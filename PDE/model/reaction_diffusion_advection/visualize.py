@@ -47,11 +47,11 @@ def plot_weight_matrices(pde):
 	w_r_p = []
 	w_r_d = []
 	for i in range(pde.func.N_LAYERS+1):
-		if "advection" in pde.TERMS:
+		if "advection" in pde.func.TERMS:
 			w_v.append(pde.func.f_v.layers[2*i].weight[:,:,0,0])
-		if "diffusion" in pde.TERMS:
+		if "diffusion" in pde.func.TERMS:
 			w_d.append(pde.func.f_d.layers[2*i].weight[:,:,0,0])
-		if "reaction" in pde.TERMS:
+		if "reaction" in pde.func.TERMS:
 			w_r_p.append(pde.func.f_r.production_layers[2*i].weight[:,:,0,0])
 			w_r_d.append(pde.func.f_r.decay_layers[2*i].weight[:,:,0,0])
 
@@ -59,7 +59,7 @@ def plot_weight_matrices(pde):
 
 	figs = []
 	
-	if "advection" in pde.TERMS:
+	if "advection" in pde.func.TERMS:
 		for i in range(pde.func.N_LAYERS+1):
 			figure = plt.figure(figsize=(5,5))
 			col_range = max(np.max(w_v[i]),-np.min(w_v[i]))
@@ -68,7 +68,7 @@ def plot_weight_matrices(pde):
 			plt.xlabel("Input")
 			plt.title(f"Advection layer {i}")
 			figs.append(plot_to_image(figure))
-	if "diffusion" in pde.TERMS:
+	if "diffusion" in pde.func.TERMS:
 		for i in range(pde.func.N_LAYERS+1):
 			figure = plt.figure(figsize=(5,5))
 			col_range = max(np.max(w_d[i]),-np.min(w_d[i]))
@@ -77,7 +77,7 @@ def plot_weight_matrices(pde):
 			plt.xlabel("Input")
 			plt.title(f"Diffusion layer {i}")
 			figs.append(plot_to_image(figure))
-	if "reaction" in pde.TERMS:
+	if "reaction" in pde.func.TERMS:
 		for i in range(pde.func.N_LAYERS+1):
 			figure = plt.figure(figsize=(5,5))
 			col_range = max(np.max(w_r_p[i]),-np.min(w_r_p[i]))
@@ -113,7 +113,7 @@ def plot_weight_kernel_boxplot(pde):
 
 	"""
 	figs = []
-	if "advection" in pde.TERMS:
+	if "advection" in pde.func.TERMS:
 		w1_v = pde.func.f_v.layers[0].weight[:,:,0,0]
 		figure = plt.figure(figsize=(5,5))
 		plt.boxplot(w1_v.T)
@@ -122,7 +122,7 @@ def plot_weight_kernel_boxplot(pde):
 		plt.title("Advection 1st layer")
 		figs.append(plot_to_image(figure))
 	
-	if "diffusion" in pde.TERMS:
+	if "diffusion" in pde.func.TERMS:
 		w1_d = pde.func.f_d.layers[0].weight[:,:,0,0]
 		figure = plt.figure(figsize=(5,5))
 		plt.boxplot(w1_d.T)
@@ -131,7 +131,7 @@ def plot_weight_kernel_boxplot(pde):
 		plt.title("Diffusion 1st layer")
 		figs.append(plot_to_image(figure))
 
-	if "reaction" in pde.TERMS:
+	if "reaction" in pde.func.TERMS:
 		w1_r_p = pde.func.f_r.production_layers[0].weight[:,:,0,0]
 		figure = plt.figure(figsize=(5,5))
 		plt.boxplot(w1_r_p.T)
