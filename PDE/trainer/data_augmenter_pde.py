@@ -85,7 +85,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		# If a counter reaches the end of the data, reset it to zero
 			
 		reset_counters = jr.bernoulli(keys[0],p=0.01,shape=(B,)) # With very small probability at each step, reset to 0
-		increment_counters = jr.bernoulli(keys[1],p=0.1,shape=(B,)) # With small probability at each step, advance to next step
+		increment_counters = jr.bernoulli(keys[1],p=0.1,shape=(B,)).astype(int) # With small probability at each step, advance to next step
 		_pos_incremented = np.clip(np.array(self.SUBTRAJECTORY_LOCATION)+increment_counters,min=0,max=N-L-1)
 		_pos_at_end = _pos_incremented == N-L-1
 		reset_counters = np.logical_or(reset_counters,_pos_at_end)
@@ -97,7 +97,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		
 		
 		propagate_hidden_channels = lambda data,y,p,inc: data.at[p+1:p+1+L,C:].set(y[:,C:])*inc + data*(1-inc) 
-		data = jax.tree_util.tree_map(propagate_hidden_channels,data,y,pos,increment_counters)
+		data = jax.tree_util.tree_map(propagate_hidden_channels,data,y,pos,list(increment_counters))
 		
 		if self.OVERWRITE_OBS_CHANNELS:
 			for b in range(len(data)//2):
