@@ -94,10 +94,11 @@ class DataAugmenter(DataAugmenterAbstract):
 		pos = np.where(reset_counters,_pos_reset,_pos_incremented)
 		pos = list(pos)
 		
+		propagate_hidden_channels = lambda data,y,p: data.at[p+1:p+1+L,C:].set(y[:,C:])
+		data = jax.tree_util.tree_map(propagate_hidden_channels,data,y,pos)
 		
-		
-		propagate_hidden_channels = lambda data,y,p,inc: data.at[p+1:p+1+L,C:].set(y[:,C:])*inc + data*(1-inc) 
-		data = jax.tree_util.tree_map(propagate_hidden_channels,data,y,pos,list(increment_counters))
+		# propagate_hidden_channels = lambda data,y,p,inc: data.at[p+1:p+1+L,C:].set(y[:,C:])*inc + data*(1-inc) 
+		# data = jax.tree_util.tree_map(propagate_hidden_channels,data,y,pos,list(increment_counters))
 		
 		if self.OVERWRITE_OBS_CHANNELS:
 			for b in range(len(data)//2):

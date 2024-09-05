@@ -298,6 +298,8 @@ class PDE_Trainer(object):
 		error_at = 0
 		if PRUNING["PRUNE"]:
 			SPARSITY_SCHEDULE = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,PRUNING["TARGET_SPARSITY"],TRAINING_ITERATIONS-WARMUP)))
+		else:
+			SPARSITY_SCHEDULE = jnp.zeros(TRAINING_ITERATIONS)
 		#x0 = self.DATA_AUGMENTER.data_saved[0][0]
 		
 
