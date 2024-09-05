@@ -12,7 +12,7 @@ class DataAugmenter(DataAugmenterAbstract):
 	"""
 	def __init__(self,Ts,*args,**kwargs):
 		super().__init__(*args,**kwargs)
-		self.OVERWRITE_OBS_CHANNELS = True
+		self.OVERWRITE_OBS_CHANNELS = False
 		B = len(self.data_saved)
 		Ts = repeat(Ts,"T -> B T",B=B)
 		self.Ts = list(Ts)
