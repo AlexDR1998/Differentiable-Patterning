@@ -34,7 +34,7 @@ STABILITY_FACTOR = 0.01
 key = jax.random.PRNGKey(int(time.time()))
 key = jax.random.fold_in(key,index)
 
-CHANNELS = 10
+CHANNELS = 16
 ITERS = 1001
 SIZE = 64
 BATCHES = 4
@@ -57,8 +57,8 @@ pde_hyperparameters = {"N_CHANNELS":CHANNELS,
                        "INIT_TYPE":{"reaction":PARAMS["REACTION_INIT"],"advection":"orthogonal","diffusion":PARAMS["DIFFUSION_INIT"]},
                        "STABILITY_FACTOR":STABILITY_FACTOR,
                        "USE_BIAS":True,
-                       "ORDER":2,
-                       "N_LAYERS":2,
+                       "ORDER":PARAMS["ORDER"],
+                       "N_LAYERS":PARAMS["N_LAYERS"],
                        "ZERO_INIT":{"reaction":False,"advection":False,"diffusion":False}}
 solver_hyperparameters = {"dt":dt,
                           "SOLVER":"euler",

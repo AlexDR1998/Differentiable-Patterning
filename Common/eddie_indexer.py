@@ -359,14 +359,14 @@ def index_to_pde_gray_scott_rda(index):
 		"REACTION_INIT":"orthogonal",
 		"DIFFUSION_INIT":"orthogonal",
 		"TEXT_LABEL":["_euclidean","_spectral_weighted"][indices[0]]+["_nadam","_nadamw"][indices[1]]+["","_scale_by_param_block_norm"][indices[2]],
-		"N_LAYERS":2,
-		"ORDER":2,
+		"N_LAYERS":3,
+		"ORDER":1,
 		"TIME_RESOLUTION":101,
 		"TRAJECTORY_LENGTH":16,
 		"LOSS_TIME_SAMPLING":1
 	}
 	return params
-	
+
 
 def index_to_pde_texture_hyperparameters(index):
 	indices = np.unravel_index(index,(4,3,2,2,2,2))
