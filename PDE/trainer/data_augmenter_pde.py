@@ -12,7 +12,9 @@ class DataAugmenter(DataAugmenterAbstract):
 	"""
 	def __init__(self,Ts,*args,**kwargs):
 		super().__init__(*args,**kwargs)
-		self.OVERWRITE_OBS_CHANNELS = False
+		self.CALLBACK_PARAMS = {"INCREMENT_PROB":0.2,
+						  		"RESET_PROB":0.001,
+								"OVERWRITE_OBS_CHANNELS":False}
 		B = len(self.data_saved)
 		Ts = repeat(Ts,"T -> B T",B=B)
 		self.Ts = list(Ts)
@@ -84,8 +86,8 @@ class DataAugmenter(DataAugmenterAbstract):
 		#    probability q=0.01, reset each counter to zero
 		# If a counter reaches the end of the data, reset it to zero
 			
-		reset_counters = jr.bernoulli(keys[0],p=0.01,shape=(B,)) # With very small probability at each step, reset to 0
-		increment_counters = jr.bernoulli(keys[1],p=0.1,shape=(B,)).astype(int) # With small probability at each step, advance to next step
+		reset_counters = jr.bernoulli(keys[0],p=self.CALLBACK_PARAMS["RESET_PROB"],shape=(B,)) # With very small probability at each step, reset to 0
+		increment_counters = jr.bernoulli(keys[1],p=self.CALLBACK_PARAMS["INCREMENT_PROB"],shape=(B,)).astype(int) # With small probability at each step, advance to next step
 		_pos_incremented = np.clip(np.array(self.SUBTRAJECTORY_LOCATION)+increment_counters,min=0,max=N-L-1)
 		_pos_at_end = _pos_incremented == N-L-1
 		reset_counters = np.logical_or(reset_counters,_pos_at_end)
@@ -100,7 +102,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		# propagate_hidden_channels = lambda data,y,p,inc: data.at[p+1:p+1+L,C:].set(y[:,C:])*inc + data*(1-inc) 
 		# data = jax.tree_util.tree_map(propagate_hidden_channels,data,y,pos,list(increment_counters))
 		
-		if self.OVERWRITE_OBS_CHANNELS:
+		if self.CALLBACK_PARAMS["OVERWRITE_OBS_CHANNELS"]:
 			for b in range(len(data)//2):
 				data[b*2] = data[b*2].at[pos[b*2]+1:pos[b*2]+1+L,:C].set(y[b*2][:,:C])*increment_counters[b*2] + data[b*2]*increment_counters[b*2]
 
