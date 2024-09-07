@@ -359,7 +359,7 @@ def index_to_pde_gray_scott_rda(index):
 		"REACTION_INIT":"orthogonal",
 		"DIFFUSION_INIT":"orthogonal",
 		"TEXT_LABEL":["_euclidean","_spectral_weighted"][indices[0]]+["_nadam","_nadamw"][0]+["","_scale_by_param_block_norm"][indices[1]],
-		"N_LAYERS":3,
+		"N_LAYERS":2,
 		"ORDER":1,
 		"TIME_RESOLUTION":101,
 		"TRAJECTORY_LENGTH":[16,32][indices[2]],

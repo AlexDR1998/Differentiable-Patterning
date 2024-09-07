@@ -45,6 +45,8 @@ class F(eqx.Module):
 			INTERNAL_ACTIVATION = jax.nn.tanh
 		elif INTERNAL_ACTIVATION=="relu":
 			INTERNAL_ACTIVATION = jax.nn.relu
+		elif INTERNAL_ACTIVATION=="relu6":
+			INTERNAL_ACTIVATION = jax.nn.relu6
 		
 		if ADVECTION_OUTER_ACTIVATION=="tanh":
 			ADVECTION_OUTER_ACTIVATION = jax.nn.tanh
@@ -63,7 +65,7 @@ class F(eqx.Module):
 		if "reaction" in self.TERMS:
 			self.f_r = R(N_CHANNELS=N_CHANNELS,
 						INTERNAL_ACTIVATION=INTERNAL_ACTIVATION,
-						OUTER_ACTIVATION=jax.nn.relu, # SHOULD BE STRICTLY NON NEGATIVE FOR INTERPRETABILITY
+						OUTER_ACTIVATION=jax.nn.relu6, # SHOULD BE STRICTLY NON NEGATIVE FOR INTERPRETABILITY
 						INIT_SCALE=INIT_SCALE["reaction"], # Should be much smaller initial scaling
 						INIT_TYPE=INIT_TYPE["reaction"],
 						USE_BIAS=USE_BIAS,
@@ -97,7 +99,7 @@ class F(eqx.Module):
 						PADDING=PADDING,
 						dx=dx,
 						INTERNAL_ACTIVATION=INTERNAL_ACTIVATION,
-						OUTER_ACTIVATION=jax.nn.relu, # MUST BE STRICTLY NON NEGATIVE FOR NUMERICAL STABILITY
+						OUTER_ACTIVATION=jax.nn.relu6, # MUST BE STRICTLY NON NEGATIVE FOR NUMERICAL STABILITY
 						INIT_SCALE=INIT_SCALE["diffusion"],
 						INIT_TYPE=INIT_TYPE["diffusion"],
 						USE_BIAS=USE_BIAS,

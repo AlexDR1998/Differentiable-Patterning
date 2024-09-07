@@ -27,7 +27,7 @@ index=int(sys.argv[1])-1
 
 
 PARAMS = index_to_pde_gray_scott_rda(index)
-INIT_SCALE = {"reaction":0.01,"advection":0.01,"diffusion":0.1}
+INIT_SCALE = {"reaction":0.01,"advection":0.01,"diffusion":0.01}
 STABILITY_FACTOR = 0.01
 
 
@@ -43,16 +43,16 @@ TRAJECTORY_LENGTH = PARAMS["TRAJECTORY_LENGTH"]
 PDE_STR = "gray_scott"
 dt = 1.0
 if "advection" in PARAMS["TERMS"]:
-    MODEL_FILENAME="pde_hyperparameters_advreacdiff_"+PDE_STR+"_euler/da_inc_02_lr_5e-4_ch_"+str(CHANNELS)+"_tl_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
+    MODEL_FILENAME="pde_hyperparameters_advreacdiff_"+PDE_STR+"_euler/da_inc_02_relu6_lr_5e-4_ch_"+str(CHANNELS)+"_tl_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
 else:
-    MODEL_FILENAME="pde_hyperparameters_reacdiff_"+PDE_STR+"_euler/da_inc_02_lr_5e-4_ch_"+str(CHANNELS)+"_tl_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
+    MODEL_FILENAME="pde_hyperparameters_reacdiff_"+PDE_STR+"_euler/da_inc_02_relu6_lr_5e-4_ch_"+str(CHANNELS)+"_tl_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
 
 pde_hyperparameters = {"N_CHANNELS":CHANNELS,
                        "PADDING":PADDING,
-                       "INTERNAL_ACTIVATION":"tanh",
+                       "INTERNAL_ACTIVATION":"relu6",
                        "dx":1.0,
                        "TERMS":PARAMS["TERMS"],
-                       "ADVECTION_OUTER_ACTIVATION":"tanh",
+                       "ADVECTION_OUTER_ACTIVATION":"relu",
                        "INIT_SCALE":INIT_SCALE,
                        "INIT_TYPE":{"reaction":PARAMS["REACTION_INIT"],"advection":"orthogonal","diffusion":PARAMS["DIFFUSION_INIT"]},
                        "STABILITY_FACTOR":STABILITY_FACTOR,
