@@ -362,7 +362,7 @@ def index_to_pde_gray_scott_rda(index):
 		"N_LAYERS":3,
 		"ORDER":1,
 		"TIME_RESOLUTION":101,
-		"TRAJECTORY_LENGTH":[2,4,8][indices[2]],
+		"TRAJECTORY_LENGTH":[2,4,8][indices[1]],
 		"LOSS_TIME_SAMPLING":1
 	}
 	return params
