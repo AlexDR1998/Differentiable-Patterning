@@ -231,7 +231,7 @@ class DataAugmenterAbstract(object):
 			  mode="full",
 			  key:Key=jr.PRNGKey(int(time.time()))):
 		"""
-		Adds uniform noise to the data
+		Adds gaussian noise to the data
 		
 		Parameters
 		----------
@@ -251,7 +251,7 @@ class DataAugmenterAbstract(object):
 		"""
 		key_array = key_pytree_gen(key, [len(data)])
 		
-		noisy = jtu.tree_map(lambda x,key:am*jr.uniform(key,shape=x.shape) + (1-am)*x,data,key_array)
+		noisy = jtu.tree_map(lambda x,key:am*jr.normal(key,shape=x.shape) + (1-am)*x,data,key_array)
 		
 		if mode=="observable": # Overwrite correct data onto hidden channels
 			noisy = jtu.tree_map(lambda x,y:x.at[:,self.OBS_CHANNELS:].set(y[:,self.OBS_CHANNELS:]),noisy,data)
