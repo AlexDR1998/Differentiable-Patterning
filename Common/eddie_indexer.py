@@ -349,7 +349,7 @@ def index_to_pde_gray_scott_hyperparameters(index):
 
 
 def index_to_pde_gray_scott_rda(index):
-	indices = np.unravel_index(index,(2,3))
+	indices = np.unravel_index(index,(2,4))
 	params = {
 		"LOSS_FUNCTION":[euclidean,spectral_weighted][indices[0]],
 		"OPTIMISER":optax.nadam,
@@ -362,7 +362,7 @@ def index_to_pde_gray_scott_rda(index):
 		"N_LAYERS":3,
 		"ORDER":1,
 		"TIME_RESOLUTION":101,
-		"TRAJECTORY_LENGTH":[2,4,8][indices[1]],
+		"TRAJECTORY_LENGTH":[2,8,16,32][indices[1]],
 		"LOSS_TIME_SAMPLING":1
 	}
 	return params
