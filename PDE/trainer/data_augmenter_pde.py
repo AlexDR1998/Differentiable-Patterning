@@ -12,7 +12,7 @@ class DataAugmenter(DataAugmenterAbstract):
 	"""
 	def __init__(self,Ts,*args,**kwargs):
 		super().__init__(*args,**kwargs)
-		self.CALLBACK_PARAMS = {"INCREMENT_PROB":0.2,
+		self.CALLBACK_PARAMS = {"INCREMENT_PROB":0.1,
 						  		"RESET_PROB":0.001,
 								"OVERWRITE_OBS_CHANNELS":False}
 		B = len(self.data_saved)
