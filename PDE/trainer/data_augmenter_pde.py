@@ -67,7 +67,7 @@ class DataAugmenter(DataAugmenterAbstract):
 			y : PyTree [BATCHES] f32[L,CHANNELS,WIDTH,HEIGHT]
 				True trajectories that follow the initial conditions
 		"""
-		keys = jr.split(key,2)
+		keys = jr.split(key,4)
 		data = self.return_saved_data()
 		ts = self.Ts
 		B = len(data)
@@ -85,7 +85,8 @@ class DataAugmenter(DataAugmenterAbstract):
 		#	 probability 1-p keep each counter the same,
 		#    probability q=0.01, reset each counter to zero
 		# If a counter reaches the end of the data, reset it to zero
-			
+		input_y_length = y[0].shape[0]
+		
 		reset_counters = jr.bernoulli(keys[0],p=self.CALLBACK_PARAMS["RESET_PROB"],shape=(B,)) # With very small probability at each step, reset to 0
 		increment_counters = jr.bernoulli(keys[1],p=self.CALLBACK_PARAMS["INCREMENT_PROB"],shape=(B,)).astype(int) # With small probability at each step, advance to next step
 		_pos_incremented = np.clip(np.array(self.SUBTRAJECTORY_LOCATION)+increment_counters,min=0,max=N-L-1)
@@ -96,7 +97,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		pos = np.where(reset_counters,_pos_reset,_pos_incremented)
 		pos = list(pos)
 		
-		propagate_hidden_channels = lambda data,y,p: data.at[p+1:p+1+L,C:].set(y[:,C:])
+		propagate_hidden_channels = lambda data,y,p: data.at[p+1:p+1+input_y_length,C:].set(y[:,C:])
 		data = jax.tree_util.tree_map(propagate_hidden_channels,data,y,pos)
 		
 		# propagate_hidden_channels = lambda data,y,p,inc: data.at[p+1:p+1+L,C:].set(y[:,C:])*inc + data*(1-inc) 
@@ -104,16 +105,17 @@ class DataAugmenter(DataAugmenterAbstract):
 		
 		if self.CALLBACK_PARAMS["OVERWRITE_OBS_CHANNELS"]:
 			for b in range(len(data)//2):
-				data[b*2] = data[b*2].at[pos[b*2]+1:pos[b*2]+1+L,:C].set(y[b*2][:,:C])*increment_counters[b*2] + data[b*2]*increment_counters[b*2]
+				data[b*2] = data[b*2].at[pos[b*2]+1:pos[b*2]+1+input_y_length,:C].set(y[b*2][:,:C])*increment_counters[b*2] + data[b*2]*increment_counters[b*2]
 
 		self.save_data(data)
 
 
 		# Sample new x,y and ts
+		output_y_length = jr.randint(keys[2],shape=(1,),minval=1,maxval=L)[0]
 		x = jax.tree_util.tree_map(lambda data,p:data[p],self.data_saved,pos)
-		x = self.noise(x,am=0.05,mode="hidden",key=keys[0])
-		y = jax.tree_util.tree_map(lambda data,p:data[p+1:p+1+L],self.data_saved,pos)
-		ts = jax.tree_util.tree_map(lambda data,p:data[p:p+1+L],ts,pos)
+		x = self.noise(x,am=0.05,mode="hidden",key=keys[3])
+		y = jax.tree_util.tree_map(lambda data,p:data[p+1:p+1+output_y_length],self.data_saved,pos)
+		ts = jax.tree_util.tree_map(lambda data,p:data[p:p+1+output_y_length],ts,pos)
 		#ts = self.Ts[:,pos:pos+L]
 		
 		self.SUBTRAJECTORY_LOCATION = pos
