@@ -10,7 +10,8 @@ import equinox as eqx
 import jax.numpy as jnp
 import time
 from PDE.model.reaction_diffusion_advection.advection import V
-from PDE.model.reaction_diffusion_advection.reaction import R
+from PDE.model.reaction_diffusion_advection.reaction import R as R_split
+from PDE.model.reaction_diffusion_advection.reaction_pure import R as R_pure
 from PDE.model.reaction_diffusion_advection.diffusion_nonlinear import D
 from PDE.model.reaction_diffusion_advection.identity import I
 from jaxtyping import Array, Float, PyTree, Scalar
@@ -62,10 +63,22 @@ class F(eqx.Module):
 		self.ORDER = ORDER
 		self.TERMS = TERMS
 		key1,key2,key3 = jax.random.split(key,3)
-		if "reaction" in self.TERMS:
-			self.f_r = R(N_CHANNELS=N_CHANNELS,
+		if "reaction_split" in self.TERMS:
+			self.f_r = R_split(N_CHANNELS=N_CHANNELS,
 						INTERNAL_ACTIVATION=INTERNAL_ACTIVATION,
 						OUTER_ACTIVATION=jax.nn.relu6, # SHOULD BE STRICTLY NON NEGATIVE FOR INTERPRETABILITY
+						INIT_SCALE=INIT_SCALE["reaction"], # Should be much smaller initial scaling
+						INIT_TYPE=INIT_TYPE["reaction"],
+						USE_BIAS=USE_BIAS,
+						STABILITY_FACTOR=STABILITY_FACTOR,
+						ORDER=ORDER,
+						N_LAYERS=N_LAYERS,
+						ZERO_INIT=ZERO_INIT["reaction"],
+						key=key1)
+		elif "reaction_pure" in self.TERMS:
+			self.f_r = R_pure(N_CHANNELS=N_CHANNELS,
+						INTERNAL_ACTIVATION=INTERNAL_ACTIVATION,
+						OUTER_ACTIVATION=jax.nn.tanh, # SHOULD ALLOW NEGEATIVES
 						INIT_SCALE=INIT_SCALE["reaction"], # Should be much smaller initial scaling
 						INIT_TYPE=INIT_TYPE["reaction"],
 						USE_BIAS=USE_BIAS,

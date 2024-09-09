@@ -42,8 +42,9 @@ def multi_learnrate_rd(schedule,rate_ratios,optimiser=optax.nadam,pre_process=op
 	def label_r(tree):
 		# Returns True for the reaction terms
 		filter_spec = jax.tree_util.tree_map(lambda _:False,tree)
-		filter_spec = eqx.tree_at(lambda t:t.func.f_r.production_layers,filter_spec,replace=True)
-		filter_spec = eqx.tree_at(lambda t:t.func.f_r.decay_layers,filter_spec,replace=True)
+		filter_spec = eqx.tree_at(lambda t:t.func.f_r.layers,filter_spec,replace=True)
+		#filter_spec = eqx.tree_at(lambda t:t.func.f_r.production_layers,filter_spec,replace=True)
+		#filter_spec = eqx.tree_at(lambda t:t.func.f_r.decay_layers,filter_spec,replace=True)
 		return filter_spec
 	
 	# def label_a(tree):
@@ -87,8 +88,9 @@ def multi_learnrate_rda(schedule,rate_ratios,optimiser=optax.nadam,pre_process=o
 	def label_r(tree):
 		# Returns True for the reaction terms
 		filter_spec = jax.tree_util.tree_map(lambda _:False,tree)
-		filter_spec = eqx.tree_at(lambda t:t.func.f_r.production_layers,filter_spec,replace=True)
-		filter_spec = eqx.tree_at(lambda t:t.func.f_r.decay_layers,filter_spec,replace=True)
+		filter_spec = eqx.tree_at(lambda t:t.func.f_r.layers,filter_spec,replace=True)
+		#filter_spec = eqx.tree_at(lambda t:t.func.f_r.production_layers,filter_spec,replace=True)
+		#filter_spec = eqx.tree_at(lambda t:t.func.f_r.decay_layers,filter_spec,replace=True)
 		return filter_spec
 	
 	def label_a(tree):
