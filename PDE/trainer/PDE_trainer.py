@@ -31,8 +31,6 @@ class PDE_Trainer(object):
 				 model_filename=None,
 				 DATA_AUGMENTER = DataAugmenter,
 				 BOUNDARY_MASK = None,
-				 GRAD_LOSS = True,
-				 SHARDING = None, 
 				 directory="models/"):
 		"""
 		
@@ -77,7 +75,7 @@ class PDE_Trainer(object):
 
 		self.OBS_CHANNELS = data[0].shape[1]
 		self.CHANNELS = self.PDE_solver.func.N_CHANNELS
-		self.GRAD_LOSS = GRAD_LOSS
+		
 		self._op = Ops(PADDING=PDE_solver.func.PADDING,
 				       dx=PDE_solver.func.dx)
 		
@@ -144,13 +142,20 @@ class PDE_Trainer(object):
 		loss : float32 array [N]
 			loss for each timestep of trajectory
 		"""
-		x_obs = x[::self.LOSS_TIME_SAMPLING,:self.OBS_CHANNELS]
-		y_obs = y[::self.LOSS_TIME_SAMPLING,:self.OBS_CHANNELS]
-		L = self._loss(x_obs,y_obs)
-		if self.GRAD_LOSS:
+		x_obs = x[:,:self.OBS_CHANNELS]
+		y_obs = y[:,:self.OBS_CHANNELS]
+		if self.LOSS_PARAMS["LOSS_TRAJECTORY_END"]:
+			x_obs = x_obs[-1:]
+			y_obs = y_obs[-1:]
+		else:
+			x_obs = x_obs[::self.LOSS_PARAMS["LOSS_SAMPLING"]]
+			y_obs = y_obs[::self.LOSS_PARAMS["LOSS_SAMPLING"]]
+		#L = self._loss(x_obs,y_obs)
+		L = self.LOSS_PARAMS["LOSS_FUNC"](x_obs,y_obs)
+		if self.LOSS_PARAMS["GRAD_LOSS"]:
 			x_obs_spatial = self.spatial_loss_gradients(x_obs)
 			y_obs_spatial = self.spatial_loss_gradients(y_obs)
-			L += 0.1*self._loss(x_obs_spatial,y_obs_spatial)
+			L += 0.1*self.LOSS_PARAMS["LOSS_FUNC"](x_obs_spatial,y_obs_spatial)
 		return L
 	
 	def train(self,
@@ -159,8 +164,10 @@ class PDE_Trainer(object):
 			  OPTIMISER=None,  
 			  WARMUP=64,
 			  LOG_EVERY=10,
-			  LOSS_TIME_SAMPLING=1,
-			  LOSS_FUNC = loss.euclidean,
+			  LOSS_PARAMS = {"LOSS_FUNC":loss.euclidean,
+							 "GRAD_LOSS":True,
+							 "LOSS_SAMPLING":1,
+							 "LOSS_TRAJECTORY_END":False},
 			  PRUNING = {"PRUNE":False,
 						 "TARGET_SPARSITY":0.9},
 			  UPDATE_X0_PARAMS = {"iters":32,
@@ -191,17 +198,13 @@ class PDE_Trainer(object):
 
 
 		"""
-		self._loss = LOSS_FUNC
-		#UPDATE_X0_PARAMS.update({"t":t})
-		#UPDATE_X0_PARAMS.update({"loss_func":self.loss_func})
-		self.LOSS_TIME_SAMPLING = LOSS_TIME_SAMPLING
-
-		#@partial(eqx.filter_jit,donate="all-except-first")
+		
+		self.LOSS_PARAMS = LOSS_PARAMS
+		
 		@eqx.filter_jit
 		def make_step(pde,
 					  x: Float[Array,"Batches T C W H"],
 					  y: Float[Array,"Batches T C W H"],
-					  #t: Int[Scalar,""],
 					  ts: Float[Array,"Batches T"],
 					  opt_state,
 					  target_sparsity,
