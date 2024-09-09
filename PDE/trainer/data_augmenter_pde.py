@@ -111,6 +111,7 @@ class DataAugmenter(DataAugmenterAbstract):
 
 		# Sample new x,y and ts
 		x = jax.tree_util.tree_map(lambda data,p:data[p],self.data_saved,pos)
+		x = self.noise(x,am=0.05,mode="hidden",key=keys[0])
 		y = jax.tree_util.tree_map(lambda data,p:data[p+1:p+1+L],self.data_saved,pos)
 		ts = jax.tree_util.tree_map(lambda data,p:data[p:p+1+L],ts,pos)
 		#ts = self.Ts[:,pos:pos+L]
