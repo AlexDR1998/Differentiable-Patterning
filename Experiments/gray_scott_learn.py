@@ -43,9 +43,9 @@ TRAJECTORY_LENGTH = PARAMS["TRAJECTORY_LENGTH"]
 PDE_STR = "gray_scott"
 dt = 1.0
 if "advection" in PARAMS["TERMS"]:
-    MODEL_FILENAME="pde_hyperparameters_advreacdiff_"+PDE_STR+"_euler/da_inc_01_relu6_noise_001_lr_5e-4_ch_"+str(CHANNELS)+"_tl_rand_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
+    MODEL_FILENAME="pde_hyperparameters_advreacdiff_"+PDE_STR+"_euler/da_inc_01_relu6_noise_001_lr_5e-4_ch_"+str(CHANNELS)+"_tl_rand_"+PARAMS["TRAJECTORY_TYPE"]+"_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_pure_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
 else:
-    MODEL_FILENAME="pde_hyperparameters_reacdiff_"+PDE_STR+"_euler/da_inc_01_relu6_noise_001_lr_5e-4_ch_"+str(CHANNELS)+"_tl_rand_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
+    MODEL_FILENAME="pde_hyperparameters_reacdiff_"+PDE_STR+"_euler/da_inc_01_relu6_noise_001_lr_5e-4_ch_"+str(CHANNELS)+"_tl_rand_"+PARAMS["TRAJECTORY_TYPE"]+"_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_pure_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
 
 pde_hyperparameters = {"N_CHANNELS":CHANNELS,
                        "PADDING":PADDING,
@@ -145,6 +145,6 @@ trainer.train(SUBTRAJECTORY_LENGTH=TRAJECTORY_LENGTH,
               LOSS_PARAMS = {"LOSS_FUNC":PARAMS["LOSS_FUNCTION"],
 							 "GRAD_LOSS":True,
 							 "LOSS_SAMPLING":PARAMS["LOSS_TIME_SAMPLING"],
-							 "LOSS_TRAJECTORY_END":True},
+							 "LOSS_TRAJECTORY_FULL":PARAMS["TRAJECTORY_FULL"]},
               
               UPDATE_X0_PARAMS=UPDATE_X0_PARAMS)
