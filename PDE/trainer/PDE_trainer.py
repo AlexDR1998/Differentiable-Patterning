@@ -144,12 +144,13 @@ class PDE_Trainer(object):
 		"""
 		x_obs = x[:,:self.OBS_CHANNELS]
 		y_obs = y[:,:self.OBS_CHANNELS]
-		if self.LOSS_PARAMS["LOSS_TRAJECTORY_END"]:
-			x_obs = x_obs[-1:]
-			y_obs = y_obs[-1:]
-		else:
+		if self.LOSS_PARAMS["LOSS_TRAJECTORY_FULL"]:
 			x_obs = x_obs[::self.LOSS_PARAMS["LOSS_SAMPLING"]]
 			y_obs = y_obs[::self.LOSS_PARAMS["LOSS_SAMPLING"]]
+		else:
+			x_obs = x_obs[-1:]
+			y_obs = y_obs[-1:]
+			
 		#L = self._loss(x_obs,y_obs)
 		L = self.LOSS_PARAMS["LOSS_FUNC"](x_obs,y_obs)
 		if self.LOSS_PARAMS["GRAD_LOSS"]:
