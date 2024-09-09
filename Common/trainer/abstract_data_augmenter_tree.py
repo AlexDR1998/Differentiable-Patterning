@@ -254,9 +254,9 @@ class DataAugmenterAbstract(object):
 		noisy = jtu.tree_map(lambda x,key:am*jr.normal(key,shape=x.shape) + (1-am)*x,data,key_array)
 		
 		if mode=="observable": # Overwrite correct data onto hidden channels
-			noisy = jtu.tree_map(lambda x,y:x.at[:,self.OBS_CHANNELS:].set(y[:,self.OBS_CHANNELS:]),noisy,data)
+			noisy = jtu.tree_map(lambda x,y:x.at[...,self.OBS_CHANNELS:,:,:].set(y[...,self.OBS_CHANNELS:,:,:]),noisy,data)
 		elif mode=="hidden": # Overwrite correct data onto observable channels
-			noisy = jtu.tree_map(lambda x,y:x.at[:,:self.OBS_CHANNELS].set(y[:,:self.OBS_CHANNELS]),noisy,data)
+			noisy = jtu.tree_map(lambda x,y:x.at[...,:self.OBS_CHANNELS,:,:].set(y[...,:self.OBS_CHANNELS,:,:]),noisy,data)
 		return noisy
 	
 
