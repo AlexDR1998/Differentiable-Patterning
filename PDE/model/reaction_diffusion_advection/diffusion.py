@@ -35,6 +35,7 @@ class D(eqx.Module):
     def __call__(self,X: Float[Array, "{self.N_CHANNELS} x y"])->Float[Array, "{self.N_CHANNELS} x y"]:
         #return self.diffusion_constants(self.ops.Lap(X))
         return jax.nn.sparse_plus(self.diffusion_constants)*self.ops.Lap(X)
+        #return jax.nn.relu(self.diffusion_constants)*self.ops.Lap(X)
 
     def partition(self):
         total_diff,total_static = eqx.partition(self,eqx.is_array)
