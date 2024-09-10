@@ -137,6 +137,7 @@ def multi_learnrate(schedule,rate_ratios,TERMS,optimiser=optax.nadam,pre_process
 	if "diffusion_nonlinear" in TERMS:
 		opts.append(optax.masked(optax.chain(pre_process,optax.apply_if_finite(optimiser(schedule_funcs["diffusion_nonlinear"]),max_consecutive_errors=8)),label_diffusion_nonlinear))
 	if "diffusion_linear" in TERMS:
+		#opts.append(optax.masked(optax.chain(optax.keep_params_nonnegative(),pre_process,optax.apply_if_finite(optimiser(schedule_funcs["diffusion_linear"]),max_consecutive_errors=8)),label_diffusion_linear))
 		opts.append(optax.masked(optax.chain(pre_process,optax.apply_if_finite(optimiser(schedule_funcs["diffusion_linear"]),max_consecutive_errors=8)),label_diffusion_linear))
 	return optax.chain(*opts)
 	#return optax.chain(opt_r,opt_d)
