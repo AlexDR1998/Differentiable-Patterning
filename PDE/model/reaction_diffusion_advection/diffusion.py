@@ -26,7 +26,7 @@ class D(eqx.Module):
         #                                     use_bias=False,
         #                                     key=key,
         #                                     groups=self.N_CHANNELS)
-        self.diffusion_constants = jr.uniform(key=key,shape=(self.N_CHANNELS,1,1))*INIT_SCALE
+        self.diffusion_constants = jr.normal(key=key,shape=(self.N_CHANNELS,1,1))*INIT_SCALE
 
         self.ops = Ops(PADDING=PADDING,dx=dx)
         where = lambda l: l.weight
@@ -34,7 +34,7 @@ class D(eqx.Module):
     @eqx.filter_jit
     def __call__(self,X: Float[Array, "{self.N_CHANNELS} x y"])->Float[Array, "{self.N_CHANNELS} x y"]:
         #return self.diffusion_constants(self.ops.Lap(X))
-        return jax.nn.relu(self.diffusion_constants)*self.ops.Lap(X)
+        return jax.nn.sparse_plus(self.diffusion_constants)*self.ops.Lap(X)
 
     def partition(self):
         total_diff,total_static = eqx.partition(self,eqx.is_array)
