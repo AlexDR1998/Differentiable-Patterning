@@ -66,7 +66,7 @@ class PDE_Train_log(Train_log):
 				tf.summary.image('Training outputs hidden channels',rearrange(hidden_channels, "B (Z C) X Y ->B (Z X) Y C",C=3),step=i,max_outputs=BATCHES)
 
 	
-	def tb_training_end_log(self,pde,x,t,boundary_callback,write_images=True):
+	def tb_training_end_log(self,pde,x,ts,boundary_callback,write_images=True):
 		"""
 		
 
@@ -75,18 +75,21 @@ class PDE_Train_log(Train_log):
 		"""
 
 		#print(nca)
+		t_max = ts[-1]
+		t_len = len(ts)
+		ts = np.linspace(0,2*t_max,2*t_len)
 		with self.train_summary_writer.as_default():
 			trs = []
 			trs_h = []
 			CHANNELS = x[0].shape[1]
 			for b in range(len(x)):
 				
-				_,Y =pde(np.linspace(0,t,t+1),x[b][0])
+				_,Y =pde(ts,x[b][0])
 				trs.append(Y)
 				Y_h = []
 				
 				if CHANNELS>4:
-					for i in range(t):
+					for i in range(len(ts)):
 						y_h = Y[i][4:]
 						extra_zeros = (-y_h.shape[0])%3
 						y_h = np.pad(y_h,((0,extra_zeros),(0,0),(0,0)))
@@ -97,7 +100,7 @@ class PDE_Train_log(Train_log):
 			trs = np.array(trs)
 			if CHANNELS > 4:
 				trs_h = np.array(trs_h)
-			for i in range(t):
+			for i in range(len(ts)):
 				tf.summary.image("Final PDE trajectory",rearrange(trs,"B N C X Y->B N X Y C")[:,i,:,:,:3],step=i)
 				if CHANNELS > 4:
 					tf.summary.image("Final PDE trajectory hidden channels",rearrange(trs_h,"B N C X Y->B N X Y C")[:,i],step=i)

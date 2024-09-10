@@ -374,4 +374,4 @@ class PDE_Trainer(object):
 			print("|-|-|-|-|-|-  Training did not converge, model was not saved  -|-|-|-|-|-|")
 		elif self.IS_LOGGING and model_saved:
 			x,y = self.DATA_AUGMENTER.split_x_y(1)
-			self.LOGGER.tb_training_end_log(self.PDE_solver,x,data_steps,self.BOUNDARY_CALLBACK)
+			self.LOGGER.tb_training_end_log(self.PDE_solver,x,self.DATA_AUGMENTER.Ts[0],self.BOUNDARY_CALLBACK)
