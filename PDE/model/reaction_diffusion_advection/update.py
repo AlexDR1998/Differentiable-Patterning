@@ -12,7 +12,8 @@ import time
 from PDE.model.reaction_diffusion_advection.advection import V
 from PDE.model.reaction_diffusion_advection.reaction import R as R_split
 from PDE.model.reaction_diffusion_advection.reaction_pure import R as R_pure
-from PDE.model.reaction_diffusion_advection.diffusion_nonlinear import D
+from PDE.model.reaction_diffusion_advection.diffusion_nonlinear import D as D_nonlinear
+from PDE.model.reaction_diffusion_advection.diffusion import D as D_linear
 from PDE.model.reaction_diffusion_advection.identity import I
 from jaxtyping import Array, Float, PyTree, Scalar
 
@@ -107,8 +108,8 @@ class F(eqx.Module):
 		else:
 			self.f_v = I(TYPE="advection")
 		
-		if "diffusion" in self.TERMS:
-			self.f_d = D(N_CHANNELS=N_CHANNELS,
+		if "diffusion_nonlinear" in self.TERMS:
+			self.f_d = D_nonlinear(N_CHANNELS=N_CHANNELS,
 						PADDING=PADDING,
 						dx=dx,
 						INTERNAL_ACTIVATION=INTERNAL_ACTIVATION,
@@ -120,6 +121,12 @@ class F(eqx.Module):
 						N_LAYERS=N_LAYERS,
 						ZERO_INIT=ZERO_INIT["diffusion"],
 						key=key3)
+		elif "diffusion_linear" in self.TERMS:
+			self.f_d = D_linear(N_CHANNELS=N_CHANNELS,
+								PADDING=PADDING,
+								dx=dx,
+								INIT_SCALE=INIT_SCALE["diffusion"],
+								key=key3)
 		else:
 			self.f_d = I(TYPE="diffusion")
 

@@ -6,8 +6,7 @@ import jax.numpy as np
 import jax.random as jr
 import equinox as eqx
 import optax
-from PDE.trainer.optimiser import non_negative_diffusion
-from PDE.trainer.optimiser import multi_learnrate_rd,multi_learnrate_rda
+from PDE.trainer.optimiser import multi_learnrate
 from einops import repeat
 from PDE.model.reaction_diffusion_advection.update import F
 from PDE.model.solver.semidiscrete_solver import PDE_solver
@@ -43,9 +42,9 @@ TRAJECTORY_LENGTH = PARAMS["TRAJECTORY_LENGTH"]
 PDE_STR = "gray_scott"
 dt = 1.0
 if "advection" in PARAMS["TERMS"]:
-    MODEL_FILENAME="pde_hyperparameters_advreacdiff_"+PDE_STR+"_euler/da_inc_01_relu6_noise_001_lr_5e-4_ch_"+str(CHANNELS)+"_tl_rand_"+PARAMS["TRAJECTORY_TYPE"]+"_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_pure_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
+    MODEL_FILENAME="pde_hyperparameters_advreacdiff_"+PDE_STR+"_euler/da_inc_01_relu6_noise_001_lr_5e-4_ch_"+str(CHANNELS)+"_tl_rand_"+PARAMS["TRAJECTORY_TYPE"]+"_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_pure_"+PARAMS["REACTION_INIT"]+"_D_linear_"+PARAMS["TEXT_LABEL"]
 else:
-    MODEL_FILENAME="pde_hyperparameters_reacdiff_"+PDE_STR+"_euler/da_inc_01_relu6_noise_001_lr_5e-4_ch_"+str(CHANNELS)+"_tl_rand_"+PARAMS["TRAJECTORY_TYPE"]+"_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_pure_"+PARAMS["REACTION_INIT"]+"_lrr_1e-1_D_"+PARAMS["DIFFUSION_INIT"]+PARAMS["TEXT_LABEL"]
+    MODEL_FILENAME="pde_hyperparameters_reacdiff_"+PDE_STR+"_euler/da_inc_01_relu6_noise_001_lr_5e-4_ch_"+str(CHANNELS)+"_tl_rand_"+PARAMS["TRAJECTORY_TYPE"]+"_"+str(PARAMS["TRAJECTORY_LENGTH"])+"_resolution_"+str(PARAMS["TIME_RESOLUTION"])+"_ord_"+str(PARAMS["ORDER"])+"_layers_"+str(PARAMS["N_LAYERS"])+"_R_pure_"+PARAMS["REACTION_INIT"]+"_D_linear_"+PARAMS["TEXT_LABEL"]
 
 pde_hyperparameters = {"N_CHANNELS":CHANNELS,
                        "PADDING":PADDING,
@@ -106,23 +105,17 @@ pde = PDE_solver(func,**hyperparameters["solver"])
 # Define optimiser and lr schedule
 
 schedule = optax.exponential_decay(5e-4, transition_steps=ITERS, decay_rate=0.99)
-if "advection" in PARAMS["TERMS"]:
-    opt = multi_learnrate_rda(
-        schedule,
-        rate_ratios={"advection": 0.1,
-                    "reaction": 0.1,
-                    "diffusion": 1},
-        optimiser=PARAMS["OPTIMISER"],
-        pre_process=PARAMS["OPTIMISER_PRE_PROCESS"],
-    )
-else:
-    opt = multi_learnrate_rd(
-        schedule,
-        rate_ratios={"reaction": 0.1,
-                    "diffusion": 1},
-        optimiser=PARAMS["OPTIMISER"],
-        pre_process=PARAMS["OPTIMISER_PRE_PROCESS"],
-    )
+
+opt = multi_learnrate(
+    schedule,
+    rate_ratios={"advection": 1.0,
+                "reaction_pure": 1.0,
+                "diffusion_linear": 1.0},
+    TERMS=PARAMS["TERMS"],
+    optimiser=PARAMS["OPTIMISER"],
+    pre_process=PARAMS["OPTIMISER_PRE_PROCESS"],
+)
+
 
 trainer = PDE_Trainer(PDE_solver=pde,
                       PDE_HYPERPARAMETERS=hyperparameters,
