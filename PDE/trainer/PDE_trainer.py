@@ -171,11 +171,11 @@ class PDE_Trainer(object):
 							 "LOSS_TRAJECTORY_END":False},
 			  PRUNING = {"PRUNE":False,
 						 "TARGET_SPARSITY":0.9},
-			  UPDATE_X0_PARAMS = {"iters":32,
-						 		  "update_every":10,
-								  "optimiser":optax.nadam,
-								  "learn_rate":1e-3,
-								  "verbose":False},
+			#   UPDATE_X0_PARAMS = {"iters":32,
+			# 			 		  "update_every":10,
+			# 					  "optimiser":optax.nadam,
+			# 					  "learn_rate":1e-3,
+			# 					  "verbose":False},
 			  key=jax.random.PRNGKey(int(time.time()))):
 		"""
 		At each training iteration, select a random subsequence of length t to train to

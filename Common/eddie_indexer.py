@@ -349,21 +349,28 @@ def index_to_pde_gray_scott_hyperparameters(index):
 
 
 def index_to_pde_gray_scott_rda(index):
-	indices = np.unravel_index(index,(2,2,2,2))
+	indices = np.unravel_index(index,(2,2,4,3,2))
 	params = {
 		"LOSS_FUNCTION":[euclidean,spectral_weighted][indices[0]],
-		"OPTIMISER":[optax.nadam,optax.nadamw][indices[1]],
+		"OPTIMISER":[optax.nadam,optax.nadamw][0],
 		"OPTIMISER_PRE_PROCESS":[optax.identity(),optax.scale_by_param_block_norm()][1],
-		#"REACTION_INIT":["orthogonal","permuted"][indices[4]],
-		"TERMS":[["reaction_pure","diffusion_linear"],["reaction_pure","advection","diffusion_linear"]][indices[3]],
+		"TEXT_LABEL":["_euclidean","_spectral_weighted"][indices[0]]+["_nadam","_nadamw"][0]+["","_scale_by_param_block_norm"][1],
+		"INTERNAL_ACTIVATION":["tanh","relu6"][indices[1]],
+		
+		"TERMS":[["reaction_pure","diffusion_linear"],
+		   		 ["reaction_pure","diffusion_nonlinear"],
+				 ["reaction_pure","advection","diffusion_linear"],
+				 ["reaction_pure","advection","diffusion_nonlinear"]][indices[2]],
 		"REACTION_INIT":"orthogonal",
 		"DIFFUSION_INIT":"orthogonal",
-		"TEXT_LABEL":["_euclidean","_spectral_weighted"][indices[0]]+["_nadam","_nadamw"][indices[1]]+["","_scale_by_param_block_norm"][1],
+		"PDE_STR":["cahn_hilliard","gray_scott","keller_segel"][indices[3]],
+		"PDE_SOLVER":["euler","heun"][indices[4]],
+		"PDE_SOLVER_ADAPTIVE":[False,True][indices[4]],
 		"N_LAYERS":2,
 		"ORDER":1,
 		"TIME_RESOLUTION":101,
-		"TRAJECTORY_FULL":[False,True][indices[2]],
-		"TRAJECTORY_TYPE":["end","full"][indices[2]],
+		"TRAJECTORY_FULL":[False,True][0],
+		"TRAJECTORY_TYPE":["end","full"][0],
 		"TRAJECTORY_LENGTH":[2,8,16,32][2],
 		"LOSS_TIME_SAMPLING":1
 	}

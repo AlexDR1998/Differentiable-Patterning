@@ -113,7 +113,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		# Sample new x,y and ts
 		output_y_length = jr.randint(keys[2],shape=(1,),minval=1,maxval=L)[0]
 		x = jax.tree_util.tree_map(lambda data,p:data[p],self.data_saved,pos)
-		x = self.noise(x,am=0.01,mode="hidden",key=keys[3])
+		#x = self.noise(x,am=0.01,mode="hidden",key=keys[3])
 		y = jax.tree_util.tree_map(lambda data,p:data[p+1:p+1+output_y_length],self.data_saved,pos)
 		ts = jax.tree_util.tree_map(lambda data,p:data[p:p+1+output_y_length],ts,pos)
 		#ts = self.Ts[:,pos:pos+L]

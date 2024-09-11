@@ -22,6 +22,8 @@ class PDE_solver(AbstractModel):
 			self.SOLVER = diffrax.Euler()
 		elif SOLVER=="tsit5":
 			self.SOLVER = diffrax.Tsit5()
+		elif SOLVER=="kencarp3":
+			self.SOLVER = diffrax.KenCarp3()
 
 		if ADAPTIVE:
 			self.stepsize_controller=diffrax.PIDController(rtol=rtol, atol=atol)
