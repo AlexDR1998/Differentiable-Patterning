@@ -74,7 +74,8 @@ def load(path):
 	#def set_weights(self,weights):
 	#	self.func.set_weights(weights)
 def save(filename,hyperparams,model):
-    with open(filename, "wb") as f:
-        hyperparam_str = json.dumps(hyperparams)
-        f.write((hyperparam_str + "\n").encode())
-        eqx.tree_serialise_leaves(f, model)
+	filename = filename+".eqx"
+	with open(filename, "wb") as f:
+		hyperparam_str = json.dumps(hyperparams)
+		f.write((hyperparam_str + "\n").encode())
+		eqx.tree_serialise_leaves(f, model)
