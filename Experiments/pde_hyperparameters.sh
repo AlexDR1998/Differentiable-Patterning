@@ -4,8 +4,10 @@
 #$ -cwd
 #$ -l h_rt=6:00:00
 #$ -l rl9=true
+#$ -q gpu
+#$ -pe gpu-a100 1
+#$ -l h_vmem=80G
 
-#$ -q gpu -l gpu=1 -pe sharedmem 1 -l h_vmem=80G
 
 
 . /etc/profile.d/modules.sh
