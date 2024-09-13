@@ -118,7 +118,7 @@ elif PARAMS["PDE_STR"]=="keller_segel":
     func = F_keller_segel(PADDING="CIRCULAR",dx=0.5,KERNEL_SCALE=1,alpha=0.01,c=3.8,D=0.8,epsilon=0.1)
     v_func = eqx.filter_vmap(func,in_axes=(None,0,None),out_axes=0)
     solver = PDE_solver(v_func,**true_solver_hyperparameters)
-    T,Y = solver(ts=np.linspace(0,1000,PARAMS["TIME_RESOLUTION"]),y0=x0)
+    T,Y = solver(ts=np.linspace(0,200,PARAMS["TIME_RESOLUTION"]),y0=x0)
     Y = rearrange(Y,"T B C X Y -> B T C X Y")
     Y = Y.at[:,:,0].set(2*(Y[:,:,0]-np.min(Y[:,:,0]))/(np.max(Y[:,:,0])-np.min(Y[:,:,0])) - 1)
     Y = Y.at[:,:,1].set(2*(Y[:,:,1]-np.min(Y[:,:,1]))/(np.max(Y[:,:,1])-np.min(Y[:,:,1])) - 1)
