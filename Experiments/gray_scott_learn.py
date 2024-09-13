@@ -30,7 +30,7 @@ key = jax.random.fold_in(key,index)
 PARAMS = index_to_pde_gray_scott_rda(index)
 INIT_SCALE = {"reaction":0.01,"advection":0.01,"diffusion":0.01}
 STABILITY_FACTOR = 0.01
-CHANNELS = 16
+CHANNELS = PARAMS["CHANNELS"]
 ITERS = 2001
 SIZE = 64
 BATCHES = 8
@@ -38,7 +38,7 @@ PADDING = "CIRCULAR"
 TRAJECTORY_LENGTH = PARAMS["TRAJECTORY_LENGTH"]
 dt = 1.0
 
-MODEL_FILENAME = "pde_hyperparameters_reacdiff/"+PARAMS["PDE_STR"]+"_"+PARAMS["PDE_SOLVER"]+"_tl_"+str(TRAJECTORY_LENGTH)+"_"+PARAMS["TRAJECTORY_TYPE"]+"_res_"+str(PARAMS["TIME_RESOLUTION"])+"_ch_"+str(CHANNELS)+"_ord_"+str(PARAMS["ORDER"])+"_act_"+PARAMS["INTERNAL_ACTIVATION"]+"_l_"+str(PARAMS["N_LAYERS"])+"_"+"_".join(PARAMS["TERMS"])+PARAMS["TEXT_LABEL"]
+MODEL_FILENAME = "pde_hyperparameters_reacdiff/2_"+PARAMS["PDE_STR"]+"_"+PARAMS["PDE_SOLVER"]+"_tl_"+str(TRAJECTORY_LENGTH)+"_"+PARAMS["TRAJECTORY_TYPE"]+"_res_"+str(PARAMS["TIME_RESOLUTION"])+"_ch_"+str(CHANNELS)+"_ord_"+str(PARAMS["ORDER"])+"_act_"+PARAMS["INTERNAL_ACTIVATION"]+"_l_"+str(PARAMS["N_LAYERS"])+"_"+"_".join(PARAMS["TERMS"])+PARAMS["TEXT_LABEL"]
 
 pde_hyperparameters = {"N_CHANNELS":CHANNELS,
                        "PADDING":PADDING,
