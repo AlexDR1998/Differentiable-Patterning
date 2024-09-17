@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import tensorflow as tf
 import io
+import jax
 
 
 
@@ -53,6 +54,8 @@ def plot_weight_matrices(pde):
 			w_v.append(pde.func.f_v.layers[2*i].weight[:,:,0,0])
 		if "diffusion_nonlinear" in pde.func.TERMS:
 			w_d.append(pde.func.f_d.layers[2*i].weight[:,:,0,0])
+		if "diffusion" in pde.func.TERMS:
+			w_d.append(pde.func.f_d.layers[2*i].weight[:,:,0,0])
 		if "reaction_split" in pde.func.TERMS:
 			w_r_p.append(pde.func.f_r.production_layers[2*i].weight[:,:,0,0])
 			w_r_d.append(pde.func.f_r.decay_layers[2*i].weight[:,:,0,0])
@@ -80,6 +83,16 @@ def plot_weight_matrices(pde):
 			plt.xlabel("Input")
 			plt.title(f"Diffusion layer {i}")
 			figs.append(plot_to_image(figure))
+	if "diffusion" in pde.func.TERMS:
+		for i in range(pde.func.N_LAYERS+1):
+			figure = plt.figure(figsize=(5,5))
+			col_range = max(np.max(w_d[i]),-np.min(w_d[i]))
+			plt.imshow(w_d[i],cmap="seismic",vmax=col_range,vmin=-col_range)
+			plt.ylabel("Output")
+			plt.xlabel("Input")
+			plt.title(f"Nonlinear Diffusion layer {i}")
+			figs.append(plot_to_image(figure))
+
 	if "reaction_split" in pde.func.TERMS:
 		for i in range(pde.func.N_LAYERS+1):
 			figure = plt.figure(figsize=(5,5))
@@ -145,10 +158,27 @@ def plot_weight_kernel_boxplot(pde):
 	if "diffusion_linear" in pde.func.TERMS:
 		w1_d = pde.func.f_d.diffusion_constants[:,0,0]
 		figure = plt.figure(figsize=(5,5))
-		plt.bar(np.arange(len(w1_d)),w1_d)
+		plt.bar(np.arange(len(w1_d)),jax.nn.sparse_plus(w1_d_l))
 		plt.xlabel("Channels")
 		plt.ylabel("Weights")
 		plt.title("Diffusion coefficients")
+		figs.append(plot_to_image(figure))
+
+	if "diffusion" in pde.func.TERMS:
+		w1_d = pde.func.f_d.layers[0].weight[:,:,0,0]
+		figure = plt.figure(figsize=(5,5))
+		plt.boxplot(w1_d.T)
+		plt.xlabel("Channels")
+		plt.ylabel("Weights")
+		plt.title("Nonlinear Diffusion 1st layer")
+		figs.append(plot_to_image(figure))
+
+		w1_d_l = pde.func.f_d.diffusion_constants[:,0,0]
+		figure = plt.figure(figsize=(5,5))
+		plt.bar(np.arange(len(w1_d_l)),jax.nn.sparse_plus(w1_d_l))
+		plt.xlabel("Channels")
+		plt.ylabel("Weights")
+		plt.title("Linear Diffusion coefficients")
 		figs.append(plot_to_image(figure))
 
 	if "reaction_split" in pde.func.TERMS:

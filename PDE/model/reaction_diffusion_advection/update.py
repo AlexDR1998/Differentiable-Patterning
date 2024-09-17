@@ -14,6 +14,7 @@ from PDE.model.reaction_diffusion_advection.reaction import R as R_split
 from PDE.model.reaction_diffusion_advection.reaction_pure import R as R_pure
 from PDE.model.reaction_diffusion_advection.diffusion_nonlinear import D as D_nonlinear
 from PDE.model.reaction_diffusion_advection.diffusion import D as D_linear
+from PDE.model.reaction_diffusion_advection.diffusion_both import D as D_both
 from PDE.model.reaction_diffusion_advection.identity import I
 from jaxtyping import Array, Float, PyTree, Scalar
 
@@ -127,9 +128,22 @@ class F(eqx.Module):
 								dx=dx,
 								INIT_SCALE=INIT_SCALE["diffusion"],
 								key=key3)
+		elif "diffusion" in self.TERMS:
+			self.f_d = D_both(N_CHANNELS=N_CHANNELS,
+					 		  PADDING=PADDING,
+							  dx=dx,
+							  INTERNAL_ACTIVATION=INTERNAL_ACTIVATION,
+							  OUTER_ACTIVATION=jax.nn.relu6, # MUST BE STRICTLY NON NEGATIVE FOR NUMERICAL STABILITY
+							  INIT_SCALE=0.1*INIT_SCALE["diffusion"],
+							  INIT_SCALE_LINEAR=INIT_SCALE["diffusion"],
+							  INIT_TYPE=INIT_TYPE["diffusion"],
+							  USE_BIAS=USE_BIAS,
+							  ORDER=ORDER,
+							  N_LAYERS=N_LAYERS,
+							  ZERO_INIT=ZERO_INIT["diffusion"],
+							  key=key3)
 		else:
 			self.f_d = I(TYPE="diffusion")
-
 
 
 	@eqx.filter_jit
