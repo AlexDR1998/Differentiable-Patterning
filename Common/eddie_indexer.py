@@ -349,7 +349,7 @@ def index_to_pde_gray_scott_hyperparameters(index):
 
 
 def index_to_pde_gray_scott_rda(index):
-	indices = np.unravel_index(index,(3,4,3,5))
+	indices = np.unravel_index(index,(2,5,5))
 	params = {
 		"LOSS_FUNCTION":[euclidean,spectral_weighted][0],
 		"OPTIMISER":[optax.nadam,optax.nadamw][1],
@@ -358,21 +358,23 @@ def index_to_pde_gray_scott_rda(index):
 		"INTERNAL_ACTIVATION":["tanh","relu6"][0],
 		
 		"TERMS":[["reaction_pure","diffusion_linear"],
-		   		 ["reaction_pure","diffusion_nonlinear"],
+		   		 ["reaction_pure","diffusion"],
 				 ["reaction_pure","advection","diffusion_linear"],
-				 ["reaction_pure","advection","diffusion_nonlinear"]][0],
+				 ["reaction_pure","advection","diffusion_nonlinear"]][indices[0]],
 		"REACTION_INIT":"orthogonal",
 		"DIFFUSION_INIT":"orthogonal",
-		"PDE_STR":["cahn_hilliard","gray_scott","keller_segel"][indices[0]],
+		"PDE_STR":["cahn_hilliard","gray_scott","keller_segel"][1],
 		"PDE_SOLVER":["euler","heun"][0],
 		"PDE_SOLVER_ADAPTIVE":[False,True][0],
-		"N_LAYERS":[1,2,3,4][indices[1]],
+		"N_LAYERS":[1,2,3,4][2],
 		"ORDER":1,
-		"TIME_RESOLUTION":[51,101,201][indices[2]],
-		"CHANNELS":[2,4,8,16,32][indices[3]],
+		"NOISE_FRACTION":[0,0.01,0.1,0.2,0.5][indices[1]],
+		"NOISE_STRING":["0","001","01","02","05"][indices[1]],
+		"TIME_RESOLUTION":[4,16,32,64,128][indices[2]],
+		"CHANNELS":16,
 		"TRAJECTORY_FULL":[False,True][0],
 		"TRAJECTORY_TYPE":["end","full"][0],
-		"TRAJECTORY_LENGTH":[2,8,16,32][2],
+		"TRAJECTORY_LENGTH":[1,4,8,16,32][indices[2]],
 		"LOSS_TIME_SAMPLING":1
 	}
 	return params

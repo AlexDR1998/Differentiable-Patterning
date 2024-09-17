@@ -15,6 +15,7 @@ from PDE.model.fixed_models.update_gray_scott import F as F_gray_scott
 # from PDE.model.fixed_models.update_chhabra import F as F_chhabra
 from PDE.model.fixed_models.update_keller_segel import F as F_keller_segel
 from PDE.model.fixed_models.update_cahn_hilliard import F as F_cahn_hilliard
+from PDE.trainer.data_augmenter_pde import DataAugmenter
 #from Common.eddie_indexer import index_to_pde_gray_scott_hyperparameters
 from Common.eddie_indexer import index_to_pde_gray_scott_rda
 from Common.model.spatial_operators import Ops
@@ -28,7 +29,7 @@ key = jax.random.fold_in(key,index)
 
 
 PARAMS = index_to_pde_gray_scott_rda(index)
-INIT_SCALE = {"reaction":0.01,"advection":0.01,"diffusion":0.01}
+INIT_SCALE = {"reaction":0.001,"advection":0.01,"diffusion":0.01}
 STABILITY_FACTOR = 0.01
 CHANNELS = PARAMS["CHANNELS"]
 ITERS = 2001
@@ -38,7 +39,7 @@ PADDING = "CIRCULAR"
 TRAJECTORY_LENGTH = PARAMS["TRAJECTORY_LENGTH"]
 dt = 1.0
 
-MODEL_FILENAME = "pde_hyperparameters_reacdiff/2_"+PARAMS["PDE_STR"]+"_"+PARAMS["PDE_SOLVER"]+"_tl_"+str(TRAJECTORY_LENGTH)+"_"+PARAMS["TRAJECTORY_TYPE"]+"_res_"+str(PARAMS["TIME_RESOLUTION"])+"_ch_"+str(CHANNELS)+"_ord_"+str(PARAMS["ORDER"])+"_act_"+PARAMS["INTERNAL_ACTIVATION"]+"_l_"+str(PARAMS["N_LAYERS"])+"_"+"_".join(PARAMS["TERMS"])+PARAMS["TEXT_LABEL"]
+MODEL_FILENAME = "pde_hyperparameters_reacdiff/3_"+PARAMS["PDE_STR"]+"_"+PARAMS["PDE_SOLVER"]+"_tl_"+str(TRAJECTORY_LENGTH)+"_"+PARAMS["TRAJECTORY_TYPE"]+"_res_"+str(PARAMS["TIME_RESOLUTION"])+"_noise_"+PARAMS["NOISE_STRING"]+"_ch_"+str(CHANNELS)+"_ord_"+str(PARAMS["ORDER"])+"_act_"+PARAMS["INTERNAL_ACTIVATION"]+"_l_"+str(PARAMS["N_LAYERS"])+"_"+"_".join(PARAMS["TERMS"])+PARAMS["TEXT_LABEL"]
 
 pde_hyperparameters = {"N_CHANNELS":CHANNELS,
                        "PADDING":PADDING,
@@ -135,13 +136,26 @@ schedule = optax.exponential_decay(5e-4, transition_steps=ITERS, decay_rate=0.99
 opt = optax.chain(PARAMS["OPTIMISER_PRE_PROCESS"],optax.apply_if_finite(PARAMS["OPTIMISER"](schedule),max_consecutive_errors=8))
 
 
+# ------------------ Define data augmenter parameters -----------------
+
+class data_augmenter_subclass(DataAugmenter):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.CALLBACK_PARAMS = {"INCREMENT_PROB":0.1,
+                                "RESET_PROB":0.001,
+                                "OVERWRITE_OBS_CHANNELS":False,
+                                "NOISE_FRACTION":PARAMS["NOISE_FRACTION"]}
+
+
+
 #-------------------- Define trainer object -----------------
 
 trainer = PDE_Trainer(PDE_solver=pde,
                       PDE_HYPERPARAMETERS=hyperparameters,
                       data=Y,
                       Ts=T,
-                      model_filename=MODEL_FILENAME)
+                      model_filename=MODEL_FILENAME,
+                      DATA_AUGMENTER=data_augmenter_subclass)
 
 
 #-------------------- Train model -----------------
