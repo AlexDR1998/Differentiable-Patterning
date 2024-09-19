@@ -158,7 +158,7 @@ def plot_weight_kernel_boxplot(pde):
 	if "diffusion_linear" in pde.func.TERMS:
 		w1_d = pde.func.f_d.diffusion_constants[:,0,0]
 		figure = plt.figure(figsize=(5,5))
-		plt.bar(np.arange(len(w1_d)),jax.nn.sparse_plus(w1_d_l))
+		plt.bar(np.arange(len(w1_d)),jax.nn.sparse_plus(w1_d))
 		plt.xlabel("Channels")
 		plt.ylabel("Weights")
 		plt.title("Diffusion coefficients")
