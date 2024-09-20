@@ -349,32 +349,32 @@ def index_to_pde_gray_scott_hyperparameters(index):
 
 
 def index_to_pde_gray_scott_rda(index):
-	indices = np.unravel_index(index,(2,5,5))
+	indices = np.unravel_index(index,(2,5,2))
 	params = {
 		"LOSS_FUNCTION":[euclidean,spectral_weighted][0],
-		"OPTIMISER":[optax.nadam,optax.nadamw][1],
+		"OPTIMISER":[optax.nadam,optax.nadamw][indices[2]],
 		"OPTIMISER_PRE_PROCESS":[optax.identity(),optax.scale_by_param_block_norm()][1],
-		"TEXT_LABEL":["_euclidean","_spectral_weighted"][0]+["_nadam","_nadamw"][1]+["","_scale_by_param_block_norm"][1],
+		"TEXT_LABEL":["_euclidean","_spectral_weighted"][0]+["_nadam","_nadamw"][indices[2]]+["","_scale_by_param_block_norm"][1],
 		"INTERNAL_ACTIVATION":["tanh","relu6"][0],
 		
 		"TERMS":[["reaction_pure","diffusion_linear"],
 		   		 ["reaction_pure","diffusion"],
 				 ["reaction_pure","advection","diffusion_linear"],
-				 ["reaction_pure","advection","diffusion_nonlinear"]][indices[0]],
+				 ["reaction_pure","advection","diffusion"]][indices[0]+2],
 		"REACTION_INIT":"orthogonal",
 		"DIFFUSION_INIT":"orthogonal",
 		"PDE_STR":["cahn_hilliard","gray_scott","keller_segel"][1],
-		"PDE_SOLVER":["euler","heun"][0],
-		"PDE_SOLVER_ADAPTIVE":[False,True][0],
+		"PDE_SOLVER":["euler","heun"][1],
+		"PDE_SOLVER_ADAPTIVE":[False,True][1],
 		"N_LAYERS":[1,2,3,4][2],
 		"ORDER":1,
-		"NOISE_FRACTION":[0,0.01,0.1,0.2,0.5][indices[1]],
-		"NOISE_STRING":["0","001","01","02","05"][indices[1]],
-		"TIME_RESOLUTION":[4,16,32,64,128][indices[2]],
+		"NOISE_FRACTION":[0,0.01,0.1,0.2,0.5][0],
+		"NOISE_STRING":["0","001","01","02","05"][0],
+		"TIME_RESOLUTION":[4,16,32,64,128][indices[1]],
 		"CHANNELS":16,
 		"TRAJECTORY_FULL":[False,True][0],
 		"TRAJECTORY_TYPE":["end","full"][0],
-		"TRAJECTORY_LENGTH":[1,4,8,16,32][indices[2]],
+		"TRAJECTORY_LENGTH":[1,4,8,16,32][indices[1]],
 		"LOSS_TIME_SAMPLING":1
 	}
 	return params
