@@ -39,7 +39,7 @@ PADDING = "CIRCULAR"
 TRAJECTORY_LENGTH = PARAMS["TRAJECTORY_LENGTH"]
 dt = 1.0
 
-MODEL_FILENAME = "pde_hyperparameters_reacdiff/5_"+PARAMS["PDE_STR"]+"_"+PARAMS["PDE_SOLVER"]+"_tl_"+str(TRAJECTORY_LENGTH)+"_"+PARAMS["TRAJECTORY_TYPE"]+"_res_"+str(PARAMS["TIME_RESOLUTION"])+"_noise_"+PARAMS["NOISE_STRING"]+"_ch_"+str(CHANNELS)+"_ord_"+str(PARAMS["ORDER"])+"_act_"+PARAMS["INTERNAL_ACTIVATION"]+"_l_"+str(PARAMS["N_LAYERS"])+"_"+"_".join(PARAMS["TERMS"])+PARAMS["TEXT_LABEL"]
+MODEL_FILENAME = "pde_hyperparameters_reacdiff/6_"+PARAMS["PDE_STR"]+"_"+PARAMS["PDE_SOLVER"]+"_tl_"+str(TRAJECTORY_LENGTH)+"_"+PARAMS["TRAJECTORY_TYPE"]+"_res_"+str(PARAMS["TIME_RESOLUTION"])+"_noise_"+PARAMS["NOISE_STRING"]+"_ch_"+str(CHANNELS)+"_ord_"+str(PARAMS["ORDER"])+"_act_"+PARAMS["INTERNAL_ACTIVATION"]+"_l_"+str(PARAMS["N_LAYERS"])+"_"+"_".join(PARAMS["TERMS"])+PARAMS["TEXT_LABEL"]
 
 pde_hyperparameters = {"N_CHANNELS":CHANNELS,
                        "PADDING":PADDING,
