@@ -48,7 +48,7 @@ x0 = x0.at[:,1,:,-SIZE//4:].set(0)
 for i in range(1):
     x0 = v_av(x0)
 x0 = x0.at[:,0].set(1-x0[:,1])
-ts = np.linspace(0,1000,TIME_RESOLUTION)
+ts = np.linspace(0,2000,TIME_RESOLUTION)
 ts = repeat(ts,"T -> B T",B=BATCHES)
 func = F_gray_scott(PADDING=PADDING,dx=1.0,KERNEL_SCALE=1)
 solver = PDE_solver(func,**true_solver_hyperparameters)
