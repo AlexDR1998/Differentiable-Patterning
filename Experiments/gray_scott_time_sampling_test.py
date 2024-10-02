@@ -89,6 +89,7 @@ for i in range(6):
         v_solver = eqx.filter_vmap(m,in_axes=(0,0),out_axes=(0,0))
     
         _,y_pred = v_solver(ts,x0_augmented)
+        y_pred = y_pred[:,:,:2]
         Y_t.append(y_pred)
     Y_ENSEMBLE.append(Y_t)
 
