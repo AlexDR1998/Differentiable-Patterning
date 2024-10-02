@@ -97,3 +97,4 @@ for i in range(6):
 #--------------------------------
 Y_ARR = np.array(Y_ENSEMBLE)
 np.save("data/gray_scott_time_sampling_test.npy",Y_ARR)
+np.save("data/gray_scott_time_sampling_true.npy",Y)
