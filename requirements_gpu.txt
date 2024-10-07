@@ -9,7 +9,7 @@ cycler==0.12.1
 dataclasses==0.6
 diffrax==0.6.0
 einops==0.8.0
-equinox==0.11.4
+equinox==0.11.5
 etils==1.9.2
 filelock==3.15.4
 flatbuffers==24.3.25
@@ -25,12 +25,12 @@ huggingface-hub==0.23.4
 idna==3.7
 imageio==2.34.2
 importlib_resources==6.4.0
-jax==0.4.30
-jax-cuda12-pjrt==0.4.30
-jax-cuda12-plugin==0.4.30
-jaxlib==0.4.30
+jax==0.4.31
+jax-cuda12-pjrt==0.4.31
+jax-cuda12-plugin==0.4.31
+jaxlib==0.4.31
 jaxopt==0.8.3
-jaxpruner @ git+https://github.com/google-research/jaxpruner
+jaxpruner @ git+https://github.com/google-research/jaxpruner@f133ee50f31a03d0152b8b272edb534065152f5d
 jaxtyping==0.2.31
 keras==3.4.1
 kiwisolver==1.4.5
@@ -43,8 +43,8 @@ markdown-it-py==3.0.0
 MarkupSafe==2.1.5
 matplotlib==3.9.0
 mdurl==0.1.2
-ml_collections==0.1.1
 ml-dtypes==0.3.2
+ml_collections==0.1.1
 msgpack==1.0.8
 namex==0.0.8
 nest-asyncio==1.6.0
@@ -69,7 +69,6 @@ orbax-checkpoint==0.5.20
 ott-jax==0.4.5
 packaging==24.1
 pillow==10.4.0
-pip==24.0
 protobuf==4.25.3
 Pygments==2.18.0
 pyparsing==3.1.2
@@ -80,7 +79,6 @@ requests==2.32.3
 rich==13.7.1
 scikit-image==0.24.0
 scipy==1.14.0
-setuptools==69.5.1
 six==1.16.0
 tensorboard==2.16.2
 tensorboard-data-server==0.7.2
@@ -95,6 +93,5 @@ typeguard==2.13.3
 typing_extensions==4.12.2
 urllib3==2.2.2
 Werkzeug==3.0.3
-wheel==0.43.0
 wrapt==1.16.0
 zipp==3.19.2
