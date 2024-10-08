@@ -64,7 +64,7 @@ class DataAugmenter(DataAugmenterAbstract):
 	
 		
 	#@eqx.filter_jit
-	def data_callback(self,x,y,i):
+	def data_callback(self,x,y,i,key):
 		"""
 		Called after every training iteration to perform data augmentation and processing		
 
@@ -107,10 +107,10 @@ class DataAugmenter(DataAugmenterAbstract):
 		
 			
 		
-		if hasattr(self, "PREVIOUS_KEY"):
-			key = jax.random.fold_in(self.PREVIOUS_KEY,i)
-		else:
-			key=jax.random.PRNGKey(int(time.time()))
+		# if hasattr(self, "PREVIOUS_KEY"):
+		# 	key = jax.random.fold_in(self.PREVIOUS_KEY,i)
+		# else:
+		# 	key=jax.random.PRNGKey(int(time.time()))
 		x = self.shift(x,am,key=key)
 		y = self.shift(y,am,key=key)
 		#print(x[0].shape)

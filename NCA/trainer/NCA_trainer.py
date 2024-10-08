@@ -28,6 +28,7 @@ class NCA_Trainer(object):
 				 BOUNDARY_MASK = None, 
 				 SHARDING = None, 
 				 GRAD_LOSS = True,
+				 OBS_CHANNELS = None,
 				 directory="models/"):
 		"""
 		
@@ -66,7 +67,10 @@ class NCA_Trainer(object):
 		
 		# Set up variables 
 		self.CHANNELS = self.NCA_model.N_CHANNELS
-		self.OBS_CHANNELS = data[0].shape[1]
+		if OBS_CHANNELS is None:
+			self.OBS_CHANNELS = data[0].shape[1]
+		else:
+			self.OBS_CHANNELS = OBS_CHANNELS
 		self.SHARDING = SHARDING
 		self.GRAD_LOSS = GRAD_LOSS
 		
@@ -311,7 +315,7 @@ class NCA_Trainer(object):
 		opt_state = self.OPTIMISER.init(nca_diff)
 		
 		# # Split data into x and y
-		x,y = self.DATA_AUGMENTER.data_load()
+		x,y = self.DATA_AUGMENTER.data_load(key)
 		
 		
 		best_loss = 100000000
@@ -330,7 +334,7 @@ class NCA_Trainer(object):
 				
 				if i>WARMUP:
 
-					ws = nca.get_weights()
+					ws,_ = nca.get_weights()
 					sparsity_distribution = partial(jaxpruner.sparsity_distributions.uniform, sparsity=SPARSITY[i])
 					pruner = jaxpruner.MagnitudePruning(
 						sparsity_distribution_fn=sparsity_distribution,
@@ -357,7 +361,7 @@ class NCA_Trainer(object):
 			
 			# Do data augmentation update
 			if error==0:
-				x,y = self.DATA_AUGMENTER.data_callback(x, y, i)
+				x,y = self.DATA_AUGMENTER.data_callback(x, y, i, key)
 				# Save model whenever mean_loss beats the previous best loss
 				if i>WARMUP:
 					if mean_loss < best_loss:
