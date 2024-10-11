@@ -7,7 +7,9 @@ from einops import rearrange
 from Common.model.spatial_operators import Ops
 from PDE.model.fixed_models.update_gray_scott import F as F_gray_scott
 from PDE.model.solver.semidiscrete_solver import PDE_solver
+from PDE.model.reaction_diffusion_advection.update import F
 from PDE.trainer.data_augmenter_pde import DataAugmenter
+from PDE.trainer.PDE_trainer import PDE_Trainer
 
 BATCHES = 8
 key = jr.PRNGKey(0)
@@ -27,7 +29,7 @@ pde_hyperparameters = {"N_CHANNELS":16,
                        "dx":1.0,
                        "TERMS":["reaction_pure","diffusion"],
                        "ADVECTION_OUTER_ACTIVATION":"relu",
-                       "INIT_SCALE":0.01,
+                       "INIT_SCALE":{"reaction":0.001,"advection":0.01,"diffusion":0.01},
                        "INIT_TYPE":{"reaction":"orthogonal","advection":"orthogonal","diffusion":"orthogonal"},
                        "STABILITY_FACTOR":0.001,
                        "USE_BIAS":True,
@@ -104,7 +106,7 @@ class data_augmenter_subclass(DataAugmenter):
         self.CALLBACK_PARAMS = {"INCREMENT_PROB":0.1,
                                 "RESET_PROB":0.001,
                                 "OVERWRITE_OBS_CHANNELS":False,
-                                "NOISE_FRACTION":PARAMS["NOISE_FRACTION"]}
+                                "NOISE_FRACTION":trainer_hyperparameters["NOISE_FRACTION"]}
 
 
 
