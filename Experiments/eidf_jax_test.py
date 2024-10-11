@@ -5,16 +5,17 @@ import optax
 import equinox as eqx
 from einops import rearrange
 from Common.model.spatial_operators import Ops
+from Common.trainer.loss import euclidean
 from PDE.model.fixed_models.update_gray_scott import F as F_gray_scott
 from PDE.model.solver.semidiscrete_solver import PDE_solver
 from PDE.model.reaction_diffusion_advection.update import F
 from PDE.trainer.data_augmenter_pde import DataAugmenter
 from PDE.trainer.PDE_trainer import PDE_Trainer
 
-BATCHES = 8
+BATCHES = 4
 key = jr.PRNGKey(0)
 PADDING = "CIRCULAR"
-SIZE=128
+SIZE=32
 
 print(jax.default_backend())
 print(jax.devices())
@@ -54,7 +55,7 @@ model_hyperparameters = {"pde":pde_hyperparameters,
 trainer_hyperparameters = {"OPTIMISER":optax.nadam,
                           "OPTIMISER_PRE_PROCESS":optax.scale_by_param_block_norm(),
                           "NOISE_FRACTION":0.0,
-                          "LOSS_FUNCTION":"euclidean",
+                          "LOSS_FUNCTION":euclidean,
                           "LOSS_SAMPLING":1,
                           "TRAJECTORY_FULL":True,
                           "TRAJECTORY_LENGTH":32,
