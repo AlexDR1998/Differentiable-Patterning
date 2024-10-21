@@ -9,6 +9,7 @@ from functools import partial
 from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, kaNCA_Train_pde_log
 from NCA.model.NCA_KAN_model import kaNCA
 from NCA.trainer.data_augmenter_nca import DataAugmenter
+from einops import repeat
 from Common.utils import key_pytree_gen
 from Common.model.boundary import model_boundary
 from tqdm import tqdm
@@ -29,6 +30,7 @@ class NCA_Trainer(object):
 				 SHARDING = None, 
 				 GRAD_LOSS = True,
 				 OBS_CHANNELS = None,
+				 LOSS_TIME_CHANNEL_MASK = None,
 				 directory="models/"):
 		"""
 		
@@ -73,7 +75,20 @@ class NCA_Trainer(object):
 			self.OBS_CHANNELS = OBS_CHANNELS
 		self.SHARDING = SHARDING
 		self.GRAD_LOSS = GRAD_LOSS
+		self.LOSS_TIME_CHANNEL_MASK = LOSS_TIME_CHANNEL_MASK
 		
+		# Set up partial mask of channels / timesteps
+		if self.LOSS_TIME_CHANNEL_MASK is not None:
+			_model_kernel_length = len(self.NCA_model.KERNEL_STR)
+			if "GRAD" in self.NCA_model.KERNEL_STR:
+				_model_kernel_length+=1
+			if GRAD_LOSS:
+				self.LOSS_TIME_CHANNEL_MASK = repeat(self.LOSS_TIME_CHANNEL_MASK,"n c -> n (gc c) () ()",gc=_model_kernel_length)
+				print("Timestep / Channel mask: ")
+				print(self.LOSS_TIME_CHANNEL_MASK[:,:,0,0])
+
+
+
 		# Set up data and data augmenter class
 		self.DATA_AUGMENTER = DATA_AUGMENTER(data,self.CHANNELS-self.OBS_CHANNELS)
 		self.DATA_AUGMENTER.data_init(self.SHARDING)
@@ -139,7 +154,7 @@ class NCA_Trainer(object):
 			y_obs = v_perception(y_obs)
 			x_obs = x_obs.at[:,self.OBS_CHANNELS:].set(0.1*x_obs[:,self.OBS_CHANNELS:])
 			y_obs = y_obs.at[:,self.OBS_CHANNELS:].set(0.1*y_obs[:,self.OBS_CHANNELS:])
-		return self._loss_func(x_obs,y_obs,key)
+		return self._loss_func(x_obs,y_obs,key,self.LOSS_TIME_CHANNEL_MASK)
 		#return loss.vgg(x_obs,y_obs,key)
 		#return loss.l2(x_obs,y_obs)
 		#return loss.random_sampled_euclidean(x_obs, y_obs, key, SAMPLES=SAMPLES)
@@ -231,6 +246,8 @@ class NCA_Trainer(object):
 			#def _loss_func(self,x,y,dummy_key):
 			#	return loss.random_sampled_euclidean(x,y,key)
 			self._loss_func = lambda x,y,dummy_key:loss.random_sampled_euclidean(x,y,key=key)
+
+
 
 
 		@partial(eqx.filter_jit,donate="all-except-first")
@@ -383,5 +400,5 @@ class NCA_Trainer(object):
 			print("|-|-|-|-|-|-  Training did not converge, model was not saved  -|-|-|-|-|-|")
 		elif self.IS_LOGGING and model_saved:
 			x,y = self.DATA_AUGMENTER.split_x_y(1)
-			x,y = self.DATA_AUGMENTER.data_callback(x,y,0)
+			x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
 			self.LOGGER.tb_training_end_log(self.NCA_model,x,t*2*x[0].shape[0],self.BOUNDARY_CALLBACK)
