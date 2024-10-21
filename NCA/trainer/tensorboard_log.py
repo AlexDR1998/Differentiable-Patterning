@@ -73,7 +73,7 @@ class NCA_Train_log(Train_log):
 
 		"""
 		#print(nca)
-		BATCHES = len(x)
+		BATCHES = 1#len(x)
 		CHANNELS = x[0].shape[1]
 		print("Running final trained model for "+str(t)+" steps")
 		with self.train_summary_writer.as_default():
