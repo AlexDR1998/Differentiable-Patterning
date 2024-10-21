@@ -15,7 +15,7 @@ from lpips_j.lpips import LPIPS
 lpips = LPIPS()
 
 @jax.jit
-def l2(x,y,key=None):
+def l2(x,y,key=None,where=None):
 	"""
 		Parameters
 		----------
@@ -29,9 +29,9 @@ def l2(x,y,key=None):
 		loss : float32 array [...]
 			loss reduced over channel and spatial axes
 		"""
-	return jnp.mean((x-y)**2,axis=[-1,-2,-3])
+	return jnp.mean((x-y)**2,axis=[-1,-2,-3],where=where)
 @jax.jit
-def l1(x,y,key=None):
+def l1(x,y,key=None,where=None):
 	"""
 		Parameters
 		----------
@@ -45,9 +45,9 @@ def l1(x,y,key=None):
 		loss : float32 array [...]
 			loss reduced over channel and spatial axes
 		"""
-	return jnp.mean(jnp.abs(x-y),axis=[-1,-2,-3])
+	return jnp.mean(jnp.abs(x-y),axis=[-1,-2,-3],where=where)
 @jax.jit
-def euclidean(x,y,key=None):
+def euclidean(x,y,key=None,where=None):
 	"""
 		General format of loss functions here:
 
@@ -64,7 +64,7 @@ def euclidean(x,y,key=None):
 			loss reduced over channel and spatial axes
 
 	"""
-	return jnp.sqrt(jnp.mean(((x-y)**2),axis=[-1,-2,-3]))
+	return jnp.sqrt(jnp.mean(((x-y)**2),axis=[-1,-2,-3],where=where))
 
 # @jax.jit
 # def sinkhorn_divergence_loss(x,y):
@@ -110,7 +110,7 @@ def random_sampled_euclidean(x,y,key,SAMPLES=16):
 
 
 @jax.jit
-def spectral(x,y,key=None):
+def spectral(x,y,key=None,where=None):
 	""" 
 		l2 norm in fourier space (discarding phase information)
 
@@ -130,10 +130,10 @@ def spectral(x,y,key=None):
 	fy = jnp.fft.rfft2(y)
 	fx = jnp.abs(fx)
 	fy = jnp.abs(fy)
-	return l2(fx,fy,key)
+	return l2(fx,fy,key,where=where)
         
 @jax.jit
-def spectral_weighted(x,y,key=None):
+def spectral_weighted(x,y,key=None,where=None):
 	""" 
 		l2 norm in fourier space, keeping phase information.
 		Weighted to emphasise importance of certain frequencies
@@ -152,7 +152,7 @@ def spectral_weighted(x,y,key=None):
 	"""
 	fx = jnp.fft.rfft2(x)
 	fy = jnp.fft.rfft2(y)
-	return jnp.abs(l2(fx,fy,key))
+	return jnp.abs(l2(fx,fy,key,where=where))
 @eqx.filter_jit
 def vgg(x,y, key):
 	"""
