@@ -150,6 +150,19 @@ class NCA(AbstractModel):
 		self.layers[2] = eqx.tree_at(w_where,self.layers[2],w1)
 		self.layers[2] = eqx.tree_at(b_where,self.layers[2],b1)
 
+	def get_weights(self):
+		"""Returns list of arrays of weights, for plotting purposes, or for manually adjusting weights with
+		code that doesn't `just work' on PyTrees
+
+		Returns:
+			weights : list of arrays of trainable parameters 
+		"""
+		
+		
+		diff_self,_ = self.partition()
+		ws,tree_def = jax.tree_util.tree_flatten(diff_self)
+		return list(map(jnp.squeeze,ws))
+		#return ws,tree_def
 	def partition(self):
 		"""
 		Behaves like eqx.partition, but moves the hard coded kernels (a jax array) from the "trainable" pytree to the "static" pytree
