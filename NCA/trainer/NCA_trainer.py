@@ -31,7 +31,8 @@ class NCA_Trainer(object):
 				 GRAD_LOSS = True,
 				 OBS_CHANNELS = None,
 				 LOSS_TIME_CHANNEL_MASK = None,
-				 directory="models/"):
+				 MODEL_DIRECTORY="models/",
+				 LOG_DIRECTORY="logs/"):
 		"""
 		
 
@@ -114,14 +115,14 @@ class NCA_Trainer(object):
 		else:
 			self.model_filename = model_filename
 			self.IS_LOGGING = True
-			self.LOG_DIR = "logs/"+self.model_filename+"/train"
+			self.LOG_DIR = LOG_DIRECTORY+self.model_filename+"/train"
 			if isinstance(self.NCA_model ,kaNCA):
 				self.LOGGER = kaNCA_Train_log(self.LOG_DIR,data)
 			else:
 				self.LOGGER = NCA_Train_log(self.LOG_DIR, data)
 			print("Logging training to: "+self.LOG_DIR)
-		self.directory = directory
-		self.MODEL_PATH = directory+self.model_filename
+		
+		self.MODEL_PATH = MODEL_DIRECTORY+self.model_filename
 		print("Saving model to: "+self.MODEL_PATH)
 		
 	@eqx.filter_jit	
