@@ -284,7 +284,7 @@ def load_micropattern_time_series_batch_average(impath,downsample=4):
   map_to_0_1 = lambda arr: (arr-np.min(arr,axis=(0,1),keepdims=True))/(np.max(arr,axis=(0,1),keepdims=True)-np.min(arr,axis=(0,1),keepdims=True))
   saturate = lambda arr: jax.nn.sigmoid(arr)
   mult_by_lmbr = lambda arr: arr*arr[:,:,3:4]
-  reshape = lambda arr:rearrange(arr,"x y c -> c x y")
+  reshape = lambda arr:rearrange(arr,"X Y C -> C X Y")
 
   ims = []
   for filenames in tqdm(filenames_ordered):
@@ -292,7 +292,7 @@ def load_micropattern_time_series_batch_average(impath,downsample=4):
     for f_str in filenames:
       ims_timestep.append(skimage.io.imread(f_str))
     ims_timestep = np.array(ims_timestep,dtype="float64")
-    ims_timestep = reduce(ims_timestep,"b (x x2) (y y2) c -> x y c","mean",x2=downsample,y2=downsample)
+    ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> X Y C","mean",x2=downsample,y2=downsample)
     ims_timestep = mean_0_std_1(ims_timestep)
     ims_timestep = saturate(ims_timestep)
     ims_timestep = map_to_0_1(ims_timestep)
@@ -303,7 +303,7 @@ def load_micropattern_time_series_batch_average(impath,downsample=4):
   return ims
 
 
-def load_micropattern_time_series(impath):
+def load_micropattern_time_series(impath,downsample=4):
   filenames = glob.glob(impath)
   filenames = list(sorted(filenames))
   where_func = lambda filenames,label:label in filenames
@@ -316,23 +316,30 @@ def load_micropattern_time_series(impath):
   filenames_ordered = [filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
 
   
-  mean_0_std_1 = lambda arr: (arr-np.mean(arr,axis=(0,1),keepdims=True))/(np.std(arr,axis=(0,1),keepdims=True))
-  map_to_0_1 = lambda arr: (arr-np.min(arr,axis=(0,1),keepdims=True))/(np.max(arr,axis=(0,1),keepdims=True)-np.min(arr,axis=(0,1),keepdims=True))
+  mean_0_std_1 = lambda arr: (arr-np.mean(arr,axis=(1,2),keepdims=True))/(np.std(arr,axis=(1,2),keepdims=True))
+  map_to_0_1 = lambda arr: (arr-np.min(arr,axis=(1,2),keepdims=True))/(np.max(arr,axis=(1,2),keepdims=True)-np.min(arr,axis=(1,2),keepdims=True))
   saturate = lambda arr: jax.nn.sigmoid(arr)
-  mult_by_lmbr = lambda arr: arr*arr[:,:,3:4]
+  mult_by_lmbr = lambda arr: arr*arr[:,:,:,3:4]
 
-  reshape = lambda arr:np.einsum("xyc->cxy",arr)
+  reshape = lambda arr:rearrange(arr,"BATCH X Y C-> BATCH C X Y")
   ims = []
   for filenames in tqdm(filenames_ordered):
     ims_timestep = []
     for f_str in filenames:
       ims_timestep.append(skimage.io.imread(f_str))
     #ims_timestep = list(map(lambda x: normalise(x),ims_timestep))
-    ims_timestep = list(map(mean_0_std_1,ims_timestep))
-    ims_timestep = list(map(saturate,ims_timestep))
-    ims_timestep = list(map(map_to_0_1,ims_timestep))
-    ims_timestep = list(map(mult_by_lmbr,ims_timestep))
-    ims_timestep = list(map(reshape,ims_timestep))
+    ims_timestep = np.array(ims_timestep,dtype="float64")
+    ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> BATCH X Y C","mean",x2=downsample,y2=downsample)
+    ims_timestep = mean_0_std_1(ims_timestep)
+    ims_timestep = saturate(ims_timestep)
+    ims_timestep = map_to_0_1(ims_timestep)
+    ims_timestep = mult_by_lmbr(ims_timestep)
+    ims_timestep = reshape(ims_timestep)
+    # ims_timestep = list(map(mean_0_std_1,ims_timestep))
+    # ims_timestep = list(map(saturate,ims_timestep))
+    # ims_timestep = list(map(map_to_0_1,ims_timestep))
+    # ims_timestep = list(map(mult_by_lmbr,ims_timestep))
+    # ims_timestep = list(map(reshape,ims_timestep))
     ims.append(ims_timestep)
     
   return ims
