@@ -29,7 +29,8 @@ def l2(x,y,key=None,where=None):
 		loss : float32 array [...]
 			loss reduced over channel and spatial axes
 		"""
-	return jnp.mean((x-y)**2,axis=[-1,-2,-3],where=where)
+	
+	return jnp.nan_to_num(jnp.mean((x-y)**2,axis=[-1,-2,-3],where=where))
 @jax.jit
 def l1(x,y,key=None,where=None):
 	"""
@@ -45,7 +46,7 @@ def l1(x,y,key=None,where=None):
 		loss : float32 array [...]
 			loss reduced over channel and spatial axes
 		"""
-	return jnp.mean(jnp.abs(x-y),axis=[-1,-2,-3],where=where)
+	return jnp.nan_to_num(jnp.mean(jnp.abs(x-y),axis=[-1,-2,-3],where=where))
 @jax.jit
 def euclidean(x,y,key=None,where=None):
 	"""
@@ -64,7 +65,7 @@ def euclidean(x,y,key=None,where=None):
 			loss reduced over channel and spatial axes
 
 	"""
-	return jnp.sqrt(jnp.mean(((x-y)**2),axis=[-1,-2,-3],where=where))
+	return jnp.nan_to_num(jnp.sqrt(jnp.mean(((x-y)**2),axis=[-1,-2,-3],where=where)))
 
 # @jax.jit
 # def sinkhorn_divergence_loss(x,y):
@@ -106,7 +107,7 @@ def random_sampled_euclidean(x,y,key,SAMPLES=16):
 	y_r = jnp.einsum("ncxy->cxyn",y)
 	x_sub = jax.random.choice(key,x_r.reshape((-1,x_r.shape[-1])),(SAMPLES,),False)
 	y_sub = jax.random.choice(key,y_r.reshape((-1,y_r.shape[-1])),(SAMPLES,),False)
-	return jnp.sqrt(jnp.mean((x_sub-y_sub)**2,axis=0))
+	return jnp.nan_to_num(jnp.sqrt(jnp.mean((x_sub-y_sub)**2,axis=0)))
 
 
 @jax.jit
@@ -152,7 +153,7 @@ def spectral_weighted(x,y,key=None,where=None):
 	"""
 	fx = jnp.fft.rfft2(x)
 	fy = jnp.fft.rfft2(y)
-	return jnp.abs(l2(fx,fy,key,where=where))
+	return jnp.nan_to_num(jnp.abs(l2(fx,fy,key,where=where)))
 @eqx.filter_jit
 def vgg(x,y, key):
 	"""
