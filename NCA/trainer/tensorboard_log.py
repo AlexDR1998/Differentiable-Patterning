@@ -131,3 +131,30 @@ class kaNCA_Train_log(NCA_Train_log):
 class kaNCA_Train_pde_log(kaNCA_Train_log):
 	def log_model_outputs(self, x, i):
 		pass # Saving the trajectory outputs during training generates far too many images
+
+
+
+
+class mNCA_Train_log(NCA_Train_log):
+	
+	def log_model_parameters(self,nca,i):
+		#Log weights and biasses of model every 10 training epochs
+		with self.train_summary_writer.as_default():
+			# w1 = nca.layers[0].weight[:,:,0,0]
+			# w2 = nca.layers[2].weight[:,:,0,0]
+			# b2 = nca.layers[2].bias[:,0,0]
+			for scale,W in enumerate(nca.get_weights()):
+				#tf.summary.histogram('Input layer weights',W,step=i)
+				#print(W)
+				w1,w2,b2 = W
+				w1 = np.squeeze(w1)
+				w2 = np.squeeze(w1)
+				b2 = np.squeeze(b2)		
+				tf.summary.histogram(f'Input layer weights, scale {scale}',w1,step=i)
+				tf.summary.histogram(f'Output layer weights, scale {scale}',w2,step=i)
+				tf.summary.histogram(f'Output layer bias, scale {scale}',b2,step=i)				
+				weight_matrix_figs = plot_weight_matrices(nca.subNCAs[scale])
+				tf.summary.image(f"Weight matrices, scale {scale}",np.array(weight_matrix_figs)[:,0],step=i)
+						
+				kernel_weight_figs = plot_weight_kernel_boxplot(nca.subNCAs[scale])
+				tf.summary.image(f"Input weights per kernel, scale {scale}",np.array(kernel_weight_figs)[:,0],step=i)
