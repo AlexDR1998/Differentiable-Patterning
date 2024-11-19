@@ -78,8 +78,20 @@ class mNCA(AbstractModel):
         diff_main,static_main = eqx.partition(self,eqx.is_array)
         for i in range(len(self.SCALES)):
             diff_subnca,static_subnca = self.subNCAs[i].partition()
-            where = lambda s:s.subNCAs[i]  
+            where = lambda s:s.subNCAs[i]
+            
             diff_main = eqx.tree_at(where,diff_main,diff_subnca)
             static_main = eqx.tree_at(where,static_main,static_subnca)
+        
+        where_scales = lambda s:s.SCALES
+        diff_main = eqx.tree_at(where_scales,diff_main,None)
+        static_main = eqx.tree_at(where_scales,static_main,self.SCALES)
         return diff_main,static_main
     
+    def set_weights(self,weights):
+        for i in range(len(self.SCALES)):
+            self.subNCAs[i].set_weights(weights[i])
+    
+    def get_weights(self):
+        return [self.subNCAs[i].get_weights() for i in range(len(self.SCALES))]
+        #return super().get_weights()

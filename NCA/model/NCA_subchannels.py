@@ -72,37 +72,43 @@ class sub_NCA(NCA):
                     x: Float[Array,"{self.N_CHANNELS} x y"],
                     boundary_callback=lambda x:x,
                     key: Key=jax.random.PRNGKey(int(time.time())))->Float[Array, "{self.N_CHANNEL} x y"]:
-            """
-            
+        """
+        
 
-            Parameters
-            ----------
-            x : float32 [N_CHANNELS,_,_]
-                input NCA lattice state.
-            boundary_callback : callable (float32 [N_CHANNELS,_,_]) -> (float32 [N_CHANNELS,_,_]), optional
-                function to augment intermediate NCA states i.e. imposing complex boundary conditions or external structure. Defaults to None
-            key : jax.random.PRNGKey, optional
-                Jax random number key. The default is jax.random.PRNGKey(int(time.time())).
+        Parameters
+        ----------
+        x : float32 [N_CHANNELS,_,_]
+            input NCA lattice state.
+        boundary_callback : callable (float32 [N_CHANNELS,_,_]) -> (float32 [N_CHANNELS,_,_]), optional
+            function to augment intermediate NCA states i.e. imposing complex boundary conditions or external structure. Defaults to None
+        key : jax.random.PRNGKey, optional
+            Jax random number key. The default is jax.random.PRNGKey(int(time.time())).
 
-            Returns
-            -------
-            x : float32 [N_CHANNELS,_,_]
-                output NCA lattice state.
+        Returns
+        -------
+        x : float32 [N_CHANNELS,_,_]
+            output NCA lattice state.
 
-            """
-            x = reduce(x, "C (h h2) (w w2) -> C h w ", "mean", h2=self.SCALE, w2=self.SCALE)
-            #print(x.shape)
-            dx = self.perception(x)
-            for layer in self.layers:
-                dx = layer(dx)
-            sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
-            dx = dx*sigma
-            dx = repeat(dx, "C h w -> C (h h2) (w w2)", h2=self.SCALE, w2=self.SCALE)
-            return dx
-            #x_new = x[self.OUTPUT_CHANNELS] + sigma*dx
-            #x_new = x
-            #x_new = jnp.where(self.OUTPUT_CHANNELS, x.at[self.OUTPUT_CHANNELS].set(x[self.OUTPUT_CHANNELS]+sigma*dx), 0)
-            #print(x_new.shape)
-            #x_new.at[self.OUTPUT_CHANNELS].set(x[self.OUTPUT_CHANNELS] + sigma*dx)
-            #return boundary_callback(x_new)
+        """
+        x = reduce(x, "C (h h2) (w w2) -> C h w ", "mean", h2=self.SCALE, w2=self.SCALE)
+        #print(x.shape)
+        dx = self.perception(x)
+        for layer in self.layers:
+            dx = layer(dx)
+        sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
+        dx = dx*sigma
+        dx = repeat(dx, "C h w -> C (h h2) (w w2)", h2=self.SCALE, w2=self.SCALE)
+        return dx
+        #x_new = x[self.OUTPUT_CHANNELS] + sigma*dx
+        #x_new = x
+        #x_new = jnp.where(self.OUTPUT_CHANNELS, x.at[self.OUTPUT_CHANNELS].set(x[self.OUTPUT_CHANNELS]+sigma*dx), 0)
+        #print(x_new.shape)
+        #x_new.at[self.OUTPUT_CHANNELS].set(x[self.OUTPUT_CHANNELS] + sigma*dx)
+        #return boundary_callback(x_new)
     
+    #def partition(self):
+    #    diff_main,static_main = eqx.partition(self,eqx.is_inexact_array)
+        #where = lambda s:s.OUTPUT_CHANNELS
+        #diff_main = eqx.tree_at(where,diff_main,None)
+        #static_main = eqx.tree_at(where,static_main,self.OUTPUT_CHANNELS)
+    #    return diff_main,static_main

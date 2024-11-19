@@ -128,10 +128,10 @@ class AbstractModel(eqx.Module):
 			raise ValueError(f'Not a file: {path}')
 		if path.suffix != suffix:
 			raise ValueError(f'Not a {suffix} file: {path}')
-		with open(path, "rb") as f:
-			hyperparams = json.loads(f.readline().decode())
-			#func = F_rda(key=jr.PRNGKey(0), **hyperparams["pde"])
-			#pde = PDE_solver(func,**hyperparams["solver"])
-			model = self.__init__(**hyperparams)
-			return eqx.tree_deserialise_leaves(f, model)
-		#return eqx.tree_deserialise_leaves(path,self)
+		# with open(path, "rb") as f:
+		# 	hyperparams = json.loads(f.readline().decode())
+		# 	#func = F_rda(key=jr.PRNGKey(0), **hyperparams["pde"])
+		# 	#pde = PDE_solver(func,**hyperparams["solver"])
+		# 	model = self.__init__(**hyperparams)
+		# 	return eqx.tree_deserialise_leaves(f, model)
+		return eqx.tree_deserialise_leaves(path,self)

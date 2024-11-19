@@ -176,7 +176,7 @@ class NCA(AbstractModel):
 
 		"""
 		
-		total_diff,total_static = eqx.partition(self,eqx.is_array)
+		total_diff,total_static = eqx.partition(self,eqx.is_inexact_array)
 		ops_diff,ops_static = self.op.partition()
 		where_ops = lambda m:m.op
 		total_diff = eqx.tree_at(where_ops,total_diff,ops_diff)
