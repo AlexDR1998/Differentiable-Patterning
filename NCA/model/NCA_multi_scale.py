@@ -74,6 +74,20 @@ class mNCA(AbstractModel):
         dX = np.concatenate(dXS,axis=0)
         return boundary_callback(X + dX)
     
+    def run(self,
+            iters: Int[Scalar, ""],
+            x: Float[Array, "{self.N_CHANNELS} x y"],
+            boundary_callback=lambda x:x,
+            key: Key =jax.random.PRNGKey(int(time.time())))->Float[Array,"{iters} {self.N_CHANNELS} x y"]:
+        
+        trajectory = []
+        trajectory.append(x)
+        for i in range(iters):
+            key = jax.random.fold_in(key,i)
+            x = self(x,boundary_callback,key=key)
+            trajectory.append(x)
+        return np.array(trajectory)
+
     def partition(self):
         diff_main,static_main = eqx.partition(self,eqx.is_array)
         for i in range(len(self.SCALES)):
