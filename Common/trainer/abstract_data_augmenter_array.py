@@ -1,11 +1,15 @@
 import jax.numpy as jnp
 import jax
 import time
+import jax.random as jr
 import equinox as eqx
 from jax.experimental import mesh_utils
+from Common.trainer.abstract_data_augmenter_tree import DataAugmenterAbstract as DataAugmenterAbstractTree
+from jaxtyping import Array, Float, PyTree, Scalar, Int, Key
+from Common.utils import key_array_gen
+from einops import repeat
 
-
-class DataAugmenterAbstract(object):
+class DataAugmenterAbstract(DataAugmenterAbstractTree):
 	
 	def __init__(self,data_true,hidden_channels=0):
 		"""
@@ -38,60 +42,14 @@ class DataAugmenterAbstract(object):
 		data = self.return_saved_data()
 		if SHARDING is not None:
 			data = self.duplicate_batches(data, SHARDING)
-			data = self.pad(data,10)
 			shard = jax.sharding.PositionalSharding(mesh_utils.create_device_mesh((SHARDING,1,1,1,1)))
 			data = jax.device_put(data,shard)
 			jax.debug.visualize_array_sharding(data[:,0,0,0])
-		else:	
-			data = self.duplicate_batches(data, 4)
-			data = self.pad(data, 10)
+
 		
 		self.save_data(data)
 		return None
-	def data_load(self):
-		x0,y0 = self.split_x_y(1)
-		return x0,y0
-	#@eqx.filter_jit
-	def data_callback(self,x,y,i):
-		"""
-		Called after every training iteration to perform data augmentation and processing		
-
-
-		Parameters
-		----------
-		x : float32[N-N_steps,BATCHES,CHANNELS,WIDTH,HEIGHT]
-			Initial conditions
-		y : float32[N-N_steps,BATCHES,CHANNELS,WIDTH,HEIGHT]
-			Final states
-		i : int
-			Current training iteration - useful for scheduling mid-training data augmentation
-
-		Returns
-		-------
-		x : float32[N-N_steps,BATCHES,CHANNELS,WIDTH,HEIGHT]
-			Initial conditions
-		y : float32[N-N_steps,BATCHES,CHANNELS,WIDTH,HEIGHT]
-			Final states
-
-		"""
-		am=10
-		
-		if hasattr(self,"PREVIOUS_KEY"):
-			x = self.unshift(x, am, self.PREVIOUS_KEY)
-			y = self.unshift(y, am, self.PREVIOUS_KEY)
-
-		
-		x = x.at[:,1:].set(x[:,:-1]) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-		x_true,_ =self.split_x_y(1)
-		x = x.at[:,0].set(x_true[:,0]) # Keep first initial x correct
-		if i < 500:
-			x = x.at[::2,:,:self.OBS_CHANNELS].set(x_true[::2,:,:self.OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
-		key=jax.random.PRNGKey(int(time.time()))
-
-		x = self.shift(x,am,key=key)
-		y = self.shift(y,am,key=key)
-		self.PREVIOUS_KEY = key
-		return x,y
+	
 		
 	def split_x_y(self,N_steps=1):
 		"""
@@ -112,49 +70,11 @@ class DataAugmenterAbstract(object):
 
 		"""
 		return self.data_saved[:,:-N_steps],self.data_saved[:,N_steps:]
-	@eqx.filter_jit
-	def concat_x_y(self,x,y):
-		"""
-		Joins x and y together as one data tensor along time axis - useful for 
-		data processing that affects each batch differently, but where
-		identitcal transformations are needed for x and y. i.e. random shifting
-
-		Parameters
-		----------
-		x : float32[:,N,...]
-			Initial conditions
-		y : float32[:,N,...]
-			Final states
-
-		Returns
-		-------
-		data : float32[:,2N,...]
-			x and y concatenated along axis 1
-		"""
-		return jnp.concatenate((x,y),axis=1)
-	@eqx.filter_jit
-	def unconcat_x_y(self,data):
-		"""
-		Inverse of concat_x_y
-
-		Parameters
-		----------
-		data : float32[:,2N,...]
-			x and y concatenated along axis 0
-		Returns
-		-------
-
-		x : float32[:,N,...]
-			Initial conditions
-		y : float32[:,N,...]
-			Final states
-
-		"""
-		midpoint = data.shape[1]//2
-		return data[:,:midpoint],data[:,midpoint:]
+	
+	
 	
 	@eqx.filter_jit
-	def pad(self,data,am):
+	def pad(self,data: Float[Array, "B N C W H"],am):
 		"""
 		
 		Pads spatial dimensions with zeros
@@ -175,7 +95,7 @@ class DataAugmenterAbstract(object):
 		return jnp.pad(data,((0,0),(0,0),(0,0),(am,am),(am,am)))
 	
 	#@eqx.filter_jit
-	def shift(self,data,am,key=jax.random.PRNGKey(int(time.time()))):
+	def shift(self,data: Float[Array, "B N C W H"],am,key=jax.random.PRNGKey(int(time.time()))):
 		"""
 		Randomly shifts each trajectory. 
 
@@ -202,7 +122,7 @@ class DataAugmenterAbstract(object):
 			data = data.at[b].set(jnp.roll(data[b],shifts[b],axis=(-1,-2)))
 		return data
 	
-	def unshift(self,data,am,key):
+	def unshift(self,data: Float[Array, "B N C W H"],am,key):
 		"""
 		Randomly shifts each trajectory. If useing same key as shift(), it undoes that shift
 
@@ -232,7 +152,11 @@ class DataAugmenterAbstract(object):
 	
 	
 	
-	def noise(self,data,am,full=True,key=jax.random.PRNGKey(int(time.time()))):
+	def noise(self,
+		   	  data: Float[Array, "B N C W H"],
+			  am,
+			  mode="full",
+			  key=jax.random.PRNGKey(int(time.time()))):
 		"""
 		Adds uniform noise to the data
 		
@@ -253,9 +177,12 @@ class DataAugmenterAbstract(object):
 
 		"""
 		noisy = am*jax.random.uniform(key,shape=data.shape) + (1-am)*data
-		if not full:
-			#noisy[:,:,self.OBS_CHANNELS:] = data[:,:,self.OBS_CHANNELS:]
-			noisy = noisy.at[:,:,self.OBS_CHANNELS:].set(data[:,:,self.OBS_CHANNELS:])
+
+		if mode=="observable": # Overwrite correct data onto hidden channels
+			noisy = noisy.at[:,:,self.OBS_CHANNELS:,:,:].set(data[:,:,self.OBS_CHANNELS:,:,:])
+		elif mode=="hidden": # Overwrite correct data onto observable channels
+			noisy = noisy.at[:,:,:self.OBS_CHANNELS,:,:].set(data[:,:,:self.OBS_CHANNELS,:,:])
+		
 		return noisy
 		
 	@eqx.filter_jit
@@ -279,6 +206,44 @@ class DataAugmenterAbstract(object):
 		
 		return jnp.repeat(data,B,axis=0)
 	
+	def zero_random_circle(self, data: Float[Array, "B N C W H"], key: Key=jr.PRNGKey(int(time.time()))):
+		
+		B = data.shape[0]
+		N = data.shape[1]
+		def _zero_random_circle(image, key):
+			# Get image dimensions
+			height = image.shape[-1]
+			width = image.shape[-2]
+
+			# Generate random numbers for circle parameters
+			key, subkey1, subkey2, subkey3 = jr.split(key, 4)
+			center_x = jr.randint(subkey1, (), 0, width)
+			center_y = jr.randint(subkey2, (), 0, height)
+			max_radius = jnp.min(jnp.array([center_x, width - center_x, center_y, height - center_y]))
+			radius = jr.randint(subkey3, (), 1, (max_radius + 1)/2)
+
+			Y, X = jnp.ogrid[:height, :width]
+			
+			# Create the mask for the circle
+			mask = (X - center_x)**2 + (Y - center_y)**2 <= radius**2
+			mask = repeat(mask,"H W -> () H W")
+			image = jnp.where(mask, 0, image)
+
+			return image
+
+
+		keys = key_array_gen(key, (B,N))
+
+		# Vectorize the zero_random_circle function to apply it to each image in the batch
+		v_zeromap = jax.vmap(_zero_random_circle, in_axes=(0, 0))
+		vv_zeromap = jax.vmap(v_zeromap, in_axes=(0, 0))
+
+		# Apply the function to the batch of images
+		modified_images = vv_zeromap(data, keys)
+
+		return modified_images
+
+# Example usage:
 	
 	def save_data(self,data):
 		self.data_saved = data

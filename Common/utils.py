@@ -267,17 +267,18 @@ def load_trajectory_log(summary_dir):
 
 
 
-def load_micropattern_time_series_batch_average(impath,downsample=4):
+def load_micropattern_time_series_batch_average(impath,downsample=4,VERBOSE=False):
   filenames = glob.glob(impath)
   filenames = list(sorted(filenames))
   where_func = lambda filenames,label:label in filenames
   #filenames_label = list(filter(lambda x:where_func(x,label),filenames))
+  filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
   filenames_12h = list(filter(lambda x:where_func(x,"12h"),filenames))
   filenames_24h = list(filter(lambda x:where_func(x,"24h"),filenames))
   filenames_36h = list(filter(lambda x:where_func(x,"36h"),filenames))
   filenames_48h = list(filter(lambda x:where_func(x,"48h"),filenames))
   filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
-  filenames_ordered = [filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
+  filenames_ordered = [filenames_0h,filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
 
   
   mean_0_std_1 = lambda arr: (arr-np.mean(arr,axis=(0,1),keepdims=True))/(np.std(arr,axis=(0,1),keepdims=True))
@@ -288,9 +289,12 @@ def load_micropattern_time_series_batch_average(impath,downsample=4):
 
   ims = []
   for filenames in tqdm(filenames_ordered):
+    if VERBOSE:
+      print(len(filenames))
     ims_timestep = []
     for f_str in filenames:
       ims_timestep.append(skimage.io.imread(f_str))
+    
     ims_timestep = np.array(ims_timestep,dtype="float64")
     ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> X Y C","mean",x2=downsample,y2=downsample)
     ims_timestep = mean_0_std_1(ims_timestep)
@@ -299,8 +303,57 @@ def load_micropattern_time_series_batch_average(impath,downsample=4):
     ims_timestep = mult_by_lmbr(ims_timestep)
     ims_timestep = reshape(ims_timestep)
     ims.append(ims_timestep)
-    
+    if VERBOSE:
+      print(ims_timestep.shape)
   return ims
+
+
+
+
+def load_micropattern_smad23_lef1_batch_average(impath,downsample=4,VERBOSE=False):
+  filenames = glob.glob(impath)
+  filenames = list(sorted(filenames))
+  where_func = lambda filenames,label:label in filenames
+  #filenames_label = list(filter(lambda x:where_func(x,label),filenames))
+  filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
+  filenames_6h = list(filter(lambda x:where_func(x,"_6h"),filenames))
+  filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
+  filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
+  filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
+  filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
+  #filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
+  filenames_ordered = [filenames_0h,filenames_6h,filenames_12h,filenames_24h,filenames_36h,filenames_48h]
+
+  
+  mean_0_std_1 = lambda arr: (arr-np.mean(arr,axis=(0,1),keepdims=True))/(np.std(arr,axis=(0,1),keepdims=True))
+  map_to_0_1 = lambda arr: (arr-np.min(arr,axis=(0,1),keepdims=True))/(np.max(arr,axis=(0,1),keepdims=True)-np.min(arr,axis=(0,1),keepdims=True))
+  saturate = lambda arr: jax.nn.sigmoid(arr)
+  mult_by_lmbr = lambda arr: arr*arr[:,:,1:2]
+  reshape = lambda arr:rearrange(arr,"X Y C -> C X Y")
+
+  ims = []
+  for filenames in tqdm(filenames_ordered):
+    if VERBOSE:
+      print(len(filenames))
+    ims_timestep = []
+    for f_str in filenames:
+      _im = skimage.io.imread(f_str)
+      ims_timestep.append(_im)
+      if VERBOSE:
+        print(_im.shape,f_str)
+    
+    ims_timestep = np.array(ims_timestep,dtype="float64")
+    ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> X Y C","mean",x2=downsample,y2=downsample)
+    ims_timestep = mean_0_std_1(ims_timestep)
+    ims_timestep = saturate(ims_timestep)
+    ims_timestep = map_to_0_1(ims_timestep)
+    ims_timestep = mult_by_lmbr(ims_timestep)
+    ims_timestep = reshape(ims_timestep)
+    ims.append(ims_timestep)
+    if VERBOSE:
+      print(ims_timestep.shape)
+  return ims
+
 
 
 def load_micropattern_time_series(impath,downsample=4):
@@ -335,16 +388,11 @@ def load_micropattern_time_series(impath,downsample=4):
     ims_timestep = map_to_0_1(ims_timestep)
     ims_timestep = mult_by_lmbr(ims_timestep)
     ims_timestep = reshape(ims_timestep)
-    # ims_timestep = list(map(mean_0_std_1,ims_timestep))
-    # ims_timestep = list(map(saturate,ims_timestep))
-    # ims_timestep = list(map(map_to_0_1,ims_timestep))
-    # ims_timestep = list(map(mult_by_lmbr,ims_timestep))
-    # ims_timestep = list(map(reshape,ims_timestep))
+
     ims.append(ims_timestep)
     
   return ims
-    
-    #ims.append(ims_timestep)
+
   
 
 def load_micropattern_radii(impath):
