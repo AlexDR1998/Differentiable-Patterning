@@ -21,8 +21,8 @@ class data_augmenter_subclass(DataAugmenter):
         self.save_data(data)
         return None
 
-CHANNELS=32
-DOWNSAMPLE = 1
+CHANNELS=8
+DOWNSAMPLE = 4
 t=64
 iters=8000
 
@@ -39,7 +39,7 @@ optimiser = optax.chain(optax.scale_by_param_block_norm(),
 
 
 mnca = mNCA(N_CHANNELS=CHANNELS,
-            SCALES=[1,4],
+            SCALES=[1,2],
             GATED = False,
             KERNEL_STR=["ID","LAP","GRAD"],
             ACTIVATION=jax.nn.relu, 
