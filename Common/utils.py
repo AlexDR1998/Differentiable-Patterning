@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import equinox as eqx
 import numpy as np
-import pandas as pd
+#import pandas as pd
 import skimage
 from tensorflow.core.util import event_pb2
 from tensorflow.python.lib.io import tf_record
