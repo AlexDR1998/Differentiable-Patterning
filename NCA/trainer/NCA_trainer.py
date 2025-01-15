@@ -193,6 +193,7 @@ class NCA_Trainer(object):
 			  WARMUP=64,
 			  LOSS_SAMPLING = 64,
 			  LOG_EVERY=40,
+			  CLEAR_CACHE_EVERY=100,
 			  WRITE_IMAGES=True,
 			  LOSS_FUNC_STR = "euclidean",
 			  LOOP_AUTODIFF = "checkpointed",
@@ -347,7 +348,11 @@ class NCA_Trainer(object):
 		SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
 		#--- Do training run ---
 		for i in tqdm(range(iters)):
+			if i%CLEAR_CACHE_EVERY==0:
+				print(f"Clearing cache at step {i}")
+				jax.clear_caches()
 			key = jax.random.fold_in(key,i)
+
 			#nca,opt_state,(mean_loss,(x,losses)) = make_step(nca, x, y, t, opt_state,key)
 			nca,x,y,t,opt_state,key,mean_loss,losses = make_step(nca, x, y, t, opt_state,key)
 			
