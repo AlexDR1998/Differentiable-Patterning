@@ -60,6 +60,15 @@ class Train_log(object):
             if write_images:
                 self.log_model_outputs(x,i)
 
+
+    def normalise_images(self,x):
+        """
+        Normalises the images to [0,1] range for tensorboard logging
+        """
+        x = x - np.min(x)
+        x = x / np.max(x)
+        return x
+
     def tb_training_end_log(self,model,x,t,*args):
         raise NotImplementedError
     

@@ -38,10 +38,13 @@ class NCA_Train_log(Train_log):
 			for b in range(BATCHES):
 				if self.RGB_mode=="RGB":
 					#tf.summary.image('Trajectory batch '+str(b),np.einsum("ncxy->nxyc",x[b,:,:3,...]),step=i,max_outputs=x.shape[0])
-					tf.summary.image('Trajectory batch '+str(b),np.einsum("ncxy->nxyc",x[b][:,:3,...]),step=i,max_outputs=x[b].shape[0])
+					tf.summary.image('Trajectory batch '+str(b),
+					  self.normalise_images(np.einsum("ncxy->nxyc",x[b][:,:3,...])),
+					  step=i,
+					  max_outputs=x[b].shape[0])
 				elif self.RGB_mode=="RGBA":
 					#tf.summary.image('Trajectory batch '+str(b),np.einsum("ncxy->nxyc",x[b,:,:4,...]),step=i,max_outputs=x.shape[0])
-					tf.summary.image('Trajectory batch '+str(b),np.einsum("ncxy->nxyc",x[b][:,:4,...]),step=i,max_outputs=x[b].shape[0])
+					tf.summary.image('Trajectory batch '+str(b),self.normalise_images(np.einsum("ncxy->nxyc",x[b][:,:4,...])),step=i,max_outputs=x[b].shape[0])
 			if x[0].shape[1] > 4:
 				b=0
 				if self.RGB_mode=="RGB":
