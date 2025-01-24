@@ -154,9 +154,10 @@ def spectral_weighted(x,y,key=None,where=None):
 	fy = jnp.fft.rfft2(y)
 	return jnp.abs(l2(fx,fy,key,where=where))
 @eqx.filter_jit
-def vgg(x,y, key):
+def vgg(x,y, key,where=None):
 	"""
 	NOTE THAT CHANNELS IS TRUNCATED TO 3
+	NOTE WHERE HAS NO EFFECT HERE
 
 	Parameters
 	----------
