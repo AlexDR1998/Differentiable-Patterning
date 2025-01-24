@@ -35,6 +35,7 @@ class DataAugmenter(DataAugmenterAbstract):
         map_to_m1p1 = lambda x:2*(x - jnp.min(x)) / (jnp.max(x) - jnp.min(x)) -1
         data = self.return_saved_data()
         data = jax.tree_util.tree_map(map_to_m1p1,data)
+        data = self.duplicate_batches(data, 4)
         for i,d in enumerate(data):
             key = jr.fold_in(key,i)
             data[i] = data[i].at[0].set(multi_channel_perlin_noise(data[i].shape[2],data[i].shape[1],self.NOISE_CUTOFF,key)) 
@@ -53,4 +54,6 @@ class DataAugmenter(DataAugmenterAbstract):
 
         x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
         x = jax.tree_util.tree_map(reset_x0,x,keys) # Reset initial conditions to noise
+
+        x = self.noise(x,0.005,key=key)
         return x,y
