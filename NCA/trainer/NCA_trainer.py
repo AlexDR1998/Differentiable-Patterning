@@ -326,6 +326,7 @@ class NCA_Trainer(object):
 		nca = self.NCA_model
 		nca_diff,nca_static = nca.partition()
 		
+		
 		#--- OPTIMISER ---
 		# Set up optimiser
 		if optimiser is None:
