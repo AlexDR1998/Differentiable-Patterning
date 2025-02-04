@@ -195,6 +195,7 @@ class NCA_Trainer(object):
 			  LOG_EVERY=40,
 			  CLEAR_CACHE_EVERY=100,
 			  WRITE_IMAGES=True,
+			  UPDATE_DATA_EVERY=1,
 			  LOSS_FUNC_STR = "euclidean",
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
@@ -255,7 +256,8 @@ class NCA_Trainer(object):
 
 
 
-		@partial(eqx.filter_jit,donate="all-except-first")
+		#@partial(eqx.filter_jit,donate="all-except-first")
+		@eqx.filter_jit
 		def make_step(nca,x,y,t,opt_state,key):
 			"""
 			
@@ -326,7 +328,7 @@ class NCA_Trainer(object):
 		nca = self.NCA_model
 		nca_diff,nca_static = nca.partition()
 		
-		
+
 		#--- OPTIMISER ---
 		# Set up optimiser
 		if optimiser is None:
@@ -355,7 +357,7 @@ class NCA_Trainer(object):
 			key = jax.random.fold_in(key,i)
 
 			#nca,opt_state,(mean_loss,(x,losses)) = make_step(nca, x, y, t, opt_state,key)
-			nca,x,y,t,opt_state,key,mean_loss,losses = make_step(nca, x, y, t, opt_state,key)
+			nca,x_new,y_new,t,opt_state,key,mean_loss,losses = make_step(nca, x, y, t, opt_state,key)
 			
 			if SPARSE_PRUNING:
 				
@@ -388,7 +390,8 @@ class NCA_Trainer(object):
 			
 			# Do data augmentation update
 			if error==0:
-				x,y = self.DATA_AUGMENTER.data_callback(x, y, i, key)
+				if i%UPDATE_DATA_EVERY==0 or i<WARMUP:
+					x,y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
 				# Save model whenever mean_loss beats the previous best loss
 				if i>WARMUP:
 					if mean_loss < best_loss:
