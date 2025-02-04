@@ -16,6 +16,7 @@ No fancy intermediate time step stuff, just learn textures as fixed points of th
 
 """
 
+
 class DataAugmenter(DataAugmenterAbstract):
     """
         Inherits the methods of DataAugmenter, but overwrites the batch cloning in the init
