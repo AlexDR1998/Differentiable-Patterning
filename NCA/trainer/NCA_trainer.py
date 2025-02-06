@@ -364,7 +364,7 @@ class NCA_Trainer(object):
 			
 
 
-			pbar.set_postfix({'loss': loss,'best loss': best_loss})
+			pbar.set_postfix({'loss': mean_loss,'best loss': best_loss})
 
 			if SPARSE_PRUNING:
 				
