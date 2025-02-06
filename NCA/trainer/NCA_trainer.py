@@ -349,8 +349,11 @@ class NCA_Trainer(object):
 		error = 0
 		error_at = 0
 		SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
+
+		pbar = tqdm(range(iters))
 		#--- Do training run ---
-		for i in tqdm(range(iters)):
+		for i in pbar:
+			
 			if i%CLEAR_CACHE_EVERY==0:
 				print(f"Clearing cache at step {i}")
 				jax.clear_caches()
@@ -359,6 +362,10 @@ class NCA_Trainer(object):
 			#nca,opt_state,(mean_loss,(x,losses)) = make_step(nca, x, y, t, opt_state,key)
 			nca,x_new,y_new,t,opt_state,key,mean_loss,losses = make_step(nca, x, y, t, opt_state,key)
 			
+
+
+			pbar.set_postfix({'loss': loss,'best loss': best_loss})
+
 			if SPARSE_PRUNING:
 				
 				if i>WARMUP:
@@ -373,7 +380,7 @@ class NCA_Trainer(object):
 
 			
 			if self.IS_LOGGING:
-				self.LOGGER.tb_training_loop_log_sequence(losses, x, i, nca,write_images=WRITE_IMAGES,LOG_EVERY=LOG_EVERY)
+				self.LOGGER.tb_training_loop_log_sequence(losses, x_new, i, nca,write_images=WRITE_IMAGES,LOG_EVERY=LOG_EVERY)
 			
 			if jnp.isnan(mean_loss):
 				error = 1
