@@ -402,7 +402,7 @@ class NCA_Trainer(object):
 			# Do data augmentation update
 			if error==0:
 				#if i%UPDATE_DATA_EVERY==0 or i<WARMUP:
-				if loss_diff>loss_diff_thresh or i<WARMUP:
+				if loss_diff<loss_diff_thresh or i<WARMUP:
 					x,y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
 				
 				
