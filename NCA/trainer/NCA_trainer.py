@@ -334,7 +334,7 @@ class NCA_Trainer(object):
 		if optimiser is None:
 			schedule = optax.exponential_decay(1e-3, transition_steps=iters, decay_rate=0.99)
 			self.OPTIMISER = optax.nadam(schedule)
-			#self.OPTIMISER = optax.chain(optax.clip_by_block_rms(1.0),self.OPTIMISER)
+			
 		else:
 			self.OPTIMISER = optimiser
 		opt_state = self.OPTIMISER.init(nca_diff)
@@ -346,6 +346,10 @@ class NCA_Trainer(object):
 		best_loss = 100000000
 		loss_thresh = 1e16
 		model_saved = False
+		loss_diff = 0
+		#prev_loss = 0
+		mean_loss = 0
+		loss_diff_thresh = 1e-2
 		error = 0
 		error_at = 0
 		SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
@@ -353,7 +357,7 @@ class NCA_Trainer(object):
 		pbar = tqdm(range(iters))
 		#--- Do training run ---
 		for i in pbar:
-			
+			#prev_loss = mean_loss
 			if i%CLEAR_CACHE_EVERY==0:
 				print(f"Clearing cache at step {i}")
 				jax.clear_caches()
@@ -361,10 +365,10 @@ class NCA_Trainer(object):
 
 			#nca,opt_state,(mean_loss,(x,losses)) = make_step(nca, x, y, t, opt_state,key)
 			nca,x_new,y_new,t,opt_state,key,mean_loss,losses = make_step(nca, x, y, t, opt_state,key)
-			
+			loss_diff = mean_loss - best_loss
 
 
-			pbar.set_postfix({'loss': mean_loss,'best loss': best_loss})
+			pbar.set_postfix({'loss': mean_loss,'best loss': best_loss,'loss diff':loss_diff})
 
 			if SPARSE_PRUNING:
 				
@@ -397,8 +401,11 @@ class NCA_Trainer(object):
 			
 			# Do data augmentation update
 			if error==0:
-				if i%UPDATE_DATA_EVERY==0 or i<WARMUP:
+				#if i%UPDATE_DATA_EVERY==0 or i<WARMUP:
+				if loss_diff>loss_diff_thresh or i<WARMUP:
 					x,y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
+				
+				
 				# Save model whenever mean_loss beats the previous best loss
 				if i>WARMUP:
 					if mean_loss < best_loss:
