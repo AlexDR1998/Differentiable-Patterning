@@ -26,5 +26,5 @@ class NCA_Trainer_multiscale_loss(NCA_Trainer):
         Ys = [reduce(y,"N CHANNELS (x Dx) (y Dy)->N CHANNELS x y",Dx=d,Dy=d,reduction="mean") for d in self.LOSS_SCALES]
         
         losses = jnp.array([self._loss_func(X,Y,key,SAMPLES) for X,Y in zip(Xs,Ys)])
-        return reduce(losses,"scales N -> N","mean")
+        return reduce(losses,"scales N () () ()-> N","mean")
         
