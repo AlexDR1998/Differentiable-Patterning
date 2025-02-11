@@ -22,8 +22,8 @@ class NCA_Trainer_multiscale_loss(NCA_Trainer):
                  key:Key,
                  SAMPLES)->Float[Array, "N"]:
         
-        Xs = [reduce(x,"N CHANNELS (x D) (y D)->N CHANNELS x y",D=d) for d in self.LOSS_SCALES]
-        Ys = [reduce(y,"N CHANNELS (x D) (y D)->N CHANNELS x y",D=d) for d in self.LOSS_SCALES]
+        Xs = [reduce(x,"N CHANNELS (x D) (y D)->N CHANNELS x y",D=d,reduction="mean") for d in self.LOSS_SCALES]
+        Ys = [reduce(y,"N CHANNELS (x D) (y D)->N CHANNELS x y",D=d,reduction="mean") for d in self.LOSS_SCALES]
         
         losses = jnp.array([self._loss_func(X,Y,key,SAMPLES) for X,Y in zip(Xs,Ys)])
         return reduce(losses,"scales N -> N","mean")
