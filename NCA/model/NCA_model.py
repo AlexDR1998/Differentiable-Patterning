@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import equinox as eqx
 import time
-from jaxtyping import Float, Array, Key, Int, Scalar
+from jaxtyping import Float, Array, Key, Int, Scalar, PyTree
 from Common.model.abstract_model import AbstractModel # Inherit model loading and saving
 from Common.model.spatial_operators import Ops # Spatial stuff like gradients or laplacians
 from einops import rearrange
@@ -138,8 +138,61 @@ class NCA(AbstractModel):
 		x_new = x + sigma*dx
 		return boundary_callback(x_new)
 
-	
+	def call_with_activations(self,
+					   x: Float[Array,"{self.N_CHANNELS} x y"],
+					   boundary_callback=lambda x:x,
+					   key: Key=jax.random.PRNGKey(int(time.time()))):
+		"""
+		Parameters
+		----------
+		x : float32 [N_CHANNELS,_,_]
+			input NCA lattice state.
+		boundary_callback : callable (float32 [N_CHANNELS,_,_]) -> (float32 [N_CHANNELS,_,_]), optional
+			function to augment intermediate NCA states i.e. imposing complex boundary conditions or external structure. Defaults to None
+		key : jax.random.PRNGKey, optional
+			Jax random number key. The default is jax.random.PRNGKey(int(time.time())).
 
+		Returns
+		-------
+		x : float32 [N_CHANNELS,_,_]
+			output NCA lattice state.
+		activations : list of float32 [N_FEATURES,_,_]
+			list of activations from each layer.
+
+		
+		"""
+		dx = self.perception(x)
+		activations = [dx]
+		for layer in self.layers:
+			dx = layer(dx)
+			activations.append(dx)
+		sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
+		x_new = x + sigma*dx
+		return boundary_callback(x_new),activations
+
+
+
+	def call_with_SAE(self,
+				   x: Float[Array,"{self.N_CHANNELS} x y"],
+				   SAE,
+				   boundary_callback=lambda x:x,
+				   key: Key=jax.random.PRNGKey(int(time.time()))):
+		layer_name_dict = {"perception":0,"linear_hidden":1,"activation":2,"linear_output":3,"gate_func":4}
+		vSAE = jax.vmap(SAE,in_axes=0,out_axes=0)
+		#dx = self.perception(x)
+		dx = x
+		layers = [self.perception,*self.layers]
+		for i,layer in enumerate(layers):
+			
+			dx = layer(dx)
+			if i == layer_name_dict[SAE.TARGET_LAYER]:
+				dx = rearrange(dx, "F X Y -> (X Y) F")
+				dx = vSAE(dx)
+				dx = rearrange(dx, "(X Y) F -> F X Y",Y=x.shape[-1])
+				
+		sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
+		x_new = x + sigma*dx
+		return boundary_callback(x_new)
 	
 	def set_weights(self,weights):
 		w0,w1,b1 = weights
