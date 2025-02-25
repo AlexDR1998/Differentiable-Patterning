@@ -5,6 +5,7 @@ import equinox as eqx
 import jax.numpy as jnp
 import jax.random as jr
 import datetime
+import time
 from tqdm import tqdm
 import optax
 
@@ -35,8 +36,10 @@ class NCA_SAE_Trainer(object):
     def train(self,
               iters,
               optimiser,
-              FE_params={"t0":0,"t1":64,"BATCH_SIZE":1,"SIZE":32,"key":jr.PRNGKey(0)},
-              key=jr.PRNGKey(0)):
+              MINIBATCH_SIZE=4096,
+              REGENERATE_EVERY=4096,
+              FE_params={"t0":0,"t1":64,"BATCH_SIZE":1,"SIZE":32,"key":jr.PRNGKey(int(time.time()))},
+              key=jr.PRNGKey(int(time.time()))):
         @eqx.filter_jit
         def make_step(SAE,x,opt_state):
 
@@ -71,10 +74,16 @@ class NCA_SAE_Trainer(object):
 
         pbar = tqdm(range(iters))
         activations = self.generate_activations(FE_params)
+
         loss_logs = [[],[],[]]
         for i in pbar:
+            if i % REGENERATE_EVERY == 0:
+                FE_params["key"] = key
+                activations = self.generate_activations(FE_params)
             key = jr.fold_in(key,i)
-            SAE,opt_state,loss,loss_recon,loss_sparse = make_step(SAE,activations,opt_state)
+            inds = jr.choice(key,activations.shape[0],(MINIBATCH_SIZE,),replace=False)
+            X = activations[inds]
+            SAE,opt_state,loss,loss_recon,loss_sparse = make_step(SAE,X,opt_state)
             pbar.set_postfix({'loss': loss,'reconstruction loss': loss_recon,'sparsity loss':loss_sparse})
             loss_logs[0].append(loss)
             loss_logs[1].append(loss_recon)
