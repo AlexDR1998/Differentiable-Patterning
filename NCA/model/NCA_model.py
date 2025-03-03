@@ -175,10 +175,22 @@ class NCA(AbstractModel):
 	def call_with_SAE(self,
 				   x: Float[Array,"{self.N_CHANNELS} x y"],
 				   SAE,
+				   latent_edit={"mode":"mult_top_k",
+								"positions":None,
+								"values":1.0},
 				   boundary_callback=lambda x:x,
 				   key: Key=jax.random.PRNGKey(int(time.time()))):
 		layer_name_dict = {"perception":0,"linear_hidden":1,"activation":2,"linear_output":3,"gate_func":4}
-		vSAE = jax.vmap(SAE,in_axes=0,out_axes=0)
+		#vSAE = jax.vmap(SAE,in_axes=0,out_axes=0)
+		vENC = jax.vmap(SAE.encode,in_axes=0,out_axes=0)
+		vDEC = jax.vmap(SAE.decode,in_axes=0,out_axes=0)
+		vGET = jax.vmap(SAE.get_top_k_feature_positions,in_axes=0,out_axes=0)
+		if latent_edit["mode"]=="mult_top_k":
+			vEDIT = jax.vmap(lambda l:SAE.mult_k_top_features(l,latent_edit["positions"],latent_edit["values"]),in_axes=0,out_axes=0)
+
+		if latent_edit["mode"]=="set_absolute":
+			vEDIT = jax.vmap(lambda l:SAE.set_features_at_positions(l,latent_edit["positions"],latent_edit["values"]),in_axes=0,out_axes=0)
+
 		#dx = self.perception(x)
 		dx = x
 		layers = [self.perception,*self.layers]
@@ -187,12 +199,18 @@ class NCA(AbstractModel):
 			dx = layer(dx)
 			if i == layer_name_dict[SAE.TARGET_LAYER]:
 				dx = rearrange(dx, "F X Y -> (X Y) F")
-				dx = vSAE(dx)
+				latents = vENC(dx)
+				top_latent_values,top_latent_positions = vGET(latents)
+				if latent_edit["mode"] in ["mult_top_k","set_absolute"]:
+					latents = vEDIT(latents)
+				dx = vDEC(latents)
 				dx = rearrange(dx, "(X Y) F -> F X Y",Y=x.shape[-1])
-				
+				latents = rearrange(latents,"(X Y) L-> L X Y",Y=x.shape[-1])
+				top_latent_positions = rearrange(top_latent_positions,"(X Y) K-> K X Y",Y=x.shape[-1])
+				top_latent_values = rearrange(top_latent_values,"(X Y) K-> K X Y",Y=x.shape[-1])
 		sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
 		x_new = x + sigma*dx
-		return boundary_callback(x_new)
+		return boundary_callback(x_new),latents,top_latent_values,top_latent_positions
 	
 	def set_weights(self,weights):
 		w0,w1,b1 = weights
