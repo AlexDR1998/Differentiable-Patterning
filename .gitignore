@@ -1,0 +1,3 @@
+# Ignore all Jupyter Notebook files in this directory
+*.ipynb
+
