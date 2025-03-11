@@ -1,3 +1,10 @@
 # Ignore all Jupyter Notebook files in this directory
 *.ipynb
-
+*.pyc
+*.npy
+*.eqx
+*events.out.tfevents.*
+logs/*
+models/*
+*.mp4
+*.pickle
