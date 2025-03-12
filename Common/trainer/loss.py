@@ -8,6 +8,7 @@ import jax
 #from eqxvision.utils import CLASSIFICATION_URLS
 import equinox as eqx
 from lpips_j.lpips import LPIPS
+from einops import rearrange
 #import eqxvision as eqv
 
 #loaded_alexnet = alexnet(torch_weights=CLASSIFICATION_URLS['alexnet'])
@@ -174,8 +175,8 @@ def vgg(x,y, key,where=None):
 	loss : float32 [N]
 
 	"""
-	x = jnp.einsum("ncxy->nxyc",x)[...,:3]
-	y = jnp.einsum("ncxy->nxyc",y)[...,:3]
+	x = rearrange(x,"n c x y->n x y c")[...,:3]
+	y = rearrange(y,"n c x y->n x y c",)[...,:3]
 	
 	
 	
@@ -183,3 +184,16 @@ def vgg(x,y, key,where=None):
 	loss = lpips.apply(params, x, y)
 	return loss
 	
+
+@eqx.filter_jit
+def vgg_fast(x,y,params):
+	x = rearrange(x,"n c x y->n x y c")[...,:3]
+	y = rearrange(y,"n c x y->n x y c",)[...,:3]
+	loss = lpips.apply(params, x, y)
+	return loss
+
+
+def vgg_init_params(x,y, key):
+	x = rearrange(x,"n c x y->n x y c")[...,:3]
+	y = rearrange(y,"n c x y->n x y c",)[...,:3]
+	return lpips.init(key, x, y)

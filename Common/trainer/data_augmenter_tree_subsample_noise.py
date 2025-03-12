@@ -28,7 +28,18 @@ class DataAugmenterSubsampleNoiseTexture(DataAugmenterAbstract):
         return x,y
         
     def data_callback(self, x, y, i):
+        """
+        Every self.sample_freq calls, reset x and y to a different sampled patch from self.split_x_y()
+        Otherwise do the usual propagation of intermediate states. Set X0 to noise
 
+        Args:
+            x (_type_): _description_
+            y (_type_): _description_
+            i (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         if hasattr(self, "PREVIOUS_KEY"):
             key = jax.random.fold_in(self.PREVIOUS_KEY,i)
             self.PREVIOUS_KEY = key
@@ -48,6 +59,7 @@ class DataAugmenterSubsampleNoiseTexture(DataAugmenterAbstract):
 
             x = jax.tree_util.tree_map(sample,x_true,x_inds,y_inds)
             y = jax.tree_util.tree_map(sample,y_true,x_inds,y_inds)
+            
         else:
             propagate_xn = lambda x:x.at[1:].set(x[:-1])
             set_x0_noise = lambda x:x.at[0].set(jax.random.uniform(key,shape=x[0].shape,minval=0,maxval=0.1))

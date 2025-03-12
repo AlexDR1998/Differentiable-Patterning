@@ -11,11 +11,11 @@ class gbNCA(bNCA):
     N_CHANNELS: int
     OBSERVABLE_CHANNELS: int
     N_FEATURES: int
-    PERIODIC: bool
+    PADDING: str
     FIRE_RATE: float
     N_WIDTH: int
-    def __init__(self, N_CHANNELS, OBSERVABLE_CHANNELS,KERNEL_STR=["ID","LAP"], ACTIVATION_STR="relu", PERIODIC=True, FIRE_RATE=1.0, key=jax.random.PRNGKey(int(time.time()))):
-        super().__init__(N_CHANNELS, OBSERVABLE_CHANNELS, KERNEL_STR, ACTIVATION_STR, PERIODIC, FIRE_RATE, key)
+    def __init__(self, N_CHANNELS, OBSERVABLE_CHANNELS,KERNEL_STR=["ID","LAP"], ACTIVATION=jax.nn.relu, PADDING="CIRCUALR", FIRE_RATE=1.0, key=jax.random.PRNGKey(int(time.time()))):
+        super().__init__(N_CHANNELS, OBSERVABLE_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, key)
         key1,key2 = jax.random.split(key,2)
         self.layers[-1] = eqx.nn.Conv2d(in_channels=self.N_WIDTH*self.N_FEATURES, 
 						  out_channels=2*self.N_CHANNELS,

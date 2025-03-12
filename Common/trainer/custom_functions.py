@@ -17,7 +17,7 @@ def check_training_diverged(mean_loss,x,step,loss_thresh=1e16):
         print( "|-|-|-|-|-|-  Loss exceded "+str(loss_thresh)+" at step "+str(step)+", optimisation probably diverging  -|-|-|-|-|-|")
     return error
 
-				
+			
 
 
 

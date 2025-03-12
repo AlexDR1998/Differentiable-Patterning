@@ -3,19 +3,18 @@ import jax.numpy as jnp
 import equinox as eqx
 import time
 #from Common.model.abstract_model import AbstractModel # Inherit model loading and saving
-from NCA.model.NCA_model import NCA
+from NCA.model.NCA_model import NCA, Ops
 
 class bNCA(NCA):
     layers: list
     KERNEL_STR: list
     N_CHANNELS: int
-    OBSERVABLE_CHANNELS: int
     N_FEATURES: int
-    PERIODIC: bool
     FIRE_RATE: float
-    N_WIDTH: int
-    def __init__(self, N_CHANNELS, OBSERVABLE_CHANNELS,KERNEL_STR=["ID","LAP"], ACTIVATION_STR="relu", PERIODIC=True, FIRE_RATE=1.0, key=jax.random.PRNGKey(int(time.time()))):
-        super().__init__(N_CHANNELS, KERNEL_STR, ACTIVATION_STR, PERIODIC, FIRE_RATE, key)
+    op: Ops
+    perception: callable
+    def __init__(self, N_CHANNELS, OBSERVABLE_CHANNELS,KERNEL_STR=["ID","LAP"], ACTIVATION=jax.nn.relu, PADDING="CIRCULAR", FIRE_RATE=1.0, KERNEL_SCALE=1, key=jax.random.PRNGKey(int(time.time()))):
+        super().__init__(N_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, KERNEL_SCALE,key)
         self.OBSERVABLE_CHANNELS = OBSERVABLE_CHANNELS
 
 
@@ -39,7 +38,7 @@ class bNCA(NCA):
 
         """
         
-        dx = x
+        dx = self.perception(x)
         for layer in self.layers:
             dx = layer(dx)
         sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
