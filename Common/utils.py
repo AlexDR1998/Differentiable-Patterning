@@ -1,9 +1,11 @@
 import jax
+from math import floor,ceil
 import jax.numpy as jnp
 import equinox as eqx
 import numpy as np
 #import pandas as pd
 import skimage
+from pprint import pprint
 from tensorflow.core.util import event_pb2
 from tensorflow.python.lib.io import tf_record
 import os
@@ -18,9 +20,19 @@ from pathlib import Path
 from typing import Union
 import pickle
 import tensorflow as tf
-from einops import reduce,rearrange
+from einops import reduce,rearrange,repeat
+from scipy.ndimage import shift, center_of_mass
 # Some convenient helper functions
 #@jax.jit
+
+
+def squarish(H):
+  a = int(H**0.5)
+  while a > 0:
+    if H % a == 0:
+      return a, H // a
+    a -= 1
+
 
 
 def save_pickle(data, path: Union[str, Path], overwrite: bool = False):
@@ -69,13 +81,6 @@ def load_pickle(path: Union[str, Path]):
         data = pickle.load(file)
     return data
 
-
-
-
-
-
-
-
 def key_array_gen(key,shape):
 	"""
 	Parameters
@@ -120,9 +125,7 @@ def key_pytree_gen(key,shape):
 
 #def key_array_gen_pytree(key,BATCHES,N):
 #	key_array = []
-#	for i in range(BATCHES):
-		
-
+#	for i in range(BATCHES):		
 
 def grad_norm(grad):
 	"""
@@ -264,10 +267,104 @@ def load_trajectory_log(summary_dir):
             trajectory.append(t)
   return steps,trajectory
 
+def load_micropattern_time_series_nodal_lef_cer(
+      impath,
+      downsample=4,
+      BATCH_AVERAGE=False,
+      VERBOSE=False,
+      EXP_MODES=[1]
+      ):
+  
+  """
+  Experiment layout was as follows:
+  -------------------------------------------------
+  | 1         | 2         | 3         | 4         |
+  | 0µM CHIR  | 1µM CHIR  | 2µM CHIR  | 3µM CHIR  |
+  |           |           |           |           |
+  -------------------------------------------------
+  | 5         | 6         | 7         |           |
+  | 4µM CHIR  | SB/LDN    | SB/LDN    |           |
+  |           | @0h       | @24h      |           |
 
+  so we don't have the same subdirectories for each timepoint
+  """
+  
+  
+  filenames = glob.glob(impath,recursive=True)
+  filenames = list(sorted(filenames))
+  is_tif = lambda x: ".tif" in x
+  filenames = list(filter(is_tif,filenames))
+  #pprint(filenames)
+  where_func = lambda filenames,label:label in filenames
+  filenames_0h = list(filter(lambda x:where_func(x,"/0h"),filenames))
+  filenames_6h = list(filter(lambda x:where_func(x,"/6h"),filenames))
+  #pprint(filenames_6h)
+  filenames_12h = list(filter(lambda x:where_func(x,"/12h"),filenames))
+  filenames_24h = list(filter(lambda x:where_func(x,"/24h"),filenames))
+  filenames_36h = list(filter(lambda x:where_func(x,"/36h"),filenames))
+  filenames_48h = list(filter(lambda x:where_func(x,"/48h"),filenames))
+  filenames_ordered = [
+    filenames_0h,
+    filenames_6h,
+    filenames_12h,
+    filenames_24h,
+    filenames_36h,
+    filenames_48h
+  ]
 
+  filenames_ordered = [[list(filter(lambda x:where_func(x,f"/{i}/"),F)) for i in EXP_MODES] for F in filenames_ordered]
+  filenames_ordered = [[ft for ft in filename_times if ft] for filename_times in filenames_ordered]
 
+  mean_0_std_1 = lambda arr: (arr-jnp.mean(arr,axis=(1,2),keepdims=True))/(jnp.std(arr,axis=(1,2),keepdims=True))
+  map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
+  saturate = lambda arr: jax.nn.sigmoid(arr)
+  mult_by_lmbr = lambda arr: arr*arr[...,:1]
+  def pad_to_full_width(arr):
+    X_pad = (1080-arr.shape[1])/2
+    Y_pad = (1080-arr.shape[2])/2
+    arr = jnp.pad(arr,((0,0),(floor(X_pad),ceil(X_pad)),(floor(Y_pad),ceil(Y_pad)),(0,0)))
+    return arr
+  
 
+  ims = []
+  for filename_times in tqdm(filenames_ordered):
+    
+    ims_timestep = []
+    for filename_conditions in filename_times:
+
+      if VERBOSE:
+       print(f"-------- Loading batch of {len(filename_conditions)} images ----------------")
+      ims_cond = []
+      for f_str in filename_conditions:
+        _im = skimage.io.imread(f_str)
+        ims_cond.append(_im)
+        if VERBOSE:
+          print(f"File {f_str} loaded with shape {_im.shape}")
+      
+      ims_cond = jnp.array(ims_cond,dtype="float64")
+      ims_cond = align_centre_of_mass(ims_cond)
+      
+      if BATCH_AVERAGE:
+        ims_cond = reduce(ims_cond,"BATCH C X Y ->() C X Y","mean")
+      
+      ims_cond = mean_0_std_1(ims_cond)
+      ims_cond = saturate(ims_cond)
+      ims_cond = map_to_0_1(ims_cond)
+      ims_cond = mult_by_lmbr(ims_cond)
+      
+      ims_cond = pad_to_full_width(ims_cond)
+      
+      if VERBOSE:
+        print(ims_cond.shape)
+      ims_cond = reduce(ims_cond,"BATCH (X x2) (Y y2) C -> BATCH X Y C","mean",x2=downsample,y2=downsample)
+      ims_cond = rearrange(ims_cond,"BATCH X Y C -> BATCH C X Y")
+      ims_cond = jnp.array(ims_cond)
+
+      ims_timestep.append(ims_cond)
+      if VERBOSE:
+        print(ims_cond.shape)
+    ims.append(ims_timestep)
+  return ims
 
 def load_micropattern_time_series(impath,downsample=4,BATCH_AVERAGE=False,VERBOSE=False):
   filenames = glob.glob(impath)
@@ -300,7 +397,7 @@ def load_micropattern_time_series(impath,downsample=4,BATCH_AVERAGE=False,VERBOS
     
     ims_timestep = np.array(ims_timestep,dtype="float64")
     if BATCH_AVERAGE:
-      ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> X Y C","mean",x2=downsample,y2=downsample)
+      ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> () X Y C","mean",x2=downsample,y2=downsample)
     else:
       ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> BATCH X Y C","mean",x2=downsample,y2=downsample)
     ims_timestep = mean_0_std_1(ims_timestep)
@@ -736,7 +833,7 @@ def adhesion_mask_convex_hull(data):
   thresh = sp.ndimage.gaussian_filter(thresh,1)  
   
   k = thresh>np.mean(thresh)
-  k = skimage.morphology.convex_hull_image(k,tolerance=0.1)
+  k = skimage.morphology.convex_hull_image(k,tolerance=0.9)
   
   
   return k
@@ -817,6 +914,105 @@ def adhesion_mask_batch(data):
   return masks
 
 
+
+
+
+def shift_image(img, shift_val):
+  """
+  Shift a 2D image by a fractional amount using bilinear interpolation with periodic boundaries.
+  
+  Parameters
+  ----------
+  img : numpy.ndarray
+    2D array with shape (H, W)
+  shift_val : tuple of float
+    Shift (row_shift, col_shift)
+    
+  Returns
+  -------
+  shifted_img : numpy.ndarray
+    Shifted image (H, W)
+  """
+  H, W = img.shape
+  row_shift, col_shift = shift_val
+
+  # Create meshgrid of coordinates
+  rows, cols = np.meshgrid(np.arange(H), np.arange(W), indexing='ij')
+  # Compute floating source coordinates
+  src_rows = rows - row_shift
+  src_cols = cols - col_shift
+
+  # Compute indices for bilinear interpolation
+  r0 = np.floor(src_rows).astype(int)
+  c0 = np.floor(src_cols).astype(int)
+  r1 = r0 + 1
+  c1 = c0 + 1
+
+  # Compute interpolation weights
+  dr = src_rows - r0
+  dc = src_cols - c0
+
+  # Apply periodic boundary conditions by wrapping indices
+  r0_mod = np.mod(r0, H)
+  r1_mod = np.mod(r1, H)
+  c0_mod = np.mod(c0, W)
+  c1_mod = np.mod(c1, W)
+
+  # Get pixel values using periodic indices
+  I00 = img[r0_mod, c0_mod]
+  I01 = img[r0_mod, c1_mod]
+  I10 = img[r1_mod, c0_mod]
+  I11 = img[r1_mod, c1_mod]
+
+  shifted = (1 - dr) * (1 - dc) * I00 + (1 - dr) * dc * I01 + dr * (1 - dc) * I10 + dr * dc * I11
+  return shifted
+
+def align_centre_of_mass(img_stack):
+  """
+  Given a stack of images with shape (N, C, H, W) where the spatial structure
+  is roughly circular, shift each image so that the center of mass (computed from
+  the sum over channels) aligns with the center of the image.
+  
+  Parameters
+  ----------
+  img_stack : numpy.ndarray
+    Stack of images with shape (N, H, W, C).
+
+  Returns
+  -------
+  aligned_stack : numpy.ndarray
+    Stack of aligned images with the same shape.
+  """
+  aligned_stack = img_stack.copy()
+  N, H, W, C = aligned_stack.shape
+  target = (H / 2.0, W / 2.0)
+  
+  # Precompute coordinate grid for center of mass calculation
+  rows, cols = np.meshgrid(np.arange(H), np.arange(W), indexing='ij')
+
+  for i in range(N):
+    img = aligned_stack[i]
+    # Compute weight by summing over channels
+    weight = img.sum(axis=-1)
+    total = np.sum(weight)
+    # If total weight is 0, keep image unchanged
+    if total == 0:
+      com = target
+    else:
+      com_row = np.sum(rows * weight) / total
+      com_col = np.sum(cols * weight) / total
+      com = (com_row, com_col)
+
+    # Calculate shift needed: positive shift moves image content downward/right.
+    shift_val = (target[0] - com[0], target[1] - com[1])
+    
+    # Shift each channel separately using bilinear interpolation
+    for c in range(C):
+      #aligned_stack[i, c] = shift_image(img[c], shift_val)
+      aligned_stack = aligned_stack.at[i,:,:,c].set(shift_image(img[:,:,c], shift_val))
+          
+  return aligned_stack
+  
 
 def my_animate(img,clip=True):
 	"""
