@@ -294,11 +294,9 @@ def load_micropattern_time_series_nodal_lef_cer(
   filenames = list(sorted(filenames))
   is_tif = lambda x: ".tif" in x
   filenames = list(filter(is_tif,filenames))
-  #pprint(filenames)
   where_func = lambda filenames,label:label in filenames
   filenames_0h = list(filter(lambda x:where_func(x,"/0h"),filenames))
   filenames_6h = list(filter(lambda x:where_func(x,"/6h"),filenames))
-  #pprint(filenames_6h)
   filenames_12h = list(filter(lambda x:where_func(x,"/12h"),filenames))
   filenames_24h = list(filter(lambda x:where_func(x,"/24h"),filenames))
   filenames_36h = list(filter(lambda x:where_func(x,"/36h"),filenames))
@@ -314,7 +312,8 @@ def load_micropattern_time_series_nodal_lef_cer(
 
   filenames_ordered = [[list(filter(lambda x:where_func(x,f"/{i}/"),F)) for i in EXP_MODES] for F in filenames_ordered]
   filenames_ordered = [[ft for ft in filename_times if ft] for filename_times in filenames_ordered]
-
+  if VERBOSE:
+    pprint(filenames_ordered)
   mean_0_std_1 = lambda arr: (arr-jnp.mean(arr,axis=(1,2),keepdims=True))/(jnp.std(arr,axis=(1,2),keepdims=True))
   map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
   saturate = lambda arr: jax.nn.sigmoid(arr)
@@ -341,7 +340,7 @@ def load_micropattern_time_series_nodal_lef_cer(
         if VERBOSE:
           print(f"File {f_str} loaded with shape {_im.shape}")
       
-      ims_cond = jnp.array(ims_cond,dtype="float64")
+      ims_cond = jnp.array(ims_cond,dtype="float32")
       ims_cond = align_centre_of_mass(ims_cond)
       
       if BATCH_AVERAGE:
@@ -370,7 +369,6 @@ def load_micropattern_time_series(impath,downsample=4,BATCH_AVERAGE=False,VERBOS
   filenames = glob.glob(impath)
   filenames = list(sorted(filenames))
   where_func = lambda filenames,label:label in filenames
-  #filenames_label = list(filter(lambda x:where_func(x,label),filenames))
   filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
   filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
   filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
@@ -380,8 +378,8 @@ def load_micropattern_time_series(impath,downsample=4,BATCH_AVERAGE=False,VERBOS
   filenames_ordered = [filenames_0h,filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
 
   
-  mean_0_std_1 = lambda arr: (arr-np.mean(arr,axis=(1,2),keepdims=True))/(np.std(arr,axis=(1,2),keepdims=True))
-  map_to_0_1 = lambda arr: (arr-np.min(arr,axis=(1,2),keepdims=True))/(np.max(arr,axis=(1,2),keepdims=True)-np.min(arr,axis=(1,2),keepdims=True))
+  mean_0_std_1 = lambda arr: (arr-jnp.mean(arr,axis=(1,2),keepdims=True))/(jnp.std(arr,axis=(1,2),keepdims=True))
+  map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
   saturate = lambda arr: jax.nn.sigmoid(arr)
   mult_by_lmbr = lambda arr: arr*arr[:,:,:,3:4]
 
@@ -395,7 +393,7 @@ def load_micropattern_time_series(impath,downsample=4,BATCH_AVERAGE=False,VERBOS
         print(f_str)
       ims_timestep.append(skimage.io.imread(f_str))
     
-    ims_timestep = np.array(ims_timestep,dtype="float64")
+    ims_timestep = jnp.array(ims_timestep,dtype="float32")
     if BATCH_AVERAGE:
       ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> () X Y C","mean",x2=downsample,y2=downsample)
     else:
@@ -425,15 +423,14 @@ def load_micropattern_smad23_lef1(impath,downsample=4,VERBOSE=False,BATCH_AVERAG
   filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
   filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
   filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
-  #filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
   filenames_ordered = [filenames_0h,filenames_6h,filenames_12h,filenames_24h,filenames_36h,filenames_48h]
 
   
-  mean_0_std_1 = lambda arr: (arr-np.mean(arr,axis=(0,1),keepdims=True))/(np.std(arr,axis=(0,1),keepdims=True))
-  map_to_0_1 = lambda arr: (arr-np.min(arr,axis=(0,1),keepdims=True))/(np.max(arr,axis=(0,1),keepdims=True)-np.min(arr,axis=(0,1),keepdims=True))
+  mean_0_std_1 = lambda arr: (arr-jnp.mean(arr,axis=(1,2),keepdims=True))/(jnp.std(arr,axis=(1,2),keepdims=True))
+  map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
   saturate = lambda arr: jax.nn.sigmoid(arr)
-  mult_by_lmbr = lambda arr: arr*arr[:,:,1:2]
-  reshape = lambda arr:rearrange(arr,"X Y C -> C X Y")
+  mult_by_lmbr = lambda arr: arr*arr[...,1:2]
+  reshape = lambda arr:rearrange(arr,"BATCH X Y C ->BATCH C X Y")
 
   ims = []
   for filenames in tqdm(filenames_ordered):
@@ -446,9 +443,9 @@ def load_micropattern_smad23_lef1(impath,downsample=4,VERBOSE=False,BATCH_AVERAG
       if VERBOSE:
         print(_im.shape,f_str)
     
-    ims_timestep = np.array(ims_timestep,dtype="float64")
+    ims_timestep = jnp.array(ims_timestep,dtype="float32")
     if BATCH_AVERAGE:
-      ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> X Y C","mean",x2=downsample,y2=downsample)
+      ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> () X Y C","mean",x2=downsample,y2=downsample)
     else:
       ims_timestep = reduce(ims_timestep,"BATCH (X x2) (Y y2) C -> BATCH X Y C","mean",x2=downsample,y2=downsample)
     ims_timestep = mean_0_std_1(ims_timestep)
