@@ -195,7 +195,6 @@ class NCA_Trainer(object):
 			  LOG_EVERY=40,
 			  CLEAR_CACHE_EVERY=100,
 			  WRITE_IMAGES=True,
-			  UPDATE_DATA_EVERY=1,
 			  LOSS_FUNC_STR = "euclidean",
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
@@ -359,7 +358,7 @@ class NCA_Trainer(object):
 		for i in pbar:
 			#prev_loss = mean_loss
 			if i%CLEAR_CACHE_EVERY==0:
-				print(f"Clearing cache at step {i}")
+				#print(f"Clearing cache at step {i}")
 				jax.clear_caches()
 			key = jax.random.fold_in(key,i)
 
@@ -413,7 +412,7 @@ class NCA_Trainer(object):
 						self.NCA_model = nca
 						self.NCA_model.save(self.MODEL_PATH,overwrite=True)
 						best_loss = mean_loss
-						tqdm.write("--- Model saved at "+str(i)+" epochs with loss "+str(mean_loss)+" ---")
+						#tqdm.write("--- Model saved at "+str(i)+" epochs with loss "+str(mean_loss)+" ---")
 		
 		if error==0:
 			print("Training completed successfully")
@@ -428,4 +427,8 @@ class NCA_Trainer(object):
 		elif self.IS_LOGGING and model_saved:
 			x,y = self.DATA_AUGMENTER.split_x_y(1)
 			x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
-			self.LOGGER.tb_training_end_log(self.NCA_model,x,t*2*x[0].shape[0],self.BOUNDARY_CALLBACK)
+			try:
+				self.LOGGER.tb_training_end_log(self.NCA_model,x,t*x[0].shape[0],self.BOUNDARY_CALLBACK)
+			except:
+				print("Error logging training end")
+				pass
