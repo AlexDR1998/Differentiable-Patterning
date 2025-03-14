@@ -3,6 +3,7 @@ from Common.trainer.abstract_data_augmenter_tree import DataAugmenterAbstract
 from Common.trainer.custom_functions import multi_channel_perlin_noise
 from Common.utils import key_pytree_gen
 import jax
+import equinox as eqx
 import jax.numpy as jnp
 import jax.random as jr
 import time
@@ -48,13 +49,17 @@ class DataAugmenter(DataAugmenterAbstract):
                       y: PyTree[Float[Array, "N C W H"]], 
                       i: Int[Scalar, ""],
                       key: Key):
-        propagate_xn = lambda x:x.at[1:].set(x[:-1])
-        reset_x0 = lambda x,key:x.at[0].set(multi_channel_perlin_noise(x.shape[2],x.shape[1],self.NOISE_CUTOFF,key))
-
-        keys = key_pytree_gen(key,(len(x),))
-
-        x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-        x = jax.tree_util.tree_map(reset_x0,x,keys) # Reset initial conditions to noise
-
+        
+        x = jittable_callback_helper(x,self.NOISE_CUTOFF,key)
         x = self.noise(x,0.005,key=key)
         return x,y
+
+@eqx.filter_jit
+def jittable_callback_helper(x,NOISE_CUTOFF,key):
+    propagate_xn = lambda x:x.at[1:].set(x[:-1])
+    reset_x0 = lambda x,key:x.at[0].set(multi_channel_perlin_noise(x.shape[2],x.shape[1],NOISE_CUTOFF,key))
+
+    keys = key_pytree_gen(key,(len(x),))
+
+    x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
+    x = jax.tree_util.tree_map(reset_x0,x,keys) # Reset initial conditions to noise
