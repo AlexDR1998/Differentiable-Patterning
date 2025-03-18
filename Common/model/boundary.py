@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import jax
 import equinox as eqx
+from einops import einsum
 from jaxtyping import Array, Float, Int, Key, Scalar
 
 class model_boundary(object):
@@ -33,6 +34,30 @@ class model_boundary(object):
 			x_masked = x.at[-m_channels:].set(self.MASK)
 			return x_masked
 		
+
+class hard_boundary(object):
+	def __init__(self,mask = None):
+		"""
+		Parameters
+		----------
+		mask : float32 [1,WIDTH,HEIGHT]
+			array encoding structure or boundary conditions for NCA intermediate states
+		Returns
+		-------
+		None.
+
+		"""
+		self.MASK = mask
+	
+	def __call__(self,x):
+		if self.MASK is None:
+			return x
+		else:
+			x_masked = einsum(x,self.MASK,'... C H W, () H W -> ... C H W')
+			
+
+			return x_masked
+	
 
 
 
