@@ -6,9 +6,10 @@ import datetime
 import Common.trainer.loss as loss
 import jaxpruner
 from functools import partial
-from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, mNCA_Train_log
+from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, mNCA_Train_log, aNCA_Train_log
 from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
+from NCA.model.NCA_attention import aNCA
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 from einops import repeat
 from Common.utils import key_pytree_gen
@@ -124,6 +125,8 @@ class NCA_Trainer(object):
 				self.LOGGER = kaNCA_Train_log(self.LOG_DIR,data)
 			elif isinstance(self.NCA_model , mNCA):
 				self.LOGGER = mNCA_Train_log(self.LOG_DIR,data)
+			elif isinstance(self.NCA_model , aNCA):
+				self.LOGGER = aNCA_Train_log(self.LOG_DIR,data)
 			else:
 				self.LOGGER = NCA_Train_log(self.LOG_DIR, data)
 			print("Logging training to: "+self.LOG_DIR)
