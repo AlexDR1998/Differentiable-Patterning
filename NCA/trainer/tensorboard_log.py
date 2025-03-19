@@ -112,6 +112,30 @@ class NCA_Train_log(Train_log):
 				
 
 
+class aNCA_Train_log(NCA_Train_log):
+	def log_model_parameters(self,nca,i):
+		#Log weights and biasses of model every 10 training epochs
+		
+		pass
+			# w1 = nca.layers[0].weight[:,:,0,0]
+			# w2 = nca.layers[2].weight[:,:,0,0]
+			# b2 = nca.layers[2].bias[:,0,0]
+			#w1,w2 = nca.get_weights()		
+			#tf.summary.histogram('Input layer weights',w1,step=i)
+			#tf.summary.histogram('Output layer weights',w2,step=i)
+			
+			#weight_matrix_figs = plot_weight_matrices(nca)
+			#tf.summary.image("Weight matrices",np.array(weight_matrix_figs)[:,0],step=i)
+					
+			#kernel_weight_figs = plot_weight_kernel_boxplot(nca)
+			#tf.summary.image("Input weights per kernel",np.array(kernel_weight_figs)[:,0],step=i)
+
+
+
+
+
+
+
 class kaNCA_Train_log(NCA_Train_log):
 	def log_model_parameters(self,nca,i):
 		#Log weights and biasses of model every 10 training epochs
