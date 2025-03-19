@@ -12,7 +12,7 @@ from NCA.model.NCA_multi_scale import mNCA
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 from einops import repeat
 from Common.utils import key_pytree_gen
-from Common.model.boundary import model_boundary
+from Common.model.boundary import model_boundary, hard_boundary, no_boundary
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key
 import time
@@ -28,6 +28,7 @@ class NCA_Trainer(object):
 				 model_filename=None,
 				 DATA_AUGMENTER = DataAugmenter,
 				 BOUNDARY_MASK = None, 
+				 BOUNDARY_MODE = "soft", # "soft" or "hard"
 				 SHARDING = None, 
 				 GRAD_LOSS = True,
 				 OBS_CHANNELS = None,
@@ -103,10 +104,12 @@ class NCA_Trainer(object):
 		self.BOUNDARY_CALLBACK = []
 		for b in range(self.BATCHES):
 			if BOUNDARY_MASK is not None:
-			
-				self.BOUNDARY_CALLBACK.append(model_boundary(BOUNDARY_MASK[b]))
+				if BOUNDARY_MODE=="soft":
+					self.BOUNDARY_CALLBACK.append(model_boundary(BOUNDARY_MASK[b]))
+				elif BOUNDARY_MODE=="hard":
+					self.BOUNDARY_CALLBACK.append(hard_boundary(BOUNDARY_MASK[b]))
 			else:
-				self.BOUNDARY_CALLBACK.append(model_boundary(None))
+				self.BOUNDARY_CALLBACK.append(no_boundary())
 		
 		#print(jax.tree_util.tree_structure(self.BOUNDARY_CALLBACK))
 		# Set logging behvaiour based on provided filename
