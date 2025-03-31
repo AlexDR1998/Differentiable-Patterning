@@ -12,6 +12,7 @@ import itertools
 from einops import rearrange
 class DataAugmenterAbstract(object):
 	
+	
 	def __init__(self,
 			  	 data_true:PyTree[Float[Array, "N C W H"]],
 				 hidden_channels:Int[Scalar, ""] =0):
@@ -224,7 +225,7 @@ class DataAugmenterAbstract(object):
 			data[b] = jnp.roll(data[b],-shifts[b],axis=(-1,-2))
 		return data
 
-	
+	@eqx.filter_jit
 	def noise(self,
 		   	  data:PyTree[Float[Array, "N C W H"]],
 			  am:Int[Scalar, ""],
@@ -260,7 +261,7 @@ class DataAugmenterAbstract(object):
 		return noisy
 	
 
-
+	@eqx.filter_jit
 	def zero_random_circle(self,
 						   data:PyTree[Float[Array, "N C W H"]],
 						   key:Key):
@@ -271,26 +272,44 @@ class DataAugmenterAbstract(object):
 			data (PyTree[Float[Array, N C W H]]): data to augment
 			key (Key): PRNGkey
 		"""
-		
+		#@jax.jit
 		def _zero_random_circle(image, key):
-			# Get image dimensions
-			height = image.shape[-1]
-			width = image.shape[-2]
-
-			# Generate random numbers for circle parameters
-			key, subkey1, subkey2, subkey3 = jr.split(key, 4)
-			center_x = jr.randint(subkey1, (), 0, width)
-			center_y = jr.randint(subkey2, (), 0, height)
-			max_radius = min(center_x, width - center_x, center_y, height - center_y)
-			radius = jr.randint(subkey3, (), 1, (max_radius + 1)/2)
-
-			Y, X = jnp.ogrid[:height, :width]
+			height = image.shape[-2]
+			width = image.shape[-1]
 			
-			# Create the mask for the circle
-			mask = (X - center_x)**2 + (Y - center_y)**2 <= radius**2
-			image = image.at[:,:,mask].set(0)
-
+			key, sk1, sk2, sk3 = jr.split(key, 4)
+			center_x = jr.randint(sk1, (), 0, width)
+			center_y = jr.randint(sk2, (), 0, height)
+			max_rad = jnp.minimum(center_x, width - center_x)
+			max_rad = jnp.minimum(max_rad, jnp.minimum(center_y, height - center_y))
+			radius = jr.randint(sk3, (), 1, jnp.maximum(2, max_rad + 1))/2
+			
+			Y, X = jnp.meshgrid(jnp.arange(height), jnp.arange(width), indexing='ij')
+			mask = (X - center_x) ** 2 + (Y - center_y) ** 2 <= radius ** 2
+			
+			# Assuming image shape is [C, H, W]
+			mask = rearrange(mask, 'h w -> () () h w')
+			image = jnp.where(mask, 0, image)
 			return image
+		# def _zero_random_circle(image, key):
+		# 	# Get image dimensions
+		# 	height = image.shape[-1]
+		# 	width = image.shape[-2]
+
+		# 	# Generate random numbers for circle parameters
+		# 	key, subkey1, subkey2, subkey3 = jr.split(key, 4)
+		# 	center_x = jr.randint(subkey1, (), 0, width)
+		# 	center_y = jr.randint(subkey2, (), 0, height)
+		# 	max_radius = min(center_x, width - center_x, center_y, height - center_y)
+		# 	radius = jr.randint(subkey3, (), 1, (max_radius + 1)/2)
+
+		# 	Y, X = jnp.ogrid[:height, :width]
+			
+		# 	# Create the mask for the circle
+		# 	mask = (X - center_x)**2 + (Y - center_y)**2 <= radius**2
+		# 	image = image.at[:,:,mask].set(0)
+
+		# 	return image
 
 
 		# Get the leaves (individual images) and the structure of the PyTree
