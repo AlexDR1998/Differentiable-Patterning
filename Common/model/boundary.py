@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import jax
 import equinox as eqx
-from einops import einsum
+from einops import einsum,rearrange
 from jaxtyping import Array, Float, Int, Key, Scalar
 
 class model_boundary(object):
@@ -24,16 +24,24 @@ class model_boundary(object):
 
 		self.MASK = mask
 		
-	#@eqx.filter_jit	
+	@eqx.filter_jit	
 	def __call__(self,x):
-		if self.MASK is None:
-			return x
-		else:
-			m_channels = self.MASK.shape[0]
-			#print(self.MASK.shape)
-			x_masked = x.at[-m_channels:].set(self.MASK)
-			return x_masked
-		
+
+		m_channels = self.MASK.shape[0]
+		x_masked = x.at[-m_channels:].set(self.MASK)
+		return x_masked
+	
+
+
+class no_boundary(object):
+	"""
+		Callable object that does not enforce any boundary conditions on intermediate NCA states
+	"""
+	def __init__(self):
+		return None
+	
+	def __call__(self,x):
+		return x
 
 class hard_boundary(object):
 	def __init__(self,mask = None):
@@ -47,16 +55,15 @@ class hard_boundary(object):
 		None.
 
 		"""
-		self.MASK = mask
+		self.MASK = rearrange(mask,"() H W -> H W")
 	
+	@eqx.filter_jit
 	def __call__(self,x):
-		if self.MASK is None:
-			return x
-		else:
-			x_masked = einsum(x,self.MASK,'... C H W, () H W -> ... C H W')
-			
-
-			return x_masked
+		#if self.MASK is None:
+		#	return x
+		
+		x_masked = einsum(x,self.MASK,'... C H W, H W -> ... C H W')
+		return x_masked
 	
 
 
@@ -87,12 +94,8 @@ class trainable_boundary(eqx.Module):
 		self.m_channels = mask.shape[0]
 
 	def __call__(self,x):
-		if self.mask is None:
-			return x
-		else:
-
-			x_masked = x.at[-self.m_channels:].set(self.limit_function(self.mask))
-			return x_masked	
+		x_masked = x.at[-self.m_channels:].set(self.limit_function(self.mask))
+		return x_masked	
 
 	def coverage(self):
 		return jnp.sum(self.limit_function(self.mask))
