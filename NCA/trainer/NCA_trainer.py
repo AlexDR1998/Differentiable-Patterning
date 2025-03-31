@@ -166,9 +166,6 @@ class NCA_Trainer(object):
 			x_obs = x_obs.at[:,self.OBS_CHANNELS:].set(0.1*x_obs[:,self.OBS_CHANNELS:])
 			y_obs = y_obs.at[:,self.OBS_CHANNELS:].set(0.1*y_obs[:,self.OBS_CHANNELS:])
 		return self._loss_func(x_obs,y_obs,key,self.LOSS_TIME_CHANNEL_MASK)
-		#return loss.vgg(x_obs,y_obs,key)
-		#return loss.l2(x_obs,y_obs)
-		#return loss.random_sampled_euclidean(x_obs, y_obs, key, SAMPLES=SAMPLES)
 	@eqx.filter_jit
 	def intermediate_reg(self,x,full=True):
 		"""
@@ -204,7 +201,7 @@ class NCA_Trainer(object):
 		reg : float32 PyTree [BATCH]
 		
 		"""
-		x_in_bound = jax.tree_util.tree_map(self.BOUNDARY_CALLBACK,x)
+		x_in_bound = jax.tree_util.tree_map(lambda f,x:f(x),self.BOUNDARY_CALLBACK,x)
 		x_out_bound = jax.tree_util.tree_map(lambda x,y: x-y,x,x_in_bound)
 		return jnp.array(jax.tree_util.tree_map(lambda x: jnp.mean(jnp.abs(x)),x_out_bound))
 
