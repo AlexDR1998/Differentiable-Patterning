@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as jnp
+import jax.random as jr
 import optax
 import equinox as eqx
 import datetime
@@ -9,7 +10,7 @@ from functools import partial
 from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, mNCA_Train_log, aNCA_Train_log
 from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
-from NCA.model.NCA_attention import aNCA
+from NCA.model.NCA_multihead_attention import aNCA
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 from einops import repeat
 from Common.utils import key_pytree_gen
@@ -136,8 +137,8 @@ class NCA_Trainer(object):
 		
 	@eqx.filter_jit	
 	def loss_func(self,
-			   	  x:Float[Array, "N CHANNELS x y"],
-				  y:Float[Array, "N CHANNELS x y"],
+			   	  x:Float[Array, "N CHANNELS x y"],  # noqa: F722
+				  y:Float[Array, "N CHANNELS x y"],  # noqa: F722
 				  key: Key,
 				  SAMPLES)->Float[Array, "N"]:
 		"""
@@ -149,7 +150,7 @@ class NCA_Trainer(object):
 			NCA state
 		y : float32 array [N,OBS_CHANNELS,_,_]
 			data
-		key : jax.random.PRNGKey
+		key : jr.PRNGKey
 			Jax random number key. Only useful for loss functions that are stochastic (i.e. subsampled).
 		Returns
 		-------
@@ -190,12 +191,32 @@ class NCA_Trainer(object):
 		if not full:
 			x = x[:,:self.OBS_CHANNELS]
 		return jnp.mean(jnp.abs(x)+jnp.abs(x-1)-1)
+
+	def boundary_regulariser(self,x):
+		"""
+		Penalise the model for any nonzero components outside the boundary mask
+		Parameters
+		----------
+		x : float32 PyTree [BATCH] Array [,N,CHANNELS,_,_]
+			NCA state
+		Returns
+		-------
+		reg : float32 PyTree [BATCH]
+		
+		"""
+		x_in_bound = jax.tree_util.tree_map(self.BOUNDARY_CALLBACK,x)
+		x_out_bound = jax.tree_util.tree_map(lambda x,y: x-y,x,x_in_bound)
+		return jnp.array(jax.tree_util.tree_map(lambda x: jnp.mean(jnp.abs(x)),x_out_bound))
+
+
+		
 	
 	def train(self,
 		      t,
 			  iters,
 			  optimiser=None,
 			  STATE_REGULARISER=1.0,
+			  BOUNDARY_REGULARISER=1.0,
 			  WARMUP=64,
 			  LOSS_SAMPLING = 64,
 			  LOG_EVERY=40,
@@ -205,7 +226,7 @@ class NCA_Trainer(object):
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
-			  key=jax.random.PRNGKey(int(time.time()))):
+			  key=jr.PRNGKey(int(time.time()))):
 		"""
 		Perform t steps of NCA on x, compare output to y, compute loss and gradients of loss wrt model parameters, and update parameters.
 
@@ -234,8 +255,8 @@ class NCA_Trainer(object):
 			Whether to prune model weights to a target sparsity
 		TARGET_SPARSITY : float
 			Target sparsity for model pruning - [0,1]
-		key : jax.random.PRNGKey, optional
-			Jax random number key. The default is jax.random.PRNGKey(int(time.time())).
+		key : jr.PRNGKey, optional
+			Jax random number key. The default is jr.PRNGKey(int(time.time())).
 		Returns
 		-------
 		None
@@ -279,7 +300,7 @@ class NCA_Trainer(object):
 				number of NCA timesteps between x[N] and x[N+1]
 			opt_state : optax.OptState
 				internal state of self.OPTIMISER
-			key : jax.random.PRNGKey, optional
+			key : jr.PRNGKey, optional
 				Jax random number key. 
 				
 			Returns
@@ -299,28 +320,30 @@ class NCA_Trainer(object):
 				# Gradient and values of loss function computed here
 				_nca = eqx.combine(nca_diff,nca_static)
 				v_nca = jax.vmap(_nca,in_axes=(0,None,0),out_axes=0,axis_name="N") # boundary is independant of time N
-				vv_nca = lambda x,callback,key_array:jax.tree_util.tree_map(v_nca,x,callback,key_array)
+				vv_nca = lambda x,callback,key_array:jax.tree_util.tree_map(v_nca,x,callback,key_array)  # noqa: E731
 				reg_log = jnp.zeros(len(x))
-				v_intermediate_reg = lambda x:jax.numpy.array(jax.tree_util.tree_map(self.intermediate_reg,x))
-				_loss_func = lambda x,y,key:self.loss_func(x,y,key,SAMPLES=LOSS_SAMPLING)
-				v_loss_func = lambda x,y,key_array:jax.numpy.array(jax.tree_util.tree_map(_loss_func,x,y,key_array))				
+				boundary_reg_log = jnp.zeros(len(x))
+				v_intermediate_reg = lambda x:jnp.array(jax.tree_util.tree_map(self.intermediate_reg,x))  # noqa: E731
+				_loss_func = lambda x,y,key:self.loss_func(x,y,key,SAMPLES=LOSS_SAMPLING)  # noqa: E731
+				v_loss_func = lambda x,y,key_array:jnp.array(jax.tree_util.tree_map(_loss_func,x,y,key_array))  # noqa: E731
 				
 				# Structuring this as function and lax.scan speeds up jit compile a lot
 
 				def nca_step(carry,j): # function of type a,b -> a
-					key,x,reg_log = carry
-					key = jax.random.fold_in(key,j)
+					key,x,reg_log,boundary_reg_log = carry
+					key = jr.fold_in(key,j)
 					key_array = key_pytree_gen(key,(len(x),x[0].shape[0]))
 					x = vv_nca(x,self.BOUNDARY_CALLBACK,key_array)				
 					reg_log+=v_intermediate_reg(x)
-					return (key,x,reg_log),None
+					boundary_reg_log+=self.boundary_regulariser(x)
+					return (key,x,reg_log,boundary_reg_log),None
 
 				#(key,x,reg_log),_ = jax.lax.scan(nca_step,(key,x,reg_log),xs=jnp.arange(t))
-				(key,x,reg_log),_ = eqx.internal.scan(nca_step,(key,x,reg_log),xs=jnp.arange(t),kind=LOOP_AUTODIFF)
+				(key,x,reg_log,boundary_reg_log),_ = eqx.internal.scan(nca_step,(key,x,reg_log,boundary_reg_log),xs=jnp.arange(t),kind=LOOP_AUTODIFF)
 				
 				loss_key = key_pytree_gen(key, (len(x),))
 				losses = v_loss_func(x, y, loss_key)
-				mean_loss = jnp.mean(losses)+STATE_REGULARISER*(jnp.mean(reg_log)/t)
+				mean_loss = jnp.mean(losses)+STATE_REGULARISER*(jnp.mean(reg_log)/t)+BOUNDARY_REGULARISER*(jnp.mean(boundary_reg_log)/t)
 				return mean_loss,(x,losses)
 			
 			nca_diff,nca_static = nca.partition()
@@ -366,7 +389,7 @@ class NCA_Trainer(object):
 			if i%CLEAR_CACHE_EVERY==0:
 				#print(f"Clearing cache at step {i}")
 				jax.clear_caches()
-			key = jax.random.fold_in(key,i)
+			key = jr.fold_in(key,i)
 
 			#nca,opt_state,(mean_loss,(x,losses)) = make_step(nca, x, y, t, opt_state,key)
 			nca,x_new,y_new,t,opt_state,key,mean_loss,losses = make_step(nca, x, y, t, opt_state,key)
