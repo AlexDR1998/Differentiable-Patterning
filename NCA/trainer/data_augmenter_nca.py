@@ -101,7 +101,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		y = self.shift(y,am,key=key)
 		#print(x[0].shape)
 		#print(len(x))
-		if i < 1000:
+		if i < 10000:
 			x = self.zero_random_circle(x,key=key)
 		x = self.noise(x,0.005,key=key)
 
@@ -110,7 +110,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		return x,y
 		
 
-eqx.filter_jit
+@eqx.filter_jit
 def jittable_callback_bit(x,x_true,OBS_CHANNELS):
 	propagate_xn = lambda x:x.at[1:].set(x[:-1])
 	reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
