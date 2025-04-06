@@ -81,3 +81,19 @@ def perlin(size,cutoff,key):
 def multi_channel_perlin_noise(size,channels,cutoff,key):
     v_perlin = jax.vmap(perlin,in_axes=(None,None,0),out_axes=0)
     return v_perlin(size,cutoff,jr.split(key,channels))
+
+
+
+
+def multi_batch_perlin_noise(X,cutoff,key):
+    batch_size = X.shape[0]
+    size = X.shape[-1]
+    channels = X.shape[2]
+    output = []
+    for i in range(batch_size):
+        key = jr.fold_in(key, i)
+        output.append(multi_channel_perlin_noise(size,channels,cutoff,key))
+    return np.array(output)
+    
+    #v_perlin = jax.vmap(multi_batch_perlin_noise,in_axes=(None,None,None,0),out_axes=0)
+    #return v_perlin(size,channels,cutoff,jr.split(key,channels))
