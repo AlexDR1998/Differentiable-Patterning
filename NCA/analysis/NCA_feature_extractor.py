@@ -13,7 +13,7 @@ from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 from einops import repeat
-from Common.utils import key_pytree_gen,key_array_gen
+from Common.utils import key_pytree_gen,key_array_gen,load_emoji_sequence
 from Common.model.boundary import model_boundary
 from tqdm import tqdm
 from einops import rearrange
@@ -70,14 +70,6 @@ class NCA_Feature_Extractor(object):
             carry,activations = jax.lax.scan(loop_body,(key,X),jnp.arange(t1))
             _,X = carry
             
-            
-            # activations = []
-            # for i in range(t1):
-            #     key = jr.fold_in(key,i)
-            #     key_pytree = key_array_gen(key,(BATCH_SIZE,))
-            #     X,act = vcall(X,lambda x:x,key_pytree)
-            #     if i >= t0:
-            #         activations.append(act)
 
             return X,activations
         
@@ -98,11 +90,7 @@ class NCA_Feature_Extractor(object):
         Xs = jnp.array(Xs)
 
 
-        #print("Shape before: ")
-        #print(len(As))
-        #print(len(As[0]))
-        #print(len(As[0][0]))
-        #print(jnp.array(As[0][0]).shape)
+        
 
 
         ### Reshape activations from [Models,Timestep,Layer] [Batch,Features,Height,Width] to [Layers] [Models,Timestep,Batch,Features,Height,Width]
@@ -115,16 +103,7 @@ class NCA_Feature_Extractor(object):
         A_new = [list(i) for i in zip(*As)]
         
         
-        #print("Shape after: ")
-        #print(len(A_new))
-        #print(len(A_new[0]))
-        #print(len(A_new[0][0]))
-        #print(jnp.array(A_new[0][0]).shape)
-        # for As in A_new:
-        #     #print(A.shape)
-        #     print(len(As))
-        #     for A in As:
-        #         print(A.shape)
+        
         A_new = [jnp.array(A) for A in A_new]
 
         #print(len(A_new))
@@ -168,3 +147,52 @@ class NCA_Feature_Extractor_Texture(NCA_Feature_Extractor):
         for i in range(BATCH_SIZE):
             ic.append(multi_channel_perlin_noise(SIZE,self.NCA_models[0].N_CHANNELS,4,jr.fold_in(key,i)))
         return jnp.array(ic)
+
+class NCA_Feature_Extractor_Emoji(NCA_Feature_Extractor):
+    def initial_condition(self,SIZE,BATCH_SIZE,key):
+        data = load_emoji_sequence([
+        "crab.png",
+        "microbe.png",
+        "avocado.png",
+        "alien_monster.png",
+        "butterfly.png",
+        "lizard.png",
+        "mushroom.png",
+        ],downsample=1)
+
+
+        # For the initial condition, take a small cropped square from the middle of the target image
+
+        data = rearrange(data,"B T C W H -> T B C W H")
+        data = repeat(data,"B T C W H -> (B b) T C W H",b=1)
+        initial_condition = jnp.array(data)
+
+
+        W = initial_condition.shape[-2]
+        H = initial_condition.shape[-1]
+
+        initial_condition = initial_condition.at[:,:,:,:W//2-6].set(0)
+        initial_condition = initial_condition.at[:,:,:,W//2+5:].set(0)
+        initial_condition = initial_condition.at[:,:,:,:,:H//2-6].set(0)
+        initial_condition = initial_condition.at[:,:,:,:,H//2+5:].set(0)
+
+
+        data = jnp.concatenate([initial_condition,data,data],axis=1) # Join initial condition and data along the time axis
+
+        print("(Batch, Time, Channels, Width, Height): "+str(data.shape))
+        
+
+        class data_augmenter_subclass(DataAugmenter):
+            #Redefine how data is pre-processed before training
+            def data_init(self,SHARDING=None):
+                data = self.return_saved_data()
+                data = self.duplicate_batches(data, 1)
+                data = self.pad(data, 10) 		
+                self.save_data(data)
+                return None
+
+        DA = data_augmenter_subclass(data,hidden_channels=self.NCA_models[0].N_CHANNELS-4)
+        X0,_ = DA.split_x_y()
+        X0 = jnp.array(X0)[:BATCH_SIZE,0]
+        print(X0.shape)
+        return jnp.array(X0)

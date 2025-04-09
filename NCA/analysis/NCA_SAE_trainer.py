@@ -1,4 +1,4 @@
-from NCA.analysis.NCA_feature_extractor import NCA_Feature_Extractor_Texture
+from NCA.analysis.NCA_feature_extractor import NCA_Feature_Extractor_Texture, NCA_Feature_Extractor_Emoji
 from NCA.analysis.NCA_SAE_class import SparseAutoencoder
 from NCA.analysis.tensorboard_log import SAE_Train_log
 import jax
@@ -14,7 +14,7 @@ import optax
 class NCA_SAE_Trainer(object):
 
     def __init__(self,
-                 Feature_Extractor: NCA_Feature_Extractor_Texture,
+                 Feature_Extractor: NCA_Feature_Extractor_Emoji,
                  SAE: SparseAutoencoder,
                  Sparsity: float,
                  filename = None,
