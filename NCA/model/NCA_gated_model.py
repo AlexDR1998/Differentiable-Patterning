@@ -14,6 +14,8 @@ class gNCA(NCA):
     FIRE_RATE: float
     op: Ops
     perception: callable
+    CONFIG: dict
+    
     def __init__(self,
                 N_CHANNELS,
                 KERNEL_STR=["ID","LAP"], 
@@ -42,3 +44,5 @@ class gNCA(NCA):
         self.layers[-2] = eqx.tree_at(w_where,self.layers[-2],w_zeros)
         self.layers[-2] = eqx.tree_at(b_where,self.layers[-2],b_zeros)
 
+        # Dict of hyperparameters for logging
+        self.CONFIG["MODEL"] = "gNCA"
