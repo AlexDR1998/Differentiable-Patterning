@@ -1,6 +1,8 @@
+import time
 import jax
 from math import floor,ceil
 import jax.numpy as jnp
+import jax.random as jr
 import equinox as eqx
 import numpy as np
 #import pandas as pd
@@ -365,18 +367,20 @@ def load_micropattern_time_series_nodal_lef_cer(
     ims.append(ims_timestep)
   return ims
 
-def load_micropattern_time_series(impath,downsample=4,BATCH_AVERAGE=False,VERBOSE=False):
+def load_micropattern_time_series(impath,downsample=4,BATCH_AVERAGE=False,VERBOSE=False,times=[0,12,24,36,48,60]):
   filenames = glob.glob(impath)
   filenames = list(sorted(filenames))
   where_func = lambda filenames,label:label in filenames
-  filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
-  filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
-  filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
-  filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
-  filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
-  filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
-  filenames_ordered = [filenames_0h,filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
-
+  # filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
+  # filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
+  # filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
+  # filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
+  # filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
+  # filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
+  # filenames_ordered = [filenames_0h,filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
+  filenames_ordered = [
+    list(filter(lambda x:where_func(x,f"_{i}h"),filenames)) for i in times
+  ]
   
   mean_0_std_1 = lambda arr: (arr-jnp.mean(arr,axis=(1,2),keepdims=True))/(jnp.std(arr,axis=(1,2),keepdims=True))
   map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
@@ -459,8 +463,7 @@ def load_micropattern_smad23_lef1(impath,downsample=4,VERBOSE=False,BATCH_AVERAG
   return ims
 
 
-
-
+   
 
 def load_micropattern_radii(impath):
 	filenames = glob.glob(impath)
@@ -499,7 +502,44 @@ def load_micropattern_radii(impath):
 	#print(jnp.mean(ims))
 	return ims,masks,shapes
 
-def load_micropattern_ellipse(impath):
+
+def downsample_padder(arr,downsample):
+  """Pads arrays with extra zeros if needed such that it can be properly downsampled by downsample
+
+    Assumes array in shape X Y C
+  Args:
+      arr (_type_): _description_
+      downsample (_type_): _description_
+  """
+  #print(arr.shape)
+  if arr.shape[0] % downsample != 0:
+    arr = np.pad(arr,((0,downsample-(arr.shape[0] % downsample)),(0,0),(0,0)))
+  if arr.shape[1] % downsample != 0:
+    arr = np.pad(arr,((0,0),(0,downsample-(arr.shape[1] % downsample)),(0,0)))
+  
+  return arr
+
+def pad_to_biggest(ims):
+  """takes a list of images [array[X Y C]] and pads the X and Y dimensions to that of the biggest one
+  """
+  # Determine the maximum height and width among all images
+  max_height = max(im.shape[0] for im in ims)
+  max_width = max(im.shape[1] for im in ims)
+  print("Max height:",max_height)
+  print("Max width:",max_width)
+  padded = []
+  for im in ims:
+    h, w, _ = im.shape
+    pad_top = (max_height - h) // 2
+    pad_bottom = max_height - h - pad_top
+    pad_left = (max_width - w) // 2
+    pad_right = max_width - w - pad_left
+    # Pad only the spatial dimensions (channels remain unchanged)
+    padded_im = np.pad(im, ((pad_top, pad_bottom), (pad_left, pad_right),(0, 0)), mode="constant")
+    padded.append(padded_im)
+  return padded
+
+def load_micropattern_ellipse(impath,DOWNSAMPLE,BATCH_AVERAGE=False):
   filenames = glob.glob(impath)
   filenames = list(sorted(filenames))
   #print(sorted(filenames))
@@ -508,12 +548,13 @@ def load_micropattern_ellipse(impath):
     ims.append(skimage.io.imread(f_str))
   #print(jax.tree_util.tree_structure(ims))
 
-  normalise = lambda arr : arr/np.max(arr,axis=(0,1))
-  pad = lambda arr : np.pad(arr,((10,10),(10,10),(0,0)))
-  mask_out = lambda arr,mask : np.where(np.repeat(mask[0][:,:,np.newaxis],4,axis=-1),arr,np.zeros_like(arr))
-  reshape = lambda arr:np.einsum("xyc->cxy",arr)
-  just_mask = lambda mask:mask[0][np.newaxis]
-  shapes = lambda arr: arr.shape[-1]
+  downsample = lambda arr : reduce(downsample_padder(arr,DOWNSAMPLE),"(X x) (Y y) C -> X Y C","mean",x=DOWNSAMPLE,y=DOWNSAMPLE)  # noqa: E731
+  
+  normalise = lambda arr : arr/np.max(arr,axis=(0,1))  # noqa: E731
+  mask_out = lambda arr,mask : np.where(np.repeat(mask[0][:,:,np.newaxis],4,axis=-1),arr,np.zeros_like(arr))  # noqa: E731
+  reshape = lambda arr:np.einsum("xyc->cxy",arr)  # noqa: E731
+  just_mask = lambda mask:mask[0][np.newaxis]  # noqa: E731
+  shapes = lambda arr: arr.shape[-1]  # noqa: E731
   def stack_x0(arr,mask):
     x0 = np.zeros_like(arr).astype(float)
     masked_arr = np.ma.array(arr,mask=~np.repeat(mask[0][np.newaxis],4,axis=0).astype(bool))
@@ -523,7 +564,15 @@ def load_micropattern_ellipse(impath):
     x0[1]*= masked_arr[1].mean()
     x0[3]*= masked_arr[3].mean()
     return np.stack((x0,arr),axis=0)
-  ims = list(map(lambda x: pad(normalise(x)),ims))
+  ims = list(map(normalise,ims))
+  ims = pad_to_biggest(ims)
+  #ims = np.array(ims)
+  ims = np.array([downsample_padder(im,DOWNSAMPLE) for im in ims])
+  if BATCH_AVERAGE:
+    ims = reduce(ims,"B (X x) (Y y) C -> () X Y C","mean",x=DOWNSAMPLE,y=DOWNSAMPLE)
+  else:
+    ims = reduce(ims,"B (X x) (Y y) C -> B X Y C","mean",x=DOWNSAMPLE,y=DOWNSAMPLE)
+  ims = list(ims)
   masks = list(map(adhesion_mask_convex_hull_ellipse,tqdm(ims)))
   ims = list(map(mask_out,ims,masks))
   ims = list(map(reshape,ims))
@@ -531,10 +580,74 @@ def load_micropattern_ellipse(impath):
   masks = list(map(just_mask,masks))
   shapes = list(map(shapes,ims))
 
-
-  #ims = jax.tree_util.treedef_tuple(ims)
-  #print(jnp.mean(ims))
   return ims,masks,shapes
+
+
+def load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE=False):
+  """_summary_
+
+  Args:
+      impath (string): path to files
+      DOWNSAMPLE (int): downsampling ratio
+      BATCH_AVERAGE (bool, optional): Average data across batches. Defaults to False.
+
+  Returns:
+      Array [BATCH, X, Y, C]: _description_
+  """
+  filenames = glob.glob(impath)
+  filenames = list(sorted(filenames))
+  ims = []
+  for f_str in filenames:
+    ims.append(skimage.io.imread(f_str))
+  mean_0_std_1 = lambda arr: (arr-jnp.mean(arr,axis=(1,2),keepdims=True))/(jnp.std(arr,axis=(1,2),keepdims=True))
+  map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
+  saturate = lambda arr: jax.nn.sigmoid(arr)
+  mult_by_lmbr = lambda arr: arr*arr[:,:,:,3:4]
+  ims = pad_to_biggest(ims)
+  ims = list(map(lambda a:downsample_padder(a,DOWNSAMPLE),ims))
+  ims = jnp.array(ims,dtype="float32")
+  
+  if BATCH_AVERAGE:
+    ims = reduce(ims,"BATCH (X x2) (Y y2) C -> () X Y C","mean",x2=DOWNSAMPLE,y2=DOWNSAMPLE)
+  else:
+    ims = reduce(ims,"BATCH (X x2) (Y y2) C -> BATCH X Y C","mean",x2=DOWNSAMPLE,y2=DOWNSAMPLE)
+  ims = mean_0_std_1(ims)
+  ims = saturate(ims)
+  ims = map_to_0_1(ims)
+  ims = mult_by_lmbr(ims)
+  ims = rearrange(ims,"BATCH X Y C -> BATCH C X Y")
+  return ims
+
+def load_micropattern_shape_sequence(impath,DOWNSAMPLE,BATCH_AVERAGE):
+  CHANNELS=[
+     "FOXA2",
+     "SOX17",
+     "TBXT",
+     "LMBR",
+     "CER",
+     "LEF1",
+     "NODAL",
+     "LEF1",
+     "SMAD23"
+  ]
+  true_data = load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE)
+  masks = adhesion_mask_convex_hull(rearrange(true_data,"B C X Y -> X Y B C"))
+
+  key = jr.PRNGKey(int(time.time()))
+  n_channels = len(CHANNELS)
+  # Expand the mask to have one channel per synthetic condition.
+  mask_expanded = repeat(masks, "X Y -> C X Y", C=n_channels)
+  # Create synthetic initial conditions by sampling random values where the mask is True, zero elsewhere.
+  synthetic_initial_conditions = jnp.where(
+    mask_expanded,
+    jax.random.uniform(key, shape=(n_channels,) + masks.shape),
+    0.0
+  )
+
+  return true_data,masks,synthetic_initial_conditions
+
+
+
 
 
 def load_micropattern_triangle(impath):
@@ -813,8 +926,8 @@ def adhesion_mask_convex_hull(data):
     
     Parameters
     ----------
-    data : float32 array [T,1,size,size,4]
-      timesteps (T) of RGBA images. Dummy index of 1 for number of batches
+    data : float32 array [X,Y,...]
+      data to be masked.
 
     rscale : float32
       scales how much bigger or smaller the radius of the mask is
@@ -822,14 +935,22 @@ def adhesion_mask_convex_hull(data):
       
     Returns
     -------
-    mask : boolean array [1,size,size]
+    mask : boolean array [X,Y]
       Array with circle of 1/0 indicating likely presence/lack of adhesive surface in micropattern
   """
   
-  thresh = np.mean(data,axis=-1) 
+  if len(data.shape) == 3:
+    thresh = reduce(data,"X Y C -> X Y","mean")
+  elif len(data.shape) == 4:
+    thresh = reduce(data,"X Y B C -> X Y","mean")
+  elif len(data.shape) == 5:
+    thresh = reduce(data,"X Y B T C -> X Y","mean")
+  else:
+    raise ValueError("Data must be 3,4 or 5 dimensional")
   thresh = sp.ndimage.gaussian_filter(thresh,1)  
-  
+  print(thresh.shape)
   k = thresh>np.mean(thresh)
+  print(k.shape)
   k = skimage.morphology.convex_hull_image(k,tolerance=0.9)
   
   
