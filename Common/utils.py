@@ -371,16 +371,16 @@ def load_micropattern_time_series(impath,downsample=4,BATCH_AVERAGE=False,VERBOS
   filenames = glob.glob(impath)
   filenames = list(sorted(filenames))
   where_func = lambda filenames,label:label in filenames
-  # filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
-  # filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
-  # filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
-  # filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
-  # filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
-  # filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
-  # filenames_ordered = [filenames_0h,filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
-  filenames_ordered = [
-    list(filter(lambda x:where_func(x,f"_{i}h"),filenames)) for i in times
-  ]
+  filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
+  filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
+  filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
+  filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
+  filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
+  filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
+  filenames_ordered = [filenames_0h,filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
+  # filenames_ordered = [
+  #   list(filter(lambda x:where_func(x,f"_{i}h"),filenames)) for i in times
+  # ]
   
   mean_0_std_1 = lambda arr: (arr-jnp.mean(arr,axis=(1,2),keepdims=True))/(jnp.std(arr,axis=(1,2),keepdims=True))
   map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
@@ -628,7 +628,7 @@ def load_micropattern_shape_sequence(impath,DOWNSAMPLE,BATCH_AVERAGE):
      "LEF1",
      "NODAL",
      "LEF1",
-     "SMAD23"
+     #"SMAD23"
   ]
   true_data = load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE)
   masks = adhesion_mask_convex_hull(rearrange(true_data,"B C X Y -> X Y B C"))
