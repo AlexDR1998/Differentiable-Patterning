@@ -119,7 +119,7 @@ class NCA_Trainer(object):
 		self.model_filename = model_filename
 		#print(jax.tree_util.tree_structure(self.BOUNDARY_CALLBACK))
 		
-	def setup_logging(self,BACKEND):
+	def setup_logging(self,BACKEND,wandb_args):
 		# Set logging behvaiour based on provided filename
 		print(f"Raw data shape: {jnp.array(self._data_raw).shape}")
 		if self.model_filename is None:
@@ -143,14 +143,16 @@ class NCA_Trainer(object):
 				self.LOG_DIR = self._LOG_DIRECTORY+self.model_filename+"/train"
 				config = {"MODEL":self.NCA_model.CONFIG,
 			  			 "TRAINING":self.TRAIN_CONFIG}
+				wandb_args["config"] = config
+				
 				if isinstance(self.NCA_model ,kaNCA):
-					self.LOGGER = kaNCA_Train_log(data=self._data_raw,config=config)
+					self.LOGGER = kaNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
 				elif isinstance(self.NCA_model , mNCA):
-					self.LOGGER = mNCA_Train_log(data=self._data_raw,config=config)
+					self.LOGGER = mNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
 				elif isinstance(self.NCA_model , aNCA):
-					self.LOGGER = aNCA_Train_log(data=self._data_raw,config=config)
+					self.LOGGER = aNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
 				else:
-					self.LOGGER = NCA_Train_log(data=self._data_raw,config=config)
+					self.LOGGER = NCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
 				print("Logging training to: "+self.LOG_DIR)
 		self.MODEL_PATH = self._MODEL_DIRECTORY+self.model_filename
 		print("Saving model to: "+self.MODEL_PATH)
@@ -243,6 +245,9 @@ class NCA_Trainer(object):
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
+			  wandb_args={"project":"NCA",
+				 		  "group":"group_1",
+				 		  "tags":["training"]},
 			  key=jr.PRNGKey(int(time.time()))):
 		"""
 		Perform t steps of NCA on x, compare output to y, compute loss and gradients of loss wrt model parameters, and update parameters.
@@ -296,7 +301,7 @@ class NCA_Trainer(object):
 			"TARGET_SPARSITY":TARGET_SPARSITY
 		}
 		
-		self.setup_logging("wandb")
+		self.setup_logging("wandb",wandb_args=wandb_args)
 
 
 		if LOSS_FUNC_STR=="l2":

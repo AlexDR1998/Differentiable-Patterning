@@ -2,24 +2,15 @@ import wandb
 import numpy as np
 from jaxtyping import Float, Array
 from einops import rearrange
+wandb.login(key="c969e9166d4abf8c10db353deaa242e386db8b99")
 class Train_log(object):
     def __init__(
         self,
         data,
-        config,
-        project="default_project",
-        entity=None,
-        tags=None,
-        notes=None,
-        dir=None,
+        wandb_config=None,
     ):
         self.run = wandb.init(
-            config=config,
-            project=project,
-            entity=entity,
-            tags=tags,
-            notes=notes,
-            dir=dir,
+            **wandb_config
         )
         
         outputs = np.array(data)    

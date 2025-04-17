@@ -6,10 +6,10 @@ from tqdm import tqdm
 from jaxtyping import Float,Array,Key,PyTree
 import os
 LOG_BACKEND = os.environ.get("LOG_BACKEND", "wandb")
-if LOG_BACKEND=="wandb":
-	from Common.trainer.abstract_wandb_log import Train_log
-elif LOG_BACKEND=="tensorboard":
-	from Common.trainer.abstract_tensorboard_log import Train_log
+#if LOG_BACKEND=="wandb":
+from Common.trainer.abstract_wandb_log import Train_log
+#elif LOG_BACKEND=="tensorboard":
+#	from Common.trainer.abstract_tensorboard_log import Train_log
 
 class NCA_Train_log(Train_log):
 	"""
