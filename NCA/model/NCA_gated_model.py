@@ -14,8 +14,8 @@ class gNCA(NCA):
     FIRE_RATE: float
     op: Ops
     perception: callable
-    CONFIG: dict
-    
+    #CONFIG: dict
+
     def __init__(self,
                 N_CHANNELS,
                 KERNEL_STR=["ID","LAP"], 
@@ -28,10 +28,10 @@ class gNCA(NCA):
         #key1,key2 = jax.random.split(key,2)
         key = jax.random.fold_in(key,1)
         self.layers[-1] = eqx.nn.Conv2d(in_channels=self.N_FEATURES, 
-						  out_channels=2*self.N_CHANNELS,
-						  kernel_size=1,
-						  use_bias=True,
-						  key=key)
+                            out_channels=2*self.N_CHANNELS,
+                            kernel_size=1,
+                            use_bias=True,
+                            key=key)
         gate_func = lambda x: jax.nn.glu(x,axis=0)
         self.layers.append(gate_func)
 
@@ -45,4 +45,24 @@ class gNCA(NCA):
         self.layers[-2] = eqx.tree_at(b_where,self.layers[-2],b_zeros)
 
         # Dict of hyperparameters for logging
-        self.CONFIG["MODEL"] = "gNCA"
+        #self.CONFIG["MODEL"] = "gNCA"
+
+    def get_config(self):
+        """
+        Returns the model configuration as a dictionary.
+
+        Returns
+        -------
+        dict
+            dictionary of model hyperparameters
+
+        """
+        
+        return {
+            "MODEL":"gNCA",
+            "N_CHANNELS":self.N_CHANNELS,
+            "KERNEL_STR":self.KERNEL_STR,
+            "ACTIVATION":self.layers[1].__name__,
+            "PADDING":self.op.PADDING,
+            "FIRE_RATE":self.FIRE_RATE
+        }
