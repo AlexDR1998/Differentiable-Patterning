@@ -40,26 +40,46 @@ class Train_log(object):
             
         self.train_summary_writer = train_summary_writer
 
-    def tb_training_loop_log_sequence(self,losses,x,i,model,write_images=True,LOG_EVERY=10):
+    # def tb_training_loop_log_sequence(self,losses,x,i,model,write_images=True,LOG_EVERY=10):
 
 
-        BATCHES = losses.shape[0]
-        N = losses.shape[1]
+    #     BATCHES = losses.shape[0]
+    #     N = losses.shape[1]
+    #     with self.train_summary_writer.as_default():
+    #         tf.summary.histogram("Loss",losses,step=i)
+    #         tf.summary.scalar("Average Loss",np.mean(losses),step=i)
+    #         for n in range(N):
+    #             tf.summary.histogram("Loss of each batch, timestep "+str(n),losses[:,n],step=i)
+    #             tf.summary.scalar("Loss of averaged over each batch, timestep "+str(n),np.mean(losses[:,n]),step=i)
+    #         for b in range(BATCHES):
+    #             tf.summary.histogram("Loss of each timestep, batch "+str(b),losses[b],step=i)
+    #             tf.summary.scalar("Loss of averaged over each timestep,  batch "+str(b),np.mean(losses[b]),step=i)
+
+    #     if i%LOG_EVERY==0:
+    #         self.log_model_parameters(model,i)
+    #         if write_images:
+    #             self.log_model_outputs(x,i)
+    def log_image(self,tag,image,step):
+        """
+        Logs an image to tensorboard
+        """
+        image = np.array(image)
         with self.train_summary_writer.as_default():
-            tf.summary.histogram("Loss",losses,step=i)
-            tf.summary.scalar("Average Loss",np.mean(losses),step=i)
-            for n in range(N):
-                tf.summary.histogram("Loss of each batch, timestep "+str(n),losses[:,n],step=i)
-                tf.summary.scalar("Loss of averaged over each batch, timestep "+str(n),np.mean(losses[:,n]),step=i)
-            for b in range(BATCHES):
-                tf.summary.histogram("Loss of each timestep, batch "+str(b),losses[b],step=i)
-                tf.summary.scalar("Loss of averaged over each timestep,  batch "+str(b),np.mean(losses[b]),step=i)
+            tf.summary.image(tag,image,step=step,max_outputs=image.shape[0])
 
-        if i%LOG_EVERY==0:
-            self.log_model_parameters(model,i)
-            if write_images:
-                self.log_model_outputs(x,i)
-
+    def log_scalar(self,tag,value,step):
+        """
+        Logs a scalar to tensorboard
+        """
+        with self.train_summary_writer.as_default():
+            tf.summary.scalar(tag,value,step=step)
+    
+    def log_histogram(self,tag,value,step):
+        """
+        Logs a histogram to tensorboard
+        """
+        with self.train_summary_writer.as_default():
+            tf.summary.histogram(tag,value,step=step)
 
     def normalise_images(self,x):
         """
