@@ -16,6 +16,7 @@ class SparseAutoencoder(AbstractModel):
     ACTIVATION: str
     TARGET_LAYER: str
     GATED: bool
+    config: dict
 
     def __init__(self, 
                  TARGET_LAYER: str, 
@@ -54,6 +55,15 @@ class SparseAutoencoder(AbstractModel):
         #b_where = lambda l: l.bias
         self.decoder = eqx.tree_at(w_where,self.decoder,self.encoder.weight.T+1e-3*jax.random.normal(keys[4],self.decoder.weight.shape))
         self.sparsity_param = sparsity_param
+        self.config = {
+            "TARGET_LAYER": TARGET_LAYER,
+            "N_CHANNELS": N_CHANNELS,
+            "N_KERNELS": N_KERNELS,
+            "ACTIVATION": ACTIVATION,
+            "GATED": GATED,
+            "hidden_dim": hidden_dim,
+            "sparsity_param": sparsity_param
+        }
 
     def encode(self,x: Float[Array,"{self.N_CHANNELS}"])->Float[Array,"{self.hidden_dim}"]:
         activation = {"topk":self.topk_activation, "relu":jax.nn.relu, "identity":lambda x:x}[self.ACTIVATION]
