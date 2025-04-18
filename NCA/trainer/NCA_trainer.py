@@ -95,6 +95,7 @@ class NCA_Trainer(object):
 
 
 		# Set up data and data augmenter class
+		self._data_raw = data
 		self.DATA_AUGMENTER = DATA_AUGMENTER(data,self.CHANNELS-self.OBS_CHANNELS)
 		self.DATA_AUGMENTER.data_init(self.SHARDING)
 		self.data = self.DATA_AUGMENTER.return_saved_data()
@@ -113,26 +114,47 @@ class NCA_Trainer(object):
 			else:
 				self.BOUNDARY_CALLBACK.append(no_boundary())
 		
+		self._LOG_DIRECTORY = LOG_DIRECTORY
+		self._MODEL_DIRECTORY = MODEL_DIRECTORY
+		self.model_filename = model_filename
 		#print(jax.tree_util.tree_structure(self.BOUNDARY_CALLBACK))
+		
+	def setup_logging(self,BACKEND,wandb_args):
 		# Set logging behvaiour based on provided filename
-		if model_filename is None:
+		print(f"Raw data shape: {jnp.array(self._data_raw).shape}")
+		if self.model_filename is None:
 			self.model_filename = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 			self.IS_LOGGING = False
 		else:
-			self.model_filename = model_filename
-			self.IS_LOGGING = True
-			self.LOG_DIR = LOG_DIRECTORY+self.model_filename+"/train"
-			if isinstance(self.NCA_model ,kaNCA):
-				self.LOGGER = kaNCA_Train_log(self.LOG_DIR,data)
-			elif isinstance(self.NCA_model , mNCA):
-				self.LOGGER = mNCA_Train_log(self.LOG_DIR,data)
-			elif isinstance(self.NCA_model , aNCA):
-				self.LOGGER = aNCA_Train_log(self.LOG_DIR,data)
-			else:
-				self.LOGGER = NCA_Train_log(self.LOG_DIR, data)
-			print("Logging training to: "+self.LOG_DIR)
-		
-		self.MODEL_PATH = MODEL_DIRECTORY+self.model_filename
+			if BACKEND=="tensorboard":
+				self.IS_LOGGING = True
+				self.LOG_DIR = self._LOG_DIRECTORY+self.model_filename+"/train"
+				if isinstance(self.NCA_model ,kaNCA):
+					self.LOGGER = kaNCA_Train_log(self.LOG_DIR,self._data_raw)
+				elif isinstance(self.NCA_model , mNCA):
+					self.LOGGER = mNCA_Train_log(self.LOG_DIR,self._data_raw)
+				elif isinstance(self.NCA_model , aNCA):
+					self.LOGGER = aNCA_Train_log(self.LOG_DIR,self._data_raw)
+				else:
+					self.LOGGER = NCA_Train_log(self.LOG_DIR, self._data_raw)
+				print("Logging training to: "+self.LOG_DIR)
+			elif BACKEND=="wandb":
+				self.IS_LOGGING = True
+				self.LOG_DIR = self._LOG_DIRECTORY+self.model_filename+"/train"
+				config = {"MODEL":self.NCA_model.get_config(),
+			  			 "TRAINING":self.TRAIN_CONFIG}
+				wandb_args["config"] = config
+				
+				if isinstance(self.NCA_model ,kaNCA):
+					self.LOGGER = kaNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
+				elif isinstance(self.NCA_model , mNCA):
+					self.LOGGER = mNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
+				elif isinstance(self.NCA_model , aNCA):
+					self.LOGGER = aNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
+				else:
+					self.LOGGER = NCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
+				print("Logging training to: "+self.LOG_DIR)
+		self.MODEL_PATH = self._MODEL_DIRECTORY+self.model_filename
 		print("Saving model to: "+self.MODEL_PATH)
 		
 	@eqx.filter_jit	
@@ -223,6 +245,9 @@ class NCA_Trainer(object):
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
+			  wandb_args={"project":"NCA",
+				 		  "group":"group_1",
+				 		  "tags":["training"]},
 			  key=jr.PRNGKey(int(time.time()))):
 		"""
 		Perform t steps of NCA on x, compare output to y, compute loss and gradients of loss wrt model parameters, and update parameters.
@@ -258,7 +283,27 @@ class NCA_Trainer(object):
 		-------
 		None
 		"""
+
+		self.TRAIN_CONFIG = {
+			"t":t,
+			"iters":iters,
+			"optimiser":optimiser,
+			"STATE_REGULARISER":STATE_REGULARISER,
+			"BOUNDARY_REGULARISER":BOUNDARY_REGULARISER,
+			"WARMUP":WARMUP,
+			"LOSS_SAMPLING":LOSS_SAMPLING,
+			"LOG_EVERY":LOG_EVERY,
+			"CLEAR_CACHE_EVERY":CLEAR_CACHE_EVERY,
+			"WRITE_IMAGES":WRITE_IMAGES,
+			"LOSS_FUNC_STR":LOSS_FUNC_STR,
+			"LOOP_AUTODIFF":LOOP_AUTODIFF,
+			"SPARSE_PRUNING":SPARSE_PRUNING,
+			"TARGET_SPARSITY":TARGET_SPARSITY
+		}
 		
+		self.setup_logging("wandb",wandb_args=wandb_args)
+
+
 		if LOSS_FUNC_STR=="l2":
 			self._loss_func = loss.l2
 		elif LOSS_FUNC_STR=="l1":
@@ -453,8 +498,9 @@ class NCA_Trainer(object):
 		elif self.IS_LOGGING and model_saved:
 			x,y = self.DATA_AUGMENTER.split_x_y(1)
 			x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
-			try:
-				self.LOGGER.tb_training_end_log(self.NCA_model,x,t*x[0].shape[0],self.BOUNDARY_CALLBACK)
-			except:
-				print("Error logging training end")
-				pass
+			#try:
+			self.LOGGER.tb_training_end_log(self.NCA_model,x,t*x[0].shape[0],self.BOUNDARY_CALLBACK)
+			# except Exception as e:
+			# 	print("Error logging training end")
+			# 	print(e)
+			# 	pass

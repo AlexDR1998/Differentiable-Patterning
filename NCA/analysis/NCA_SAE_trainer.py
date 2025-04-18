@@ -16,14 +16,12 @@ class NCA_SAE_Trainer(object):
     def __init__(self,
                  Feature_Extractor: NCA_Feature_Extractor_Emoji,
                  SAE: SparseAutoencoder,
-                 Sparsity: float,
                  filename = None,
                  model_directory="",
                  log_directory=""):
         
         self.FE = Feature_Extractor
         self.SAE = SAE
-        self.Sparsity = Sparsity
         if filename is None:
             self.model_filename = model_directory+"SAE_"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
             self.log_directory = log_directory+"SAE_"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S")+"/train"
@@ -33,7 +31,7 @@ class NCA_SAE_Trainer(object):
         
         
         #self.log_directory = log_directory+self.model_filename+"/train"
-        self.LOGGER = SAE_Train_log(self.log_directory)
+        
             
         
     
@@ -47,11 +45,13 @@ class NCA_SAE_Trainer(object):
 
     def train(self,
               iters,
+              Sparsity,
               optimiser,
               MINIBATCH_SIZE=4096,
               REGENERATE_EVERY=512,
               LOG_EVERY=512,
-              FE_params={"t0":0,"t1":64,"BATCH_SIZE":1,"SIZE":32,"key":jr.PRNGKey(int(time.time()))},
+              FE_params={"t0":0,"t1":128,"BATCH_SIZE":1,"SIZE":32,"key":jr.PRNGKey(int(time.time()))},
+              wandb_config={"project":"NCA_SAE","name":"SAE_Train"},
               key=jr.PRNGKey(int(time.time()))):
         @eqx.filter_jit
         def make_step(SAE,x,opt_state):
@@ -66,7 +66,7 @@ class NCA_SAE_Trainer(object):
                 loss_reconstruction = jnp.mean((X-x_reconstructed)**2)#/jnp.mean(X**2,axis=1))
                 loss_sparsity = jnp.mean(jnp.abs(latent))
 
-                return loss_reconstruction+self.Sparsity*loss_sparsity,(loss_reconstruction,loss_sparsity)
+                return loss_reconstruction+Sparsity*loss_sparsity,(loss_reconstruction,loss_sparsity)
             
             SAE_diff,SAE_static = SAE.partition()
             (loss,(loss_recon,loss_sparse)),grad = compute_loss(SAE_diff,SAE_static,x)
@@ -75,8 +75,23 @@ class NCA_SAE_Trainer(object):
             return SAE,opt_state,loss,loss_recon,loss_sparse
     
         #--------------------------------------
+        training_config = {
+            "iters": iters,
+            "optimiser": optimiser,
+            "MINIBATCH_SIZE": MINIBATCH_SIZE,
+            "REGENERATE_EVERY": REGENERATE_EVERY,
+            "LOG_EVERY": LOG_EVERY,
+            "FE_params": FE_params,
+            "SPARSITY": Sparsity,
 
-        
+        }
+
+        _config = {
+            "MODEL": self.SAE.config,
+            "TRAINING": training_config,
+        }
+        wandb_config["config"] = _config
+        self.LOGGER = SAE_Train_log(data=(self.FE,FE_params),wandb_config=wandb_config)
 
         SAE = self.SAE
         SAE_diff,_ = SAE.partition()
@@ -105,7 +120,7 @@ class NCA_SAE_Trainer(object):
                                                       FE_params,
                                                       write_images=True,
                                                       LOG_EVERY=LOG_EVERY)
-
+        self.LOGGER.finish()
         self.SAE = SAE
         self.SAE.save(self.model_filename)
         return SAE

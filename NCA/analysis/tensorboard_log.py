@@ -1,6 +1,4 @@
-import tensorflow as tf
-tf.config.experimental.set_visible_devices([], "GPU") 
-from Common.trainer.abstract_tensorboard_log import Train_log
+from Common.trainer.abstract_wandb_log import Train_log
 import jax.numpy as jnp
 import jax.random as jr
 import jax
@@ -8,28 +6,24 @@ import equinox as eqx
 from einops import rearrange
 
 
-class SAE_Train_log(object):
-    def __init__(self,log_dir):
-        """
-			Initialises the tensorboard logging of training.
-			Writes some initial information. Very similar to setup_tb_log_single, but designed for sequence modelling
+class SAE_Train_log(Train_log):
+        
+    def log_data_at_init(self, data):
+        FE,FE_params = data
+        X,Activations = FE.extract_features(**FE_params)
+        print("X shape",X.shape)
+        for key,value in Activations.items():
+            print(f"{key} shape: {value.shape}")
 
-		"""
+        X = rearrange(X, "T B C H W -> B (T H) W C")[...,:3]
+        self.log_image("NCA output without SAE",X,step=None)
 
-        self.LOG_DIR = log_dir
-        train_summary_writer = tf.summary.create_file_writer(self.LOG_DIR)
-        self.train_summary_writer = train_summary_writer
-        print(f"Logging to {self.LOG_DIR}")
 
     def tb_training_loop_log_sequence(self,L,sae,step,FE,FE_params,write_images=True,LOG_EVERY=10):
         loss,loss_recon,loss_sparse = L
-        
-        with self.train_summary_writer.as_default():
- 
-            tf.summary.scalar("Total Loss",loss,step=step)
-            tf.summary.scalar("Reconstruction Loss",loss_recon,step=step)
-            tf.summary.scalar("Sparsity Loss",loss_sparse,step=step)
-
+        self.log_scalars({"Total Loss":loss,
+                          "Reconstruction Loss":loss_recon,
+                          "Sparsity Loss":loss_sparse},step=step)
 
         if step%LOG_EVERY==0:
             self.log_model_parameters(sae,step)
@@ -41,13 +35,13 @@ class SAE_Train_log(object):
 
         enc = sae.encoder.weight
         dec = sae.decoder.weight
-        enc = rearrange(enc, "i j -> () i j ()")
-        dec = rearrange(dec, "i j -> () i j ()")
-        with self.train_summary_writer.as_default():
-            #tf.summary.histogram('Encoder weights',enc,step=step)
-            #tf.summary.histogram('Decoder weights',dec,step=step)
-            tf.summary.image('Encoder weights',enc,step=step)
-            tf.summary.image('Decoder weights',dec,step=step)
+        enc = rearrange(enc, "i j -> i j ()")
+        dec = rearrange(dec, "i j -> i j ()")
+        
+        self.log_image("Encoder weights",enc,step=step)
+        self.log_image("Decoder weights",dec,step=step)
+        self.log_histogram("Encoder weights",enc,step=step)
+        self.log_histogram("Decoder weights",dec,step=step)
 
     def log_model_outputs(self,sae,FE,FE_params,step):
         latent_edit = {"mode":"None",
@@ -76,6 +70,8 @@ class SAE_Train_log(object):
             X_FINALS.append(X)
         X_FINALS = jnp.array(X_FINALS)
         X_FINALS = jnp.clip(X_FINALS,0,1)[:,:3]
-        X_FINALS = rearrange(X_FINALS,"(m1 m2) c h w -> () (m1 h) (m2 w) c",m1=3)
-        with self.train_summary_writer.as_default():
-            tf.summary.image("NCA output with SAE replacement",X_FINALS,step=step)
+        #X_FINALS = rearrange(X_FINALS,"(m1 m2) c h w -> () (m1 h) (m2 w) c",m1=3)
+        X_FINALS = rearrange(X_FINALS, "b c h w -> b h w c")
+        #with self.train_summary_writer.as_default():
+        #    tf.summary.image("NCA output with SAE replacement",X_FINALS,step=step)
+        self.log_image("NCA output with SAE replacement",X_FINALS,step=step)

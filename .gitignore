@@ -1,4 +1,12 @@
 # Ignore all Jupyter Notebook files in this directory
+**/__pycache__/*
+***/__pycache__/*.pyc
+***/__pycache__/*.pyo
+***/__pycache__/*/*.pyc
+***/__pycache__/*/*.pyo
+***/__pycache__/*/*/*.pyc
+***/__pycache__/*/*/*.pyo
+***/__pycache__/*/*/*/*.pyc
 *.ipynb
 *.pyc
 *.npy
@@ -8,3 +16,8 @@ logs/*
 models/*
 *.mp4
 *.pickle
+*.png
+!demo/*
+*Dockerfile
+.env 
+*/wandb/*

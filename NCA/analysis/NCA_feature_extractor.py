@@ -21,6 +21,8 @@ from jaxtyping import Float,Array,Key
 import random
 import time
 from Common.trainer.custom_functions import multi_channel_perlin_noise
+import os
+PVC_PATH = os.environ.get("PVC_PATH", "/mnt/ceph/ar-dp/")
 class NCA_Feature_Extractor(object):
     """
     General class for extracting features from NCA models over trajectories
@@ -30,7 +32,7 @@ class NCA_Feature_Extractor(object):
                 NCA_models,
                 BOUNDARY_MASKS,
                 GATED=False,
-                MODEL_BATCH_SIZE=4):
+                MODEL_BATCH_SIZE=1):
         self.NCA_models = NCA_models
         self.BOUNDARY_MASKS = BOUNDARY_MASKS
         self.GATED = GATED
@@ -158,7 +160,9 @@ class NCA_Feature_Extractor_Emoji(NCA_Feature_Extractor):
         "butterfly.png",
         "lizard.png",
         "mushroom.png",
-        ],downsample=1)
+        ],
+        impath_emojis=PVC_PATH+"Data/Emojis/",
+        downsample=1)
 
 
         # For the initial condition, take a small cropped square from the middle of the target image
@@ -179,7 +183,7 @@ class NCA_Feature_Extractor_Emoji(NCA_Feature_Extractor):
 
         data = jnp.concatenate([initial_condition,data,data],axis=1) # Join initial condition and data along the time axis
 
-        print("(Batch, Time, Channels, Width, Height): "+str(data.shape))
+        #print("(Batch, Time, Channels, Width, Height): "+str(data.shape))
         
 
         class data_augmenter_subclass(DataAugmenter):
@@ -194,5 +198,5 @@ class NCA_Feature_Extractor_Emoji(NCA_Feature_Extractor):
         DA = data_augmenter_subclass(data,hidden_channels=self.NCA_models[0].N_CHANNELS-4)
         X0,_ = DA.split_x_y()
         X0 = jnp.array(X0)[:BATCH_SIZE,0]
-        print(X0.shape)
+        #print(X0.shape)
         return jnp.array(X0)
