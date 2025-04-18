@@ -141,7 +141,7 @@ class NCA_Trainer(object):
 			elif BACKEND=="wandb":
 				self.IS_LOGGING = True
 				self.LOG_DIR = self._LOG_DIRECTORY+self.model_filename+"/train"
-				config = {"MODEL":self.NCA_model.CONFIG,
+				config = {"MODEL":self.NCA_model.get_config(),
 			  			 "TRAINING":self.TRAIN_CONFIG}
 				wandb_args["config"] = config
 				
