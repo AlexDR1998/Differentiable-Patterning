@@ -12,8 +12,13 @@ class Train_log(object):
         self.run = wandb.init(
             **wandb_config
         )
-        
-        outputs = np.array(data)    
+        self.log_data_at_init(data)
+
+    def log_data_at_init(self,data):    
+        """
+        Log data at the start of training. Defined as a separate function to allow for overwriting in subclasses
+        """
+        outputs = np.array(data)
         self.log_image("True sequence RGB", rearrange(outputs, "Batch Time C x y ->(Batch x) (Time y) C")[:,:,:3], step=None)
 
     def log_scalar(self, tag, value, step=None):
