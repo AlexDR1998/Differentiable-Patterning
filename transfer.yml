@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+    generateName: ar-dp-transfer-job
+    labels:
+        kueue.x-k8s.io/queue-name:  eidf151ns-user-queue
+spec:
+    completions: 1
+    template:
+        metadata:
+            name: lightweight-pod
+        spec:
+            containers:
+            - name: data-loader
+              image: busybox
+              args: ["sleep", "infinity"]
+              resources:
+                    requests:
+                        cpu: 1
+                        memory: '16Gi'
+                    limits:
+                        cpu: 1
+                        memory: '16Gi'
+              volumeMounts:
+                    - mountPath: /mnt/ceph
+                      name: volume
+            restartPolicy: Never
+            volumes:
+                - name: volume
+                  persistentVolumeClaim:
+                    claimName: ar-pvc

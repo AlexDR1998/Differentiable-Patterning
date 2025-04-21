@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+    generateName: "${JOB_NAME_PREFIX}-"
+    labels:
+        kueue.x-k8s.io/queue-name:  eidf151ns-user-queue
+spec:
+    completions: 1
+    template:
+        metadata:
+            name: ar-dp-pod
+        spec:
+            restartPolicy: Never
+            containers:
+            - name: differentiable-patterning
+              image: alexdr1998/jax_equinox_scratch:latest
+              imagePullPolicy: Always
+              command: ["bash","/mnt/ceph/ar-dp/run_multi_gpu.sh"]
+              args: ["${JOB_PATH_TO_PYTHON_SCRIPT}","${JOB_NUM_GPUS}"]
+              volumeMounts:
+                - mountPath: /mnt/ceph
+                  name: volume
+              resources:
+                requests:
+                  cpu: 48
+                  memory: "80Gi"
+                limits:
+                  cpu: 48
+                  memory: "80Gi"
+                  nvidia.com/gpu: ${JOB_NUM_GPUS}
+            nodeSelector:
+                nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
+            volumes:
+                - name: volume
+                  persistentVolumeClaim:
+                    claimName: ar-pvc
