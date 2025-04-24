@@ -204,7 +204,7 @@ class NCA(AbstractModel):
 	def call_with_SAE(self,
 				   x: Float[Array,"{self.N_CHANNELS} x y"],
 				   SAE,
-				   latent_edit={"mode":"mult_top_k",
+				   latent_edit={"mode":"none",
 								"positions":None,
 								"values":1.0},
 				   boundary_callback=lambda x:x,
