@@ -127,7 +127,8 @@ class AbstractModel(eqx.Module):
 		if not path.is_file():
 			raise ValueError(f'Not a file: {path}')
 		if path.suffix != suffix:
-			raise ValueError(f'Not a {suffix} file: {path}')
+			#raise ValueError(f'Not a {suffix} file: {path}')
+			path = path.with_suffix(suffix)
 		# with open(path, "rb") as f:
 		# 	hyperparams = json.loads(f.readline().decode())
 		# 	#func = F_rda(key=jr.PRNGKey(0), **hyperparams["pde"])
@@ -135,3 +136,39 @@ class AbstractModel(eqx.Module):
 		# 	model = self.__init__(**hyperparams)
 		# 	return eqx.tree_deserialise_leaves(f, model)
 		return eqx.tree_deserialise_leaves(path,self)
+	
+	def load_with_hyperparam_dict(self, path: Union[str, Path]):
+		"""
+		Wrapper for loading model via eqx.tree_deserialise_leaves
+
+		Parameters
+		----------
+		path : Union[str, Path]
+			path to filename.
+
+		Raises
+		------
+		ValueError
+			Not a file or incorrect file type.
+
+		Returns
+		-------
+		tuple
+			model and hyperparams loaded from pickle.
+
+		"""
+		
+		suffix = ".eqx"
+		path = Path(path)
+		
+		if not path.is_file():
+			raise ValueError(f'Not a file: {path}')
+		
+		if path.suffix != suffix:
+			raise ValueError(f'Not a {suffix} file: {path}')
+		
+		with open(path, "rb") as f:
+			hyperparams = json.loads(f.readline().decode())
+			print("Hyperparams: ",hyperparams)
+			model = self.__init__(**hyperparams)
+			return eqx.tree_deserialise_leaves(f, model), hyperparams
