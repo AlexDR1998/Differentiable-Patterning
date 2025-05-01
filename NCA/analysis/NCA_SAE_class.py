@@ -28,7 +28,7 @@ class SparseAutoencoder(AbstractModel):
                  sparsity_param: float, 
                  TIED_INIT: bool,
                  key):
-        keys = jr.split(key,3)
+        keys = jr.split(key,5)
         assert TARGET_LAYER in ["perception", "linear_hidden", "activation", "linear_output", "gate_func"], "Invalid target layer"
         assert ACTIVATION in ["topk", "relu", "identity"], "Invalid activation function"
         
@@ -50,7 +50,8 @@ class SparseAutoencoder(AbstractModel):
         w_where = lambda l: l.weight
         self.bias_params = [
             jr.normal(keys[2],(input_dim,)),
-            jr.normal(keys[3],(latent_dim,))
+            jr.normal(keys[3],(latent_dim,)),
+            jr.normal(keys[4],(input_dim,))
         ]
 
         #b_where = lambda l: l.bias
@@ -68,12 +69,16 @@ class SparseAutoencoder(AbstractModel):
             "sparsity_param": sparsity_param
         }
 
+
+    def get_config(self)->dict:
+        return self.config
+
     def encode(self,x: Float[Array,"{self.N_CHANNELS}"])->Float[Array,"{self.latent_dim}"]:
         activation = {"topk":self.topk_activation, "relu":jax.nn.relu, "identity":lambda x:x}[self.ACTIVATION]
         return activation(self.encoder(x-self.bias_params[0])+self.bias_params[1])
     
     def decode(self,x: Float[Array,"{self.latent_dim}"])->Float[Array,"{self.N_CHANNELS}"]:
-        return self.decoder(x) + self.bias_params[0]
+        return self.decoder(x) + self.bias_params[2]
     
     def topk_activation(self,x: Float[Array,"{self.latent_dim}"])->Float[Array,"{self.latent_dim}"]:
         vals,inds = jax.lax.top_k(x,k=self.sparsity_param)

@@ -16,6 +16,26 @@ from einops import rearrange
 lpips = LPIPS()
 
 @jax.jit
+def cosine(x,y,key=None,where=None):
+	"""
+		Parameters
+		----------
+		x : float32 [...,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [...,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [...]
+			loss reduced over channel and spatial axes
+	"""
+	return -jnp.nan_to_num(jnp.mean((x*y)/(jnp.linalg.norm(x)*jnp.linalg.norm(y)),axis=[-1,-2,-3],where=where))
+
+
+
+
+@jax.jit
 def l2(x,y,key=None,where=None):
 	"""
 		Parameters

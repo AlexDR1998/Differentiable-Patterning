@@ -32,21 +32,20 @@ class NCA_SAE_Trainer(object):
         
         #self.log_directory = log_directory+self.model_filename+"/train"
         
-            
-        
-    
+                
     def generate_activations(self,FE_params):
         X,activations = self.FE.extract_features(**FE_params)
         activations = self.FE.flatten_activations(activations)
         activations = activations[self.SAE.TARGET_LAYER]
         return activations
 
-
+    
 
     def train(self,
               iters,
               Sparsity,
               optimiser,
+              LOSS="l2",
               MINIBATCH_SIZE=4096,
               REGENERATE_EVERY=512,
               LOG_EVERY=512,
@@ -63,7 +62,7 @@ class NCA_SAE_Trainer(object):
                 vDec = jax.vmap(SAE.decode,in_axes=0,out_axes=0)
                 latent = vEnc(X)
                 x_reconstructed = vDec(latent)
-                loss_reconstruction = jnp.mean((X-x_reconstructed)**2)#/jnp.mean(X**2,axis=1))
+                loss_reconstruction = self._loss(X,x_reconstructed)#/jnp.mean(X**2,axis=1))
                 loss_sparsity = jnp.mean(jnp.abs(latent))
 
                 return loss_reconstruction+Sparsity*loss_sparsity,(loss_reconstruction,loss_sparsity)
@@ -75,6 +74,13 @@ class NCA_SAE_Trainer(object):
             return SAE,opt_state,loss,loss_recon,loss_sparse
     
         #--------------------------------------
+        if LOSS == "l2":
+            self._loss = lambda x,y: jnp.mean((x-y)**2)
+        elif LOSS == "l1":
+            self._loss = lambda x,y: jnp.mean(jnp.abs(x-y))
+        elif LOSS == "cosine":
+            self._loss = lambda x,y: 1-jnp.dot(x,y)/(jnp.linalg.norm(x)*jnp.linalg.norm(y))
+        
         training_config = {
             "iters": iters,
             "optimiser": optimiser,
@@ -105,7 +111,6 @@ class NCA_SAE_Trainer(object):
         for i in pbar:
             if i % REGENERATE_EVERY == 0 and i>0:
                 FE_params["key"] = key
-                #print("Regenerating activations")
                 activations = self.generate_activations(FE_params)
             key = jr.fold_in(key,i)
             inds = jr.choice(key,activations.shape[0],(MINIBATCH_SIZE,),replace=False)
@@ -120,7 +125,13 @@ class NCA_SAE_Trainer(object):
                                                       FE_params,
                                                       write_images=True,
                                                       LOG_EVERY=LOG_EVERY)
-        self.LOGGER.finish()
+        
+        #self.LOGGER.finish()
         self.SAE = SAE
         self.SAE.save(self.model_filename)
-        return SAE
+        X0 = self.FE.initial_condition(BATCH_SIZE=FE_params["BATCH_SIZE"])
+        NCA = self.FE.NCA_models[0]
+        NCA_TIMESTEPS = FE_params["t1"]
+        key = jr.fold_in(key,1)
+        self.LOGGER.log_end(SAE,X0,NCA,NCA_TIMESTEPS,key)
+        

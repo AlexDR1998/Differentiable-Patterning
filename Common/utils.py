@@ -24,8 +24,9 @@ import pickle
 import tensorflow as tf
 from einops import reduce,rearrange,repeat
 from scipy.ndimage import shift, center_of_mass
+import itertools
 # Some convenient helper functions
-#@jax.jit
+
 
 
 def squarish(H):
@@ -35,6 +36,17 @@ def squarish(H):
       return a, H // a
     a -= 1
 
+def index_to_param_list(index,n_processes,full_hyperparameters):
+  """
+    Take a Dict of arrays of hyperparameters, and return a list of n_processes dicts of hyperparameters,
+    such that all hyperparameter combinations are enumerated and split over the n_processes.
+    index selects which of the n_processes to return.
+  """
+  
+  keys = list(full_hyperparameters.keys())
+  values = [full_hyperparameters[k] for k in keys]
+  all_combinations = [dict(zip(keys, combo)) for combo in itertools.product(*values)]
+  return all_combinations[index::n_processes]
 
 
 def save_pickle(data, path: Union[str, Path], overwrite: bool = False):

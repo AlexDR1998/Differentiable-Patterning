@@ -77,7 +77,7 @@ class NCA_Feature_Extractor(object):
         
         
         
-        X = self.initial_condition(SIZE,BATCH_SIZE,key)
+        X = self.initial_condition(BATCH_SIZE)
 
         Xs = []
         As = []
@@ -99,17 +99,10 @@ class NCA_Feature_Extractor(object):
         
         # Reshape activations from [Models,Layer,Timestep] [Batch,Features,Height,Width] to [Layers] [Models,Timestep,Batch,Features,Height,Width]
 
-        #A_new = [[list(i) for i in zip(*A)] for A in As]
-        #A_new = [list(i) for i in zip(*A_new)]
         
-        A_new = [list(i) for i in zip(*As)]
-        
-        
-        
+        A_new = [list(i) for i in zip(*As)]        
         A_new = [jnp.array(A) for A in A_new]
 
-        #print(len(A_new))
-        #print(A_new[0].shape)
         if self.GATED:
             A_dict = {"perception":A_new[0],
                       "linear_hidden":A_new[1],
@@ -135,7 +128,6 @@ class NCA_Feature_Extractor(object):
             As : [Layers] [Models,Timestep,Batch,Features,Height,Width]
         Returns : [Layers] [Models*Timestep*Batch*Height*Width,Features]
         """
-        #As = [rearrange(A,"Models Timestep Batch Features H W -> (Models Timestep Batch H W) Features") for A in As]
         As = {k:rearrange(A,"Models Timestep Batch Features H W -> (Models Timestep Batch H W) Features") for k,A in As.items()}
         return As
 
@@ -151,7 +143,7 @@ class NCA_Feature_Extractor_Texture(NCA_Feature_Extractor):
         return jnp.array(ic)
 
 class NCA_Feature_Extractor_Emoji(NCA_Feature_Extractor):
-    def initial_condition(self,SIZE,BATCH_SIZE,key):
+    def initial_condition(self,BATCH_SIZE):
         data = load_emoji_sequence([
         "crab.png",
         "microbe.png",
