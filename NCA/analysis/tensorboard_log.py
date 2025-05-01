@@ -74,6 +74,23 @@ class SAE_Train_log(Train_log):
         self.log_image("NCA output with SAE replacement",X_FINALS,step=step)
 
 
+
+class CM_Train_log(Train_log):
+
+    def log_data_at_init(self, data):
+        pass
+
+    def tb_training_loop_log_sequence(self,loss,cm,step,write_images=True,LOG_EVERY=10):
+        
+        self.log_scalars({"Loss":loss},step=step)
+        if step%LOG_EVERY==0:
+            self.log_model_parameters(cm,step)
+    
+    def log_model_parameters(self, cm, i):
+        self.log_histogram("Channel map weights",cm.layers[0].weight,step=i)
+                
+
+
 class SAE_Train_better_log(SAE_Train_log):
         
     def log_data_at_init(self, data):
