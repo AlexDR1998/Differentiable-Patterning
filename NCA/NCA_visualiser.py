@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-#import tensorflow as tf
+from einops import rearrange
 import io
 from PIL import Image
 
@@ -15,6 +15,10 @@ def plot_to_image(figure):
 	plt.close(figure)
 	buf.seek(0)
 	image = Image.open(buf)
+	#print("Image size: ",image.size)
+	image = np.array(image)
+	#print("Image array shape: ",image.shape)
+	image = rearrange(image, "x y c -> () x y c")
 	return image
 	# # Save the plot to a PNG in memory.
 	# buf = io.BytesIO()
@@ -62,8 +66,9 @@ def plot_weight_matrices(nca):
 				plt.xlabel(r"N_CHANNELS$\star$ KERNELS")
 			else:
 				plt.xlabel("Input")
+			
 			figs.append(plot_to_image(figure))
-
+			# figs.append(w)
 		
 		# figure = plt.figure(figsize=(5,5))
 		# col_range = max(np.max(w2),-np.min(w2))
@@ -106,7 +111,7 @@ def plot_weight_kernel_boxplot(nca):
 		#w_k = w[:,k::N_KERNELS]
 		w_k = w[:,k*N_CHANNELS:(k+1)*N_CHANNELS]
 		figure = plt.figure(figsize=(5,5))
-		plt.boxplot(w_k.T)
+		plt.boxplot(w_k)
 		plt.xlabel("Channels")
 		plt.ylabel("Weights")
 		plt.title(K_STR[k]+" kernel weights")

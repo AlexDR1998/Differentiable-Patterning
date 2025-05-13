@@ -31,7 +31,6 @@ class Train_log(object):
         # image can be a numpy array or a local image file; wandb.Image handles both.
         image = np.array(image)
         assert len(image.shape) == 3, "Image must be 3D"
-        print(image.shape)
         wandb.log({tag: wandb.Image(image)}, step=step)
     
     def log_image_batch(self, tag, images, step=None):
@@ -54,7 +53,6 @@ class Train_log(object):
         # Convert to uint8
         video = np.clip(video * 255, 0, 255).astype(np.uint8)
     
-        print("Video shape: ",video.shape)
         wandb_video = wandb.Video(video, fps=10,format="mp4")
         wandb.log({tag: wandb_video}, step=None)
 
