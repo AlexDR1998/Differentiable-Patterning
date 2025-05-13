@@ -5,6 +5,7 @@ optax
 diffrax
 tqdm
 wandb
+wandb[media]
 einops
 jaxpruner @ git+https://github.com/google-research/jaxpruner
 ott-jax==0.4.5
