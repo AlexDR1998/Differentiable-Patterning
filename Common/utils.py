@@ -475,7 +475,64 @@ def load_micropattern_smad23_lef1(impath,downsample=4,VERBOSE=False,BATCH_AVERAG
   return ims
 
 
-   
+
+
+def load_micropattern_circle_8ch(DOWNSAMPLE,BATCHES,PVC_PATH="/mnt/ceph/ar-dp/"):
+
+  """
+    Loads circular micropatterns for channels: Foxa2, Sox17, TbxT, Lmbr, Cer, Lefty, Nodal, Lef1
+  """
+  impath_fstl = PVC_PATH+"Data/Timecourse 60h June/S2 FOXA2_SOX17_TBXT_LMBR/Max Projections/*"     # Foxa2, Sox17, TbxT, Lmbr
+  impath_nlc = PVC_PATH+"Data/Nodal_LEFTY_CER/**"                                                  # Lmbr, Cer Lefty, Nodal
+  impath_ls = PVC_PATH+"Data/Timecourse 60h June/Smad23_LEF 48h/Max Projections/*"            # Lef1, Lmbr, Smad23
+  data_fstl = load_micropattern_time_series(impath_fstl,downsample=DOWNSAMPLE,VERBOSE=False,BATCH_AVERAGE=True)               # 0h, 12h, 24h, 36h, 48h, 60h
+  data_nlc = load_micropattern_time_series_nodal_lef_cer(impath_nlc,downsample=DOWNSAMPLE,VERBOSE=False,BATCH_AVERAGE=True)   # 0h, 6h, 12h, 24h, 36h, 48h
+  data_ls = load_micropattern_smad23_lef1(impath_ls,downsample=DOWNSAMPLE,VERBOSE=False,BATCH_AVERAGE=True)                   # 0h, 6h, 12h, 24h, 36h, 48h
+  data_fstl = np.array(data_fstl)
+  data_nlc = np.array(data_nlc)[:,:,0] # select only condition 1 from data
+  data_ls = np.array(data_ls)
+
+
+
+  print("---- Before removing 6h and duplicate LMBR ----")
+  print(f"Foxa2 sox17 tbxt lmbr shape: {data_fstl.shape}")
+  print(f"Lmbr cer lefty nodal shape: {data_nlc.shape}")
+  print(f"Lef1 Lmbr smad23 shape: {data_ls.shape}")
+  # Data shape: (Time, batch, channels, width, height)
+
+  # Try without the 6h data first - it makes the timestepping a lot simpler
+  data_nlc = np.concatenate([data_nlc[:1],data_nlc[2:],np.zeros((1,*data_nlc.shape[1:]))],axis=0)
+  data_ls = np.concatenate([data_ls[:1],data_ls[2:],np.zeros((1,*data_ls.shape[1:]))],axis=0)
+
+  # Remove duplicates of LMBR channel
+  data_nlc = data_nlc[:,:,1:]
+  data_ls = data_ls[:,:,:1] # Also remove smad23 channel as guillaume recommended
+
+
+
+  print("---- After removing 6h and duplicate LMBR ----")
+  print(f"Foxa2 sox17 tbxt lmbr shape: {data_fstl.shape}")
+  print(f"Lmbr cer lefty nodal shape: {data_nlc.shape}")
+  print(f"Lef1 Lmbr smad23 shape: {data_ls.shape}")
+
+
+  # Combine the datasets
+  data = np.concatenate([data_fstl,data_nlc,data_ls],axis=2)
+
+  boundary_mask = adhesion_mask_convex_hull_circle(rearrange(data_fstl[0,0],"C X Y -> X Y C"))[0]
+
+  boundary_mask = repeat(boundary_mask,"X Y -> B () X Y",B=BATCHES)
+  data = repeat(data,"T () C X Y -> B T C X Y", B=BATCHES)
+  print("Boundary mask shape: ",boundary_mask.shape)
+
+  data = data*rearrange(boundary_mask,"B () X Y -> B () () X Y")
+
+  print("Channel order: Foxa2, Sox17, TbxT, Lmbr, Cer, Lefty, Nodal, Lef1")
+  print(f"Total data shape: {data.shape}")
+  return data,boundary_mask
+
+
+
 
 def load_micropattern_radii(impath):
 	filenames = glob.glob(impath)

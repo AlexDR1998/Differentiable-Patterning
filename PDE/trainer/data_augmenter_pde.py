@@ -15,7 +15,8 @@ class DataAugmenter(DataAugmenterAbstract):
 		self.CALLBACK_PARAMS = {"INCREMENT_PROB":0.1,
 						  		"RESET_PROB":0.001,
 								"OVERWRITE_OBS_CHANNELS":False,
-								"NOISE_FRACTION":0.01}
+								"NOISE_FRACTION":0.01,
+								"RANDOM_TRAJECTORY_LENGTHS":False}
 		B = len(self.data_saved)
 		Ts = repeat(Ts,"T -> B T",B=B)
 		self.Ts = list(Ts)
@@ -112,7 +113,10 @@ class DataAugmenter(DataAugmenterAbstract):
 
 
 		# Sample new x,y and ts
-		output_y_length = jr.randint(keys[2],shape=(1,),minval=1,maxval=L)[0]
+		if self.CALLBACK_PARAMS["RANDOM_TRAJECTORY_LENGTHS"]:
+			output_y_length = jr.randint(keys[2],shape=(1,),minval=1,maxval=L)[0]
+		else:
+			output_y_length = L
 		x = jax.tree_util.tree_map(lambda data,p:data[p],self.data_saved,pos)
 		# TODO make sure noise never makes x negative
 		x = self.noise(x,am=self.CALLBACK_PARAMS["NOISE_FRACTION"],mode="full",key=keys[3])

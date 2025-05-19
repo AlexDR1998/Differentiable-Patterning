@@ -45,7 +45,7 @@ class DataAugmenter(DataAugmenterAbstract):
         self.key = jax.random.PRNGKey(int(1000*time.time()))
 
 
-    def data_callback(self,x,y,i):
+    def data_callback(self,x,y,i,key):
         """
         Called after every training iteration to perform data augmentation and processing		
 
