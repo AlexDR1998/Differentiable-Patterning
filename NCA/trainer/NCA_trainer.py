@@ -161,8 +161,7 @@ class NCA_Trainer(object):
 	def loss_func(self,
 			   	  x:Float[Array, "N CHANNELS x y"],  # noqa: F722
 				  y:Float[Array, "N CHANNELS x y"],  # noqa: F722
-				  key: Key,
-				  SAMPLES)->Float[Array, "N"]:
+				  key: Key)->Float[Array, "N"]:
 		"""
 		NOTE: VMAP THIS OVER BATCHES TO HANDLE DIFFERENT SIZES OF GRID IN EACH BATCH
 
@@ -237,7 +236,6 @@ class NCA_Trainer(object):
 			  STATE_REGULARISER=1.0,
 			  BOUNDARY_REGULARISER=1.0,
 			  WARMUP=64,
-			  LOSS_SAMPLING = 64,
 			  LOG_EVERY=40,
 			  CLEAR_CACHE_EVERY=100,
 			  WRITE_IMAGES=True,
@@ -291,7 +289,6 @@ class NCA_Trainer(object):
 			"STATE_REGULARISER":STATE_REGULARISER,
 			"BOUNDARY_REGULARISER":BOUNDARY_REGULARISER,
 			"WARMUP":WARMUP,
-			"LOSS_SAMPLING":LOSS_SAMPLING,
 			"LOG_EVERY":LOG_EVERY,
 			"CLEAR_CACHE_EVERY":CLEAR_CACHE_EVERY,
 			"WRITE_IMAGES":WRITE_IMAGES,
@@ -366,7 +363,7 @@ class NCA_Trainer(object):
 				reg_log = jnp.zeros(len(x))
 				boundary_reg_log = jnp.zeros(len(x))
 				v_intermediate_reg = lambda x:jnp.array(jax.tree_util.tree_map(self.intermediate_reg,x))  # noqa: E731
-				_loss_func = lambda x,y,key:self.loss_func(x,y,key,SAMPLES=LOSS_SAMPLING)  # noqa: E731
+				_loss_func = lambda x,y,key:self.loss_func(x,y,key)  # noqa: E731
 				v_loss_func = lambda x,y,key_array:jnp.array(jax.tree_util.tree_map(_loss_func,x,y,key_array))  # noqa: E731
 				
 				# Structuring this as function and lax.scan speeds up jit compile a lot
