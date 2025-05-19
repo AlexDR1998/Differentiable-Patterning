@@ -74,6 +74,7 @@ class NCA_channel_map_trainer(object):
     def train(self,
               STEPS_BETWEEN_IMAGES:int,
               ITERS:int,
+              LOG_EVERY:int,
               optimiser,
               FILENAME:str,
               wandb_config={"project":"micropattern channel map",
@@ -84,17 +85,17 @@ class NCA_channel_map_trainer(object):
         """Train the NCA channel map model"""
         @eqx.filter_jit
         def make_step(model,x,y,opt_state):
-            @eqx.filter_value_and_grad(has_aux=False)
+            @eqx.filter_value_and_grad(has_aux=True)
             def compute_loss(model_diff,model_static,X,Y_true):
                 model = eqx.combine(model_diff,model_static)
                 Y = model(X)
                 loss = jnp.mean((Y_true - Y)**2)
-                return loss
+                return loss,Y
             model_diff,model_static = eqx.partition(model,filter_spec=eqx.is_inexact_array)
-            loss,grad = compute_loss(model_diff,model_static,x,y)
+            (loss,Y),grad = compute_loss(model_diff,model_static,x,y)
             updates, opt_state = optimiser.update(grad,opt_state,model)
             model = eqx.apply_updates(model,updates)
-            return model,loss,opt_state
+            return model,loss,opt_state,Y
         #--------------------------------------
 
 
@@ -107,11 +108,12 @@ class NCA_channel_map_trainer(object):
         data = self.CE.generate_data(STEPS_BETWEEN_IMAGES,self.data,channels=self.FULL_CHANNELS,key=key)
         for i in pbar:
             key = jr.fold_in(key,i)
-            model,loss,opt_state = make_step(
+            model,loss,opt_state,y_pred = make_step(
                 model,
                 x=data,
                 y=self.data[:,:,self.TARGET_CHANNELS],
                 opt_state=opt_state)
             pbar.set_postfix(loss=loss)
+            self.LOGGER.tb_training_loop_log_sequence(loss,model,y_pred,i,write_images=True,LOG_EVERY=LOG_EVERY)
         model.save("")
         #return model
