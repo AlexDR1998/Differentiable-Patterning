@@ -24,3 +24,4 @@ dependencies:
     - ipykernel
     - ipywidgets
     - ffmpeg-python
+    - nbformat

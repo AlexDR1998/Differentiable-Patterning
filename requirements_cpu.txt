@@ -18,3 +18,4 @@ matplotlib
 ipykernel
 ipywidgets
 ffmpeg-python
+nbformat
