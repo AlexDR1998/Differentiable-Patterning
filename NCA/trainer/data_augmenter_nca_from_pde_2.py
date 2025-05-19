@@ -45,7 +45,7 @@ class DataAugmenter(DataAugmenterAbstract):
         self.key = jax.random.PRNGKey(int(1000*time.time()))
 
 
-    def data_callback(self,x,y,i,key):
+    def data_callback(self,x,y,i,key=None):
         """
         Called after every training iteration to perform data augmentation and processing		
 
@@ -70,18 +70,23 @@ class DataAugmenter(DataAugmenterAbstract):
 
         x_true,_ =self.split_x_y(1)
                 
-        propagate_xn = lambda x:x.at[1:].set(x[:-1])
-        reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
-        
-        x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-        x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-        
-                
-        for b in range(len(x)//2):
-            x[b*2] = x[b*2].at[:,:self.OBS_CHANNELS].set(x_true[b*2][:,:self.OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
-        
+        x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
             
         x = self.noise(x,0.001,key=self.key)
         self.key = jax.random.fold_in(self.key,i)
         #y = self.noise(y,0.01,key=jax.random.fold_in(key,2*i))
         return x,y
+    
+@eqx.filter_jit
+def jittable_callback_bit(x,x_true,OBS_CHANNELS):
+                
+    propagate_xn = lambda x:x.at[1:].set(x[:-1])
+    reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
+    
+    x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
+    x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
+    
+    
+    for b in range(len(x)//2):
+        x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
+    return x

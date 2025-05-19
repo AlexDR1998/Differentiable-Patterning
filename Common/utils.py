@@ -8,8 +8,8 @@ import numpy as np
 #import pandas as pd
 import skimage
 from pprint import pprint
-from tensorflow.core.util import event_pb2
-from tensorflow.python.lib.io import tf_record
+#from tensorflow.core.util import event_pb2
+#from tensorflow.python.lib.io import tf_record
 import os
 import scipy as sp
 import glob
@@ -17,11 +17,11 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.patches import Circle
 from tqdm import tqdm
-from tensorflow.python.framework import tensor_util
+#from tensorflow.python.framework import tensor_util
 from pathlib import Path
 from typing import Union
 import pickle
-import tensorflow as tf
+#import tensorflow as tf
 from einops import reduce,rearrange,repeat
 from scipy.ndimage import shift, center_of_mass
 import itertools
