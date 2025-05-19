@@ -8,6 +8,7 @@ from Common.utils import key_pytree_gen
 from Common.trainer.abstract_data_augmenter_tree import DataAugmenterAbstract
 import itertools
 
+
 class DataAugmenter(DataAugmenterAbstract):
 
     def __init__(self,data_true,hidden_channels=0,MINIBATCHES=64):
@@ -23,6 +24,7 @@ class DataAugmenter(DataAugmenterAbstract):
         self.OBS_CHANNELS = data_true[0].shape[1]
         self.MINIBATCHES = MINIBATCHES
         print("Resampling subtrajectories every "+str(MINIBATCHES)+" steps")
+        print("Observable channels: "+str(self.OBS_CHANNELS))
         data_tree = []
         try:
             for i in range(data_true.shape[0]): # if data is provided as big array, convert to list of arrays. If data is list of arrays, this will leave it unchanged

@@ -11,6 +11,7 @@ class DataAugmenterSubsampleMicropatternTexture(DataAugmenterAbstract):
     def data_init(self,*args):
         data = self.return_saved_data()
         self.save_data(data)
+        
 
 
     def data_load(self):

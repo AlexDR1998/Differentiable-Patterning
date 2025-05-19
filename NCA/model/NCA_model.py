@@ -15,7 +15,6 @@ class NCA(AbstractModel):
 	FIRE_RATE: float
 	op: Ops
 	perception: callable
-	#CONFIG: dict
 	def __init__(self,
 			     N_CHANNELS,
 				 KERNEL_STR=["ID","LAP"],
@@ -106,17 +105,7 @@ class NCA(AbstractModel):
 		b_where = lambda l: l.bias
 		self.layers[-1] = eqx.tree_at(w_where,self.layers[-1],w_zeros)
 		self.layers[-1] = eqx.tree_at(b_where,self.layers[-1],b_zeros)
-		
-		# Dict of hyperparameters for logging
-		# self.CONFIG = {
-		# 	"MODEL":"NCA",
-		# 	"N_CHANNELS":N_CHANNELS,
-		# 	"KERNEL_STR":KERNEL_STR,
-		# 	"ACTIVATION":ACTIVATION,
-		# 	"PADDING":PADDING,
-		# 	"FIRE_RATE":FIRE_RATE,
-		# 	"KERNEL_SCALE":KERNEL_SCALE
-		# }
+
 	def get_config(self):
 		"""
 		Returns the model configuration as a dictionary.
