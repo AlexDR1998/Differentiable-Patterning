@@ -27,13 +27,23 @@ class Train_log(object):
     def log_scalars(self, scalars_dict, step=None):
         wandb.log(scalars_dict, step=step)
 
-    def log_image_single(self, tag, image, step=None):
+    def log_image_single(
+        self, 
+        tag, 
+        image: Float[Array,"Width Height Channels"], 
+        step=None
+    ):
         # image can be a numpy array or a local image file; wandb.Image handles both.
         image = np.array(image)
         assert len(image.shape) == 3, "Image must be 3D"
         wandb.log({tag: wandb.Image(image)}, step=step)
     
-    def log_image_batch(self, tag, images, step=None):
+    def log_image_batch(
+        self, 
+        tag, 
+        images: Float[Array,"Batch Width Height Channels"],
+        step=None
+    ):
         image = np.array(images)
         assert len(image.shape) == 4, "Image batch must be 4D"
         # Convert to a list of wandb.Image objects
@@ -57,6 +67,8 @@ class Train_log(object):
         wandb.log({tag: wandb_video}, step=None)
 
     def log_image(self, tag, images, step=None):
+        # Accepts either [Batch, Width, Height, Channels] or [Width, Height, Channels]
+        # If images is a list, convert to numpy array
         images = np.array(images)
         if len(images.shape) == 4:
             # If images is a batch, log as a batch
