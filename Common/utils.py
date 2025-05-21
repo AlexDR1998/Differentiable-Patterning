@@ -687,7 +687,7 @@ def load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE=False):
   ims = rearrange(ims,"BATCH X Y C -> BATCH C X Y")
   return ims
 
-def load_micropattern_shape_sequence(impath,DOWNSAMPLE,BATCH_AVERAGE):
+def load_micropattern_shape_sequence(impath,DOWNSAMPLE,BATCH_AVERAGE,CIRCLE_DATA,CIRCLE_MASK):
   CHANNELS=[
      "FOXA2",
      "SOX17",
@@ -699,6 +699,7 @@ def load_micropattern_shape_sequence(impath,DOWNSAMPLE,BATCH_AVERAGE):
      "LEF1",
      #"SMAD23"
   ]
+  # CIRCLE_DATA is (B,T,CHANNELS, X, Y)
   true_data = load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE)
   masks = adhesion_mask_convex_hull(rearrange(true_data,"B C X Y -> X Y B C"))
 
@@ -707,9 +708,19 @@ def load_micropattern_shape_sequence(impath,DOWNSAMPLE,BATCH_AVERAGE):
   # Expand the mask to have one channel per synthetic condition.
   mask_expanded = repeat(masks, "X Y -> C X Y", C=n_channels)
   # Create synthetic initial conditions by sampling random values where the mask is True, zero elsewhere.
+  #unmasked_ic = jr.choice(key,)
+  unmasked_ic = []
+  for i in range(n_channels):
+    unmasked_ic.append(jax.random.choice(
+      key, 
+      shape=(masks.shape[0], masks.shape[1]), 
+      a=CIRCLE_DATA[0,0,i][CIRCLE_MASK[0,0]==1].flatten(), 
+      replace=True
+      ))
+  unmasked_ic = jnp.array(unmasked_ic)
   synthetic_initial_conditions = jnp.where(
     mask_expanded,
-    jax.random.uniform(key, shape=(n_channels,) + masks.shape),
+    unmasked_ic,
     0.0
   )
 
