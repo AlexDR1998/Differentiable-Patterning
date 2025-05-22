@@ -480,9 +480,9 @@ def load_micropattern_smad23_lef1(impath,downsample=4,VERBOSE=False,BATCH_AVERAG
 def load_micropattern_circle_8ch(DOWNSAMPLE,BATCHES,PVC_PATH="/mnt/ceph/ar-dp/"):
 
   """
-    Loads circular micropatterns for channels: Foxa2, Sox17, TbxT, Lmbr, Cer, Lefty, Nodal, Lef1
+    Loads circular micropatterns for channels: Sox17, Foxa2, TbxT, Lmbr, Cer, Lefty, Nodal, Lef1
   """
-  impath_fstl = PVC_PATH+"Data/Timecourse 60h June/S2 FOXA2_SOX17_TBXT_LMBR/Max Projections/*"     # Foxa2, Sox17, TbxT, Lmbr
+  impath_fstl = PVC_PATH+"Data/Timecourse 60h June/S2 FOXA2_SOX17_TBXT_LMBR/Max Projections/*"     # Sox17, Foxa2, TbxT, Lmbr
   impath_nlc = PVC_PATH+"Data/Nodal_LEFTY_CER/**"                                                  # Lmbr, Cer Lefty, Nodal
   impath_ls = PVC_PATH+"Data/Timecourse 60h June/Smad23_LEF 48h/Max Projections/*"            # Lef1, Lmbr, Smad23
   data_fstl = load_micropattern_time_series(impath_fstl,downsample=DOWNSAMPLE,VERBOSE=False,BATCH_AVERAGE=True)               # 0h, 12h, 24h, 36h, 48h, 60h
@@ -495,7 +495,7 @@ def load_micropattern_circle_8ch(DOWNSAMPLE,BATCHES,PVC_PATH="/mnt/ceph/ar-dp/")
 
 
   print("---- Before removing 6h and duplicate LMBR ----")
-  print(f"Foxa2 sox17 tbxt lmbr shape: {data_fstl.shape}")
+  print(f"Sox17 foxa2 tbxt lmbr shape: {data_fstl.shape}")
   print(f"Lmbr cer lefty nodal shape: {data_nlc.shape}")
   print(f"Lef1 Lmbr smad23 shape: {data_ls.shape}")
   # Data shape: (Time, batch, channels, width, height)
@@ -511,7 +511,7 @@ def load_micropattern_circle_8ch(DOWNSAMPLE,BATCHES,PVC_PATH="/mnt/ceph/ar-dp/")
 
 
   print("---- After removing 6h and duplicate LMBR ----")
-  print(f"Foxa2 sox17 tbxt lmbr shape: {data_fstl.shape}")
+  print(f"Sox17 foxa2 tbxt lmbr shape: {data_fstl.shape}")
   print(f"Lmbr cer lefty nodal shape: {data_nlc.shape}")
   print(f"Lef1 Lmbr smad23 shape: {data_ls.shape}")
 
@@ -527,7 +527,7 @@ def load_micropattern_circle_8ch(DOWNSAMPLE,BATCHES,PVC_PATH="/mnt/ceph/ar-dp/")
 
   data = data*rearrange(boundary_mask,"B () X Y -> B () () X Y")
 
-  print("Channel order: Foxa2, Sox17, TbxT, Lmbr, Cer, Lefty, Nodal, Lef1")
+  print("Channel order: Sox17, Foxa2 TbxT, Lmbr, Cer, Lefty, Nodal, Lef1")
   print(f"Total data shape: {data.shape}")
   return data,boundary_mask
 
@@ -689,8 +689,8 @@ def load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE=False):
 
 def load_micropattern_shape_sequence(impath,DOWNSAMPLE,BATCH_AVERAGE,CIRCLE_DATA,CIRCLE_MASK):
   CHANNELS=[
-     "FOXA2",
      "SOX17",
+     "FOXA2",
      "TBXT",
      "LMBR",
      "CER",
