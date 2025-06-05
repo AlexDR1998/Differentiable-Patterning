@@ -26,6 +26,7 @@ def load_micropattern_nodal_lefty_cer(
       downsample=4,
       BATCH_AVERAGE=False,
       BACKGROUND_RADIUS=50,
+      TIMESTEPS=[0,6,12,24,36,48],  # 0h, 6h, 12h, 24h, 36h, 48h
       VERBOSE=False,
       HIST_EQS=(5,95),
       SHOW_HISTOGRAMS=False,
@@ -53,27 +54,27 @@ def load_micropattern_nodal_lefty_cer(
     """
     
     CHANNEL_NAMES = ["Dappi","Cerberus","Lefty","Nodal"]
-    
+    TIMESTEPS = [0,6,12,24,36,48]  # 0h, 6h, 12h, 24h, 36h, 48h
     filenames = glob.glob(impath,recursive=True)
     filenames = list(sorted(filenames))
     is_tif = lambda x: ".tif" in x
     filenames = list(filter(is_tif,filenames))
     #where_func = lambda filenames,label:label in filenames
-    filenames_0h = list(filter(lambda x:"/0h" in x,filenames))
-    filenames_6h = list(filter(lambda x:"/6h" in x,filenames))
-    filenames_12h = list(filter(lambda x:"/12h" in x,filenames))
-    filenames_24h = list(filter(lambda x:"/24h" in x,filenames))
-    filenames_36h = list(filter(lambda x:"/36h" in x,filenames))
-    filenames_48h = list(filter(lambda x:"/48h" in x,filenames))
-    filenames_ordered = [
-        filenames_0h,
-        filenames_6h,
-        filenames_12h,
-        filenames_24h,
-        filenames_36h,
-        filenames_48h
-    ]
-
+    # filenames_0h = list(filter(lambda x:"/0h" in x,filenames))
+    # filenames_6h = list(filter(lambda x:"/6h" in x,filenames))
+    # filenames_12h = list(filter(lambda x:"/12h" in x,filenames))
+    # filenames_24h = list(filter(lambda x:"/24h" in x,filenames))
+    # filenames_36h = list(filter(lambda x:"/36h" in x,filenames))
+    # filenames_48h = list(filter(lambda x:"/48h" in x,filenames))
+    # filenames_ordered = [
+    #     filenames_0h,
+    #     filenames_6h,
+    #     filenames_12h,
+    #     filenames_24h,
+    #     filenames_36h,
+    #     filenames_48h
+    # ]
+    filenames_ordered = [list(filter(lambda x: f"/{i}h/" in x, filenames)) for i in TIMESTEPS]
     filenames_ordered = [[list(filter(lambda x:f"/{i}/" in x,F)) for i in EXP_MODES] for F in filenames_ordered]
     filenames_ordered = [[ft for ft in filename_times if ft] for filename_times in filenames_ordered]
     if not filenames_ordered[0]:
@@ -125,11 +126,12 @@ def load_micropattern_sox17_foxa2_tbxt_lmbr(
     downsample=4,
     BATCH_AVERAGE=False,
     VERBOSE=False,
+    TIMESTEPS=[0,12,24,36,48,60],  # 0h, 12h, 24h, 36h, 48h, 60h
     BACKGROUND_RADIUS=50,
     SHOW_HISTOGRAMS=False,
     HIST_EQS=(5,95),
     PROCESSING_MODES=["mean_0_std_1","saturate","map_to_0_1","mult_by_lmbr"]
-):
+    ):
     """
         Data is ordered as follows:
         0h, 12h, 24h, 36h, 48h, 60h
@@ -142,17 +144,18 @@ def load_micropattern_sox17_foxa2_tbxt_lmbr(
     filenames = list(sorted(filenames))
     
     where_func = lambda filenames,label:label in filenames
-    filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
-    filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
-    filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
-    filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
-    filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
-    filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
-    filenames_ordered = [filenames_0h,filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
+    # filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
+    # filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
+    # filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
+    # filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
+    # filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
+    # filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
+    filenames_ordered = [list(filter(lambda x:where_func(x,f"_{i}h"),filenames)) for i in TIMESTEPS]
+    #filenames_ordered = [filenames_0h,filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
     # filenames_ordered = [
     #   list(filter(lambda x:where_func(x,f"_{i}h"),filenames)) for i in times
     # ]
-
+    
 
     ims = []
     for filenames in tqdm(filenames_ordered):
@@ -189,24 +192,25 @@ def load_micropattern_smad23_lef1(
     downsample=4,
     VERBOSE=False,
     BATCH_AVERAGE=False,
+    TIMESTEPS=[0,6,12,24,36,48],  # 0h, 6h, 12h, 24h, 36h, 48h
     BACKGROUND_RADIUS=50,
     SHOW_HISTOGRAMS=False,
     HIST_EQS=(5,95),
     PROCESSING_MODES=["mean_0_std_1","saturate","map_to_0_1","mult_by_lmbr"]
-):
+    ):
     CHANNEL_NAMES = ["Lef1","Lmbr","Smad23"]
     filenames = glob.glob(impath)
     filenames = list(sorted(filenames))
     where_func = lambda filenames,label:label in filenames
     #filenames_label = list(filter(lambda x:where_func(x,label),filenames))
-    filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
-    filenames_6h = list(filter(lambda x:where_func(x,"_6h"),filenames))
-    filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
-    filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
-    filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
-    filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
-    filenames_ordered = [filenames_0h,filenames_6h,filenames_12h,filenames_24h,filenames_36h,filenames_48h]
-
+    # filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
+    # filenames_6h = list(filter(lambda x:where_func(x,"_6h"),filenames))
+    # filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
+    # filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
+    # filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
+    # filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
+    #filenames_ordered = [filenames_0h,filenames_6h,filenames_12h,filenames_24h,filenames_36h,filenames_48h]
+    filenames_ordered = [list(filter(lambda x: f"_{i}h" in x, filenames)) for i in TIMESTEPS]
 
     ims = []
     for filenames in tqdm(filenames_ordered):
@@ -274,7 +278,7 @@ def process_data(
     HIST_EQS=(5,95),
     VERBOSE=False,
     mode=["clip","mean_0_std_1","saturate","map_to_0_1","downsample"]
-):
+    ):
     """
         Expects data as a list of [T] arrays of shape [BATCH, X, Y, CHANNELS], where for each entry in the list, BATCH can be different
         Some transformations need to be applied consistently across T, 
@@ -487,13 +491,14 @@ def load_micropattern_circle_8ch(
         BATCHES,
         PVC_PATH="/mnt/ceph/ar-dp/",
         BACKGROUND_RADIUS=50,
+        TIMESTEPS=[0,12,24,36,48,60],  # 0h, 6h, 12h, 24h, 36h, 48h
         HIST_EQS={
-            "sftl":(5,95),
-            "dcln":(5,95),
-            "lls":(5,95)},
+            "sftl":(0.5,99.95),
+            "dcln":(0.5,99.95),
+            "lls":(0.5,99.95)},
         SHOW_HISTOGRAMS=False,
         PROCESSING_MODES=["hist_eq","batch_average","map_to_0_1"]
-):
+    ):
 
     """
         Loads circular micropatterns for channels: Sox17, Foxa2, TbxT, Lmbr, Cer, Lefty, Nodal, Lef1
@@ -506,6 +511,7 @@ def load_micropattern_circle_8ch(
         downsample=DOWNSAMPLE,
         VERBOSE=False,
         BATCH_AVERAGE=True,
+        TIMESTEPS=TIMESTEPS,
         PROCESSING_MODES=["downsample"]+PROCESSING_MODES,
         HIST_EQS=HIST_EQS["sftl"],
         SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
@@ -516,6 +522,7 @@ def load_micropattern_circle_8ch(
         downsample=DOWNSAMPLE,
         VERBOSE=False,
         BATCH_AVERAGE=True,
+        TIMESTEPS=TIMESTEPS,
         PROCESSING_MODES=["align","pad_to_full_width","downsample"]+PROCESSING_MODES,
         HIST_EQS=HIST_EQS["dcln"],
         SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
@@ -525,6 +532,7 @@ def load_micropattern_circle_8ch(
         downsample=DOWNSAMPLE,
         VERBOSE=False,
         BATCH_AVERAGE=True,
+        TIMESTEPS=TIMESTEPS,
         PROCESSING_MODES=["downsample"]+PROCESSING_MODES,
         HIST_EQS=HIST_EQS["lls"],
         SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
