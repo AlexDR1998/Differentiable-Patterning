@@ -54,11 +54,13 @@ def load_micropattern_nodal_lefty_cer(
     """
     
     CHANNEL_NAMES = ["Dappi","Cerberus","Lefty","Nodal"]
-    TIMESTEPS = [0,6,12,24,36,48]  # 0h, 6h, 12h, 24h, 36h, 48h
+    #TIMESTEPS = [0,6,12,24,36,48]  # 0h, 6h, 12h, 24h, 36h, 48h
     filenames = glob.glob(impath,recursive=True)
     filenames = list(sorted(filenames))
     is_tif = lambda x: ".tif" in x
     filenames = list(filter(is_tif,filenames))
+    if 60 in TIMESTEPS:
+        TIMESTEPS = [t for t in TIMESTEPS if t != 60]  # Remove 60h as it is not present in the data
     #where_func = lambda filenames,label:label in filenames
     # filenames_0h = list(filter(lambda x:"/0h" in x,filenames))
     # filenames_6h = list(filter(lambda x:"/6h" in x,filenames))
@@ -74,11 +76,11 @@ def load_micropattern_nodal_lefty_cer(
     #     filenames_36h,
     #     filenames_48h
     # ]
-    filenames_ordered = [list(filter(lambda x: f"/{i}h/" in x, filenames)) for i in TIMESTEPS]
-    filenames_ordered = [[list(filter(lambda x:f"/{i}/" in x,F)) for i in EXP_MODES] for F in filenames_ordered]
+    filenames_ordered_base = [list(filter(lambda x: f"/{i}h/" in x, filenames)) for i in TIMESTEPS]
+    filenames_ordered = [[list(filter(lambda x:f"/{i}/" in x,F)) for i in EXP_MODES] for F in filenames_ordered_base]
     filenames_ordered = [[ft for ft in filename_times if ft] for filename_times in filenames_ordered]
     if not filenames_ordered[0]:
-        exp1_filenames = list(filter(lambda x: "/1/" in x, filenames_0h))
+        exp1_filenames = list(filter(lambda x: "/1/" in x, filenames_ordered_base[0]))
         if exp1_filenames:
             filenames_ordered[0] = [exp1_filenames]
     
@@ -202,6 +204,8 @@ def load_micropattern_smad23_lef1(
     filenames = glob.glob(impath)
     filenames = list(sorted(filenames))
     where_func = lambda filenames,label:label in filenames
+    if 60 in TIMESTEPS:
+        TIMESTEPS = [t for t in TIMESTEPS if t != 60]  # Remove 60h as it is not present in the data
     #filenames_label = list(filter(lambda x:where_func(x,label),filenames))
     # filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
     # filenames_6h = list(filter(lambda x:where_func(x,"_6h"),filenames))
@@ -336,8 +340,8 @@ def process_data(
         mins = jnp.array(mins)
         maxs = jnp.max(maxs, axis=0, keepdims=False)
         mins = jnp.min(mins, axis=0, keepdims=False)
-        print("Maxs:", maxs.shape)
-        print("Mins:", mins.shape)
+        #print("Maxs:", maxs.shape)
+        #print("Mins:", mins.shape)
         data = [(timestep - mins) / (maxs - mins + 1e-8) for timestep in data]
         return data
 
@@ -348,8 +352,8 @@ def process_data(
         stds = jnp.array(stds)
         means = jnp.mean(means, axis=0, keepdims=False)
         stds = jnp.mean(stds, axis=0, keepdims=False)
-        print("Means:", means.shape)
-        print("Stds:", stds.shape)
+        #print("Means:", means.shape)
+        #print("Stds:", stds.shape)
         arr = [(timestep - means) / (stds + 1e-8) for timestep in arr]
         return arr
 
@@ -552,7 +556,7 @@ def load_micropattern_circle_8ch(
 
 
 
-    print("---- Before removing 6h and duplicate LMBR/Dappi ----")
+    print("---- Before removing duplicate LMBR/Dappi ----")
     print("--- (Time , batch, width, height, channels) ---")
     print(f"{' '.join(sftl_names)} shape: {data_sftl.shape}")
     print(f"{' '.join(dcln_names)} shape: {data_dcln.shape}")
@@ -560,9 +564,13 @@ def load_micropattern_circle_8ch(
     # Data shape: (Time, batch, width, height, channels)
 
     # Try without the 6h data first - it makes the timestepping a lot simpler
-    data_dcln = np.concatenate([data_dcln[:1],data_dcln[2:],np.zeros((1,*data_dcln.shape[1:]))],axis=0)
-    data_lls = np.concatenate([data_lls[:1],data_lls[2:],np.zeros((1,*data_lls.shape[1:]))],axis=0)
+    # data_dcln = np.concatenate([data_dcln[:1],data_dcln[2:],np.zeros((1,*data_dcln.shape[1:]))],axis=0)
+    # data_lls = np.concatenate([data_lls[:1],data_lls[2:],np.zeros((1,*data_lls.shape[1:]))],axis=0)
 
+    if 60 in TIMESTEPS:
+        # Add zeros on final timestep for Nodal_Lefty_Cerberus and Smad23_Lef1
+        data_dcln = np.concatenate([data_dcln,np.zeros((1,*data_dcln.shape[1:]))],axis=0)
+        data_lls = np.concatenate([data_lls,np.zeros((1,*data_lls.shape[1:]))],axis=0)
     # Remove duplicates of LMBR channel
     data_dcln = data_dcln[:,:,:,:,1:]
     dcln_names = dcln_names[1:]  # Remove LMBR channel name
@@ -578,7 +586,7 @@ def load_micropattern_circle_8ch(
     # Combine the datasets along channels
     data = np.concatenate([data_sftl,data_dcln,data_lls],axis=-1)
     channel_names = sftl_names + dcln_names + lls_names
-    boundary_mask = adhesion_mask_convex_hull_circle(data_sftl[4,0])[0] # Timestep 4 looks good
+    boundary_mask = adhesion_mask_convex_hull_circle(data_sftl[-1,0])[0] # last timestep looks good
 
     boundary_mask = repeat(boundary_mask,"X Y -> B () X Y",B=BATCHES)
     data = repeat(data,"T () X Y C -> B T C X Y", B=BATCHES)
