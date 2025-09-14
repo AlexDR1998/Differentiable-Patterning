@@ -13,7 +13,6 @@ from PDE.model.solver.semidiscrete_solver import PDE_solver
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from NCA.trainer.data_augmenter_nca_from_pde_2 import DataAugmenter
 from NCA.model.NCA_model import NCA
-from NCA.model.DINCA_model import DINCA
 import jax.lax as lax
 import numpy as np
 
