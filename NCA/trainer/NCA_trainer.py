@@ -496,7 +496,13 @@ class NCA_Trainer(object):
 			x,y = self.DATA_AUGMENTER.split_x_y(1)
 			x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
 			#try:
-			self.LOGGER.tb_training_end_log(self.NCA_model,x,t*x[0].shape[0],self.BOUNDARY_CALLBACK)
+			self.LOGGER.tb_training_end_log(
+				self.NCA_model,
+				x,
+				t=t,
+				NUMBER_OF_IMAGES=x[0].shape[0],
+				boundary_callback=self.BOUNDARY_CALLBACK,
+				SAVE_TRAJECTORY=True)
 			# except Exception as e:
 			# 	print("Error logging training end")
 			# 	print(e)
