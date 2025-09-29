@@ -227,14 +227,51 @@ class NCA_Trainer(object):
 		return jnp.array(jax.tree_util.tree_map(lambda x: jnp.mean(jnp.abs(x)),x_out_bound))
 
 
+	def contiguous_regulariser(self,x,x_previous):
+		"""
+		Contiguous state regulariser. For the observable channels, penalises any growth of those channels that occurs more than
+		N cells out from the current block of high cells. Intended to stop regions of cells growing seemingly out of nowhere.
+
+		NOTE: VMAP THIS OVER BATCHES
+
+		Parameters
+		----------
+		x : float32 array [N,CHANNELS,_,_]
+			NCA state
+		x_previous : float32 array [N,CHANNELS,_,_]
+			Previous NCA state
+		Returns
+		-------
+		reg : float
+			float tracking how much of growth of x in observable channels occurs outwith the bounding region of high observable cells in x_previous 
+
+		"""
+		x = x[:,:self.OBS_CHANNELS]
+		x_previous = x_previous[:,:self.OBS_CHANNELS]
+		dx = x - x_previous # How much obs growth
+		kernel = jnp.array([[1,1,1],[1,1,1],[1,1,1]],dtype=jnp.float32)
+		kernel = repeat(kernel,"w h -> O I w h",O=1,I=self.OBS_CHANNELS)
 		
-	
+		dilation = jax.lax.conv_general_dilated(
+			lhs=x_previous,
+			rhs=kernel,
+			window_strides=(1, 1),
+			padding="SAME",
+		)
+		dilation = 1 - jax.nn.sigmoid((dilation-5.0)*10.0)
+		dilation = repeat(dilation,"N () w h -> N C w h",C=self.OBS_CHANNELS)
+		# err = reduce(dilation*dx,"N C w h -> N")
+		err = jnp.mean(dilation*dx)
+		# return jnp.mean(jnp.abs(x - x_previous))
+		return err
+
 	def train(self,
 		      t,
 			  iters,
 			  optimiser=None,
 			  STATE_REGULARISER=1.0,
 			  BOUNDARY_REGULARISER=1.0,
+			  CONTIGUOUS_REGULARISER=1.0,
 			  WARMUP=64,
 			  LOG_EVERY=40,
 			  CLEAR_CACHE_EVERY=100,
@@ -362,27 +399,47 @@ class NCA_Trainer(object):
 				vv_nca = lambda x,callback,key_array:jax.tree_util.tree_map(v_nca,x,callback,key_array)  # noqa: E731
 				reg_log = jnp.zeros(len(x))
 				boundary_reg_log = jnp.zeros(len(x))
+				contiguous_reg_log = jnp.zeros(len(x))
 				v_intermediate_reg = lambda x:jnp.array(jax.tree_util.tree_map(self.intermediate_reg,x))  # noqa: E731
+				v_contiguous_reg = lambda x,px:jnp.array(jax.tree_util.tree_map(self.contiguous_regulariser,x,px))  # noqa: E731
 				_loss_func = lambda x,y,key:self.loss_func(x,y,key)  # noqa: E731
 				v_loss_func = lambda x,y,key_array:jnp.array(jax.tree_util.tree_map(_loss_func,x,y,key_array))  # noqa: E731
 				
 				# Structuring this as function and lax.scan speeds up jit compile a lot
 
 				def nca_step(carry,j): # function of type a,b -> a
-					key,x,reg_log,boundary_reg_log = carry
+					key,x,reg_log,boundary_reg_log,contiguous_reg_log = carry
 					key = jr.fold_in(key,j)
 					key_array = key_pytree_gen(key,(len(x),x[0].shape[0]))
-					x = vv_nca(x,self.BOUNDARY_CALLBACK,key_array)				
-					reg_log+=v_intermediate_reg(x)
-					boundary_reg_log+=self.boundary_regulariser(x)
-					return (key,x,reg_log,boundary_reg_log),None
+					x_new = vv_nca(x,self.BOUNDARY_CALLBACK,key_array)				
+					reg_log+=v_intermediate_reg(x_new)
+					contiguous_reg_log+=v_contiguous_reg(x_new,x)
+					boundary_reg_log+=self.boundary_regulariser(x_new)
+					return (key,x_new,reg_log,boundary_reg_log,contiguous_reg_log),None
 
 				#(key,x,reg_log),_ = jax.lax.scan(nca_step,(key,x,reg_log),xs=jnp.arange(t))
-				(key,x,reg_log,boundary_reg_log),_ = eqx.internal.scan(nca_step,(key,x,reg_log,boundary_reg_log),xs=jnp.arange(t),kind=LOOP_AUTODIFF)
-				
+				(
+					key,
+					x,
+					reg_log,
+					boundary_reg_log,
+					contiguous_reg_log
+				),_ = eqx.internal.scan(
+					nca_step,
+					(
+						key,
+						x,
+						reg_log,
+						boundary_reg_log,
+						contiguous_reg_log
+					),
+					xs=jnp.arange(t),
+					kind=LOOP_AUTODIFF
+				)
+
 				loss_key = key_pytree_gen(key, (len(x),))
 				losses = v_loss_func(x, y, loss_key)
-				mean_loss = jnp.mean(losses)+STATE_REGULARISER*(jnp.mean(reg_log)/t)+BOUNDARY_REGULARISER*(jnp.mean(boundary_reg_log)/t)
+				mean_loss = jnp.mean(losses)+STATE_REGULARISER*(jnp.mean(reg_log)/t)+BOUNDARY_REGULARISER*(jnp.mean(boundary_reg_log)/t) + CONTIGUOUS_REGULARISER*(jnp.mean(contiguous_reg_log)/t)
 				return mean_loss,(x,losses)
 			
 			nca_diff,nca_static = nca.partition()
