@@ -18,6 +18,7 @@ NCA/trainer/__pycache__/*
 *.eqx
 *events.out.tfevents.*
 logs/*
+wandb/*
 models/*
 *.mp4
 *.pickle
