@@ -340,8 +340,8 @@ def process_data(
         mins = jnp.array(mins)
         maxs = jnp.max(maxs, axis=0, keepdims=False)
         mins = jnp.min(mins, axis=0, keepdims=False)
-        #print("Maxs:", maxs.shape)
-        #print("Mins:", mins.shape)
+        # print("Maxs:", maxs.shape)
+        # print("Mins:", mins.shape)
         data = [(timestep - mins) / (maxs - mins + 1e-8) for timestep in data]
         return data
 
@@ -527,7 +527,7 @@ def load_micropattern_circle_8ch(
         VERBOSE=False,
         BATCH_AVERAGE=True,
         TIMESTEPS=TIMESTEPS,
-        PROCESSING_MODES=["align","pad_to_full_width","downsample"]+PROCESSING_MODES,
+        PROCESSING_MODES=["pad_to_full_width","downsample"]+PROCESSING_MODES,
         HIST_EQS=HIST_EQS["dcln"],
         SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
         BACKGROUND_RADIUS=BACKGROUND_RADIUS)   # 0h, 6h, 12h, 24h, 36h, 48h
@@ -599,6 +599,47 @@ def load_micropattern_circle_8ch(
     return data,boundary_mask,channel_names,aux
 
 
+def load_micropattern_circle_8ch_individual(
+        impath="../Data/Timecourse Individual Images/*",
+        DOWNSAMPLE=1,
+        BATCHES=1,
+        BACKGROUND_RADIUS=20,
+        TIMESTEPS=[0,12,24,36,48],  # 0h, 6h, 12h, 24h, 36h, 48h
+        HIST_EQS=(1.0,95.0),
+        SHOW_HISTOGRAMS=False,
+        PROCESSING_MODES=["threshold","map_to_0_1"]
+        ):
+    filenames = glob.glob(impath)
+    ims = []
+    where_func = lambda filenames,label:label in filenames
+    # TIMESTEPS = [0,12,24,36,48]
+    CHANNEL_NAMES = ["Cer1","Foxa2","LMBR","Lefty","Nodal","Sox17","Sox2","Tbxt"] # Sorted alphabetically
+    filenames_ordered = [list(filter(lambda x:where_func(x,f"_{i}h"),sorted(filenames))) for i in TIMESTEPS]
+    
+    # pprint(filenames_ordered)
+    for f_times in filenames_ordered:
+        ims_time = []
+        for f_str in f_times:
+            ims_time.append(skimage.io.imread(f_str))
+        ims_time = jnp.array(ims_time)
+        ims_time = rearrange(ims_time,"C X Y -> () X Y C")
+        ims.append(ims_time)
+    # ims = np.array(ims)
+    # print("Loaded images with shape: ",ims.shape)
+
+    ims,aux = process_data(
+        ims,
+        LMBR_CHANNEL=2,
+        BATCH_AVERAGE=False,
+        DOWNSAMPLE=DOWNSAMPLE,
+        mode=PROCESSING_MODES,
+        HIST_EQS=HIST_EQS,
+        VERBOSE=False,
+        BACKGROUND_RADIUS=BACKGROUND_RADIUS)
+    # ims = np.array(ims)
+
+
+    return ims,aux,CHANNEL_NAMES
 
 
 def load_micropattern_radii(impath):
@@ -804,7 +845,7 @@ def load_micropattern_shape_sequence(
         #"SMAD23"
     ]
     # CIRCLE_DATA is (B,T,CHANNELS, X, Y)
-    true_data = load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE,HIST_BINS=CIRCLE_HIST_BINS,PROCESSING_MODES=["align","hist_eq","map_to_0_1"])[0]
+    true_data = load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE,HIST_BINS=CIRCLE_HIST_BINS,PROCESSING_MODES=["hist_eq","map_to_0_1"])[0]
     masks = adhesion_mask_convex_hull(rearrange(true_data,"B C X Y -> X Y B C"))
 
     key = jr.PRNGKey(int(time.time()))
