@@ -374,6 +374,7 @@ def process_data(
         #else:
         #for timestep in arr:
             #print("Downsampling timestep with shape:", timestep.shape)
+        arr = [downsample_padder(timestep,DOWNSAMPLE) for timestep in arr]
         return [reduce(timestep,"BATCH (X x2) (Y y2) C -> BATCH X Y C","mean",x2=DOWNSAMPLE,y2=DOWNSAMPLE) for timestep in arr]
         
     def _pad_to_full_width(arr):
@@ -604,7 +605,7 @@ def load_micropattern_circle_8ch_individual(
         DOWNSAMPLE=1,
         BATCHES=1,
         BACKGROUND_RADIUS=20,
-        TIMESTEPS=[0,12,24,36,48],  # 0h, 6h, 12h, 24h, 36h, 48h
+        TIMESTEPS=[0,12,24,36,48,60],  # 0h, 6h, 12h, 24h, 36h, 48h
         HIST_EQS=(1.0,95.0),
         SHOW_HISTOGRAMS=False,
         PROCESSING_MODES=["map_to_0_1"]
@@ -646,12 +647,19 @@ def load_micropattern_circle_8ch_individual(
         HIST_EQS=HIST_EQS,
         VERBOSE=False,
         BACKGROUND_RADIUS=BACKGROUND_RADIUS)
-    ims = np.array(ims)
-
+    ims = np.array(ims) # shape of T B X Y C
+    print("Processed images with shape: ",ims.shape)
     boundary_mask = adhesion_mask_convex_hull_circle(ims[-1,0])[0] # last timestep looks good
-
+    ims = repeat(ims,"T () X Y C -> B T C X Y",B=BATCHES)
     boundary_mask = repeat(boundary_mask,"X Y -> B () X Y",B=BATCHES)
-    ims = ims*rearrange(boundary_mask,"B () X Y -> B () X Y ()")
+
+    # boundary_mask = repeat(boundary_mask,"X Y -> B () X Y",B=BATCHES)
+    # data = repeat(data,"T () X Y C -> B T C X Y", B=BATCHES)
+
+    print("Data shape after batching: ", ims.shape)
+    print("Boundary mask shape: ",boundary_mask.shape)
+    ims = ims*rearrange(boundary_mask,"B () X Y -> B () () X Y")
+    # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
     return ims,aux,CHANNEL_NAMES_DESIRED, boundary_mask
 
 
@@ -696,17 +704,27 @@ def load_micropattern_radii(impath):
 def downsample_padder(arr,downsample):
     """Pads arrays with extra zeros if needed such that it can be properly downsampled by downsample
 
-        Assumes array in shape X Y C
+        Assumes array in shape X Y C, _ X Y C or _ _ X Y C
     Args:
         arr (_type_): _description_
         downsample (_type_): _description_
     """
     #print(arr.shape)
-    if arr.shape[0] % downsample != 0:
-        arr = jnp.pad(arr,((0,downsample-(arr.shape[0] % downsample)),(0,0),(0,0)))
-    if arr.shape[1] % downsample != 0:
-        arr = jnp.pad(arr,((0,0),(0,downsample-(arr.shape[1] % downsample)),(0,0)))
-    
+    if arr.ndim == 3:
+        if arr.shape[0] % downsample != 0:
+            arr = jnp.pad(arr,((0,downsample-(arr.shape[0] % downsample)),(0,0),(0,0)))
+        if arr.shape[1] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,downsample-(arr.shape[1] % downsample)),(0,0)))
+    elif arr.ndim == 4:
+        if arr.shape[1] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,downsample-(arr.shape[1] % downsample)),(0,0),(0,0)))
+        if arr.shape[2] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,0),(0,downsample-(arr.shape[2] % downsample)),(0,0)))
+    elif arr.ndim == 5:
+        if arr.shape[2] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,0),(0,downsample-(arr.shape[2] % downsample)),(0,0),(0,0)))
+        if arr.shape[3] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,0),(0,0),(0,downsample-(arr.shape[3] % downsample)),(0,0)))
     return arr
 
 def pad_to_biggest(ims):
