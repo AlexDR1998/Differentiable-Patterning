@@ -62,7 +62,6 @@ class NCA_Train_log(Train_log):
 				step=i)
 	
 	def tb_training_loop_log_sequence(self,losses,reg_loss,x,i,model,write_images=True,LOG_EVERY=10):
-		
 		self.log_histogram("Train/loss",losses,step=i)
 		self.log_scalar("Train/mean_loss",np.mean(losses),step=i)
 		for name in reg_loss.keys():

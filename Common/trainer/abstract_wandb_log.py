@@ -2,6 +2,8 @@ import wandb
 import numpy as np
 from jaxtyping import Float, Array
 from einops import rearrange
+import io
+from PIL import Image
 wandb.login(key="c969e9166d4abf8c10db353deaa242e386db8b99")
 class Train_log(object):
     def __init__(
@@ -34,9 +36,26 @@ class Train_log(object):
         step=None
     ):
         # image can be a numpy array or a local image file; wandb.Image handles both.
-        image = np.array(image)
-        assert len(image.shape) == 3, "Image must be 3D"
-        wandb.log({tag: wandb.Image(image)}, step=step)
+        try:
+            image = np.array(image)
+            assert len(image.shape) == 3, "Image must be 3D"
+            
+            # Convert to PIL Image
+            if image.dtype != np.uint8:
+                image = np.clip(image * 255 if image.max() <= 1.0 else image, 0, 255).astype(np.uint8)
+            
+            pil_image = Image.fromarray(image)
+            
+            # Use in-memory buffer
+            buffer = io.BytesIO()
+            pil_image.save(buffer, format='PNG')
+            buffer.seek(0)
+            
+            wandb_image = wandb.Image(Image.open(buffer))
+            wandb.log({tag: wandb_image}, step=step)
+            
+        except Exception as e:
+            print(f"Warning: Failed to process single image {tag}: {e}")
     
     def log_image_batch(
         self, 
@@ -47,9 +66,28 @@ class Train_log(object):
         image = np.array(images)
         assert len(image.shape) == 4, "Image batch must be 4D"
         # Convert to a list of wandb.Image objects
-        wandb_images = [wandb.Image(img) for img in image]
-        # Log the images as a batch
-        wandb.log({tag: wandb_images}, step=step)
+        wandb_images = []
+        for img in image:
+            try:
+                # Convert to PIL Image
+                if img.dtype != np.uint8:
+                    img = np.clip(img * 255 if img.max() <= 1.0 else img, 0, 255).astype(np.uint8)
+                
+                pil_image = Image.fromarray(img)
+                
+                # Use in-memory buffer
+                buffer = io.BytesIO()
+                pil_image.save(buffer, format='PNG')
+                buffer.seek(0)
+                
+                wandb_images.append(wandb.Image(Image.open(buffer)))
+                
+            except Exception as e:
+                print(f"Warning: Failed to process image: {e}")
+                continue
+        
+        if wandb_images:
+            wandb.log({tag: wandb_images}, step=step)
     
     def log_video(self,tag,video:Float[Array,"T C X Y"],step=None):
         """
