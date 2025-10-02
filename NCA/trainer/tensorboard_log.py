@@ -61,11 +61,13 @@ class NCA_Train_log(Train_log):
 				hidden_channels_r,
 				step=i)
 	
-	def tb_training_loop_log_sequence(self,losses,x,i,model,write_images=True,LOG_EVERY=10):
+	def tb_training_loop_log_sequence(self,losses,reg_loss,x,i,model,write_images=True,LOG_EVERY=10):
 		
 		self.log_histogram("Train/loss",losses,step=i)
 		self.log_scalar("Train/mean_loss",np.mean(losses),step=i)
-
+		for name in reg_loss.keys():
+			if name not in ["loss"]:
+				self.log_scalar(f"Train/{name}_reg_loss",reg_loss[name],step=i)
 		if i%LOG_EVERY==0:
 			self.log_model_parameters(model,i)
 			if write_images:
