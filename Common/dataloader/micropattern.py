@@ -607,22 +607,32 @@ def load_micropattern_circle_8ch_individual(
         TIMESTEPS=[0,12,24,36,48],  # 0h, 6h, 12h, 24h, 36h, 48h
         HIST_EQS=(1.0,95.0),
         SHOW_HISTOGRAMS=False,
-        PROCESSING_MODES=["threshold","map_to_0_1"]
+        PROCESSING_MODES=["map_to_0_1"]
         ):
     filenames = glob.glob(impath)
     ims = []
     where_func = lambda filenames,label:label in filenames
     # TIMESTEPS = [0,12,24,36,48]
-    CHANNEL_NAMES = ["Cer1","Foxa2","LMBR","Lefty","Nodal","Sox17","Sox2","Tbxt"] # Sorted alphabetically
+    # CHANNEL_NAMES_SORTED = ["Cer1","Foxa2","LMBR","Lefty","Nodal","Sox17","Sox2","Tbxt"] # Sorted alphabetically
+    CHANNEL_NAMES_DESIRED = ["LMBR","SOX2","TBXT","SOX17","FOXA2","Cer1","Lefty2","Nodal"] # Desired order
     filenames_ordered = [list(filter(lambda x:where_func(x,f"_{i}h"),sorted(filenames))) for i in TIMESTEPS]
     
-    # pprint(filenames_ordered)
+    pprint(filenames_ordered[-1])
     for f_times in filenames_ordered:
         ims_time = []
+        channel_names = []
         for f_str in f_times:
             ims_time.append(skimage.io.imread(f_str))
+            channel_name = f_str.split("/")[-1].split("_")[0].replace(".tif","")
+            channel_names.append(channel_name)
+        print("Channel names found: ",channel_names)
         ims_time = jnp.array(ims_time)
         ims_time = rearrange(ims_time,"C X Y -> () X Y C")
+        # Reorder channels
+        ims_time = ims_time[:,:,:, [channel_names.index(name) for name in CHANNEL_NAMES_DESIRED[:len(ims_time[0,0,0])]]]  # Some timepoints have less than 8 channels]
+        if ims_time.shape[-1] < 8:
+            # Pad with zeros to have 8 channels
+            ims_time = jnp.pad(ims_time,((0,0),(0,0),(0,0),(0,8-ims_time.shape[-1])),mode="constant")
         ims.append(ims_time)
     # ims = np.array(ims)
     # print("Loaded images with shape: ",ims.shape)
@@ -636,10 +646,13 @@ def load_micropattern_circle_8ch_individual(
         HIST_EQS=HIST_EQS,
         VERBOSE=False,
         BACKGROUND_RADIUS=BACKGROUND_RADIUS)
-    # ims = np.array(ims)
+    ims = np.array(ims)
 
+    boundary_mask = adhesion_mask_convex_hull_circle(ims[-1,0])[0] # last timestep looks good
 
-    return ims,aux,CHANNEL_NAMES
+    boundary_mask = repeat(boundary_mask,"X Y -> B () X Y",B=BATCHES)
+    ims = ims*rearrange(boundary_mask,"B () X Y -> B () X Y ()")
+    return ims,aux,CHANNEL_NAMES_DESIRED, boundary_mask
 
 
 def load_micropattern_radii(impath):
