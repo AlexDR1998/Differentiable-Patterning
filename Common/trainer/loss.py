@@ -199,7 +199,9 @@ def vgg(x,y, key,where=None):
 	y = rearrange(y,"n c x y->n x y c",)[...,:3]
 	
 	
-	
+	# L-pips expects inputs in the range [-1,1], but we almost always use data in the range [0,1]
+	x = x*2-1
+	y = y*2-1
 	params = lpips.init(key, x, y)
 	loss = lpips.apply(params, x, y)
 	return loss
