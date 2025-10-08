@@ -23,10 +23,11 @@ def muon_optimizer(schedule):
         schedule,
         muon_weight_dimension_numbers=build_muon_dnums
     )
-    return optax.chain(
-        optimiser,
-        optax.scale_by_param_block_norm(),
-    )
+    return optimiser
+    # return optax.chain(
+    #     optimiser,
+    #     optax.scale_by_param_block_norm(),
+    # )
 
 def sam_optimizer(base_optimizer, rho=0.05, sync_period=2):
     """Wraps an existing optimizer with SAM (Sharpness-Aware Minimization)."""
