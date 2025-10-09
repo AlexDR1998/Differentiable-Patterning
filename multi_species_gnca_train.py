@@ -1,5 +1,5 @@
 from NCA.trainer.NCA_trainer import NCA_Trainer
-from Common.utils import load_emoji_sequence
+from Common.dataloader.emoji import load_emoji_sequence
 from Common.eddie_indexer import index_to_data_nca_type_multi_species
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 from NCA.model.NCA_model import NCA
@@ -15,7 +15,7 @@ import sys
 class data_augmenter_subclass(DataAugmenter):
     def data_init(self, SHARDING=None):
         data = self.return_saved_data()
-        data = self.pad(data, 10)
+        data = self.pad(data, [10,10])
         self.save_data(data)
         return None
 PVC_PATH = "/mnt/ceph/ar-dp/"
@@ -23,15 +23,17 @@ PVC_PATH = "/mnt/ceph/ar-dp/"
 TRAINING_STEPS = 20000  # How many steps to train for
 DOWNSAMPLE = 1  # How much to downsample the image by
 NCA_STEPS = 128  # How many NCA steps between each image in the data sequence
-BATCH=1
+BATCH=4
 
 index = int(sys.argv[1])
 key = jax.random.PRNGKey(int(time.time()))
 key = jax.random.fold_in(key, index)
 
-CHANNELS = [32,48,64,32,48,64][index]  # How many channels to use in the model
-MODE = ["gNCA", "gNCA", "gNCA", "NCA", "NCA", "NCA"][index]  # What mode to use for the model
-nca_filename = f"{MODE}_grad_{CHANNELS}ch_v1"
+# CHANNELS = [32,48,64,32,48,64][index]  # How many channels to use in the model
+# MODE = ["gNCA", "gNCA", "gNCA", "NCA", "NCA", "NCA"][index]  # What mode to use for the model
+CHANNELS = 32
+MODE = "gNCA"
+nca_filename = f"{MODE}_grad_{CHANNELS}ch_v2"
 
 
     # Redefine how data is pre-processed before training
@@ -40,16 +42,17 @@ data = load_emoji_sequence(
     [
         "crab.png",
         "microbe.png",
-        "avocado.png",
-        "alien_monster.png",
-        "butterfly.png",
-        "lizard.png",
-        "mushroom.png",
+        # "avocado.png",
+        # "alien_monster.png",
+        # "butterfly.png",
+        # "lizard.png",
+        # "mushroom.png",
     ],
     downsample=DOWNSAMPLE,
     impath_emojis=PVC_PATH + "Data/Emojis/",
 )
-data_filename = "cr_mi_av_al_bt_li_mu"
+# data_filename = "cr_mi_av_al_bt_li_mu"
+data_filename = "cr_mi"
 
 data = rearrange(data, "B T C W H -> T B C W H")
 
@@ -131,6 +134,7 @@ trainer.train(
     iters=TRAINING_STEPS+warmup_steps, 
     LOOP_AUTODIFF="checkpointed", 
     optimiser=optimiser,
+    CONTIGUOUS_REGULARISER=0.0,
     WARMUP=warmup_steps,
     LOG_EVERY=200,
     CLEAR_CACHE_EVERY=200,
