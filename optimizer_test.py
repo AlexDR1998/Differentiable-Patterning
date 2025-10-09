@@ -122,6 +122,15 @@ def emoji_task():
             self.save_data(data)
             return None
     STEPS_BETWEEN_IMAGES = 128
+    NCA_hyperparameters = {
+        "N_CHANNELS":CHANNELS,
+        "KERNEL_STR":["ID","LAP","GRAD"],
+        "FIRE_RATE":0.5,
+        "PADDING":"circular",
+        "key":key
+    }
+
+    
     data = load_emoji_sequence(
         [
             "crab.png",
@@ -157,7 +166,7 @@ def emoji_task():
     print("(Batch, Time, Channels, Width, Height): " + str(data.shape))
     nca = gNCA(**NCA_hyperparameters)
     opt,optmode = build_opt(args)
-    name = "optimizer_test_"+optmode+"_emoji"
+    name = "optimizer_test_"+optmode+"_emoji_grad"
     print("-----------------------------------------------------------------------------------------------------")
     print(f"Training {optmode} on emoji task")
     trainer = NCA_Trainer(
@@ -187,13 +196,21 @@ def emoji_task():
         wandb_args={
             "project":"nca_optimizer_test",
             "name":name,
-            "tags":["multi_species","gNCA","emoji","long","optimizer_test"],
+            "tags":["multi_species","gNCA","emoji","long","optimizer_test","grad"],
             "group":"multispecies_emoji_morph"}
     )
 
 
 
 def micropattern_task():
+    NCA_hyperparameters = {
+        "N_CHANNELS":CHANNELS,
+        "KERNEL_STR":["ID","LAP","DIFF"],
+        "FIRE_RATE":0.5,
+        "PADDING":"circular",
+        "key":key
+    }
+
     DOWNSAMPLE = 4
     STEPS_BETWEEN_IMAGES = int(256 / np.sqrt(DOWNSAMPLE))
     # FILENAME = f"micropattern_circle_8ch_individual_gNCA_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}_v4_long"
@@ -221,7 +238,7 @@ def micropattern_task():
     # nca = gNCA(**NCA_hyperparameters)
     nca = gNCA(**NCA_hyperparameters)
     opt,optmode = build_opt(args)
-    name = f"optimizer_test_"+optmode+"_micropattern_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}"
+    name = f"optimizer_test_{optmode}_micropattern_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}"
     print("-----------------------------------------------------------------------------------------------------")
     print(f"Training {optmode} on micropattern task")
     trainer = NCA_Trainer(

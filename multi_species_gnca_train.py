@@ -10,6 +10,7 @@ import time
 import jax
 import jax.numpy as np
 import optax
+from optax.contrib import muon
 import matplotlib.pyplot as plt
 import sys
 
@@ -40,7 +41,7 @@ key = jax.random.PRNGKey(int(time.time()))
 CHANNELS = 64
 MODE = "gNCA"
 
-nca_filename = f"{MODE}_grad_{CHANNELS}ch_contiguous_{REGULARISER}_wide_perturbation_0.1"
+nca_filename = f"{MODE}_grad_{CHANNELS}ch_contiguous_{REGULARISER}_wide_perturbation_0.1_muon"
 
 
     # Redefine how data is pre-processed before training
@@ -153,7 +154,7 @@ trainer.train(
     CLEAR_CACHE_EVERY=200,
     wandb_args={
         "project":"multi_species_patterning",
-        "name":f"{MODE}_grad_{CHANNELS}ch_multi_species_stable_contiguous_{REGULARISER}_perturbation_0.1",
+        "name":f"{MODE}_grad_{CHANNELS}ch_multi_species_stable_contiguous_{REGULARISER}_perturbation_0.1_muon",
         "tags":["multi_species","gNCA","grad","emoji","long","hyperparam_sweep"],
         "group":"multi_species_gNCA_stable_contiguous_sweep"}
 )

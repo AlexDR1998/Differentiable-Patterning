@@ -15,6 +15,52 @@ key = jax.random.PRNGKey(int(time.time()))
 print(sys.path)
 
 
+
+class data_augmenter_subclass(DataAugmenter):
+    def data_callback(self,x,y,i,key):
+        """
+        Called after every training iteration to perform data augmentation and processing		
+
+
+        Parameters
+        ----------
+        x : PyTree [BATCHES] f32[N-N_steps,CHANNELS,WIDTH,HEIGHT]
+            Initial conditions
+        y : PyTree [BATCHES] f32[N-N_steps,CHANNELS,WIDTH,HEIGHT]
+            Final states
+        i : int
+            Current training iteration - useful for scheduling mid-training data augmentation
+
+        Returns
+        -------
+        x : PyTree [BATCHES] f32[N-N_steps,CHANNELS,WIDTH,HEIGHT]
+            Initial conditions
+        y : PyTree [BATCHES] f32[N-N_steps,CHANNELS,WIDTH,HEIGHT]
+            Final states
+
+        """
+
+        
+        x_true,_ =self.split_x_y(1)
+        x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
+        x = self.noise(x,0.1,key=key)
+        self.PREVIOUS_KEY = key
+        return x,y
+		
+
+@eqx.filter_jit
+def jittable_callback_bit(x,x_true,OBS_CHANNELS):
+	propagate_xn = lambda x:x.at[1:].set(x[:-1])
+	reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
+	
+	x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
+	x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
+			
+	for b in range(len(x)//2):
+		x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
+	return x
+
+
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--downsample', type=int, help='Resolution downsampling factor', default=1)
 argparser.add_argument('--channels', type=int, help='Number of channels in NCA', default=16)
@@ -36,7 +82,7 @@ NCA_hyperparameters = {
     "PADDING":"circular",
     "key":key
 }
-FILENAME = f"micropattern_circle_8ch_individual_gNCA_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}_v4_long"
+FILENAME = f"micropattern_circle_8ch_individual_gNCA_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}_texture_pretrain"
 
 
 data, aux, CHANNEL_NAMES, boundary_mask = load_micropattern_circle_8ch_individual(
@@ -71,19 +117,14 @@ schedule = optax.join_schedules(
 
 optimiser = optax.chain(optax.scale_by_param_block_norm(), optax.nadam(schedule))
 
-MASK = np.array([
-    [1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,0,0,0]])
 
+# MASK = np.array([
+#     [1,1,1,1,1,1,1,1],
+#     [1,1,1,1,1,1,1,1],
+#     [1,1,1,1,1,1,1,1],
+#     [1,1,1,1,1,1,1,1],
+#     [1,1,1,1,1,0,0,0]])
 
-# print("Testing data augmenter...")
-# data_augmenter = DataAugmenter(data,hidden_channels=CHANNELS-8)
-# x,y = data_augmenter.data_load(key=key)
-# print("x shape = ",len(x),x[0].shape)
-# print("y shape = ",len(y),y[0].shape)
 
 print("-----------------------------------------------------------------------------------------------------")
 print(f"Training gNCA on with STEPS_BETWEEN_IMAGES: {STEPS_BETWEEN_IMAGES} CHANNELS: {CHANNELS}")
@@ -92,28 +133,27 @@ opt = NCA_Trainer(
     nca,
     data,
     model_filename=FILENAME,
-    DATA_AUGMENTER=DataAugmenter,
+    DATA_AUGMENTER=data_augmenter_subclass,
     MODEL_DIRECTORY="models/",
     LOG_DIRECTORY="logs/",
     BOUNDARY_MASK=boundary_mask,
     BOUNDARY_MODE="soft",
-    LOSS_TIME_CHANNEL_MASK=MASK
 )
 opt.train(
     t=STEPS_BETWEEN_IMAGES,
     iters=TRAINING_ITERATIONS,
     REGULARISER_COEFFS={
-        "intermediate_state":1.0,
+        "intermediate_state":0.1,
         "boundary": 1.0,
-        # "contiguous_growth":1.0,
+        "contiguous_growth":0.1,
     },
     WARMUP=warmup_steps,
     optimiser=optimiser,
     WRITE_IMAGES=True,
-    LOSS_FUNC_STR="euclidean",
+    LOSS_FUNC_STR="vgg",
     wandb_args={
         "project":"nca-micropatterns",
-        "group":"individual_8ch_sampling_channel_sweep",
+        "group":"individual_8ch_sampling_channel_texture_pretrain",
         "tags":["training","gNCA",str(CHANNELS)+"ch",str(DOWNSAMPLE)+"x_downsample"],
         "name":FILENAME
     },
