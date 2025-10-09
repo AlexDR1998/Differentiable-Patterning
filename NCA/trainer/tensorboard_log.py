@@ -6,6 +6,7 @@ from tqdm import tqdm
 from jaxtyping import Float,Array,Key,PyTree
 import os
 LOG_BACKEND = os.environ.get("LOG_BACKEND", "wandb")
+PVC_PATH = "mnt/ceph/ar-dp/"  # Path to the PVC where the data is stored
 #if LOG_BACKEND=="wandb":
 from Common.trainer.abstract_wandb_log import Train_log
 #elif LOG_BACKEND=="tensorboard":
@@ -76,7 +77,9 @@ class NCA_Train_log(Train_log):
 						 	nca,
 							x: PyTree[Float[Array, "N CHANNELS x y"], "B"],  # noqa: F722, F821
 							t,
+							NUMBER_OF_IMAGES,
 							boundary_callback,
+							SAVE_TRAJECTORY=False,
 							write_images=True):
 		"""
 		
@@ -89,9 +92,10 @@ class NCA_Train_log(Train_log):
 		print("Running final trained model for "+str(t)+" steps")
 		
 		for b in tqdm(range(BATCHES)):
-			T =nca.run(t,x[b][0],boundary_callback[b])
+			T =nca.run(t*NUMBER_OF_IMAGES,x[b][0],boundary_callback[b])
 			self.log_video("Evaluation/trajectory",T[:,:3],step=None)
-
+			if SAVE_TRAJECTORY:
+				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])
 			if CHANNELS>4:
 				t_h = T[:,:,:,4:]
 				extra_zeros = (-t_h.shape[1])%3

@@ -595,6 +595,7 @@ def load_micropattern_circle_8ch(
     data = data*rearrange(boundary_mask,"B () X Y -> B () () X Y")
 
     print("Channel order: "+" ".join(channel_names))
+    #data = rearrange(data,"B T C X Y -> B T X Y C")
     print(f"Total data shape: {data.shape}")
     return data,boundary_mask,channel_names,aux
 
@@ -759,8 +760,8 @@ def load_micropattern_shape_array(
     # map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
     # saturate = lambda arr: jax.nn.sigmoid(arr)
     # mult_by_lmbr = lambda arr: arr*arr[:,:,:,3:4]
-    for im in ims:
-        print(im.shape)
+    #for im in ims:
+        #print(im.shape)
     ims = pad_to_biggest(ims)
     ims = list(map(lambda a:downsample_padder(a,DOWNSAMPLE),ims))
     #ims = [rearrange(im,"X Y C -> () X Y C") for im in ims]  # Add time dimension
@@ -804,7 +805,10 @@ def load_micropattern_shape_sequence(
         #"SMAD23"
     ]
     # CIRCLE_DATA is (B,T,CHANNELS, X, Y)
-    true_data = load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE,HIST_BINS=CIRCLE_HIST_BINS,PROCESSING_MODES=["align","hist_eq","map_to_0_1"])[0]
+    true_data,_,_ = load_micropattern_shape_array(impath,DOWNSAMPLE,BATCH_AVERAGE,HIST_BINS=CIRCLE_HIST_BINS,PROCESSING_MODES=["hist_eq","batch_average","map_to_0_1"])
+    true_data = jnp.array(true_data[0])  # Get the first (and only) timestep
+    true_data = rearrange(true_data,"B X Y C -> B C X Y")  # Rearrange to (BATCH, CHANNELS, X, Y)
+    print("Shape of true data:",true_data.shape)
     masks = adhesion_mask_convex_hull(rearrange(true_data,"B C X Y -> X Y B C"))
 
     key = jr.PRNGKey(int(time.time()))
@@ -827,7 +831,8 @@ def load_micropattern_shape_sequence(
         unmasked_ic,
         0.0
     )
-
+    print("Shape of synthetic initial conditions:",synthetic_initial_conditions.shape)
+    print("Shape of masks:",masks.shape)
     return true_data,masks,synthetic_initial_conditions
 
 

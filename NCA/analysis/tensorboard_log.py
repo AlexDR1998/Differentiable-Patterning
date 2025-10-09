@@ -1,6 +1,7 @@
 from Common.trainer.abstract_wandb_log import Train_log
 from NCA.trainer.tensorboard_log import NCA_Train_log
 from Common.utils import squarish
+from jaxtyping import Float, Array
 import jax.numpy as jnp
 import jax.random as jr
 import jax
@@ -77,17 +78,26 @@ class SAE_Train_log(Train_log):
 
 class CM_Train_log(Train_log):
 
-    def log_data_at_init(self, data):
-        pass
+    def log_data_at_init(
+        self, 
+        data: Float[Array,"Batch Time Channels H W"], 
+        label="Target channels"
+    ):
+        y_true = rearrange(data, "B T C H W -> (B C H) (T W) ()")
+        self.log_image(label,y_true,step=0)
 
     def tb_training_loop_log_sequence(self,loss,cm,y_pred,step,write_images=True,LOG_EVERY=10):
-        print("Y shape",y_pred.shape)
-        self.log_scalars({"Loss":loss},step=step)
+        #print("Y shape",y_pred.shape)
+        self.log_scalars({"Loss":loss,"Log_loss":jnp.log(loss)},step=step)
         if step%LOG_EVERY==0:
             self.log_model_parameters(cm,step)
+            y_pred = rearrange(y_pred, "B T C H W -> (B C H) (T W) ()")
+            self.log_image("Channel map output",y_pred,step=step)
     
     def log_model_parameters(self, cm, i):
-        self.log_histogram("Channel map weights",cm.layers[0].weight,step=i)
+        #self.log_histogram("Channel map input weights",cm.layers[0].weight,step=i)
+        #self.log_histogram("Channel map output weights",cm.layers[2].weight,step=i)
+        pass
                 
 
 

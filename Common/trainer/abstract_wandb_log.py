@@ -12,6 +12,7 @@ class Train_log(object):
         self.run = wandb.init(
             **wandb_config
         )
+        self.wandb_config = wandb_config
         self.log_data_at_init(data)
 
     def log_data_at_init(self,data):    
@@ -70,6 +71,8 @@ class Train_log(object):
         # Accepts either [Batch, Width, Height, Channels] or [Width, Height, Channels]
         # If images is a list, convert to numpy array
         images = np.array(images)
+        if images.shape[-1]==2:
+            images = np.concatenate([images, np.zeros_like(images[..., :1])], axis=-1)  # Add a zero 3rd channel if only 2 channels are present
         if len(images.shape) == 4:
             # If images is a batch, log as a batch
             self.log_image_batch(tag, images, step)

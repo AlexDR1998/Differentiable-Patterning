@@ -21,7 +21,7 @@ class model_boundary(object):
 		None.
 
 		"""
-
+		assert len(mask.shape) == 3, "Mask should be of shape [MASK_CHANNELS,WIDTH,HEIGHT]"
 		self.MASK = mask
 		
 	@eqx.filter_jit	
