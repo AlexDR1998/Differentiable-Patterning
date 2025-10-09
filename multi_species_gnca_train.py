@@ -1,3 +1,4 @@
+import argparse
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from Common.dataloader.emoji import load_emoji_sequence
 from Common.eddie_indexer import index_to_data_nca_type_multi_species
@@ -9,6 +10,7 @@ import time
 import jax
 import jax.numpy as np
 import optax
+from optax.contrib import muon
 import matplotlib.pyplot as plt
 import sys
 
@@ -18,22 +20,28 @@ class data_augmenter_subclass(DataAugmenter):
         data = self.pad(data, [10,10])
         self.save_data(data)
         return None
-PVC_PATH = "/mnt/ceph/ar-dp/"
+# PVC_PATH = "/mnt/ceph/ar-dp/"
 
-TRAINING_STEPS = 20000  # How many steps to train for
+TRAINING_STEPS = 10000  # How many steps to train for
 DOWNSAMPLE = 1  # How much to downsample the image by
 NCA_STEPS = 128  # How many NCA steps between each image in the data sequence
-BATCH=4
+BATCH = 2
+# CONTIGUOUS_REGULARISER = 0.1  # Weighting for the contiguous regulariser term in the loss function
 
-index = int(sys.argv[1])
+parser = argparse.ArgumentParser(description="RECORD model training script")
+parser.add_argument("--contiguous_regulariser", type=float, default=0.1, help="Weighting for the contiguous regulariser term in the loss function")
+args = parser.parse_args()
+
+REGULARISER = args.contiguous_regulariser
 key = jax.random.PRNGKey(int(time.time()))
-key = jax.random.fold_in(key, index)
+# key = jax.random.fold_in(key, index)
 
 # CHANNELS = [32,48,64,32,48,64][index]  # How many channels to use in the model
 # MODE = ["gNCA", "gNCA", "gNCA", "NCA", "NCA", "NCA"][index]  # What mode to use for the model
-CHANNELS = 32
+CHANNELS = 64
 MODE = "gNCA"
-nca_filename = f"{MODE}_grad_{CHANNELS}ch_v2"
+
+nca_filename = f"{MODE}_grad_{CHANNELS}ch_contiguous_{REGULARISER}_wide_perturbation_0.1_muon"
 
 
     # Redefine how data is pre-processed before training
@@ -49,7 +57,7 @@ data = load_emoji_sequence(
         # "mushroom.png",
     ],
     downsample=DOWNSAMPLE,
-    impath_emojis=PVC_PATH + "Data/Emojis/",
+    impath_emojis="/projects/u5be/alex_data/Emojis/",
 )
 # data_filename = "cr_mi_av_al_bt_li_mu"
 data_filename = "cr_mi"
@@ -100,8 +108,8 @@ trainer = NCA_Trainer(
     data,
     DATA_AUGMENTER=data_augmenter_subclass,
     model_filename="multi_species_stable_" + nca_filename + "_" + data_filename+ "_ds_" + str(DOWNSAMPLE)+"_long",
-    MODEL_DIRECTORY=PVC_PATH + "models/",
-    LOG_DIRECTORY=PVC_PATH + "logs/",
+    MODEL_DIRECTORY= "models/",
+    LOG_DIRECTORY= "logs/",
 )
 
 warmup_steps = 100  # number of steps for warmup
@@ -131,7 +139,14 @@ optimiser = optax.chain(optax.scale_by_param_block_norm(), optax.nadam(schedule)
 
 trainer.train(
     t=NCA_STEPS, 
-    iters=TRAINING_STEPS+warmup_steps, 
+    iters=TRAINING_STEPS+warmup_steps,
+    REGULARISER_COEFFS={
+        "intermediate_state":0.1,
+        "boundary":0.0,
+        "contiguous_growth":1.0,
+        "update_sensitivity":0.0,
+        "perturbation_conservation":1.0,
+    }, 
     LOOP_AUTODIFF="checkpointed", 
     optimiser=optimiser,
     CONTIGUOUS_REGULARISER=0.0,
@@ -140,7 +155,7 @@ trainer.train(
     CLEAR_CACHE_EVERY=200,
     wandb_args={
         "project":"multi_species_patterning",
-        "name":f"{MODE}_grad_{CHANNELS}ch_multi_species",
-        "tags":["multi_species","gNCA","grad","emoji","long","hyperparameter sweep"],
-        "group":"multi_species_gNCA_vs_NCA_grad_channel_sweep"}
+        "name":f"{MODE}_grad_{CHANNELS}ch_multi_species_stable_contiguous_{REGULARISER}_perturbation_0.1_muon",
+        "tags":["multi_species","gNCA","grad","emoji","long","hyperparam_sweep"],
+        "group":"multi_species_gNCA_stable_contiguous_sweep"}
 )

@@ -340,8 +340,8 @@ def process_data(
         mins = jnp.array(mins)
         maxs = jnp.max(maxs, axis=0, keepdims=False)
         mins = jnp.min(mins, axis=0, keepdims=False)
-        #print("Maxs:", maxs.shape)
-        #print("Mins:", mins.shape)
+        # print("Maxs:", maxs.shape)
+        # print("Mins:", mins.shape)
         data = [(timestep - mins) / (maxs - mins + 1e-8) for timestep in data]
         return data
 
@@ -374,6 +374,7 @@ def process_data(
         #else:
         #for timestep in arr:
             #print("Downsampling timestep with shape:", timestep.shape)
+        arr = [downsample_padder(timestep,DOWNSAMPLE) for timestep in arr]
         return [reduce(timestep,"BATCH (X x2) (Y y2) C -> BATCH X Y C","mean",x2=DOWNSAMPLE,y2=DOWNSAMPLE) for timestep in arr]
         
     def _pad_to_full_width(arr):
@@ -527,7 +528,7 @@ def load_micropattern_circle_8ch(
         VERBOSE=False,
         BATCH_AVERAGE=True,
         TIMESTEPS=TIMESTEPS,
-        PROCESSING_MODES=["align","pad_to_full_width","downsample"]+PROCESSING_MODES,
+        PROCESSING_MODES=["pad_to_full_width","downsample"]+PROCESSING_MODES,
         HIST_EQS=HIST_EQS["dcln"],
         SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
         BACKGROUND_RADIUS=BACKGROUND_RADIUS)   # 0h, 6h, 12h, 24h, 36h, 48h
@@ -600,6 +601,67 @@ def load_micropattern_circle_8ch(
     return data,boundary_mask,channel_names,aux
 
 
+def load_micropattern_circle_8ch_individual(
+        impath="../Data/Timecourse Individual Images/*",
+        DOWNSAMPLE=1,
+        BATCHES=1,
+        BACKGROUND_RADIUS=20,
+        TIMESTEPS=[0,12,24,36,48,60],  # 0h, 6h, 12h, 24h, 36h, 48h
+        HIST_EQS=(1.0,95.0),
+        SHOW_HISTOGRAMS=False,
+        PROCESSING_MODES=["map_to_0_1"]
+        ):
+    filenames = glob.glob(impath)
+    ims = []
+    where_func = lambda filenames,label:label in filenames
+    # TIMESTEPS = [0,12,24,36,48]
+    # CHANNEL_NAMES_SORTED = ["Cer1","Foxa2","LMBR","Lefty","Nodal","Sox17","Sox2","Tbxt"] # Sorted alphabetically
+    CHANNEL_NAMES_DESIRED = ["LMBR","SOX2","TBXT","SOX17","FOXA2","Cer1","Lefty2","Nodal"] # Desired order
+    filenames_ordered = [list(filter(lambda x:where_func(x,f"_{i}h"),sorted(filenames))) for i in TIMESTEPS]
+    
+    pprint(filenames_ordered[-1])
+    for f_times in filenames_ordered:
+        ims_time = []
+        channel_names = []
+        for f_str in f_times:
+            ims_time.append(skimage.io.imread(f_str))
+            channel_name = f_str.split("/")[-1].split("_")[0].replace(".tif","")
+            channel_names.append(channel_name)
+        print("Channel names found: ",channel_names)
+        ims_time = jnp.array(ims_time)
+        ims_time = rearrange(ims_time,"C X Y -> () X Y C")
+        # Reorder channels
+        ims_time = ims_time[:,:,:, [channel_names.index(name) for name in CHANNEL_NAMES_DESIRED[:len(ims_time[0,0,0])]]]  # Some timepoints have less than 8 channels]
+        if ims_time.shape[-1] < 8:
+            # Pad with zeros to have 8 channels
+            ims_time = jnp.pad(ims_time,((0,0),(0,0),(0,0),(0,8-ims_time.shape[-1])),mode="constant")
+        ims.append(ims_time)
+    # ims = np.array(ims)
+    # print("Loaded images with shape: ",ims.shape)
+
+    ims,aux = process_data(
+        ims,
+        LMBR_CHANNEL=2,
+        BATCH_AVERAGE=False,
+        DOWNSAMPLE=DOWNSAMPLE,
+        mode=PROCESSING_MODES,
+        HIST_EQS=HIST_EQS,
+        VERBOSE=False,
+        BACKGROUND_RADIUS=BACKGROUND_RADIUS)
+    ims = np.array(ims) # shape of T B X Y C
+    print("Processed images with shape: ",ims.shape)
+    boundary_mask = adhesion_mask_convex_hull_circle(ims[-1,0])[0] # last timestep looks good
+    ims = repeat(ims,"T () X Y C -> B T C X Y",B=BATCHES)
+    boundary_mask = repeat(boundary_mask,"X Y -> B () X Y",B=BATCHES)
+
+    # boundary_mask = repeat(boundary_mask,"X Y -> B () X Y",B=BATCHES)
+    # data = repeat(data,"T () X Y C -> B T C X Y", B=BATCHES)
+
+    print("Data shape after batching: ", ims.shape)
+    print("Boundary mask shape: ",boundary_mask.shape)
+    ims = ims*rearrange(boundary_mask,"B () X Y -> B () () X Y")
+    # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
+    return ims,aux,CHANNEL_NAMES_DESIRED, boundary_mask
 
 
 def load_micropattern_radii(impath):
@@ -643,17 +705,27 @@ def load_micropattern_radii(impath):
 def downsample_padder(arr,downsample):
     """Pads arrays with extra zeros if needed such that it can be properly downsampled by downsample
 
-        Assumes array in shape X Y C
+        Assumes array in shape X Y C, _ X Y C or _ _ X Y C
     Args:
         arr (_type_): _description_
         downsample (_type_): _description_
     """
     #print(arr.shape)
-    if arr.shape[0] % downsample != 0:
-        arr = jnp.pad(arr,((0,downsample-(arr.shape[0] % downsample)),(0,0),(0,0)))
-    if arr.shape[1] % downsample != 0:
-        arr = jnp.pad(arr,((0,0),(0,downsample-(arr.shape[1] % downsample)),(0,0)))
-    
+    if arr.ndim == 3:
+        if arr.shape[0] % downsample != 0:
+            arr = jnp.pad(arr,((0,downsample-(arr.shape[0] % downsample)),(0,0),(0,0)))
+        if arr.shape[1] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,downsample-(arr.shape[1] % downsample)),(0,0)))
+    elif arr.ndim == 4:
+        if arr.shape[1] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,downsample-(arr.shape[1] % downsample)),(0,0),(0,0)))
+        if arr.shape[2] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,0),(0,downsample-(arr.shape[2] % downsample)),(0,0)))
+    elif arr.ndim == 5:
+        if arr.shape[2] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,0),(0,downsample-(arr.shape[2] % downsample)),(0,0),(0,0)))
+        if arr.shape[3] % downsample != 0:
+            arr = jnp.pad(arr,((0,0),(0,0),(0,0),(0,downsample-(arr.shape[3] % downsample)),(0,0)))
     return arr
 
 def pad_to_biggest(ims):

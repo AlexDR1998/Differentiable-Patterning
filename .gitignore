@@ -9,12 +9,16 @@
 ***/__pycache__/*/*/*.pyc
 ***/__pycache__/*/*/*.pyo
 ***/__pycache__/*/*/*/*.pyc
+NCA/__pycache__/*
+NCA/model/__pycache__/*
+NCA/trainer/__pycache__/*
 *.ipynb
 *.pyc
 *.npy
 *.eqx
 *events.out.tfevents.*
 logs/*
+wandb/*
 models/*
 *.mp4
 *.pickle
