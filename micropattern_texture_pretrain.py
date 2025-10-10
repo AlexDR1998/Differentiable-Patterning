@@ -61,19 +61,30 @@ def jittable_callback_bit(x,x_true,OBS_CHANNELS):
 	return x
 
 
-argparser = argparse.ArgumentParser()
-argparser.add_argument('--downsample', type=int, help='Resolution downsampling factor', default=1)
-argparser.add_argument('--channels', type=int, help='Number of channels in NCA', default=16)
-args = argparser.parse_args()
+# argparser = argparse.ArgumentParser()
+# argparser.add_argument('--downsample', type=int, help='Resolution downsampling factor', default=1)
+# argparser.add_argument('--channels', type=int, help='Number of channels in NCA', default=16)
+# args = argparser.parse_args()
 
 
-DATA_PATH = "/projects/u5be/alex_data/Micropatterns/Timecourse_individual_images/*"
+
+
+PVC_PATH = "/mnt/ceph/ar-dp/"
+
+
+
+index = int(sys.argv[1])
+
+# DATA_PATH = "/projects/u5be/alex_data/Micropatterns/Timecourse_individual_images/*"
+DATA_PATH = "Data/Timecourse_individual_images/*"
+
 # print(glob.glob(DATA_PATH+"*.tif"))
-BATCHES = 4
-DOWNSAMPLE = args.downsample
+BATCHES = 2
+DOWNSAMPLE = 2
+# DOWNSAMPLE = args.downsample
 TRAINING_ITERATIONS = 20000
 STEPS_BETWEEN_IMAGES = int(256 / np.sqrt(DOWNSAMPLE))
-CHANNELS = args.channels
+CHANNELS = 32
 
 NCA_hyperparameters = {
     "N_CHANNELS":CHANNELS+1,
@@ -82,11 +93,11 @@ NCA_hyperparameters = {
     "PADDING":"circular",
     "key":key
 }
-FILENAME = f"micropattern_circle_8ch_individual_gNCA_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}_texture_pretrain"
+FILENAME = f"micropattern_circle_8ch_individual_gNCA_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}_texture_pretrain_v2"
 
 
 data, aux, CHANNEL_NAMES, boundary_mask = load_micropattern_circle_8ch_individual(
-    impath=DATA_PATH, 
+    impath=PVC_PATH+DATA_PATH, 
     BATCHES=BATCHES, 
     DOWNSAMPLE=DOWNSAMPLE,
     TIMESTEPS=[0,12,24,36,48,60],
@@ -134,8 +145,8 @@ opt = NCA_Trainer(
     data,
     model_filename=FILENAME,
     DATA_AUGMENTER=data_augmenter_subclass,
-    MODEL_DIRECTORY="models/",
-    LOG_DIRECTORY="logs/",
+    MODEL_DIRECTORY=PVC_PATH+"models/",
+    LOG_DIRECTORY=PVC_PATH+"logs/",
     BOUNDARY_MASK=boundary_mask,
     BOUNDARY_MODE="soft",
 )
@@ -145,7 +156,7 @@ opt.train(
     REGULARISER_COEFFS={
         "intermediate_state":0.1,
         "boundary": 1.0,
-        "contiguous_growth":0.1,
+        "contiguous_growth":1.0,
     },
     WARMUP=warmup_steps,
     optimiser=optimiser,
