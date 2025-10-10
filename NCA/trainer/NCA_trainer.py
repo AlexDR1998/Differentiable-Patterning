@@ -405,6 +405,8 @@ class NCA_Trainer(object):
 		elif LOSS_FUNC_STR=="l1":
 			self._loss_func = loss.l1
 		elif LOSS_FUNC_STR=="vgg":
+			self._loss_func = loss.vgg_hyperspectral
+		elif LOSS_FUNC_STR=="vgg_3ch":
 			self._loss_func = loss.vgg
 		elif LOSS_FUNC_STR=="euclidean":
 			self._loss_func = loss.euclidean
