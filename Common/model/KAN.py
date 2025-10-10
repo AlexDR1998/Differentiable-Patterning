@@ -5,7 +5,6 @@ from jaxtyping import Array,Float,Key
 import time
 from einops import einsum,reduce,repeat
 ### Equinox module that applies Kolmogorov Arnold network as a 1*1 convolutional network
-### Rather than using B-splines, each learnable edge activation is itself a very small 1->H->H->1 neural network with hidden layer size H as a hyperparameter
 
 
 class nKAN(eqx.Module):
@@ -19,13 +18,14 @@ class nKAN(eqx.Module):
     def __init__(self,
                  in_features,
                  out_features,
-                 INTRSIC_HIDDEN_LAYERS,
+                 INTRINSIC_HIDDEN_LAYERS,
                  scale,
                  use_bias=True,
                  activation= jax.nn.relu,
                  key=jax.random.PRNGKey(int(time.time()))):
+        ### Rather than using B-splines, each learnable edge activation is itself a very small 1->H->H->1 neural network with hidden layer size H as a hyperparameter
         key1,key2,key3,key4 = jax.random.split(key,4)
-        self.weight = scale*jax.random.normal(key=key1,shape=(in_features,out_features,INTRSIC_HIDDEN_LAYERS,2+INTRSIC_HIDDEN_LAYERS))#/(1.0*in_features)
+        self.weight = scale*jax.random.normal(key=key1,shape=(in_features,out_features,INTRINSIC_HIDDEN_LAYERS,2+INTRINSIC_HIDDEN_LAYERS))#/(1.0*in_features)
         
         if use_bias:
             self.bias = [
@@ -35,8 +35,8 @@ class nKAN(eqx.Module):
                 ]
         else:
             self.bias = jnp.zeros(3)
-        
-        self.INTRINSIC_HIDDEN_LAYERS = INTRSIC_HIDDEN_LAYERS
+
+        self.INTRINSIC_HIDDEN_LAYERS = INTRINSIC_HIDDEN_LAYERS
         self.in_features = in_features
         self.out_features = out_features
         self.activation = activation

@@ -18,7 +18,7 @@ from NCA.model.NCA_model import NCA
 
 #--- Set model and training parameters
 ITERS = 8000        # Training iterations
-CHANNELS = 8        # NCA channels
+CHANNELS = 16        # NCA channels
 SIZE = 32           # Grid size
 BATCHES = 2         # Data batches
 TIME_SAMPLING = 32  # Timesteps between data snapshots
@@ -36,8 +36,6 @@ Y = rearrange(Y,"T B C X Y -> B T C X Y")                       # Reshape data s
 Y = Y[:,:,:1]                                                   # Only include main channel, not inhibitor/other chemical - see if the NCA can learn from only 1 channel
 Y = (Y-jnp.min(Y))/(jnp.max(Y)-jnp.min(Y))                      # Rescale data between 0 and 1
 Y = Y[:,::TIME_SAMPLING]                                        # Downsample along time axis
-
-
 
 # Define NCA model
 nca = NCA(N_CHANNELS=CHANNELS,          # An important NCA hyperparameter - how many channels

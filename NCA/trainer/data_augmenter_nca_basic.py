@@ -46,19 +46,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		Chain together various data augmentations to perform at intialisation of NCA training
 
 		"""
-		data = self.return_saved_data()
-		if SHARDING is not None:
-			# For Pytree version we have to shard over time axis?
-			data = self.duplicate_batches(data, SHARDING)
-			data = self.pad(data,10)
-			shard = jax.sharding.PositionalSharding(mesh_utils.create_device_mesh((SHARDING,1,1,1,1)))
-			data = jax.device_put(data,shard)
-			jax.debug.visualize_array_sharding(data[:,0,0,0])
-		else:	
-			data = self.duplicate_batches(data, 4)
-			data = self.pad(data, 10)
-
-		
+		data = self.return_saved_data()	
 		self.save_data(data)
 		return None
 	
@@ -86,23 +74,15 @@ class DataAugmenter(DataAugmenterAbstract):
 			Final states
 
 		"""
-		am=10
-		
-		
-		if hasattr(self,"PREVIOUS_KEY"):
-			x = self.unshift(x, am, self.PREVIOUS_KEY)
-			y = self.unshift(y, am, self.PREVIOUS_KEY)
 
+		
 		x_true,_ =self.split_x_y(1)
 				
 		x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
 
-		x = self.shift(x,am,key=key)
-		y = self.shift(y,am,key=key)
 		#print(x[0].shape)
 		#print(len(x))
 		# if i < 10000:
-		x = self.zero_random_circle(x,key=key)
 		x = self.noise(x,0.005,key=key)
 
 		#y = self.noise(y,0.01,key=jax.random.fold_in(key,2*i))

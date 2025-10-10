@@ -80,8 +80,8 @@ class CM_Train_log(Train_log):
     def log_data_at_init(self, data):
         pass
 
-    def tb_training_loop_log_sequence(self,loss,cm,step,write_images=True,LOG_EVERY=10):
-        
+    def tb_training_loop_log_sequence(self,loss,cm,y_pred,step,write_images=True,LOG_EVERY=10):
+        print("Y shape",y_pred.shape)
         self.log_scalars({"Loss":loss},step=step)
         if step%LOG_EVERY==0:
             self.log_model_parameters(cm,step)
