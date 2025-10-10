@@ -1,18 +1,14 @@
 import jax
-
-#from NCA.model.NCA_model import NCA
-#from NCA.model.NCA_gated_model import gNCA
-#from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
 from NCA.trainer.NCA_trainer import NCA_Trainer
-from Common.utils import load_emoji_sequence
-#from Common.eddie_indexer import index_to_data_nca_type
+from Common.dataloader.emoji import load_emoji_sequence
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 import time
 import optax
 import sys
+from einops import repeat, rearrange
 
-PVC_PATH = "/mnt/ceph_rbd/ar-dp/"
+PVC_PATH = "/mnt/ceph/ar-dp/"
 
 class data_augmenter_subclass(DataAugmenter):
     #Redefine how data is pre-processed before training
@@ -28,17 +24,19 @@ class data_augmenter_subclass(DataAugmenter):
         self.save_data(data)
         return None
 
-CHANNELS=32
+CHANNELS=24
 DOWNSAMPLE = 1
+UPSCALE = 4
 t=128
 iters=8000
 
 key = jax.random.PRNGKey(int(time.time()))
 #key = jax.random.fold_in(key,index)
 
-data = load_emoji_sequence(["crab.png","microbe.png","alien_monster.png","crab.png","microbe.png","alien_monster.png","crab.png","microbe.png","alien_monster.png"],impath_emojis=PVC_PATH+"Data/Emojis/",downsample=DOWNSAMPLE)
-data_filename = "cr_mi_al_cycle"
+data = load_emoji_sequence(["crab.png","microbe.png","alien_monster.png"],impath_emojis=PVC_PATH+"Data/Emojis/",downsample=DOWNSAMPLE)
+data_filename = "cr_mi_al"
 
+data = repeat(data, "b t c x y -> b t c (x h) (y w)", h=UPSCALE, w=UPSCALE)
 
 
 
@@ -48,7 +46,7 @@ optimiser = optax.chain(optax.scale_by_param_block_norm(),
 
 
 mnca = mNCA(N_CHANNELS=CHANNELS,
-            SCALES=[1,4,8,16],
+            SCALES=[UPSCALE,2,1],
             GATED = False,
             KERNEL_STR=["ID","LAP","GRAD"],
             ACTIVATION=jax.nn.relu, 
@@ -58,7 +56,7 @@ mnca = mNCA(N_CHANNELS=CHANNELS,
 
 trainer = NCA_Trainer(mnca,
                       data,
-                      model_filename="multiscale_nca_sparse_"+data_filename,
+                      model_filename="multiscale_nca"+data_filename,
                       DATA_AUGMENTER=data_augmenter_subclass,
                       GRAD_LOSS=True,
                       MODEL_DIRECTORY=PVC_PATH+"models/",
@@ -67,4 +65,8 @@ trainer.train(t,
               iters,
               WARMUP=10,
               optimiser=optimiser,
+              wandb_args={
+                "project":"nca-experiments",
+                "group":"multiscale_image_morph",
+                "tags":["training","mNCA"]},
               LOSS_FUNC_STR="euclidean")
