@@ -118,8 +118,15 @@ class Train_log(object):
             raise ValueError("Image must be 3D or 4D (batch)")
 
     def log_histogram(self, tag, values, step=None):
-        wandb.log({tag: wandb.Histogram(values)}, step=step)
-
+        # values = np.array(values)
+        # values = values.ravel()
+        # if values.size < 2 or np.max(values) == np.min(values):
+        #     print(f"Warning: Histogram {tag} has no variation.")
+        # else:
+        try:
+            wandb.log({tag: wandb.Histogram(values)}, step=step)
+        except Exception as e:
+            print(f"Warning: Failed to log histogram {tag}: {e}")
     def log_text(self, tag, text, step=None):
         wandb.log({tag: text}, step=step)
 
