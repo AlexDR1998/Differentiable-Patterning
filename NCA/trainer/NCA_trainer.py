@@ -330,7 +330,7 @@ class NCA_Trainer(object):
 				  "boundary": 1.0,
 				  "contiguous_growth":1.0,
 				  "update_sensitivity":0.0,
-				  "perturbation_conservation":1.0
+				  "perturbation_conservation":0.0
 				},
 			  WARMUP=64,
 			  LOG_EVERY=40,

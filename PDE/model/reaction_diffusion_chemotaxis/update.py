@@ -18,6 +18,7 @@ class F(eqx.Module):
     signal_reaction: Signal_reaction
     CELL_CHANNELS: int
     SIGNAL_CHANNELS: int
+    N_CHANNELS: int
     PADDING: str
     dx: float
 
@@ -34,6 +35,7 @@ class F(eqx.Module):
                  key=jax.random.PRNGKey(int(time.time()))):
         self.CELL_CHANNELS = CELL_CHANNELS
         self.SIGNAL_CHANNELS = SIGNAL_CHANNELS
+        self.N_CHANNELS = CELL_CHANNELS + SIGNAL_CHANNELS
         self.PADDING = PADDING
         key1,key2,key3,key4 = jax.random.split(key,4)
         self.dx = dx

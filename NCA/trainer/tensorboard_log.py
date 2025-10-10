@@ -28,8 +28,9 @@ class NCA_Train_log(Train_log):
 		
 		w1,w2,b2 = nca.get_weights()
 		w1 = np.squeeze(w1)
-		w2 = np.squeeze(w1)
-		b2 = np.squeeze(b2)		
+		w2 = np.squeeze(w2)
+		b2 = np.squeeze(b2)
+				
 		self.log_histogram('Train/input_layer_weights',w1,step=i)
 		self.log_histogram('Train/output_layer_weights',w2,step=i)
 		self.log_histogram('Train/output_layer_bias',b2,step=i)				
@@ -68,7 +69,7 @@ class NCA_Train_log(Train_log):
 		for name in reg_loss.keys():
 			if name not in ["loss"]:
 				self.log_scalar(f"Train/{name}_reg_loss",reg_loss[name],step=i)
-		if i%LOG_EVERY==0:
+		if i%LOG_EVERY==0 and i>0:
 			self.log_model_parameters(model,i)
 			if write_images:
 				self.log_model_outputs(x,i)
