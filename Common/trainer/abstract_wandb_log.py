@@ -43,8 +43,10 @@ class Train_log(object):
             
             # Convert to PIL Image
             if image.dtype != np.uint8:
-                image = np.clip(image * 255 if image.max() <= 1.0 else image, 0, 255).astype(np.uint8)
-            
+                image = np.clip(image * 255 , 0, 255).astype(np.uint8)
+            # if image.dtype == np.float32 or image.dtype == np.float64:
+                # image = np.clip(image, 0, 1)
+
             pil_image = Image.fromarray(image)
             
             # Use in-memory buffer
@@ -72,8 +74,10 @@ class Train_log(object):
             try:
                 # Convert to PIL Image
                 if img.dtype != np.uint8:
-                    img = np.clip(img * 255 if img.max() <= 1.0 else img, 0, 255).astype(np.uint8)
-                
+                    img = np.clip(img * 255, 0, 255).astype(np.uint8)
+                # if img.dtype == np.float32 or img.dtype == np.float64:
+                    # img = np.clip(img,0,1)
+
                 pil_image = Image.fromarray(img)
                 
                 # Use in-memory buffer
