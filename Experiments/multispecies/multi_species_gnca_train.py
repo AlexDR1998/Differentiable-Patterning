@@ -1,3 +1,8 @@
+PVC_PATH = "/mnt/ceph/ar-dp/"
+import sys
+import os
+sys.path.append(PVC_PATH)
+os.chdir(PVC_PATH)
 import argparse
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from Common.dataloader.emoji import load_emoji_sequence
@@ -12,7 +17,7 @@ import jax.numpy as np
 import optax
 from optax.contrib import muon
 import matplotlib.pyplot as plt
-import sys
+# import sys
 
 class data_augmenter_subclass(DataAugmenter):
     def data_init(self, SHARDING=None):
