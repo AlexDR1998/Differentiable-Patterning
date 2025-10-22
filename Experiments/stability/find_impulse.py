@@ -1,3 +1,9 @@
+PVC_PATH = "/home/alex/PhD/Differentiable-Patterning/"
+import sys
+import os
+sys.path.append(PVC_PATH)
+os.chdir(PVC_PATH)
+
 from NCA.trainer.NCA_impulse_optimiser import NCA_impulse_optimiser
 from Common.dataloader.emoji import load_emoji_sequence
 from einops import rearrange
@@ -22,7 +28,7 @@ data = load_emoji_sequence(
         # "mushroom.png",
     ],
     downsample=1,
-    impath_emojis="/projects/u5be/alex_data/Emojis/",
+    impath_emojis="../Data/Emojis/",
 )
 # data_filename = "cr_mi_av_al_bt_li_mu"
 data_filename = "cr_mi"
@@ -46,19 +52,19 @@ data = np.concatenate(
 print("(Batch, Time, Channels, Width, Height): " + str(data.shape))
 
 
-CHANNELS = 64
+CHANNELS = 32
 OBS_CHANNELS = 4
 key = jr.PRNGKey(0)
 nca = gNCA(
     N_CHANNELS=CHANNELS,
-    KERNEL_STR=["ID", "GRAD", "LAP"],
+    KERNEL_STR = ["ID","LAP","GRAD"],
     ACTIVATION=jax.nn.relu,
     PADDING="CIRCULAR",
     FIRE_RATE=0.5,
     key=key,)
 
-nca = nca.load("models/multi_species_stable_gNCA_grad_64ch_contiguous_1.0_wide_perturbation_0.1_cr_mi_ds_1_long.eqx")
-
+# nca = nca.load("models/multi_species_stable_gNCA_grad_64ch_contiguous_1.0_wide_perturbation_0.1_cr_mi_ds_1_long.eqx")
+nca = nca.load("models/signal_stability/good_emoji_multi_species_cr_mi_patch_gNCA_intermediate_contiguous_reg_32ch_t128_regrowth.eqx")
 opt = NCA_impulse_optimiser(
     NCA_model = nca,
     data = data,
@@ -71,3 +77,4 @@ opt = NCA_impulse_optimiser(
     BOUNDARY_MODE = "soft",
     OBS_CHANNELS = 4, # Assume first third of channels are observable
 )
+opt.train(iters=1000)

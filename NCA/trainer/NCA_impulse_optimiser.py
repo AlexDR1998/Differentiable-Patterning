@@ -71,8 +71,11 @@ class NCA_impulse_optimiser(object):
         
         init_data = self.generate_stable_configurations(16,self.NCA_model,jr.PRNGKey(0)) # Generate a pool of stable configurations to train against
 
-        data_for_log = rearrange(init_data,"POOL BATCHES CHANNELS W H -> (BATCHES POOL) W H CHANNELS")[:,:,:,:3]
-        
+        data_for_log = rearrange(init_data[:,:,:27],"POOL BATCHES (C1 C2 C3) W H -> (BATCHES C1 W) (POOL C2 H) C3",C3=3,C1=3,C2=3)
+        # print(f"Logging {data_for_log.shape[0]} stable configurations for visualisation")
+        # import matplotlib.pyplot as plt
+        # plt.imshow(data_for_log[0])
+        # plt.show()
         self.logger.log_image("Train/configurations",data_for_log,step=1)
         # print("Successfully generated stable configurations, shape = " + str(init_data.shape))
         # print(init_data.shape)
@@ -86,13 +89,14 @@ class NCA_impulse_optimiser(object):
 
         Returns
         -------
-        stable_configurations : float32 array [POOL_SIZE,BATCH,CHANNELS,WIDTH,HEIGHT]
+        stable_configurations : float32 array [POOL_SIZE,CONDITION,CHANNELS,WIDTH,HEIGHT]
         """
         final_states = []
         for i in tqdm(range(POOL_SIZE)):
             # choose an initial state (wrap-around if POOL_SIZE > available data)
             key = jr.fold_in(key,i)
-            state = self.DATA_AUGMENTER.data_load(key)[0][0] # Load x from x,y pair, and take first timestep of x
+            state = np.array(self.DATA_AUGMENTER.data_load(key)[0])[:,0] # Load x from x,y pair, and take first timestep of x
+            print(f"Initial condition {i} shape: "+str(state.shape))
             # iterate the NCA for the required number of steps
             v_nca = jax.vmap(nca,in_axes=(0,None,None),out_axes=0,axis_name="B")
             def nca_step(carry,j):
@@ -102,6 +106,7 @@ class NCA_impulse_optimiser(object):
                 # x = v_nca(x, self.BOUNDARY_CALLBACK, jr.split(key,len(x)))
                 return (key,x),None
             (key,state),_ = eqx.internal.scan(nca_step,(key,state),xs=np.arange(self.STEPS_TO_STABLE),kind="lax")
+            print(f"Final state {i} shape: "+str(state.shape))
             final_states.append(state)
         # stack and return/save the final states only
         return np.stack(final_states)
@@ -132,7 +137,8 @@ class NCA_impulse_optimiser(object):
             optimiser = optax.adam(1e-3),
             log_interval = 100,
             LOSS_FUNC_STR = "l2",
-
+            RESAMPLE_EVERY = 100,
+            key=jr.PRNGKey(int(time.time()))
         ):
         LOSS_FUNCS = {
 			"l2":loss.l2,
@@ -177,7 +183,7 @@ class NCA_impulse_optimiser(object):
                 Current loss value
             """
 
-            @eqx.filter_value_and_grad
+            @eqx.filter_value_and_grad(has_aux=True)
             def compute_loss(dx,nca,x,y,t,key):
                 v_nca = jax.vmap(nca,in_axes=(0,None,0),out_axes=0,axis_name="B")
                 def nca_step(carry,j):
@@ -191,17 +197,45 @@ class NCA_impulse_optimiser(object):
                 x = x + dx
                 (key,x),_ = eqx.internal.scan(nca_step,(key,x),xs=np.arange(t),kind="lax")
                 loss_batches = self.loss_func(x,y)
-                loss_value = np.mean(loss_batches)
-                return loss_value
-            loss,grads = compute_loss(dx,nca,x,y,t,key)
+                loss = np.mean(loss_batches)
+                aux = (x,loss_batches)
+                return loss,aux
+            loss_aux,grads = compute_loss(dx,nca,x,y,t,key)
+            
             updates, opt_state = self.OPTIMISER.update(grads, opt_state, dx)
             dx = eqx.apply_updates(dx, updates)
-            return dx, opt_state, loss
+            aux = {
+                "mean_loss":loss_aux[0],
+                "loss_batches":loss_aux[1][1],
+                "final_states":loss_aux[1][0],
+            }
+            return dx, opt_state, aux
 
 
 
-        dx = np.zeros_like(self.data[0]) # Initialise impulse perturbation to zero
+
+        pbar = tqdm(range(iters))
+        stable_pool = self.generate_stable_configurations(self.BATCHES,self.NCA_model,key)
+        x = stable_pool[:,0]
+        y = stable_pool[:,1]
+        dx = np.zeros_like(x[:1]) # Initialise impulse perturbation to zero. single batch, so shape is [1,CHANNELS,WIDTH,HEIGHT]
         opt_state = self.OPTIMISER.init(dx)
-
-        # pbar = tqdm(range(iters))
-        # for i in pbar:
+        for i in pbar:
+            key = jr.fold_in(key,i)
+            dx, opt_state, aux = makestep(dx,self.NCA_model,x,y,self.STEPS_TO_STABLE,opt_state,key)
+            pbar.set_description(f"Loss: {aux['mean_loss']:.6f}")
+            if i % log_interval == 0:
+                self.logger.log({"Train/loss":aux['mean_loss']},step=i)
+                self.logger.log_image(
+                    tag = "Train/output",
+                    images = rearrange(aux['final_states'][:,:,:27],"POOL BATCHES (C1 C2 C3) W H -> (BATCHES C1 W) (POOL C2 H) C3",C3=3,C1=3,C2=3),
+                    step=i
+                )
+                # self.logger.log_image("Train/output")
+                # Log the impulse perturbation
+                # impulse_for_log = rearrange(dx,"B (C1 C2 C3) W H -> (C1 W) (B C2 H) C3",C3=3,C1=4,C2=1)
+                # self.logger.log_image("Train/impulse",impulse_for_log,step=i)
+            if RESAMPLE_EVERY > 0 and (i+1) % RESAMPLE_EVERY == 0:
+                stable_pool = self.generate_stable_configurations(self.BATCHES,self.NCA_model,key)
+                x = stable_pool[:,0]
+                y = stable_pool[:,1]
