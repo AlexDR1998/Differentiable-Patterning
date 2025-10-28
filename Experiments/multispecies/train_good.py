@@ -113,22 +113,17 @@ def jittable_callback_bit(x,x_true,OBS_CHANNELS):
     return x
 
 
-def prepare_data(BATCHES,mode):
+def prepare_data(BATCHES,mode,species=["crab","microbe"]):
     data = load_emoji_sequence(
         [
-            "crab.png",
-            "microbe.png",
-            # "avocado.png",
-            # "alien_monster.png",
-            # "butterfly.png",
-            # "lizard.png",
-            # "mushroom.png",
+            f"{s}.png" for s in species
         ],
         downsample=1,
         impath_emojis=PVC_PATH+"Data/Emojis/",
     )
     # data_filename = "cr_mi_av_al_bt_li_mu"
-    data_filename = f"cr_mi_{mode}"
+    # data_filename = f"cr_mi_{mode}"
+    data_filename = "_".join([s[:2] for s in species])+"_"+mode
     data = rearrange(data, "T B C W H -> B T C W H") # We are swapping time and batch here. Rather than learning image-image sequence we are learning each image in parallel
     if mode=="patch":
         ic = np.array(data)
@@ -192,6 +187,7 @@ def emoji_task(key,hparams):
     NCA_MODEL = hparams["nca_model"]
     DATA_MODE = hparams["data_mode"]
     DATA_AUGMENTER = hparams["data_augmenter"]
+    DATA_TYPE = hparams["data_type"]
     TRAINING_ITERATIONS = 20000
     warmup_steps = 100
     STEPS_BETWEEN_IMAGES = 128
@@ -240,7 +236,7 @@ def emoji_task(key,hparams):
         DA = data_augmenter_subclass
     else:
         raise ValueError("Invalid DATA_AUGMENTER")
-    data, data_filename = prepare_data(BATCHES,DATA_MODE)
+    data, data_filename = prepare_data(BATCHES,DATA_MODE,species=[DATA_TYPE])
     nca = NCA_MODEL(**NCA_hyperparameters)
     name = f"good_emoji_multi_species_{data_filename}_{nca.get_config()['MODEL']}{REG_STR}_32ch_t128_{DATA_AUGMENTER}"
     
@@ -274,11 +270,12 @@ def main():
     key = jr.PRNGKey(int(time.time()))
     index = int(sys.argv[1])
     FULL_HYPERPARAMETERS = {
-        # "regulariser_coeffs":[0,1,2],
-        "regulariser_coeffs":[2],
+        "regulariser_coeffs":[0,1,2],
+        "data_type":["crab","microbe"],
+        # "regulariser_coeffs":[2],
         "nca_model":[NCA,gNCA],
         # "data_mode":["pixel","patch"],
-        "data_mode":["pixel"],
+        "data_mode":["patch"],
         "data_augmenter":["standard","regrowth"],
     }
     hparam_list = index_to_param_list(index,4,FULL_HYPERPARAMETERS)
@@ -291,4 +288,5 @@ def main():
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print(f"Error occurred while processing {hparams}: {e}")
 
-main()
+if __name__ == "__main__":
+    main()

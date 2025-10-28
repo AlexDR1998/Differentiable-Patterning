@@ -87,15 +87,15 @@ index = int(sys.argv[1])
 # DATA_PATH = "/projects/u5be/alex_data/Micropatterns/Timecourse_individual_images/*"
 DATA_PATH = "Data/Timecourse_individual_images/*"
 BATCHES = 2
-DOWNSAMPLE = 2
+# DOWNSAMPLE = 2
 TRAINING_ITERATIONS = 20000
-STEPS_BETWEEN_IMAGES = 256#int(256 / np.sqrt(DOWNSAMPLE))
 CHANNELS = 32
 
 FULL_HYPERPARAMETERS = {
     # "model":["mNCA","gNCA","NCA"],
-    "model":["NCA"],
+    "model":["mNCA"],
     "channels":[32],
+    "downsample":[2,4],
     "loss_mode":["l2","vgg","both_average"],
     "grad_loss": [True, False]
 }
@@ -117,6 +117,8 @@ def run_training(H,key):
     CHANNELS = H["channels"]
     LOSS_MODE = H["loss_mode"]
     GRAD_LOSS = H["grad_loss"]
+    DOWNSAMPLE = H["downsample"]
+    STEPS_BETWEEN_IMAGES = int(256 / np.sqrt(DOWNSAMPLE))
     NCA_hyperparameters = {
         "N_CHANNELS":CHANNELS,
         "KERNEL_STR":["ID","LAP","DIFF"],
@@ -135,9 +137,14 @@ def run_training(H,key):
         PROCESSING_MODES=["map_to_0_1","downsample"],
     )
     OBS_CHANNELS = 8
-    _p = 3 # Takes 250 -> 256, which is nicely divisible by 8
-    data = np.pad(data,((0,0),(0,0),(0,0),(_p,_p),(_p,_p)))
-    boundary_mask = np.pad(boundary_mask,((0,0),(0,0),(_p,_p),(_p,_p)))
+    # _p = 3 # Takes 250 -> 256, which is nicely divisible by 8
+    if DOWNSAMPLE == 2:
+        _p = 3  # Takes 250 -> 256, which is nicely divisible by 8
+        data = np.pad(data,((0,0),(0,0),(0,0),(_p,_p),(_p,_p)))
+        boundary_mask = np.pad(boundary_mask,((0,0),(0,0),(_p,_p),(_p,_p)))
+    if DOWNSAMPLE == 4:
+        data = np.pad(data,((0,0),(0,0),(0,0),(1,2),(1,2)))
+        boundary_mask = np.pad(boundary_mask,((0,0),(0,0),(1,2),(1,2)))
     print("Data shape = " + str(data.shape))
     print("Boundary mask shape = " + str(boundary_mask.shape))
     warmup_steps = 100  # number of steps for warmup
@@ -173,8 +180,8 @@ def run_training(H,key):
 
 
     print("-----------------------------------------------------------------------------------------------------")
-    print(f"Training gNCA on with STEPS_BETWEEN_IMAGES: {STEPS_BETWEEN_IMAGES} CHANNELS: {CHANNELS}")
     nca = model(**NCA_hyperparameters)
+    print(f"Training {nca.get_config()['MODEL']} on with STEPS_BETWEEN_IMAGES: {STEPS_BETWEEN_IMAGES} CHANNELS: {CHANNELS}")
     FILENAME = f"micropattern_circle_8ch_individual_loss_comparison_{nca.get_config()['MODEL']}_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}_loss_{LOSS_MODE}_grad_{GRAD_LOSS}_48h"
     opt = NCA_Trainer(
         nca,
@@ -219,7 +226,7 @@ def run_training(H,key):
             LOSS_FUNC_STR=loss_str,
             wandb_args={
                 "project":"nca-micropatterns",
-                "group":"individual_8ch_loss_model_comparison_48h",
+                "group":"ind_8ch_loss_model_downsample_48h_v2",
                 "tags":["training",nca.get_config()['MODEL'],str(CHANNELS)+"ch",str(DOWNSAMPLE)+"x_downsample"],
                 "name":FILENAME
             },
