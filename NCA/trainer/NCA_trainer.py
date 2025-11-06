@@ -35,6 +35,7 @@ class NCA_Trainer(object):
 				 SHARDING = None, 
 				 GRAD_LOSS = True,
 				 OBS_CHANNELS = None,
+				 DATA_CHANNELS = None,
 				 LOSS_TIME_CHANNEL_MASK = None,
 				 MODEL_DIRECTORY="models/",
 				 LOG_DIRECTORY="logs/"):
@@ -79,6 +80,13 @@ class NCA_Trainer(object):
 			self.OBS_CHANNELS = data[0].shape[1]
 		else:
 			self.OBS_CHANNELS = OBS_CHANNELS
+		# For some loss functions, the NCA observable channels don't necessarily match the data channels. Handle this here.
+		if DATA_CHANNELS is None:
+			self.DATA_CHANNELS = self.OBS_CHANNELS
+		else:
+			self.DATA_CHANNELS = DATA_CHANNELS
+		
+		
 		self.SHARDING = SHARDING
 		self.GRAD_LOSS = GRAD_LOSS
 		self.LOSS_TIME_CHANNEL_MASK = LOSS_TIME_CHANNEL_MASK
@@ -102,7 +110,7 @@ class NCA_Trainer(object):
 
 		# Set up data and data augmenter class
 		self._data_raw = data
-		self.DATA_AUGMENTER = DATA_AUGMENTER(data,self.CHANNELS-self.OBS_CHANNELS)
+		self.DATA_AUGMENTER = DATA_AUGMENTER(data,self.CHANNELS-self.DATA_CHANNELS)
 		self.DATA_AUGMENTER.data_init(self.SHARDING)
 		self.data = self.DATA_AUGMENTER.return_saved_data()
 		self.BATCHES = len(self.data)
@@ -185,13 +193,13 @@ class NCA_Trainer(object):
 			loss for each timestep of trajectory
 		"""
 		x_obs = x[:,:self.OBS_CHANNELS]
-		y_obs = y[:,:self.OBS_CHANNELS]
+		y_obs = y[:,:self.DATA_CHANNELS]
 		if self.GRAD_LOSS:
 			v_perception = jax.vmap(self.NCA_model.perception,in_axes=0,out_axes=0)
 			x_obs = v_perception(x_obs)
 			y_obs = v_perception(y_obs)
 			x_obs = x_obs.at[:,self.OBS_CHANNELS:].set(0.1*x_obs[:,self.OBS_CHANNELS:])
-			y_obs = y_obs.at[:,self.OBS_CHANNELS:].set(0.1*y_obs[:,self.OBS_CHANNELS:])
+			y_obs = y_obs.at[:,self.DATA_CHANNELS:].set(0.1*y_obs[:,self.DATA_CHANNELS:])
 		# return self._loss_func(x_obs,y_obs,key,self.LOSS_TIME_CHANNEL_MASK)
 		# if self.LOSS_FUNC_CHANNELS is not None:
 		losses = []
@@ -427,32 +435,20 @@ class NCA_Trainer(object):
 			"l2":loss.l2,
 			"l1":loss.l1,
 			"vgg":loss.vgg_hyperspectral,#lambda x,y,key,where:loss.vgg_hyperspectral(x,y,key,where,experiment_groups=LOSS_ARGS["experiment_groups"]),
+			"vgg_grouped":loss.vgg_hyperspectral_colony,
+			"vgg_grouped_and_l2":loss.vgg_hyperspectral_colony_and_l2,
 			"vgg_3ch":loss.vgg,
 			"euclidean":loss.euclidean,
 			"spectral":loss.spectral,
 			"spectral_full":loss.spectral_weighted,
 			# "rand_euclidean":lambda x,y,key:loss.random_sampled_euclidean(x,y,key=key)
 		}
-		
-		# Some loss functions have optionally defined auxiliary arguments. Handle them here so the jax.jit compilation works properly
-		LOSS_FUNC_AUXS = {
-			"l2":None,
-			"l1":None,
-			"vgg":_build_vgg_aux(LOSS_ARGS["experiment_groups"]),
-			"vgg_3ch":None,
-			"euclidean":None,
-			"spectral":None,
-			"spectral_full":None,
-		}
 
 		if isinstance(LOSS_FUNC_STR,str):
 			self._loss_func = [LOSS_FUNCS[LOSS_FUNC_STR]]
-			self.LOSS_FUNC_AUX = [LOSS_FUNC_AUXS[LOSS_FUNC_STR]]
 		elif isinstance(LOSS_FUNC_STR,list):
-			# self._loss_func = lambda x,y,key: jnp.mean(jnp.array([f(x,y,key) for f in [LOSS_FUNCS[f] for f in LOSS_FUNC_STR]]),axis=0)
 			self._loss_func = [LOSS_FUNCS[f] for f in LOSS_FUNC_STR]
-			self.LOSS_FUNC_AUX = [LOSS_FUNC_AUXS[f] for f in LOSS_FUNC_STR]
-		# self._loss_func = [jax.jit(f,static_argnames=["aux"]) for f in self._loss_func]
+			
 		
 		LOSS_FUNC_CHANNELS = LOSS_ARGS["channels"]
 		if LOSS_FUNC_CHANNELS is not None:
@@ -468,10 +464,7 @@ class NCA_Trainer(object):
 			"update_sensitivity":self.update_sensitivity_regulariser,
 			"perturbation_conservation":self.perturbation_conservation_regulariser
 		}
-		# Keep only regulariser functions that have entries in REGULARISER_COEFFS
-		# REGULARISERS = {name: REGULARISER_COEFFS[name]
-		# 				for name in REG_FUNCS.keys()
-		# 				if name in REGULARISER_COEFFS}
+		
 
 		# Filter REG_FUNCS to the same set (optional but keeps things consistent)
 		REGULARISER_COEFFS = {name:REGULARISER_COEFFS[name] for name in REGULARISER_COEFFS.keys() if REGULARISER_COEFFS[name]!=0.0}
@@ -578,6 +571,7 @@ class NCA_Trainer(object):
 		
 		# # Split data into x and y
 		x,y = self.DATA_AUGMENTER.data_load(key)
+		print(f"Initial x shape: {jnp.array(x).shape}, y shape: {jnp.array(y).shape}",flush=True)
 		
 		
 		best_loss = 100000000
