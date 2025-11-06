@@ -433,7 +433,17 @@ class NCA_Trainer(object):
 			"spectral_full":loss.spectral_weighted,
 			# "rand_euclidean":lambda x,y,key:loss.random_sampled_euclidean(x,y,key=key)
 		}
-		
+
+		LOSS_FUNCS = {
+			"l2":loss.l2,
+			"l1":loss.l1,
+			"vgg":loss.vgg_hyperspectral,#lambda x,y,key,where:loss.vgg_hyperspectral(x,y,key,where,experiment_groups=LOSS_ARGS["experiment_groups"]),
+			"vgg_3ch":loss.vgg,
+			"euclidean":loss.euclidean,
+			"spectral":loss.spectral,
+			"spectral_full":loss.spectral_weighted,
+			# "rand_euclidean":lambda x,y,key:loss.random_sampled_euclidean(x,y,key=key)
+		}
 		# Some loss functions have optionally defined auxiliary arguments. Handle them here so the jax.jit compilation works properly
 		LOSS_FUNC_AUXS = {
 			"l2":None,
@@ -454,13 +464,7 @@ class NCA_Trainer(object):
 			self.LOSS_FUNC_AUX = [LOSS_FUNC_AUXS[f] for f in LOSS_FUNC_STR]
 		# self._loss_func = [jax.jit(f,static_argnames=["aux"]) for f in self._loss_func]
 		
-		LOSS_FUNC_CHANNELS = LOSS_ARGS["channels"]
-		if LOSS_FUNC_CHANNELS is not None:
-			assert len(LOSS_FUNC_CHANNELS)==self.OBS_CHANNELS, "LOSS_FUNC_CHANNELS should be same length as number of observable channels"
-		elif LOSS_FUNC_CHANNELS is None:
-			LOSS_FUNC_CHANNELS = jnp.ones((self.OBS_CHANNELS,),dtype=jnp.int32)*-1
-		self.LOSS_FUNC_CHANNELS = LOSS_FUNC_CHANNELS
-		
+
 		REG_FUNCS = {
 			"intermediate_state":self.intermediate_reg,
 			"boundary":self.boundary_regulariser,
