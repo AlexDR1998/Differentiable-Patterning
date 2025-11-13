@@ -513,9 +513,10 @@ class NCA_Trainer(object):
 				_nca = eqx.combine(nca_diff,nca_static)
 				v_nca = jax.vmap(_nca,in_axes=(0,None,0),out_axes=0,axis_name="N") # boundary is independant of time N
 				vv_nca = lambda x,callback,key_array:jax.tree_util.tree_map(v_nca,x,callback,key_array)  # noqa: E731
+				# vv_nca = jax.vmap(v_nca,in_axes=(0,0,0),out_axes=0,axis_name="B") # boundary can be different for each batch
 				reg_logs_internal = {name: jnp.zeros(len(x)) for name in REGULARISER_COEFFS.keys()}
-				_loss_func = lambda x,y,key:self.loss_func(x,y,key)  # noqa: E731
-				v_loss_func = lambda x,y,key_array:jnp.array(jax.tree_util.tree_map(_loss_func,x,y,key_array))  # noqa: E731
+				# _loss_func = lambda x,y,key:self.loss_func(x,y,key)  # noqa: E731
+				v_loss_func = lambda x,y,key_array:jnp.array(jax.tree_util.tree_map(self.loss_func,x,y,key_array))  # noqa: E731
 				
 				# Structuring this as function and lax.scan speeds up jit compile a lot
 				def nca_step(carry,j): # function of type a,b -> a
@@ -546,7 +547,7 @@ class NCA_Trainer(object):
 				losses = v_loss_func(x, y, loss_key)
 				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
 				mean_loss = jnp.mean(losses) + jnp.sum(jnp.array(list(reg_loss_internal.values())))
-				return mean_loss,(x,losses,reg_loss_internal)
+				return mean_loss, (x,losses,reg_loss_internal)
 
 			nca_diff,nca_static = nca.partition()
 			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)
@@ -584,7 +585,7 @@ class NCA_Trainer(object):
 		error = 0
 		error_at = 0
 		SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
-
+		
 		pbar = tqdm(range(iters))
 		#--- Do training run ---
 		for i in pbar:
@@ -659,24 +660,24 @@ class NCA_Trainer(object):
 		if error!=0 and model_saved==False:
 			print("|-|-|-|-|-|-  Training did not converge, model was not saved  -|-|-|-|-|-|")
 		elif self.IS_LOGGING and model_saved:
-			x,y = self.DATA_AUGMENTER.split_x_y(1)
-			x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
+			# x,y = self.DATA_AUGMENTER.split_x_y(1)
+			# x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
 			#try:
 			self.LOGGER.tb_training_end_log(
 				self.NCA_model,
-				x,
+				self.DATA_AUGMENTER,
 				t=t,
-				NUMBER_OF_IMAGES=x[0].shape[0],
 				boundary_callback=self.BOUNDARY_CALLBACK,
-				SAVE_TRAJECTORY=True)
+				SAVE_TRAJECTORY=False)
+		self.LOGGER.finish()
 			# except Exception as e:
 			# 	print("Error logging training end")
 			# 	print(e)
 			# 	pass
-def _build_vgg_aux(experiment_groups):
-	if experiment_groups is None:
-		return None
-	else:
-		diff = jnp.diff(experiment_groups)	
-		indices_to_split_at = jnp.where(diff != 0)[0] + 1
-		return indices_to_split_at.astype(jnp.int32)
+# def _build_vgg_aux(experiment_groups):
+# 	if experiment_groups is None:
+# 		return None
+# 	else:
+# 		diff = jnp.diff(experiment_groups)	
+# 		indices_to_split_at = jnp.where(diff != 0)[0] + 1
+# 		return indices_to_split_at.astype(jnp.int32)
