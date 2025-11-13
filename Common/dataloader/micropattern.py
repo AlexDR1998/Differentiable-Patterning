@@ -762,19 +762,19 @@ def load_micropattern_circle_8ch_individual_explicit_colony(
     PROCESSING_MODES=["map_to_0_1"],
 ):
     CHANNEL_NAMES_DESIRED = [
-        ["LMBR","SOX2","TBXT","SOX17",],
-        ["LMBR","FOXA2","TBXT","SOX17",],
+        ["LMBR","TBXT","SOX17","SOX2"],
+        ["LMBR","TBXT","SOX17","FOXA2"],
         ["Cer1","Lefty2","Nodal",],
         ]
     CHANNEL_NAMES_COLONIES = [
         "A-LMBR",
-        "A-SOX2",
         "A-TBXT",
         "A-SOX17",
+        "A-SOX2",
         "B-LMBR",
-        "B-FOXA2",
         "B-TBXT",
         "B-SOX17",
+        "B-FOXA2",
         "C-Cer1",
         "C-Lefty2",
         "C-Nodal",
