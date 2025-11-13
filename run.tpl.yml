@@ -22,11 +22,11 @@ spec:
                   name: volume
               resources:
                 requests:
-                  cpu: 48
-                  memory: "80Gi"
+                  cpu: 16
+                  memory: "120Gi"
                 limits:
-                  cpu: 48
-                  memory: "80Gi"
+                  cpu: 16
+                  memory: "120Gi"
                   nvidia.com/gpu: ${JOB_NUM_GPUS}
             nodeSelector:
                 nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
