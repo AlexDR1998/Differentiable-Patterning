@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+    generateName: "ar-dp-job-experiments-micropatterns-micropattern-texture-pretra-"
+    labels:
+        kueue.x-k8s.io/queue-name:  eidf151ns-user-queue
+spec:
+    completions: 1
+    template:
+        metadata:
+            name: ar-dp-pod
+        spec:
+            restartPolicy: Never
+            containers:
+            - name: differentiable-patterning
+              image: alexdr1998/jax_equinox_scratch:latest
+              imagePullPolicy: Always
+              command: ["bash","/mnt/ceph/ar-dp/run_multi_gpu.sh"]
+              args: ["mnt/ceph/ar-dp/Experiments/micropatterns/micropattern_texture_pretrain.py","4"]
+              volumeMounts:
+                - mountPath: /mnt/ceph
+                  name: volume
+              resources:
+                requests:
+                  cpu: 16
+                  memory: "120Gi"
+                limits:
+                  cpu: 16
+                  memory: "120Gi"
+                  nvidia.com/gpu: 4
+            nodeSelector:
+                nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
+            volumes:
+                - name: volume
+                  persistentVolumeClaim:
+                    claimName: ar-pvc
