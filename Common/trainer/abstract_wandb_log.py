@@ -1,7 +1,7 @@
 import wandb
 import numpy as np
 from jaxtyping import Float, Array
-from einops import rearrange
+from einops import rearrange,repeat
 import io
 from PIL import Image
 wandb.login(key="c969e9166d4abf8c10db353deaa242e386db8b99")
@@ -23,6 +23,14 @@ class Train_log(object):
         """
         outputs = np.array(data)
         self.log_image("True sequence RGB", rearrange(outputs, "Batch Time C x y ->(Batch x) (Time y) C")[:,:,:3], step=None)
+        if outputs.shape[2]>3:
+            output_full_composite = np.pad(outputs,((0,0),(0,0),(0,(3 - outputs.shape[2]%3)%3),(0,0),(0,0)),mode='constant')
+            output_full_composite = rearrange(output_full_composite,"Batch Time (C vc) x y -> (Batch C x) (Time y) vc",vc=3)
+            self.log_image("True sequence RGB (full composite)", output_full_composite, step=None)
+            individual_channels = rearrange(outputs,"Batch Time C x y -> (Batch C x) (Time y)")
+            individual_channels = repeat(individual_channels,"bx ty -> bx ty 3")
+            self.log_image("True sequence all channels individual", individual_channels, step=None)
+
 
     def log_scalar(self, tag, value, step=None):
         wandb.log({tag: value}, step=step)
@@ -54,7 +62,7 @@ class Train_log(object):
             pil_image.save(buffer, format='PNG')
             buffer.seek(0)
             
-            wandb_image = wandb.Image(Image.open(buffer))
+            wandb_image = wandb.Image(Image.open(buffer),file_type="jpg")
             wandb.log({tag: wandb_image}, step=step)
             
         except Exception as e:
@@ -84,9 +92,9 @@ class Train_log(object):
                 buffer = io.BytesIO()
                 pil_image.save(buffer, format='PNG')
                 buffer.seek(0)
-                
-                wandb_images.append(wandb.Image(Image.open(buffer)))
-                
+
+                wandb_images.append(wandb.Image(Image.open(buffer),file_type="jpg"))
+
             except Exception as e:
                 print(f"Warning: Failed to process image: {e}")
                 continue
