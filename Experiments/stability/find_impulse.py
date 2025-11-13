@@ -106,7 +106,7 @@ def run_training(H,key):
         wandb_args = {
             "name":NAME,
             "project":"NCA_impulse_optimiser",
-            "group":"long_trajectory_regulariser_sweep_v1",
+            "group":"long_trajectory_regulariser_sweep_v2",
             "tags":[f"{k}:{v}" for k,v in H.items()]
         }
     )
@@ -135,7 +135,7 @@ def main():
 
     HPARAMS = {
         # "data_augmenter":["regrowth","standard"],
-        "data_augmenter":["standard"],
+        "data_augmenter":["regrowth"],
         "channel_mode":["hidden"],
         "spatial_mode":["local"],#,"pixel","patch","flat"],
         "spatial_width":[0.05,0.1,0.2],
