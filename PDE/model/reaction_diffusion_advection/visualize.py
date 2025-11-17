@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import tensorflow as tf
+# import tensorflow as tf
 import io
 import jax
+from PIL import Image
 
 
 
@@ -17,10 +18,14 @@ def plot_to_image(figure):
 	# the notebook.
 	plt.close(figure)
 	buf.seek(0)
-	# Convert PNG buffer to TF image
-	image = tf.image.decode_png(buf.getvalue(), channels=4)
+	# Convert PNG buffer to numpy array
+	image = np.array(Image.open(buf))
 	# Add the batch dimension
-	image = tf.expand_dims(image, 0)
+	image = np.expand_dims(image, 0)
+	# # Convert PNG buffer to TF image
+	# image = tf.image.decode_png(buf.getvalue(), channels=4)
+	# # Add the batch dimension
+	# image = tf.expand_dims(image, 0)
 	return image
 
 
