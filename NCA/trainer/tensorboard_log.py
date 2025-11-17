@@ -1,11 +1,14 @@
-from einops import rearrange
+from einops import rearrange,repeat
 from NCA.NCA_visualiser import plot_weight_matrices,plot_weight_kernel_boxplot
 import numpy as np
 from Common.utils import squarish
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key,PyTree
 import os
+import jax.random as jr
+import time
 LOG_BACKEND = os.environ.get("LOG_BACKEND", "wandb")
+PVC_PATH = "mnt/ceph/ar-dp/"  # Path to the PVC where the data is stored
 #if LOG_BACKEND=="wandb":
 from Common.trainer.abstract_wandb_log import Train_log
 #elif LOG_BACKEND=="tensorboard":
@@ -65,6 +68,7 @@ class NCA_Train_log(Train_log):
 	def tb_training_loop_log_sequence(self,losses,reg_loss,x,i,model,write_images=True,LOG_EVERY=10):
 		self.log_histogram("Train/loss",losses,step=i)
 		self.log_scalar("Train/mean_loss",np.mean(losses),step=i)
+		self.log_scalar("Train/log_mean_loss",np.log(np.mean(losses)+1e-8),step=i)
 		for name in reg_loss.keys():
 			if name not in ["loss"]:
 				self.log_scalar(f"Train/{name}_reg_loss",reg_loss[name],step=i)
@@ -76,33 +80,63 @@ class NCA_Train_log(Train_log):
 	
 	def tb_training_end_log(self,
 						 	nca,
-							x: PyTree[Float[Array, "N CHANNELS x y"], "B"],  # noqa: F722, F821
+							# x: PyTree[Float[Array, "N CHANNELS x y"], "B"],  # noqa: F722, F821
+							DATA_AUGMENTER,
 							t,
 							boundary_callback,
-							write_images=True):
+							SAVE_TRAJECTORY=False,
+							write_images=True,
+							key=jr.PRNGKey(int(time.time()))):
 		"""
 		
 
 			Log trained NCA model trajectory after training
 
 		"""
+		x,y = DATA_AUGMENTER.split_x_y(1)
+		x,y = DATA_AUGMENTER.data_callback(x,y,0,key)
+		NUMBER_OF_IMAGES=x[0].shape[0]
+		# Log true data for side by side comparison
+		true_data = DATA_AUGMENTER.return_true_data()[0]
+		true_data = true_data[:,:DATA_AUGMENTER.OBS_CHANNELS]
+		true_data = rearrange(true_data,"T C x y -> (C x) (T y)")
+		true_data = repeat(true_data,"x y -> x y 3")
+		self.log_image(
+			'Evaluation/true_data',
+			true_data,
+			step=None
+		)
 		BATCHES = 1#len(x)
 		CHANNELS = x[0].shape[1]
+
 		print("Running final trained model for "+str(t)+" steps")
 		
+		SNAPSHOTS = []
 		for b in tqdm(range(BATCHES)):
-			T =nca.run(t,x[b][0],boundary_callback[b])
+			T =nca.run(t*NUMBER_OF_IMAGES,x[b][0],boundary_callback[b]) # Shape T C x y
 			self.log_video("Evaluation/trajectory",T[:,:3],step=None)
-
-			if CHANNELS>4:
-				t_h = T[:,:,:,4:]
+			T_snapshot = T[::t,:DATA_AUGMENTER.OBS_CHANNELS]
+			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
+			T_snapshot = repeat(T_snapshot,"x y -> x y 3")
+			SNAPSHOTS.append(T_snapshot)
+			
+			if SAVE_TRAJECTORY:
+				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])
+			if CHANNELS>3:
+				t_h = T[:,3:,:,:]
 				extra_zeros = (-t_h.shape[1])%3
 				t_h = np.pad(t_h,((0,0),(0,extra_zeros),(0,0),(0,0)))
 				_cy,_cx = squarish(t_h.shape[1]//3)
 				T_h = rearrange(t_h,"Time (cx cy C) x y  -> Time C (cx x) (cy y)",C=3,cy=_cy,cx=_cx)
 				self.log_video("Evaluation/trajectory_hidden_channels",T_h,step=None)
-			
-		self.finish()
+		SNAPSHOTS = np.array(SNAPSHOTS)
+		self.log_image(
+			'Evaluation/trajectory_snapshot',
+			SNAPSHOTS,
+			step=None
+		)
+		
+		
 				
 
 

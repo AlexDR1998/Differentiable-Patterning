@@ -146,7 +146,7 @@ class DataAugmenterAbstract(object):
 		return x,y
 	
 	@eqx.filter_jit
-	def pad(self,data:PyTree[Float[Array, "N C W H"]],am:Int[Scalar, ""]):
+	def pad(self,data:PyTree[Float[Array, "N C W H"]],am):
 		"""
 		
 		Pads spatial dimensions with zeros
@@ -164,8 +164,9 @@ class DataAugmenterAbstract(object):
 			data padded with zeros
 
 		"""
-		return jtu.tree_map(lambda x,am:jnp.pad(x,((0,0),(0,0),(am,am),(am,am))),data,[am]*len(data))
-
+		#return jtu.tree_map(lambda x,am:jnp.pad(x,((0,0),(0,0),(am[0],am[1]),(am[2],am[3]))),data,[am]*len(data))
+		data = [jnp.pad(x,((0,0),(0,0),(am[0],am[1]),(am[2],am[3]))) for x in data]
+		return data
 	
 	@eqx.filter_jit
 	def shift(self,

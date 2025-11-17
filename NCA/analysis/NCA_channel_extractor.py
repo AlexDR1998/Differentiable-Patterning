@@ -29,13 +29,18 @@ class NCA_channel_extractor(object):
         # Implement this in subclasses
         raise NotImplementedError("Initial condition not implemented")
     
-    def _generate_hidden_channels(self,X0,STEPS_BETWEEN_IMAGES,STEPS,channels,key):
+    def _generate_hidden_channels(
+        self,
+        X0,
+        STEPS_BETWEEN_IMAGES,
+        STEPS,
+        key
+    ):
         """_summary_
 
         Args:
             X0 (float32 [BATCH,C,X,Y]): batch of initial conditions
             timesteps (int): timesteps to run for
-            channels (list of int): list of channels to return
         """
 
         #print(nca)
@@ -53,10 +58,17 @@ class NCA_channel_extractor(object):
             
         T = jnp.array(T)
         T = rearrange(T,"T B C X Y -> B T C X Y")
-        return T[:,:, channels, :, :]
+        return T
         
 
-    def generate_data(self,STEPS_BETWEEN_IMAGES,true_data,channels,key):
+    def generate_data(
+        self,
+        STEPS_BETWEEN_IMAGES,
+        true_data,
+        TARGET_CHANNELS,
+        MEASURED_CHANNELS,
+        key
+    ):
         """_summary_
 
         Args:
@@ -68,5 +80,7 @@ class NCA_channel_extractor(object):
         
         X0 = true_data[:,0]
         TIMESTEPS = true_data.shape[1]
-        data = self._generate_hidden_channels(X0,STEPS_BETWEEN_IMAGES,TIMESTEPS,channels,key)
-        return data
+        data = self._generate_hidden_channels(X0,STEPS_BETWEEN_IMAGES,TIMESTEPS,key)
+        data_measured = data[:,:,MEASURED_CHANNELS,:,:]
+        data_target = data[:,:,TARGET_CHANNELS,:,:]
+        return data_measured,data_target

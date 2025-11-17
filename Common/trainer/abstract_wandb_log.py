@@ -1,7 +1,7 @@
 import wandb
 import numpy as np
 from jaxtyping import Float, Array
-from einops import rearrange
+from einops import rearrange,repeat
 import io
 from PIL import Image
 wandb.login(key="c969e9166d4abf8c10db353deaa242e386db8b99")
@@ -14,6 +14,7 @@ class Train_log(object):
         self.run = wandb.init(
             **wandb_config
         )
+        self.wandb_config = wandb_config
         self.log_data_at_init(data)
 
     def log_data_at_init(self,data):    
@@ -22,6 +23,14 @@ class Train_log(object):
         """
         outputs = np.array(data)
         self.log_image("True sequence RGB", rearrange(outputs, "Batch Time C x y ->(Batch x) (Time y) C")[:,:,:3], step=None)
+        if outputs.shape[2]>3:
+            output_full_composite = np.pad(outputs,((0,0),(0,0),(0,(3 - outputs.shape[2]%3)%3),(0,0),(0,0)),mode='constant')
+            output_full_composite = rearrange(output_full_composite,"Batch Time (C vc) x y -> (Batch C x) (Time y) vc",vc=3)
+            self.log_image("True sequence RGB (full composite)", output_full_composite, step=None)
+            individual_channels = rearrange(outputs,"Batch Time C x y -> (Batch C x) (Time y)")
+            individual_channels = repeat(individual_channels,"bx ty -> bx ty 3")
+            self.log_image("True sequence all channels individual", individual_channels, step=None)
+
 
     def log_scalar(self, tag, value, step=None):
         wandb.log({tag: value}, step=step)
@@ -42,8 +51,10 @@ class Train_log(object):
             
             # Convert to PIL Image
             if image.dtype != np.uint8:
-                image = np.clip(image * 255 if image.max() <= 1.0 else image, 0, 255).astype(np.uint8)
-            
+                image = np.clip(image * 255 , 0, 255).astype(np.uint8)
+            # if image.dtype == np.float32 or image.dtype == np.float64:
+                # image = np.clip(image, 0, 1)
+
             pil_image = Image.fromarray(image)
             
             # Use in-memory buffer
@@ -51,7 +62,7 @@ class Train_log(object):
             pil_image.save(buffer, format='PNG')
             buffer.seek(0)
             
-            wandb_image = wandb.Image(Image.open(buffer))
+            wandb_image = wandb.Image(Image.open(buffer),file_type="jpg")
             wandb.log({tag: wandb_image}, step=step)
             
         except Exception as e:
@@ -71,17 +82,19 @@ class Train_log(object):
             try:
                 # Convert to PIL Image
                 if img.dtype != np.uint8:
-                    img = np.clip(img * 255 if img.max() <= 1.0 else img, 0, 255).astype(np.uint8)
-                
+                    img = np.clip(img * 255, 0, 255).astype(np.uint8)
+                # if img.dtype == np.float32 or img.dtype == np.float64:
+                    # img = np.clip(img,0,1)
+
                 pil_image = Image.fromarray(img)
                 
                 # Use in-memory buffer
                 buffer = io.BytesIO()
                 pil_image.save(buffer, format='PNG')
                 buffer.seek(0)
-                
-                wandb_images.append(wandb.Image(Image.open(buffer)))
-                
+
+                wandb_images.append(wandb.Image(Image.open(buffer),file_type="jpg"))
+
             except Exception as e:
                 print(f"Warning: Failed to process image: {e}")
                 continue
@@ -108,6 +121,8 @@ class Train_log(object):
         # Accepts either [Batch, Width, Height, Channels] or [Width, Height, Channels]
         # If images is a list, convert to numpy array
         images = np.array(images)
+        if images.shape[-1]==2:
+            images = np.concatenate([images, np.zeros_like(images[..., :1])], axis=-1)  # Add a zero 3rd channel if only 2 channels are present
         if len(images.shape) == 4:
             # If images is a batch, log as a batch
             self.log_image_batch(tag, images, step)

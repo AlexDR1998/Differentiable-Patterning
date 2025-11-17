@@ -51,7 +51,7 @@ class kaNCA(NCA):
                     gaussKAN(in_features=self.N_FEATURES,
                             out_features=self.N_CHANNELS,
                             ORDER=BASIS_FUNCS,
-                            scale=0,
+                            scale=INIT_SCALE,
                             width=BASIS_WIDTH,
                             bounds=bounds,
                             key=key2),

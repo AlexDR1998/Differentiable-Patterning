@@ -28,7 +28,7 @@ spec:
       volumes:
       - name: source-pvc
         persistentVolumeClaim:
-          claimName: ar-dp-pvc # Change this - original source PVC
+          claimName: lb-recalling-unlearned-pvc # Change this - original source PVC
       - name: dest-pvc
         persistentVolumeClaim:
-          claimName: ar-pvc # Change this - new destination PVC
+          claimName: ar-record-pvc # Change this - new destination PVC

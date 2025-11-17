@@ -707,10 +707,7 @@ def load_micropattern_circle_8ch_individual(
         ims_time = jnp.array(ims_time)
         ims_time = rearrange(ims_time, "C X Y -> () X Y C")
         # Reorder channels
-        ims_time = ims_time[
-            :,
-            :,
-            :,
+        ims_time = ims_time[:,:,:,
             [
                 channel_names.index(name)
                 for name in CHANNEL_NAMES_DESIRED[: len(ims_time[0, 0, 0])]
@@ -754,6 +751,97 @@ def load_micropattern_circle_8ch_individual(
     # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
     return ims, aux, CHANNEL_NAMES_DESIRED, boundary_mask
 
+def load_micropattern_circle_8ch_individual_explicit_colony(
+    impath="../Data/Timecourse Seperate Colonies/",
+    DOWNSAMPLE=1,
+    BATCHES=1,
+    BACKGROUND_RADIUS=20,
+    TIMESTEPS=[0, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
+    HIST_EQS=(1.0, 95.0),
+    SHOW_HISTOGRAMS=False,
+    PROCESSING_MODES=["map_to_0_1"],
+):
+    CHANNEL_NAMES_DESIRED = [
+        ["LMBR","TBXT","SOX17","SOX2"],
+        ["LMBR","TBXT","SOX17","FOXA2"],
+        ["Cer1","Lefty2","Nodal",],
+        ]
+    CHANNEL_NAMES_COLONIES = [
+        "A-LMBR",
+        "A-TBXT",
+        "A-SOX17",
+        "A-SOX2",
+        "B-LMBR",
+        "B-TBXT",
+        "B-SOX17",
+        "B-FOXA2",
+        "C-Cer1",
+        "C-Lefty2",
+        "C-Nodal",
+    ]
+    colony_paths = [impath+f"{i}/*" for i in ["A","B","C"]]
+    # colony_filenames = [sorted(glob.glob(path)) for path in colony_paths]
+    where_func = lambda filenames, label: label in filenames
+    colony_filenames = [[list(filter(lambda x: where_func(x, f"_{i}h"), sorted(filenames)))
+        for i in TIMESTEPS] for filenames in [glob.glob(path) for path in colony_paths]]
+    # return colony_filenames
+    ims = []
+    names = []
+    for i,f_colony in enumerate(colony_filenames):
+        ims_colony = [] 
+        channel_names_colony = []
+        for f_times in f_colony:
+            ims_time = []
+            channel_names = []
+            for f_str in f_times: # Stack up channels
+                ims_time.append(skimage.io.imread(f_str))
+                channel_name = f_str.split("/")[-1].split("_")[0].replace(".tif", "")
+                channel_names.append(channel_name)
+            print("Channel names found: ", channel_names)
+            ims_time = jnp.array(ims_time)
+            ims_time = rearrange(ims_time, "C X Y -> () X Y C")
+            ims_time = ims_time[:,:,:,
+            [
+                channel_names.index(name)
+                for name in CHANNEL_NAMES_DESIRED[i][: len(ims_time[0, 0, 0])]
+            ],
+        ]
+            # ims_time.append(ims_time)
+            ims_colony.append(ims_time)
+            channel_names_colony.append(channel_names)
+        ims.append(np.array(ims_colony))
+        names.append(channel_names_colony)
+    
+    # Ims is list of arrays
+    ims = np.concatenate(ims,axis=-1)
+    ims = list(ims)
+    ims, aux = process_data(
+        ims,
+        LMBR_CHANNEL=0,
+        BATCH_AVERAGE=False,
+        DOWNSAMPLE=DOWNSAMPLE,
+        mode=PROCESSING_MODES,
+        HIST_EQS=HIST_EQS,
+        VERBOSE=False,
+        BACKGROUND_RADIUS=BACKGROUND_RADIUS,
+    )
+    ims = np.array(ims)  # shape of T B X Y C
+    print("Processed images with shape: ", ims.shape)
+    boundary_mask = adhesion_mask_convex_hull_circle(ims[-1, 0])[
+        0
+    ]  # last timestep looks good
+    ims = repeat(ims, "T () X Y C -> B T C X Y", B=BATCHES)
+    boundary_mask = repeat(boundary_mask, "X Y -> B () X Y", B=BATCHES)
+
+    # boundary_mask = repeat(boundary_mask,"X Y -> B () X Y",B=BATCHES)
+    # data = repeat(data,"T () X Y C -> B T C X Y", B=BATCHES)
+
+    print("Data shape after batching: ", ims.shape)
+    print("Boundary mask shape: ", boundary_mask.shape)
+    ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
+    # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
+    return ims, aux, CHANNEL_NAMES_COLONIES, boundary_mask
+    
 
 def load_micropattern_radii(impath):
     filenames = glob.glob(impath)
@@ -984,8 +1072,8 @@ def load_micropattern_shape_array(
     # map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
     # saturate = lambda arr: jax.nn.sigmoid(arr)
     # mult_by_lmbr = lambda arr: arr*arr[:,:,:,3:4]
-    for im in ims:
-        print(im.shape)
+    #for im in ims:
+        #print(im.shape)
     ims = pad_to_biggest(ims)
     ims = list(map(lambda a: downsample_padder(a, DOWNSAMPLE), ims))
     # ims = [rearrange(im,"X Y C -> () X Y C") for im in ims]  # Add time dimension

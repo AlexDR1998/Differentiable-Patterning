@@ -8,7 +8,7 @@ import jax
 #from eqxvision.utils import CLASSIFICATION_URLS
 import equinox as eqx
 from lpips_j.lpips import LPIPS
-from einops import rearrange
+from einops import rearrange,reduce,einsum
 #import eqxvision as eqv
 
 #loaded_alexnet = alexnet(torch_weights=CLASSIFICATION_URLS['alexnet'])
@@ -16,7 +16,7 @@ from einops import rearrange
 lpips = LPIPS()
 
 @jax.jit
-def cosine(x,y,key=None,where=None):
+def cosine(x,y,key=None,where=None,aux=None):
 	"""
 		Parameters
 		----------
@@ -36,7 +36,7 @@ def cosine(x,y,key=None,where=None):
 
 
 @jax.jit
-def l2(x,y,key=None,where=None):
+def l2(x,y,key=None,where=None,aux=None):
 	"""
 		Parameters
 		----------
@@ -53,7 +53,7 @@ def l2(x,y,key=None,where=None):
 	
 	return jnp.nan_to_num(jnp.mean((x-y)**2,axis=[-1,-2,-3],where=where))
 @jax.jit
-def l1(x,y,key=None,where=None):
+def l1(x,y,key=None,where=None,aux=None):
 	"""
 		Parameters
 		----------
@@ -69,7 +69,7 @@ def l1(x,y,key=None,where=None):
 		"""
 	return jnp.nan_to_num(jnp.mean(jnp.abs(x-y),axis=[-1,-2,-3],where=where))
 @jax.jit
-def euclidean(x,y,key=None,where=None):
+def euclidean(x,y,key=None,where=None,aux=None):
 	"""
 		General format of loss functions here:
 
@@ -123,7 +123,8 @@ def euclidean(x,y,key=None,where=None):
 
 
 @jax.jit
-def random_sampled_euclidean(x,y,key,SAMPLES=16):
+def random_sampled_euclidean(x,y,key,where=None,aux=16):
+	SAMPLES = aux
 	x_r = jnp.einsum("ncxy->cxyn",x)
 	y_r = jnp.einsum("ncxy->cxyn",y)
 	x_sub = jax.random.choice(key,x_r.reshape((-1,x_r.shape[-1])),(SAMPLES,),False)
@@ -132,7 +133,7 @@ def random_sampled_euclidean(x,y,key,SAMPLES=16):
 
 
 @jax.jit
-def spectral(x,y,key=None,where=None):
+def spectral(x,y,key=None,where=None,aux=None):
 	""" 
 		l2 norm in fourier space (discarding phase information)
 
@@ -155,7 +156,7 @@ def spectral(x,y,key=None,where=None):
 	return l2(fx,fy,key,where=where)
         
 @jax.jit
-def spectral_weighted(x,y,key=None,where=None):
+def spectral_weighted(x,y,key=None,where=None,aux=None):
 	""" 
 		l2 norm in fourier space, keeping phase information.
 		Weighted to emphasise importance of certain frequencies
@@ -176,7 +177,7 @@ def spectral_weighted(x,y,key=None,where=None):
 	fy = jnp.fft.rfft2(y)
 	return jnp.nan_to_num(jnp.abs(l2(fx,fy,key,where=where)))
 @eqx.filter_jit
-def vgg(x,y, key,where=None):
+def vgg(x,y, key,where=None,aux=None):
 	"""
 	NOTE THAT CHANNELS IS TRUNCATED TO 3
 	NOTE WHERE HAS NO EFFECT HERE
@@ -207,15 +208,132 @@ def vgg(x,y, key,where=None):
 	return loss
 	
 
-@eqx.filter_jit
-def vgg_fast(x,y,params):
-	x = rearrange(x,"n c x y->n x y c")[...,:3]
-	y = rearrange(y,"n c x y->n x y c",)[...,:3]
-	loss = lpips.apply(params, x, y)
+
+def _duplicate_x_channels(x):
+	# data_channels = ["lmbr","tbxt","sox17","sox2","lmbr","tbxt","sox17","foxa2","cer1","lefty2","nodal"]
+	# input_channels = ["lmbr","tbxt","sox17","sox2","foxa2","cer1","lefty2","nodal"]
+	x_dup = [x[:,0:4],x[:,0:3],x[:,4:8]]
+	return jnp.concatenate(x_dup,axis=1)
+
+def _split_and_pad_by_experiment_groups(x): 
+	"""
+		For VGG hyperspectral loss, sometimes we need to define which channels are aggregated together, as we compare corresponding blocks of 3 channels.
+		TODO: This needs to be pure and able to be jitted. We probably need to pass this function in with the data
+	"""
+
+	x_split = [x[:,0:4],x[:,4:8],x[:,8:11]]  # Hardcoded for jitting
+	x_split = [jnp.pad(x,((0,0),(0,(3-x.shape[1]%3)%3),(0,0),(0,0)),mode="constant") for x in x_split]
+
+	# Recombine
+	x = jnp.concatenate(x_split,axis=1)
+	return x
+
+def vgg_hyperspectral_colony(x,y,key,where=None,aux=None):
+	"""
+
+		Takes x and y with > 3 channels and computes VGG loss on each 3-channel subset, averaging the result.
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
+			true data
+		key : jax.random.PRNGKey
+			Jax random number key.
+		where : boolean array [N,CHANNELS,(),()]
+			Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
+		Returns
+		-------
+		loss : float32 [N]
+			loss reduced over channel and spatial axes
+	"""
+	
+	# Scale to [-1,1] for lpips
+	x = x*2-1
+	y = y*2-1
+
+	# x has 8 channels but y has 11. Some specified x channels need to be repeated to match the channels in y
+	# Apply where mask
+	
+	if where is not None:
+		x = x*where.astype(x.dtype)
+		where_y = _duplicate_x_channels(where)
+		y = y*where_y.astype(y.dtype)
+
+
+
+	x = _duplicate_x_channels(x)
+	x = _split_and_pad_by_experiment_groups(x)
+	y = _split_and_pad_by_experiment_groups(y)		
+	x = rearrange(x,"n (c vc) x y -> c n x y vc",vc=3)
+	y = rearrange(y,"n (c vc) x y -> c n x y vc",vc=3)
+
+	params = lpips.init(key, x[0], y[0])
+	losses = jax.vmap(lpips.apply, in_axes=(None,0,0))(params, x, y) # C N () () ()
+	# print("VGG losses shape: ",losses.shape,flush=True)
+	# Weight different loss channels - some are duplicate channels from specifying colonies, others are dummy channels introduced by vgg groupings
+	loss_weighting = jnp.array([0.5,1.0,0.5,1.0,1.0])
+	losses = einsum(losses,loss_weighting,"c n i j k , c -> c n i j k")
+	loss = reduce(losses,"c n () () () -> n","mean")
 	return loss
 
 
-def vgg_init_params(x,y, key):
-	x = rearrange(x,"n c x y->n x y c")[...,:3]
-	y = rearrange(y,"n c x y->n x y c",)[...,:3]
-	return lpips.init(key, x, y)
+def vgg_hyperspectral_colony_and_l2(x,y,key,where=None,aux=None):
+	vgg_loss = vgg_hyperspectral_colony(x,y,key,where,aux)
+	x_full = _duplicate_x_channels(x)
+	_l2 = (x_full-y)**2
+	weighting = jnp.array([0.5,0.5,0.5,1.0,0.5,0.5,0.5,1.0,1.0,1.0,1.0]) # Account for duplicate channels
+	_l2 = einsum(_l2,weighting,"n c x y , c -> n c x y")
+	where_full = _duplicate_x_channels(where)
+	l2_loss = jnp.nan_to_num(jnp.mean(_l2,axis=[-1,-2,-3],where=where_full))
+	return vgg_loss + l2_loss
+
+def vgg_hyperspectral(x,y,key,where=None,aux=None):
+	"""
+
+		Takes x and y with > 3 channels and computes VGG loss on each 3-channel subset, averaging the result.
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
+			true data
+		key : jax.random.PRNGKey
+			Jax random number key.
+		where : boolean array [N,CHANNELS,(),()]
+			Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
+		Returns
+		-------
+		loss : float32 [N]
+			loss reduced over channel and spatial axes
+	"""
+	
+	# Scale to [-1,1] for lpips
+	x = x*2-1
+	y = y*2-1
+	# Apply where mask
+	
+	if where is not None:
+		x = x*where.astype(x.dtype)
+		y = y*where.astype(y.dtype)
+
+	x = _split_and_pad_by_experiment_groups(x)
+	y = _split_and_pad_by_experiment_groups(y)		
+	x = rearrange(x,"n (c vc) x y -> c n x y vc",vc=3)
+	y = rearrange(y,"n (c vc) x y -> c n x y vc",vc=3)
+	params = lpips.init(key, x[0], y[0])
+	losses = jax.vmap(lpips.apply, in_axes=(None,0,0))(params, x, y) # C N () () ()
+	loss = reduce(losses,"c n () () () -> n","mean")
+	return loss
+# @eqx.filter_jit
+# def vgg_fast(x,y,params):
+# 	x = rearrange(x,"n c x y->n x y c")[...,:3]
+# 	y = rearrange(y,"n c x y->n x y c",)[...,:3]
+# 	loss = lpips.apply(params, x, y)
+# 	return loss
+
+
+# def vgg_init_params(x,y, key):
+# 	x = rearrange(x,"n c x y->n x y c")[...,:3]
+# 	y = rearrange(y,"n c x y->n x y c",)[...,:3]
+# 	return lpips.init(key, x, y)

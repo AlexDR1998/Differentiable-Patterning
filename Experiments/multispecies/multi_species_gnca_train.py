@@ -1,3 +1,8 @@
+PVC_PATH = "/mnt/ceph/ar-dp/"
+import sys
+import os
+sys.path.append(PVC_PATH)
+os.chdir(PVC_PATH)
 import argparse
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from Common.dataloader.emoji import load_emoji_sequence
@@ -12,12 +17,12 @@ import jax.numpy as np
 import optax
 from optax.contrib import muon
 import matplotlib.pyplot as plt
-import sys
+# import sys
 
 class data_augmenter_subclass(DataAugmenter):
     def data_init(self, SHARDING=None):
         data = self.return_saved_data()
-        data = self.pad(data, 10)
+        data = self.pad(data, [10,10])
         self.save_data(data)
         return None
 # PVC_PATH = "/mnt/ceph/ar-dp/"
@@ -149,6 +154,7 @@ trainer.train(
     }, 
     LOOP_AUTODIFF="checkpointed", 
     optimiser=optimiser,
+    CONTIGUOUS_REGULARISER=0.0,
     WARMUP=warmup_steps,
     LOG_EVERY=200,
     CLEAR_CACHE_EVERY=200,

@@ -9,7 +9,7 @@ import time
 import jaxpruner
 from PDE.trainer.data_augmenter_pde import DataAugmenter
 import Common.trainer.loss as loss
-from Common.model.boundary import model_boundary
+from Common.model.boundary import model_boundary,no_boundary
 from Common.trainer.custom_functions import check_training_diverged
 from PDE.trainer.tensorboard_log import PDE_Train_log
 from PDE.trainer.optimiser import non_negative_diffusion_chemotaxis
@@ -29,6 +29,7 @@ class PDE_Trainer(object):
 				 data: Float[Array, "Batches T C W H"],
 				 Ts: Float[Array, "Batches T"],
 				 model_filename=None,
+				 wandb_config={"project":"neural_pdes"},
 				 DATA_AUGMENTER = DataAugmenter,
 				 BOUNDARY_MASK = None,
 				 directory="models/"):
@@ -97,7 +98,7 @@ class PDE_Trainer(object):
 			
 				self.BOUNDARY_CALLBACK.append(model_boundary(BOUNDARY_MASK[b]))
 			else:
-				self.BOUNDARY_CALLBACK.append(model_boundary(None))
+				self.BOUNDARY_CALLBACK.append(no_boundary())
 		
 		#print(jax.tree_util.tree_structure(self.BOUNDARY_CALLBACK))
 		# Set logging behvaiour based on provided filename
@@ -108,7 +109,7 @@ class PDE_Trainer(object):
 			self.model_filename = model_filename
 			self.IS_LOGGING = True
 			self.LOG_DIR = "logs/"+self.model_filename+"/train"
-			self.LOGGER = PDE_Train_log(self.LOG_DIR, data)
+			self.LOGGER = PDE_Train_log(data,wandb_config=wandb_config)
 			print("Logging training to: "+self.LOG_DIR)
 		self.directory = directory
 		self.MODEL_PATH = directory+self.model_filename

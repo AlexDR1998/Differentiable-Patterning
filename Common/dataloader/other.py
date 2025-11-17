@@ -23,4 +23,5 @@ def load_data_for_tilo(
         DOWNSAMPLE=DOWNSAMPLE,
         mode=PROCESSING_MODES,
         HIST_EQS=HIST_EQS)
+    data = rearrange(data,"T B H W C -> B T C H W")
     return data

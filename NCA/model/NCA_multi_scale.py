@@ -65,6 +65,27 @@ class mNCA(AbstractModel):
         
         self.perception = self.subNCAs[0].perception
 
+    def get_config(self):
+        """
+        Returns the model configuration as a dictionary.
+
+        Returns
+        -------
+        dict
+            dictionary of model hyperparameters
+
+        """
+        
+        return {
+            "MODEL":"mNCA",
+            "N_CHANNELS":self.N_CHANNELS,
+            "KERNEL_STR":self.KERNEL_STR,
+            #"ACTIVATION":self.layers[1].__name__,
+            "GATED":self.GATED,
+            "SCALES":self.SCALES,
+            "PADDING":self.subNCAs[0].op.PADDING,
+            "FIRE_RATE":self.FIRE_RATE,
+        }
     def __call__(self,
                  X: Float[Array,"{self.N_CHANNELS} x y"],
 				 boundary_callback=lambda x:x,

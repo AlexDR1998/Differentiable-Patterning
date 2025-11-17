@@ -13,7 +13,7 @@ from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
 from NCA.model.NCA_multihead_attention import aNCA
 from NCA.trainer.data_augmenter_nca import DataAugmenter
-from einops import repeat
+from einops import repeat, reduce, rearrange, einsum
 from Common.utils import key_pytree_gen
 from Common.model.boundary import model_boundary, hard_boundary, no_boundary
 from tqdm import tqdm
@@ -35,6 +35,7 @@ class NCA_Trainer(object):
 				 SHARDING = None, 
 				 GRAD_LOSS = True,
 				 OBS_CHANNELS = None,
+				 DATA_CHANNELS = None,
 				 LOSS_TIME_CHANNEL_MASK = None,
 				 MODEL_DIRECTORY="models/",
 				 LOG_DIRECTORY="logs/"):
@@ -79,25 +80,37 @@ class NCA_Trainer(object):
 			self.OBS_CHANNELS = data[0].shape[1]
 		else:
 			self.OBS_CHANNELS = OBS_CHANNELS
+		# For some loss functions, the NCA observable channels don't necessarily match the data channels. Handle this here.
+		if DATA_CHANNELS is None:
+			self.DATA_CHANNELS = self.OBS_CHANNELS
+		else:
+			self.DATA_CHANNELS = DATA_CHANNELS
+		
+		
 		self.SHARDING = SHARDING
 		self.GRAD_LOSS = GRAD_LOSS
 		self.LOSS_TIME_CHANNEL_MASK = LOSS_TIME_CHANNEL_MASK
 		
 		# Set up partial mask of channels / timesteps
-		if self.LOSS_TIME_CHANNEL_MASK is not None:
-			_model_kernel_length = len(self.NCA_model.KERNEL_STR)
-			if "GRAD" in self.NCA_model.KERNEL_STR:
-				_model_kernel_length+=1
-			if GRAD_LOSS:
-				self.LOSS_TIME_CHANNEL_MASK = repeat(self.LOSS_TIME_CHANNEL_MASK,"n c -> n (gc c) () ()",gc=_model_kernel_length)
-				print("Timestep / Channel mask: ")
-				print(self.LOSS_TIME_CHANNEL_MASK[:,:,0,0])
+		if self.LOSS_TIME_CHANNEL_MASK is None:
+			self.LOSS_TIME_CHANNEL_MASK = jnp.ones((data.shape[1]-1,self.OBS_CHANNELS),dtype=jnp.float32)
 
+		_model_kernel_length = len(self.NCA_model.KERNEL_STR)
+		if "GRAD" in self.NCA_model.KERNEL_STR:
+			_model_kernel_length+=1
+		if GRAD_LOSS:
+			self.LOSS_TIME_CHANNEL_MASK = repeat(self.LOSS_TIME_CHANNEL_MASK,"n c -> n (gc c) () ()",gc=_model_kernel_length)
+			print("Timestep / Channel mask: ")
+			print(self.LOSS_TIME_CHANNEL_MASK[:,:,0,0])
+		else:
+			self.LOSS_TIME_CHANNEL_MASK = rearrange(self.LOSS_TIME_CHANNEL_MASK,"n c -> n c () ()")
+			print("Timestep / Channel mask: ")
+			print(self.LOSS_TIME_CHANNEL_MASK[:,:,0,0])
 
 
 		# Set up data and data augmenter class
 		self._data_raw = data
-		self.DATA_AUGMENTER = DATA_AUGMENTER(data,self.CHANNELS-self.OBS_CHANNELS)
+		self.DATA_AUGMENTER = DATA_AUGMENTER(data,self.CHANNELS-self.DATA_CHANNELS)
 		self.DATA_AUGMENTER.data_init(self.SHARDING)
 		self.data = self.DATA_AUGMENTER.return_saved_data()
 		self.BATCHES = len(self.data)
@@ -180,14 +193,34 @@ class NCA_Trainer(object):
 			loss for each timestep of trajectory
 		"""
 		x_obs = x[:,:self.OBS_CHANNELS]
-		y_obs = y[:,:self.OBS_CHANNELS]
+		y_obs = y[:,:self.DATA_CHANNELS]
 		if self.GRAD_LOSS:
 			v_perception = jax.vmap(self.NCA_model.perception,in_axes=0,out_axes=0)
 			x_obs = v_perception(x_obs)
 			y_obs = v_perception(y_obs)
 			x_obs = x_obs.at[:,self.OBS_CHANNELS:].set(0.1*x_obs[:,self.OBS_CHANNELS:])
-			y_obs = y_obs.at[:,self.OBS_CHANNELS:].set(0.1*y_obs[:,self.OBS_CHANNELS:])
-		return self._loss_func(x_obs,y_obs,key,self.LOSS_TIME_CHANNEL_MASK)
+			y_obs = y_obs.at[:,self.DATA_CHANNELS:].set(0.1*y_obs[:,self.DATA_CHANNELS:])
+		# return self._loss_func(x_obs,y_obs,key,self.LOSS_TIME_CHANNEL_MASK)
+		# if self.LOSS_FUNC_CHANNELS is not None:
+		losses = []
+		for idx, f in enumerate(self._loss_func):
+			key = jr.fold_in(key,idx)
+			# Get mask for channels that should be included in this loss function
+			# Include channels where LOSS_FUNC_CHANNELS == idx or == -1
+			channel_mask = (self.LOSS_FUNC_CHANNELS == idx) | (self.LOSS_FUNC_CHANNELS == -1)
+			channel_mask = repeat(channel_mask,"c -> (gc c) () ()",gc=self.LOSS_TIME_CHANNEL_MASK.shape[1]//self.OBS_CHANNELS).astype(jnp.float32)
+			# Select only the relevant channels
+			
+			loss_mask = einsum(self.LOSS_TIME_CHANNEL_MASK,channel_mask,"n c w h, c w h-> n c w h")
+			# loss_aux = self.LOSS_FUNC_AUX[idx]
+			# losses.append(f(x_obs, y_obs, key, loss_mask, loss_aux))
+			losses.append(f(x_obs, y_obs, key, loss_mask))
+
+		losses = jnp.array(losses)
+	
+	
+	
+		return reduce(losses,"loss_funcs N -> N","mean")
 	@eqx.filter_jit
 	def intermediate_reg(self,x,x_new,vv_nca,key):
 		"""
@@ -321,13 +354,9 @@ class NCA_Trainer(object):
 		      t,
 			  iters,
 			  optimiser=None,
-			#   STATE_REGULARISER=1.0,
-			#   BOUNDARY_REGULARISER=1.0,
-			#   CONTIGUOUS_REGULARISER=1.0,
-			#   SENSITIVITY_REGULARISER=1.0,
 			  REGULARISER_COEFFS = {
 				  "intermediate_state":1.0,
-				  "boundary": 1.0,
+				  "boundary": 0.0,
 				  "contiguous_growth":1.0,
 				  "update_sensitivity":0.0,
 				  "perturbation_conservation":0.0
@@ -336,7 +365,11 @@ class NCA_Trainer(object):
 			  LOG_EVERY=40,
 			  CLEAR_CACHE_EVERY=100,
 			  WRITE_IMAGES=True,
-			  LOSS_FUNC_STR = "euclidean",
+			  LOSS_FUNC_STR = ["euclidean"],
+			  LOSS_ARGS = {
+				"channels":None,
+				"experiment_groups":None
+			  },			  
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
@@ -384,8 +417,6 @@ class NCA_Trainer(object):
 			"t":t,
 			"iters":iters,
 			"optimiser":optimiser,
-			# "STATE_REGULARISER":STATE_REGULARISER,
-			# "BOUNDARY_REGULARISER":BOUNDARY_REGULARISER,
 			"REGULARISERS":REGULARISER_COEFFS,
 			"WARMUP":WARMUP,
 			"LOG_EVERY":LOG_EVERY,
@@ -400,23 +431,32 @@ class NCA_Trainer(object):
 		self.setup_logging("wandb",wandb_args=wandb_args)
 
 
-		if LOSS_FUNC_STR=="l2":
-			self._loss_func = loss.l2
-		elif LOSS_FUNC_STR=="l1":
-			self._loss_func = loss.l1
-		elif LOSS_FUNC_STR=="vgg":
-			self._loss_func = loss.vgg
-		elif LOSS_FUNC_STR=="euclidean":
-			self._loss_func = loss.euclidean
-		elif LOSS_FUNC_STR=="spectral":
-			self._loss_func = loss.spectral
-		elif LOSS_FUNC_STR=="spectral_full":
-			self._loss_func = loss.spectral_weighted
-		elif LOSS_FUNC_STR=="rand_euclidean":
-			#def _loss_func(self,x,y,dummy_key):
-			#	return loss.random_sampled_euclidean(x,y,key)
-			self._loss_func = lambda x,y,dummy_key:loss.random_sampled_euclidean(x,y,key=key)
+		LOSS_FUNCS = {
+			"l2":loss.l2,
+			"l1":loss.l1,
+			"vgg":loss.vgg_hyperspectral,#lambda x,y,key,where:loss.vgg_hyperspectral(x,y,key,where,experiment_groups=LOSS_ARGS["experiment_groups"]),
+			"vgg_grouped":loss.vgg_hyperspectral_colony,
+			"vgg_grouped_and_l2":loss.vgg_hyperspectral_colony_and_l2,
+			"vgg_3ch":loss.vgg,
+			"euclidean":loss.euclidean,
+			"spectral":loss.spectral,
+			"spectral_full":loss.spectral_weighted,
+			# "rand_euclidean":lambda x,y,key:loss.random_sampled_euclidean(x,y,key=key)
+		}
 
+		if isinstance(LOSS_FUNC_STR,str):
+			self._loss_func = [LOSS_FUNCS[LOSS_FUNC_STR]]
+		elif isinstance(LOSS_FUNC_STR,list):
+			self._loss_func = [LOSS_FUNCS[f] for f in LOSS_FUNC_STR]
+			
+		
+		LOSS_FUNC_CHANNELS = LOSS_ARGS["channels"]
+		if LOSS_FUNC_CHANNELS is not None:
+			assert len(LOSS_FUNC_CHANNELS)==self.OBS_CHANNELS, "LOSS_FUNC_CHANNELS should be same length as number of observable channels"
+		elif LOSS_FUNC_CHANNELS is None:
+			LOSS_FUNC_CHANNELS = jnp.ones((self.OBS_CHANNELS,),dtype=jnp.int32)*-1
+		self.LOSS_FUNC_CHANNELS = LOSS_FUNC_CHANNELS
+		
 		REG_FUNCS = {
 			"intermediate_state":self.intermediate_reg,
 			"boundary":self.boundary_regulariser,
@@ -424,10 +464,7 @@ class NCA_Trainer(object):
 			"update_sensitivity":self.update_sensitivity_regulariser,
 			"perturbation_conservation":self.perturbation_conservation_regulariser
 		}
-		# Keep only regulariser functions that have entries in REGULARISER_COEFFS
-		# REGULARISERS = {name: REGULARISER_COEFFS[name]
-		# 				for name in REG_FUNCS.keys()
-		# 				if name in REGULARISER_COEFFS}
+		
 
 		# Filter REG_FUNCS to the same set (optional but keeps things consistent)
 		REGULARISER_COEFFS = {name:REGULARISER_COEFFS[name] for name in REGULARISER_COEFFS.keys() if REGULARISER_COEFFS[name]!=0.0}
@@ -476,9 +513,10 @@ class NCA_Trainer(object):
 				_nca = eqx.combine(nca_diff,nca_static)
 				v_nca = jax.vmap(_nca,in_axes=(0,None,0),out_axes=0,axis_name="N") # boundary is independant of time N
 				vv_nca = lambda x,callback,key_array:jax.tree_util.tree_map(v_nca,x,callback,key_array)  # noqa: E731
+				# vv_nca = jax.vmap(v_nca,in_axes=(0,0,0),out_axes=0,axis_name="B") # boundary can be different for each batch
 				reg_logs_internal = {name: jnp.zeros(len(x)) for name in REGULARISER_COEFFS.keys()}
-				_loss_func = lambda x,y,key:self.loss_func(x,y,key)  # noqa: E731
-				v_loss_func = lambda x,y,key_array:jnp.array(jax.tree_util.tree_map(_loss_func,x,y,key_array))  # noqa: E731
+				# _loss_func = lambda x,y,key:self.loss_func(x,y,key)  # noqa: E731
+				v_loss_func = lambda x,y,key_array:jnp.array(jax.tree_util.tree_map(self.loss_func,x,y,key_array))  # noqa: E731
 				
 				# Structuring this as function and lax.scan speeds up jit compile a lot
 				def nca_step(carry,j): # function of type a,b -> a
@@ -509,7 +547,7 @@ class NCA_Trainer(object):
 				losses = v_loss_func(x, y, loss_key)
 				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
 				mean_loss = jnp.mean(losses) + jnp.sum(jnp.array(list(reg_loss_internal.values())))
-				return mean_loss,(x,losses,reg_loss_internal)
+				return mean_loss, (x,losses,reg_loss_internal)
 
 			nca_diff,nca_static = nca.partition()
 			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)
@@ -534,6 +572,7 @@ class NCA_Trainer(object):
 		
 		# # Split data into x and y
 		x,y = self.DATA_AUGMENTER.data_load(key)
+		print(f"Initial x shape: {jnp.array(x).shape}, y shape: {jnp.array(y).shape}",flush=True)
 		
 		
 		best_loss = 100000000
@@ -546,7 +585,7 @@ class NCA_Trainer(object):
 		error = 0
 		error_at = 0
 		SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
-
+		
 		pbar = tqdm(range(iters))
 		#--- Do training run ---
 		for i in pbar:
@@ -621,11 +660,24 @@ class NCA_Trainer(object):
 		if error!=0 and model_saved==False:
 			print("|-|-|-|-|-|-  Training did not converge, model was not saved  -|-|-|-|-|-|")
 		elif self.IS_LOGGING and model_saved:
-			x,y = self.DATA_AUGMENTER.split_x_y(1)
-			x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
+			# x,y = self.DATA_AUGMENTER.split_x_y(1)
+			# x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
 			#try:
-			self.LOGGER.tb_training_end_log(self.NCA_model,x,t*x[0].shape[0],self.BOUNDARY_CALLBACK)
+			self.LOGGER.tb_training_end_log(
+				self.NCA_model,
+				self.DATA_AUGMENTER,
+				t=t,
+				boundary_callback=self.BOUNDARY_CALLBACK,
+				SAVE_TRAJECTORY=False)
+		self.LOGGER.finish()
 			# except Exception as e:
 			# 	print("Error logging training end")
 			# 	print(e)
 			# 	pass
+# def _build_vgg_aux(experiment_groups):
+# 	if experiment_groups is None:
+# 		return None
+# 	else:
+# 		diff = jnp.diff(experiment_groups)	
+# 		indices_to_split_at = jnp.where(diff != 0)[0] + 1
+# 		return indices_to_split_at.astype(jnp.int32)
