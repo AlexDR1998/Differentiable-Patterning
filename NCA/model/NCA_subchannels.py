@@ -71,7 +71,7 @@ class sub_NCA(NCA):
     def __call__(self,
                     x: Float[Array,"{self.N_CHANNELS} x y"],
                     boundary_callback=lambda x:x,
-                    key: Key=jax.random.PRNGKey(int(time.time())))->Float[Array, "{self.N_CHANNEL} x y"]:
+                    key: Key=jax.random.PRNGKey(int(time.time())))->Float[Array, "{self.OUTPUT_CHANNELS} x y"]:
         """
         
 

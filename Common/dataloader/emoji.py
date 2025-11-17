@@ -20,7 +20,7 @@ def load_emoji_sequence(filename_sequence,impath_emojis="../Data/Emojis/",downsa
 	
 		Returns
 		-------
-		images : float32 array [1,T,C,size,size]
+		images : float32 array [1,File,C,size,size]
 			Timesteps of T RGB/RGBA images. Dummy index of 1 for number of batches
 	"""
 	images = []
