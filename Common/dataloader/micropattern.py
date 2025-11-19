@@ -670,7 +670,7 @@ def load_micropattern_circle_8ch_individual(
     DOWNSAMPLE=1,
     BATCHES=1,
     BACKGROUND_RADIUS=20,
-    TIMESTEPS=[0, 12, 24, 36, 48, 60],  # 0h, 6h, 12h, 24h, 36h, 48h
+    TIMESTEPS=[0, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
     HIST_EQS=(1.0, 95.0),
     SHOW_HISTOGRAMS=False,
     PROCESSING_MODES=["map_to_0_1"],
@@ -682,9 +682,9 @@ def load_micropattern_circle_8ch_individual(
     # CHANNEL_NAMES_SORTED = ["Cer1","Foxa2","LMBR","Lefty","Nodal","Sox17","Sox2","Tbxt"] # Sorted alphabetically
     CHANNEL_NAMES_DESIRED = [
         "LMBR",
-        "SOX2",
         "TBXT",
         "SOX17",
+        "SOX2",
         "FOXA2",
         "Cer1",
         "Lefty2",
