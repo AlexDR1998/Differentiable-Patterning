@@ -751,6 +751,167 @@ def load_micropattern_circle_8ch_individual(
     # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
     return ims, aux, CHANNEL_NAMES_DESIRED, boundary_mask
 
+
+
+def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+    impath="../Data/Timecourse Seperate Colonies/",
+    DOWNSAMPLE=1,
+    BATCHES=1,
+    BACKGROUND_RADIUS=20,
+    TIMESTEPS=[0, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
+    HIST_EQS=(1.0, 95.0),
+    FILTER_KN_TIME=0,
+    PROCESSING_MODES=["map_to_0_1"],
+):
+    """
+        Loads circular micropatterns for 9 channels: LMBR, TBXT, SOX17, SOX2, FOXA2, Cer1, Lefty2, Nodal, Dappi
+        Data is measured from 6 separate colonies, with some duplication of channels (LMBR, TBXT, SOX17 are in both A and B)
+
+        Parameters:
+        ----------
+        impath: str
+            Path to the folder containing the data. Expects subfolders A, B, C for each colony.
+        DOWNSAMPLE: int
+            Factor to downsample the images by.
+        BATCHES: int
+            Number of batches to repeat the data for.
+        BACKGROUND_RADIUS: int
+            Radius for background subtraction.
+        TIMESTEPS: list
+            List of timesteps in hours to load. 
+        HIST_EQS: tuple
+            Percentiles for histogram equalisation.
+        PROCESSING_MODES: list
+            List of processing modes to apply. See process_data function for options.
+        Returns:
+        -------
+        ims: jnp.array
+            Processed images of shape [BATCHES, TIMESTEPS, CHANNELS, X, Y]
+        aux: dict
+            Auxiliary data from processing. Used for debugging.
+        CHANNEL_NAMES_COLONIES: list
+            List of channel names in the order they are loaded.
+        boundary_mask: jnp.array
+            Boundary mask of shape [BATCHES, 1, X, Y]. Indicates where the micropattern is adhesing to the substrate.
+    """
+    CHANNEL_NAMES_DESIRED = [
+        ["LMBR","TBXT","SOX17","SOX2"],
+        ["LMBR","TBXT","SOX17","FOXA2"],
+        ["Cer1","Lefty2","Nodal",],
+        ["Lef1",],
+        ["TBXT","SOX17","SOX2"],
+        ["FOXA2"]
+
+        ]
+    CHANNEL_NAMES_COLONIES = [
+        "A-LMBR",
+        "A-TBXT",
+        "A-SOX17",
+        "A-SOX2",
+        "B-LMBR",
+        "B-TBXT",
+        "B-SOX17",
+        "B-FOXA2",
+        "C-Cer1",
+        "C-Lefty2",
+        "C-Nodal",
+        "D-Lef1",
+        "E-TBXT",
+        "E-SOX17",
+        "E-SOX2",
+        "F-FOXA2",
+    ]
+    if FILTER_KN_TIME==None:
+        cols = ["A","B","C","D"]
+        cols_knockout = []
+        colony_paths_knockout = []
+    else:
+        cols = ["A","B","C"]
+        cols_knockout = ["D","E","F"]
+        colony_paths_knockout = [impath+f"{i}/*" for i in cols_knockout]
+
+    # col_label = cols + cols_knockout
+    # cols = ["A","B","C","D","E","F"]
+    colony_paths = [impath+f"{i}/*" for i in cols]#,"E","F"]]
+    # colony_filenames = [sorted(glob.glob(path)) for path in colony_paths]
+    # colony_paths += colony_paths_knockout
+    # rearrange big list of paths into lists of filenames per colony per timepoint
+    # where_func = lambda filenames, label: label in filenames
+    # colony_filenames = [[list(filter(lambda x: where_func(x, f"_{i}h"), sorted(filenames)))
+        # for i in TIMESTEPS] for filenames in [glob.glob(path) for path in colony_paths]]
+    colony_filenames = [
+        [list(filter(lambda x: f"_{i}h" in x, sorted(filenames))) for i in TIMESTEPS] 
+        for filenames in [glob.glob(path) for path in colony_paths]
+        ]
+    # Filter condition for if kn{FILTER_KN_TIME} in x and _{time}h in x; OR if _{time}h in x for time<FILTER_KN_TIME
+
+    filter_time_knockout = lambda x,time: (f"_{time}h_kn{FILTER_KN_TIME}" in x) if time>FILTER_KN_TIME else (f"_{time}h" in x)
+    # colony_filenames_knockout = [
+    #     [list(filter(lambda x: f"_{i}h_kn{FILTER_KN_TIME}" in x, sorted(filenames))) for i in TIMESTEPS]
+    #     for filenames in [glob.glob(path) for path in colony_paths_knockout]
+    # ]
+    colony_filenames_knockout = [
+        [list(filter(lambda x: filter_time_knockout(x, i), sorted(filenames))) for i in TIMESTEPS]
+        for filenames in [glob.glob(path) for path in colony_paths_knockout]
+    ]
+    # pprint(colony_filenames)
+    # pprint(colony_filenames_knockout)
+    colony_filenames += colony_filenames_knockout
+    cols+=cols_knockout
+    # return colony_filenames
+    # pprint("Colony filenames: ", colony_filenames)
+    print("Colony filenames: ")
+    print(len(colony_filenames))
+    for i in range(len(colony_filenames)):
+        print(f"Colony {cols[i]} has {len(colony_filenames[i])} timepoints.")
+        for j in range(len(colony_filenames[i])):
+            print(f"  Timepoint {TIMESTEPS[j]}h has {len(colony_filenames[i][j])} channels.")
+        pprint(colony_filenames[i])
+    
+    # pprint(colony_filenames)
+    ims = []
+    names = []
+    for i,f_colony in enumerate(colony_filenames):
+        ims_colony = [] 
+        channel_names_colony = []
+        print(f"Loading colony {f_colony} ...")
+        #iterate over non empty lists in f_colony
+        f_colony = [f_times for f_times in f_colony if len(f_times)>0]
+        for f_times in f_colony:
+            ims_time = []
+            channel_names = []
+            for f_str in f_times: # Stack up channels
+                ims_time.append(skimage.io.imread(f_str))
+                channel_name = f_str.split("/")[-1].split("_")[0].replace(".tif", "")
+                channel_names.append(channel_name)
+                print(f_str)
+            print("Channel names found: ", channel_names)
+            ims_time = jnp.array(ims_time)
+            ims_time = rearrange(ims_time, "C X Y -> () X Y C")
+            ims_time = ims_time[:,:,:,
+                [
+                    channel_names.index(name)
+                    for name in CHANNEL_NAMES_DESIRED[i][: len(ims_time[0, 0, 0])]
+                ],
+            ]
+            # ims_time.append(ims_time)
+            ims_colony.append(ims_time)
+            channel_names_colony.append(channel_names)
+        ims_timestep = np.array(ims_colony)
+        if ims_timestep.shape[0]==1:
+            ims_timestep = np.pad(ims_timestep,((4,0),(0,0),(0,0),(0,0),(0,0)),mode="constant")
+        print(f"Colony {cols[i]} loaded with shape {ims_timestep.shape}")
+        ims.append(ims_timestep)
+        names.append(channel_names_colony)
+    print("Names of channels loaded from colonies: ", names)
+    # print(len(ims))
+    # print(len(ims[0]))
+    aux = None
+    boundary_mask = None
+    return ims, aux, CHANNEL_NAMES_COLONIES, boundary_mask
+
+
+
 def load_micropattern_circle_8ch_individual_explicit_colony(
     impath="../Data/Timecourse Seperate Colonies/",
     DOWNSAMPLE=1,
@@ -758,9 +919,39 @@ def load_micropattern_circle_8ch_individual_explicit_colony(
     BACKGROUND_RADIUS=20,
     TIMESTEPS=[0, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
     HIST_EQS=(1.0, 95.0),
-    SHOW_HISTOGRAMS=False,
     PROCESSING_MODES=["map_to_0_1"],
 ):
+    """
+        Loads circular micropatterns for 8 channels: LMBR, TBXT, SOX17, SOX2, FOXA2, Cer1, Lefty2, Nodal
+        Data is measured from 3 separate colonies, with some duplication of channels (LMBR, TBXT, SOX17 are in both A and B)
+
+        Parameters:
+        ----------
+        impath: str
+            Path to the folder containing the data. Expects subfolders A, B, C for each colony.
+        DOWNSAMPLE: int
+            Factor to downsample the images by.
+        BATCHES: int
+            Number of batches to repeat the data for.
+        BACKGROUND_RADIUS: int
+            Radius for background subtraction.
+        TIMESTEPS: list
+            List of timesteps in hours to load. 
+        HIST_EQS: tuple
+            Percentiles for histogram equalisation.
+        PROCESSING_MODES: list
+            List of processing modes to apply. See process_data function for options.
+        Returns:
+        -------
+        ims: jnp.array
+            Processed images of shape [BATCHES, TIMESTEPS, CHANNELS=11, X, Y]
+        aux: dict
+            Auxiliary data from processing. Used for debugging.
+        CHANNEL_NAMES_COLONIES: list
+            List of channel names in the order they are loaded.
+        boundary_mask: jnp.array
+            Boundary mask of shape [BATCHES, 1, X, Y]. Indicates where the micropattern is adhesing to the substrate.
+    """
     CHANNEL_NAMES_DESIRED = [
         ["LMBR","TBXT","SOX17","SOX2"],
         ["LMBR","TBXT","SOX17","FOXA2"],
@@ -1065,9 +1256,14 @@ def load_micropattern_shape_array(
     ]
     filenames = glob.glob(impath)
     filenames = list(sorted(filenames))
+    print("Found filenames: ", filenames)
     ims = []
-    for f_str in tqdm(filenames):
-        ims.append(skimage.io.imread(f_str))
+    
+    # for f_str in tqdm(filenames):
+        # ims.append(skimage.io.imread(f_str))
+
+    ims.append(skimage.io.imread(filenames[0])) # Try just loading 1 image as we only really need the shape
+
     # mean_0_std_1 = lambda arr: (arr-jnp.mean(arr,axis=(1,2),keepdims=True))/(jnp.std(arr,axis=(1,2),keepdims=True))
     # map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
     # saturate = lambda arr: jax.nn.sigmoid(arr)
@@ -1100,7 +1296,14 @@ def load_micropattern_shape_array(
 
 
 def load_micropattern_shape_sequence(
-    impath, DOWNSAMPLE, BATCH_AVERAGE, CIRCLE_DATA, CIRCLE_MASK, CIRCLE_HIST_BINS
+    impath, 
+    DOWNSAMPLE, 
+    BATCH_AVERAGE, 
+    CIRCLE_DATA, 
+    CIRCLE_MASK, 
+    CIRCLE_HIST_BINS, 
+    PROCESSING_MODES,
+    SHAPED_MASK = None,
 ):
     CHANNELS = [
         "SOX17",
@@ -1114,15 +1317,20 @@ def load_micropattern_shape_sequence(
         # "SMAD23"
     ]
     # CIRCLE_DATA is (B,T,CHANNELS, X, Y)
-    true_data = load_micropattern_shape_array(
-        impath,
-        DOWNSAMPLE,
-        BATCH_AVERAGE,
-        HIST_BINS=CIRCLE_HIST_BINS,
-        PROCESSING_MODES=["hist_eq", "map_to_0_1"],
-    )[0]
-    masks = adhesion_mask_convex_hull(rearrange(true_data, "B C X Y -> X Y B C"))
-
+    if SHAPED_MASK is None:
+        true_data = load_micropattern_shape_array(
+            impath,
+            DOWNSAMPLE,
+            BATCH_AVERAGE,
+            HIST_BINS=CIRCLE_HIST_BINS,
+            PROCESSING_MODES=PROCESSING_MODES,
+        )[0]
+        masks = adhesion_mask_convex_hull(rearrange(true_data[0], "B X Y C -> X Y B C"))
+        print(f"True data shape: {true_data[0].shape}")
+    else:
+        masks = SHAPED_MASK
+        true_data = None
+    print(f"Masks shape internal {masks.shape}")
     key = jr.PRNGKey(int(time.time()))
     n_channels = len(CHANNELS)
     # Expand the mask to have one channel per synthetic condition.
