@@ -767,10 +767,42 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
         Loads circular micropatterns for 9 channels: LMBR, TBXT, SOX17, SOX2, FOXA2, Cer1, Lefty2, Nodal, Dappi
         Data is measured from 6 separate colonies, with some duplication of channels (LMBR, TBXT, SOX17 are in both A and B)
 
+        Depending on if FILTER_KN_TIME is None, 0 or 24, this function will load different colonies and return DIFFERENT SHAPES OF OUTPUT DATA
+        1) If FILTER_KN_TIME is None, loads colonies A, B, C, D (no knockouts)
+            Returns data of shape [BATCHES, TIMESTEPS, 12 CHANNELS, X, Y]
+            CHANNEL NAMES:
+            [
+                "A-LMBR",
+                "A-TBXT",
+                "A-SOX17",
+                "A-SOX2",
+                "B-LMBR",
+                "B-TBXT",
+                "B-SOX17",
+                "B-FOXA2",
+                "C-Cer1",
+                "C-Lefty2",
+                "C-Nodal",
+                "D-Lef1",
+            ]
+        2) If FILTER_KN_TIME is 0 or 24, loads colonies and D, E, F (knockout), and some extra padding channels as the NCA model expects 9 channels
+            Returns data of shape [BATCHES, TIMESTEPS, 9 CHANNELS, X, Y]
+            CHANNEL NAMES:
+            [
+                "0-LMBR",
+                "E-TBXT",
+                "E-SOX17",
+                "E-SOX2",
+                "F-FOXA2",
+                "0-Cer1",
+                "0-Lefty2",
+                "C-Nodal",
+                "D-Lef1",
+            ]
         Parameters:
         ----------
         impath: str
-            Path to the folder containing the data. Expects subfolders A, B, C for each colony.
+            Path to the folder containing the data. Expects subfolders A, B, C, D, E, F for each colony.
         DOWNSAMPLE: int
             Factor to downsample the images by.
         BATCHES: int
@@ -801,44 +833,73 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
         ["Lef1",],
         ["TBXT","SOX17","SOX2"],
         ["FOXA2"]
-
         ]
-    CHANNEL_NAMES_COLONIES = [
-        "A-LMBR",
-        "A-TBXT",
-        "A-SOX17",
-        "A-SOX2",
-        "B-LMBR",
-        "B-TBXT",
-        "B-SOX17",
-        "B-FOXA2",
-        "C-Cer1",
-        "C-Lefty2",
-        "C-Nodal",
-        "D-Lef1",
-        "E-TBXT",
-        "E-SOX17",
-        "E-SOX2",
-        "F-FOXA2",
-    ]
+    
+    if FILTER_KN_TIME==None:
+        CHANNEL_TIMESTEP_MASK = np.ones((len(TIMESTEPS)-1,12))
+    else:
+        CHANNEL_TIMESTEP_MASK = np.array([
+            [0,0,0,0,0,0,0,1,1],  # 12h
+            [0,0,0,0,0,0,0,1,1],  # 24h
+            [0,0,0,0,0,0,0,1,1],  # 36h
+            [0,1,1,1,1,0,0,1,1],  # 48h
+        ])
+    # CHANNEL_NAMES_COLONIES = [
+    #     "A-LMBR",
+    #     "A-TBXT",
+    #     "A-SOX17",
+    #     "A-SOX2",
+    #     "B-LMBR",
+    #     "B-TBXT",
+    #     "B-SOX17",
+    #     "B-FOXA2",
+    #     "C-Cer1",
+    #     "C-Lefty2",
+    #     "C-Nodal",
+    #     "D-Lef1",
+    #     "E-TBXT",
+    #     "E-SOX17",
+    #     "E-SOX2",
+    #     "F-FOXA2",
+    # ]
     if FILTER_KN_TIME==None:
         cols = ["A","B","C","D"]
         cols_knockout = []
         colony_paths_knockout = []
+        CHANNEL_NAMES_COLONIES = [
+            "A-LMBR",
+            "A-TBXT",
+            "A-SOX17",
+            "A-SOX2",
+            "B-LMBR",
+            "B-TBXT",
+            "B-SOX17",
+            "B-FOXA2",
+            "C-Cer1",
+            "C-Lefty2",
+            "C-Nodal",
+            "D-Lef1",
+        ]
     else:
         cols = ["A","B","C"]
         cols_knockout = ["D","E","F"]
         colony_paths_knockout = [impath+f"{i}/*" for i in cols_knockout]
+        CHANNEL_NAMES_COLONIES = [
+            "0-LMBR",
+            "E-TBXT",
+            "E-SOX17",
+            "E-SOX2",
+            "F-FOXA2",
+            "0-Cer1",
+            "0-Lefty2",
+            "C-Nodal",
+            "D-Lef1",
+        ]
 
-    # col_label = cols + cols_knockout
-    # cols = ["A","B","C","D","E","F"]
     colony_paths = [impath+f"{i}/*" for i in cols]#,"E","F"]]
-    # colony_filenames = [sorted(glob.glob(path)) for path in colony_paths]
-    # colony_paths += colony_paths_knockout
+    
     # rearrange big list of paths into lists of filenames per colony per timepoint
-    # where_func = lambda filenames, label: label in filenames
-    # colony_filenames = [[list(filter(lambda x: where_func(x, f"_{i}h"), sorted(filenames)))
-        # for i in TIMESTEPS] for filenames in [glob.glob(path) for path in colony_paths]]
+    
     colony_filenames = [
         [list(filter(lambda x: f"_{i}h" in x, sorted(filenames))) for i in TIMESTEPS] 
         for filenames in [glob.glob(path) for path in colony_paths]
@@ -846,20 +907,13 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
     # Filter condition for if kn{FILTER_KN_TIME} in x and _{time}h in x; OR if _{time}h in x for time<FILTER_KN_TIME
 
     filter_time_knockout = lambda x,time: (f"_{time}h_kn{FILTER_KN_TIME}" in x) if time>FILTER_KN_TIME else (f"_{time}h" in x)
-    # colony_filenames_knockout = [
-    #     [list(filter(lambda x: f"_{i}h_kn{FILTER_KN_TIME}" in x, sorted(filenames))) for i in TIMESTEPS]
-    #     for filenames in [glob.glob(path) for path in colony_paths_knockout]
-    # ]
+
     colony_filenames_knockout = [
         [list(filter(lambda x: filter_time_knockout(x, i), sorted(filenames))) for i in TIMESTEPS]
         for filenames in [glob.glob(path) for path in colony_paths_knockout]
     ]
-    # pprint(colony_filenames)
-    # pprint(colony_filenames_knockout)
     colony_filenames += colony_filenames_knockout
     cols+=cols_knockout
-    # return colony_filenames
-    # pprint("Colony filenames: ", colony_filenames)
     print("Colony filenames: ")
     print(len(colony_filenames))
     for i in range(len(colony_filenames)):
@@ -868,7 +922,7 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             print(f"  Timepoint {TIMESTEPS[j]}h has {len(colony_filenames[i][j])} channels.")
         pprint(colony_filenames[i])
     
-    # pprint(colony_filenames)
+    
     ims = []
     names = []
     for i,f_colony in enumerate(colony_filenames):
@@ -906,9 +960,41 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
     print("Names of channels loaded from colonies: ", names)
     # print(len(ims))
     # print(len(ims[0]))
-    aux = None
-    boundary_mask = None
-    return ims, aux, CHANNEL_NAMES_COLONIES, boundary_mask
+    ims = np.concatenate(ims,axis=-1) # Concatenate along channels
+    ims = list(ims)
+    ims, aux = process_data(
+        ims,
+        LMBR_CHANNEL=0,
+        BATCH_AVERAGE=False,
+        DOWNSAMPLE=DOWNSAMPLE,
+        mode=PROCESSING_MODES,
+        HIST_EQS=HIST_EQS,
+        VERBOSE=False,
+        BACKGROUND_RADIUS=BACKGROUND_RADIUS,
+    )
+    ims = np.array(ims)  # shape of T B X Y C
+    print("Processed images with shape: ", ims.shape)
+    boundary_mask = adhesion_mask_convex_hull_circle(ims[-1, 0])[
+        0
+    ]  # last timestep looks good
+    boundary_mask = repeat(boundary_mask, "X Y -> B () X Y", B=BATCHES)
+
+
+    if FILTER_KN_TIME!=None: # If doing knockout, we rearrange the channels a bit
+        ims[...,0] = 0 # We have no LMBR channel in the knockout colonies
+        ims[...,1:5] = ims[...,12:16] # Use TBXT, SOX17, SOX2, FOXA2 from knockout colonies
+        ims[...,5:7] = 0 # No Cer1, Lefty2 channels in knockout colonies
+        
+        if FILTER_KN_TIME==0: # Manually set Nodal to 0 at the timepoints where it is knocked out
+            ims[...,7] = 0
+        elif FILTER_KN_TIME==24:
+            ims[2:,:,:,:,7]=0
+        ims[...,8] = ims[...,11] # Use Lef1 from knockout colonies
+        ims = ims[...,:9]
+
+    ims = repeat(ims, "T () X Y C -> B T C X Y", B=BATCHES)
+    ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
+    return ims, aux, CHANNEL_NAMES_COLONIES, boundary_mask, CHANNEL_TIMESTEP_MASK
 
 
 
@@ -1004,7 +1090,7 @@ def load_micropattern_circle_8ch_individual_explicit_colony(
         names.append(channel_names_colony)
     
     # Ims is list of arrays
-    ims = np.concatenate(ims,axis=-1)
+    ims = np.concatenate(ims,axis=-1) # Concatenate along channels
     ims = list(ims)
     ims, aux = process_data(
         ims,
