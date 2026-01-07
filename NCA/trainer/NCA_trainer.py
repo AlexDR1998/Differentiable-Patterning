@@ -6,6 +6,7 @@ import optax
 import equinox as eqx
 import datetime
 import Common.trainer.loss as loss
+import Common.trainer.loss_ott as loss_ott
 import jaxpruner
 from functools import partial
 from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, mNCA_Train_log, aNCA_Train_log
@@ -19,6 +20,7 @@ from Common.model.boundary import model_boundary, hard_boundary, no_boundary
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key
 import time
+
 
 class NCA_Trainer(object):
 	"""
@@ -36,7 +38,7 @@ class NCA_Trainer(object):
 				 GRAD_LOSS = True,
 				 OBS_CHANNELS = None,
 				 DATA_CHANNELS = None,
-				 LOSS_TIME_CHANNEL_MASK = None,
+				 LOSS_TIME_CHANNEL_MASK = None, # If none, is overwritten to ones mask that does nothing
 				 MODEL_DIRECTORY="models/",
 				 LOG_DIRECTORY="logs/"):
 		"""
@@ -211,7 +213,7 @@ class NCA_Trainer(object):
 			channel_mask = repeat(channel_mask,"c -> (gc c) () ()",gc=self.LOSS_TIME_CHANNEL_MASK.shape[1]//self.OBS_CHANNELS).astype(jnp.float32)
 			# Select only the relevant channels
 			
-			loss_mask = einsum(self.LOSS_TIME_CHANNEL_MASK,channel_mask,"n c w h, c w h-> n c w h")
+			loss_mask = einsum(self.LOSS_TIME_CHANNEL_MASK,channel_mask,"n c w h, c w h-> n c w h").astype(jnp.bool_)
 			# loss_aux = self.LOSS_FUNC_AUX[idx]
 			# losses.append(f(x_obs, y_obs, key, loss_mask, loss_aux))
 			losses.append(f(x_obs, y_obs, key, loss_mask))
@@ -368,7 +370,13 @@ class NCA_Trainer(object):
 			  LOSS_FUNC_STR = ["euclidean"],
 			  LOSS_ARGS = {
 				"channels":None,
-				"experiment_groups":None
+				"experiment_groups":None,
+				"S":1024,
+				"K":5,
+				"D":3,
+				"sharpen":True,
+				"epsilon":0.1,
+				"internal_loss_func":"l2"
 			  },			  
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
@@ -430,7 +438,14 @@ class NCA_Trainer(object):
 		
 		self.setup_logging("wandb",wandb_args=wandb_args)
 
-
+		_ott_aux = {
+			"D":LOSS_ARGS["D"],
+			"S":LOSS_ARGS["S"],
+			"K":LOSS_ARGS["K"],
+			"sharpen":LOSS_ARGS["sharpen"],
+			"epsilon":LOSS_ARGS["epsilon"],
+			"internal_loss_func":LOSS_ARGS["internal_loss_func"]
+		}
 		LOSS_FUNCS = {
 			"l2":loss.l2,
 			"l1":loss.l1,
@@ -441,6 +456,10 @@ class NCA_Trainer(object):
 			"euclidean":loss.euclidean,
 			"spectral":loss.spectral,
 			"spectral_full":loss.spectral_weighted,
+			"ott":lambda x,y,key,where:loss_ott.ott_loss(x,y,key,where,aux=_ott_aux),
+			"ott_chstack":lambda x,y,key,where:loss_ott.ott_channel_stack_loss(x,y,key,where,aux=_ott_aux),
+			"ott_grouped":lambda x,y,key,where:loss_ott.ott_grouped_loss(x,y,key,where,aux=_ott_aux),
+			"ott_grouped_and_l2":lambda x,y,key,where:loss_ott.ott_grouped_and_l2_loss(x,y,key,where,aux=_ott_aux)
 			# "rand_euclidean":lambda x,y,key:loss.random_sampled_euclidean(x,y,key=key)
 		}
 
@@ -670,14 +689,3 @@ class NCA_Trainer(object):
 				boundary_callback=self.BOUNDARY_CALLBACK,
 				SAVE_TRAJECTORY=False)
 		self.LOGGER.finish()
-			# except Exception as e:
-			# 	print("Error logging training end")
-			# 	print(e)
-			# 	pass
-# def _build_vgg_aux(experiment_groups):
-# 	if experiment_groups is None:
-# 		return None
-# 	else:
-# 		diff = jnp.diff(experiment_groups)	
-# 		indices_to_split_at = jnp.where(diff != 0)[0] + 1
-# 		return indices_to_split_at.astype(jnp.int32)

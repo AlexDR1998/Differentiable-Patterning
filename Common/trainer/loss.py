@@ -8,7 +8,9 @@ import jax
 #from eqxvision.utils import CLASSIFICATION_URLS
 import equinox as eqx
 from lpips_j.lpips import LPIPS
-from einops import rearrange,reduce,einsum
+from einops import rearrange,reduce,einsum,repeat
+import jax.random as jr
+from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
 #import eqxvision as eqv
 
 #loaded_alexnet = alexnet(torch_weights=CLASSIFICATION_URLS['alexnet'])
@@ -88,36 +90,6 @@ def euclidean(x,y,key=None,where=None,aux=None):
 	"""
 	return jnp.nan_to_num(jnp.sqrt(jnp.mean(((x-y)**2),axis=[-1,-2,-3],where=where)))
 
-# @jax.jit
-# def sinkhorn_divergence_loss(x,y):
-# 	"""
-# 		Sinkhorn loss - OT distance between 2 point clouds in 2D space
-
-# 		Parameters
-# 		----------
-# 		x : float32 [N_x,2]
-# 			predictions
-# 		y : float32 [N_y,2]
-# 			true data
-
-# 		Returns
-# 		-------
-# 		loss : float32 
-# 			loss 
-
-# 	"""
-
-
-# 	geom = pointcloud.PointCloud(x,y)
-# 	ot = sinkhorn_divergence.sinkhorn_divergence(
-# 		geom,
-# 		x=geom.x,
-# 		y=geom.y,
-# 		static_b=True,
-# 	)
-# 	return ot.divergence
-# 	# ot = sinkhorn.Sinkhorn()(linear_problem.LinearProblem(geom))
-# 	# return ot.reg_ot_cost
 	
 	
 
@@ -208,26 +180,6 @@ def vgg(x,y, key,where=None,aux=None):
 	return loss
 	
 
-
-def _duplicate_x_channels(x):
-	# data_channels = ["lmbr","tbxt","sox17","sox2","lmbr","tbxt","sox17","foxa2","cer1","lefty2","nodal"]
-	# input_channels = ["lmbr","tbxt","sox17","sox2","foxa2","cer1","lefty2","nodal"]
-	x_dup = [x[:,0:4],x[:,0:3],x[:,4:8]]
-	return jnp.concatenate(x_dup,axis=1)
-
-def _split_and_pad_by_experiment_groups(x): 
-	"""
-		For VGG hyperspectral loss, sometimes we need to define which channels are aggregated together, as we compare corresponding blocks of 3 channels.
-		TODO: This needs to be pure and able to be jitted. We probably need to pass this function in with the data
-	"""
-
-	x_split = [x[:,0:4],x[:,4:8],x[:,8:11]]  # Hardcoded for jitting
-	x_split = [jnp.pad(x,((0,0),(0,(3-x.shape[1]%3)%3),(0,0),(0,0)),mode="constant") for x in x_split]
-
-	# Recombine
-	x = jnp.concatenate(x_split,axis=1)
-	return x
-
 def vgg_hyperspectral_colony(x,y,key,where=None,aux=None):
 	"""
 
@@ -257,14 +209,14 @@ def vgg_hyperspectral_colony(x,y,key,where=None,aux=None):
 	
 	if where is not None:
 		x = x*where.astype(x.dtype)
-		where_y = _duplicate_x_channels(where)
+		where_y = duplicate_x_channels_9ch(where)
 		y = y*where_y.astype(y.dtype)
 
 
 
-	x = _duplicate_x_channels(x)
-	x = _split_and_pad_by_experiment_groups(x)
-	y = _split_and_pad_by_experiment_groups(y)		
+	x = duplicate_x_channels_9ch(x)
+	x = split_and_pad_by_experiment_groups_12ch(x)
+	y = split_and_pad_by_experiment_groups_12ch(y)		
 	x = rearrange(x,"n (c vc) x y -> c n x y vc",vc=3)
 	y = rearrange(y,"n (c vc) x y -> c n x y vc",vc=3)
 
@@ -272,7 +224,7 @@ def vgg_hyperspectral_colony(x,y,key,where=None,aux=None):
 	losses = jax.vmap(lpips.apply, in_axes=(None,0,0))(params, x, y) # C N () () ()
 	# print("VGG losses shape: ",losses.shape,flush=True)
 	# Weight different loss channels - some are duplicate channels from specifying colonies, others are dummy channels introduced by vgg groupings
-	loss_weighting = jnp.array([0.5,1.0,0.5,1.0,1.0])
+	loss_weighting = jnp.array([0.5,1.0,0.5,1.0,1.0,1.0]) # Should there be an extra 1.0 here?
 	losses = einsum(losses,loss_weighting,"c n i j k , c -> c n i j k")
 	loss = reduce(losses,"c n () () () -> n","mean")
 	return loss
@@ -280,11 +232,11 @@ def vgg_hyperspectral_colony(x,y,key,where=None,aux=None):
 
 def vgg_hyperspectral_colony_and_l2(x,y,key,where=None,aux=None):
 	vgg_loss = vgg_hyperspectral_colony(x,y,key,where,aux)
-	x_full = _duplicate_x_channels(x)
+	x_full = duplicate_x_channels_9ch(x)
 	_l2 = (x_full-y)**2
-	weighting = jnp.array([0.5,0.5,0.5,1.0,0.5,0.5,0.5,1.0,1.0,1.0,1.0]) # Account for duplicate channels
+	weighting = jnp.array([0.5,0.5,0.5,1.0,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0]) # Account for duplicate channels
 	_l2 = einsum(_l2,weighting,"n c x y , c -> n c x y")
-	where_full = _duplicate_x_channels(where)
+	where_full = duplicate_x_channels_9ch(where).astype(where.dtype)
 	l2_loss = jnp.nan_to_num(jnp.mean(_l2,axis=[-1,-2,-3],where=where_full))
 	return vgg_loss + l2_loss
 
@@ -317,8 +269,8 @@ def vgg_hyperspectral(x,y,key,where=None,aux=None):
 		x = x*where.astype(x.dtype)
 		y = y*where.astype(y.dtype)
 
-	x = _split_and_pad_by_experiment_groups(x)
-	y = _split_and_pad_by_experiment_groups(y)		
+	x = pad_to_multiple_of_3_channels(x)
+	y = pad_to_multiple_of_3_channels(y)		
 	x = rearrange(x,"n (c vc) x y -> c n x y vc",vc=3)
 	y = rearrange(y,"n (c vc) x y -> c n x y vc",vc=3)
 	params = lpips.init(key, x[0], y[0])
