@@ -1,4 +1,8 @@
-PVC_PATH = "/mnt/ceph/ar-dp/"
+import os
+from dotenv import load_dotenv
+load_dotenv()
+PVC_PATH = os.getenv("PVC_PATH")
+DATA_PATH_BASE = os.getenv("DATA_PATH_BASE")
 import jax
 import jax.numpy as np
 import numpy as onp
@@ -6,12 +10,13 @@ import jax.random as jr
 import optax
 import equinox as eqx
 import sys
-import os
 from einops import repeat,rearrange
 import glob
+from pprint import pprint
+
 sys.path.append(PVC_PATH)
 os.chdir(PVC_PATH)
-print(sys.path)
+# print(sys.path)
 # from NCA.trainer.data_augmenter_nca_basic import DataAugmenter
 from NCA.trainer.data_augmenter_micropattern_vgg_colony import DataAugmenter as DataAugmenterGrouped
 from NCA.trainer.data_augmenter_nca_basic import DataAugmenter as DataAugmenterBasic
@@ -31,37 +36,57 @@ key = jax.random.PRNGKey(int(time.time()))
 
 
 index = int(sys.argv[1])
+TOTAL_JOBS = int(sys.argv[2])
 # DATA_PATH = "/projects/u5be/alex_data/Micropatterns/Timecourse_individual_images/*"
-DATA_PATH_INDIVIDUAL = "Data/Timecourse_individual_images/*"
-DATA_PATH_GROUPED= "Data/Timecourse Seperate Colonies/*"
+DATA_PATH_INDIVIDUAL = DATA_PATH_BASE + "Timecourse Individual Images/*"
+DATA_PATH_GROUPED= DATA_PATH_BASE + "Timecourse Seperate Colonies/*"
 BATCHES = 2
 # DOWNSAMPLE = 2
-TRAINING_ITERATIONS = 10000
+TRAINING_ITERATIONS = 5000
 # CHANNELS = 32
 
 FULL_HYPERPARAMETERS = {
     # "model":["mNCA","gNCA","NCA"],
-    "loss_mode":["vgg","vgg_grouped","vgg_and_l2","vgg_grouped_and_l2"],
-    "model":["NCA","gNCA"],
+    # "loss_mode":["ott_and_l2","ott_and_l2_grad","ott_chstack","ott_chstack_grad"],
+    # "loss_mode":["ott_chstack","ott_chstack_grad","ott_chstack_and_l2","ott_chstack_and_l2_grad","ott_grouped","ott_grouped_and_l2"],
+    # "loss_mode":["ott_grouped","ott_grouped_and_l2"],
+    "loss_mode":["ott_grouped_and_l2"],
+    # "loss_mode":["l2","vgg","vgg_and_l2"],
+    "model":["NCA"],
     "optimizer":["nadam"],
     "block_norm":[True],
-    # "noise_strength":[0.001,0.01,0.1],
-    "noise_strength":[0.1],
+    "noise_strength":[0.005],
+    # "noise_strength":[0.1],
     "multistep":[1],
-    "channels":[32],
-    "intermediate_growth":[0.0,0.2,1.0,2.0],
-    "contiguous_growth":[0.0],
-    "downsample":[8],
-    "grad_loss": [False]
+    "channels":[16,24,32,48,64],
+    # "ott_S":[128,256,512,1024],
+    # "ott_K":[3,5,7],
+    # "ott_D":[1,2,3],
+    # "ott_sharpen":[True,False],
+    "ott_S":[2048],
+    "ott_K":[5],
+    "ott_D":[4],
+    "learn_rate":[1e-3],
+    "downsample":[8,4,2],
+    "ott_sharpen":[True],
+    # "ott_epsilon":[0.01,0.1,0.5],
+    "ott_epsilon":[0.01],
+    # "ott_internal_loss_func":["l2_squared","l2","l1","cos"],
+    "ott_internal_loss_func":["l1"],
+    "intermediate_growth":[1.0],
+    "boundary_reg":[0.1,1.0,2.0,5.0,10.0],
+    # "intermediate_growth":[0.0],
+    "contiguous_growth":[1.0],
+    # "grad_loss": [True]
 }
 
-HPARAMS = index_to_param_list(index,4,FULL_HYPERPARAMETERS)
+HPARAMS = index_to_param_list(index,TOTAL_JOBS,FULL_HYPERPARAMETERS)
 
 
 def load_data(DOWNSAMPLE,GROUPED):
     if GROUPED:        
         data, aux, CHANNEL_NAMES, boundary_mask = load_micropattern_circle_8ch_individual_explicit_colony(
-            impath=PVC_PATH+DATA_PATH_GROUPED, 
+            impath=DATA_PATH_GROUPED, 
             BATCHES=BATCHES, 
             DOWNSAMPLE=DOWNSAMPLE,
             TIMESTEPS=[0,12,24,36,48],
@@ -71,7 +96,7 @@ def load_data(DOWNSAMPLE,GROUPED):
         DATA_CHANNELS = 11
     else:
         data, aux, CHANNEL_NAMES, boundary_mask = load_micropattern_circle_8ch_individual(
-            impath=PVC_PATH+DATA_PATH_INDIVIDUAL, 
+            impath=DATA_PATH_INDIVIDUAL, 
             BATCHES=BATCHES, 
             DOWNSAMPLE=DOWNSAMPLE,
             TIMESTEPS=[0,12,24,36,48],
@@ -95,9 +120,11 @@ def run_training(H,key):
         raise ValueError("Invalid MODEL")
     CHANNELS = H["channels"]
     LOSS_MODE = H["loss_mode"]
-    GRAD_LOSS = H["grad_loss"]
+    # GRAD_LOSS = H["grad_loss"]
     DOWNSAMPLE = H["downsample"]
     NOISE_STRENGTH = H["noise_strength"]
+    INIT_LR = H["learn_rate"]
+    BOUNDARY_REG_COEFF = H["boundary_reg"]
     INTERMEDIATE_GROWTH_COEFF = H["intermediate_growth"]
     CONTIGUOUS_GROWTH_COEFF = H["contiguous_growth"]
     STEPS_BETWEEN_IMAGES = int(256 / np.sqrt(DOWNSAMPLE))
@@ -114,7 +141,7 @@ def run_training(H,key):
 
     OBS_CHANNELS = 8
 
-    data, aux,CHANNEL_NAMES,boundary_mask,augmenter,DATA_CHANNELS = load_data(DOWNSAMPLE,LOSS_MODE in ["vgg_grouped","vgg_grouped_and_l2"])
+    data, aux,CHANNEL_NAMES,boundary_mask,augmenter,DATA_CHANNELS = load_data(DOWNSAMPLE,"grouped" in LOSS_MODE)
     
     data =np.concatenate([data,data[:,-1:]],axis=1) # Duplicate last time step to enforce stability at the end of run
     
@@ -134,6 +161,9 @@ def run_training(H,key):
         return x
     
     class DA_subclass(DA):
+        # def data_init(self,SHARDING=None):
+        #     data = self.pad(data, 24)
+        #     self.save_data(data)
         def data_callback(self,x,y,i,key):
             x_true,_ =self.split_x_y(1)	
             x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
@@ -146,7 +176,7 @@ def run_training(H,key):
     print("Boundary mask shape = " + str(boundary_mask.shape))
     warmup_steps = 100  # number of steps for warmup
     init_lr = 1e-6      # starting learning rate
-    target_lr = 1e-3    # learning rate after warmup
+    target_lr = INIT_LR    # learning rate after warmup
 
     warmup_fn = optax.linear_schedule(
         init_value=init_lr,
@@ -179,14 +209,38 @@ def run_training(H,key):
     print("-----------------------------------------------------------------------------------------------------")
     nca = model(**NCA_hyperparameters)
     print(f"Training {nca.get_config()['MODEL']} on with STEPS_BETWEEN_IMAGES: {STEPS_BETWEEN_IMAGES} CHANNELS: {CHANNELS}")
-    # if INTERMEDIATE_GROWTH_COEFF ==:
-        # reg_str = "_int"
-    # else:
-    #     reg_str = ""
-    # if CONTIGUOUS_GROWTH_COEFF ==1.0:
-    #     reg_str += "_contig"
 
-    FILENAME = f"micropattern_circle_8ch_3colony_individual_{LOSS_MODE}_{opt_str}_int{INTERMEDIATE_GROWTH_COEFF}_contig_{CONTIGUOUS_GROWTH_COEFF}_noise{NOISE_STRENGTH}_{nca.get_config()['MODEL']}_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}_48h_stable"
+    # if LOSS_MODE in ["ott","ott_grad","ott_and_l2","ott_and_l2_grad","ott_chstack","ott_chstack_grad","ott_chstack_and_l2","ott_chstack_and_l2_grad","ott_grouped","ott_grouped_and_l2"]:
+    if "ott" in LOSS_MODE:
+        loss_name = f"{LOSS_MODE}_S{H['ott_S']}K{H['ott_K']}D{H['ott_D']}shp{H['ott_sharpen']}ep{H['ott_epsilon']}{H['ott_internal_loss_func']}"
+    else:
+        loss_name = LOSS_MODE
+    FILENAME = f"isambard_mp_circ_8ch_ind_{loss_name}_{opt_str}_int{INTERMEDIATE_GROWTH_COEFF}_contig_{CONTIGUOUS_GROWTH_COEFF}_bound_{BOUNDARY_REG_COEFF}_noise{NOISE_STRENGTH}_{nca.get_config()['MODEL']}_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}_lr{INIT_LR}_48h_stable"
+    
+    loss_str = {
+        "l2":["l2"],
+        "vgg":["vgg"],
+        "vgg_grouped":["vgg_grouped"],
+        "vgg_and_l2":["vgg","l2"],
+        "vgg_grouped_and_l2":["vgg_grouped_and_l2"],
+        "l2_grad":["l2"],
+        "vgg_grad":["vgg"],
+        "vgg_and_l2_grad":["vgg","l2"],
+        "ott":["ott"],
+        "ott_grad":["ott"],
+        "ott_chstack":["ott_chstack"],
+        "ott_chstack_grad":["ott_chstack"],
+        "ott_and_l2":["ott","l2"],
+        "ott_and_l2_grad":["ott","l2"],
+        "ott_chstack_and_l2":["ott_chstack","l2"],
+        "ott_chstack_and_l2_grad":["ott_chstack","l2"],
+        "ott_grouped":["ott_grouped"],
+        "ott_grouped_and_l2":["ott_grouped_and_l2"],
+        # "ott_grouped_grad":["ott_grouped"],
+    }[LOSS_MODE]
+    GRAD_LOSS = "_grad" in LOSS_MODE
+
+    
     opt = NCA_Trainer(
         nca,
         data,
@@ -202,36 +256,33 @@ def run_training(H,key):
         LOSS_TIME_CHANNEL_MASK=MASK,
     )
 
-    if LOSS_MODE == "l2":
-        loss_str = ["l2"]
-    elif LOSS_MODE == "vgg":
-        loss_str = ["vgg"]
-    elif LOSS_MODE == "vgg_grouped":
-        loss_str = ["vgg_grouped"]
-    elif LOSS_MODE == "vgg_and_l2":
-        loss_str = ["vgg","l2"]
-    elif LOSS_MODE == "vgg_grouped_and_l2":
-        loss_str = ["vgg_grouped_and_l2"]
-    # elif LOSS_MODE == "both_average":
-        # loss_str = ["vgg","l2"]
-    else:
-        raise ValueError("Invalid LOSS_MODE")
     # try:
     opt.train(
         t=STEPS_BETWEEN_IMAGES,
         iters=TRAINING_ITERATIONS,
         REGULARISER_COEFFS={
             "intermediate_state":INTERMEDIATE_GROWTH_COEFF,
-            "boundary": 1.0,
+            "boundary":BOUNDARY_REG_COEFF,
             "contiguous_growth":CONTIGUOUS_GROWTH_COEFF,
         },
         WARMUP=warmup_steps,
         optimiser=optimiser,
         WRITE_IMAGES=True,
         LOSS_FUNC_STR=loss_str,
+        LOSS_ARGS={
+            "channels":None,
+            "experiment_groups":None,
+            "S":H["ott_S"],
+            "K":H["ott_K"],
+            "D":H["ott_D"],
+            "sharpen":H["ott_sharpen"],
+            "epsilon":H["ott_epsilon"],
+            "internal_loss_func":H["ott_internal_loss_func"],
+        },
         wandb_args={
-            "project":"nca-micropatterns",
-            "group":"ind_8ch_3colony_loss_channel_opt_48h_stable_intreg",
+            "project":"nca-micropatterns-ott",
+            "group":"ott-hparameter-sweep-7",
+            # "group":"ott-hparameter-sweep-test",
             # "tags":["training",nca.get_config()['MODEL'],str(CHANNELS)+"ch",str(DOWNSAMPLE)+"x_downsample",LOSS_MODE],
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
@@ -240,9 +291,19 @@ def run_training(H,key):
         CLEAR_CACHE_EVERY=500,
     )
     # except Exception as e:
-        # print(f"Training failed with hyperparameters {H} exception: {e}")
+    #     print(f"Training failed with hyperparameters {H} exception: {e}")
     return key
 
 
+
+print(f"JOB {index}/{TOTAL_JOBS} RUNNING WITH {len(HPARAMS)} SETS OF HPARAMS EACH")
+# pprint(HPARAMS)
+# print("---------------------------------------------------")
+# data, aux,CHANNEL_NAMES,boundary_mask,augmenter,DATA_CHANNELS = load_data(HPARAMS[0]["downsample"],HPARAMS[0]["loss_mode"] in ["vgg_grouped","vgg_grouped_and_l2"])
+# print("Data loaded to test for errors, shape = " + str(data.shape))
+# print("Channel names: " + str(CHANNEL_NAMES))
 for H in HPARAMS:
+    print("---------------------------------------------------")
+    print(f"RUNNING WITH HYPERPARAMS:")
+    pprint(H)
     key = run_training(H,key)
