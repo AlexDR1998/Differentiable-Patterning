@@ -836,7 +836,7 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
         ]
     
     if FILTER_KN_TIME==None:
-        CHANNEL_TIMESTEP_MASK = np.ones((len(TIMESTEPS)-1,12))
+        CHANNEL_TIMESTEP_MASK = np.ones((len(TIMESTEPS)-1,9))
     else:
         CHANNEL_TIMESTEP_MASK = np.array([
             [0,0,0,0,0,0,0,1,1],  # 12h
@@ -889,6 +889,9 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             "E-TBXT",
             "E-SOX17",
             "E-SOX2",
+            "0-LMBR",
+            "E-TBXT",
+            "E-SOX17",
             "F-FOXA2",
             "0-Cer1",
             "0-Lefty2",
@@ -982,15 +985,20 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
 
     if FILTER_KN_TIME!=None: # If doing knockout, we rearrange the channels a bit
         ims[...,0] = 0 # We have no LMBR channel in the knockout colonies
-        ims[...,1:5] = ims[...,12:16] # Use TBXT, SOX17, SOX2, FOXA2 from knockout colonies
-        ims[...,5:7] = 0 # No Cer1, Lefty2 channels in knockout colonies
+        ims[...,1:4] = ims[...,12:15] # Use TBXT, SOX17, SOX2 from knockout colonies
+        ims[...,4] = 0 # No LMBR
+        ims[...,5:7] = ims[...,12:14] # Use TBXT, SOX17 from knockout colonies
+        ims[...,7] = ims[...,16] # Use FOXA2 from knockout colonies
+
+        ims[...,8:10] = 0 # No Cer1, Lefty2 channels in knockout colonies
         
         if FILTER_KN_TIME==0: # Manually set Nodal to 0 at the timepoints where it is knocked out
-            ims[...,7] = 0
+            ims[...,10] = 0
         elif FILTER_KN_TIME==24:
-            ims[2:,:,:,:,7]=0
-        ims[...,8] = ims[...,11] # Use Lef1 from knockout colonies
-        ims = ims[...,:9]
+            ims[2:,:,:,:,10]=0
+        # ims[...,11] = ims[...,11] # Use Lef1 from knockout colonies
+        ims = ims[...,:12]
+        # ims = ims[...,:9]
 
     ims = repeat(ims, "T () X Y C -> B T C X Y", B=BATCHES)
     ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
