@@ -985,10 +985,10 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
 
     if FILTER_KN_TIME!=None: # If doing knockout, we rearrange the channels a bit
         # ims[...,0] = 0 # We have no LMBR channel in the knockout colonies
-        ims[...,1:4] = ims[...,12:15] # Use TBXT, SOX17, SOX2 from knockout colonies
+        ims[1:,...,1:4] = ims[1:,...,12:15] # Use TBXT, SOX17, SOX2 from knockout colonies
         # ims[...,4] = 0 # No LMBR
-        ims[...,5:7] = ims[...,12:14] # Use TBXT, SOX17 from knockout colonies
-        ims[...,7] = ims[...,15] # Use FOXA2 from knockout colonies
+        ims[1:,...,5:7] = ims[1:,...,12:14] # Use TBXT, SOX17 from knockout colonies
+        ims[1:,...,7] = ims[1:,...,15] # Use FOXA2 from knockout colonies
 
         # ims[...,8:10] = 0 # No Cer1, Lefty2 channels in knockout colonies
         
