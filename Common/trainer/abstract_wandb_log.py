@@ -4,7 +4,17 @@ from jaxtyping import Float, Array
 from einops import rearrange,repeat
 import io
 from PIL import Image
-wandb.login(key="c969e9166d4abf8c10db353deaa242e386db8b99")
+import os
+from dotenv import load_dotenv
+# wandb.login(key="c969e9166d4abf8c10db353deaa242e386db8b99")
+load_dotenv()
+wandb_api_key = os.getenv("WANDB_API_KEY")
+
+if wandb_api_key:
+    wandb.login(key=wandb_api_key)
+else:
+    print("Warning: WANDB_API_KEY not found in environment variables. Wandb login skipped.")
+
 class Train_log(object):
     def __init__(
         self,
