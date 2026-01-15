@@ -92,6 +92,175 @@ def euclidean(x,y,key=None,where=None,aux=None):
 
 	
 	
+@eqx.filter_jit
+def sliced_wasserstein_spatial(x,y,key=None,where=None,aux=None):
+	"""
+		Sliced Wasserstein distance in spatial domain
+
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [N]
+			loss reduced over channel and spatial axes
+	"""
+	
+	WIDTH = x.shape[2]
+	HEIGHT = x.shape[3]
+	
+	if aux["samples"] is None:
+		SAMPLES = 64
+	else:
+		SAMPLES = aux["samples"]
+	
+	proj_directions = jr.uniform(key,(WIDTH,HEIGHT,SAMPLES))
+	proj_directions = proj_directions / jnp.linalg.norm(proj_directions,axis=(0,1),keepdims=True)
+
+	x_proj = einsum(x,proj_directions,"n channels width height , width height samples -> n channels samples")
+	y_proj = einsum(y,proj_directions,"n channels width height , width height samples -> n channels samples")
+
+	x_sorted = jnp.sort(x_proj,axis=2)
+	y_sorted = jnp.sort(y_proj,axis=2)
+
+	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[-1,-2]))
+
+
+@eqx.filter_jit
+def sliced_wasserstein_channel(x,y,key=None,where=None,aux=None):
+	"""
+		Sliced Wasserstein distance across channels
+
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [N]
+			loss reduced over channel and spatial axes
+	"""
+	
+	CHANNELS = x.shape[1]
+	if aux["samples"] is None:
+		SAMPLES = 64
+	else:
+		SAMPLES = aux["samples"]
+	
+	proj_directions = jr.uniform(key,(CHANNELS,SAMPLES))
+	proj_directions = proj_directions / jnp.linalg.norm(proj_directions,axis=(0,1),keepdims=True)
+
+	x_proj = einsum(x,proj_directions,"n channels width height , channels samples -> n samples width height")
+	y_proj = einsum(y,proj_directions,"n channels width height , channels samples -> n samples width height")
+
+	x_proj = rearrange(x_proj,"n s w h -> n (w h) s")
+	y_proj = rearrange(y_proj,"n s w h -> n (w h) s")
+
+	x_sorted = jnp.sort(x_proj,axis=2)
+	y_sorted = jnp.sort(y_proj,axis=2)
+
+	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[-1,-2]))
+
+
+
+@jax.jit
+def bhattacharyya_distance(x,y,key=None,where=None,aux=None):
+	"""
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [...]
+			loss reduced over channel and spatial axes
+	"""
+	eps = 1e-8
+	x_norm = (x+eps) / (jnp.linalg.norm(x,axis=(-1,-2),keepdims=True)+eps)
+	y_norm = (y+eps) / (jnp.linalg.norm(y,axis=(-1,-2),keepdims=True)+eps)
+	bc = jnp.sum(jnp.sqrt(x_norm*y_norm),axis=[-1,-2],keepdims=True,where=where)
+	bc =-jnp.log(bc+eps)
+	print("loss shape before mean reduction:",bc.shape)
+	return jnp.nan_to_num(jnp.mean(bc,axis=[-1,-2,-3],where=where))
+
+	# return -jnp.nan_to_num(jnp.log(bc + eps))
+
+@jax.jit
+def hellinger_distance(x,y,key=None,where=None,aux=None):
+	"""
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [N]
+			loss reduced over channel and spatial axes
+	"""
+	eps = 1e-8
+	x_norm = (x+eps) / (jnp.linalg.norm(x,axis=(-1,-2),keepdims=True)+eps)
+	y_norm = (y+eps) / (jnp.linalg.norm(y,axis=(-1,-2),keepdims=True)+eps)
+	sqrt_diff = jnp.sqrt(x_norm) - jnp.sqrt(y_norm)
+	H_bc = jnp.sqrt(jnp.sum(sqrt_diff**2,axis=[-1,-2],keepdims=True)) / jnp.sqrt(2) # Shape [N,CHANNELS,1,1]
+	print("loss shape before mean reduction:",H_bc.shape)
+	return jnp.nan_to_num(jnp.mean(H_bc,axis=[-1,-2,-3],where=where))
+
+@jax.jit
+def kl_divergence(x,y,key=None,where=None,aux=None):
+	"""
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [N]
+			loss reduced over channel and spatial axes
+	"""
+	eps = 1e-8
+	x_norm = (x+eps) / (jnp.sum(x,axis=[-1,-2],keepdims=True)+eps)
+	y_norm = (y+eps) / (jnp.sum(y,axis=[-1,-2],keepdims=True)+eps)
+	kl = jnp.sum(x_norm * jnp.log((x_norm + eps)/(y_norm + eps)),axis=[-1,-2],where=where,keepdims=True) # Shape [N C 1 1]
+	
+	return jnp.nan_to_num(jnp.mean(kl,axis=[-1,-2,-3],where=where))
+
+@jax.jit
+def average_amplitude_distance(x,y,key=None,where=None,aux=None):
+	"""
+		Distance between average intensities of each channel and timestep. Removes all spatial information, 
+		can be a useful auxiliary loss when combined with losses that re-normalise X and Y
+	
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [N]
+			loss reduced over channel and spatial axes
+	"""
+	x_amp = jnp.mean(x,axis=[-1,-2],keepdims=True)
+	y_amp = jnp.mean(y,axis=[-1,-2],keepdims=True)
+	return jnp.nan_to_num(jnp.mean((x_amp - y_amp)**2,axis=[-1,-2,-3],where=where))
 
 
 @jax.jit
@@ -105,7 +274,7 @@ def random_sampled_euclidean(x,y,key,where=None,aux=16):
 
 
 @jax.jit
-def spectral(x,y,key=None,where=None,aux=None):
+def spectral_no_phase(x,y,key=None,where=None,aux=None):
 	""" 
 		l2 norm in fourier space (discarding phase information)
 
@@ -127,8 +296,33 @@ def spectral(x,y,key=None,where=None,aux=None):
 	fy = jnp.abs(fy)
 	return l2(fx,fy,key,where=where)
         
+
 @jax.jit
-def spectral_weighted(x,y,key=None,where=None,aux=None):
+def spectral_only_phase(x,y,key=None,where=None,aux=None):
+	""" 
+		l2 norm in fourier space, keeping only phase information.
+
+		Parameters
+		----------
+		x : float32 [...,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [...,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [...]
+			loss reduced over channel and spatial axes
+	"""
+	fx = jnp.fft.rfft2(x)
+	fy = jnp.fft.rfft2(y)
+	fx_phase = fx / (jnp.abs(fx)+1e-8)
+	fy_phase = fy / (jnp.abs(fy)+1e-8)
+	return jnp.nan_to_num(jnp.abs(l2(fx_phase,fy_phase,key,where=where)))
+
+
+@jax.jit
+def spectral(x,y,key=None,where=None,aux=None):
 	""" 
 		l2 norm in fourier space, keeping phase information.
 		Weighted to emphasise importance of certain frequencies
