@@ -1,6 +1,7 @@
 import jax
 import jax.random as jr
 import jax.numpy as np
+import equinox as eqx
 import os
 import sys
 import time
@@ -29,25 +30,13 @@ BATCHES = 4
 # STEPS_BETWEEN_IMAGES=64
 # iters=8000
 
-HYPERPARAMETERS = {
-    "loss_mode":["l2"],
-    "model":["NCA"],
-    "channels":[32],
-    "downsample":[1],
-    "steps_between_images":[64],
-    "iters":[8000],
-    "intermediate_growth_coeff":[0.0,0.01,0.1,1.0],
-    "boundary_reg_coeff":[0.0], # emoji data doesn't have a boundary mask
-    "contiguous_growth_coeff":[0.0,0.01,0.1,1.0],
-    "perturbation_conservation_coeff":[0.0,0.01,0.1,1.0],
-    "update_sensitivity_coeff":[0.0,0.01,0.1,1.0],
-}
-
-
-
-
-HPARAMS = index_to_param_list(index,TOTAL_JOBS,HYPERPARAMETERS)
-
+def H_to_filename(H):
+    if H["regenerate"]:
+        regen_str = "regenerate_"
+    else:
+        regen_str = ""
+    FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
+    return FILENAME
 
 key = jr.PRNGKey(int(time.time()))
 key = jr.fold_in(key,index)
@@ -64,6 +53,56 @@ class data_augmenter_subclass(DataAugmenter):
 
 def run(H,key):
     
+    if H["regenerate"]:
+        class data_augmenter_subclass(DataAugmenter):
+            #Redefine how data is pre-processed before training
+            def data_init(self,SHARDING=None):
+                data = self.return_saved_data()
+                data = self.duplicate_batches(data, BATCHES)
+                data = self.pad(data, [10,10,10,10]) 		
+                self.save_data(data)
+                return None
+    else: # Redifine data_callback to not have regeneration
+        class data_augmenter_subclass(DataAugmenter):
+            #Redefine how data is pre-processed before training
+            def data_init(self,SHARDING=None):
+                data = self.return_saved_data()
+                data = self.duplicate_batches(data, BATCHES)
+                data = self.pad(data, [10,10,10,10]) 		
+                self.save_data(data)
+                return None
+            def data_callback(self, x, y, i, key):
+                am=10
+                if hasattr(self,"PREVIOUS_KEY"):
+                    x = self.unshift(x, am, self.PREVIOUS_KEY)
+                    y = self.unshift(y, am, self.PREVIOUS_KEY)
+                x_true,_ =self.split_x_y(1)
+                x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
+                x = self.shift(x,am,key=key)
+                y = self.shift(y,am,key=key)
+                # x = self.zero_random_circle(x,key=key)
+                x = self.noise(x,0.005,key=key)
+
+                self.PREVIOUS_KEY = key
+                return x,y
+
+        @eqx.filter_jit
+        def jittable_callback_bit(x,x_true,OBS_CHANNELS):
+            propagate_xn = lambda x:x.at[1:].set(x[:-1])
+            reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
+            
+            x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
+            x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
+                    
+            for b in range(len(x)//2):
+                x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
+            return x
+	
+    if H["channels"]==32:
+        H["steps_between_images"]=64
+    elif H["channels"]==16:
+        H["steps_between_images"]=128
+
     loss_str = {
         "l2":["l2"],
         "l1":["l1"],
@@ -97,7 +136,11 @@ def run(H,key):
 
 
     print("Training anisotropic nca")
-    nca = NCA(
+    if H["model"] == "NCA":
+         model = NCA
+    elif H["model"] == "gNCA":
+         model = gNCA
+    nca = model(
         H["channels"],
         KERNEL_STR=["ID","LAP","GRAD"],
         KERNEL_SCALE=1,
@@ -105,7 +148,7 @@ def run(H,key):
         PADDING="REPLICATE",
         key=key
     )
-    FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
+    FILENAME = H_to_filename(H)
     opt = NCA_Trainer(nca,
                         data,
                         model_filename=FILENAME,
@@ -139,7 +182,7 @@ def run(H,key):
         # },
         wandb_args={
             "project":"nca-emojis-thesis-ch1",
-            "group":"regulariser-comparisons-1",
+            "group":"gate-time-comparisons-2",
             # "group":"baseline-9ch-train-1",
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
@@ -148,10 +191,29 @@ def run(H,key):
         LOG_EVERY=100,
         CLEAR_CACHE_EVERY=500,
     )
+def main():
 
-for H in HPARAMS:
-    print("---------------------------------------------------")
-    print(f"RUNNING WITH HYPERPARAMS:")
-    pprint(H)
-    key = jr.fold_in(key,index)
-    run(H,key)
+    HYPERPARAMETERS = {
+        "loss_mode":["l2"],
+        "model":["NCA","gNCA"],
+        "channels":[16,32],
+        "downsample":[1],
+        # "steps_between_images":[128],
+        "iters":[8000],
+        "intermediate_growth_coeff":[0.0],
+        "boundary_reg_coeff":[0.0], # emoji data doesn't have a boundary mask
+        "contiguous_growth_coeff":[0.0],
+        "perturbation_conservation_coeff":[0.0],
+        "update_sensitivity_coeff":[0.0,0.01,0.1,1.0],
+        "regenerate":[False,True],
+    }
+    HPARAMS = index_to_param_list(index,TOTAL_JOBS,HYPERPARAMETERS)
+
+    for H in HPARAMS:
+        print("---------------------------------------------------")
+        print(f"RUNNING WITH HYPERPARAMS:")
+        pprint(H)
+        key = jr.fold_in(key,index)
+        run(H,key)
+if __name__ == "__main__":
+    main()
