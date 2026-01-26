@@ -30,6 +30,7 @@ BATCHES = 4
 
 
 def H_to_filename(H):
+    H["steps_between_images"]=int(32 / H["fire_rate"])
     if H["regenerate"]:
         regen_str = "regenerate_"
     else:
