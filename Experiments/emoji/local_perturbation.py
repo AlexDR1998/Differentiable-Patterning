@@ -18,13 +18,15 @@ os.chdir(CODE_PATH)
 
 from NCA.model.NCA_model import NCA
 from NCA.model.NCA_gated_model import gNCA
-from NCA.model.NCA_KAN_model import kaNCA
+from NCA.model.NCA_noise_model import nNCA
+from NCA.model.NCA_gated_noise_model import gnNCA
 # from NCA.trainer.NCA_trainer import NCA_Trainer
 from Common.dataloader.emoji import load_emoji_sequence
 from Common.utils import index_to_param_list
 
 from Experiments.emoji.fire_rate_sweep import H_to_filename as H_to_filename_fr
 from Experiments.emoji.time_gate_stability_comparison import H_to_filename as H_to_filename_gate
+from Experiments.emoji.parameter_noise_sweep import H_to_filename as H_to_filename_noise
 # from NCA.trainer.data_augmenter_nca import DataAugmenter
 
 
@@ -69,10 +71,13 @@ def numpy_image_float_to_int(array):
 
 def run(H,key):
     # H[""]
-    if H["channels"]==32:
-        H["steps_between_images"]=64
-    elif H["channels"]==16:
-        H["steps_between_images"]=128
+    if "fire_rate" in H:
+        H["steps_between_images"]=int(32 / H["fire_rate"])
+    else:
+        if H["channels"]==32:
+            H["steps_between_images"]=64
+        elif H["channels"]==16:
+            H["steps_between_images"]=128
 
     data = prepare_data(H)  # T C X Y
     ic = data[0]  # C X Y
@@ -87,20 +92,37 @@ def run(H,key):
          model = NCA
     elif H["model"] == "gNCA":
          model = gNCA
-    nca = model(
-        H["channels"],
-        KERNEL_STR=["ID","LAP","GRAD"],
-        KERNEL_SCALE=1,
-        FIRE_RATE=H["fire_rate"],
-        PADDING="REPLICATE",
-        key=jr.PRNGKey(0),
-    )
+    elif H["model"] == "nNCA":
+         model = nNCA
+    elif H["model"] == "gnNCA":
+         model = gnNCA
+    if H["model"] in ["nNCA","gnNCA"]:
+        print(f"Using parameter noise level: {H['parameter_noise_level']}")
+        nca = model(
+            H["channels"],
+            KERNEL_STR=["ID","LAP","GRAD"],
+            KERNEL_SCALE=1,
+            FIRE_RATE=H['fire_rate'] if "fire_rate" in H else 0.5,
+            PADDING="REPLICATE",
+            PARAMETER_NOISE_LEVEL=H["parameter_noise_level"],
+            key=key
+        )
+    else:
+        nca = model(
+            H["channels"],
+            KERNEL_STR=["ID","LAP","GRAD"],
+            KERNEL_SCALE=1,
+            FIRE_RATE=H['fire_rate'] if "fire_rate" in H else 0.5,
+            PADDING="REPLICATE",
+            key=key
+        )
     # if H["regenerate"]:
     #     regen_str = "regenerate_"
     # else:
     #     regen_str = ""
     # FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
-    FILENAME = H_to_filename_fr(H)
+    # FILENAME = H_to_filename_fr(H)
+    FILENAME = H_to_filename_noise(H)
     nca = nca.load(f"{CODE_PATH}/models/{FILENAME}.eqx")
     baseline_traj = run_perturbed_nca(nca,ic,H,key) # no perturbation yet
     for x in tqdm(range(X)):
@@ -133,7 +155,7 @@ def main():
         "loss_mode":["l2"],
         # "model":["NCA","gNCA"],
         # "channels":[32,16],
-        "model":["NCA"],
+        "model":["nNCA"],
         "channels":[32],
         "downsample":[1],
         # "steps_between_images":[64,128],
@@ -145,8 +167,11 @@ def main():
         "update_sensitivity_coeff":[0.0],#,0.01,0.1,1.0],
         "timesteps":[3],
         "perturbation_mode":["large"],
-        "regenerate":[False,True],
-        "fire_rate":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.9,1.0]
+        "regenerate":[False],
+        # "fire_rate":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+        # "fire_rate":[0.5],
+        "parameter_noise_level":[0.0,0.001,0.005,0.01,0.05,0.1],
+        "data_noise_level":[0.001,0.005,0.01,0.05,0.1,0.5],
     }
     HPARAMS = index_to_param_list(index,TOTAL_JOBS,HYPERPARAMETERS)
 

@@ -18,34 +18,58 @@ import jax.random as jr
 import optax
 from NCA.model.NCA_gated_model import gNCA
 from NCA.model.NCA_model import NCA
+from NCA.model.NCA_noise_model import nNCA
+from NCA.model.NCA_gated_noise_model import gnNCA
 from einops import repeat
 from Experiments.emoji.local_perturbation import prepare_data
-
+from Experiments.emoji.fire_rate_sweep import H_to_filename as H_to_filename_fr
+from Experiments.emoji.time_gate_stability_comparison import H_to_filename as H_to_filename_gate
+from Experiments.emoji.parameter_noise_sweep import H_to_filename as H_to_filename_noise
 
 def run(H,key):
-    if H["channels"]==32:
-        H["steps_between_images"]=64
-    elif H["channels"]==16:
-        H["steps_between_images"]=128
-
+    if "fire_rate" in H:
+        H["steps_between_images"]=int(32 / H["fire_rate"])
+    else:
+        if H["channels"]==32:
+            H["steps_between_images"]=64
+        elif H["channels"]==16:
+            H["steps_between_images"]=128
     data = prepare_data(H)
     if H["model"] == "NCA":
          model = NCA
     elif H["model"] == "gNCA":
          model = gNCA
-    nca = model(
-        H["channels"],
-        KERNEL_STR=["ID","LAP","GRAD"],
-        KERNEL_SCALE=1,
-        FIRE_RATE=0.5,
-        PADDING="REPLICATE",
-        key=jr.PRNGKey(0),
-    )
-    if H["regenerate"]:
-        regen_str = "regenerate_"
+    elif H["model"] == "nNCA":
+         model = nNCA
+    elif H["model"] == "gnNCA":
+         model = gnNCA
+    if H["model"] in ["nNCA","gnNCA"]:
+        print(f"Using parameter noise level: {H['parameter_noise_level']}")
+        nca = model(
+            H["channels"],
+            KERNEL_STR=["ID","LAP","GRAD"],
+            KERNEL_SCALE=1,
+            FIRE_RATE=H['fire_rate'] if "fire_rate" in H else 0.5,
+            PADDING="REPLICATE",
+            PARAMETER_NOISE_LEVEL=H["parameter_noise_level"],
+            key=key
+        )
     else:
-        regen_str = ""
-    FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
+        nca = model(
+            H["channels"],
+            KERNEL_STR=["ID","LAP","GRAD"],
+            KERNEL_SCALE=1,
+            FIRE_RATE=H['fire_rate'] if "fire_rate" in H else 0.5,
+            PADDING="REPLICATE",
+            key=key
+        )
+    # if H["regenerate"]:
+    #     regen_str = "regenerate_"
+    # else:
+    #     regen_str = ""
+    # FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
+    # FILENAME = H_to_filename_fr(H)
+    FILENAME = H_to_filename_noise(H)
     nca = nca.load(f"{CODE_PATH}/models/{FILENAME}.eqx")
     # data_augmenter = DA_pad(data,H["channels"]-4)
     optimiser = optax.adam(1e-3)
@@ -111,7 +135,7 @@ def main():
     HYPERPARAMETERS = {
         # These specify the NCA model to load
         "loss_mode":["l2"],
-        "model":["NCA"],
+        "model":["nNCA"],
         "channels":[32],
         "downsample":[1],
             # "steps_between_images":[64,128],
@@ -120,13 +144,17 @@ def main():
         "boundary_reg_coeff":[0.0], # emoji data doesn't have a boundary mask
         "contiguous_growth_coeff":[0.0],
         "perturbation_conservation_coeff":[0.0],
-        "update_sensitivity_coeff":[0.0,0.01,0.1,1.0],
+        "update_sensitivity_coeff":[0.0],
+        # "regenerate":[False,True],
+        # "fire_rate":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
         "regenerate":[False],
+        "parameter_noise_level":[0.0,0.001,0.005,0.01,0.05,0.1],
+        "data_noise_level":[0.001,0.005,0.01,0.05,0.1,0.5],
         # From here on are specific to perturbation optimiser
         "timesteps":[3],
         "perturbation_mode":[{"channel":"obs","spatial":"global"},],
         "optimisation_mode":["maximal_preservative","minimal_destructive"],
-        "perturb_iters":[5,10,50,100,500]
+        "perturb_iters":[100,500]
     }
     HPARAMS = index_to_param_list(index,TOTAL_JOBS,HYPERPARAMETERS)
 
@@ -137,6 +165,9 @@ def main():
         pprint(H)
         
         key = jr.fold_in(key,index)
+        # try:
         run(H,key)
+        # except Exception as e:
+            # print(f"Error during run with hyperparameters {H}: {e}")
 if __name__ == "__main__":
     main()

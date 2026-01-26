@@ -17,6 +17,8 @@ os.chdir(CODE_PATH)
 from NCA.model.NCA_model import NCA
 from NCA.model.NCA_gated_model import gNCA
 from NCA.model.NCA_KAN_model import kaNCA
+from NCA.model.NCA_noise_model import nNCA
+from NCA.model.NCA_gated_noise_model import gnNCA
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from Common.dataloader.emoji import load_emoji_sequence
 from Common.utils import index_to_param_list
@@ -30,17 +32,13 @@ BATCHES = 4
 # STEPS_BETWEEN_IMAGES=64
 # iters=8000
 
-
 def H_to_filename(H):
     if H["regenerate"]:
         regen_str = "regenerate_"
     else:
         regen_str = ""
-    FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_fr{H['fire_rate']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
+    FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_pn{H['parameter_noise_level']}_dn{H['data_noise_level']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
     return FILENAME
-
-
-
 
 class data_augmenter_subclass(DataAugmenter):
     #Redefine how data is pre-processed before training
@@ -63,6 +61,20 @@ def run(H,key):
                 data = self.pad(data, [10,10,10,10]) 		
                 self.save_data(data)
                 return None
+            def data_callback(self, x, y, i, key):
+                am=10
+                if hasattr(self,"PREVIOUS_KEY"):
+                    x = self.unshift(x, am, self.PREVIOUS_KEY)
+                    y = self.unshift(y, am, self.PREVIOUS_KEY)
+                x_true,_ =self.split_x_y(1)
+                x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
+                x = self.shift(x,am,key=key)
+                y = self.shift(y,am,key=key)
+                x = self.zero_random_circle(x,key=key)
+                x = self.noise(x,H['data_noise_level'],key=key)
+
+                self.PREVIOUS_KEY = key
+                return x,y
     else: # Redifine data_callback to not have regeneration
         class data_augmenter_subclass(DataAugmenter):
             #Redefine how data is pre-processed before training
@@ -82,7 +94,7 @@ def run(H,key):
                 x = self.shift(x,am,key=key)
                 y = self.shift(y,am,key=key)
                 # x = self.zero_random_circle(x,key=key)
-                x = self.noise(x,0.005,key=key)
+                x = self.noise(x,H['data_noise_level'],key=key)
 
                 self.PREVIOUS_KEY = key
                 return x,y
@@ -99,11 +111,11 @@ def run(H,key):
                 x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
             return x
 	
-    # if H["channels"]==32:
-        # H["steps_between_images"]=64
-    # elif H["channels"]==16:
-        # H["steps_between_images"]=128
-    H["steps_between_images"]=int(32 / H["fire_rate"])
+    if H["channels"]==32:
+        H["steps_between_images"]=64
+    elif H["channels"]==16:
+        H["steps_between_images"]=128
+
     loss_str = {
         "l2":["l2"],
         "l1":["l1"],
@@ -141,26 +153,39 @@ def run(H,key):
          model = NCA
     elif H["model"] == "gNCA":
          model = gNCA
-    nca = model(
-        H["channels"],
-        KERNEL_STR=["ID","LAP","GRAD"],
-        KERNEL_SCALE=1,
-        FIRE_RATE=H["fire_rate"],
-        PADDING="REPLICATE",
-        key=key
-    )
-    # if H["regenerate"]:
-    #     regen_str = "regenerate_"
-    # else:
-    #     regen_str = ""
-    # FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_fr{H['fire_rate']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
+    elif H["model"] == "nNCA":
+         model = nNCA
+    elif H["model"] == "gnNCA":
+         model = gnNCA
+    if H["model"] in ["nNCA","gnNCA"]:
+        print(f"Using parameter noise level: {H['parameter_noise_level']}")
+        nca = model(
+            H["channels"],
+            KERNEL_STR=["ID","LAP","GRAD"],
+            KERNEL_SCALE=1,
+            FIRE_RATE=0.5,
+            PADDING="REPLICATE",
+            PARAMETER_NOISE_LEVEL=H["parameter_noise_level"],
+            key=key
+        )
+    else:
+        nca = model(
+            H["channels"],
+            KERNEL_STR=["ID","LAP","GRAD"],
+            KERNEL_SCALE=1,
+            FIRE_RATE=0.5,
+            PADDING="REPLICATE",
+            key=key
+        )
     FILENAME = H_to_filename(H)
-    opt = NCA_Trainer(nca,
-                        data,
-                        model_filename=FILENAME,
-                        MODEL_DIRECTORY=CODE_PATH+"models/",
-                        DATA_AUGMENTER=data_augmenter_subclass,
-                        GRAD_LOSS=True)
+    opt = NCA_Trainer(
+        nca,
+        data,
+        model_filename=FILENAME,
+        MODEL_DIRECTORY=CODE_PATH+"models/",
+        DATA_AUGMENTER=data_augmenter_subclass,
+        GRAD_LOSS=True
+    )
 
     opt.train(
         t=H["steps_between_images"],
@@ -188,7 +213,7 @@ def run(H,key):
         # },
         wandb_args={
             "project":"nca-emojis-thesis-ch1",
-            "group":"fire-rate-comparisons-1",
+            "group":"parameter-noise-comparisons-1",
             # "group":"baseline-9ch-train-1",
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
@@ -199,10 +224,10 @@ def run(H,key):
     )
 def main():
     key = jr.PRNGKey(int(time.time()))
-    key = jr.fold_in(key,index)    
+    key = jr.fold_in(key,index)
     HYPERPARAMETERS = {
         "loss_mode":["l2"],
-        "model":["NCA"],
+        "model":["nNCA"],#,"gnNCA"],
         "channels":[32],
         "downsample":[1],
         # "steps_between_images":[128],
@@ -212,12 +237,12 @@ def main():
         "contiguous_growth_coeff":[0.0],
         "perturbation_conservation_coeff":[0.0],
         "update_sensitivity_coeff":[0.0],
-        "regenerate":[False,True],
-        # "fire_rate":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.9,1.0],
-        "fire_rate":[0.8],
+        "parameter_noise_level":[0.0,0.001,0.005,0.01,0.05,0.1],
+        "data_noise_level":[0.001,0.005,0.01,0.05,0.1,0.5],
+        "regenerate":[False],#,True],
     }
-
     HPARAMS = index_to_param_list(index,TOTAL_JOBS,HYPERPARAMETERS)
+
     for H in HPARAMS:
         print("---------------------------------------------------")
         print(f"RUNNING WITH HYPERPARAMS:")
