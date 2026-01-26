@@ -6,86 +6,20 @@ import optax
 import equinox as eqx
 import datetime
 import Common.trainer.loss as loss
+from Common.model.abstract_model import AbstractModel
 import jaxpruner
 from einops import repeat, rearrange
 # from Common.trainer.abstract_wandb_log import Train_log
 from NCA.trainer.impulse_tensorboard_log import Impulse_Train_log
 from Common.utils import key_pytree_gen
 from Common.model.boundary import model_boundary, hard_boundary, no_boundary
-
+from NCA.model.NCA_perturbation import perturbation
 # from NCA.trainer.boundary_tensorboard_log import boundary_train_log
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key
 
 import time
 
-class perturbation(eqx.Module):
-    location: Array
-    values: Array
-    mode: dict
-    OBS_CHANNELS: int
-    CHANNELS: int
-    WIDTH: float
-
-    def __init__(self,mode,CHANNELS,OBS_CHANNELS,x,WIDTH,key):
-        # Location is normalised (0 to 1) coordinates
-        self.WIDTH = WIDTH
-        self.location = jr.uniform(key,(2,),minval=0,maxval=1)
-        self.mode=mode
-        self.OBS_CHANNELS = OBS_CHANNELS
-        self.CHANNELS = CHANNELS
-        CH = {
-            "all":np.s_[:1,:self.CHANNELS],
-            "obs":np.s_[:1,:self.OBS_CHANNELS],
-            "hidden":np.s_[:1,self.OBS_CHANNELS:],
-            "single":np.s_[:1,self.OBS_CHANNELS:self.OBS_CHANNELS+1]
-        }[self.mode['channel']]
-        SP = {
-            "global":np.s_[:,:],
-            "local":np.s_[:,:],
-            "flat":np.s_[:1,:1],
-        }[self.mode['spatial']]
-        inds = CH + SP
-        
-        self.values = np.zeros_like(x[inds])
-    def __call__(self,x):
-        CH = {
-            "all":np.s_[:,:self.CHANNELS],
-            "obs":np.s_[:,:self.OBS_CHANNELS],
-            "hidden":np.s_[:,self.OBS_CHANNELS:],
-            "single":np.s_[:,self.OBS_CHANNELS:self.OBS_CHANNELS+1]
-        }[self.mode['channel']]
-
-        values = self._spatial_mask(jax.nn.sigmoid(self.location),np.array([self.WIDTH,self.WIDTH]),self.values)
-        x = x.at[CH].set(x[CH] + values)
-        return x
-    @eqx.filter_jit
-    def _spatial_mask(self,centers,scales,x):
-        if self.mode['spatial'] in ["global","flat"]:
-            return x
-        else:
-            xs = np.linspace(0,1, x.shape[-2])
-            ys = np.linspace(0,1, x.shape[-1])
-            grid_x, grid_y = np.meshgrid(xs, ys, indexing='ij')
-            grid = np.stack([grid_x, grid_y], axis=-1)  # Shape: (H, W, 2)
-            centers = rearrange(centers, 'Dim -> 1 1 Dim')
-            scales = rearrange(scales, 'Dim -> 1 1 Dim')
-            m = np.exp(-0.5 * (((grid - centers)**2) / scales**2))
-            m = m[:,:,0] * m[:,:,1]
-            m = rearrange(m, 'H W -> 1 1 H W')
-            return m*x
-    
-    def get_values(self):
-        return self.values
-    
-    def get_location(self):
-        return self.location
-    
-    def regulariser(self,x,REG_FUNCS):
-        reg_loss = 0.0
-        for name in REG_FUNCS.keys():
-            reg_loss += REG_FUNCS[name](x,self.values)
-        return reg_loss
 class NCA_impulse_optimiser(object):
     """
         This class takes a pre-trained NCA and finds localised perturbations (impulses) that trigger the NCA to switch between its stable configurations.
@@ -103,6 +37,7 @@ class NCA_impulse_optimiser(object):
             OBS_CHANNELS = None,
             LOG_DIRECTORY ="logs/",
             MODEL_DIRECTORY = "models/",
+            OUTPUT_DIRECTORY = "perturbations/",
             wandb_args = {
                 "name":"switch_signal_hidden",
                 "project":"NCA_impulse_optimiser",
@@ -124,6 +59,8 @@ class NCA_impulse_optimiser(object):
         self.STEPS_TO_STABLE = STEPS_TO_STABLE
         self.STEPS_FROM_STABLE = STEPS_FROM_STABLE
         self.setup_logging(self.data,wandb_args)
+        self.OUTPUT_DIRECTORY = OUTPUT_DIRECTORY
+        self.FILENAME = FILENAME
         state = self.DATA_AUGMENTER.data_load(key=jr.PRNGKey(0))[0][0]
         print("Initial state shape: "+str(state.shape))
         
@@ -394,8 +331,13 @@ class NCA_impulse_optimiser(object):
             if aux['mean_loss']<loss_best:
                 loss_best = aux['mean_loss']
                 dx_best = dx_func
-
+        print("Saving best perturbation...")
+        dx_best.save(self.OUTPUT_DIRECTORY+self.FILENAME,overwrite=True)
+        print("Loading best perturbation and running final trajectory...")
+        print(f"Saving as {self.OUTPUT_DIRECTORY+self.FILENAME}")
+        dx_best = dx_best.load(self.OUTPUT_DIRECTORY+self.FILENAME)
         T = self.run_full_trajectory(key,128,dx_best)
+
         self.logger.log_final_trajectory(T)
         self.logger.finish()
         
