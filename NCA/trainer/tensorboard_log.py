@@ -140,6 +140,90 @@ class NCA_Train_log(Train_log):
 				
 
 
+class NCA_knockout_Train_log(NCA_Train_log):
+
+	def __init__(
+        self,
+        data,
+        wandb_config=None,
+		knockout_time=None,
+		knockout_channel=None,
+    ):
+		super().__init__(data, wandb_config)
+		assert knockout_time is not None, "knockout_time must be provided for NCA_knockout_Train_log"
+		assert knockout_channel is not None, "knockout_channel must be provided for NCA_knockout_Train_log"
+		self.knockout_time = knockout_time
+		self.knockout_channel = knockout_channel
+
+	def tb_training_end_log(self,
+						 	nca,
+							# x: PyTree[Float[Array, "N CHANNELS x y"], "B"],  # noqa: F722, F821
+							DATA_AUGMENTER,
+							t,
+							boundary_callback,
+							SAVE_TRAJECTORY=False,
+							write_images=True,
+							key=jr.PRNGKey(int(time.time()))):
+		"""
+		
+
+			Log trained NCA model trajectory after training
+
+		"""
+		x,y = DATA_AUGMENTER.split_x_y(1)
+		x,y = DATA_AUGMENTER.data_callback(x,y,0,key)
+		NUMBER_OF_IMAGES=x[0].shape[0]
+		# Log true data for side by side comparison
+		true_data = DATA_AUGMENTER.return_true_data()[0]
+		true_data = true_data[:,:DATA_AUGMENTER.OBS_CHANNELS]
+		true_data = rearrange(true_data,"T C x y -> (C x) (T y)")
+		true_data = repeat(true_data,"x y -> x y 3")
+		self.log_image(
+			'Evaluation/true_data',
+			true_data,
+			step=None
+		)
+		BATCHES = 1#len(x)
+		CHANNELS = x[0].shape[1]
+
+		print("Running final trained model for "+str(t)+" steps")
+		
+		SNAPSHOTS = []
+		for b in tqdm(range(BATCHES)):
+
+			# T =nca.run(t*NUMBER_OF_IMAGES,x[b][0],boundary_callback[b]) # Shape T C x y
+			T = []
+			xb = x[b][0] # C x y
+			
+			for step in range(t*NUMBER_OF_IMAGES):
+				key = jr.fold_in(key,step)
+				if step/t >= self.knockout_time:
+					xb = xb.at[self.knockout_channel].set(0.0) # Set nodal channel to 0 at and after knockout time
+				xb = nca(xb,boundary_callback[b],key)
+				T.append(xb)
+			T = np.array(T) # Shape T C x y
+			
+			self.log_video("Evaluation/trajectory_comp",rearrange(T[:,:9],"T (cx cy) X Y -> T cx X (cy Y)",cx=3,cy=3),step=None)
+			_T_mono = rearrange(T[:,:9],"T (cx cy) X Y -> T () (cx X) (cy Y)",cx=3,cy=3)
+			_T_mono = repeat(_T_mono,"T () x y -> T 3 x y")
+			self.log_video("Evaluation/trajectory_monochrome",_T_mono,step=None)
+			T_snapshot = T[::t,:DATA_AUGMENTER.OBS_CHANNELS]
+			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
+			T_snapshot = repeat(T_snapshot,"x y -> x y 3")
+			SNAPSHOTS.append(T_snapshot)
+			
+			if SAVE_TRAJECTORY:
+				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])
+
+		SNAPSHOTS = np.array(SNAPSHOTS)
+		self.log_image(
+			'Evaluation/trajectory_snapshot',
+			SNAPSHOTS,
+			step=None
+		)
+
+
+
 class aNCA_Train_log(NCA_Train_log):
 	def log_model_parameters(self,nca,i):
 		#Log weights and biasses of model every 10 training epochs

@@ -5,11 +5,12 @@ import jax.tree_util as jtu
 import optax
 import equinox as eqx
 import datetime
-import Common.trainer.loss as loss
-import Common.trainer.loss_ott as loss_ott
+# import Common.trainer.loss as loss
+# import Common.trainer.loss_ott as loss_ott
+from Common.trainer.loss import build_loss_functions
 import jaxpruner
 from functools import partial
-from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, mNCA_Train_log, aNCA_Train_log
+from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, mNCA_Train_log, aNCA_Train_log, NCA_knockout_Train_log
 from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
 from NCA.model.NCA_multihead_attention import aNCA
@@ -135,7 +136,7 @@ class NCA_Trainer(object):
 		self.model_filename = model_filename
 		#print(jax.tree_util.tree_structure(self.BOUNDARY_CALLBACK))
 		
-	def setup_logging(self,BACKEND,wandb_args):
+	def setup_logging(self,BACKEND,wandb_args,KNOCKOUT_ARGS):
 		# Set logging behvaiour based on provided filename
 		print(f"Raw data shape: {jnp.array(self._data_raw).shape}")
 		if self.model_filename is None:
@@ -161,12 +162,18 @@ class NCA_Trainer(object):
 			  			 "TRAINING":self.TRAIN_CONFIG}
 				wandb_args["config"] = config
 				
-				if isinstance(self.NCA_model ,kaNCA):
-					self.LOGGER = kaNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
-				elif isinstance(self.NCA_model , mNCA):
-					self.LOGGER = mNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
-				elif isinstance(self.NCA_model , aNCA):
-					self.LOGGER = aNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
+				# if isinstance(self.NCA_model ,kaNCA):
+				# 	self.LOGGER = kaNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
+				# elif isinstance(self.NCA_model , mNCA):
+				# 	self.LOGGER = mNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
+				# elif isinstance(self.NCA_model , aNCA):
+				# 	self.LOGGER = aNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
+				if KNOCKOUT_ARGS["time"] is not None:
+					self.LOGGER = NCA_knockout_Train_log(
+						data=self._data_raw,
+						wandb_config=wandb_args,
+						knockout_time=KNOCKOUT_ARGS["time"],
+						knockout_channel=KNOCKOUT_ARGS["channel"])
 				else:
 					self.LOGGER = NCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
 				print("Logging training to: "+self.LOG_DIR)
@@ -324,7 +331,7 @@ class NCA_Trainer(object):
 		x_noise = jtu.tree_map(lambda x,key:x+noise_amount*jr.normal(key,shape=x.shape),x,key_array_noise) # x with gaussian noise added
 		key_array_nca = key_pytree_gen(key,(len(x),x[0].shape[0]))
 		x_new_noise = vv_nca(x_noise,self.BOUNDARY_CALLBACK,key_array_nca)
-		diffs = jtu.tree_map(lambda x,x_noise,x_new,x_new_noise:jnp.mean(jnp.abs(x_new-x_new_noise)/(jnp.abs(x-x_noise)+1e-8)),x,x_noise,x_new,x_new_noise)
+		diffs = jtu.tree_map(lambda x,x_noise,x_new,x_new_noise:jnp.mean(jnp.abs(x_new-x_new_noise)),x,x_noise,x_new,x_new_noise)
 
 		return jnp.array(diffs)
 	
@@ -349,7 +356,7 @@ class NCA_Trainer(object):
 		key_array_nca = key_pytree_gen(key,(len(x),x[0].shape[0]))
 		x_new_noise = vv_nca(x_noise,self.BOUNDARY_CALLBACK,key_array_nca)
 
-		diffs = jtu.tree_map(lambda x,x_noise,x_new,x_new_noise:jnp.mean(jnp.abs(x_new-x_new_noise)-(jnp.abs(x-x_noise))),x,x_noise,x_new,x_new_noise)
+		diffs = jtu.tree_map(lambda x,x_noise,x_new,x_new_noise:jnp.mean(jnp.abs(jnp.abs(x_new-x_new_noise)-jnp.abs(x-x_noise))),x,x_noise,x_new,x_new_noise)
 		return jnp.array(diffs)
 
 	def train(self,
@@ -376,7 +383,12 @@ class NCA_Trainer(object):
 				"D":3,
 				"sharpen":True,
 				"epsilon":0.1,
-				"internal_loss_func":"l2"
+				"internal_loss_func":"l2",
+				"samples":128
+			  },
+			  KNOCKOUT_ARGS = {
+				  "time":None,
+				  "channel":None
 			  },			  
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
@@ -436,38 +448,9 @@ class NCA_Trainer(object):
 			"TARGET_SPARSITY":TARGET_SPARSITY
 		}
 		
-		self.setup_logging("wandb",wandb_args=wandb_args)
+		self.setup_logging("wandb",wandb_args=wandb_args,KNOCKOUT_ARGS=KNOCKOUT_ARGS)
 
-		_ott_aux = {
-			"D":LOSS_ARGS["D"],
-			"S":LOSS_ARGS["S"],
-			"K":LOSS_ARGS["K"],
-			"sharpen":LOSS_ARGS["sharpen"],
-			"epsilon":LOSS_ARGS["epsilon"],
-			"internal_loss_func":LOSS_ARGS["internal_loss_func"]
-		}
-		LOSS_FUNCS = {
-			"l2":loss.l2,
-			"l1":loss.l1,
-			"vgg":loss.vgg_hyperspectral,#lambda x,y,key,where:loss.vgg_hyperspectral(x,y,key,where,experiment_groups=LOSS_ARGS["experiment_groups"]),
-			"vgg_grouped":loss.vgg_hyperspectral_colony,
-			"vgg_grouped_and_l2":loss.vgg_hyperspectral_colony_and_l2,
-			"vgg_3ch":loss.vgg,
-			"euclidean":loss.euclidean,
-			"spectral":loss.spectral,
-			"spectral_full":loss.spectral_weighted,
-			"ott":lambda x,y,key,where:loss_ott.ott_loss(x,y,key,where,aux=_ott_aux),
-			"ott_chstack":lambda x,y,key,where:loss_ott.ott_channel_stack_loss(x,y,key,where,aux=_ott_aux),
-			"ott_grouped":lambda x,y,key,where:loss_ott.ott_grouped_loss(x,y,key,where,aux=_ott_aux),
-			"ott_grouped_and_l2":lambda x,y,key,where:loss_ott.ott_grouped_and_l2_loss(x,y,key,where,aux=_ott_aux)
-			# "rand_euclidean":lambda x,y,key:loss.random_sampled_euclidean(x,y,key=key)
-		}
-
-		if isinstance(LOSS_FUNC_STR,str):
-			self._loss_func = [LOSS_FUNCS[LOSS_FUNC_STR]]
-		elif isinstance(LOSS_FUNC_STR,list):
-			self._loss_func = [LOSS_FUNCS[f] for f in LOSS_FUNC_STR]
-			
+		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
 		
 		LOSS_FUNC_CHANNELS = LOSS_ARGS["channels"]
 		if LOSS_FUNC_CHANNELS is not None:
@@ -603,7 +586,7 @@ class NCA_Trainer(object):
 		loss_diff_thresh = 1e-2
 		error = 0
 		error_at = 0
-		SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
+		# SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
 		
 		pbar = tqdm(range(iters))
 		#--- Do training run ---
@@ -623,17 +606,17 @@ class NCA_Trainer(object):
 			reg_loss["best_loss"] = best_loss
 			pbar.set_postfix(reg_loss)
 
-			if SPARSE_PRUNING:
+			# if SPARSE_PRUNING:
 				
-				if i>WARMUP:
+			# 	if i>WARMUP:
 
-					ws,_ = nca.get_weights()
-					sparsity_distribution = partial(jaxpruner.sparsity_distributions.uniform, sparsity=SPARSITY[i])
-					pruner = jaxpruner.MagnitudePruning(
-						sparsity_distribution_fn=sparsity_distribution,
-						skip_gradients=True)
-					ws = pruner.instant_sparsify(ws)[0]
-					nca.set_weights(ws)
+			# 		ws,_ = nca.get_weights()
+			# 		sparsity_distribution = partial(jaxpruner.sparsity_distributions.uniform, sparsity=SPARSITY[i])
+			# 		pruner = jaxpruner.MagnitudePruning(
+			# 			sparsity_distribution_fn=sparsity_distribution,
+			# 			skip_gradients=True)
+			# 		ws = pruner.instant_sparsify(ws)[0]
+			# 		nca.set_weights(ws)
 
 			
 			if self.IS_LOGGING:
