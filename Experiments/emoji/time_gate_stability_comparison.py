@@ -22,8 +22,7 @@ from Common.dataloader.emoji import load_emoji_sequence
 from Common.utils import index_to_param_list
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 
-index = int(sys.argv[1])
-TOTAL_JOBS = int(sys.argv[2])
+
 BATCHES = 4
 # CHANNELS=32
 # DOWNSAMPLE = 1
@@ -38,8 +37,7 @@ def H_to_filename(H):
     FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
     return FILENAME
 
-key = jr.PRNGKey(int(time.time()))
-key = jr.fold_in(key,index)
+
 
 class data_augmenter_subclass(DataAugmenter):
     #Redefine how data is pre-processed before training
@@ -192,7 +190,10 @@ def run(H,key):
         CLEAR_CACHE_EVERY=500,
     )
 def main():
-
+    index = int(sys.argv[1])
+    TOTAL_JOBS = int(sys.argv[2])
+    key = jr.PRNGKey(int(time.time()))
+    key = jr.fold_in(key,index)
     HYPERPARAMETERS = {
         "loss_mode":["l2"],
         "model":["NCA","gNCA"],

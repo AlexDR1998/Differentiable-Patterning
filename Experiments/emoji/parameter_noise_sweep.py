@@ -24,8 +24,7 @@ from Common.dataloader.emoji import load_emoji_sequence
 from Common.utils import index_to_param_list
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 
-index = int(sys.argv[1])
-TOTAL_JOBS = int(sys.argv[2])
+
 BATCHES = 4
 # CHANNELS=32
 # DOWNSAMPLE = 1
@@ -223,6 +222,8 @@ def run(H,key):
         CLEAR_CACHE_EVERY=500,
     )
 def main():
+    index = int(sys.argv[1])
+    TOTAL_JOBS = int(sys.argv[2])
     key = jr.PRNGKey(int(time.time()))
     key = jr.fold_in(key,index)
     HYPERPARAMETERS = {
