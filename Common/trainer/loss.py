@@ -8,9 +8,11 @@ import jax
 #from eqxvision.utils import CLASSIFICATION_URLS
 import equinox as eqx
 from lpips_j.lpips import LPIPS
+from jax.scipy.ndimage import map_coordinates
 from einops import rearrange,reduce,einsum,repeat
 import jax.random as jr
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
+import Common.trainer.loss_ott as loss_ott
 #import eqxvision as eqv
 
 #loaded_alexnet = alexnet(torch_weights=CLASSIFICATION_URLS['alexnet'])
@@ -34,9 +36,6 @@ def cosine(x,y,key=None,where=None,aux=None):
 	"""
 	return -jnp.nan_to_num(jnp.mean((x*y)/(jnp.linalg.norm(x)*jnp.linalg.norm(y)),axis=[-1,-2,-3],where=where))
 
-
-
-
 @jax.jit
 def l2(x,y,key=None,where=None,aux=None):
 	"""
@@ -54,6 +53,7 @@ def l2(x,y,key=None,where=None,aux=None):
 		"""
 	
 	return jnp.nan_to_num(jnp.mean((x-y)**2,axis=[-1,-2,-3],where=where))
+
 @jax.jit
 def l1(x,y,key=None,where=None,aux=None):
 	"""
@@ -70,6 +70,7 @@ def l1(x,y,key=None,where=None,aux=None):
 			loss reduced over channel and spatial axes
 		"""
 	return jnp.nan_to_num(jnp.mean(jnp.abs(x-y),axis=[-1,-2,-3],where=where))
+
 @jax.jit
 def euclidean(x,y,key=None,where=None,aux=None):
 	"""
@@ -90,8 +91,6 @@ def euclidean(x,y,key=None,where=None,aux=None):
 	"""
 	return jnp.nan_to_num(jnp.sqrt(jnp.mean(((x-y)**2),axis=[-1,-2,-3],where=where)))
 
-	
-	
 @eqx.filter_jit
 def sliced_wasserstein_spatial(x,y,key=None,where=None,aux=None):
 	"""
@@ -169,6 +168,143 @@ def sliced_wasserstein_channel(x,y,key=None,where=None,aux=None):
 	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[-1,-2]))
 
 
+@eqx.filter_jit
+def sliced_wasserstein_rotational(x,y,key=None,where=None,aux=None):
+
+	"""
+		Sliced Wasserstein distance in spatial domain, using random rotations
+
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [N]
+			loss reduced over channel and spatial axes
+	"""
+	
+	WIDTH = x.shape[2]
+	HEIGHT = x.shape[3]
+	
+	if aux["samples"] is None:
+		SAMPLES = 64
+	else:
+		SAMPLES = aux["samples"]
+	
+	angles = jr.uniform(key,(SAMPLES,),minval=0.0,maxval=360.0)
+	v_rotate_project = jax.vmap(_rotate_and_project, in_axes=(0,None),out_axes=0) # rotates array of shape [C, WIDTH, HEIGHT] by a given angle and projects to [C,WIDTH]
+	vv_rotate_project = jax.vmap(v_rotate_project, in_axes=(0,None),out_axes=0) # rotates array of shape [N, C, WIDTH,HEIGHT] by a given angle and projects to [N, C, W]
+	vvv_rotate_project = jax.vmap(vv_rotate_project, in_axes=(None,0),out_axes=0) # rotates array of shape [N, C, WIDTH,HEIGHT] by an array of angles [SAMPLES] and projects to [SAMPLES, N, C, W]
+
+	x_proj = vvv_rotate_project(x,angles) # shape [SAMPLES, N, C, W]
+	y_proj = vvv_rotate_project(y,angles) # shape [SAMPLES, N, C, W]
+	# x_proj = jnp.mean(x_rotated,axis=-1) # shape [SAMPLES, N, C, W]
+	# y_proj = jnp.mean(y_rotated,axis=-1) # shape [SAMPLES, N, C, W]
+
+	x_sorted = jnp.sort(x_proj,axis=-1)
+	y_sorted = jnp.sort(y_proj,axis=-1)
+
+	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[0,2,3]))
+
+def _get_rotation_grid(shape, angle_deg):
+    
+	ny, nx = shape
+	y, x = jnp.meshgrid(jnp.arange(ny), jnp.arange(nx), indexing='ij')
+	# Center coordinates for rotation.
+	y_center = (ny - 1) / 2.
+	x_center = (nx - 1) / 2.
+	y = y - y_center
+	x = x - x_center
+
+	# Convert angle to radians.
+	theta = jnp.deg2rad(angle_deg)
+	cos_theta = jnp.cos(theta)
+	sin_theta = jnp.sin(theta)
+
+	# Compute inverse rotation (to sample from the input image).
+	x_rot = cos_theta * x + sin_theta * y
+	y_rot = -sin_theta * x + cos_theta * y
+
+	# Shift back.
+	x_rot = x_rot + x_center
+	y_rot = y_rot + y_center
+
+	return y_rot, x_rot
+
+def _rotate_and_project(arr, angle_deg):
+	# arr shape: [W, H]
+	# return shape: [W]
+	coords = _get_rotation_grid(arr.shape, angle_deg)
+	coords = jnp.stack(coords, axis=0)
+	rotated = map_coordinates(arr, coords, order=1, mode='constant', cval=0.0)
+	rotated = jnp.mean(rotated,axis=-1)
+	return rotated
+
+@eqx.filter_jit
+def wasserstein_projected(x,y,key=None,where=None,aux=None):
+	"""
+		Parameters
+		----------
+		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			predictions
+		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+			true data
+
+		Returns
+		-------
+		loss : float32 array [N]
+			loss reduced over channel and spatial axes
+	"""
+	
+	CHANNELS = x.shape[1]
+	WIDTH = x.shape[2]
+	HEIGHT = x.shape[3]
+	
+	if aux["samples"] is None:
+		SAMPLES = 64
+	else:
+		SAMPLES = aux["samples"]
+	
+	proj_directions = jr.uniform(key,(CHANNELS,WIDTH,HEIGHT,SAMPLES))
+	proj_directions = proj_directions / jnp.linalg.norm(proj_directions,axis=(1,2),keepdims=True)
+
+	x_proj = einsum(x,proj_directions,"n channels width height , channels width height samples -> n samples")
+	y_proj = einsum(y,proj_directions,"n channels width height , channels width height samples -> n samples")
+
+	x_sorted = jnp.sort(x_proj,axis=1)
+	y_sorted = jnp.sort(y_proj,axis=1)
+
+	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=-1))
+
+@eqx.filter_jit
+def spectral_wasserstein_projected(x,y,key=None,where=None,aux=None):
+	# return loss_ott.spectral_wasserstein_projected(x,y,key,where,aux)
+	fx = jnp.fft.rfft2(x)
+	fy = jnp.fft.rfft2(y)
+	CHANNELS = fx.shape[1]
+	WIDTH = fx.shape[2]
+	HEIGHT = fx.shape[3]
+	
+	if aux["samples"] is None:
+		SAMPLES = 64
+	else:
+		SAMPLES = aux["samples"]
+	
+	proj_directions = jr.uniform(key,(CHANNELS,WIDTH,HEIGHT,SAMPLES))
+	proj_directions = proj_directions / jnp.linalg.norm(proj_directions,axis=(1,2),keepdims=True)
+
+	x_proj = einsum(fx,proj_directions,"n channels width height , channels width height samples -> n samples")
+	y_proj = einsum(fy,proj_directions,"n channels width height , channels width height samples -> n samples")
+
+	x_sorted = jnp.sort(x_proj,axis=1)
+	y_sorted = jnp.sort(y_proj,axis=1)
+
+	return jnp.nan_to_num(jnp.abs(jnp.mean((x_sorted - y_sorted)**2,axis=-1)))
+
 
 @jax.jit
 def bhattacharyya_distance(x,y,key=None,where=None,aux=None):
@@ -185,7 +321,7 @@ def bhattacharyya_distance(x,y,key=None,where=None,aux=None):
 		loss : float32 array [...]
 			loss reduced over channel and spatial axes
 	"""
-	eps = 1e-8
+	eps = 1e-6
 	x_norm = (x+eps) / (jnp.linalg.norm(x,axis=(-1,-2),keepdims=True)+eps)
 	y_norm = (y+eps) / (jnp.linalg.norm(y,axis=(-1,-2),keepdims=True)+eps)
 	bc = jnp.sum(jnp.sqrt(x_norm*y_norm),axis=[-1,-2],keepdims=True,where=where)
@@ -210,7 +346,7 @@ def hellinger_distance(x,y,key=None,where=None,aux=None):
 		loss : float32 array [N]
 			loss reduced over channel and spatial axes
 	"""
-	eps = 1e-8
+	eps = 1e-6
 	x_norm = (x+eps) / (jnp.linalg.norm(x,axis=(-1,-2),keepdims=True)+eps)
 	y_norm = (y+eps) / (jnp.linalg.norm(y,axis=(-1,-2),keepdims=True)+eps)
 	sqrt_diff = jnp.sqrt(x_norm) - jnp.sqrt(y_norm)
@@ -233,7 +369,7 @@ def kl_divergence(x,y,key=None,where=None,aux=None):
 		loss : float32 array [N]
 			loss reduced over channel and spatial axes
 	"""
-	eps = 1e-8
+	eps = 1e-6
 	x_norm = (x+eps) / (jnp.sum(x,axis=[-1,-2],keepdims=True)+eps)
 	y_norm = (y+eps) / (jnp.sum(y,axis=[-1,-2],keepdims=True)+eps)
 	kl = jnp.sum(x_norm * jnp.log((x_norm + eps)/(y_norm + eps)),axis=[-1,-2],where=where,keepdims=True) # Shape [N C 1 1]
@@ -471,15 +607,69 @@ def vgg_hyperspectral(x,y,key,where=None,aux=None):
 	losses = jax.vmap(lpips.apply, in_axes=(None,0,0))(params, x, y) # C N () () ()
 	loss = reduce(losses,"c n () () () -> n","mean")
 	return loss
-# @eqx.filter_jit
-# def vgg_fast(x,y,params):
-# 	x = rearrange(x,"n c x y->n x y c")[...,:3]
-# 	y = rearrange(y,"n c x y->n x y c",)[...,:3]
-# 	loss = lpips.apply(params, x, y)
-# 	return loss
 
 
-# def vgg_init_params(x,y, key):
-# 	x = rearrange(x,"n c x y->n x y c")[...,:3]
-# 	y = rearrange(y,"n c x y->n x y c",)[...,:3]
-# 	return lpips.init(key, x, y)
+def build_loss_functions(loss_strings,loss_args):
+	"""
+		Builds a list of loss functions based on the specified loss strings.
+		If loss_string is a single string, returns a list with one loss function.
+		If loss_string is a list of strings, returns a list of loss functions in the same order.
+
+
+
+		Parameters
+		----------
+		loss_strings : str or list of str
+			Loss function name(s) to build. Must be keys in the LOSS_FUNCS dictionary.
+		loss_args : dict
+			Dictionary of additional arguments for certain loss functions.
+		Returns
+		-------
+		loss_funcs : list of functions
+			List of loss functions corresponding to the input loss_strings.
+	"""
+
+
+	_ott_aux = {
+		"D":loss_args["D"],
+		"S":loss_args["S"],
+		"K":loss_args["K"],
+		"sharpen":loss_args["sharpen"],
+		"epsilon":loss_args["epsilon"],
+		"internal_loss_func":loss_args["internal_loss_func"]
+	}
+	LOSS_FUNCS = {
+		"l2":l2,
+		"l1":l1,
+		"vgg":vgg_hyperspectral,#lambda x,y,key,where:loss.vgg_hyperspectral(x,y,key,where,experiment_groups=LOSS_ARGS["experiment_groups"]),
+		"vgg_grouped":vgg_hyperspectral_colony,
+		"vgg_grouped_and_l2":vgg_hyperspectral_colony_and_l2,
+		"vgg_3ch":vgg,
+		"euclidean":euclidean,
+		"cosine":cosine,
+		"spectral":spectral,
+		"spectral_no_phase":spectral_no_phase,
+		"spectral_phase":spectral_only_phase,
+		"sliced_wasserstein_spatial":lambda x,y,key,where:sliced_wasserstein_spatial(x,y,key,where,aux={"samples":loss_args["samples"]}),
+		"sliced_wasserstein_channel":lambda x,y,key,where:sliced_wasserstein_channel(x,y,key,where,aux={"samples":loss_args["samples"]}),
+		"sliced_wasserstein_full":lambda x,y,key,where:wasserstein_projected(x,y,key,where,aux={"samples":loss_args["samples"]}),
+		"sliced_wasserstein_rotational":lambda x,y,key,where:sliced_wasserstein_rotational(x,y,key,where,aux={"samples":loss_args["samples"]}),
+		"spectral_wasserstein_full":lambda x,y,key,where:spectral_wasserstein_projected(x,y,key,where,aux={"samples":loss_args["samples"]}),
+		"bhattacharyya":bhattacharyya_distance,
+		"kl_divergence":kl_divergence,
+		"hellinger":hellinger_distance,
+		"average_amplitude":average_amplitude_distance,
+		"ott":lambda x,y,key,where:loss_ott.ott_loss(x,y,key,where,aux=_ott_aux),
+		"ott_chstack":lambda x,y,key,where:loss_ott.ott_channel_stack_loss(x,y,key,where,aux=_ott_aux),
+		"ott_grouped":lambda x,y,key,where:loss_ott.ott_grouped_loss(x,y,key,where,aux=_ott_aux),
+		"ott_grouped_and_l2":lambda x,y,key,where:loss_ott.ott_grouped_and_l2_loss(x,y,key,where,aux=_ott_aux)
+		# "rand_euclidean":lambda x,y,key:loss.random_sampled_euclidean(x,y,key=key)
+	}
+	if isinstance(loss_strings,str):
+		loss_funcs = [LOSS_FUNCS[loss_strings]]
+	elif isinstance(loss_strings,list):
+		loss_funcs = [LOSS_FUNCS[f] for f in loss_strings]
+	else:
+		raise ValueError("loss_strings must be a string or list of strings")
+		
+	return loss_funcs
