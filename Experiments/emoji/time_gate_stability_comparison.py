@@ -30,6 +30,11 @@ BATCHES = 4
 # iters=8000
 
 def H_to_filename(H):
+    if H["channels"]==32:
+        H["steps_between_images"]=64
+    elif H["channels"]==16:
+        H["steps_between_images"]=128
+
     if H["regenerate"]:
         regen_str = "regenerate_"
     else:
