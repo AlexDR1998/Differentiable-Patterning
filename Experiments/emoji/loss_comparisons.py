@@ -21,42 +21,18 @@ from Common.dataloader.emoji import load_emoji_sequence
 from Common.utils import index_to_param_list
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 
-index = int(sys.argv[1])
-TOTAL_JOBS = int(sys.argv[2])
+
 BATCHES = 4
 # CHANNELS=32
 # DOWNSAMPLE = 1
 # STEPS_BETWEEN_IMAGES=64
 # iters=8000
 
-HYPERPARAMETERS = {
-    "loss_mode":[#"l2","l1","euclidean","spectral","spectral_no_phase","spectral_phase","spectral_euclidean",
-                # "sliced_wasserstein_spatial","sliced_wasserstein_channel","spectral_wasserstein_full","sliced_wasserstein_full"
-                "sliced_wasserstein_rotational",
-                # "ott"
-                #  "bhattacharyya","kl_divergence","hellinger",
-                #  "bhattacharyya_modified","hellinger_modified","kl_divergence_modified", 
-    ],
-                 #"cosine"],
-    "model":["NCA"],
-    "channels":[32],
-    "downsample":[1],
-    "steps_between_images":[64],
-    "iters":[8000],
-    "intermediate_growth_coeff":[0.0],
-    "boundary_reg_coeff":[0.0],
-    "contiguous_growth_coeff":[0.0],
-    "wasserstein_samples":[1,4,16,32,64,128,256,512],
-}
 
 
-
-
-HPARAMS = index_to_param_list(index,TOTAL_JOBS,HYPERPARAMETERS)
-
-
-key = jr.PRNGKey(int(time.time()))
-key = jr.fold_in(key,index)
+def H_to_filename(H):
+    FILENAME = f"emoji_al_mi_ro_loss_{H['loss_mode']}_s{H['wasserstein_samples']}_ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}"
+    return FILENAME
 
 class data_augmenter_subclass(DataAugmenter):
     #Redefine how data is pre-processed before training
@@ -115,7 +91,8 @@ def run(H,key):
         PADDING="REPLICATE",
         key=key
     )
-    FILENAME = f"emoji_al_mi_ro_loss_{H['loss_mode']}_ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}"
+    # FILENAME = f"emoji_al_mi_ro_loss_{H['loss_mode']}_ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}"
+    FILENAME = H_to_filename(H)
     opt = NCA_Trainer(nca,
                         data,
                         model_filename=FILENAME,
@@ -158,7 +135,7 @@ def run(H,key):
         # },
         wandb_args={
             "project":"nca-emojis-thesis-ch1",
-            "group":"loss-function-wasserstein-sample-comparisons-1",
+            "group":"loss-function-wasserstein-sample-comparisons-2",
             # "group":"baseline-9ch-train-1",
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
@@ -168,10 +145,45 @@ def run(H,key):
         CLEAR_CACHE_EVERY=500,
     )
 
-for H in HPARAMS:
-    print("---------------------------------------------------")
-    print(f"RUNNING WITH HYPERPARAMS:")
-    pprint(H)
-    
+def main():
+    index = int(sys.argv[1])
+    TOTAL_JOBS = int(sys.argv[2])
+    HYPERPARAMETERS = {
+        "loss_mode":[#"l2","l1","euclidean","spectral","spectral_no_phase","spectral_phase","spectral_euclidean",
+                    "sliced_wasserstein_spatial","sliced_wasserstein_channel","spectral_wasserstein_full","sliced_wasserstein_full",
+                    "sliced_wasserstein_rotational",
+                    # "ott"
+                    #  "bhattacharyya","kl_divergence","hellinger",
+                    #  "bhattacharyya_modified","hellinger_modified","kl_divergence_modified", 
+        ],
+                    #"cosine"],
+        "model":["NCA"],
+        "channels":[32],
+        "downsample":[1],
+        "steps_between_images":[64],
+        "iters":[8000],
+        "intermediate_growth_coeff":[0.0],
+        "boundary_reg_coeff":[0.0],
+        "contiguous_growth_coeff":[0.0],
+        "wasserstein_samples":[1,4,16,32,64,128,256,512],
+        # "wasserstein_samples":[64],
+    }
+
+
+
+
+    HPARAMS = index_to_param_list(index,TOTAL_JOBS,HYPERPARAMETERS)
+
+
+    key = jr.PRNGKey(int(time.time()))
     key = jr.fold_in(key,index)
-    run(H,key)
+
+    for H in HPARAMS:
+        print("---------------------------------------------------")
+        print(f"RUNNING WITH HYPERPARAMS:")
+        pprint(H)
+        
+        key = jr.fold_in(key,index)
+        run(H,key)
+if __name__ == "__main__":
+    main()

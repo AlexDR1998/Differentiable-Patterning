@@ -30,7 +30,10 @@ BATCHES = 4
 
 
 def H_to_filename(H):
-    H["steps_between_images"]=int(32 / H["fire_rate"])
+    if H["channels"]==32:
+        H["steps_between_images"]=int(32 / H["fire_rate"])
+    elif H["channels"]==16:
+        H["steps_between_images"]=int(64 / H["fire_rate"])
     if H["regenerate"]:
         regen_str = "regenerate_"
     else:
@@ -98,11 +101,12 @@ def run(H,key):
                 x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
             return x
 	
-    # if H["channels"]==32:
+    if H["channels"]==32:
         # H["steps_between_images"]=64
-    # elif H["channels"]==16:
+        H["steps_between_images"]=int(32 / H["fire_rate"])
+    elif H["channels"]==16:
+        H["steps_between_images"]=int(64 / H["fire_rate"])
         # H["steps_between_images"]=128
-    H["steps_between_images"]=int(32 / H["fire_rate"])
     loss_str = {
         "l2":["l2"],
         "l1":["l1"],
@@ -187,7 +191,7 @@ def run(H,key):
         # },
         wandb_args={
             "project":"nca-emojis-thesis-ch1",
-            "group":"fire-rate-comparisons-1",
+            "group":"fire-rate-comparisons-2",
             # "group":"baseline-9ch-train-1",
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
@@ -204,8 +208,8 @@ def main():
     key = jr.fold_in(key,index)    
     HYPERPARAMETERS = {
         "loss_mode":["l2"],
-        "model":["NCA"],
-        "channels":[32],
+        "model":["gNCA"],
+        "channels":[16],
         "downsample":[1],
         # "steps_between_images":[128],
         "iters":[8000],
@@ -214,7 +218,7 @@ def main():
         "contiguous_growth_coeff":[0.0],
         "perturbation_conservation_coeff":[0.0],
         "update_sensitivity_coeff":[0.0],
-        "regenerate":[False,True],
+        "regenerate":[False],
         "fire_rate":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
         # "fire_rate":[0.8],
     }

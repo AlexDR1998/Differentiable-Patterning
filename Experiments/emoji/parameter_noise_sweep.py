@@ -55,7 +55,17 @@ class data_augmenter_subclass(DataAugmenter):
 
 
 def run(H,key):
-    
+    @eqx.filter_jit
+    def jittable_callback_bit(x,x_true,OBS_CHANNELS):
+        propagate_xn = lambda x:x.at[1:].set(x[:-1])
+        reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
+        
+        x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
+        x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
+                
+        for b in range(len(x)//2):
+            x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
+        return x
     if H["regenerate"]:
         class data_augmenter_subclass(DataAugmenter):
             #Redefine how data is pre-processed before training
@@ -103,17 +113,7 @@ def run(H,key):
                 self.PREVIOUS_KEY = key
                 return x,y
 
-        @eqx.filter_jit
-        def jittable_callback_bit(x,x_true,OBS_CHANNELS):
-            propagate_xn = lambda x:x.at[1:].set(x[:-1])
-            reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
-            
-            x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-            x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-                    
-            for b in range(len(x)//2):
-                x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
-            return x
+    
 	
     if H["channels"]==32:
         H["steps_between_images"]=64
@@ -234,7 +234,7 @@ def main():
     HYPERPARAMETERS = {
         "loss_mode":["l2"],
         "model":["nNCA"],#,"gnNCA"],
-        "channels":[32],
+        "channels":[16],
         "downsample":[1],
         # "steps_between_images":[128],
         "iters":[8000],
@@ -245,7 +245,7 @@ def main():
         "update_sensitivity_coeff":[0.0],
         "parameter_noise_level":[0.0,0.001,0.005,0.01,0.05,0.1],
         "data_noise_level":[0.001,0.005,0.01,0.05,0.1,0.5],
-        "regenerate":[False],#,True],
+        "regenerate":[True],#,True],
     }
     HPARAMS = index_to_param_list(index,TOTAL_JOBS,HYPERPARAMETERS)
 
