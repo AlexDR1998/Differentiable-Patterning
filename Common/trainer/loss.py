@@ -120,13 +120,13 @@ def sliced_wasserstein_spatial(x,y,key=None,where=None,aux=None):
 	proj_directions = jr.uniform(key,(WIDTH,HEIGHT,SAMPLES))
 	proj_directions = proj_directions / jnp.linalg.norm(proj_directions,axis=(0,1),keepdims=True)
 
-	x_proj = einsum(x,proj_directions,"n channels width height , width height samples -> n channels samples")
-	y_proj = einsum(y,proj_directions,"n channels width height , width height samples -> n channels samples")
+	x_proj = einsum(x,proj_directions,"n channels width height , width height samples -> samples n channels")
+	y_proj = einsum(y,proj_directions,"n channels width height , width height samples -> samples n channels")
 
-	x_sorted = jnp.sort(x_proj,axis=2)
-	y_sorted = jnp.sort(y_proj,axis=2)
+	x_sorted = jnp.sort(x_proj,axis=-1)
+	y_sorted = jnp.sort(y_proj,axis=-1)
 
-	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[-1,-2]))
+	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[0,2]))
 
 
 @eqx.filter_jit
@@ -159,13 +159,13 @@ def sliced_wasserstein_channel(x,y,key=None,where=None,aux=None):
 	x_proj = einsum(x,proj_directions,"n channels width height , channels samples -> n samples width height")
 	y_proj = einsum(y,proj_directions,"n channels width height , channels samples -> n samples width height")
 
-	x_proj = rearrange(x_proj,"n s w h -> n (w h) s")
-	y_proj = rearrange(y_proj,"n s w h -> n (w h) s")
+	x_proj = rearrange(x_proj,"n s w h -> s n (w h)")
+	y_proj = rearrange(y_proj,"n s w h -> s n (w h)")
 
-	x_sorted = jnp.sort(x_proj,axis=2)
-	y_sorted = jnp.sort(y_proj,axis=2)
+	x_sorted = jnp.sort(x_proj,axis=-1)
+	y_sorted = jnp.sort(y_proj,axis=-1)
 
-	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[-1,-2]))
+	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[0,2]))
 
 
 @eqx.filter_jit
@@ -204,11 +204,12 @@ def sliced_wasserstein_rotational(x,y,key=None,where=None,aux=None):
 	y_proj = vvv_rotate_project(y,angles) # shape [SAMPLES, N, C, W]
 	# x_proj = jnp.mean(x_rotated,axis=-1) # shape [SAMPLES, N, C, W]
 	# y_proj = jnp.mean(y_rotated,axis=-1) # shape [SAMPLES, N, C, W]
-
+	x_proj = rearrange(x_proj,"s n c w -> (s c) n w")
+	y_proj = rearrange(y_proj,"s n c w -> (s c) n w")
 	x_sorted = jnp.sort(x_proj,axis=-1)
 	y_sorted = jnp.sort(y_proj,axis=-1)
 
-	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[0,2,3]))
+	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=[0,2]))
 
 def _get_rotation_grid(shape, angle_deg):
     
@@ -275,8 +276,10 @@ def wasserstein_projected(x,y,key=None,where=None,aux=None):
 	x_proj = einsum(x,proj_directions,"n channels width height , channels width height samples -> n samples")
 	y_proj = einsum(y,proj_directions,"n channels width height , channels width height samples -> n samples")
 
-	x_sorted = jnp.sort(x_proj,axis=1)
-	y_sorted = jnp.sort(y_proj,axis=1)
+	# x_sorted = jnp.sort(x_proj,axis=1)
+	# y_sorted = jnp.sort(y_proj,axis=1)
+	x_sorted = x_proj
+	y_sorted = y_proj
 
 	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=-1))
 
@@ -300,8 +303,10 @@ def spectral_wasserstein_projected(x,y,key=None,where=None,aux=None):
 	x_proj = einsum(fx,proj_directions,"n channels width height , channels width height samples -> n samples")
 	y_proj = einsum(fy,proj_directions,"n channels width height , channels width height samples -> n samples")
 
-	x_sorted = jnp.sort(x_proj,axis=1)
-	y_sorted = jnp.sort(y_proj,axis=1)
+	# x_sorted = jnp.sort(x_proj,axis=1)
+	# y_sorted = jnp.sort(y_proj,axis=1)
+	x_sorted = x_proj
+	y_sorted = y_proj
 
 	return jnp.nan_to_num(jnp.abs(jnp.mean((x_sorted - y_sorted)**2,axis=-1)))
 
