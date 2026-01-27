@@ -58,12 +58,37 @@ def perturb_pixel(ic,coords,perturbation_mode):
 
 @eqx.filter_jit
 def run_perturbed_nca(nca,ic,H,key):
-    x = ic
-    for i in range(H["steps_between_images"]*H["timesteps"]):
-        key = jr.fold_in(key,i)
+    # x = ic
+    # for i in range(H["steps_between_images"]*H["timesteps"]):
+    #     key = jr.fold_in(key,i)
+    #     x = nca(x,lambda x:x,key)
+    # return x
+        
+    def nca_step(carry,j):
+        key,x = carry
+        key = jr.fold_in(key,j)
+        # keys = jr.split(key,len(x))
         x = nca(x,lambda x:x,key)
+        return (key,x),x
+    (_,x),_ = eqx.internal.scan(nca_step,(key,ic),xs=np.arange(H["steps_between_images"]*H["timesteps"]),kind="lax")
     return x
 
+@eqx.filter_jit
+def run_perturbed_nca_batch(v_nca,ic,H,key):
+    """
+        Runs vmapped NCA on a batch of initial conditions. Also uses scan rather than loop for jit efficiency.
+        ic: B C X Y
+        returns: B C X Y
+    """
+    
+    def nca_step(carry,j):
+        key,x = carry
+        key = jr.fold_in(key,j)
+        keys = jr.split(key,len(x))
+        x = v_nca(x,lambda x:x,keys)
+        return (key,x),x
+    (_,x),_ = eqx.internal.scan(nca_step,(key,ic),xs=np.arange(H["steps_between_images"]*H["timesteps"]),kind="lax")
+    return x
 def numpy_image_float_to_int(array):
     array = onp.clip(array,0.0,1.0)
     array = (array * 255.0).astype(onp.uint8)
@@ -71,12 +96,18 @@ def numpy_image_float_to_int(array):
 
 def run(H,key):
     # H[""]
-    if "fire_rate" in H:
-        H["steps_between_images"]=int(32 / H["fire_rate"])
-    else:
-        if H["channels"]==32:
+    # if "fire_rate" in H:
+        # H["steps_between_images"]=int(32 / H["fire_rate"])
+    # else:
+    if H["channels"]==32:
+        if "fire_rate" in H:
+            H["steps_between_images"]=int(32 / H["fire_rate"])
+        else:
             H["steps_between_images"]=64
-        elif H["channels"]==16:
+    elif H["channels"]==16:
+        if "fire_rate" in H:
+            H["steps_between_images"]=int(64 / H["fire_rate"])
+        else:
             H["steps_between_images"]=128
 
     data = prepare_data(H)  # T C X Y
@@ -125,21 +156,46 @@ def run(H,key):
     FILENAME = H_to_filename_noise(H)
     nca = nca.load(f"{CODE_PATH}/models/{FILENAME}.eqx")
     baseline_traj = run_perturbed_nca(nca,ic,H,key) # no perturbation yet
+    batch_size = 16
+    v_nca = jax.vmap(nca, in_axes=(0, None, 0))
+
     for x in tqdm(range(X)):
-        # for c in range(C):
-        for y in range(Y):
-            ic_perturbed = perturb_pixel(ic,(x,y),H["perturbation_mode"])
-            perturbed_traj = run_perturbed_nca(nca,ic_perturbed,H,key)
-            if x % 8 ==0 and y % 8 ==0: # Only save full image every 8th pixel to save space
-                perturbed_result = onp.array(perturbed_traj[:4]) # save only first 4 channels (RGB + alpha)
-                perturbed_result = numpy_image_float_to_int(perturbed_result) # Reduce space required to save and transfer later
-                onp.save(f"perturbations/emoji_local/{FILENAME}_coords_all_{x}_{y}_{H['perturbation_mode']}_T{H['timesteps']}.npy",perturbed_result)
+        for y0 in range(0, Y, batch_size):
+            ys = list(range(y0, min(y0 + batch_size, Y)))
+            # build batch of perturbed initial conditions
+            ic_batch = np.stack([perturb_pixel(ic, (x, y), H["perturbation_mode"]) for y in ys])
+            # derive a per-batch key to avoid reusing the same randomness
+            key = jr.fold_in(key, x * Y + y0)
+            # run vmapped NCA on the batch
+            perturbed_trajs = run_perturbed_nca_batch(v_nca, ic_batch, H, key)  # B C X Y
+            bas = baseline_traj[None, ...]  # 1 C X Y -> broadcastable to B C X Y
+            diffs = np.mean(np.abs(perturbed_trajs - bas), axis=(1, 2, 3))
+            num_diffs = np.sum((np.abs(perturbed_trajs - bas) > 0.1), axis=(1, 2, 3))
+
+            for i, y in enumerate(ys):
+                if x % 8 == 0 and y % 8 == 0:  # save full image every 8th pixel as before
+                    perturbed_result = onp.array(perturbed_trajs[i][:4])  # first 4 channels
+                    perturbed_result = numpy_image_float_to_int(perturbed_result)
+                    onp.save(f"perturbations/emoji_local/{FILENAME}_coords_all_{x}_{y}_{H['perturbation_mode']}_T{H['timesteps']}.npy", perturbed_result)
+
+                perturbation_results = perturbation_results.at[x, y].set(diffs[i])
+                perturbation_counts = perturbation_counts.at[x, y].set(num_diffs[i])
+                print(f"Perturbed pixel ({x},{y}), mean abs diff: {float(diffs[i]):.6f}")
+    # for x in tqdm(range(X)):
+    #     # for c in range(C):
+    #     for y in range(Y):
+    #         ic_perturbed = perturb_pixel(ic,(x,y),H["perturbation_mode"])
+    #         perturbed_traj = run_perturbed_nca(nca,ic_perturbed,H,key)
+    #         if x % 8 ==0 and y % 8 ==0: # Only save full image every 8th pixel to save space
+    #             perturbed_result = onp.array(perturbed_traj[:4]) # save only first 4 channels (RGB + alpha)
+    #             perturbed_result = numpy_image_float_to_int(perturbed_result) # Reduce space required to save and transfer later
+    #             onp.save(f"perturbations/emoji_local/{FILENAME}_coords_all_{x}_{y}_{H['perturbation_mode']}_T{H['timesteps']}.npy",perturbed_result)
             
-            diff = np.abs(perturbed_traj - baseline_traj).mean()
-            num_diff = np.count_nonzero(np.abs(perturbed_traj - baseline_traj) > 0.1)
-            perturbation_results = perturbation_results.at[x,y].set(diff)
-            perturbation_counts = perturbation_counts.at[x,y].set(num_diff)
-            print(f"Perturbed pixel ({x},{y}), mean abs diff: {diff:.6f}")
+    #         diff = np.abs(perturbed_traj - baseline_traj).mean()
+    #         num_diff = np.count_nonzero(np.abs(perturbed_traj - baseline_traj) > 0.1)
+    #         perturbation_results = perturbation_results.at[x,y].set(diff)
+    #         perturbation_counts = perturbation_counts.at[x,y].set(num_diff)
+    #         print(f"Perturbed pixel ({x},{y}), mean abs diff: {diff:.6f}")
     perturbation_results = onp.array(perturbation_results)
     onp.save(f"perturbations/emoji_local/{FILENAME}_full_{H['perturbation_mode']}_T{H['timesteps']}.npy",perturbation_results)
     onp.save(f"perturbations/emoji_local/{FILENAME}_counts_{H['perturbation_mode']}_T{H['timesteps']}.npy",onp.array(perturbation_counts))
@@ -155,8 +211,8 @@ def main():
         "loss_mode":["l2"],
         # "model":["NCA","gNCA"],
         # "channels":[32,16],
-        "model":["nNCA"],
-        "channels":[32],
+        "model":["gnNCA"],
+        "channels":[16],
         "downsample":[1],
         # "steps_between_images":[64,128],
         "iters":[8000],
