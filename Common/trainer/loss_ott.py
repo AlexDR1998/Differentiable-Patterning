@@ -437,3 +437,41 @@ def ott_grouped_and_l2_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpe
     where_full = duplicate_x_channels_9ch(where).astype(where.dtype)
     l2_loss = np.nan_to_num(np.mean(_l2,axis=[-1,-2,-3],where=where_full))
     return loss_ott + l2_loss
+
+
+
+def emd_loss(x,y,key,where,aux={"epsilon":0.01,"internal_loss_func":"l2","normalize":True,"tau":1.0}):
+
+    def oti_loss(X,Y,aux):
+        """
+            Computes linear OT loss between two single channel images X and Y
+            Parameters
+                X: np.ndarray of shape [H W], source image
+                Y: np.ndarray of shape [H W], target image
+            Returns
+                OT loss: float
+
+        """
+        metric = {
+            "l2": [ott.geometry.costs.Euclidean()]*2,
+            "l2_squared": [ott.geometry.costs.SqEuclidean()]*2,
+            "l1": [ott.geometry.costs.PNormP(1)]*2,
+        }
+        geom = ott.geometry.grid.Grid(grid_size=X.shape,epsilon=aux['epsilon'],cost_fns=metric[aux["internal_loss_func"]])
+        if aux["normalize"]:
+            X = X/ (X.sum()+1e-8)
+            Y = Y/ (Y.sum()+1e-8)
+        problem = ott.problems.linear.linear_problem.LinearProblem(geom,a=X.ravel(),b=Y.ravel(),tau_a=aux["tau"],tau_b=aux["tau"])
+        
+        solver = ott.solvers.linear.sinkhorn.Sinkhorn(min_iterations=64,max_iterations=64)
+        out = solver(problem)
+        
+        return out.reg_ot_cost
+    v_oti_loss = jax.vmap(oti_loss, in_axes=(0,0,None),out_axes=0)
+    vv_oti_loss = jax.vmap(v_oti_loss, in_axes=(0,0,None),out_axes=0)
+    losses = vv_oti_loss(x,y,aux) # Shape N C
+    losses_avg_intensity = (reduce(x,"n c x y -> n c", 'mean') - reduce(y,"n c x y -> n c", 'mean'))**2
+    if aux["amplitude_penalty"]:
+        losses = losses + losses_avg_intensity
+    where = where[:,:,0,0] # Shape N C
+    return np.nan_to_num(np.mean(losses,axis=1,where=where)) # N
