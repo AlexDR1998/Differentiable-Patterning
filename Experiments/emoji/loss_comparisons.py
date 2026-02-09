@@ -34,6 +34,15 @@ def H_to_filename(H):
     FILENAME = f"emoji_al_mi_ro_loss_{H['loss_mode']}_s{H['wasserstein_samples']}_ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}"
     return FILENAME
 
+def H_to_filename_lr(H):
+    FILENAME = f"emoji_al_mi_ro_loss_{H['loss_mode']}_ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_lr{H['learning_rate']}"
+    return FILENAME
+
+def H_to_filename_emd(H):
+    loss_str = f"{H['loss_mode']}_norm{H['normalize']}_ap{H['amplitude_penalty']}_tau{H['tau']}_eps{H['epsilon']}"
+    FILENAME = f"emoji_al_mi_ro_loss_{loss_str}_ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_lr{H['learning_rate']}"
+    return FILENAME
+
 class data_augmenter_subclass(DataAugmenter):
     #Redefine how data is pre-processed before training
     def data_init(self,SHARDING=None):
@@ -68,6 +77,7 @@ def run(H,key):
         "kl_divergence_modified":["kl_divergence","average_amplitude"],
         "cosine":["cosine"],
         "vgg_3ch":["vgg_3ch"],
+        "emd_loss":["emd_loss"],
     }[H["loss_mode"]]
     
     
@@ -77,7 +87,7 @@ def run(H,key):
         downsample=H["downsample"]
     )
 
-    schedule = optax.exponential_decay(1e-3, transition_steps=H["iters"], decay_rate=0.99)
+    schedule = optax.exponential_decay(H["learning_rate"], transition_steps=H["iters"], decay_rate=0.99)
     optimiser = optax.chain(optax.scale_by_param_block_norm(),
                             optax.nadam(schedule))
 
@@ -92,7 +102,8 @@ def run(H,key):
         key=key
     )
     # FILENAME = f"emoji_al_mi_ro_loss_{H['loss_mode']}_ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}"
-    FILENAME = H_to_filename(H)
+    # FILENAME = H_to_filename_lr(H)
+    FILENAME = H_to_filename_emd(H)
     opt = NCA_Trainer(nca,
                         data,
                         model_filename=FILENAME,
@@ -119,9 +130,12 @@ def run(H,key):
 				"K":5,
 				"D":3,
 				"sharpen":True,
-				"epsilon":0.1,
-				"internal_loss_func":"l2",
+				"epsilon":H["epsilon"] if "epsilon" in H else 0.1,
+				"internal_loss_func":H["internal_loss_func"] if "internal_loss_func" in H else "l2",
 				"samples":H['wasserstein_samples'],
+                "normalize":H["normalize"] if "normalize" in H else True,
+				"tau":H["tau"] if "tau" in H else 1.0,
+                "amplitude_penalty":H["amplitude_penalty"] if "amplitude_penalty" in H else True,
 			  },
         # LOSS_ARGS={
         #     "channels":None,
@@ -135,7 +149,7 @@ def run(H,key):
         # },
         wandb_args={
             "project":"nca-emojis-thesis-ch1",
-            "group":"loss-function-wasserstein-sample-comparisons-2",
+            "group":"loss-function-emd-test-1",
             # "group":"baseline-9ch-train-1",
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
@@ -149,9 +163,11 @@ def main():
     index = int(sys.argv[1])
     TOTAL_JOBS = int(sys.argv[2])
     HYPERPARAMETERS = {
-        "loss_mode":[#"l2","l1","euclidean","spectral","spectral_no_phase","spectral_phase","spectral_euclidean",
-                    "sliced_wasserstein_spatial","sliced_wasserstein_channel","spectral_wasserstein_full","sliced_wasserstein_full",
-                    "sliced_wasserstein_rotational",
+        "loss_mode":[#"l2","l1","euclidean",
+                    "emd_loss",
+                    # "spectral","spectral_no_phase","spectral_phase","spectral_euclidean",
+                    # "sliced_wasserstein_spatial","sliced_wasserstein_channel","spectral_wasserstein_full","sliced_wasserstein_full",
+                    # "sliced_wasserstein_rotational",
                     # "ott"
                     #  "bhattacharyya","kl_divergence","hellinger",
                     #  "bhattacharyya_modified","hellinger_modified","kl_divergence_modified", 
@@ -165,8 +181,14 @@ def main():
         "intermediate_growth_coeff":[0.0],
         "boundary_reg_coeff":[0.0],
         "contiguous_growth_coeff":[0.0],
-        "wasserstein_samples":[1,4,16,32,64,128,256,512],
-        # "wasserstein_samples":[64],
+        "learning_rate":[1e-3],
+        # "wasserstein_samples":[1,4,16,32,64,128,256,512],
+        "wasserstein_samples":[64],
+        "normalize":[True,False],
+        "tau":[1.0,0.99,0.9],
+        "epsilon":[0.1,0.01,0.001],
+        "amplitude_penalty":[True,False],
+        "internal_loss_func":["l2","l1","euclidean"],
     }
 
 

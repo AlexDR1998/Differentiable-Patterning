@@ -1,6 +1,10 @@
-PVC_PATH = "/mnt/ceph/ar-dp/"
+# PVC_PATH = "/mnt/ceph/ar-dp/"
+
 import sys
 import os
+from dotenv import load_dotenv
+load_dotenv()
+PVC_PATH = os.getenv("PVC_PATH")
 sys.path.append(PVC_PATH)
 os.chdir(PVC_PATH)
 import jax

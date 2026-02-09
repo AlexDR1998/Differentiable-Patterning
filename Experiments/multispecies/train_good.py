@@ -1,8 +1,10 @@
-PVC_PATH = "/mnt/ceph/ar-dp/"
-import sys
+# PVC_PATH = "/mnt/ceph/ar-dp/"
 import os
-sys.path.append(PVC_PATH)
-os.chdir(PVC_PATH)
+from dotenv import load_dotenv
+load_dotenv()
+PVC_PATH = os.getenv("PVC_PATH")
+DATA_PATH_BASE = os.getenv("DATA_PATH_BASE")
+import sys
 import jax
 import jax.numpy as np
 import jax.random as jr
@@ -60,7 +62,6 @@ class data_augmenter_subclass_regrowth(EmojiDataAugmenter):
         self.PREVIOUS_KEY = key
         return x,y
 
-
 class data_augmenter_subclass(EmojiDataAugmenter):
     def data_init(self, SHARDING=None):
         data = self.return_saved_data()
@@ -102,16 +103,13 @@ class data_augmenter_subclass(EmojiDataAugmenter):
         self.PREVIOUS_KEY = key
         return x,y
 
-
 @eqx.filter_jit
 def jittable_callback_bit(x,x_true,OBS_CHANNELS):
     propagate_xn = lambda x:x.at[1:].set(x[:-1])
     reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
     x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
     x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-
     return x
-
 
 def prepare_data(BATCHES,mode,species=["crab","microbe"]):
     data = load_emoji_sequence(
@@ -119,7 +117,7 @@ def prepare_data(BATCHES,mode,species=["crab","microbe"]):
             f"{s}.png" for s in species
         ],
         downsample=1,
-        impath_emojis=PVC_PATH+"Data/Emojis/",
+        impath_emojis=DATA_PATH_BASE+"Emojis/",
     )
     # data_filename = "cr_mi_av_al_bt_li_mu"
     # data_filename = f"cr_mi_{mode}"
