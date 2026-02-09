@@ -22,7 +22,7 @@ class Impulse_Train_log(Train_log):
         self.log({"Train/losses":aux['loss_batches']},step=i)
         self.log_histogram("Train/impulse", np.ravel(aux['dx']),step=i)
         self.log({"Train/log_mean_loss":np.log(aux['mean_loss']+1e-8)},step=i)
-        self.log({"Train/location":aux['dx_location']},step=i)
+        # self.log({"Train/location":aux['dx_location']},step=i)
         if i % log_interval == 0:
             self.log_image(
                 tag = "Train/output",
@@ -31,11 +31,11 @@ class Impulse_Train_log(Train_log):
                 # images
                 step=i
             )
-            self.log_image(
-                tag = "Train/output_hidden",
-                images = rearrange(aux['final_states'][:1,3:30,::2,::2],"POOL (C1 C2 C3) W H -> POOL (C1 W) (C2 H) C3",C3=3,C1=3,C2=3),
-                step=i
-            )
+            # self.log_image(
+            #     tag = "Train/output_hidden",
+            #     images = rearrange(aux['final_states'][:1,3:30,::2,::2],"POOL (C1 C2 C3) W H -> POOL (C1 W) (C2 H) C3",C3=3,C1=3,C2=3),
+            #     step=i
+            # )
 
 
     def log_final_trajectory(self,T):

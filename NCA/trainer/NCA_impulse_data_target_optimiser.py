@@ -9,7 +9,7 @@ import datetime
 from Common.trainer.loss import build_loss_functions
 from Common.model.abstract_model import AbstractModel
 import jaxpruner
-from einops import repeat, rearrange, reduce
+from einops import repeat, rearrange
 # from Common.trainer.abstract_wandb_log import Train_log
 from NCA.trainer.impulse_tensorboard_log import Impulse_Train_log
 from Common.utils import key_pytree_gen
@@ -18,17 +18,21 @@ from NCA.model.NCA_perturbation import perturbation
 # from NCA.trainer.boundary_tensorboard_log import boundary_train_log
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key
-
 import time
 
-class NCA_impulse_optimiser(object):
+from NCA.trainer.NCA_impulse_conserve_optimiser import NCA_impulse_optimiser
+
+
+class NCA_impulse_data_target_optimiser(NCA_impulse_optimiser):
     """
-        This class takes a pre-trained NCA and finds localised perturbations (impulses) that trigger the NCA to switch between its stable configurations.
+        Subclass of NCA_impulse_optimiser which finds preserving or disruptive perturbations. This version
+        finds a minimal impulse which shifts the NCA dynamics in time - so the perturbed NCA at step N matches unperturbed NCA at step M
     """
     def __init__(
             self,
             NCA_model,
-            data,
+            data_trajectory,
+            data_target,
             FILENAME,
             OBS_CHANNELS = None,
             OUTPUT_DIRECTORY = "perturbations/",
@@ -41,83 +45,27 @@ class NCA_impulse_optimiser(object):
         self.NCA_model = NCA_model
         self.CHANNELS = self.NCA_model.N_CHANNELS
         if OBS_CHANNELS is None:    
-           self.OBS_CHANNELS = data[0].shape[1]
+           self.OBS_CHANNELS = data_trajectory[0].shape[1]
         else:
             self.OBS_CHANNELS = OBS_CHANNELS
         
 
-        self.data = data # Shape [T C W H]
-        self.setup_logging(repeat(data,"T C W H -> B T C W H",B=1),wandb_args)
+        self.data_trajectory = data_trajectory # Shape [T C W H]
+        self.data_target = data_target # Shape [1 C W H]
+        self.setup_logging(repeat(data_trajectory,"T C W H -> B T C W H",B=1),wandb_args)
         self.OUTPUT_DIRECTORY = OUTPUT_DIRECTORY
         self.FILENAME = FILENAME
-        
-    def setup_logging(self,data,wandb_args):
-        self.logger = Impulse_Train_log(data,wandb_args)
-    
-        
-    def loss_func(self,x,y,key):
-        """
-            Handles observable channel selection for loss calculation.
-            Parameters
-            ----------
-            x : float32 array [BATCHES,CHANNELS,WIDTH,HEIGHT]
-                Predicted states from NCA
-            y : float32 array [BATCHES,CHANNELS,WIDTH,HEIGHT]
-                Target stable configurations
-            Returns
-            -------
-            loss_value : float32 [BATCHES]
-                Loss value reduced over channel and spatial axes
-        """
-        x_obs = x[:,:self.OBS_CHANNELS]
-        y_obs = y[:,:self.OBS_CHANNELS]
-        losses = []
-        for idx,f in enumerate(self._loss_func):
-            key = jr.fold_in(key,idx)
-            losses.append(f(x_obs,y_obs,key=key,where=None))
-        losses = np.array(losses)
-        return reduce(losses,"F N -> N", "mean")
-        # return self._loss_func(x_obs,y_obs,key=jr.PRNGKey(0),where=None)
-    
-    def run_nca_model_batch(self,x,t,key):
-        """
-            Runs the NCA model on a batch of inputs x for t steps
-            Parameters
-            ----------
-            x : float32 array [BATCHES,CHANNELS,WIDTH,HEIGHT]
-                Initial states to run NCA from
-            t : int
-                Number of steps to run NCA for
-            key : jr.PRNGKey
-                Jax random key
-            Returns
-            -------
-            final_x : float32 array [BATCHES,CHANNELS,WIDTH,HEIGHT]
-                Final state after running NCA for t steps
-            xs : float32 array [BATCHES,t,CHANNELS,WIDTH,HEIGHT]
-        """
-        v_nca = jax.vmap(self.NCA_model,in_axes=(0,None,0),out_axes=0,axis_name="B")
-        def nca_step(carry,j):
-            key,x = carry
-            key = jr.fold_in(key,j)
-            keys = jr.split(key,len(x))
-            x = v_nca(x,lambda x:x,keys)
-            # x = v_nca(x, self.BOUNDARY_CALLBACK, jr.split(key,len(x)))
-            return (key,x),x
-        (key,final_x),xs = eqx.internal.scan(nca_step,(key,x),xs=np.arange(t),kind="lax")
-        xs = rearrange(xs,"T B C W H -> B T C W H")
-        return final_x,xs
-
 
     def generate_init_target_pairs(self,key):
-        x = self.data[:1] # Shape [1 Channels Width Height] 
+        x = self.data_trajectory[:1] # Shape [1 Channels Width Height] 
         x = repeat(x,"1 C W H -> B C W H",B=self.BATCHES)
+        y = self.data_target # Shape [1 Channels Width Height]
+        y = repeat(y,"1 C W H -> B C W H",B=self.BATCHES)
         # steps = jr.randint(key, (), minval=self.STEPS_TO_STABLE[0], maxval=self.STEPS_TO_STABLE[1])
-        steps = self.STEPS_TO_TARGET
-        y,_ = self.run_nca_model_batch(x,steps,key)
+        # steps = self.STEPS_TO_TARGET
+        # y,_ = self.run_nca_model_batch(x,steps,key)
         
         return x,y
-
     def train(
             self,
             iters,
@@ -125,7 +73,7 @@ class NCA_impulse_optimiser(object):
             BATCHES = 16,
             STEPS_TO_TARGET = 64,
             perturbation_mode = {"channel":"obs","spatial":"global"},
-            optimisation_mode = "maximal_preservative",
+            # optimisation_mode = "maximal_preservative",
             perturbation_reg_coeff = {
                 "l2":0.0,
                 "l1":0.0,
@@ -149,8 +97,8 @@ class NCA_impulse_optimiser(object):
             RESAMPLE_EVERY = 200,
             key=jr.PRNGKey(int(time.time()))
     ):
-        self.optimisation_mode = optimisation_mode
-        assert self.optimisation_mode in ["maximal_preservative","minimal_destructive"], "MODE must be either 'maximal_preservative' or 'minimal_destructive'"
+        # self.optimisation_mode = optimisation_mode
+        # assert self.optimisation_mode in ["maximal_preservative","minimal_destructive"], "MODE must be either 'maximal_preservative' or 'minimal_destructive'"
         self.STEPS_TO_TARGET = STEPS_TO_TARGET
         self.BATCHES = BATCHES
         # LOSS_FUNCS = {
@@ -165,33 +113,15 @@ class NCA_impulse_optimiser(object):
 		# 	"spectral":loss.spectral,
 		# 	"spectral_no_phase":loss.spectral_no_phase,
 		# 	"spectral_phase":loss.spectral_only_phase,
-		# 	# "sliced_wasserstein_spatial":lambda x,y,key,where:loss.sliced_wasserstein_spatial(x,y,key,where,aux={"samples":LOSS_ARGS["samples"]}),
-		# 	# "sliced_wasserstein_channel":lambda x,y,key,where:loss.sliced_wasserstein_channel(x,y,key,where,aux={"samples":LOSS_ARGS["samples"]}),
-		# 	# "bhattacharyya":loss.bhattacharyya_distance,
-		# 	# "kl_divergence":loss.kl_divergence,
-		# 	# "hellinger":loss.hellinger_distance,
-		# 	# "average_amplitude":loss.average_amplitude_distance,
-		# 	# "ott":lambda x,y,key,where:loss_ott.ott_loss(x,y,key,where,aux=_ott_aux),
-		# 	# "ott_chstack":lambda x,y,key,where:loss_ott.ott_channel_stack_loss(x,y,key,where,aux=_ott_aux),
-		# 	# "ott_grouped":lambda x,y,key,where:loss_ott.ott_grouped_loss(x,y,key,where,aux=_ott_aux),
-		# 	# "ott_grouped_and_l2":lambda x,y,key,where:loss_ott.ott_grouped_and_l2_loss(x,y,key,where,aux=_ott_aux)
-		# 	# "rand_euclidean":lambda x,y,key:loss.random_sampled_euclidean(x,y,key=key)
+
 		# }
         # self._loss_func = LOSS_FUNCS[LOSS_FUNC_STR]
         self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
         self.OPTIMISER = optimiser
-        # def _smooth_reg(x,dx):
-        #     avg_dx = jax.lax.conv_general_dilated(
-        #         lhs=dx,
-        #         rhs=np.ones((1,1,3,3))/(3*3),
-        #         window_strides=(1,1),
-        #         padding='SAME',
-        #     )
-        #     return np.mean((dx - avg_dx)**2)
+
         REG_FUNCS = {
             "l2":lambda x,dx: np.mean(dx**2),
             "l1":lambda x,dx: np.mean(np.abs(dx)),
-            # "smooth":_smooth_reg,
             "max":lambda x,dx: np.max(np.abs(dx)),
             "in_0_1":lambda x,dx: np.mean(np.abs(x)+np.abs(x-1)-1),
 		}
@@ -203,6 +133,7 @@ class NCA_impulse_optimiser(object):
             # Multiply each regularization function by its coefficient
         REG_FUNCS = {name: lambda x, dx, f=func, c=perturbation_reg_coeff[name]: c * f(x, dx) 
                         for name, func in REG_FUNCS.items()}
+        @eqx.filter_jit
         def makestep(dx_func,nca,x,y,t,opt_state,key):
             @eqx.filter_value_and_grad(has_aux=True)
             def compute_loss(dx_func,nca,x,y,t,key):
@@ -224,11 +155,12 @@ class NCA_impulse_optimiser(object):
                 loss_batches = self.loss_func(x,y,key) # Loss between final state and target
                 mean_loss = np.mean(loss_batches)
                 aux = (x,loss_batches,mean_loss,dx_reg,x_dx)
-                if self.optimisation_mode=="minimal_destructive":
-                    loss = -mean_loss + dx_reg
-                elif self.optimisation_mode=="maximal_preservative":
-                    loss = mean_loss - dx_reg
-                
+                # if self.optimisation_mode=="minimal_destructive":
+                #     loss = -mean_loss + dx_reg
+                # elif self.optimisation_mode=="maximal_preservative":
+                #     loss = mean_loss - dx_reg
+                loss = mean_loss + dx_reg
+
                 return loss,aux
             loss_aux,grads = compute_loss(dx_func,nca,x,y,t,key)
             dx_func_diff,dx_func_static = eqx.partition(dx_func, eqx.is_inexact_array)

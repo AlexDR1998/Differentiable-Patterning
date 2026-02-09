@@ -1,7 +1,10 @@
-# PVC_PATH = "/home/alex/PhD/Differentiable-Patterning/"
-PVC_PATH = "/mnt/ceph/ar-dp/"
-import sys
 import os
+from dotenv import load_dotenv
+load_dotenv()
+PVC_PATH = os.getenv("PVC_PATH")
+DATA_PATH_BASE = os.getenv("DATA_PATH_BASE")
+import sys
+
 from time import time
 sys.path.append(PVC_PATH)
 os.chdir(PVC_PATH)
@@ -74,9 +77,10 @@ def run_training(H,key):
     DX_L1 = H["dx_l1"]
     DX_MAX = H["dx_max"]
     DX_IN_0_1 = H["dx_in_0_1"]
+    STEPS_FROM_STABLE = H["steps_from_stable"]
     
     REG_STR = ["","_intermediate_reg","_intermediate_contiguous_reg"][REG_MODE]
-    NAME = f"nca_signal_impulse_NCA{REG_STR}_32ch_{DATA_AUGMENTER}_{INIT_MODE}_dx_{CH_MODE}_{SP_MODE}_l2{DX_L2}_l1{DX_L1}_max{DX_MAX}_in_0_1{DX_IN_0_1}_w{P_WIDTH}"
+    NAME = f"nca_signal_impulse_NCA{REG_STR}_32ch_{DATA_AUGMENTER}_{INIT_MODE}_dx_{CH_MODE}_{SP_MODE}_l2{DX_L2}_l1{DX_L1}_max{DX_MAX}_in_0_1{DX_IN_0_1}_w{P_WIDTH}_steps{STEPS_FROM_STABLE}"
     nca,data = load_data_and_model(
         REG_MODE=REG_MODE,
         DATA_AUGMENTER=DATA_AUGMENTER,
@@ -85,7 +89,7 @@ def run_training(H,key):
         BATCHES=1,
         NCA_MODEL=gNCA,
     )
-    ITERATIONS = 5000
+    ITERATIONS = 100
     schedule = optax.exponential_decay(
         init_value=1e-3,
         transition_steps=ITERATIONS,
@@ -96,17 +100,18 @@ def run_training(H,key):
         data = data,
         DATA_AUGMENTER=DA_pad,
         STEPS_TO_STABLE=[128,128+128],
-        STEPS_FROM_STABLE=[256,256+32],
+        STEPS_FROM_STABLE=[STEPS_FROM_STABLE,STEPS_FROM_STABLE+32],
         FILENAME=NAME,
         MODEL_DIRECTORY= "models/",
         LOG_DIRECTORY= "logs/",
+        OUTPUT_DIRECTORY= "perturbations/",
         BOUNDARY_MASK = None,
         BOUNDARY_MODE = "soft",
         OBS_CHANNELS = 4, 
         wandb_args = {
             "name":NAME,
             "project":"NCA_impulse_optimiser",
-            "group":"long_trajectory_regulariser_sweep_v2",
+            "group":"long_trajectory_regulariser_sweep_save_test",
             "tags":[f"{k}:{v}" for k,v in H.items()]
         }
     )
@@ -130,6 +135,7 @@ def run_training(H,key):
 
 def main():
     index = int(sys.argv[1])
+    TOTAL_JOBS = int(sys.argv[2])
     key = jr.PRNGKey(int(time()))
     key = jr.fold_in(key,index)
 
@@ -138,24 +144,25 @@ def main():
         "data_augmenter":["regrowth"],
         "channel_mode":["hidden"],
         "spatial_mode":["local"],#,"pixel","patch","flat"],
-        "spatial_width":[0.05,0.1,0.2],
+        "spatial_width":[0.2],
         "nca_reg_mode":[2],
-        "init_mode":["patch","pixel"],
+        "init_mode":["patch"],
         "dx_l2":[0.0],
         "dx_l1":[0.0],
-        "dx_max":[0.1,0.2,0.5],
+        "dx_max":[0.0],
         "dx_in_0_1":[0.0],
+        "steps_from_stable":[256],
     }
-    Hlist = index_to_param_list(index,3,HPARAMS)
+    Hlist = index_to_param_list(index,TOTAL_JOBS,HPARAMS)
     for H in Hlist:
         jax.clear_caches() # Weird OOM errors
         key = jr.fold_in(key,1)
 
         print("Running with hyperparameters: "+str(H))
-        try:
-            run_training(H,key)
-        except Exception as e:
-            print(f"Error occurred with hyperparameters {H}: {e}")
+        # try:
+        run_training(H,key)
+        # except Exception as e:
+            # print(f"Error occurred with hyperparameters {H}: {e}")
 
 if __name__ == "__main__":
     main()
