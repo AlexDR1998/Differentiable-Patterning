@@ -14,6 +14,7 @@ import jax.random as jr
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
 import Common.trainer.loss_ott as loss_ott
 import Common.trainer.loss_vgg as loss_vgg
+import Common.trainer.loss_clip as loss_clip
 #import eqxvision as eqv
 
 #loaded_alexnet = alexnet(torch_weights=CLASSIFICATION_URLS['alexnet'])
@@ -536,12 +537,16 @@ def build_loss_functions(loss_strings,loss_args):
 	}
 
 	_vgg_aux = {
-		"vgg_metric":loss_args["vgg_metric"],
+		"vgg_metric":loss_args["metric"],
 		"internal_loss_func":loss_args["internal_loss_func"],
 		"epsilon":loss_args["epsilon"],
 		"tau":loss_args["tau"],
 		"normalize":loss_args["normalize"],
 		"samples":loss_args["samples"] if "samples" in loss_args else None
+	}
+	_clip_aux = {
+		"clip_metric":loss_args["metric"],
+		"normalize":loss_args["normalize"],
 	}
 	LOSS_FUNCS = {
 		"l2":l2,
@@ -550,6 +555,10 @@ def build_loss_functions(loss_strings,loss_args):
 		"vgg_grouped":lambda x,y,key,where:loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux=_vgg_aux),
 		"vgg_3ch":lambda x,y,key,where:loss_vgg.vgg(x,y,key,where,aux=_vgg_aux),
 		"vgg_grouped_and_l2":lambda x,y,key,where:vgg_hyperspectral_colony_and_l2(x,y,key,where,aux=_vgg_aux),
+		"clip_3ch":lambda x,y,key,where:loss_clip.clip_loss_3ch(x,y,key,where,aux=_clip_aux),
+		"clip_grouped":lambda x,y,key,where:loss_clip.clip_loss_colony(x,y,key,where,aux=_clip_aux),
+		"clip":lambda x,y,key,where:loss_clip.clip_loss_hyperspectral(x,y,key,where,aux=_clip_aux),
+		"clip_grouped_and_l2":lambda x,y,key,where:loss_clip.clip_loss_colony_and_l2(x,y,key,where,aux=_clip_aux),
 		"euclidean":euclidean,
 		"cosine":cosine,
 		"spectral":spectral,

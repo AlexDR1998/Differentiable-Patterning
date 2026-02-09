@@ -50,15 +50,15 @@ FULL_HYPERPARAMETERS = {
     # "loss_mode":["ott_and_l2","ott_and_l2_grad","ott_chstack","ott_chstack_grad"],
     # "loss_mode":["ott_chstack","ott_chstack_grad","ott_chstack_and_l2","ott_chstack_and_l2_grad","ott_grouped","ott_grouped_and_l2"],
     # "loss_mode":["ott_grouped","ott_grouped_and_l2"],
-    "loss_mode":["ott_grouped_and_l2"],
-    # "loss_mode":["l2","vgg","vgg_and_l2"],
+    # "loss_mode":["ott_grouped_and_l2"],
+    "loss_mode":["vgg_grouped"],
     "model":["NCA"],
     "optimizer":["nadam"],
     "block_norm":[True],
     "noise_strength":[0.005],
     # "noise_strength":[0.1],
     "multistep":[1],
-    "channels":[16,24,32,48,64],
+    "channels":[64],
     # "ott_S":[128,256,512,1024],
     # "ott_K":[3,5,7],
     # "ott_D":[1,2,3],
@@ -67,16 +67,17 @@ FULL_HYPERPARAMETERS = {
     "ott_K":[5],
     "ott_D":[4],
     "learn_rate":[1e-3],
-    "downsample":[8,4,2],
+    "downsample":[4],
     "ott_sharpen":[True],
     # "ott_epsilon":[0.01,0.1,0.5],
     "ott_epsilon":[0.01],
     # "ott_internal_loss_func":["l2_squared","l2","l1","cos"],
     "ott_internal_loss_func":["l1"],
     "intermediate_growth":[1.0],
-    "boundary_reg":[0.1,1.0,2.0,5.0,10.0],
+    "boundary_reg":[5.0],
     # "intermediate_growth":[0.0],
     "contiguous_growth":[1.0],
+    "vgg_metric":["l2","otch","otsp"],
     # "grad_loss": [True]
 }
 
@@ -213,6 +214,8 @@ def run_training(H,key):
     # if LOSS_MODE in ["ott","ott_grad","ott_and_l2","ott_and_l2_grad","ott_chstack","ott_chstack_grad","ott_chstack_and_l2","ott_chstack_and_l2_grad","ott_grouped","ott_grouped_and_l2"]:
     if "ott" in LOSS_MODE:
         loss_name = f"{LOSS_MODE}_S{H['ott_S']}K{H['ott_K']}D{H['ott_D']}shp{H['ott_sharpen']}ep{H['ott_epsilon']}{H['ott_internal_loss_func']}"
+    elif "vgg" in LOSS_MODE:
+        loss_name = f"{LOSS_MODE}_{H['vgg_metric']}"
     else:
         loss_name = LOSS_MODE
     FILENAME = f"isambard_mp_circ_8ch_ind_{loss_name}_{opt_str}_int{INTERMEDIATE_GROWTH_COEFF}_contig_{CONTIGUOUS_GROWTH_COEFF}_bound_{BOUNDARY_REG_COEFF}_noise{NOISE_STRENGTH}_{nca.get_config()['MODEL']}_t{STEPS_BETWEEN_IMAGES}_ch{CHANNELS}_ds{DOWNSAMPLE}_lr{INIT_LR}_48h_stable"
@@ -278,10 +281,11 @@ def run_training(H,key):
             "sharpen":H["ott_sharpen"],
             "epsilon":H["ott_epsilon"],
             "internal_loss_func":H["ott_internal_loss_func"],
+            "vgg_metric":H["vgg_metric"],
         },
         wandb_args={
-            "project":"nca-micropatterns-ott",
-            "group":"ott-hparameter-sweep-7",
+            "project":"thesis-micropatterns",
+            "group":"vgg-ott-metrics-groupings",
             # "group":"ott-hparameter-sweep-test",
             # "tags":["training",nca.get_config()['MODEL'],str(CHANNELS)+"ch",str(DOWNSAMPLE)+"x_downsample",LOSS_MODE],
             "tags":[f"{k}:{v}" for k,v in H.items()],
