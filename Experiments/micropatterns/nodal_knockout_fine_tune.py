@@ -46,9 +46,9 @@ def H_to_filename(H):
     elif "vgg" in H["loss_mode"]:
         loss_name = f"{H['loss_mode']}_{H['metric']}"
         if H["metric"] in ["emdsp","emdfull"]:
-            loss_name += f"_ep{H['ott_epsilon']}{H['ott_internal_loss_func']}"
+            loss_name += f"_ep{H['ott_epsilon']}{H['ott_internal_loss_func']}{H['loss_normalize']}"
     elif "clip" in H["loss_mode"]:
-        loss_name = f"{H['loss_mode']}_{H['metric']}"
+        loss_name = f"{H['loss_mode']}_{H['metric']}_{H['loss_normalize']}"
     else:
         loss_name = H["loss_mode"]
 
@@ -57,11 +57,12 @@ def H_to_filename(H):
         opt_str += f"_multistep{H['multistep']}"
     if H["block_norm"]:
         opt_str += "_blocknorm"
+    STEPS_BETWEEN_IMAGES = int(512 / H["downsample"])
     # FILENAME = f"baseline_9ch_{MODEL}_{loss_name}_steps{STEPS_BETWEEN_IMAGES}_ds{DOWNSAMPLE}_ch{CHANNELS}_opt{opt_str}_ns{NOISE_STRENGTH}_ig{INTERMEDIATE_GROWTH_COEFF}_br{BOUNDARY_REG_COEFF}_cg{CONTIGUOUS_GROWTH_COEFF}"
-    FILENAME_BASE = f"baseline_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_ch{H['channels']}_opt{opt_str}_good"
+    FILENAME_BASE = f"baseline_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str}_good"
     if H["knockout"] in [0,24]:
     
-        FILENAME_KO = f"ftko_{H['knockout']}_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_ch{H['channels']}_opt{opt_str}_{H['TRAINING_ITERATIONS']}iters_lr{H['finetune_lr']}"
+        FILENAME_KO = f"ftko_{H['knockout']}_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str}_{H['TRAINING_ITERATIONS']}iters_lr{H['finetune_lr']}"
     else:
         FILENAME_KO = None
     return FILENAME_BASE,FILENAME_KO
@@ -92,7 +93,7 @@ def train(H,key):
     BOUNDARY_REG_COEFF = H["boundary_reg"]
     INTERMEDIATE_GROWTH_COEFF = H["intermediate_growth"]
     CONTIGUOUS_GROWTH_COEFF = H["contiguous_growth"]
-    STEPS_BETWEEN_IMAGES = int(256 / np.sqrt(DOWNSAMPLE))
+    STEPS_BETWEEN_IMAGES = int(512 / DOWNSAMPLE)
     NCA_hyperparameters = {
         "N_CHANNELS":CHANNELS,
         "KERNEL_STR":["ID","LAP","DIFF"],
@@ -203,6 +204,7 @@ def train(H,key):
     nca = model(**NCA_hyperparameters)
     loss_str = {
         "l2":["l2"],
+        "l2_grouped":["l2_grouped"],
         "vgg":["vgg"],
         "vgg_grouped":["vgg_grouped"],
         "vgg_and_l2":["vgg","l2"],
@@ -280,8 +282,8 @@ def train(H,key):
         wandb_args={
             "project":"nca-micropatterns-nodal-knockout",
             # "group":"baseline-9ch-texture-train",
-            "group":"baseline-9ch-clip-test-1",
-            # "group":"baseline-9ch-train-1",
+            # "group":"baseline-9ch-clip-test-1",
+            "group":"baseline-9ch-train-final",
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
         },
@@ -305,13 +307,13 @@ def main():
     FULL_HYPERPARAMETERS = {
         # "loss_mode":["ott_grouped_and_l2","vgg_grouped_and_l2"],
         
-        "model":["NCA"],
+        "model":["gNCA","NCA"],
         "optimizer":["nadam"],
         "block_norm":[True],
         "noise_strength":[0.005],
         "multistep":[1],
         "channels":[64],
-        "ott_S":[1024],
+        "ott_S":[512],
         "ott_D":[4],
         "learn_rate":[1e-3],
         "downsample":[2,4,8],
@@ -328,25 +330,31 @@ def main():
         # "loss_mode":["ott_grouped_and_l2","ott_grouped"],
         # "ott_internal_loss_func":["l1","l2"],
         # "metric":["l2"],
-        # "ott_K":[7,5,3,1],
+        # "ott_K":[5,3,1],
         # "loss_normalize":[False],
         
-        "loss_mode":["clip_grouped_and_l2"],
+        "loss_mode":["clip_grouped_and_l2","clip_grouped"],
         "ott_internal_loss_func":["l2"],
         "metric":["l2","l1"],
         "ott_K":[1],
         "loss_normalize":[False,True],
 
+        # "loss_mode":["l2_grouped"],
+        # "metric":["l2"],
+        # "ott_internal_loss_func":["l2"],
+        # "ott_K":[5],
+        # "loss_normalize":[False],
 
         "intermediate_growth":[1.0],
         "boundary_reg":[5.0],
         "contiguous_growth":[0.0],
-        # "TRAINING_ITERATIONS": [10,100,1000,5000],
         "TRAINING_ITERATIONS": [8000],
-        # "knockout":[0,24], # or None for baseline model training
         "knockout":[None], # or None for baseline model training
-        # "finetune_lr":[1e-4,1e-5],
         "finetune_lr":[1e-4],
+        
+        # "TRAINING_ITERATIONS": [10,100,1000,5000],
+        # "knockout":[0,24], # or None for baseline model training
+        # "finetune_lr":[1e-4,1e-5],
     }
 
     HPARAMS = index_to_param_list(index,TOTAL_JOBS,FULL_HYPERPARAMETERS)

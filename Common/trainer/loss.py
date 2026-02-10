@@ -11,6 +11,7 @@ import equinox as eqx
 from jax.scipy.ndimage import map_coordinates
 from einops import rearrange,reduce,einsum,repeat
 import jax.random as jr
+from optax import l2_loss
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
 import Common.trainer.loss_ott as loss_ott
 import Common.trainer.loss_vgg as loss_vgg
@@ -490,15 +491,19 @@ def spectral(x,y,key=None,where=None,aux=None):
 
 def vgg_hyperspectral_colony_and_l2(x,y,key,where,aux={"vgg_metric":"l2"}):
 	vgg_loss = loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux)
+	l2_loss = l2_colony_grouped(x,y,key,where,aux)
+	return vgg_loss + l2_loss
+
+
+def l2_colony_grouped(x,y,key,where,aux=None):
+	
 	x_full = duplicate_x_channels_9ch(x)
 	_l2 = (x_full-y)**2
 	weighting = jnp.array([0.5,0.5,0.5,1.0,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0]) # Account for duplicate channels
 	_l2 = einsum(_l2,weighting,"n c x y , c -> n c x y")
 	where_full = duplicate_x_channels_9ch(where).astype(where.dtype)
 	l2_loss = jnp.nan_to_num(jnp.mean(_l2,axis=[-1,-2,-3],where=where_full))
-	return vgg_loss + l2_loss
-
-
+	return l2_loss
 def build_loss_functions(loss_strings,loss_args):
 	"""
 		Builds a list of loss functions based on the specified loss strings.
@@ -558,6 +563,7 @@ def build_loss_functions(loss_strings,loss_args):
 
 	LOSS_FUNCS = {
 		"l2":l2,
+		"l2_grouped":l2_colony_grouped,
 		"l1":l1,
 		"vgg":lambda x,y,key,where:loss_vgg.vgg_hyperspectral(x,y,key,where,aux=_vgg_aux),
 		"vgg_grouped":lambda x,y,key,where:loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux=_vgg_aux),
