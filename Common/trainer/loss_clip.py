@@ -116,7 +116,7 @@ def build_clip_vision_extractor():
     model, params = build_clip_model()
     return CLIPVisionExtractor(model, params)
 
-_vision_extractor = build_clip_vision_extractor()
+# _vision_extractor = build_clip_vision_extractor()
 
 @eqx.filter_jit
 def clip_loss_3ch(x,y,key,where,aux):
@@ -142,8 +142,8 @@ def clip_loss_3ch(x,y,key,where,aux):
         y = y*where.astype(y.dtype)
     x = rearrange(x, "n c h w -> n h w c")[:,:,:,:3]
     y = rearrange(y, "n c h w -> n h w c")[:,:,:,:3]
-    x_embeds = _vision_extractor(x, normalize=aux["normalize"])
-    y_embeds = _vision_extractor(y, normalize=aux["normalize"])
+    x_embeds = aux["vision_extractor"](x, normalize=aux["normalize"])
+    y_embeds = aux["vision_extractor"](y, normalize=aux["normalize"])
     loss = metric(x_embeds,y_embeds)
 
     # loss = jnp.mean(jnp.sum((x_embeds - y_embeds) ** 2, axis=-1))
@@ -163,8 +163,8 @@ def clip_loss_hyperspectral(x,y,key,where,aux):
     bc = x.shape[1] // 3
     x = rearrange(x,"n (c vc) w h -> (n c) w h vc", vc=3,c=bc)
     y = rearrange(y,"n (c vc) w h -> (n c) w h vc", vc=3,c=bc)
-    x_embeds = _vision_extractor(x, normalize=aux["normalize"])
-    y_embeds = _vision_extractor(y, normalize=aux["normalize"])
+    x_embeds = aux["vision_extractor"](x, normalize=aux["normalize"])
+    y_embeds = aux["vision_extractor"](y, normalize=aux["normalize"])
     metric = {
         "l2": lambda x,y: jnp.sum((x - y) ** 2, axis=-1),
         "l1": lambda x,y: jnp.sum(jnp.abs(x - y), axis=-1),
@@ -188,8 +188,8 @@ def clip_loss_colony(x,y,key,where,aux):
     bc = x.shape[1] // 3
     x = rearrange(x,"n (c vc) w h -> (n c) w h vc", vc=3,c=bc)
     y = rearrange(y,"n (c vc) w h -> (n c) w h vc", vc=3,c=bc)
-    x_embeds = _vision_extractor(x, normalize=aux["normalize"])
-    y_embeds = _vision_extractor(y, normalize=aux["normalize"])
+    x_embeds = aux["vision_extractor"](x, normalize=aux["normalize"])
+    y_embeds = aux["vision_extractor"](y, normalize=aux["normalize"])
     metric = {
         "l2": lambda x,y: jnp.sum((x - y) ** 2, axis=-1),
         "l1": lambda x,y: jnp.sum(jnp.abs(x - y), axis=-1),

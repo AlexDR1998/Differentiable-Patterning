@@ -544,10 +544,18 @@ def build_loss_functions(loss_strings,loss_args):
 		"normalize":loss_args["normalize"],
 		"samples":loss_args["samples"] if "samples" in loss_args else None
 	}
+	_vision_extractor = None
+	for lstr in loss_strings:
+		if "clip" in lstr:
+			_vision_extractor = loss_clip.build_clip_vision_extractor() # Only actually load this if using clip loss, as it is quite big
+			break
+
 	_clip_aux = {
 		"clip_metric":loss_args["metric"],
 		"normalize":loss_args["normalize"],
+		"vision_extractor":_vision_extractor
 	}
+
 	LOSS_FUNCS = {
 		"l2":l2,
 		"l1":l1,
