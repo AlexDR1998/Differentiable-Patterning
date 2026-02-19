@@ -123,8 +123,8 @@ def _downsample_and_patch(X,S,K,D,key):
     """
     patches = [_sample_random_patches(X,S,K,key=key)]
     Xd = X
-    keys = jr.split(key,D-1)
-    for d in range(D-1):
+    keys = jr.split(key,D)
+    for d in range(D):
         Xd = np.pad(Xd,((0,Xd.shape[0]%2),(0,Xd.shape[1]%2)),'reflect')
         Xd = reduce(Xd,"(h 2) (w 2) -> h w", 'mean')
         pd = _sample_random_patches(Xd,S,K,key=keys[d])
