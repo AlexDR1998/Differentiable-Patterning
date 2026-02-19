@@ -1397,19 +1397,20 @@ def load_micropattern_shape_sequence(
     CIRCLE_MASK, 
     CIRCLE_HIST_BINS, 
     PROCESSING_MODES,
+    CHANNELS,
     SHAPED_MASK = None,
 ):
-    CHANNELS = [
-        "SOX17",
-        "FOXA2",
-        "TBXT",
-        "LMBR",
-        "CER",
-        "LEFTY",
-        "NODAL",
-        "LEF1",
-        # "SMAD23"
-    ]
+    # CHANNELS = [
+    #     "SOX17",
+    #     "FOXA2",
+    #     "TBXT",
+    #     "LMBR",
+    #     "CER",
+    #     "LEFTY",
+    #     "NODAL",
+    #     "LEF1",
+    #     # "SMAD23"
+    # ]
     # CIRCLE_DATA is (B,T,CHANNELS, X, Y)
     if SHAPED_MASK is None:
         true_data = load_micropattern_shape_array(
