@@ -42,7 +42,7 @@ BATCHES = 2
 
 def H_to_filename(H):
     if "ott" in H["loss_mode"]:
-        loss_name = f"{H['loss_mode']}_S{H['ott_S']}K{H['ott_K']}D{H['ott_D']}shp{H['ott_sharpen']}ep{H['ott_epsilon']}{H['ott_internal_loss_func']}"
+        loss_name = f"{H['loss_mode']}_S{H['ott_S']}K{H['ott_K']}D{int(4-onp.log2(H['downsample']))}shp{H['ott_sharpen']}ep{H['ott_epsilon']}{H['ott_internal_loss_func']}"
     elif "vgg" in H["loss_mode"]:
         loss_name = f"{H['loss_mode']}_{H['metric']}"
         if H["metric"] in ["emdsp","emdfull"]:
@@ -57,7 +57,13 @@ def H_to_filename(H):
         opt_str += f"_multistep{H['multistep']}"
     if H["block_norm"]:
         opt_str += "_blocknorm"
-    STEPS_BETWEEN_IMAGES = int(512 / H["downsample"])
+    # _STEPS_AT_DS8 = 64
+
+    if H["stepsize_scaling"]=="convective":
+        STEPS_BETWEEN_IMAGES = int(H["steps_at_ds8"]*(8/H["downsample"])) # Scale steps between images with downsample factor, linearly like for sliving hyperbolic PDEs
+    if H["stepsize_scaling"]=="diffusive":
+        STEPS_BETWEEN_IMAGES = int(H["steps_at_ds8"]*((8/H["downsample"])**2)) # Scale steps between images with downsample factor squared, like for diffusive PDEs
+    # STEPS_BETWEEN_IMAGES = int(512 / H["downsample"])
     # FILENAME = f"baseline_9ch_{MODEL}_{loss_name}_steps{STEPS_BETWEEN_IMAGES}_ds{DOWNSAMPLE}_ch{CHANNELS}_opt{opt_str}_ns{NOISE_STRENGTH}_ig{INTERMEDIATE_GROWTH_COEFF}_br{BOUNDARY_REG_COEFF}_cg{CONTIGUOUS_GROWTH_COEFF}"
     FILENAME_BASE = f"baseline_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str}_good"
     if H["knockout"] in [0,24]:
@@ -65,7 +71,7 @@ def H_to_filename(H):
         FILENAME_KO = f"ftko_{H['knockout']}_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str}_{H['TRAINING_ITERATIONS']}iters_lr{H['finetune_lr']}"
     else:
         FILENAME_KO = None
-    return FILENAME_BASE,FILENAME_KO
+    return {"base":FILENAME_BASE,"ko":FILENAME_KO,"timesteps":STEPS_BETWEEN_IMAGES}
     
     
 
@@ -93,7 +99,7 @@ def train(H,key):
     BOUNDARY_REG_COEFF = H["boundary_reg"]
     INTERMEDIATE_GROWTH_COEFF = H["intermediate_growth"]
     CONTIGUOUS_GROWTH_COEFF = H["contiguous_growth"]
-    STEPS_BETWEEN_IMAGES = int(512 / DOWNSAMPLE)
+    # STEPS_BETWEEN_IMAGES = int(512 / DOWNSAMPLE)
     NCA_hyperparameters = {
         "N_CHANNELS":CHANNELS,
         "KERNEL_STR":["ID","LAP","DIFF"],
@@ -229,7 +235,11 @@ def train(H,key):
     }[LOSS_MODE]
     GRAD_LOSS = "_grad" in LOSS_MODE
 
-    FILENAME_BASE,FILENAME_KO = H_to_filename(H)
+    filename_dict = H_to_filename(H)
+    FILENAME_BASE = filename_dict["base"]
+    FILENAME_KO = filename_dict["ko"]
+    STEPS_BETWEEN_IMAGES = filename_dict["timesteps"]
+    
     if H["knockout"] in [0,24]:
         nca = nca.load(PVC_PATH+f"models/{FILENAME_BASE}.eqx")
         FILENAME = FILENAME_KO
@@ -269,7 +279,7 @@ def train(H,key):
             "experiment_groups":None,
             "S":H["ott_S"],
             "K":H["ott_K"],
-            "D":H["ott_D"],
+            "D":int(4-onp.log2(H["downsample"])),
             "sharpen":H["ott_sharpen"],
             "epsilon":H["ott_epsilon"],
             "internal_loss_func":H["ott_internal_loss_func"],
@@ -283,7 +293,8 @@ def train(H,key):
             "project":"nca-micropatterns-nodal-knockout",
             # "group":"baseline-9ch-texture-train",
             # "group":"baseline-9ch-clip-test-1",
-            "group":"baseline-9ch-train-final",
+            # "group":"baseline-9ch-train-final-diffusive-scaling",
+            "group":"baseline-9ch-train-final-ott-downsample-fix-2",
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
         },
@@ -307,17 +318,17 @@ def main():
     FULL_HYPERPARAMETERS = {
         # "loss_mode":["ott_grouped_and_l2","vgg_grouped_and_l2"],
         
-        "model":["gNCA","NCA"],
+        "model":["NCA"],
         "optimizer":["nadam"],
         "block_norm":[True],
         "noise_strength":[0.005],
         "multistep":[1],
         "channels":[64],
         "ott_S":[512],
-        "ott_D":[4],
+        # "ott_D":[3],
         "learn_rate":[1e-3],
         "downsample":[2,4,8],
-        "ott_sharpen":[True],
+        "ott_sharpen":[True, False],
         "ott_epsilon":[0.01],
         "samples":[64],
         
@@ -326,24 +337,33 @@ def main():
         # "ott_internal_loss_func":["l1"],
         # "ott_K":[5],
         # "loss_normalize":[False],
+        # "stepsize_scaling":["convective","diffusive"],
+        # "steps_at_ds8":[32],
         
-        # "loss_mode":["ott_grouped_and_l2","ott_grouped"],
-        # "ott_internal_loss_func":["l1","l2"],
-        # "metric":["l2"],
-        # "ott_K":[5,3,1],
-        # "loss_normalize":[False],
+        "loss_mode":["ott_grouped_and_l2","ott_grouped"],
+        "ott_internal_loss_func":["l1","l2"],
+        "metric":["l2"],
+        "ott_K":[7,5,3,2],
+        "loss_normalize":[False],
+        # "stepsize_scaling":["convective","diffusive"],
+        "stepsize_scaling":["convective"],
+        "steps_at_ds8":[64],
         
-        "loss_mode":["clip_grouped_and_l2","clip_grouped"],
-        "ott_internal_loss_func":["l2"],
-        "metric":["l2","l1"],
-        "ott_K":[1],
-        "loss_normalize":[False,True],
+        # "loss_mode":["clip_grouped_and_l2","clip_grouped"],
+        # "ott_internal_loss_func":["l2"],
+        # "metric":["l2","l1"],
+        # "ott_K":[1],
+        # "loss_normalize":[False,True],
+        # "stepsize_scaling":["convective","diffusive"],
+        # "steps_at_ds8":[64],
 
         # "loss_mode":["l2_grouped"],
         # "metric":["l2"],
         # "ott_internal_loss_func":["l2"],
         # "ott_K":[5],
         # "loss_normalize":[False],
+        # "stepsize_scaling":["convective","diffusive"],
+        # "steps_at_ds8":[64],
 
         "intermediate_growth":[1.0],
         "boundary_reg":[5.0],
