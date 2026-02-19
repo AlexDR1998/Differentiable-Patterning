@@ -98,8 +98,9 @@ def _sample_random_patches(X,S,K,key):
 			patches: float32 [S K*K], sampled patches
     """
     H,W = X.shape
-    ys = jr.randint(key,(S,),0,H)
-    xs = jr.randint(key,(S,),0,W)
+    keys = jr.split(key,2)
+    ys = jr.randint(keys[0],(S,),0,H)
+    xs = jr.randint(keys[1],(S,),0,W)
     X_pad = np.pad(X,((0,K),(0,K)),'edge')
     def select_patch(X,ix,iy,K):
         return jax.lax.dynamic_slice(X, (iy, ix), (K, K))
@@ -122,8 +123,8 @@ def _downsample_and_patch(X,S,K,D,key):
     """
     patches = [_sample_random_patches(X,S,K,key=key)]
     Xd = X
-    keys = jr.split(key,D-1)
-    for d in range(D-1):
+    keys = jr.split(key,D)
+    for d in range(D):
         Xd = np.pad(Xd,((0,Xd.shape[0]%2),(0,Xd.shape[1]%2)),'reflect')
         Xd = reduce(Xd,"(h 2) (w 2) -> h w", 'mean')
         pd = _sample_random_patches(Xd,S,K,key=keys[d])
