@@ -1430,6 +1430,7 @@ def load_micropattern_shape_array(
         "FOXA2",
         "TBXT",
         "LMBR",
+        "SOX2",
         "CER",
         "LEFTY",
         "NODAL",
@@ -1441,10 +1442,10 @@ def load_micropattern_shape_array(
     print("Found filenames: ", filenames)
     ims = []
     
-    # for f_str in tqdm(filenames):
+    # for f_str in tqdm(filenames[:10]):
         # ims.append(skimage.io.imread(f_str))
 
-    ims.append(skimage.io.imread(filenames[0])) # Try just loading 1 image as we only really need the shape
+    ims.append(skimage.io.imread(filenames[1])) # Try just loading 1 image as we only really need the shape
 
     # mean_0_std_1 = lambda arr: (arr-jnp.mean(arr,axis=(1,2),keepdims=True))/(jnp.std(arr,axis=(1,2),keepdims=True))
     # map_to_0_1 = lambda arr: (arr-jnp.min(arr,axis=(1,2),keepdims=True))/(jnp.max(arr,axis=(1,2),keepdims=True)-jnp.min(arr,axis=(1,2),keepdims=True))
@@ -1501,18 +1502,19 @@ def load_micropattern_shape_sequence(
     # ]
     # CIRCLE_DATA is (B,T,CHANNELS, X, Y)
     if SHAPED_MASK is None:
-        true_data = load_micropattern_shape_array(
+        true_data, aux, CHANNEL_NAMES = load_micropattern_shape_array(
             impath,
             DOWNSAMPLE,
             BATCH_AVERAGE,
             HIST_BINS=CIRCLE_HIST_BINS,
             PROCESSING_MODES=PROCESSING_MODES,
-        )[0]
+        )
         masks = adhesion_mask_convex_hull(rearrange(true_data[0], "B X Y C -> X Y B C"))
         print(f"True data shape: {true_data[0].shape}")
     else:
         masks = SHAPED_MASK
         true_data = None
+        CHANNEL_NAMES = None
     print(f"Masks shape internal {masks.shape}")
     key = jr.PRNGKey(int(time.time()))
     n_channels = len(CHANNELS)
@@ -1533,7 +1535,7 @@ def load_micropattern_shape_sequence(
     unmasked_ic = jnp.array(unmasked_ic)
     synthetic_initial_conditions = jnp.where(mask_expanded, unmasked_ic, 0.0)
 
-    return true_data, masks, synthetic_initial_conditions
+    return true_data, masks, synthetic_initial_conditions, CHANNEL_NAMES
 
 
 def load_micropattern_triangle(impath):
