@@ -932,6 +932,7 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             [0,0,0,0,0,0,0,1,1],  # 36h
             [0,1,1,1,1,0,0,1,1],  # 48h
         ])
+    CHANNEL_TIMESTEP_MASK = repeat(CHANNEL_TIMESTEP_MASK, "T C -> B T C", B=BATCHES)
     # CHANNEL_NAMES_COLONIES = [
     #     "A-LMBR",
     #     "A-TBXT",
@@ -1005,13 +1006,13 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
     ]
     colony_filenames += colony_filenames_knockout
     cols+=cols_knockout
-    print("Colony filenames: ")
-    print(len(colony_filenames))
-    for i in range(len(colony_filenames)):
-        print(f"Colony {cols[i]} has {len(colony_filenames[i])} timepoints.")
-        for j in range(len(colony_filenames[i])):
-            print(f"  Timepoint {TIMESTEPS[j]}h has {len(colony_filenames[i][j])} channels.")
-        pprint(colony_filenames[i])
+    # print("Colony filenames: ")
+    # print(len(colony_filenames))
+    # for i in range(len(colony_filenames)):
+        # print(f"Colony {cols[i]} has {len(colony_filenames[i])} timepoints.")
+        # for j in range(len(colony_filenames[i])):
+            # print(f"  Timepoint {TIMESTEPS[j]}h has {len(colony_filenames[i][j])} channels.")
+        # pprint(colony_filenames[i])
     
     
     ims = []
@@ -1019,7 +1020,7 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
     for i,f_colony in enumerate(colony_filenames):
         ims_colony = [] 
         channel_names_colony = []
-        print(f"Loading colony {f_colony} ...")
+        # print(f"Loading colony {f_colony} ...")
         #iterate over non empty lists in f_colony
         f_colony = [f_times for f_times in f_colony if len(f_times)>0]
         for f_times in f_colony:
@@ -1030,7 +1031,7 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
                 channel_name = f_str.split("/")[-1].split("_")[0].replace(".tif", "")
                 channel_names.append(channel_name)
                 print(f_str)
-            print("Channel names found: ", channel_names)
+            # print("Channel names found: ", channel_names)
             ims_time = jnp.array(ims_time)
             ims_time = rearrange(ims_time, "C X Y -> () X Y C")
             ims_time = ims_time[:,:,:,
@@ -1045,10 +1046,10 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
         ims_timestep = np.array(ims_colony)
         if ims_timestep.shape[0]==1:
             ims_timestep = np.pad(ims_timestep,((4,0),(0,0),(0,0),(0,0),(0,0)),mode="constant")
-        print(f"Colony {cols[i]} loaded with shape {ims_timestep.shape}")
+        # print(f"Colony {cols[i]} loaded with shape {ims_timestep.shape}")
         ims.append(ims_timestep)
         names.append(channel_names_colony)
-    print("Names of channels loaded from colonies: ", names)
+    # print("Names of channels loaded from colonies: ", names)
     # print(len(ims))
     # print(len(ims[0]))
     ims = np.concatenate(ims,axis=-1) # Concatenate along channels
@@ -1064,7 +1065,7 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
         BACKGROUND_RADIUS=BACKGROUND_RADIUS,
     )
     ims = np.array(ims)  # shape of T B X Y C
-    print("Processed images with shape: ", ims.shape)
+    # print("Processed images with shape: ", ims.shape)
     boundary_mask = adhesion_mask_convex_hull_circle(ims[-1, 0])[
         0
     ]  # last timestep looks good
