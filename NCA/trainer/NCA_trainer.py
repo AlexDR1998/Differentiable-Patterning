@@ -50,25 +50,32 @@ class NCA_Trainer(object):
 		
 		NCA_model : object callable - (float32 array [N_CHANNELS,_,_],PRNGKey) -> (float32 array [N_CHANNELS,_,_])
 			the NCA object to train
-			
 		data : float32 array [BATCHES,N,OBS_CHANNELS,_,_]
 			set of trajectories to train NCA on
-		
 		model_filename : str, optional
 			name of directories to save tensorboard log and model parameters to.
-			log at :	'logs/gradient_tape/model_filename/train'
-			model at : 	'models/model_filename'
 			if None, sets model_filename to current time
-		
 		DATA_AUGMENTER : object, optional
 			DataAugmenter object. Has data_init and data_callback methods that can be re-written as needed. The default is DataAugmenter.
 		BOUNDARY_MASK : float32 [N_BOUNDARY_CHANNELS,WIDTH,HEIGHT], optional
 			Set of channels to keep fixed, encoding boundary conditions. The default is None.
+		BOUNDARY_MODE : string, optional
+			Whether to apply boundary conditions as a soft regulariser ("soft") or a hard constraint ("hard"). The default is "soft".
 		SHARDING : int, optional
 			How many parallel GPUs to shard data across?. The default is None.
-		
-		directory : str
-			Name of directory where all models get stored, defaults to 'models/'
+		GRAD_LOSS : boolean, optional
+			Whether to compute loss on spatial gradients of x and y as well as on x and y themself. The default is True.
+		OBS_CHANNELS : int, optional
+			Number of channels in x and y to include in loss function. If None, set to all channels in data. The default is None.
+		DATA_CHANNELS : int, optional
+			Number of channels in y to include in loss function. If None, set to OBS_CHANNELS. The default is None.
+			Can be different to OBS_CHANNELS, i.e. if training to duplicate data from multiple experiments
+		LOSS_TIME_CHANNEL_MASK: float32 array [BATCHES, N, OBS_CHANNELS], optional
+			Mask for which channels and timesteps to include in loss function. 1 for include, 0 for exclude. If None, set to ones mask that includes everything. The default is None.
+		MODEL_DIRECTORY : str, optional
+			Name of directory where model parameters get stored, defaults to 'models/'
+		LOG_DIRECOTRY : str, optional
+			Name of directory where tensorboard logs get stored, defaults to 'logs/'
 
 		Returns
 		-------
@@ -93,24 +100,6 @@ class NCA_Trainer(object):
 		self.SHARDING = SHARDING
 		self.GRAD_LOSS = GRAD_LOSS
 		self.LOSS_TIME_CHANNEL_MASK = LOSS_TIME_CHANNEL_MASK
-		
-		# Set up partial mask of channels / timesteps
-		if self.LOSS_TIME_CHANNEL_MASK is None:
-			self.LOSS_TIME_CHANNEL_MASK = jnp.ones((data.shape[1]-1,self.OBS_CHANNELS),dtype=jnp.float32)
-
-		_model_kernel_length = len(self.NCA_model.KERNEL_STR)
-		if "GRAD" in self.NCA_model.KERNEL_STR:
-			_model_kernel_length+=1
-		if GRAD_LOSS:
-			self.LOSS_TIME_CHANNEL_MASK = repeat(self.LOSS_TIME_CHANNEL_MASK,"n c -> n (gc c) () ()",gc=_model_kernel_length)
-			print("Timestep / Channel mask: ")
-			print(self.LOSS_TIME_CHANNEL_MASK[:,:,0,0])
-		else:
-			self.LOSS_TIME_CHANNEL_MASK = rearrange(self.LOSS_TIME_CHANNEL_MASK,"n c -> n c () ()")
-			print("Timestep / Channel mask: ")
-			print(self.LOSS_TIME_CHANNEL_MASK[:,:,0,0])
-
-
 		# Set up data and data augmenter class
 		self._data_raw = data
 		self.DATA_AUGMENTER = DATA_AUGMENTER(data,self.CHANNELS-self.DATA_CHANNELS)
@@ -118,6 +107,24 @@ class NCA_Trainer(object):
 		self.data = self.DATA_AUGMENTER.return_saved_data()
 		self.BATCHES = len(self.data)
 		print("Batches = "+str(self.BATCHES))
+		
+		# Set up partial mask of channels / timesteps
+		if self.LOSS_TIME_CHANNEL_MASK is None:
+			self.LOSS_TIME_CHANNEL_MASK = jnp.ones((self.BATCHES,data.shape[1]-1,self.OBS_CHANNELS),dtype=jnp.float32)
+
+		_model_kernel_length = len(self.NCA_model.KERNEL_STR)
+		if "GRAD" in self.NCA_model.KERNEL_STR:
+			_model_kernel_length+=1
+		if GRAD_LOSS:
+			self.LOSS_TIME_CHANNEL_MASK = repeat(self.LOSS_TIME_CHANNEL_MASK,"b n c -> b n (gc c) () ()",gc=_model_kernel_length)
+			print("Timestep / Channel mask: ")
+			print(self.LOSS_TIME_CHANNEL_MASK[:,:,:,0,0])
+		else:
+			self.LOSS_TIME_CHANNEL_MASK = rearrange(self.LOSS_TIME_CHANNEL_MASK,"b n c -> b n c () ()")
+			print("Timestep / Channel mask: ")
+			print(self.LOSS_TIME_CHANNEL_MASK[:,:,:,0,0])
+
+		self.LOSS_TIME_CHANNEL_MASK = list(self.LOSS_TIME_CHANNEL_MASK)
 		# Set up boundary augmenter class
 		# length of BOUNDARY_MASK PyTree should be same as number of batches
 		
@@ -184,6 +191,7 @@ class NCA_Trainer(object):
 	def loss_func(self,
 			   	  x:Float[Array, "N CHANNELS x y"],  # noqa: F722
 				  y:Float[Array, "N CHANNELS x y"],  # noqa: F722
+				  channel_time_mask:Float[Array, "N OBS_CHANNELS"],  # noqa: F722
 				  key: Key)->Float[Array, "N"]:
 		"""
 		NOTE: VMAP THIS OVER BATCHES TO HANDLE DIFFERENT SIZES OF GRID IN EACH BATCH
@@ -194,6 +202,8 @@ class NCA_Trainer(object):
 			NCA state
 		y : float32 array [N,OBS_CHANNELS,_,_]
 			data
+		channel_time_mask : float32 array [N,OBS_CHANNELS]
+			Masks for which channels and timesteps to include in the loss. 1 for include, 0 for exclude. 
 		key : jr.PRNGKey
 			Jax random number key. Only useful for loss functions that are stochastic (i.e. subsampled).
 		Returns
@@ -216,11 +226,11 @@ class NCA_Trainer(object):
 			key = jr.fold_in(key,idx)
 			# Get mask for channels that should be included in this loss function
 			# Include channels where LOSS_FUNC_CHANNELS == idx or == -1
-			channel_mask = (self.LOSS_FUNC_CHANNELS == idx) | (self.LOSS_FUNC_CHANNELS == -1)
-			channel_mask = repeat(channel_mask,"c -> (gc c) () ()",gc=self.LOSS_TIME_CHANNEL_MASK.shape[1]//self.OBS_CHANNELS).astype(jnp.float32)
+			channel_loss_mask = (self.LOSS_FUNC_CHANNELS == idx) | (self.LOSS_FUNC_CHANNELS == -1)
+			channel_loss_mask = repeat(channel_loss_mask,"c -> (gc c) () ()",gc=channel_time_mask.shape[1]//self.OBS_CHANNELS).astype(jnp.float32)
 			# Select only the relevant channels
 			
-			loss_mask = einsum(self.LOSS_TIME_CHANNEL_MASK,channel_mask,"n c w h, c w h-> n c w h").astype(jnp.bool_)
+			loss_mask = einsum(channel_time_mask,channel_loss_mask,"n c w h, c w h-> n c w h").astype(jnp.bool_)
 			# loss_aux = self.LOSS_FUNC_AUX[idx]
 			# losses.append(f(x_obs, y_obs, key, loss_mask, loss_aux))
 			losses.append(f(x_obs, y_obs, key, loss_mask))
@@ -518,7 +528,7 @@ class NCA_Trainer(object):
 				# vv_nca = jax.vmap(v_nca,in_axes=(0,0,0),out_axes=0,axis_name="B") # boundary can be different for each batch
 				reg_logs_internal = {name: jnp.zeros(len(x)) for name in REGULARISER_COEFFS.keys()}
 				# _loss_func = lambda x,y,key:self.loss_func(x,y,key)  # noqa: E731
-				v_loss_func = lambda x,y,key_array:jnp.array(jax.tree_util.tree_map(self.loss_func,x,y,key_array))  # noqa: E731
+				v_loss_func = lambda x,y,channel_loss_mask,key_array:jnp.array(jax.tree_util.tree_map(self.loss_func,x,y,channel_loss_mask,key_array))  # noqa: E731
 				
 				# Structuring this as function and lax.scan speeds up jit compile a lot
 				def nca_step(carry,j): # function of type a,b -> a
@@ -546,7 +556,7 @@ class NCA_Trainer(object):
 				)
 
 				loss_key = key_pytree_gen(key, (len(x),))
-				losses = v_loss_func(x, y, loss_key)
+				losses = v_loss_func(x, y, self.LOSS_TIME_CHANNEL_MASK, loss_key)
 				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
 				mean_loss = jnp.mean(losses) + jnp.sum(jnp.array(list(reg_loss_internal.values())))
 				return mean_loss, (x,losses,reg_loss_internal)

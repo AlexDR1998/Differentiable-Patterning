@@ -53,10 +53,12 @@ def H_to_filename(H):
         loss_name = H["loss_mode"]
 
     opt_str = H["optimizer"]
+    opt_str_base = H["optimizer"]
     if H["multistep"]>1:
         opt_str += f"_multistep{H['multistep']}"
     if H["block_norm"]:
         opt_str += "_blocknorm"
+        opt_str_base += "_blocknorm"
     # _STEPS_AT_DS8 = 64
 
     if H["stepsize_scaling"]=="convective":
@@ -65,10 +67,10 @@ def H_to_filename(H):
         STEPS_BETWEEN_IMAGES = int(H["steps_at_ds8"]*((8/H["downsample"])**2)) # Scale steps between images with downsample factor squared, like for diffusive PDEs
     # STEPS_BETWEEN_IMAGES = int(512 / H["downsample"])
     # FILENAME = f"baseline_9ch_{MODEL}_{loss_name}_steps{STEPS_BETWEEN_IMAGES}_ds{DOWNSAMPLE}_ch{CHANNELS}_opt{opt_str}_ns{NOISE_STRENGTH}_ig{INTERMEDIATE_GROWTH_COEFF}_br{BOUNDARY_REG_COEFF}_cg{CONTIGUOUS_GROWTH_COEFF}"
-    FILENAME_BASE = f"baseline_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str}_good"
+    FILENAME_BASE = f"baseline_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str_base}_good"
     if H["knockout"] in [0,24]:
     
-        FILENAME_KO = f"ftko_{H['knockout']}_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str}_{H['TRAINING_ITERATIONS']}iters_lr{H['finetune_lr']}"
+        FILENAME_KO = f"ftko_{H['knockout_mode']}_{H['knockout']}_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str}_{H['TRAINING_ITERATIONS']}iters_lr{H['finetune_lr']}"
     else:
         FILENAME_KO = None
     return {"base":FILENAME_BASE,"ko":FILENAME_KO,"timesteps":STEPS_BETWEEN_IMAGES}
@@ -107,23 +109,54 @@ def train(H,key):
         "PADDING":"circular",
         "key":key
     }
-    data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
-        impath=DATA_PATH_GROUPED,
-        FILTER_KN_TIME=H["knockout"],
-        BATCHES=BATCHES,
-        DOWNSAMPLE=DOWNSAMPLE,
-        TIMESTEPS=[0,12,24,36,48],
-        PROCESSING_MODES={
-            "map_to_0_1",
-            "downsample"
-        }
-    )
+    if H["knockout"] is not None and H["knockout_mode"]=="both":
+        # NCA_hyperparameters["FIRE_RATE"]=1.0 # For fine tuning on both WT and KO data, we want to use all the data and not drop any updates randomly, as the dataset is already small.
+        data_ko,aux,CHANNEL_NAMES,boundary_mask_ko,CHANNEL_TIMESTEP_MASK_KO = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+            impath=DATA_PATH_GROUPED,
+            FILTER_KN_TIME=H["knockout"],
+            BATCHES=1,
+            DOWNSAMPLE=DOWNSAMPLE,
+            TIMESTEPS=[0,12,24,36,48],
+            PROCESSING_MODES={
+                "map_to_0_1",
+                "downsample"
+            }
+        )
+        data_base,aux,CHANNEL_NAMES,boundary_mask_base,CHANNEL_TIMESTEP_MASK_BASE = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+            impath=DATA_PATH_GROUPED,
+            FILTER_KN_TIME=None,
+            BATCHES=1,
+            DOWNSAMPLE=DOWNSAMPLE,
+            TIMESTEPS=[0,12,24,36,48],
+            PROCESSING_MODES={
+                "map_to_0_1",
+                "downsample"
+            }
+        )
+        data = np.concatenate([data_ko,data_base],axis=0)
+        boundary_mask = np.concatenate([boundary_mask_ko,boundary_mask_base],axis=0)
+        CHANNEL_TIMESTEP_MASK = np.concatenate([CHANNEL_TIMESTEP_MASK_KO,CHANNEL_TIMESTEP_MASK_BASE],axis=0)
+
+
+    else:
+        data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+            impath=DATA_PATH_GROUPED,
+            FILTER_KN_TIME=H["knockout"],
+            BATCHES=BATCHES,
+            DOWNSAMPLE=DOWNSAMPLE,
+            TIMESTEPS=[0,12,24,36,48],
+            PROCESSING_MODES={
+                "map_to_0_1",
+                "downsample"
+            }
+        )
+     
     print(f"Channel timestep mask shape: {CHANNEL_TIMESTEP_MASK.shape}")
     print(f"Boundary mask shape: {boundary_mask.shape}")
     DATA_CHANNELS = 12
     OBS_CHANNELS = 9
     data =np.concatenate([data,data[:,-1:]],axis=1) # Duplicate last time step to enforce stability at the end of run
-    CHANNEL_TIMESTEP_MASK = np.concatenate([CHANNEL_TIMESTEP_MASK,CHANNEL_TIMESTEP_MASK[-1:]],axis=0)
+    CHANNEL_TIMESTEP_MASK = np.concatenate([CHANNEL_TIMESTEP_MASK,CHANNEL_TIMESTEP_MASK[:,-1:]],axis=1)
     
     
     
@@ -152,21 +185,38 @@ def train(H,key):
         warmup_steps = 100  # number of steps for warmup
     else:
         _KNOCKOUT = H["knockout"]//12
-        @eqx.filter_jit
-        def jittable_callback_bit(x,x_true,OBS_CHANNELS):
-            # Here we only want 9 channels - no duplicates - as this is what the NCA sees.
-            propagate_xn = lambda x:x.at[1:].set(x[:-1])
-            reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
-            knockout_nodal = lambda x:x.at[_KNOCKOUT:,7].set(0.0) # Set nodal channel to 0 at and after knockout time
-            x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-            x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-            x = jax.tree_util.tree_map(knockout_nodal,x)
-            # Set nodal to 0 at knockout time
-            # x = x.at[:]
+        if H["knockout_mode"]=="pure":
+            @eqx.filter_jit
+            def jittable_callback_bit(x,x_true,OBS_CHANNELS):
+                # Here we only want 9 channels - no duplicates - as this is what the NCA sees.
+                propagate_xn = lambda x:x.at[1:].set(x[:-1])
+                reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
+                knockout_nodal = lambda x:x.at[_KNOCKOUT:,7].set(0.0) # Set nodal channel to 0 at and after knockout time
+                x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
+                x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
+                x = jax.tree_util.tree_map(knockout_nodal,x)
+                # Set nodal to 0 at knockout time
+                # x = x.at[:]
 
-            # for b in range(len(x)//2):
-                # x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
-            return x
+                # for b in range(len(x)//2):
+                    # x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
+                return x
+        elif H["knockout_mode"]=="both":
+            @eqx.filter_jit
+            def jittable_callback_bit(x,x_true,OBS_CHANNELS):
+                # Here we only want 9 channels - no duplicates - as this is what the NCA sees.
+                propagate_xn = lambda x:x.at[1:].set(x[:-1])
+                reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
+                # knockout_nodal = lambda x:x.at[_KNOCKOUT:,7].set(0.0) # Set nodal channel to 0 at and after knockout time
+                x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
+                x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
+                # x = jax.tree_util.tree_map(knockout_nodal,x)
+                # Apply knockour_nodal to every even batch
+                for b in range(len(x)//2):
+                    x[b*2] = x[b*2].at[_KNOCKOUT:,7].set(0.0) # Set nodal channel to 0 at and after knockout time for every even batch
+    
+                
+                return x
         
         KNOCKOUT_ARGS={
             "time":H["knockout"]//12,
@@ -294,7 +344,8 @@ def train(H,key):
             # "group":"baseline-9ch-texture-train",
             # "group":"baseline-9ch-clip-test-1",
             # "group":"baseline-9ch-train-final-diffusive-scaling",
-            "group":"baseline-9ch-train-final-ott-downsample-fix-2",
+            # "group":"baseline-9ch-train-final-ott-downsample-fix-2",
+            "group":"ko-both-l2-vgg-9ch-final-diffusive-scaling",
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
         },
@@ -322,32 +373,32 @@ def main():
         "optimizer":["nadam"],
         "block_norm":[True],
         "noise_strength":[0.005],
-        "multistep":[1],
+        "multistep":[1,2,4,8],
         "channels":[64],
         "ott_S":[512],
         # "ott_D":[3],
         "learn_rate":[1e-3],
-        "downsample":[2,4,8],
-        "ott_sharpen":[True, False],
+        "downsample":[4,8],
+        "ott_sharpen":[True],
         "ott_epsilon":[0.01],
         "samples":[64],
         
-        # "loss_mode":["vgg_grouped_and_l2","vgg_grouped"],
-        # "metric":["otch","otsp","l2"],
-        # "ott_internal_loss_func":["l1"],
-        # "ott_K":[5],
-        # "loss_normalize":[False],
-        # "stepsize_scaling":["convective","diffusive"],
-        # "steps_at_ds8":[32],
-        
-        "loss_mode":["ott_grouped_and_l2","ott_grouped"],
-        "ott_internal_loss_func":["l1","l2"],
+        "loss_mode":["vgg_grouped_and_l2"],
         "metric":["l2"],
-        "ott_K":[7,5,3,2],
+        "ott_internal_loss_func":["l1"],
+        "ott_K":[5],
         "loss_normalize":[False],
-        # "stepsize_scaling":["convective","diffusive"],
-        "stepsize_scaling":["convective"],
-        "steps_at_ds8":[64],
+        "stepsize_scaling":["diffusive"],
+        "steps_at_ds8":[32],
+        
+        # "loss_mode":["ott_grouped_and_l2","ott_grouped"],
+        # "ott_internal_loss_func":["l1","l2"],
+        # "metric":["l2"],
+        # "ott_K":[7,5,3,2],
+        # "loss_normalize":[False],
+        # # "stepsize_scaling":["convective","diffusive"],
+        # "stepsize_scaling":["convective"],
+        # "steps_at_ds8":[64],
         
         # "loss_mode":["clip_grouped_and_l2","clip_grouped"],
         # "ott_internal_loss_func":["l2"],
@@ -368,13 +419,14 @@ def main():
         "intermediate_growth":[1.0],
         "boundary_reg":[5.0],
         "contiguous_growth":[0.0],
-        "TRAINING_ITERATIONS": [8000],
-        "knockout":[None], # or None for baseline model training
-        "finetune_lr":[1e-4],
+        # "TRAINING_ITERATIONS": [8000],
+        # "knockout":[None], # or None for baseline model training
+        # "finetune_lr":[1e-4],
         
-        # "TRAINING_ITERATIONS": [10,100,1000,5000],
-        # "knockout":[0,24], # or None for baseline model training
-        # "finetune_lr":[1e-4,1e-5],
+        "TRAINING_ITERATIONS": [10,100,1000,5000],
+        "knockout":[0,24], # or None for baseline model training
+        "knockout_mode":["both"],# "both" or "pure" - whether to fine tune on KO data alone or to also include baseline
+        "finetune_lr":[1e-4,1e-5,1e-6],
     }
 
     HPARAMS = index_to_param_list(index,TOTAL_JOBS,FULL_HYPERPARAMETERS)
