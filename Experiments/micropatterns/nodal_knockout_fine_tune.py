@@ -137,7 +137,46 @@ def train(H,key):
         boundary_mask = np.concatenate([boundary_mask_ko,boundary_mask_base],axis=0)
         CHANNEL_TIMESTEP_MASK = np.concatenate([CHANNEL_TIMESTEP_MASK_KO,CHANNEL_TIMESTEP_MASK_BASE],axis=0)
 
+    elif H["knockout"] is not None and H["knockout_mode"]=="all":
+        data_ko_0,aux,CHANNEL_NAMES,boundary_mask_ko_0,CHANNEL_TIMESTEP_MASK_KO_0 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+            impath=DATA_PATH_GROUPED,
+            FILTER_KN_TIME=0,
+            BATCHES=1,
+            DOWNSAMPLE=DOWNSAMPLE,
+            TIMESTEPS=[0,12,24,36,48],
+            PROCESSING_MODES={
+                "map_to_0_1",
+                "downsample"
+            }
+        )
 
+        data_ko_24,aux,CHANNEL_NAMES,boundary_mask_ko_24,CHANNEL_TIMESTEP_MASK_KO_24 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+            impath=DATA_PATH_GROUPED,
+            FILTER_KN_TIME=24,
+            BATCHES=1,
+            DOWNSAMPLE=DOWNSAMPLE,
+            TIMESTEPS=[0,12,24,36,48],
+            PROCESSING_MODES={
+                "map_to_0_1",
+                "downsample"
+            }
+        )
+        data_base,aux,CHANNEL_NAMES,boundary_mask_base,CHANNEL_TIMESTEP_MASK_BASE = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+            impath=DATA_PATH_GROUPED,
+            FILTER_KN_TIME=None,
+            BATCHES=1,
+            DOWNSAMPLE=DOWNSAMPLE,
+            TIMESTEPS=[0,12,24,36,48],
+            PROCESSING_MODES={
+                "map_to_0_1",
+                "downsample"
+            }
+        )
+
+
+        data = np.concatenate([data_ko_0,data_ko_24,data_base],axis=0)
+        boundary_mask = np.concatenate([boundary_mask_ko_0,boundary_mask_ko_24,boundary_mask_base],axis=0)
+        CHANNEL_TIMESTEP_MASK = np.concatenate([CHANNEL_TIMESTEP_MASK_KO_0,CHANNEL_TIMESTEP_MASK_KO_24,CHANNEL_TIMESTEP_MASK_BASE],axis=0)
     else:
         data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=DATA_PATH_GROUPED,
@@ -217,7 +256,18 @@ def train(H,key):
     
                 
                 return x
-        
+        elif H["knockout_mode"]=="all":
+            @eqx.filter_jit
+            def jittable_callback_bit(x,x_true,OBS_CHANNELS):
+                # Here we only want 9 channels - no duplicates - as this is what the NCA sees.
+                propagate_xn = lambda x:x.at[1:].set(x[:-1])
+                reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
+                x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
+                x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
+                x[0] = x[0].at[0:,7].set(0.0) # 0h nodal knockout batch
+                x[1] = x[1].at[2:,7].set(0.0) # 24h nodal knockout batch
+                # x[2] = x[2].at[:,:OBS_CHANNELS].set(x_true[2][:,:OBS_CHANNELS]) # WT batch - set all channels to correct initial conditions
+                return x
         KNOCKOUT_ARGS={
             "time":H["knockout"]//12,
             "channel":7
@@ -345,7 +395,7 @@ def train(H,key):
             # "group":"baseline-9ch-clip-test-1",
             # "group":"baseline-9ch-train-final-diffusive-scaling",
             # "group":"baseline-9ch-train-final-ott-downsample-fix-2",
-            "group":"ko-both-l2-vgg-9ch-final-diffusive-scaling",
+            "group":"ko-all-l2-vgg-9ch-final-diffusive-scaling",
             "tags":[f"{k}:{v}" for k,v in H.items()],
             "name":FILENAME
         },
@@ -424,8 +474,8 @@ def main():
         # "finetune_lr":[1e-4],
         
         "TRAINING_ITERATIONS": [10,100,1000,5000],
-        "knockout":[0,24], # or None for baseline model training
-        "knockout_mode":["both"],# "both" or "pure" - whether to fine tune on KO data alone or to also include baseline
+        "knockout":[0], # or None for baseline model training
+        "knockout_mode":["all"],# "both" or "pure" - whether to fine tune on KO data alone or to also include baseline
         "finetune_lr":[1e-4,1e-5,1e-6],
     }
 
