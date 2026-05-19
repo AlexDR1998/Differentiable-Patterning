@@ -124,12 +124,13 @@ class AbstractModel(eqx.Module):
 		"""
 		suffix = ".eqx"
 		path = Path(path)
-		if not path.is_file():
-			raise ValueError(f'Not a file: {path}')
 		if path.suffix != suffix:
 			#raise ValueError(f'Not a {suffix} file: {path}')
-			path = path.with_suffix(suffix)
+			# path = path.with_suffix(suffix)
+			path = path + suffix
 		# with open(path, "rb") as f:
+		if not path.is_file():
+			raise ValueError(f'Not a file: {path}')
 		# 	hyperparams = json.loads(f.readline().decode())
 		# 	#func = F_rda(key=jr.PRNGKey(0), **hyperparams["pde"])
 		# 	#pde = PDE_solver(func,**hyperparams["solver"])
