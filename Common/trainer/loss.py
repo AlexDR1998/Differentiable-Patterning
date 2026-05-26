@@ -526,27 +526,27 @@ def build_loss_functions(loss_strings,loss_args):
 
 
 	_ott_aux = {
-		"D":loss_args["D"],
-		"S":loss_args["S"],
-		"K":loss_args["K"],
-		"sharpen":loss_args["sharpen"],
-		"epsilon":loss_args["epsilon"],
-		"internal_loss_func":loss_args["internal_loss_func"]
+		"D":loss_args["D"] if "D" in loss_args else None,
+		"S":loss_args["S"] if "S" in loss_args else None,
+		"K":loss_args["K"] if "K" in loss_args else None,
+		"sharpen":loss_args["sharpen"] if "sharpen" in loss_args else False,
+		"epsilon":loss_args["epsilon"] if "epsilon" in loss_args else None,
+		"internal_loss_func":loss_args["internal_loss_func"] if "internal_loss_func" in loss_args else None,
 	}
 	_emd_aux = {
-		"epsilon":loss_args["epsilon"],
-		"internal_loss_func":loss_args["internal_loss_func"],
-		"normalize":loss_args["normalize"],
-		"tau":loss_args["tau"],
+		"epsilon":loss_args["epsilon"] if "epsilon" in loss_args else None,
+		"internal_loss_func":loss_args["internal_loss_func"] if "internal_loss_func" in loss_args else None,
+		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
+		"tau":loss_args["tau"] if "tau" in loss_args else None,
 		"amplitude_penalty":loss_args["amplitude_penalty"] if "amplitude_penalty" in loss_args else False
 	}
 
 	_vgg_aux = {
-		"vgg_metric":loss_args["metric"],
-		"internal_loss_func":loss_args["internal_loss_func"],
-		"epsilon":loss_args["epsilon"],
-		"tau":loss_args["tau"],
-		"normalize":loss_args["normalize"],
+		"vgg_metric":loss_args["metric"] if "metric" in loss_args else "l2",
+		"internal_loss_func":loss_args["internal_loss_func"] if "internal_loss_func" in loss_args else None,
+		"epsilon":loss_args["epsilon"] if "epsilon" in loss_args else None,
+		"tau":loss_args["tau"] if "tau" in loss_args else None,
+		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
 		"samples":loss_args["samples"] if "samples" in loss_args else None
 	}
 	_vision_extractor = None
@@ -556,8 +556,8 @@ def build_loss_functions(loss_strings,loss_args):
 			break
 
 	_clip_aux = {
-		"clip_metric":loss_args["metric"],
-		"normalize":loss_args["normalize"],
+		"clip_metric":loss_args["metric"] if "metric" in loss_args else "l2",
+		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
 		"vision_extractor":_vision_extractor
 	}
 

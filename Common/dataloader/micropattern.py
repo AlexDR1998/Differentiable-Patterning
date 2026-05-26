@@ -967,7 +967,7 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             "C-Cer1",
             "C-Lefty2",
             "C-Nodal",
-            "D-Lef1",
+            "D-LEF1",
         ]
     else:
         cols = ["A","B","C"]
@@ -985,7 +985,7 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             "0-Cer1",
             "0-Lefty2",
             "C-Nodal",
-            "D-Lef1",
+            "D-LEF1",
         ]
 
     colony_paths = [impath+f"{i}/*" for i in cols]#,"E","F"]]
@@ -1006,13 +1006,13 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
     ]
     colony_filenames += colony_filenames_knockout
     cols+=cols_knockout
-    # print("Colony filenames: ")
-    # print(len(colony_filenames))
-    # for i in range(len(colony_filenames)):
-        # print(f"Colony {cols[i]} has {len(colony_filenames[i])} timepoints.")
-        # for j in range(len(colony_filenames[i])):
-            # print(f"  Timepoint {TIMESTEPS[j]}h has {len(colony_filenames[i][j])} channels.")
-        # pprint(colony_filenames[i])
+    print("Colony filenames: ")
+    print(len(colony_filenames))
+    for i in range(len(colony_filenames)):
+        print(f"Colony {cols[i]} has {len(colony_filenames[i])} timepoints.")
+        for j in range(len(colony_filenames[i])):
+            print(f"  Timepoint {TIMESTEPS[j]}h has {len(colony_filenames[i][j])} channels.")
+        pprint(colony_filenames[i])
     
     
     ims = []
@@ -1080,6 +1080,8 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
         ims[1:,...,7] = ims[1:,...,15] # Use FOXA2 from knockout colonies
 
         # ims[...,8:10] = 0 # No Cer1, Lefty2 channels in knockout colonies
+        ims[1:,...,8:10] = 0
+        ims[1:,...,0] = 0 # No LMBR channel in knockout colonies
         
         if FILTER_KN_TIME==0: # Manually set Nodal to 0 at the timepoints where it is knocked out
             ims[...,10] = 0
@@ -1584,6 +1586,64 @@ def load_micropattern_triangle(impath):
     # ims = jax.tree_util.treedef_tuple(ims)
     # print(jnp.mean(ims))
     return ims, masks, shapes
+
+
+def normalise_micropattern_radii(training_data, impath, percentile_thresh):
+    """
+        Loads the micropattern radii data, and normalises it such that the histogram of pixel values matches those from the training data at 48h
+    """
+    filenames = glob.glob(impath)
+    filenames = list(sorted(filenames))
+    ims = []
+    for f_str in filenames:
+        im = skimage.io.imread(f_str)
+        print(im.shape)
+        ims.append(im)
+    # Each image is a different size - we must keep as a list
+    # ims shape - [X Y C], C is SOX17 - SOX2 - TBXT - LMBR
+    # First normalise each channel in ims to 0-1
+    # clip_outliers = lambda arr,thresh: np.clip(arr, 0, np.percentile(arr, thresh))
+    def clip_outliers(arr, thresh):
+        clipped = np.zeros_like(arr)
+        for c in range(arr.shape[-1]):
+            clipped[..., c] = np.clip(arr[..., c], 0, np.percentile(arr[..., c], thresh[c]))
+        return clipped
+    normalise = lambda arr: arr / np.max(arr, axis=(0, 1))
+    swap_channel_order = lambda arr: arr[:, :, [3, 2, 0, 1]]  # Swap to LMBR, TBXT, SOX17, SOX2 order
+    # ims = list(map(lambda im: clip_outliers(im, percentile_thresh), ims))
+    # percentile thresh is a list of thresholds for each channel, we apply them separately
+    ims = list(map(swap_channel_order, ims))
+    ims = list(map(lambda im: clip_outliers(im, percentile_thresh), ims))
+    ims = list(map(normalise, ims))
+
+    # Now scale each channel so the max and min match those from the training data at 48h
+    # We assume the order of channels in ims is the same as in training data (LMBR, TBXT, SOX17, SOX2)
+    # We also assume the histogram of pixel values in the training data at 48h is representative of the desired distribution for the radii data
+    training_ims_48h = training_data[0, -1, :4]  # Shape is [B, T, C, X, Y] -> [C,X,Y]
+    training_max = np.max(training_ims_48h, axis=(1, 2))  # Max for each channel
+    training_min = np.min(training_ims_48h, axis=(1, 2))  # Min for each channel
+    print("Training data max values at 48h:", training_max)
+    print("Training data min values at 48h:", training_min)
+    scaled_ims = []
+    for im in ims:
+        scaled_channels = []
+        for c in range(im.shape[-1]):
+            channel = im[:, :, c]
+            channel_min = np.min(channel)
+            channel_max = np.max(channel)
+            # Scale to 0-1
+            channel_scaled = (channel - channel_min) / (channel_max - channel_min + 1e-8)
+            # Now scale to match training data
+            channel_scaled = channel_scaled * (training_max[c] - training_min[c]) + training_min[c]
+            scaled_channels.append(channel_scaled)
+        scaled_im = np.stack(scaled_channels, axis=-1)
+        scaled_ims.append(scaled_im)
+    return scaled_ims
+
+
+
+
+
 
 
 def shift_image(img, shift_val):

@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 from tqdm import tqdm
-# import cmapy
+import cmapy
 from jaxtyping import Array, Float
 from einops import repeat
 def save_to_video_mono(data: Float[Array, "N X Y"], filename, fps=30, duration=10, SCALE_UP=4, cmap='viridis'):
@@ -14,13 +14,13 @@ def save_to_video_mono(data: Float[Array, "N X Y"], filename, fps=30, duration=1
     #print(data.shape)
     data = np.array(data)
     height,width = data[0].shape
-    step_ratio = int(duration*fps/data.shape[0])
+    step_ratio = max(1, int(duration*fps/data.shape[0]))
     out = cv2.VideoWriter(filename, fourcc, fps, (width*SCALE_UP, height*SCALE_UP),True)
     for i in range(data.shape[0]*step_ratio):
         #frame = np.uint8(cmapy.colorize(frame, cmap=cmap)*255)
         frame = data[i//step_ratio]
         #print(frame.shape)
-        # frame = cv2.applyColorMap(to_uint8(frame), cmapy.cmap(cmap))
+        frame = cv2.applyColorMap(to_uint8(frame), cmapy.cmap(cmap))
         #print(frame.shape)
         frame = upscale(frame)
         #print(frame.shape)
@@ -44,7 +44,7 @@ def save_to_video_rgb(data: Float[Array, "N X Y C"], filename, fps=30, duration=
     height = data.shape[1]
     width = data.shape[2]
     print(height,width)
-    step_ratio = int(duration*fps/data.shape[0])
+    step_ratio = max(1, int(duration*fps/data.shape[0]))
     out = cv2.VideoWriter(filename, fourcc, fps, (width*SCALE_UP, height*SCALE_UP),True)
     for i in tqdm(range(data.shape[0]*step_ratio)):
         #frame = np.uint8(cmapy.colorize(frame, cmap=cmap)*255)

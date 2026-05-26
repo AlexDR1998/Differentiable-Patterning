@@ -1,18 +1,22 @@
 import jax
 import json
-import jax.numpy as jnp
 import equinox as eqx
-import time
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 import abc
 
 
 class AbstractModel(eqx.Module):
 	
 	@abc.abstractmethod
-	def __call__(self):
-		pass
+	def __call__(self, *args, **kwargs) -> Any:
+		raise NotImplementedError
+
+	def prepare_state(self, x):
+		return x
+
+	def process(self, x):
+		return x
 	
 	def partition(self):
 		"""
