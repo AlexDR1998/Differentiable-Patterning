@@ -7,8 +7,11 @@ from jaxtyping import Float,Array,Key,PyTree
 import os
 import jax.random as jr
 import time
+from dotenv import load_dotenv
+load_dotenv()
+PVC_PATH = os.getenv("PVC_PATH")
 LOG_BACKEND = os.environ.get("LOG_BACKEND", "wandb")
-PVC_PATH = "mnt/ceph/ar-dp/"  # Path to the PVC where the data is stored
+# PVC_PATH = "mnt/ceph/ar-dp/"  # Path to the PVC where the data is stored
 #if LOG_BACKEND=="wandb":
 from Common.trainer.abstract_wandb_log import Train_log
 #elif LOG_BACKEND=="tensorboard":
@@ -27,20 +30,21 @@ class NCA_Train_log(Train_log):
 			i : training step
 		"""
 		
-		
-		w1,w2,b2 = nca.get_weights()
-		w1 = np.squeeze(w1)
-		w2 = np.squeeze(w2)
-		b2 = np.squeeze(b2)
+		for idx, w in enumerate(nca.get_weights()):
+			self.log_histogram(f"Train/weight_{idx}", np.squeeze(w), step=i)
+		# w1,w2,b2 = nca.get_weights()
+		# w1 = np.squeeze(w1)
+		# w2 = np.squeeze(w2)
+		# b2 = np.squeeze(b2)
 				
-		self.log_histogram('Train/input_layer_weights',w1,step=i)
-		self.log_histogram('Train/output_layer_weights',w2,step=i)
-		self.log_histogram('Train/output_layer_bias',b2,step=i)				
-		weight_matrix_figs = plot_weight_matrices(nca)
-		self.log_image("Train/weight_matrices",np.array(weight_matrix_figs)[:,0],step=i)
+		# self.log_histogram('Train/input_layer_weights',w1,step=i)
+		# self.log_histogram('Train/output_layer_weights',w2,step=i)
+		# self.log_histogram('Train/output_layer_bias',b2,step=i)				
+		# weight_matrix_figs = plot_weight_matrices(nca)
+		# self.log_image("Train/weight_matrices",np.array(weight_matrix_figs)[:,0],step=i)
 				
-		kernel_weight_figs = plot_weight_kernel_boxplot(nca)
-		self.log_image("Train/input_weights_per_kernel",np.array(kernel_weight_figs)[:,0],step=i)
+		# kernel_weight_figs = plot_weight_kernel_boxplot(nca)
+		# self.log_image("Train/input_weights_per_kernel",np.array(kernel_weight_figs)[:,0],step=i)
 
 	def log_model_outputs(self,
 					      x: PyTree[Float[Array, "N CHANNELS x y"], "B"], # type: ignore
@@ -231,11 +235,6 @@ class aNCA_Train_log(NCA_Train_log):
 		pass
 			
 
-
-
-
-
-
 class kaNCA_Train_log(NCA_Train_log):
 	def log_model_parameters(self,nca,i):
 		#Log weights and biasses of model every 10 training epochs
@@ -248,6 +247,13 @@ class kaNCA_Train_log(NCA_Train_log):
 class kaNCA_Train_pde_log(kaNCA_Train_log):
 	def log_model_outputs(self, x, i):
 		pass # Saving the trajectory outputs during training generates far too many images
+
+
+# class uNCA_Train_log(NCA_Train_log):
+# 	def log_model_parameters(self, nca, i):
+# 		# uNCA exposes additional trainable arrays; log all weights generically.
+# 		for idx, w in enumerate(nca.get_weights()):
+# 			self.log_histogram(f"Train/weight_{idx}", np.squeeze(w), step=i)
 
 
 

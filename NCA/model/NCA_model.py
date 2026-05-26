@@ -279,10 +279,10 @@ class NCA(AbstractModel):
 			key: Key =jax.random.PRNGKey(int(time.time())))->Float[Array,"{iters} {self.N_CHANNELS} x y"]:
 		
 		trajectory = []
-		trajectory.append(x)
+		trajectory.append(self.process(x))
 		for i in range(iters):
 			key = jax.random.fold_in(key,i)
 			x = self(x,callback,key=key)
-			trajectory.append(x)
-		return jnp.array(trajectory)
+			trajectory.append(self.process(x))
+		return jnp.stack(trajectory)
 		

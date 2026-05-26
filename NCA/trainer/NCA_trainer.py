@@ -8,21 +8,18 @@ import datetime
 # import Common.trainer.loss as loss
 # import Common.trainer.loss_ott as loss_ott
 from Common.trainer.loss import build_loss_functions
-import jaxpruner
-from functools import partial
 from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, mNCA_Train_log, aNCA_Train_log, NCA_knockout_Train_log
 from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
 from NCA.model.NCA_multihead_attention import aNCA
 from NCA.trainer.data_augmenter_nca import DataAugmenter
+import NCA.trainer.NCA_regulariser as regularisers
 from einops import repeat, reduce, rearrange, einsum
 from Common.utils import key_pytree_gen
 from Common.model.boundary import model_boundary, hard_boundary, no_boundary
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key
 import time
-
-
 class NCA_Trainer(object):
 	"""
 	General class for training NCA model to data trajectories
@@ -159,6 +156,8 @@ class NCA_Trainer(object):
 					self.LOGGER = mNCA_Train_log(self.LOG_DIR,self._data_raw)
 				elif isinstance(self.NCA_model , aNCA):
 					self.LOGGER = aNCA_Train_log(self.LOG_DIR,self._data_raw)
+				# elif isinstance(self.NCA_model, uNCA):
+					# self.LOGGER = uNCA_Train_log(self.LOG_DIR, self._data_raw)
 				else:
 					self.LOGGER = NCA_Train_log(self.LOG_DIR, self._data_raw)
 				print("Logging training to: "+self.LOG_DIR)
@@ -175,7 +174,7 @@ class NCA_Trainer(object):
 				# 	self.LOGGER = mNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
 				# elif isinstance(self.NCA_model , aNCA):
 				# 	self.LOGGER = aNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
-				if KNOCKOUT_ARGS["time"] is not None:
+				if KNOCKOUT_ARGS["time"] is not None: # Nodal KO has differet logging behaviour
 					self.LOGGER = NCA_knockout_Train_log(
 						data=self._data_raw,
 						wandb_config=wandb_args,
@@ -186,9 +185,10 @@ class NCA_Trainer(object):
 				print("Logging training to: "+self.LOG_DIR)
 		self.MODEL_PATH = self._MODEL_DIRECTORY+self.model_filename
 		print("Saving model to: "+self.MODEL_PATH)
-		
+
 	@eqx.filter_jit	
 	def loss_func(self,
+			      nca,
 			   	  x:Float[Array, "N CHANNELS x y"],  # noqa: F722
 				  y:Float[Array, "N CHANNELS x y"],  # noqa: F722
 				  channel_time_mask:Float[Array, "N OBS_CHANNELS"],  # noqa: F722
@@ -211,10 +211,14 @@ class NCA_Trainer(object):
 		loss : float32 array [N]
 			loss for each timestep of trajectory
 		"""
+		x = nca.process(x)
+		# if x.shape[-2:] != y.shape[-2:]:
+			# x = jax.image.resize(x, y.shape, method="linear")
+		
 		x_obs = x[:,:self.OBS_CHANNELS]
 		y_obs = y[:,:self.DATA_CHANNELS]
 		if self.GRAD_LOSS:
-			v_perception = jax.vmap(self.NCA_model.perception,in_axes=0,out_axes=0)
+			v_perception = jax.vmap(nca.perception,in_axes=0,out_axes=0)
 			x_obs = v_perception(x_obs)
 			y_obs = v_perception(y_obs)
 			x_obs = x_obs.at[:,self.OBS_CHANNELS:].set(0.1*x_obs[:,self.OBS_CHANNELS:])
@@ -234,141 +238,14 @@ class NCA_Trainer(object):
 			# loss_aux = self.LOSS_FUNC_AUX[idx]
 			# losses.append(f(x_obs, y_obs, key, loss_mask, loss_aux))
 			losses.append(f(x_obs, y_obs, key, loss_mask))
-
+						
 		losses = jnp.array(losses)
 	
 	
 	
 		return reduce(losses,"loss_funcs N -> N","mean")
-	@eqx.filter_jit
-	def intermediate_reg(self,x,x_new,vv_nca,key):
-		"""
-		Intermediate state regulariser - tracks how much of x is outwith [0,1]
-		
-		NOTE: IS NOW TREE-MAPPED OVER BATCHES TO HANDLE DIFFERENT SIZES OF GRID IN EACH BATCH
-
-		Parameters
-		----------
-		x : float32 array [N,CHANNELS,_,_]
-			NCA state
-		full : boolean
-			Flag for whether to only regularise observable channel (true) or all channels (false)
-		Returns
-		-------
-		reg : float
-			float tracking how much of x is outwith range [0,1]
-
-		"""
-		def _reg(x_new,full=True):
-			# if not full:
-				# x = x[:,:self.OBS_CHANNELS]
-			return jnp.mean(jnp.abs(x_new)+jnp.abs(x_new-1)-1)
-		return jnp.array(jtu.tree_map(_reg,x_new))
-			# v_intermediate_reg = lambda x:jnp.array(jax.tree_util.tree_map(self.intermediate_reg,x))  # noqa: E731
-		
-
-	def boundary_regulariser(self,x,x_new,vv_nca,key):
-		"""
-		Penalise the model for any nonzero components outside the boundary mask
-		Parameters
-		----------
-		x : float32 PyTree [BATCH] Array [,N,CHANNELS,_,_]
-			NCA state
-		Returns
-		-------
-		reg : float32 PyTree [BATCH]
-		
-		"""
-		x_in_bound = jax.tree_util.tree_map(lambda f,x:f(x),self.BOUNDARY_CALLBACK,x_new)
-		x_out_bound = jax.tree_util.tree_map(lambda x,y: x-y,x_new,x_in_bound)
-		return jnp.array(jax.tree_util.tree_map(lambda x: jnp.mean(jnp.abs(x)),x_out_bound))
-	@eqx.filter_jit
-	def contiguous_growth_regulariser(self,x,x_new,vv_nca,key):
-		"""
-		Contiguous state regulariser. For the observable channels, penalises any growth of those channels that occurs more than
-		N cells out from the current block of high cells. Intended to stop regions of cells growing seemingly out of nowhere.
-
-		NOTE: VMAP THIS OVER BATCHES
-
-		Parameters
-		----------
-		x : float32 array [N,CHANNELS,_,_]
-			NCA state
-		x_previous : float32 array [N,CHANNELS,_,_]
-			Previous NCA state
-		Returns
-		-------
-		reg : float
-			float tracking how much of growth of x in observable channels occurs outwith the bounding region of high observable cells in x_previous 
-
-		"""
-		def _reg(x_new,x):
-			x_new = x_new[:,:self.OBS_CHANNELS]
-			x = x[:,:self.OBS_CHANNELS]
-			dx = jax.nn.relu(x_new - x) # How much obs growth
-			# kernel = jnp.array([[1,1,1],[1,1,1],[1,1,1]],dtype=jnp.float32)
-			kernel = jnp.ones((3,3),dtype=jnp.float32)
-			kernel = repeat(kernel,"w h -> O I w h",O=1,I=self.OBS_CHANNELS)
-			dilation = jax.lax.conv_general_dilated(
-				lhs=x,
-				rhs=kernel,
-				window_strides=(1, 1),
-				padding="SAME",
-			)
-			dilation = 1 - jax.nn.sigmoid((dilation-5.0)*10.0)
-			dilation = repeat(dilation,"N () w h -> N C w h",C=self.OBS_CHANNELS)
-			err = jnp.mean(dilation*dx)
-			return err
-		return jnp.array(jtu.tree_map(_reg,x_new,x))
-
-	def update_sensitivity_regulariser(self,x,x_new,vv_nca,key):
-		"""
-		Measures NCA update step sensitivity to small changes in inputs. Computes a second update step with a small amount of noise added to the input.
-		Minimized by NCA model that is insensitive to small changes in input.
 	
-		Parameters
-		----------
-			x: PyTree [Batch] of Arrays [N C H W]
-			x_new: PyTree [Batch] of Arrays [N C H W]
-			vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
-			key: Jax PRNGkey
-		Returns:
-			Sensitivity: List [Batch] of floats
-		"""
-
-		noise_amount = 0.1
-		key_array_noise = key_pytree_gen(key,[len(x)])
-		x_noise = jtu.tree_map(lambda x,key:x+noise_amount*jr.normal(key,shape=x.shape),x,key_array_noise) # x with gaussian noise added
-		key_array_nca = key_pytree_gen(key,(len(x),x[0].shape[0]))
-		x_new_noise = vv_nca(x_noise,self.BOUNDARY_CALLBACK,key_array_nca)
-		diffs = jtu.tree_map(lambda x,x_noise,x_new,x_new_noise:jnp.mean(jnp.abs(x_new-x_new_noise)),x,x_noise,x_new,x_new_noise)
-
-		return jnp.array(diffs)
 	
-	def perturbation_conservation_regulariser(self,x,x_new,vv_nca,key):
-		"""
-		Measures NCA update step sensitivity to small changes in inputs. Computes a second update step with a small amount of noise added to the input.
-		Minimized by NCA model that is linearly proportional to small changes in input. I.e. if input is changed by dx, output should change by ~dx
-
-
-		Parameters
-		----------
-			x: PyTree [Batch] of Arrays [N C H W]
-			x_new: PyTree [Batch] of Arrays [N C H W]
-			vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
-			key: Jax PRNGkey
-		Returns:
-			Loss: List [Batch] of floats
-		"""
-		noise_amount = 0.1
-		key_array_noise = key_pytree_gen(key,[len(x)])
-		x_noise = jtu.tree_map(lambda x,key:x+noise_amount*jr.normal(key,shape=x.shape),x,key_array_noise) # x with gaussian noise added
-		key_array_nca = key_pytree_gen(key,(len(x),x[0].shape[0]))
-		x_new_noise = vv_nca(x_noise,self.BOUNDARY_CALLBACK,key_array_nca)
-
-		diffs = jtu.tree_map(lambda x,x_noise,x_new,x_new_noise:jnp.mean(jnp.abs(jnp.abs(x_new-x_new_noise)-jnp.abs(x-x_noise))),x,x_noise,x_new,x_new_noise)
-		return jnp.array(diffs)
-
 	def train(self,
 		      t,
 			  iters,
@@ -399,7 +276,8 @@ class NCA_Trainer(object):
 			  KNOCKOUT_ARGS = {
 				  "time":None,
 				  "channel":None
-			  },			  
+			  },
+			#   NCA_MODEL_AUX_ARGS = None,			  
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
@@ -410,7 +288,7 @@ class NCA_Trainer(object):
 		"""
 		Perform t steps of NCA on x, compare output to y, compute loss and gradients of loss wrt model parameters, and update parameters.
 
-		Parameters
+			log_x = jtu.tree_map(self.NCA_model.process, x_new)
 		----------
 		t : int
 			number of NCA timesteps between x[N] and x[N+1]
@@ -435,6 +313,8 @@ class NCA_Trainer(object):
 			Whether to prune model weights to a target sparsity
 		TARGET_SPARSITY : float
 			Target sparsity for model pruning - [0,1]
+		NCA_MODEL_AUX_ARGS : dict, optional
+			Additional arguments for the NCA model
 		key : jr.PRNGKey, optional
 			Jax random number key. The default is jr.PRNGKey(int(time.time())).
 		Returns
@@ -470,11 +350,11 @@ class NCA_Trainer(object):
 		self.LOSS_FUNC_CHANNELS = LOSS_FUNC_CHANNELS
 		
 		REG_FUNCS = {
-			"intermediate_state":self.intermediate_reg,
-			"boundary":self.boundary_regulariser,
-			"contiguous_growth":self.contiguous_growth_regulariser,
-			"update_sensitivity":self.update_sensitivity_regulariser,
-			"perturbation_conservation":self.perturbation_conservation_regulariser
+			"intermediate_state":regularisers.intermediate_reg,
+			"boundary":regularisers.boundary_regulariser,
+			"contiguous_growth":regularisers.contiguous_growth_regulariser,
+			"update_sensitivity":regularisers.update_sensitivity_regulariser,
+			"perturbation_conservation":regularisers.perturbation_conservation_regulariser
 		}
 		
 
@@ -515,8 +395,9 @@ class NCA_Trainer(object):
 			"""
 
 			def apply_intermediate_regs(reg_logs,x,x_new,vv_nca,key):
+				aux = {"BOUNDARY_CALLBACK": self.BOUNDARY_CALLBACK, "OBS_CHANNELS": self.OBS_CHANNELS}
 				for name in REGULARISER_COEFFS.keys():
-					reg_logs[name]+=REG_FUNCS[name](x,x_new,vv_nca,key)
+					reg_logs[name]+=REG_FUNCS[name](x,x_new,vv_nca,aux,key)
 				return reg_logs
 			
 			@eqx.filter_value_and_grad(has_aux=True)
@@ -524,18 +405,29 @@ class NCA_Trainer(object):
 				# Gradient and values of loss function computed here
 				_nca = eqx.combine(nca_diff,nca_static)
 				v_nca = jax.vmap(_nca,in_axes=(0,None,0),out_axes=0,axis_name="N") # boundary is independant of time N
-				vv_nca = lambda x,callback,key_array:jax.tree_util.tree_map(v_nca,x,callback,key_array)  # noqa: E731
-				# vv_nca = jax.vmap(v_nca,in_axes=(0,0,0),out_axes=0,axis_name="B") # boundary can be different for each batch
+				vv_nca = lambda x,callback,key_array: jtu.tree_map(v_nca,x,callback,key_array)  # noqa: E731
+				
 				reg_logs_internal = {name: jnp.zeros(len(x)) for name in REGULARISER_COEFFS.keys()}
-				# _loss_func = lambda x,y,key:self.loss_func(x,y,key)  # noqa: E731
-				v_loss_func = lambda x,y,channel_loss_mask,key_array:jnp.array(jax.tree_util.tree_map(self.loss_func,x,y,channel_loss_mask,key_array))  # noqa: E731
+				
+				v_loss_func = lambda x,y,channel_loss_mask,key_array: jnp.array(
+					jtu.tree_map(
+						lambda x_i, y_i, mask_i, key_i: self.loss_func(
+							_nca, x_i, y_i, mask_i, key_i
+						),
+						x,
+						y,
+						channel_loss_mask,
+						key_array,
+					)
+				)  # noqa: E731
+				state_shape = x[0].shape[0] # Assumes the same number of outer timesteps in each batch.
 				
 				# Structuring this as function and lax.scan speeds up jit compile a lot
 				def nca_step(carry,j): # function of type a,b -> a
 					key,x,reg_logs_internal = carry
 					# Apply NCA update step
 					key = jr.fold_in(key,j)
-					key_array = key_pytree_gen(key,(len(x),x[0].shape[0]))
+					key_array = key_pytree_gen(key,(len(x),state_shape))
 					x_new = vv_nca(x,self.BOUNDARY_CALLBACK,key_array)
 					reg_logs_internal = apply_intermediate_regs(reg_logs_internal,x,x_new,vv_nca,key)
 
@@ -569,6 +461,10 @@ class NCA_Trainer(object):
 			return nca,x,y,t,opt_state,key,mean_loss,losses,reg_loss
 
 		nca = self.NCA_model
+		# Some NCA model variants have an auxiliary argument dict in their call method.
+		# if NCA_MODEL_AUX_ARGS is not None:
+			# nca = lambda x,boundary_callback,key: self.NCA_model(x=x,boundary_callback=boundary_callback,key=key,aux=NCA_MODEL_AUX_ARGS)
+
 		nca_diff,nca_static = nca.partition()
 		
 
@@ -584,6 +480,8 @@ class NCA_Trainer(object):
 		
 		# # Split data into x and y
 		x,y = self.DATA_AUGMENTER.data_load(key)
+		x = jtu.tree_map(self.NCA_model.prepare_state, x)
+		use_processed_output = hasattr(self.NCA_model, "SPATIAL_UPSAMPLE")
 		print(f"Initial x shape: {jnp.array(x).shape}, y shape: {jnp.array(y).shape}",flush=True)
 		
 		
@@ -630,7 +528,8 @@ class NCA_Trainer(object):
 
 			
 			if self.IS_LOGGING:
-				self.LOGGER.tb_training_loop_log_sequence(losses, reg_loss, x_new, i, nca,write_images=WRITE_IMAGES,LOG_EVERY=LOG_EVERY)
+				log_x = jtu.tree_map(self.NCA_model.process, x_new)
+				self.LOGGER.tb_training_loop_log_sequence(losses, reg_loss, log_x, i, nca,write_images=WRITE_IMAGES,LOG_EVERY=LOG_EVERY)
 			
 			if jnp.isnan(mean_loss):
 				error = 1
@@ -648,7 +547,7 @@ class NCA_Trainer(object):
 			# Do data augmentation update
 			if error==0:
 				#if i%UPDATE_DATA_EVERY==0 or i<WARMUP:
-				if loss_diff<loss_diff_thresh or i<WARMUP:
+				if not use_processed_output and (loss_diff<loss_diff_thresh or i<WARMUP):
 					x,y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
 				
 				
