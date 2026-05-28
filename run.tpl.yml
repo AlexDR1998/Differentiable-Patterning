@@ -25,7 +25,7 @@ spec:
               - name: MY_EXPERIMENT 
                 value: experiment1
               - name: JOB_COMPLETION_INDEX
-                value: "$(JOB_COMPLETION_INDEX)"
+                value: $JOB_COMPLETION_INDEX
               volumeMounts:
                 - name: workspace
                   mountPath: /workspace
