@@ -1,18 +1,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-    # generateName: "${JOB_NAME_PREFIX}-"
     generateName: $USER-
     labels:
       eidf/user: $USER
       kueue.x-k8s.io/queue-name: $KUBE_USER_QUEUE
-    # labels:
-        # kueue.x-k8s.io/queue-name:  eidf151ns-user-queue
 spec:
     completions: 1
     template:
         metadata:
-            # name: ar-dp-pod
             labels:
               eidf/user: $USER
         spec:
@@ -22,38 +18,37 @@ spec:
               image: alexdr1998/jax_equinox_scratch:latest
               imagePullPolicy: Always
               command: ["bash","/mnt/ceph/ar-dp/run_multi_gpu.sh"]
-              args: ["${JOB_PATH_TO_PYTHON_SCRIPT}","${JOB_NUM_GPUS}"]
+              args: ["${JOB_PATH_TO_PYTHON_SCRIPT}"]
+              env:
+              - name: MY_USERNAME
+                value: $USER
+              - name: MY_EXPERIMENT 
+                value: experiment1
+              - name: JOB_COMPLETION_INDEX
+                value: "$(JOB_COMPLETION_INDEX)"
               volumeMounts:
                 - name: workspace
                   mountPath: /workspace
                   readOnly: true
                 - name: writeable
                   mountPath: /workspace/writeable
-                - name: publicdata
-                  mountPath: /public
-                  readOnly: true
               resources:
                 requests:
-                  cpu: 16
+                  cpu: 8
                   memory: "80Gi"
                 limits:
-                  cpu: 16
+                  cpu: 8
                   memory: "80Gi"
                   nvidia.com/gpu: 1
             nodeSelector:
                 nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
-            
             volumes:
               - name: workspace
                 nfs:
-                  server: $NFS_SERVER_IP
+                  server: $EIDF107_USER_DATA_NFS_HOST_IP
                   path: $WORKING_DIR
               - name: writeable
                 persistentVolumeClaim:
                   claimName: $USER-ws1
-              - name: publicdata
-                nfs:
-                  server: $INFORMATICS_NFS_SERVER_IP
-                  path: /public
 
 
