@@ -9,7 +9,7 @@ metadata:
 spec:
     backoffLimitPerIndex: 0
     # maxFailedIndexes: $N_PODS
-    # completions: $N_PODS
+    completions: $N_PODS
     completionMode: Indexed
     parallelism: 1
     template:
