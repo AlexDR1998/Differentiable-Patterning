@@ -1,0 +1,13 @@
+experiment_name: example_template
+entrypoint: Experiments.hydra_template.example_experiment:run
+output_subdir: generated/example_template
+seed_mode: index
+grid:
+  data.dataset: [synthetic_a, synthetic_b]
+  model.channels: [16, 32]
+  model.fire_rate: [0.5, 1.0]
+  optimiser.learn_rate: [0.001, 0.0005]
+  loss.primary: [l2, vgg]
+  run.t: [32]
+  run.iterations: [200]
+  trainer.grad_loss: [true]

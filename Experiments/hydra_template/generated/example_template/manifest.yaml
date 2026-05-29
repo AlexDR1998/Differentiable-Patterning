@@ -1,0 +1,2728 @@
+experiment_name: example_template
+entrypoint: example_experiment:run
+base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/hydra_template/conf/config.yaml
+sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/hydra_template/conf/experiments/example_sweep.yaml
+output_dir: Experiments/hydra_template/generated/example_template
+count: 32
+configs:
+- index: 0
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 16
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.001
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 0
+  config:
+    seed: 0
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 1
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 16
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.001
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 1
+  config:
+    seed: 1
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 2
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 16
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.0005
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 2
+  config:
+    seed: 2
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 3
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 16
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.0005
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 3
+  config:
+    seed: 3
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 4
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 16
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.001
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 4
+  config:
+    seed: 4
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 5
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 16
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.001
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 5
+  config:
+    seed: 5
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 6
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 16
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.0005
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 6
+  config:
+    seed: 6
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 7
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 16
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.0005
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 7
+  config:
+    seed: 7
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 8
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 32
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.001
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 8
+  config:
+    seed: 8
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 9
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 32
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.001
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 9
+  config:
+    seed: 9
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 10
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 32
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.0005
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 10
+  config:
+    seed: 10
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 11
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 32
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.0005
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 11
+  config:
+    seed: 11
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 12
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 32
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.001
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 12
+  config:
+    seed: 12
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 13
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 32
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.001
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 13
+  config:
+    seed: 13
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 14
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 32
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.0005
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 14
+  config:
+    seed: 14
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 15
+  overrides:
+    data.dataset: synthetic_a
+    model.channels: 32
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.0005
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 15
+  config:
+    seed: 15
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_a
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 16
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 16
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.001
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 16
+  config:
+    seed: 16
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 17
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 16
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.001
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 17
+  config:
+    seed: 17
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 18
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 16
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.0005
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 18
+  config:
+    seed: 18
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 19
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 16
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.0005
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 19
+  config:
+    seed: 19
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 20
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 16
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.001
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 20
+  config:
+    seed: 20
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 21
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 16
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.001
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 21
+  config:
+    seed: 21
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 22
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 16
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.0005
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 22
+  config:
+    seed: 22
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 23
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 16
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.0005
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 23
+  config:
+    seed: 23
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 24
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 32
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.001
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 24
+  config:
+    seed: 24
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 25
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 32
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.001
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 25
+  config:
+    seed: 25
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 26
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 32
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.0005
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 26
+  config:
+    seed: 26
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 27
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 32
+    model.fire_rate: 0.5
+    optimiser.learn_rate: 0.0005
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 27
+  config:
+    seed: 27
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 28
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 32
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.001
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 28
+  config:
+    seed: 28
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 29
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 32
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.001
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 29
+  config:
+    seed: 29
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 30
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 32
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.0005
+    loss.primary: l2
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 30
+  config:
+    seed: 30
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+- index: 31
+  overrides:
+    data.dataset: synthetic_b
+    model.channels: 32
+    model.fire_rate: 1.0
+    optimiser.learn_rate: 0.0005
+    loss.primary: vgg
+    run.t: 32
+    run.iterations: 200
+    trainer.grad_loss: true
+    seed: 31
+  config:
+    seed: 31
+    experiment:
+      name: nca_template
+    data:
+      source: generic_sequence
+      dataset: synthetic_b
+      batches: 2
+      timesteps:
+      - 0
+      - 8
+      - 16
+      - 24
+      observed_channels: 4
+      data_channels: 4
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 1.0
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      name: nadam
+      learn_rate: 0.0005
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: vgg
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 200
+      warmup: 64
+      log_every: 40
+      clear_cache_every: 100
+      write_images: false
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA
+        group: hydra-template
+        tags:
+        - training
+    knockout:
+      time: null
+      channel: null
+emit_files: false

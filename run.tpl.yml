@@ -5,8 +5,13 @@ metadata:
     labels:
       eidf/user: $USER
       kueue.x-k8s.io/queue-name: $KUBE_USER_QUEUE
+      kueue.x-k8s.io/priority-class: batch-workload-priority
 spec:
-    completions: 1
+    backoffLimitPerIndex: 0
+    maxFailedIndexes: $N_PODS
+    completions: $N_PODS
+    completionMode: Indexed
+    parallelism: 1
     template:
         metadata:
             labels:
@@ -16,15 +21,18 @@ spec:
             containers:
             - name: differentiable-patterning
               image: alexdr1998/jax_equinox_scratch:latest
-              imagePullPolicy: Always
-              command: ["python", "${JOB_PATH_TO_PYTHON_SCRIPT}"]
+              imagePullPolicy: IfNotPresent
+              # command: ["python", "${JOB_PATH_TO_PYTHON_SCRIPT}"]
+              command: ["/bin/bash", "-lc"]
+              args:
+                - "bash ./launch_inside_pod.sh $PATH_TO_PYTHON_SCRIPT $PATH_TO_EXPERIMENT_CONFIG"
               env:
-              - name: MY_USERNAME
-                value: $USER
-              - name: MY_EXPERIMENT 
-                value: experiment1
-              - name: JOB_COMPLETION_INDEX
-                value: $JOB_COMPLETION_INDEX
+              # - name: MY_USERNAME
+                # value: $USER
+              - name: JOB_WORKER_INDEX
+                value: $JOB_WORKER_INDEX
+              - name: JOB_WORKER_COUNT
+                value: $JOB_WORKER_COUNT
               volumeMounts:
                 - name: workspace
                   mountPath: /workspace
