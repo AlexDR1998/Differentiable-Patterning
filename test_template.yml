@@ -42,20 +42,13 @@ spec:
             readOnly: true
           - name: writeable
             mountPath: /workspace/writeable
-          - name: publicdata
-            mountPath: /public
-            readOnly: true
       # nodeSelector:
       #  nvidia.com/gpu.product: NVIDIA-A100-SXM4-40GB
       volumes:
         - name: workspace
           nfs:
             server: $EIDF107_USER_DATA_NFS_HOST_IP
-            path: user/$USER
+            path: /user/$USER
         - name: writeable
           persistentVolumeClaim:
              claimName: $USER-ws1
-        - name: publicdata
-          nfs:
-            server: $INFORMATICS_NFS_SERVER_IP
-            path: /public
