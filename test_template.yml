@@ -9,6 +9,9 @@ metadata:
 spec:
   backoffLimit: 0
   ttlSecondsAfterFinished: 300
+  parallelism: 1
+  completions: $N_PODS
+  completionMode: Indexed
   template:
     metadata:
       labels:
@@ -20,7 +23,9 @@ spec:
         image: huggingface/transformers-pytorch-gpu:latest 
         imagePullPolicy: IfNotPresent
         workingDir: "/workspace"
-        command: ["/bin/bash", "./run.sh"]
+        command: ["/bin/bash", "-lc"]
+        args:
+          - "exec ./run_test.sh $((JOB_COMPLETION_INDEX + 1))"
         env:
           - name: MY_USERNAME
             value: $USER
