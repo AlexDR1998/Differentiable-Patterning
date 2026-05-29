@@ -43,11 +43,11 @@ spec:
               resources:
                 limits:
                   cpu: 2
-                  memory: "64Gi"
-                  nvidia.com/gpu: 1
-            nodeSelector:
+                  memory: "16Gi"
+                  nvidia.com/gpu: 0
+            # nodeSelector:
                 # nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
-                nvidia.com/gpu.product: NVIDIA-A100-SXM4-80GB
+                # nvidia.com/gpu.product: NVIDIA-A100-SXM4-80GB
             volumes:
               - name: workspace
                 nfs:
