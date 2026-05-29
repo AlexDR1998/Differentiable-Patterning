@@ -8,6 +8,7 @@ metadata:
     kueue.x-k8s.io/priority-class: batch-workload-priority
 spec:
   backoffLimitPerIndex: 0
+  maxFailedIndexes: $N_PODS
   ttlSecondsAfterFinished: 300
   parallelism: 2
   completions: $N_PODS
