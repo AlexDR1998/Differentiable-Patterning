@@ -5,7 +5,8 @@ metadata:
     labels:
       eidf/user: $USER
       kueue.x-k8s.io/queue-name: $KUBE_USER_QUEUE
-      kueue.x-k8s.io/priority-class: batch-workload-priority
+      # kueue.x-k8s.io/priority-class: batch-workload-priority
+      kueue.x-k8s.io/priority-class: short-workload-high-priority
 spec:
     backoffLimitPerIndex: 0
     # maxFailedIndexes: $N_PODS
@@ -41,11 +42,11 @@ spec:
                   mountPath: /workspace/writeable
               resources:
                 limits:
-                  cpu: 8
-                  memory: "80Gi"
+                  cpu: 2
+                  memory: "64Gi"
                   nvidia.com/gpu: 1
-            nodeSelector:
-                nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
+            # nodeSelector:
+                # nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
             volumes:
               - name: workspace
                 nfs:
