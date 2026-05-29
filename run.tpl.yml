@@ -26,7 +26,7 @@ spec:
               # command: ["python", "${JOB_PATH_TO_PYTHON_SCRIPT}"]
               command: ["/bin/bash", "-lc"]
               args:
-                - "bash ./workspace/launch_inside_pod.sh $PATH_TO_PYTHON_SCRIPT $PATH_TO_EXPERIMENT_CONFIG"
+                - "bash ./workspace/launch_inside_pod.sh workspace$PATH_TO_PYTHON_SCRIPT workspace$PATH_TO_EXPERIMENT_CONFIG"
               env:
               # - name: MY_USERNAME
                 # value: $USER
