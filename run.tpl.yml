@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-    generateName: $USER-
+    generateName: $USER-job
     labels:
       eidf/user: $USER
       kueue.x-k8s.io/queue-name: $KUBE_USER_QUEUE
@@ -30,9 +30,9 @@ spec:
               # - name: MY_USERNAME
                 # value: $USER
               - name: JOB_WORKER_INDEX
-                value: $JOB_WORKER_INDEX
+                value: "$JOB_WORKER_INDEX"
               - name: JOB_WORKER_COUNT
-                value: $JOB_WORKER_COUNT
+                value: "$JOB_WORKER_COUNT"
               volumeMounts:
                 - name: workspace
                   mountPath: /workspace
@@ -40,9 +40,6 @@ spec:
                 - name: writeable
                   mountPath: /workspace/writeable
               resources:
-                requests:
-                  cpu: 8
-                  memory: "80Gi"
                 limits:
                   cpu: 8
                   memory: "80Gi"
