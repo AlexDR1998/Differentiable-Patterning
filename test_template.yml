@@ -7,12 +7,17 @@ metadata:
     kueue.x-k8s.io/queue-name: $KUBE_USER_QUEUE
     kueue.x-k8s.io/priority-class: batch-workload-priority
 spec:
-  backoffLimitPerIndex: 0
-  maxFailedIndexes: $N_PODS
   ttlSecondsAfterFinished: 300
   parallelism: 2
   completions: $N_PODS
   completionMode: Indexed
+  podFailurePolicy:
+    rules:
+      - action: Ignore
+        onExitCodes:
+          containerName: huggingface
+          operator: NotIn
+          values: [0]
   template:
     metadata:
       labels:
