@@ -65,3 +65,46 @@ def reduce_on_plateau(optimizer,factor=0.8,patience=10,cooldown=5,accumulate_ste
     return opt
 
 
+
+
+def build_optimizer(cfg):
+    """
+        Takes a hydra config and constructs the appropriate optimizer with learning rate schedule and any additional features (block norm, SAM, etc.)
+    """
+    # schedule = optax.exponential_decay(1e-3, transition_steps=cfg.run.iterations, decay_rate=0.99)
+    init_lr = 1e-6      # starting learning rate
+    
+    warmup_fn = optax.linear_schedule(
+        init_value=init_lr,
+        end_value=cfg.optimiser.learn_rate,
+        transition_steps=cfg.optimiser.warmup_steps,
+    )
+
+    decay_fn = optax.exponential_decay(
+        init_value=cfg.optimiser.learn_rate,
+        transition_steps=cfg.run.iterations,
+        decay_rate=cfg.optimiser.decay_rate,
+    )
+
+    schedule = optax.join_schedules(
+        schedules=[warmup_fn, decay_fn],
+        boundaries=[cfg.optimiser.warmup_steps],
+    )
+    if cfg.optimiser.type == "nadam":
+        optimizer = optax.nadam(schedule)
+        opt_name = "nadam"
+    elif cfg.optimiser.type == "muon":
+        optimizer = muon_optimizer(schedule)
+        opt_name = "muon"
+    elif cfg.optimiser.type == "adamw":
+        optimizer = optax.adamw(schedule)
+        opt_name = "adamw"
+    else:
+        raise ValueError(f"Unsupported optimizer type: {cfg.optimiser.type}")
+    if cfg.optimiser.blocknorm:
+        optimizer = optax.chain(optax.scale_by_param_block_norm(), optimizer)
+        opt_name += "_blocknorm"
+    if cfg.optimiser.sam:
+        optimizer = sam_optimizer(optimizer, rho=cfg.optimiser.sam_rho, sync_period=cfg.optimiser.sam_sync_period)  
+        opt_name += "_sam"
+    return optimizer, opt_name
