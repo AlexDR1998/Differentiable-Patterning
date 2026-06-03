@@ -4,7 +4,7 @@ import importlib
 import itertools
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from omegaconf import OmegaConf
 
@@ -26,6 +26,48 @@ def flatten_grid(node: dict[str, Any], prefix: str = "") -> list[tuple[str, list
     return items
 
 
+def _expand_cartesian_grid(grid: dict[str, Any]) -> list[dict[str, Any]]:
+    flat_grid = flatten_grid(grid)
+    if not flat_grid:
+        return [{}]
+
+    keys = [key for key, _ in flat_grid]
+    value_lists = [values for _, values in flat_grid]
+    return [dict(zip(keys, combo)) for combo in itertools.product(*value_lists)]
+
+
+def _expand_group_block(group: dict[str, Any]) -> list[dict[str, Any]]:
+    flat_group = flatten_grid(group)
+    if not flat_group:
+        return [{}]
+
+    lengths = {len(values) for _, values in flat_group}
+    if len(lengths) != 1:
+        raise ValueError("All values in a grouped sweep block must have the same length")
+
+    length = lengths.pop()
+    return [{key: values[index] for key, values in flat_group} for index in range(length)]
+
+
+def _expand_section(section: dict[str, Any]) -> list[dict[str, Any]]:
+    grid_combos = _expand_cartesian_grid(cast(dict[str, Any], section.get("grid", {})))
+    group_blocks = cast(list[dict[str, Any]], section.get("groups", []))
+    if not group_blocks:
+        return grid_combos
+
+    grouped_combos = [_expand_group_block(group) for group in group_blocks]
+    expanded: list[dict[str, Any]] = []
+    for combo in itertools.product(grid_combos, *grouped_combos):
+        merged: dict[str, Any] = {}
+        for values in combo:
+            overlap = set(merged).intersection(values)
+            if overlap:
+                raise ValueError(f"Duplicate sweep keys across grouped sections: {sorted(overlap)}")
+            merged.update(values)
+        expanded.append(merged)
+    return expanded
+
+
 def build_nested_override(dotlist_items: dict[str, Any]) -> dict[str, Any]:
     root: dict[str, Any] = {}
     for dotted_key, value in dotlist_items.items():
@@ -37,32 +79,62 @@ def build_nested_override(dotlist_items: dict[str, Any]) -> dict[str, Any]:
     return root
 
 
+def _matches_condition(values: dict[str, Any], condition: dict[str, Any]) -> bool:
+    return all(values.get(key) == expected_value for key, expected_value in condition.items())
+
+
+def _branch_keys(branches: list[dict[str, Any]]) -> set[str]:
+    branch_keys: set[str] = set()
+    for branch in branches:
+        branch_keys.update(key for key, _ in flatten_grid(cast(dict[str, Any], branch.get("grid", {}))))
+        for group in cast(list[dict[str, Any]], branch.get("groups", [])):
+            branch_keys.update(key for key, _ in flatten_grid(group))
+    return branch_keys
+
+
 def generate_manifest(base_cfg: dict[str, Any], sweep_cfg: dict[str, Any], output_dir: Path, emit_files: bool = False) -> dict[str, Any]:
-    flat_grid = flatten_grid(sweep_cfg["grid"])
-    keys = [key for key, _ in flat_grid]
-    value_lists = [values for _, values in flat_grid]
-    combos = list(itertools.product(*value_lists))
+    combos = _expand_section(sweep_cfg)
+    branches = cast(list[dict[str, Any]], sweep_cfg.get("branches", []))
+    branch_value_keys = _branch_keys(branches) if branches else set()
 
     output_dir.mkdir(parents=True, exist_ok=True)
     generated_entries: list[dict[str, Any]] = []
 
-    for index, combo in enumerate(combos):
-        override_values = dict(zip(keys, combo))
-        override_values["seed"] = index if sweep_cfg.get("seed_mode", "index") == "index" else base_cfg.get("seed", 0)
-        generated_cfg = OmegaConf.merge(base_cfg, OmegaConf.create(build_nested_override(override_values)))
+    for combo in combos:
+        base_overrides = dict(combo)
+        matching_branches = [branch for branch in branches if _matches_condition(base_overrides, cast(dict[str, Any], branch.get("when", {})))]
 
-        entry: dict[str, Any] = {
-            "index": index,
-            "overrides": override_values,
-            "config": OmegaConf.to_container(generated_cfg, resolve=True),
-        }
+        if len(matching_branches) > 1:
+            raise ValueError(f"Multiple branches matched overrides {base_overrides}: {matching_branches}")
 
-        if emit_files:
-            config_path = output_dir / f"config_{index:04d}.yaml"
-            OmegaConf.save(generated_cfg, config_path)
-            entry["config_path"] = str(config_path)
+        branch_options = matching_branches or [None]
+        for branch in branch_options:
+            branch_combos = _expand_section(branch) if branch else [{}]
 
-        generated_entries.append(entry)
+            for branch_combo in branch_combos:
+                override_values = dict(base_overrides)
+                override_values.update(branch_combo)
+                for branch_key in branch_value_keys:
+                    override_values.setdefault(branch_key, None)
+                generated_index = len(generated_entries)
+                override_values["seed"] = (
+                    generated_index if sweep_cfg.get("seed_mode", "index") == "index" else base_cfg.get("seed", 0)
+                )
+
+                generated_cfg = OmegaConf.merge(base_cfg, OmegaConf.create(build_nested_override(override_values)))
+
+                entry: dict[str, Any] = {
+                    "index": generated_index,
+                    "overrides": override_values,
+                    "config": OmegaConf.to_container(generated_cfg, resolve=True),
+                }
+
+                if emit_files:
+                    config_path = output_dir / f"config_{entry['index']:04d}.yaml"
+                    OmegaConf.save(generated_cfg, config_path)
+                    entry["config_path"] = str(config_path)
+
+                generated_entries.append(entry)
 
     manifest = {
         "experiment_name": sweep_cfg.get("experiment_name"),

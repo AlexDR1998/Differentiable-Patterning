@@ -35,6 +35,18 @@ python Experiments/hydra_template/generate_configs.py \
   --output-dir Experiments/hydra_template/generated/example_template
 ```
 
+## Branching Sweeps
+
+The generator also supports a simple `branches` section in sweep YAML files. Each branch adds a conditional grid that is only expanded when its `when` values match the top-level grid assignment. Any branch-specific keys that are inactive for a config are written as `null` in the manifest entry.
+
+An example is available at `Experiments/hydra_template/conf/experiments/experiments_branched.yaml`.
+
+## Grouped Sweeps
+
+If you want parameters to vary together instead of taking a cartesian product, add a `groups` list to the sweep YAML. Each group is expanded in lockstep, and multiple groups still combine with the top-level `grid` by cartesian product. This also works together with `branches` because both are expanded by the same shared workflow.
+
+An example is available at `Experiments/hydra_template/conf/experiments/experiments_grouped.yaml`.
+
 ## Run One Config
 
 Run directly from the manifest:
