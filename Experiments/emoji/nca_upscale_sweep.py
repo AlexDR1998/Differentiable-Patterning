@@ -116,7 +116,7 @@ def run(cfg):
         model_filename=run_name,
         DATA_AUGMENTER=data_augmenter_subclass,
         GRAD_LOSS=cfg.trainer.grad_loss,
-        MODEL_DIRECTORY=CODE_PATH + "/writeable/Models/"+cfg.wandb.group+"/", # type: ignore
+        MODEL_DIRECTORY=CODE_PATH + "/writeable/Models/"+cfg.logging.wandb.group+"/", # type: ignore
     )
     trainer.train(
         t=cfg.run.t,
