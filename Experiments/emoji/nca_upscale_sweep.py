@@ -103,7 +103,7 @@ def run(cfg):
     )
     trainer.train(
         t=cfg.run.t,
-        iters=cfg.run.iters,
+        iters=cfg.run.iterations,
         REGULARISER_COEFFS={**cfg.loss.regulariser_coeffs},
         WARMUP=cfg.run.warmup,
         optimiser=optimiser,
