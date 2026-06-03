@@ -51,7 +51,7 @@ class DataAugmenter(DataAugmenterAbstract):
 
         
     #@eqx.filter_jit
-    def data_callback(self,x,y,i):
+    def data_callback(self,x,y,i,key=None):
         """
         Called after every training iteration to perform data augmentation and processing		
 
@@ -77,7 +77,7 @@ class DataAugmenter(DataAugmenterAbstract):
         if i%self.MINIBATCHES==0:
             self.key = jr.fold_in(self.key,i)
             x,y = self.sub_trajectory_split(self.MINIBATCHES,self.key)
-            x = self.noise(x,0.1,mode="hidden",key=self.key)
+            x = self.noise(x,0.01,mode="hidden",key=self.key)
         else:
             propagate_xn = lambda x:x.at[1:].set(x[:-1])
             reset_x0 = lambda x,x_true:x.at[0,:self.OBS_CHANNELS].set(x_true[0,:self.OBS_CHANNELS])
@@ -115,6 +115,8 @@ class DataAugmenter(DataAugmenterAbstract):
         pos = list(jax.random.randint(key,shape=(len(x),),minval=0,maxval=x[0].shape[0]-L))
         x = jax.tree_util.tree_map(lambda data,p:data[p:p+L],x,pos)
         y = jax.tree_util.tree_map(lambda data,p:data[p:p+L],y,pos)
+        print(f"Sub-trajectory split at positions {pos} with length {L}")
+        print(f"Initial x shape {x[0].shape}, y shape {y[0].shape}")
         
         return x,y
 		
