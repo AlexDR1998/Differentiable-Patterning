@@ -34,16 +34,33 @@ spec:
                 value: "$JOB_WORKER_INDEX"
               - name: JOB_WORKER_COUNT
                 value: "$JOB_WORKER_COUNT"
+              - name: CODE_PATH
+                value: /workspace
+              - name: DATA_PATH_BASE
+                value: /workspace/writeable/data/Data
+              - name: WANDB_DIR
+                value: /workspace/wandb-fast
+              - name: WANDB_CACHE_DIR
+                value: /workspace/wandb-fast/cache
+              - name: WANDB_FLUSH_INTERVAL
+                value: "60"
+              - name: WANDB_API_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: $USER-wandb-login
+                    key: WANDB_API_KEY
               volumeMounts:
                 - name: workspace
                   mountPath: /workspace
                   readOnly: true
                 - name: writeable
                   mountPath: /workspace/writeable
+                - name: wandb-fast
+                  mountPath: /workspace/wandb-fast
               resources:
                 limits:
-                  cpu: 2
-                  memory: "16Gi"
+                  cpu: 8
+                  memory: "80Gi"
                   nvidia.com/gpu: 1
             nodeSelector:
                 nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
@@ -56,5 +73,7 @@ spec:
               - name: writeable
                 persistentVolumeClaim:
                   claimName: $USER-ws1
-
+              - name: wandb-fast
+                emptyDir: 
+                  sizeLimit: 20Gi
 
