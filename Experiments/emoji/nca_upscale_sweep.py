@@ -38,6 +38,14 @@ def build_model(cfg):
             KERNEL_STR=cfg.model.kernel_str,
             FIRE_RATE=cfg.model.fire_rate,
             PADDING=cfg.model.padding,
+            # SPATIAL_UPSAMPLE = cfg.model.upscale_factor,
+            UPSAMPLER_AUX = {
+                "depth": cfg.model.upsampler.depth,
+                "width_factor": cfg.model.upsampler.width_factor,
+                "fourier_modes" : cfg.model.upsampler.fourier_modes,
+                "upsample_factor": cfg.model.upscale_factor
+            }
+            
         )
     elif cfg.model.family == "isouNCA":
         model = isouNCA(
@@ -46,6 +54,14 @@ def build_model(cfg):
             KERNEL_STR=cfg.model.kernel_str,
             FIRE_RATE=cfg.model.fire_rate,
             PADDING=cfg.model.padding,
+            # SPATIAL_UPSAMPLE = cfg.model.upscale_factor,
+            # RADIUS=cfg.model.upsampler.radius
+            UPSAMPLER_AUX = {
+                "depth": cfg.model.upsampler.depth,
+                "width_factor": cfg.model.upsampler.width_factor,
+                "radius" : cfg.model.upsampler.fourier_modes,
+                "upsample_factor": cfg.model.upscale_factor
+            }
         )
     else:
         raise ValueError(f"Unknown model family {cfg.model.family}")
@@ -100,6 +116,7 @@ def run(cfg):
         model_filename=run_name,
         DATA_AUGMENTER=data_augmenter_subclass,
         GRAD_LOSS=cfg.trainer.grad_loss,
+        MODEL_DIRECTORY=CODE_PATH + "/writeable/Models/"+cfg.experiment_name+"/", # type: ignore
     )
     trainer.train(
         t=cfg.run.t,

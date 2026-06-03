@@ -47,7 +47,7 @@ class PointwiseConvNet(eqx.Module):
 
     def __call__(self, x: Array) -> Array:
         for layer in self.layers[:-1]:
-            x = jax.nn.silu(layer(x))
+            x = jax.nn.relu(layer(x))
         return self.layers[-1](x)
 
 
@@ -259,7 +259,7 @@ class uNCA(NCA):
     N_CHANNELS: int
     # O_CHANNELS: int
     N_FEATURES: int
-    SPATIAL_UPSAMPLE: int
+    UPSAMPLER_AUX: dict
     FIRE_RATE: float
     op: Ops
     perception: callable # type: ignore
@@ -274,17 +274,26 @@ class uNCA(NCA):
                 PADDING="CIRCULAR", 
                 FIRE_RATE=1.0, 
                 KERNEL_SCALE = 1, 
-                SPATIAL_UPSAMPLE = 4,
+                UPSAMPLER_AUX = {
+                    "depth": 3,
+                    "width_factor": 1,
+                    "radius": 2,
+                    "upsample_factor": 4
+                },
                 key=jax.random.PRNGKey(int(time.time()))):
         super().__init__(N_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, KERNEL_SCALE, key)
         #key1,key2 = jax.random.split(key,2)
         key = jax.random.fold_in(key,1234)
-        self.SPATIAL_UPSAMPLE = SPATIAL_UPSAMPLE
+        # self.SPATIAL_UPSAMPLE = UPSAMPLER_AUX["upsample_factor"]
+        self.UPSAMPLER_AUX = UPSAMPLER_AUX
         self.upsample = IsotropicMLSUpsampler(
             latent_channels=N_CHANNELS, 
             out_channels=O_CHANNELS, 
-            scale_x=SPATIAL_UPSAMPLE, 
-            scale_y=SPATIAL_UPSAMPLE, 
+            scale_x=UPSAMPLER_AUX["upsample_factor"], 
+            scale_y=UPSAMPLER_AUX["upsample_factor"],
+            hidden_channels=int(UPSAMPLER_AUX["width_factor"]*N_CHANNELS),
+            depth=UPSAMPLER_AUX["depth"],
+            radius=UPSAMPLER_AUX["radius"],
             key=key)
 
     def real_to_latent(self, x):
@@ -293,8 +302,8 @@ class uNCA(NCA):
             X: [...,W,H]
         """
         latent_shape = x.shape[:-2] + (
-            max(1, x.shape[-2] // self.SPATIAL_UPSAMPLE),
-            max(1, x.shape[-1] // self.SPATIAL_UPSAMPLE),
+            max(1, x.shape[-2] // self.UPSAMPLER_AUX["upsample_factor"]),
+            max(1, x.shape[-1] // self.UPSAMPLER_AUX["upsample_factor"]),
         )
         return jax.image.resize(x, latent_shape, method="linear")
 
@@ -335,5 +344,6 @@ class uNCA(NCA):
             "KERNEL_STR":self.KERNEL_STR,
             "ACTIVATION":self.layers[1].__name__,
             "PADDING":self.op.PADDING,
-            "FIRE_RATE":self.FIRE_RATE
+            "FIRE_RATE":self.FIRE_RATE,
+            "UPSAMPLE_AUX":self.UPSAMPLER_AUX
         }

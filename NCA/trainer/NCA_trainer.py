@@ -509,7 +509,9 @@ class NCA_Trainer(object):
 			loss_diff = mean_loss - best_loss
 
 			log_dict["best_loss"] = best_loss
-			pbar.set_postfix(log_dict)
+			# print_dict = {k: v if isinstance(v, (int, float)) else str(v.shape) for k, v in log_dict.items()}
+			print_dict = {k:v for k,v in log_dict.items() if k not in ['x_latent','x_processed']}
+			pbar.set_postfix(print_dict)
 
 			# if SPARSE_PRUNING:
 				

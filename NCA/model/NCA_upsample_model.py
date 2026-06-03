@@ -7,8 +7,46 @@ from einops import rearrange, repeat
 #from Common.model.abstract_model import AbstractModel # Inherit model loading and saving
 from NCA.model.NCA_model import NCA, Ops
 
+
+
+
+class PointwiseConvNet(eqx.Module):
+    """Pointwise MLP as stacked 1x1 convolutions."""
+    layers: tuple
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        hidden_channels: int,
+        depth: int,
+        *,
+        key: Array,
+    ):
+        if depth < 1:
+            raise ValueError("depth must be >= 1")
+
+        dims = [in_channels] + [hidden_channels] * (depth - 1) + [out_channels]
+        keys = jax.random.split(key, len(dims) - 1)
+
+        self.layers = tuple(
+            eqx.nn.Conv2d(
+                in_channels=dims[i],
+                out_channels=dims[i + 1],
+                kernel_size=1,
+                key=keys[i],
+            )
+            for i in range(len(dims) - 1)
+        )
+
+    def __call__(self, x: Array) -> Array:
+        for layer in self.layers[:-1]:
+            x = jax.nn.relu(layer(x))
+        return self.layers[-1](x)
+
 class local_upsample(eqx.Module):
-    layers: list
+    decoder: PointwiseConvNet
+
     fourier_modes: int
     output_channels: int = eqx.field(static=True)
     
@@ -16,8 +54,9 @@ class local_upsample(eqx.Module):
             self, 
             channels: int, 
             output_channels: int, 
-            hidden_scale: int = 8, 
-            fourier_modes: int = 4, 
+            hidden_channels: int,
+            fourier_modes: int = 4,
+            depth: int = 3, 
             key=jax.random.PRNGKey(0)):
         key1, key2 = jax.random.split(key, 2)
 
@@ -25,23 +64,38 @@ class local_upsample(eqx.Module):
             raise ValueError("output_channels must be <= channels")
 
         insize = channels + 4*fourier_modes # 4 because sin and cos, for x and y
-        self.layers = [
-            eqx.nn.Conv2d(in_channels=insize,
-						  out_channels=insize*hidden_scale,
-						  kernel_size=1,
-						  use_bias=True,
-						  key=key1),
-			jax.nn.relu,
-			eqx.nn.Conv2d(in_channels=insize*hidden_scale, 
-						  out_channels=output_channels,
-						  kernel_size=1,
-						  use_bias=True,
-						  key=key2)
-			]
+
+
+        self.decoder = PointwiseConvNet(
+            in_channels=insize,   # z(q) + [r, r^2]
+            out_channels=output_channels,     # a0, a1, b1, a2, b2
+            hidden_channels=hidden_channels,
+            depth=depth,
+            key=key,
+        )
+        self.decoder = eqx.tree_at(
+            lambda m: m.layers,
+            self.decoder,
+            self.decoder.layers[:-1] + (self._zero_conv(self.decoder.layers[-1]),),
+        )
+
+        # self.layers = [
+        #     eqx.nn.Conv2d(in_channels=insize,
+		# 				  out_channels=insize*hidden_scale,
+		# 				  kernel_size=1,
+		# 				  use_bias=True,
+		# 				  key=key1),
+		# 	jax.nn.relu,
+		# 	eqx.nn.Conv2d(in_channels=insize*hidden_scale, 
+		# 				  out_channels=output_channels,
+		# 				  kernel_size=1,
+		# 				  use_bias=True,
+		# 				  key=key2)
+		# 	]
         self.fourier_modes = fourier_modes
         self.output_channels = output_channels
 
-        self.layers[-1] = self._zero_conv(self.layers[-1])
+        
 
     @staticmethod
     def _zero_conv(layer: eqx.nn.Conv2d) -> eqx.nn.Conv2d:
@@ -138,8 +192,9 @@ class local_upsample(eqx.Module):
             resolution=resolution, 
         )
         x = jnp.concatenate([x_upsampled, local_coords], axis=0)
-        for layer in self.layers:
-            x = layer(x)
+        # for layer in self.layers:
+            # x = layer(x)
+        x = self.decoder(x)
         return x + x_upsampled[: self.output_channels]
 
 
@@ -165,17 +220,25 @@ class uNCA(NCA):
                 PADDING="CIRCULAR", 
                 FIRE_RATE=1.0, 
                 KERNEL_SCALE = 1, 
-                SPATIAL_UPSAMPLE = 4,
-                fourier_modes = 4,
+                # SPATIAL_UPSAMPLE = 4,
+                # fourier_modes = 4,
+                UPSAMPLER_AUX = {
+                    "depth": 3,
+                    "width_factor": 1,
+                    "fourier_modes": 2,
+                    "upsample_factor": 4
+                },
                 key=jax.random.PRNGKey(int(time.time()))):
         super().__init__(N_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, KERNEL_SCALE, key)
         #key1,key2 = jax.random.split(key,2)
         key = jax.random.fold_in(key,1234)
-        self.SPATIAL_UPSAMPLE = SPATIAL_UPSAMPLE
+        self.SPATIAL_UPSAMPLE = UPSAMPLER_AUX["upsample_factor"]
         self.upsample = local_upsample(
             channels=N_CHANNELS, 
             output_channels=O_CHANNELS, 
-            fourier_modes=fourier_modes, 
+            fourier_modes=UPSAMPLER_AUX["fourier_modes"],
+            hidden_channels=UPSAMPLER_AUX["width_factor"]*N_CHANNELS,
+            depth=UPSAMPLER_AUX["depth"],
             key=key)
 
     def real_to_latent(self, x):
