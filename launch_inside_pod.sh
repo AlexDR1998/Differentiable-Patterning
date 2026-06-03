@@ -51,7 +51,7 @@ else
   WANDB_DIR_NAME="default"
 fi
 
-mkdir -p /workspace/writeable/logs/wandb/"$WANDB_DIR_NAME"/"$JOB_WORKER_INDEX"_"$JOB_COMPLETION_INDEX"
+mkdir -p /workspace/writeable/data/logs/wandb/"$WANDB_DIR_NAME"/"$JOB_WORKER_INDEX"_"$JOB_COMPLETION_INDEX"
 
 python "$SCRIPT_PATH" --manifest "$MANIFEST_PATH"
 
