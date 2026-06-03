@@ -41,6 +41,8 @@ spec:
                 value: /workspace/writeable/Data/
               - name: MODEL_SAVE_PATH
                 value: /workspace/writeable/Models/
+              - name: XLA_PYTHON_CLIENT_MEM_FRACTION
+                value: "0.9"
               - name: WANDB_DIR
                 value: /workspace/writeable/wandb-fast
               - name: WANDB_CACHE_DIR
