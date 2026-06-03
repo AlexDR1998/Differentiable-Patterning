@@ -39,9 +39,9 @@ spec:
               - name: DATA_PATH_BASE
                 value: /workspace/writeable/data/Data
               - name: WANDB_DIR
-                value: /workspace/wandb-fast
+                value: /workspace/writeable/wandb-fast
               - name: WANDB_CACHE_DIR
-                value: /workspace/wandb-fast/cache
+                value: /workspace/writeable/wandb-fast/cache
               - name: WANDB_FLUSH_INTERVAL
                 value: "60"
               - name: WANDB_API_KEY
@@ -56,7 +56,7 @@ spec:
                 - name: writeable
                   mountPath: /workspace/writeable
                 - name: wandb-fast
-                  mountPath: /workspace/wandb-fast
+                  mountPath: /workspace/writeable/wandb-fast
               resources:
                 limits:
                   cpu: 8
