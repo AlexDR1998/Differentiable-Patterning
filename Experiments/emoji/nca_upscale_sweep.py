@@ -6,6 +6,7 @@ import optax
 from dotenv import load_dotenv
 load_dotenv()
 CODE_PATH = os.getenv("PVC_PATH")
+MODEL_SAVE_PATH = os.getenv("MODEL_SAVE_PATH")
 DATA_PATH = os.getenv("DATA_PATH_BASE") + "Emojis/" # type: ignore
 sys.path.append(CODE_PATH)  # type: ignore
 os.chdir(CODE_PATH) # type: ignore
@@ -116,7 +117,7 @@ def run(cfg):
         model_filename=run_name,
         DATA_AUGMENTER=data_augmenter_subclass,
         GRAD_LOSS=cfg.trainer.grad_loss,
-        MODEL_DIRECTORY=CODE_PATH + "/writeable/Models/"+cfg.logging.wandb.group+"/", # type: ignore
+        MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
     )
     trainer.train(
         t=cfg.run.t,

@@ -102,10 +102,12 @@ class AbstractModel(eqx.Module):
 		# 	else:
 		# 		raise RuntimeError(f'File {path} already exists.')
 		suffix = ".eqx"
+		path = Path(path)
+		path.parent.mkdir(parents=True, exist_ok=True)
 		with open(path, "wb") as f:
 			hyperparam_str = json.dumps(hyperparams)
 			f.write((hyperparam_str + "\n").encode())
-			eqx.tree_serialise_leaves(path+suffix,self) # type: ignore
+			eqx.tree_serialise_leaves(path.with_suffix(suffix),self) # type: ignore
 
 	
 	def load(self, path: Union[str, Path]):
