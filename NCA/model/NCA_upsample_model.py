@@ -153,7 +153,7 @@ class uNCA(NCA):
     SPATIAL_UPSAMPLE: int
     FIRE_RATE: float
     op: Ops
-    perception: callable
+    perception: callable  # type: ignore
     upsample: local_upsample
     #CONFIG: dict
 
@@ -178,14 +178,14 @@ class uNCA(NCA):
             fourier_modes=fourier_modes, 
             key=key)
 
-    def prepare_state(self, x):
+    def real_to_latent(self, x):
         latent_shape = x.shape[:-2] + (
             max(1, x.shape[-2] // self.SPATIAL_UPSAMPLE),
             max(1, x.shape[-1] // self.SPATIAL_UPSAMPLE),
         )
         return jax.image.resize(x, latent_shape, method="linear")
 
-    def process(self, x):
+    def latent_to_real(self, x):
         if x.ndim == 3:
             return self.upsample(x, resolution=self.SPATIAL_UPSAMPLE)
 

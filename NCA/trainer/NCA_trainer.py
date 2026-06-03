@@ -99,7 +99,11 @@ class NCA_Trainer(object):
 		self.LOSS_TIME_CHANNEL_MASK = LOSS_TIME_CHANNEL_MASK
 		# Set up data and data augmenter class
 		self._data_raw = data
-		self.DATA_AUGMENTER = DATA_AUGMENTER(data,self.CHANNELS-self.DATA_CHANNELS)
+		self.DATA_AUGMENTER = DATA_AUGMENTER(
+			data_true=data,
+			hidden_channels=self.CHANNELS-self.DATA_CHANNELS,
+			nca_model=self.NCA_model
+			)
 		self.DATA_AUGMENTER.data_init(self.SHARDING)
 		self.data = self.DATA_AUGMENTER.return_saved_data()
 		self.BATCHES = len(self.data)
@@ -168,12 +172,6 @@ class NCA_Trainer(object):
 			  			 "TRAINING":self.TRAIN_CONFIG}
 				wandb_args["config"] = config
 				
-				# if isinstance(self.NCA_model ,kaNCA):
-				# 	self.LOGGER = kaNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
-				# elif isinstance(self.NCA_model , mNCA):
-				# 	self.LOGGER = mNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
-				# elif isinstance(self.NCA_model , aNCA):
-				# 	self.LOGGER = aNCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
 				if KNOCKOUT_ARGS["time"] is not None: # Nodal KO has differet logging behaviour
 					self.LOGGER = NCA_knockout_Train_log(
 						data=self._data_raw,
@@ -188,11 +186,10 @@ class NCA_Trainer(object):
 
 	@eqx.filter_jit	
 	def loss_func(self,
-			      nca,
-			   	  x:Float[Array, "N CHANNELS x y"],  # noqa: F722
+			      x:Float[Array, "N CHANNELS x y"],  # noqa: F722
 				  y:Float[Array, "N CHANNELS x y"],  # noqa: F722
 				  channel_time_mask:Float[Array, "N OBS_CHANNELS"],  # noqa: F722
-				  key: Key)->Float[Array, "N"]:
+				  key: Key)->Float[Array, " N"]:
 		"""
 		NOTE: VMAP THIS OVER BATCHES TO HANDLE DIFFERENT SIZES OF GRID IN EACH BATCH
 
@@ -211,14 +208,13 @@ class NCA_Trainer(object):
 		loss : float32 array [N]
 			loss for each timestep of trajectory
 		"""
-		x = nca.process(x)
 		# if x.shape[-2:] != y.shape[-2:]:
 			# x = jax.image.resize(x, y.shape, method="linear")
 		
 		x_obs = x[:,:self.OBS_CHANNELS]
 		y_obs = y[:,:self.DATA_CHANNELS]
 		if self.GRAD_LOSS:
-			v_perception = jax.vmap(nca.perception,in_axes=0,out_axes=0)
+			v_perception = jax.vmap(self.NCA_model.perception,in_axes=0,out_axes=0)
 			x_obs = v_perception(x_obs)
 			y_obs = v_perception(y_obs)
 			x_obs = x_obs.at[:,self.OBS_CHANNELS:].set(0.1*x_obs[:,self.OBS_CHANNELS:])
@@ -277,7 +273,6 @@ class NCA_Trainer(object):
 				  "time":None,
 				  "channel":None
 			  },
-			#   NCA_MODEL_AUX_ARGS = None,			  
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
@@ -288,7 +283,7 @@ class NCA_Trainer(object):
 		"""
 		Perform t steps of NCA on x, compare output to y, compute loss and gradients of loss wrt model parameters, and update parameters.
 
-			log_x = jtu.tree_map(self.NCA_model.process, x_new)
+			log_x = jtu.tree_map(self.NCA_model.latent_to_real, x_new)
 		----------
 		t : int
 			number of NCA timesteps between x[N] and x[N+1]
@@ -354,7 +349,8 @@ class NCA_Trainer(object):
 			"boundary":regularisers.boundary_regulariser,
 			"contiguous_growth":regularisers.contiguous_growth_regulariser,
 			"update_sensitivity":regularisers.update_sensitivity_regulariser,
-			"perturbation_conservation":regularisers.perturbation_conservation_regulariser
+			"perturbation_conservation":regularisers.perturbation_conservation_regulariser,
+			"latent_channel_match":regularisers.latent_channel_match_regulariser
 		}
 		
 
@@ -386,18 +382,31 @@ class NCA_Trainer(object):
 			-------
 			nca : object callable - (float32 array [N_CHANNELS,_,_],PRNGKey) -> (float32 array [N_CHANNELS,_,_])
 				the NCA object with updated parameters
+			x : float32 array [BATCHES,N,CHANNELS,_,_]
+				NCA state
+			y : float32 array [BATCHES,N,OBS_CHANNELS,_,_]
+				true data
+			t : int	
+				number of NCA timesteps between x[N] and x[N+1]
 			opt_state : optax.OptState
 				internal state of self.OPTIMISER, updated in line with having done one update step
-			loss_x : (float32, (float32 array [BATCHES,N,CHANNELS,_,_], float32 array [BATCHES,N]))
-				tuple of (mean_loss, (x,losses)), where mean_loss and losses are returned for logging purposes,
-				and x is the updated NCA state after t iterations
+			key : jr.PRNGKey
+				Jax random number key
+			mean_loss : float
+				Mean loss across batch and time for this step
+			log_dict : dict
+				Dictionary of values to log, including at least "loss", and optionally "x_latent", "x_processed", "losses", and any regulariser losses under their own keys.
 
 			"""
 
-			def apply_intermediate_regs(reg_logs,x,x_new,vv_nca,key):
-				aux = {"BOUNDARY_CALLBACK": self.BOUNDARY_CALLBACK, "OBS_CHANNELS": self.OBS_CHANNELS}
+			def apply_intermediate_regs(reg_logs,x,x_new,x_proc,x_new_proc,vv_nca,key):
+				aux = {
+					"BOUNDARY_CALLBACK": self.BOUNDARY_CALLBACK, 
+					"OBS_CHANNELS": self.OBS_CHANNELS,
+					"REAL_TO_LATENT": self.NCA_model.real_to_latent,
+					}
 				for name in REGULARISER_COEFFS.keys():
-					reg_logs[name]+=REG_FUNCS[name](x,x_new,vv_nca,aux,key)
+					reg_logs[name]+=REG_FUNCS[name](x,x_new,x_proc,x_new_proc,vv_nca,aux,key)
 				return reg_logs
 			
 			@eqx.filter_value_and_grad(has_aux=True)
@@ -406,67 +415,59 @@ class NCA_Trainer(object):
 				_nca = eqx.combine(nca_diff,nca_static)
 				v_nca = jax.vmap(_nca,in_axes=(0,None,0),out_axes=0,axis_name="N") # boundary is independant of time N
 				vv_nca = lambda x,callback,key_array: jtu.tree_map(v_nca,x,callback,key_array)  # noqa: E731
+				# provide a batched processor that maps model.latent_to_real over the batch/tree
+				v_latent_to_real = jax.vmap(lambda model_x: _nca.latent_to_real(model_x), in_axes=0, out_axes=0)
+				vv_latent_to_real = lambda x: jtu.tree_map(v_latent_to_real, x)
 				
 				reg_logs_internal = {name: jnp.zeros(len(x)) for name in REGULARISER_COEFFS.keys()}
 				
 				v_loss_func = lambda x,y,channel_loss_mask,key_array: jnp.array(
 					jtu.tree_map(
-						lambda x_i, y_i, mask_i, key_i: self.loss_func(
-							_nca, x_i, y_i, mask_i, key_i
-						),
-						x,
-						y,
-						channel_loss_mask,
-						key_array,
+						self.loss_func
+						,x,y,channel_loss_mask,key_array
 					)
-				)  # noqa: E731
+				)
+
 				state_shape = x[0].shape[0] # Assumes the same number of outer timesteps in each batch.
 				
 				# Structuring this as function and lax.scan speeds up jit compile a lot
 				def nca_step(carry,j): # function of type a,b -> a
-					key,x,reg_logs_internal = carry
+					key,x,x_proc,reg_logs_internal = carry
 					# Apply NCA update step
 					key = jr.fold_in(key,j)
 					key_array = key_pytree_gen(key,(len(x),state_shape))
 					x_new = vv_nca(x,self.BOUNDARY_CALLBACK,key_array)
-					reg_logs_internal = apply_intermediate_regs(reg_logs_internal,x,x_new,vv_nca,key)
+					x_new_proc = vv_latent_to_real(x_new)
+					reg_logs_internal = apply_intermediate_regs(reg_logs_internal,x,x_new,x_proc,x_new_proc,vv_nca,key)
 
-					return (key,x_new,reg_logs_internal),None
-				(
-					key,
-					x,
-					reg_logs_internal
-				),_ = eqx.internal.scan(
-					nca_step,
-					(
-						key,
-						x,
-						reg_logs_internal
-					),
+					return (key,x_new,x_new_proc,reg_logs_internal),None
+				(key,x,x_proc,reg_logs_internal),_ = eqx.internal.scan(nca_step,(key,x,vv_latent_to_real(x),reg_logs_internal),
 					xs=jnp.arange(t),
-					kind=LOOP_AUTODIFF
+					kind=LOOP_AUTODIFF  # type: ignore
 				)
 
 				loss_key = key_pytree_gen(key, (len(x),))
-				losses = v_loss_func(x, y, self.LOSS_TIME_CHANNEL_MASK, loss_key)
+				losses = v_loss_func(x_proc, y, self.LOSS_TIME_CHANNEL_MASK, loss_key)
 				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
 				mean_loss = jnp.mean(losses) + jnp.sum(jnp.array(list(reg_loss_internal.values())))
-				return mean_loss, (x,losses,reg_loss_internal)
+				return mean_loss, (x,x_proc,losses,reg_loss_internal)
 
 			nca_diff,nca_static = nca.partition()
-			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)
+			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)  # type: ignore
 			updates,opt_state = self.OPTIMISER.update(grads, opt_state, nca_diff)
 			nca = eqx.apply_updates(nca,updates)
-			(mean_loss,(x,losses,reg_loss)) = loss_x
-			return nca,x,y,t,opt_state,key,mean_loss,losses,reg_loss
+			(mean_loss,(x,x_proc,losses,reg_loss)) = loss_x
+			log_dict = {
+				"loss": mean_loss,
+				"x_latent": x,
+				"x_processed": x_proc,
+				"losses": losses,
+				**reg_loss
+			}
+			return nca,x,y,t,opt_state,key,mean_loss,log_dict
 
 		nca = self.NCA_model
-		# Some NCA model variants have an auxiliary argument dict in their call method.
-		# if NCA_MODEL_AUX_ARGS is not None:
-			# nca = lambda x,boundary_callback,key: self.NCA_model(x=x,boundary_callback=boundary_callback,key=key,aux=NCA_MODEL_AUX_ARGS)
-
 		nca_diff,nca_static = nca.partition()
-		
 
 		#--- OPTIMISER ---
 		# Set up optimiser
@@ -480,18 +481,17 @@ class NCA_Trainer(object):
 		
 		# # Split data into x and y
 		x,y = self.DATA_AUGMENTER.data_load(key)
-		x = jtu.tree_map(self.NCA_model.prepare_state, x)
-		use_processed_output = hasattr(self.NCA_model, "SPATIAL_UPSAMPLE")
+		# x = jtu.tree_map(self.NCA_model.real_to_latent, x)
 		print(f"Initial x shape: {jnp.array(x).shape}, y shape: {jnp.array(y).shape}",flush=True)
 		
 		
 		best_loss = 100000000
-		loss_thresh = 1e16
+		loss_thresh = 1e16 # If loss exceeds this, training is diverging to NaN
 		model_saved = False
 		loss_diff = 0
 		#prev_loss = 0
 		mean_loss = 0
-		loss_diff_thresh = 1e-2
+		loss_diff_thresh = 1e-2 # How much the loss needs to improve by to trigger a data update.
 		error = 0
 		error_at = 0
 		# SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
@@ -504,15 +504,12 @@ class NCA_Trainer(object):
 				#print(f"Clearing cache at step {i}")
 				jax.clear_caches()
 			key = jr.fold_in(key,i)
-
-			#nca,opt_state,(mean_loss,(x,losses)) = make_step(nca, x, y, t, opt_state,key)
-			nca,x_new,y_new,t,opt_state,key,mean_loss,losses,reg_loss = make_step(nca, x, y, t, opt_state,key)
+			
+			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = make_step(nca, x, y, t, opt_state,key)  # type: ignore
 			loss_diff = mean_loss - best_loss
 
-
-			reg_loss["loss"] = mean_loss
-			reg_loss["best_loss"] = best_loss
-			pbar.set_postfix(reg_loss)
+			log_dict["best_loss"] = best_loss
+			pbar.set_postfix(log_dict)
 
 			# if SPARSE_PRUNING:
 				
@@ -528,8 +525,8 @@ class NCA_Trainer(object):
 
 			
 			if self.IS_LOGGING:
-				log_x = jtu.tree_map(self.NCA_model.process, x_new)
-				self.LOGGER.tb_training_loop_log_sequence(losses, reg_loss, log_x, i, nca,write_images=WRITE_IMAGES,LOG_EVERY=LOG_EVERY)
+				# log_x = jtu.tree_map(self.NCA_model.latent_to_real, x_new)
+				self.LOGGER.tb_training_loop_log_sequence(log_dict, i, nca,write_images=WRITE_IMAGES,LOG_EVERY=LOG_EVERY)
 			
 			if jnp.isnan(mean_loss):
 				error = 1
@@ -546,10 +543,11 @@ class NCA_Trainer(object):
 			
 			# Do data augmentation update
 			if error==0:
-				#if i%UPDATE_DATA_EVERY==0 or i<WARMUP:
-				if not use_processed_output and (loss_diff<loss_diff_thresh or i<WARMUP):
-					x,y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
-				
+				if (loss_diff<loss_diff_thresh or i<WARMUP):
+					# x_for_callback = log_dict.get("x_processed", x_new)
+					x, y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
+					# x = jtu.tree_map(self.NCA_model.real_to_latent, x_aug)
+					# y = y_aug
 				
 				# Save model whenever mean_loss beats the previous best loss
 				if i>WARMUP:
@@ -558,7 +556,7 @@ class NCA_Trainer(object):
 						self.NCA_model = nca
 						self.NCA_model.save(self.MODEL_PATH,overwrite=True)
 						best_loss = mean_loss
-						#tqdm.write("--- Model saved at "+str(i)+" epochs with loss "+str(mean_loss)+" ---")
+						
 		
 		if error==0:
 			print("Training completed successfully")
@@ -571,9 +569,7 @@ class NCA_Trainer(object):
 		if error!=0 and model_saved==False:
 			print("|-|-|-|-|-|-  Training did not converge, model was not saved  -|-|-|-|-|-|")
 		elif self.IS_LOGGING and model_saved:
-			# x,y = self.DATA_AUGMENTER.split_x_y(1)
-			# x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
-			#try:
+			
 			self.LOGGER.tb_training_end_log(
 				self.NCA_model,
 				self.DATA_AUGMENTER,

@@ -15,7 +15,8 @@ class DataAugmenterAbstract(object):
 	
 	def __init__(self,
 			  	 data_true:PyTree[Float[Array, "N C W H"]],
-				 hidden_channels:Int[Scalar, ""] =0):
+				 hidden_channels=0,
+				 nca_model=None):
 		"""
 		Class for handling data augmentation for NCA training. 
 		data_init is called before training,
@@ -34,6 +35,10 @@ class DataAugmenterAbstract(object):
 		hidden_channels : int optional
 			number of hidden channels to zero-pad to data. Defaults to zero
 		"""
+		if nca_model is None:
+			self.real_to_latent = lambda x:x
+		else:
+			self.real_to_latent = nca_model.real_to_latent
 		self.OBS_CHANNELS = data_true[0].shape[1]
 		data_tree = []
 		try:
@@ -65,7 +70,7 @@ class DataAugmenterAbstract(object):
 	def data_callback(self,
 				   	  x:PyTree[Float[Array, "N C W H"]],
 					  y:PyTree[Float[Array, "N C W H"]],
-					  i:Int[Scalar, ""],
+					  i,
 					  key):
 		"""
 		Called after every training iteration to perform data augmentation and processing		
@@ -95,7 +100,7 @@ class DataAugmenterAbstract(object):
 	def random_N_select(self,
 					 	x:PyTree[Float[Array, "N C W H"]],
 						y:PyTree[Float[Array, "N C W H"]],
-						n:Int[Scalar, ""],
+						n,
 						key:Key =jr.PRNGKey(int(time.time()))):
 		"""
 		Randomly sample n pairs of states from x and y
@@ -123,7 +128,7 @@ class DataAugmenterAbstract(object):
 		y_sampled = jtu.tree_map(lambda data:data[ns],y)
 		return x_sampled,y_sampled
 
-	def split_x_y(self,N_steps:Int[Scalar, ""]=1):
+	def split_x_y(self,N_steps=1):
 		"""
 		Splits data into x (initial conditions) and y (final states). 
 		Offset by N_steps in N, so x[:,N]->y[:,N+N_steps] is learned
@@ -142,6 +147,7 @@ class DataAugmenterAbstract(object):
 
 		"""
 		x = jtu.tree_map(lambda data:data[:-N_steps],self.data_saved)
+		x = jtu.tree_map(lambda x:self.real_to_latent(x),x)
 		y = jtu.tree_map(lambda data:data[N_steps:],self.data_saved)
 		return x,y
 	
@@ -171,7 +177,7 @@ class DataAugmenterAbstract(object):
 	@eqx.filter_jit
 	def shift(self,
 		      data:PyTree[Float[Array, "N C W H"]],
-			  am:Int[Scalar, ""],
+			  am,
 			  key:Key=jr.PRNGKey(int(time.time()))):
 		"""
 		Randomly shifts each trajectory. 
@@ -200,7 +206,7 @@ class DataAugmenterAbstract(object):
 	@eqx.filter_jit
 	def unshift(self,
 			 	data:PyTree[Float[Array, "N C W H"]],
-				am:Int[Scalar, ""],
+				am,
 				key:Key):
 		"""
 		Randomly shifts each trajectory. If useing same key as shift(), it undoes that shift
@@ -229,7 +235,7 @@ class DataAugmenterAbstract(object):
 	@eqx.filter_jit
 	def noise(self,
 		   	  data:PyTree[Float[Array, "N C W H"]],
-			  am:Int[Scalar, ""],
+			  am,
 			  mode="full",
 			  key:Key=jr.PRNGKey(int(time.time()))):
 		"""
@@ -329,7 +335,7 @@ class DataAugmenterAbstract(object):
 
 
 	@eqx.filter_jit
-	def duplicate_batches(self,data:PyTree[Float[Array, "N C W H"]],B:Int[Scalar, ""]):
+	def duplicate_batches(self,data:PyTree[Float[Array, "N C W H"]],B):
 		"""
 		Repeats data along batches axis by B
 
@@ -356,9 +362,11 @@ class DataAugmenterAbstract(object):
 		self.data_saved = data
 
 	def return_saved_data(self):		
+		# This saved data can be overwritten via `self.save_data()`
 		return self.data_saved
 	
 	def return_true_data(self):
+		# This data is never overwritten, it is only written to at initialisation.
 		return self.data_true
 		
 		
@@ -405,7 +413,7 @@ class DataAugmenterAbstract(object):
 		schedule = optax.exponential_decay(learn_rate,transition_steps=iters,decay_rate=0.99)
 		opt = optimiser(schedule)
 		opt_state = opt.init(x0_hidden)
-		
+		loss = 0
 		for j in range(iters):
 			x0,opt_state,loss = makestep(x0,opt_state)
 		if args["verbose"]:

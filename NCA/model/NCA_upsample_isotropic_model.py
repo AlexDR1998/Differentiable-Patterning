@@ -122,7 +122,7 @@ class IsotropicMLSUpsampler(eqx.Module):
             (jnp.zeros_like(layer.weight), jnp.zeros_like(layer.bias)),
         )
 
-    def _geometry(self, x_coarse: int, y_coarse: int, dtype) -> tuple[Array, Array, Array, Array]:
+    def _geometry(self, x_coarse: int, y_coarse: int, dtype):
         x_fine = self.scale_x * x_coarse
         y_fine = self.scale_y * y_coarse
 
@@ -224,7 +224,7 @@ class IsotropicMLSUpsampler(eqx.Module):
         dtype = latent.dtype
         flat_idx, lam, radial_feat, basis = self._geometry(Xc, Yc, dtype)
 
-        z = self._interpolate_latent(latent, flat_idx, lam)   # (C, X, Y)
+        z = self._interpolate_latent(latent, flat_idx, lam)   # (C, X, Y)  # type: ignore
         feat = jnp.concatenate([z, radial_feat], axis=0)      # (C+2, X, Y)
 
         coeffs = self.decoder(feat)                           # (5D, X, Y)
@@ -262,7 +262,7 @@ class uNCA(NCA):
     SPATIAL_UPSAMPLE: int
     FIRE_RATE: float
     op: Ops
-    perception: callable
+    perception: callable # type: ignore
     upsample: IsotropicMLSUpsampler
     #CONFIG: dict
 
@@ -287,14 +287,18 @@ class uNCA(NCA):
             scale_y=SPATIAL_UPSAMPLE, 
             key=key)
 
-    def prepare_state(self, x):
+    def real_to_latent(self, x):
+        """
+            Takes real image and downsamples to latent space using linear interpolation
+            X: [...,W,H]
+        """
         latent_shape = x.shape[:-2] + (
             max(1, x.shape[-2] // self.SPATIAL_UPSAMPLE),
             max(1, x.shape[-1] // self.SPATIAL_UPSAMPLE),
         )
         return jax.image.resize(x, latent_shape, method="linear")
 
-    def process(self, x):
+    def latent_to_real(self, x):
         if x.ndim == 3:
             return self.upsample(x)
 

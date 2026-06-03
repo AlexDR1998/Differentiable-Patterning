@@ -14,7 +14,7 @@ class NCA(AbstractModel):
 	N_FEATURES: int
 	FIRE_RATE: float
 	op: Ops
-	perception: callable
+	perception: callable # type: ignore
 	def __init__(self,
 			     N_CHANNELS,
 				 KERNEL_STR=["ID","LAP"],
@@ -54,7 +54,7 @@ class NCA(AbstractModel):
 		self.FIRE_RATE = FIRE_RATE
 		self.KERNEL_STR = KERNEL_STR
 		N_WIDTH = 1
-		self.op = Ops(PADDING=PADDING,dx=1,KERNEL_SCALE=KERNEL_SCALE,SMOOTHING=1.0)
+		self.op = Ops(PADDING=PADDING,dx=1,KERNEL_SCALE=KERNEL_SCALE,SMOOTHING=1)
 
 		
 
@@ -220,7 +220,7 @@ class NCA(AbstractModel):
 				latents = vENC(dx)
 				top_latent_values,top_latent_positions = vGET(latents)
 				if latent_edit["mode"] in ["mult_top_k","set_absolute"]:
-					latents = vEDIT(latents)
+					latents = vEDIT(latents) # type: ignore
 				dx = vDEC(latents)
 				dx = rearrange(dx, "(X Y) F -> F X Y",Y=x.shape[-1])
 				latents = rearrange(latents,"(X Y) L-> L X Y",Y=x.shape[-1])
@@ -228,9 +228,9 @@ class NCA(AbstractModel):
 				top_latent_values = rearrange(top_latent_values,"(X Y) K-> K X Y",Y=x.shape[-1])
 		sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
 		x_new = x + sigma*dx
-		return boundary_callback(x_new),latents,top_latent_values,top_latent_positions
+		return boundary_callback(x_new),latents,top_latent_values,top_latent_positions # type: ignore
 	
-	def set_weights(self,weights):
+	def set_weights(self,weights): # type: ignore
 		w0,w1,b1 = weights
 		w_where = lambda l: l.weight
 		b_where = lambda l: l.bias
@@ -239,7 +239,7 @@ class NCA(AbstractModel):
 		self.layers[2] = eqx.tree_at(w_where,self.layers[2],w1)
 		self.layers[2] = eqx.tree_at(b_where,self.layers[2],b1)
 
-	def get_weights(self):
+	def get_weights(self): # type: ignore
 		"""Returns list of arrays of weights, for plotting purposes, or for manually adjusting weights with
 		code that doesn't `just work' on PyTrees
 
@@ -276,13 +276,18 @@ class NCA(AbstractModel):
 		    iters: Int[Scalar, ""],
 			x: Float[Array, "{self.N_CHANNELS} x y"],
 			callback=lambda x:x,
-			key: Key =jax.random.PRNGKey(int(time.time())))->Float[Array,"{iters} {self.N_CHANNELS} x y"]:
+			SAVE_LATENTS=False,
+			key: Key =jax.random.PRNGKey(int(time.time())))->tuple[Float[Array,"{iters} {self.N_CHANNELS} x y"], Float[Array,"{iters} {self.N_CHANNELS} x y"]]:
 		
 		trajectory = []
-		trajectory.append(self.process(x))
+		trajectory.append(self.latent_to_real(x))
+		latents = [x]
+
 		for i in range(iters):
 			key = jax.random.fold_in(key,i)
 			x = self(x,callback,key=key)
-			trajectory.append(self.process(x))
-		return jnp.stack(trajectory)
+			trajectory.append(self.latent_to_real(x))
+			if SAVE_LATENTS:
+				latents.append(x)
+		return jnp.stack(trajectory), jnp.stack(latents)
 		

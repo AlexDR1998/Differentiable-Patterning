@@ -22,7 +22,7 @@ class NCA_Train_log(Train_log):
 		Class for logging training behaviour of NCA_Trainer classes
 	"""
 
-	def log_model_parameters(self,nca,i):
+	def log_model_parameters(self,nca,i):  # type: ignore
 		"""Log model parameters
 
 		Args:
@@ -31,58 +31,58 @@ class NCA_Train_log(Train_log):
 		"""
 		
 		for idx, w in enumerate(nca.get_weights()):
-			self.log_histogram(f"Train/weight_{idx}", np.squeeze(w), step=i)
-		# w1,w2,b2 = nca.get_weights()
-		# w1 = np.squeeze(w1)
-		# w2 = np.squeeze(w2)
-		# b2 = np.squeeze(b2)
-				
-		# self.log_histogram('Train/input_layer_weights',w1,step=i)
-		# self.log_histogram('Train/output_layer_weights',w2,step=i)
-		# self.log_histogram('Train/output_layer_bias',b2,step=i)				
-		# weight_matrix_figs = plot_weight_matrices(nca)
-		# self.log_image("Train/weight_matrices",np.array(weight_matrix_figs)[:,0],step=i)
-				
-		# kernel_weight_figs = plot_weight_kernel_boxplot(nca)
-		# self.log_image("Train/input_weights_per_kernel",np.array(kernel_weight_figs)[:,0],step=i)
+			w = np.squeeze(w)
+			self.log_histogram(f"Train/weight_{idx}", w, step=i)
+			# print("Weight shape ",w.shape)
+			if len(w.shape) == 2:
+				w = repeat(w,"W H -> W H 3")
+				self.log_image(f"Train/weight_image_{idx}", self.normalise_images(w), step=i)
+			
 
-	def log_model_outputs(self,
-					      x: PyTree[Float[Array, "N CHANNELS x y"], "B"], # type: ignore
-						  i):
-		
-		BATCHES = len(x)
+	def log_model_outputs(self,x,i):
+		"""
+			x: Dict {"x_latent": PyTree[Float[Array, "N CHANNELS x y"], "B"],
+					"x_processed": PyTree[Float[Array, "N CHANNELS x y"], "B"]}
+			i: training step
+		"""
+		x_latent = x["x_latent"]
+		x_processed = x["x_processed"]
+		BATCHES = len(x_latent)
 		for b in range(BATCHES):
 			self.log_image(
-				'Train/trajectory_batch_'+str(b),
-				self.normalise_images(rearrange(x[b][:,:3,...],"Batch Channel x y -> Batch x y Channel")),
+				'Train/processed_batch_'+str(b),
+				self.normalise_images(rearrange(x_processed[b][:,:3,...],"Batch Channel x y -> Batch x y Channel")),
+				step=i)
+
+			self.log_image(
+				'Train/latent_batch_'+str(b),
+				self.normalise_images(rearrange(x_latent[b][:,:3,...],"Batch Channel x y -> Batch x y Channel")),
 				step=i)
 			
-		if x[0].shape[1] > 3:
+		if x_latent[0].shape[1] > 3:
 			b=0
-			hidden_channels = x[b][:,3:]
+			hidden_channels = x_latent[b][:,3:]
 			extra_zeros = (-hidden_channels.shape[1])%3
 			hidden_channels = np.pad(hidden_channels,((0,0),(0,extra_zeros),(0,0),(0,0)))
-			_cy,_cx = squarish(hidden_channels.shape[1]//3)
+			_cy,_cx = squarish(hidden_channels.shape[1]//3) # type: ignore
 			hidden_channels_r = rearrange(hidden_channels,"Batch (cx cy C) x y -> Batch (cx x) (cy y) C",C=3,cy=_cy,cx=_cx)
 			self.log_image(
-				f'Train/trajectory_batch_{b}_hidden_channels',
+				f'Train/latent_batch_{b}_hidden_channels',
 				hidden_channels_r,
 				step=i)
 	
-	def tb_training_loop_log_sequence(self,losses,reg_loss,x,i,model,write_images=True,LOG_EVERY=10):
-		self.log_histogram("Train/loss",losses,step=i)
-		self.log_scalar("Train/mean_loss",np.mean(losses),step=i)
-		self.log_scalar("Train/log_mean_loss",np.log(np.mean(losses)+1e-8),step=i)
-		for name in reg_loss.keys():
-			if name not in ["loss"]:
-				self.log_scalar(f"Train/{name}_reg_loss",reg_loss[name],step=i)
+	def tb_training_loop_log_sequence(self,log_dict,i,model,write_images=True,LOG_EVERY=10):
+		
+		for name in log_dict.keys():
+			if name not in ["x_latent", "x_processed"]:
+				self.log_scalar(f"Train/{name}",log_dict[name],step=i)
 		if i%LOG_EVERY==0 and i>0:
 			self.log_model_parameters(model,i)
 			if write_images:
-				self.log_model_outputs(x,i)
+				self.log_model_outputs(log_dict,i)
 
 	
-	def tb_training_end_log(self,
+	def tb_training_end_log(self, # type: ignore
 						 	nca,
 							# x: PyTree[Float[Array, "N CHANNELS x y"], "B"],  # noqa: F722, F821
 							DATA_AUGMENTER,
@@ -92,8 +92,6 @@ class NCA_Train_log(Train_log):
 							write_images=True,
 							key=jr.PRNGKey(int(time.time()))):
 		"""
-		
-
 			Log trained NCA model trajectory after training
 
 		"""
@@ -117,7 +115,7 @@ class NCA_Train_log(Train_log):
 		
 		SNAPSHOTS = []
 		for b in tqdm(range(BATCHES)):
-			T =nca.run(t*NUMBER_OF_IMAGES,x[b][0],boundary_callback[b]) # Shape T C x y
+			T, latents = nca.run(t*NUMBER_OF_IMAGES, x[b][0], boundary_callback[b], SAVE_LATENTS=True)  # Shape T C x y
 			self.log_video("Evaluation/trajectory",T[:,:3],step=None)
 			T_snapshot = T[::t,:DATA_AUGMENTER.OBS_CHANNELS]
 			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
@@ -125,24 +123,20 @@ class NCA_Train_log(Train_log):
 			SNAPSHOTS.append(T_snapshot)
 			
 			if SAVE_TRAJECTORY:
-				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])
-			if CHANNELS>3:
-				t_h = T[:,3:,:,:]
-				extra_zeros = (-t_h.shape[1])%3
-				t_h = np.pad(t_h,((0,0),(0,extra_zeros),(0,0),(0,0)))
-				_cy,_cx = squarish(t_h.shape[1]//3)
-				T_h = rearrange(t_h,"Time (cx cy C) x y  -> Time C (cx x) (cy y)",C=3,cy=_cy,cx=_cx)
-				self.log_video("Evaluation/trajectory_hidden_channels",T_h,step=None)
+				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])  # type: ignore
+
+			extra_zeros = (-latents[0].shape[1])%3
+			latents = np.pad(latents,((0,0),(0,extra_zeros),(0,0),(0,0)))
+			_cy,_cx = squarish(latents.shape[1]//3)
+			latents = rearrange(latents,"Time (cx cy C) x y  -> Time C (cx x) (cy y)",C=3,cy=_cy,cx=_cx)
+			self.log_video("Evaluation/latent_trajectory",latents,step=None)
+
 		SNAPSHOTS = np.array(SNAPSHOTS)
 		self.log_image(
 			'Evaluation/trajectory_snapshot',
 			SNAPSHOTS,
 			step=None
 		)
-		
-		
-				
-
 
 class NCA_knockout_Train_log(NCA_Train_log):
 
@@ -207,17 +201,17 @@ class NCA_knockout_Train_log(NCA_Train_log):
 				T.append(xb)
 			T = np.array(T) # Shape T C x y
 			
-			self.log_video("Evaluation/trajectory_comp",rearrange(T[:,:9],"T (cx cy) X Y -> T cx X (cy Y)",cx=3,cy=3),step=None)
+			self.log_video("Evaluation/trajectory_comp",rearrange(T[:,:9],"T (cx cy) X Y -> T cx X (cy Y)",cx=3,cy=3),step=None) # type: ignore
 			_T_mono = rearrange(T[:,:9],"T (cx cy) X Y -> T () (cx X) (cy Y)",cx=3,cy=3)
 			_T_mono = repeat(_T_mono,"T () x y -> T 3 x y")
-			self.log_video("Evaluation/trajectory_monochrome",_T_mono,step=None)
+			self.log_video("Evaluation/trajectory_monochrome",_T_mono,step=None) # type: ignore
 			T_snapshot = T[::t,:DATA_AUGMENTER.OBS_CHANNELS]
 			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
 			T_snapshot = repeat(T_snapshot,"x y -> x y 3")
 			SNAPSHOTS.append(T_snapshot)
 			
 			if SAVE_TRAJECTORY:
-				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])
+				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3]) # type: ignore
 
 		SNAPSHOTS = np.array(SNAPSHOTS)
 		self.log_image(
