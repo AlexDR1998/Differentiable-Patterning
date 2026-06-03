@@ -34,7 +34,7 @@ spec:
                 value: "$JOB_WORKER_INDEX"
               - name: JOB_WORKER_COUNT
                 value: "$JOB_WORKER_COUNT"
-              - name: CODE_PATH
+              - name: PVC_PATH
                 value: /workspace
               - name: DATA_PATH_BASE
                 value: /workspace/writeable/data/Data
