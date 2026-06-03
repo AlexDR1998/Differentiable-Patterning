@@ -12,10 +12,12 @@ class AbstractModel(eqx.Module):
 	def __call__(self, *args, **kwargs) -> Any:
 		raise NotImplementedError
 
-	def prepare_state(self, x):
+	def real_to_latent(self, x):
+		# Converts the "true data" to the latent space of the NCA. For example, a simple downsample
 		return x
 
-	def process(self, x):
+	def latent_to_real(self, x):
+		# Converts the latent space of the NCA to the "true data" space. For example, a learnable upsampler.
 		return x
 	
 	def partition(self):
@@ -103,7 +105,7 @@ class AbstractModel(eqx.Module):
 		with open(path, "wb") as f:
 			hyperparam_str = json.dumps(hyperparams)
 			f.write((hyperparam_str + "\n").encode())
-			eqx.tree_serialise_leaves(path+suffix,self)
+			eqx.tree_serialise_leaves(path+suffix,self) # type: ignore
 
 	
 	def load(self, path: Union[str, Path]):
@@ -131,9 +133,9 @@ class AbstractModel(eqx.Module):
 		if path.suffix != suffix:
 			#raise ValueError(f'Not a {suffix} file: {path}')
 			# path = path.with_suffix(suffix)
-			path = path + suffix
+			path = path + suffix # type: ignore
 		# with open(path, "rb") as f:
-		if not path.is_file():
+		if not path.is_file(): # type: ignore
 			raise ValueError(f'Not a file: {path}')
 		# 	hyperparams = json.loads(f.readline().decode())
 		# 	#func = F_rda(key=jr.PRNGKey(0), **hyperparams["pde"])

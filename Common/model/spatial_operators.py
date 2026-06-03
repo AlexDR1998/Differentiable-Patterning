@@ -168,6 +168,7 @@ class Ops(eqx.Module):
 
         def laplacian(sigma,nstds,SMOOTHING):
             # Laplacian of gaussian
+            lap = None
             if sigma==1:
                 if SMOOTHING == 0:
                     lap = jnp.array([[0.0,1.0,0.0],
@@ -251,8 +252,8 @@ class Ops(eqx.Module):
 
     @eqx.filter_jit
     def Grad(self,X: Float[Array,"C x y"])->Float[Array, "dim C x y"]:
-        v_grad_x = jax.vmap(self.grad_x,in_axes=0,out_axes=0,axis_name="CHANNELS")
-        v_grad_y = jax.vmap(self.grad_y,in_axes=0,out_axes=0,axis_name="CHANNELS")
+        v_grad_x = jax.vmap(self.grad_x,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
+        v_grad_y = jax.vmap(self.grad_y,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
         X = rearrange(X,"C x y -> C () x y")
         gx = v_grad_x(X)[:,0]
         gy = v_grad_y(X)[:,0]
@@ -272,8 +273,8 @@ class Ops(eqx.Module):
     
     @eqx.filter_jit
     def GradNorm(self,X: Float[Array,"C x y"])->Float[Array, "C x y"]:
-        v_grad_x = jax.vmap(self.grad_x,in_axes=0,out_axes=0,axis_name="CHANNELS")
-        v_grad_y = jax.vmap(self.grad_y,in_axes=0,out_axes=0,axis_name="CHANNELS")
+        v_grad_x = jax.vmap(self.grad_x,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
+        v_grad_y = jax.vmap(self.grad_y,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
         X = rearrange(X,"C x y -> C () x y")
         gx = v_grad_x(X)[:,0]
         gy = v_grad_y(X)[:,0]
@@ -281,8 +282,8 @@ class Ops(eqx.Module):
     
     @eqx.filter_jit
     def Div(self,X: Float[Array,"dim C x y"])->Float[Array, "C x y"]:
-        v_grad_x = jax.vmap(self.grad_x,in_axes=0,out_axes=0,axis_name="CHANNELS")
-        v_grad_y = jax.vmap(self.grad_y,in_axes=0,out_axes=0,axis_name="CHANNELS")
+        v_grad_x = jax.vmap(self.grad_x,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
+        v_grad_y = jax.vmap(self.grad_y,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
         Xx = rearrange(X[0],"C x y -> C () x y")
         Xy = rearrange(X[1],"C x y -> C () x y")
         gx = v_grad_x(Xx)[:,0]
@@ -290,14 +291,14 @@ class Ops(eqx.Module):
         return gx + gy
     @eqx.filter_jit
     def Lap(self,X: Float[Array,"C x y"])->Float[Array, "C x y"]:
-        v_lap = jax.vmap(self.laplacian,in_axes=0,out_axes=0,axis_name="CHANNELS")
+        v_lap = jax.vmap(self.laplacian,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
         X = rearrange(X,"C x y -> C () x y")
         return v_lap(X)[:,0]
 
     @eqx.filter_jit
     def Curl(self,X: Float[Array,"dim C x y"])->Float[Array, "C x y"]:
-        v_grad_x = jax.vmap(self.grad_x,in_axes=0,out_axes=0,axis_name="CHANNELS")
-        v_grad_y = jax.vmap(self.grad_y,in_axes=0,out_axes=0,axis_name="CHANNELS")
+        v_grad_x = jax.vmap(self.grad_x,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
+        v_grad_y = jax.vmap(self.grad_y,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
         Xx = rearrange(X[0],"C x y -> C () x y")
         Xy = rearrange(X[1],"C x y -> C () x y")
         gx = v_grad_x(Xy)[:,0]
@@ -307,7 +308,7 @@ class Ops(eqx.Module):
     
     @eqx.filter_jit
     def Average(self,X:Float [Array, "C x y"])->Float[Array,"C x y"]:
-        v_av = jax.vmap(self.average,in_axes=0,out_axes=0,axis_name="CHANNELS")
+        v_av = jax.vmap(self.average,in_axes=0,out_axes=0,axis_name="CHANNELS") # type: ignore
         X = rearrange(X,"C x y -> C () x y")
         return v_av(X)[:,0]
     
@@ -371,10 +372,10 @@ class Ops(eqx.Module):
         where_l = lambda m: m.laplacian.weight
         where_av = lambda m: m.average.weight
         #where_lap_inv = lambda m: m.partial_laplacian_inverse.weight
-        sobel_x = self.grad_x.weight
-        sobel_y = self.grad_y.weight
-        l_weight = self.laplacian.weight
-        av_weight= self.average.weight
+        sobel_x = self.grad_x.weight # type: ignore
+        sobel_y = self.grad_y.weight # type: ignore
+        l_weight = self.laplacian.weight # type: ignore
+        av_weight= self.average.weight # type: ignore
         #lap_inv_weight = self.partial_laplacian_inverse.weight
         diff,static = eqx.partition(self,eqx.is_array)
         diff = eqx.tree_at(where_x,diff,None)
