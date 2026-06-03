@@ -37,7 +37,7 @@ spec:
               - name: PVC_PATH
                 value: /workspace
               - name: DATA_PATH_BASE
-                value: /workspace/writeable/data/Data/
+                value: /workspace/writeable/Data/
               - name: WANDB_DIR
                 value: /workspace/writeable/wandb-fast
               - name: WANDB_CACHE_DIR
