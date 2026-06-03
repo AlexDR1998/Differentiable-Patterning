@@ -16,9 +16,9 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: null
     model.upsampler.width_factor: null
-    model.fourier_modes: null
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
+    model.upsampler.fourier_modes: null
     seed: 0
   config:
     seed: 0
@@ -44,8 +44,8 @@ configs:
       upsampler:
         depth: null
         width_factor: null
-      fourier_modes: null
-      radius: null
+        radius: null
+        fourier_modes: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -105,14 +105,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 1
   config:
     seed: 1
@@ -134,12 +134,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -199,14 +199,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 2
   config:
     seed: 2
@@ -228,12 +228,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -293,14 +293,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 3
   config:
     seed: 3
@@ -322,12 +322,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -387,14 +387,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 4
   config:
     seed: 4
@@ -416,12 +416,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -481,14 +481,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 5
   config:
     seed: 5
@@ -510,12 +510,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -575,14 +575,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 6
   config:
     seed: 6
@@ -604,12 +604,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -669,14 +669,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 7
   config:
     seed: 7
@@ -698,12 +698,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -763,14 +763,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 8
   config:
     seed: 8
@@ -792,12 +792,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -857,14 +857,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 9
   config:
     seed: 9
@@ -886,12 +886,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -951,14 +951,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 10
   config:
     seed: 10
@@ -980,12 +980,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1045,14 +1045,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 11
   config:
     seed: 11
@@ -1074,12 +1074,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1139,14 +1139,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 12
   config:
     seed: 12
@@ -1168,12 +1168,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1233,14 +1233,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 13
   config:
     seed: 13
@@ -1262,12 +1262,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1327,14 +1327,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 14
   config:
     seed: 14
@@ -1356,12 +1356,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1421,14 +1421,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 15
   config:
     seed: 15
@@ -1450,12 +1450,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1515,14 +1515,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 16
   config:
     seed: 16
@@ -1544,12 +1544,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1609,14 +1609,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 17
   config:
     seed: 17
@@ -1638,12 +1638,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1703,14 +1703,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 18
   config:
     seed: 18
@@ -1732,12 +1732,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1797,14 +1797,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 19
   config:
     seed: 19
@@ -1826,12 +1826,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1891,14 +1891,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 20
   config:
     seed: 20
@@ -1920,12 +1920,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1985,14 +1985,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 21
   config:
     seed: 21
@@ -2014,12 +2014,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2079,14 +2079,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 22
   config:
     seed: 22
@@ -2108,12 +2108,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2173,14 +2173,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 23
   config:
     seed: 23
@@ -2202,12 +2202,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2267,14 +2267,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 24
   config:
     seed: 24
@@ -2296,12 +2296,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2361,14 +2361,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 25
   config:
     seed: 25
@@ -2390,12 +2390,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2455,14 +2455,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 26
   config:
     seed: 26
@@ -2484,12 +2484,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2549,14 +2549,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 27
   config:
     seed: 27
@@ -2578,12 +2578,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2643,14 +2643,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 28
   config:
     seed: 28
@@ -2672,12 +2672,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2737,14 +2737,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 29
   config:
     seed: 29
@@ -2766,12 +2766,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2831,14 +2831,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 30
   config:
     seed: 30
@@ -2860,12 +2860,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -2925,14 +2925,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 31
   config:
     seed: 31
@@ -2954,12 +2954,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3019,14 +3019,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 1
+    model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 32
   config:
     seed: 32
@@ -3048,12 +3048,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 1
       upsampler:
+        fourier_modes: 1
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3113,14 +3113,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 33
   config:
     seed: 33
@@ -3142,12 +3142,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3207,14 +3207,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 34
   config:
     seed: 34
@@ -3236,12 +3236,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3301,14 +3301,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 35
   config:
     seed: 35
@@ -3330,12 +3330,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3395,14 +3395,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 36
   config:
     seed: 36
@@ -3424,12 +3424,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3489,14 +3489,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 37
   config:
     seed: 37
@@ -3518,12 +3518,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3583,14 +3583,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 38
   config:
     seed: 38
@@ -3612,12 +3612,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3677,14 +3677,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 39
   config:
     seed: 39
@@ -3706,12 +3706,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3771,14 +3771,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 40
   config:
     seed: 40
@@ -3800,12 +3800,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3865,14 +3865,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 41
   config:
     seed: 41
@@ -3894,12 +3894,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -3959,14 +3959,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 42
   config:
     seed: 42
@@ -3988,12 +3988,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4053,14 +4053,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 43
   config:
     seed: 43
@@ -4082,12 +4082,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4147,14 +4147,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 44
   config:
     seed: 44
@@ -4176,12 +4176,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4241,14 +4241,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 45
   config:
     seed: 45
@@ -4270,12 +4270,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4335,14 +4335,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 46
   config:
     seed: 46
@@ -4364,12 +4364,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4429,14 +4429,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 47
   config:
     seed: 47
@@ -4458,12 +4458,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4523,14 +4523,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 48
   config:
     seed: 48
@@ -4552,12 +4552,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4617,14 +4617,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 49
   config:
     seed: 49
@@ -4646,12 +4646,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4711,14 +4711,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 50
   config:
     seed: 50
@@ -4740,12 +4740,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4805,14 +4805,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 51
   config:
     seed: 51
@@ -4834,12 +4834,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4899,14 +4899,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 52
   config:
     seed: 52
@@ -4928,12 +4928,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -4993,14 +4993,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 53
   config:
     seed: 53
@@ -5022,12 +5022,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5087,14 +5087,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 54
   config:
     seed: 54
@@ -5116,12 +5116,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5181,14 +5181,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 55
   config:
     seed: 55
@@ -5210,12 +5210,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5275,14 +5275,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 56
   config:
     seed: 56
@@ -5304,12 +5304,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5369,14 +5369,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 57
   config:
     seed: 57
@@ -5398,12 +5398,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5463,14 +5463,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 58
   config:
     seed: 58
@@ -5492,12 +5492,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5557,14 +5557,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 59
   config:
     seed: 59
@@ -5586,12 +5586,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5651,14 +5651,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 60
   config:
     seed: 60
@@ -5680,12 +5680,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5745,14 +5745,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 61
   config:
     seed: 61
@@ -5774,12 +5774,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5839,14 +5839,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 62
   config:
     seed: 62
@@ -5868,12 +5868,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -5933,14 +5933,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 63
   config:
     seed: 63
@@ -5962,12 +5962,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6027,14 +6027,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 2
+    model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 64
   config:
     seed: 64
@@ -6056,12 +6056,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 2
       upsampler:
+        fourier_modes: 2
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6121,14 +6121,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 65
   config:
     seed: 65
@@ -6150,12 +6150,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6215,14 +6215,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 66
   config:
     seed: 66
@@ -6244,12 +6244,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6309,14 +6309,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 67
   config:
     seed: 67
@@ -6338,12 +6338,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6403,14 +6403,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 68
   config:
     seed: 68
@@ -6432,12 +6432,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6497,14 +6497,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 69
   config:
     seed: 69
@@ -6526,12 +6526,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6591,14 +6591,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 70
   config:
     seed: 70
@@ -6620,12 +6620,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6685,14 +6685,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 71
   config:
     seed: 71
@@ -6714,12 +6714,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6779,14 +6779,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 72
   config:
     seed: 72
@@ -6808,12 +6808,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6873,14 +6873,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 73
   config:
     seed: 73
@@ -6902,12 +6902,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -6967,14 +6967,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 74
   config:
     seed: 74
@@ -6996,12 +6996,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7061,14 +7061,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 75
   config:
     seed: 75
@@ -7090,12 +7090,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7155,14 +7155,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 76
   config:
     seed: 76
@@ -7184,12 +7184,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7249,14 +7249,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 77
   config:
     seed: 77
@@ -7278,12 +7278,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7343,14 +7343,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 78
   config:
     seed: 78
@@ -7372,12 +7372,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7437,14 +7437,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 79
   config:
     seed: 79
@@ -7466,12 +7466,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7531,14 +7531,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 80
   config:
     seed: 80
@@ -7560,12 +7560,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7625,14 +7625,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 81
   config:
     seed: 81
@@ -7654,12 +7654,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7719,14 +7719,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 82
   config:
     seed: 82
@@ -7748,12 +7748,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7813,14 +7813,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 83
   config:
     seed: 83
@@ -7842,12 +7842,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -7907,14 +7907,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 84
   config:
     seed: 84
@@ -7936,12 +7936,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8001,14 +8001,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 85
   config:
     seed: 85
@@ -8030,12 +8030,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8095,14 +8095,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 86
   config:
     seed: 86
@@ -8124,12 +8124,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8189,14 +8189,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 87
   config:
     seed: 87
@@ -8218,12 +8218,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8283,14 +8283,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 88
   config:
     seed: 88
@@ -8312,12 +8312,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 2
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8377,14 +8377,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 89
   config:
     seed: 89
@@ -8406,12 +8406,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8471,14 +8471,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 90
   config:
     seed: 90
@@ -8500,12 +8500,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8565,14 +8565,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 91
   config:
     seed: 91
@@ -8594,12 +8594,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8659,14 +8659,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 92
   config:
     seed: 92
@@ -8688,12 +8688,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 1
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8753,14 +8753,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 1
     run.t: 128
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 93
   config:
     seed: 93
@@ -8782,12 +8782,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 1
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8847,14 +8847,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 2
     run.t: 64
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 94
   config:
     seed: 94
@@ -8876,12 +8876,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 2
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -8941,14 +8941,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 4
     run.t: 32
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 95
   config:
     seed: 95
@@ -8970,12 +8970,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 4
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -9035,14 +9035,14 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.fourier_modes: 3
+    model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
     model.upscale_factor: 8
     run.t: 16
-    model.radius: null
     groups: null
+    model.upsampler.radius: null
     seed: 96
   config:
     seed: 96
@@ -9064,12 +9064,12 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      fourier_modes: 3
       upsampler:
+        fourier_modes: 3
         depth: 4
         width_factor: 2
+        radius: null
       upscale_factor: 8
-      radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -9129,7 +9129,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 1
+    model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
@@ -9144,9 +9144,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 97
   config:
     seed: 97
@@ -9168,11 +9168,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 1
       upsampler:
+        radius: 1
         depth: 2
         width_factor: 1
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -9243,7 +9243,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 1
+    model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
@@ -9258,9 +9258,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 98
   config:
     seed: 98
@@ -9282,11 +9282,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 1
       upsampler:
+        radius: 1
         depth: 2
         width_factor: 2
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -9357,7 +9357,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 1
+    model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
@@ -9372,9 +9372,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 99
   config:
     seed: 99
@@ -9396,11 +9396,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 1
       upsampler:
+        radius: 1
         depth: 4
         width_factor: 1
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -9471,7 +9471,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 1
+    model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
@@ -9486,9 +9486,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 100
   config:
     seed: 100
@@ -9510,11 +9510,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 1
       upsampler:
+        radius: 1
         depth: 4
         width_factor: 2
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -9585,7 +9585,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 1
+    model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
@@ -9600,9 +9600,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 101
   config:
     seed: 101
@@ -9624,11 +9624,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 1
       upsampler:
+        radius: 1
         depth: 2
         width_factor: 1
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -9699,7 +9699,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 1
+    model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
@@ -9714,9 +9714,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 102
   config:
     seed: 102
@@ -9738,11 +9738,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 1
       upsampler:
+        radius: 1
         depth: 2
         width_factor: 2
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -9813,7 +9813,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 1
+    model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
@@ -9828,9 +9828,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 103
   config:
     seed: 103
@@ -9852,11 +9852,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 1
       upsampler:
+        radius: 1
         depth: 4
         width_factor: 1
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -9927,7 +9927,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 1
+    model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
@@ -9942,9 +9942,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 104
   config:
     seed: 104
@@ -9966,11 +9966,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 1
       upsampler:
+        radius: 1
         depth: 4
         width_factor: 2
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -10041,7 +10041,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 2
+    model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
@@ -10056,9 +10056,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 105
   config:
     seed: 105
@@ -10080,11 +10080,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 2
       upsampler:
+        radius: 2
         depth: 2
         width_factor: 1
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -10155,7 +10155,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 2
+    model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
@@ -10170,9 +10170,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 106
   config:
     seed: 106
@@ -10194,11 +10194,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 2
       upsampler:
+        radius: 2
         depth: 2
         width_factor: 2
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -10269,7 +10269,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 2
+    model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
@@ -10284,9 +10284,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 107
   config:
     seed: 107
@@ -10308,11 +10308,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 2
       upsampler:
+        radius: 2
         depth: 4
         width_factor: 1
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -10383,7 +10383,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 2
+    model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
@@ -10398,9 +10398,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 108
   config:
     seed: 108
@@ -10422,11 +10422,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 2
       upsampler:
+        radius: 2
         depth: 4
         width_factor: 2
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -10497,7 +10497,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 2
+    model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
@@ -10512,9 +10512,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 109
   config:
     seed: 109
@@ -10536,11 +10536,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 2
       upsampler:
+        radius: 2
         depth: 2
         width_factor: 1
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -10611,7 +10611,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 2
+    model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
@@ -10626,9 +10626,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 110
   config:
     seed: 110
@@ -10650,11 +10650,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 2
       upsampler:
+        radius: 2
         depth: 2
         width_factor: 2
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -10725,7 +10725,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 2
+    model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
@@ -10740,9 +10740,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 111
   config:
     seed: 111
@@ -10764,11 +10764,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 2
       upsampler:
+        radius: 2
         depth: 4
         width_factor: 1
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft
@@ -10839,7 +10839,7 @@ configs:
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_test_1
     run.iterations: 200
-    model.radius: 2
+    model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
@@ -10854,9 +10854,9 @@ configs:
       - 64
       - 32
       - 16
-    model.fourier_modes: null
-    run.t: null
     model.upscale_factor: null
+    run.t: null
+    model.upsampler.fourier_modes: null
     seed: 112
   config:
     seed: 112
@@ -10878,11 +10878,11 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
-      radius: 2
       upsampler:
+        radius: 2
         depth: 4
         width_factor: 2
-      fourier_modes: null
+        fourier_modes: null
       upscale_factor: null
     trainer:
       boundary_mode: soft

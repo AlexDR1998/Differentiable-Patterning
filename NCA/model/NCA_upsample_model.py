@@ -205,7 +205,8 @@ class uNCA(NCA):
     N_CHANNELS: int
     # O_CHANNELS: int
     N_FEATURES: int
-    SPATIAL_UPSAMPLE: int
+    # SPATIAL_UPSAMPLE: int
+    UPSAMPLER_AUX: dict
     FIRE_RATE: float
     op: Ops
     perception: callable  # type: ignore
@@ -232,7 +233,8 @@ class uNCA(NCA):
         super().__init__(N_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, KERNEL_SCALE, key)
         #key1,key2 = jax.random.split(key,2)
         key = jax.random.fold_in(key,1234)
-        self.SPATIAL_UPSAMPLE = UPSAMPLER_AUX["upsample_factor"]
+        # self.SPATIAL_UPSAMPLE = UPSAMPLER_AUX["upsample_factor"]
+        self.UPSAMPLER_AUX = UPSAMPLER_AUX
         self.upsample = local_upsample(
             channels=N_CHANNELS, 
             output_channels=O_CHANNELS, 
@@ -242,18 +244,27 @@ class uNCA(NCA):
             key=key)
 
     def real_to_latent(self, x):
+        # print("=== Real to latent call ===",flush=True)
+        # print("     input real shape: ", x.shape,flush=True)
         latent_shape = x.shape[:-2] + (
-            max(1, x.shape[-2] // self.SPATIAL_UPSAMPLE),
-            max(1, x.shape[-1] // self.SPATIAL_UPSAMPLE),
+            max(1, x.shape[-2] // self.UPSAMPLER_AUX["upsample_factor"]),
+            max(1, x.shape[-1] // self.UPSAMPLER_AUX["upsample_factor"]),
         )
-        return jax.image.resize(x, latent_shape, method="linear")
+        x_lat = jax.image.resize(x, latent_shape, method="linear") 
+        # print("     output latent shape: ", x_lat.shape,flush=True)
+        return x_lat
 
     def latent_to_real(self, x):
+        # print("=== Latent to real call ===",flush=True)
+        # print("     input latent shape: ", x.shape,flush=True)
         if x.ndim == 3:
-            return self.upsample(x, resolution=self.SPATIAL_UPSAMPLE)
+            x_real = self.upsample(x, resolution=self.UPSAMPLER_AUX["upsample_factor"])
+        else:
+            x_real = jax.vmap(lambda x_i: self.upsample(x_i, resolution=self.UPSAMPLER_AUX["upsample_factor"]))(x)
 
         # x = rearrange(x, "b c h w -> b c h w")
-        return jax.vmap(lambda x_i: self.upsample(x_i, resolution=self.SPATIAL_UPSAMPLE))(x)
+        # print("     output real shape: ", x_real.shape,flush=True)
+        return x_real
 
 
     def __call__(self,

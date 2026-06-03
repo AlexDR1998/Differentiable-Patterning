@@ -60,7 +60,7 @@ def build_model(cfg):
             UPSAMPLER_AUX = {
                 "depth": cfg.model.upsampler.depth,
                 "width_factor": cfg.model.upsampler.width_factor,
-                "radius" : cfg.model.upsampler.fourier_modes,
+                "radius" : cfg.model.upsampler.radius,
                 "upsample_factor": cfg.model.upscale_factor
             }
         )
@@ -98,7 +98,7 @@ def run(cfg):
         def data_init(self,SHARDING=None):
             data = self.return_saved_data()
             data = self.duplicate_batches(data, cfg.data.batches)
-            data = self.pad(data, [10,10,10,10]) 		
+            data = self.pad(data, [20,20,20,20]) 		
             self.save_data(data)
             return None
 
@@ -128,7 +128,7 @@ def run(cfg):
         WRITE_IMAGES=cfg.run.write_images,
         LOSS_FUNC_STR=cfg.loss.primary,
         wandb_args={
-            "project":"nca-upsample",
+            "project":cfg.logging.wandb.project,
             "group":cfg.logging.wandb.group,
             # "group":"baseline-9ch-train-1",
             "tags":build_tags(cfg),
