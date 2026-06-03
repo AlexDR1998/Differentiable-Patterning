@@ -29,7 +29,7 @@ def build_model(cfg):
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
             FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.trainer.boundary_mode,
+            PADDING=cfg.model.padding,
         )
     elif cfg.model.family == "uNCA":
         model = uNCA(
@@ -37,7 +37,7 @@ def build_model(cfg):
             O_CHANNELS=cfg.data.data_channels,
             KERNEL_STR=cfg.model.kernel_str,
             FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.trainer.boundary_mode,
+            PADDING=cfg.model.padding,
         )
     elif cfg.model.family == "isouNCA":
         model = isouNCA(
@@ -45,7 +45,7 @@ def build_model(cfg):
             O_CHANNELS=cfg.data.data_channels,
             KERNEL_STR=cfg.model.kernel_str,
             FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.trainer.boundary_mode,
+            PADDING=cfg.model.padding,
         )
     else:
         raise ValueError(f"Unknown model family {cfg.model.family}")
