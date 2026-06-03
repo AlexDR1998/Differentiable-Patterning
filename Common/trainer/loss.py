@@ -15,7 +15,7 @@ from optax import l2_loss
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
 import Common.trainer.loss_ott as loss_ott
 import Common.trainer.loss_vgg as loss_vgg
-import Common.trainer.loss_clip as loss_clip
+# import Common.trainer.loss_clip as loss_clip
 #import eqxvision as eqv
 
 #loaded_alexnet = alexnet(torch_weights=CLASSIFICATION_URLS['alexnet'])
@@ -549,17 +549,17 @@ def build_loss_functions(loss_strings,loss_args):
 		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
 		"samples":loss_args["samples"] if "samples" in loss_args else None
 	}
-	_vision_extractor = None
-	for lstr in loss_strings:
-		if "clip" in lstr:
-			_vision_extractor = loss_clip.build_clip_vision_extractor() # Only actually load this if using clip loss, as it is quite big
-			break
+	# _vision_extractor = None
+	# for lstr in loss_strings:
+	# 	if "clip" in lstr:
+	# 		_vision_extractor = loss_clip.build_clip_vision_extractor() # Only actually load this if using clip loss, as it is quite big
+	# 		break
 
-	_clip_aux = {
-		"clip_metric":loss_args["metric"] if "metric" in loss_args else "l2",
-		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
-		"vision_extractor":_vision_extractor
-	}
+	# _clip_aux = {
+	# 	"clip_metric":loss_args["metric"] if "metric" in loss_args else "l2",
+	# 	"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
+	# 	"vision_extractor":_vision_extractor
+	# }
 
 	LOSS_FUNCS = {
 		"l2":l2,
@@ -569,10 +569,10 @@ def build_loss_functions(loss_strings,loss_args):
 		"vgg_grouped":lambda x,y,key,where:loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux=_vgg_aux),
 		"vgg_3ch":lambda x,y,key,where:loss_vgg.vgg(x,y,key,where,aux=_vgg_aux),
 		"vgg_grouped_and_l2":lambda x,y,key,where:vgg_hyperspectral_colony_and_l2(x,y,key,where,aux=_vgg_aux),
-		"clip_3ch":lambda x,y,key,where:loss_clip.clip_loss_3ch(x,y,key,where,aux=_clip_aux),
-		"clip_grouped":lambda x,y,key,where:loss_clip.clip_loss_colony(x,y,key,where,aux=_clip_aux),
-		"clip":lambda x,y,key,where:loss_clip.clip_loss_hyperspectral(x,y,key,where,aux=_clip_aux),
-		"clip_grouped_and_l2":lambda x,y,key,where:loss_clip.clip_loss_colony_and_l2(x,y,key,where,aux=_clip_aux),
+		# "clip_3ch":lambda x,y,key,where:loss_clip.clip_loss_3ch(x,y,key,where,aux=_clip_aux),
+		# "clip_grouped":lambda x,y,key,where:loss_clip.clip_loss_colony(x,y,key,where,aux=_clip_aux),
+		# "clip":lambda x,y,key,where:loss_clip.clip_loss_hyperspectral(x,y,key,where,aux=_clip_aux),
+		# "clip_grouped_and_l2":lambda x,y,key,where:loss_clip.clip_loss_colony_and_l2(x,y,key,where,aux=_clip_aux),
 		"euclidean":euclidean,
 		"cosine":cosine,
 		"spectral":spectral,
