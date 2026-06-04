@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 import jax.numpy as jnp
 import jax
 #from ott.geometry import pointcloud
@@ -596,9 +598,10 @@ def build_loss_functions(loss_strings,loss_args):
 	}
 	if isinstance(loss_strings,str):
 		loss_funcs = [LOSS_FUNCS[loss_strings]]
-	elif isinstance(loss_strings,list):
+	elif isinstance(loss_strings,Sequence):
+		# loss_strings = list(loss_strings)
 		loss_funcs = [LOSS_FUNCS[f] for f in loss_strings]
 	else:
-		raise ValueError("loss_strings must be a string or list of strings")
+		raise ValueError("loss_strings must be a string or sequence of strings. Got {}".format(type(loss_strings)))
 		
 	return loss_funcs
