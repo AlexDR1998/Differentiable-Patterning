@@ -1,10 +1,11 @@
 from __future__ import annotations
-
+import random
 import argparse
 import os
 import sys
 from pathlib import Path
 from typing import Any
+from omegaconf import OmegaConf  
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 os.chdir(REPO_ROOT)
@@ -109,8 +110,14 @@ def main() -> None:
     parser.add_argument("path_to_baselines", help="Path to baseline YAML file or directory of baseline YAML files")
     parser.add_argument("path_to_output", help="Path to directory where generated manifests/config files are written")
     parser.add_argument("--emit-files", action="store_true", help="Also write one YAML file per generated config")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed for deterministic generation of per-config random seeds in the manifest",
+    )
     args = parser.parse_args()
-
+    rng = random.Random(args.seed)
     experiments_path = Path(args.path_to_experiments).resolve()
     baselines_path = Path(args.path_to_baselines).resolve()
     output_root = Path(args.path_to_output).resolve()
@@ -131,6 +138,17 @@ def main() -> None:
 
         output_dir = _resolve_output_dir(output_root, sweep_cfg, sweep_file, len(sweep_files))
         manifest = generate_manifest(base_cfg, sweep_cfg, output_dir, emit_files=bool(args.emit_files))
+        if args.seed is not None:
+            for item in manifest.get("configs", []):
+                new_seed = rng.randint(0, 2**31 - 1)
+
+                if isinstance(item.get("overrides"), dict) and "seed" in item["overrides"]:
+                    item["overrides"]["seed"] = new_seed
+                if isinstance(item.get("config"), dict) and "seed" in item["config"]:
+                    item["config"]["seed"] = new_seed
+
+            OmegaConf.save(OmegaConf.create(manifest), output_dir / "manifest.yaml")
+
         wrote.append((output_dir / "manifest.yaml", int(manifest["count"])))
 
     for manifest_path, count in wrote:

@@ -3,7 +3,7 @@ entrypoint: Experiments.emoji.nca_upscale_sweep:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/experiments/uNCA_hyperparamer_sweep.yaml
 output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/generated/nca_upscale_sweep_1
-count: 113
+count: 161
 configs:
 - index: 0
   overrides:
@@ -16,12 +16,11 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: null
     model.upsampler.width_factor: null
-    model.upsampler.radius: null
     model.upsampler.fourier_modes: null
-    groups: null
-    seed: 0
+    model.upsampler.radius: null
+    seed: 577090037
   config:
-    seed: 0
+    seed: 577090037
     experiment:
       name: nca_emoji_template
     data:
@@ -44,8 +43,8 @@ configs:
       upsampler:
         depth: null
         width_factor: null
-        radius: null
         fourier_modes: null
+        radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -98,7 +97,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 1
   overrides:
     model.family: uNCA
@@ -112,10 +110,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 1
+    seed: 271041745
   config:
-    seed: 1
+    seed: 271041745
     experiment:
       name: nca_emoji_template
     data:
@@ -192,7 +189,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 2
   overrides:
     model.family: uNCA
@@ -206,10 +202,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 2
+    seed: 1095513148
   config:
-    seed: 2
+    seed: 1095513148
     experiment:
       name: nca_emoji_template
     data:
@@ -286,7 +281,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 3
   overrides:
     model.family: uNCA
@@ -300,10 +294,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 3
+    seed: 506456969
   config:
-    seed: 3
+    seed: 506456969
     experiment:
       name: nca_emoji_template
     data:
@@ -380,7 +373,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 4
   overrides:
     model.family: uNCA
@@ -394,10 +386,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 4
+    seed: 2127877499
   config:
-    seed: 4
+    seed: 2127877499
     experiment:
       name: nca_emoji_template
     data:
@@ -474,7 +465,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 5
   overrides:
     model.family: uNCA
@@ -488,10 +478,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 5
+    seed: 1930549411
   config:
-    seed: 5
+    seed: 1930549411
     experiment:
       name: nca_emoji_template
     data:
@@ -568,7 +557,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 6
   overrides:
     model.family: uNCA
@@ -582,10 +570,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 6
+    seed: 2028277857
   config:
-    seed: 6
+    seed: 2028277857
     experiment:
       name: nca_emoji_template
     data:
@@ -662,7 +649,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 7
   overrides:
     model.family: uNCA
@@ -676,10 +662,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 7
+    seed: 1630434966
   config:
-    seed: 7
+    seed: 1630434966
     experiment:
       name: nca_emoji_template
     data:
@@ -756,7 +741,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 8
   overrides:
     model.family: uNCA
@@ -770,10 +754,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 8
+    seed: 901749037
   config:
-    seed: 8
+    seed: 901749037
     experiment:
       name: nca_emoji_template
     data:
@@ -850,7 +833,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 9
   overrides:
     model.family: uNCA
@@ -864,10 +846,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 9
+    seed: 403123852
   config:
-    seed: 9
+    seed: 403123852
     experiment:
       name: nca_emoji_template
     data:
@@ -944,7 +925,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 10
   overrides:
     model.family: uNCA
@@ -958,10 +938,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 10
+    seed: 2095328386
   config:
-    seed: 10
+    seed: 2095328386
     experiment:
       name: nca_emoji_template
     data:
@@ -1038,7 +1017,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 11
   overrides:
     model.family: uNCA
@@ -1052,10 +1030,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 11
+    seed: 121751464
   config:
-    seed: 11
+    seed: 121751464
     experiment:
       name: nca_emoji_template
     data:
@@ -1132,7 +1109,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 12
   overrides:
     model.family: uNCA
@@ -1146,10 +1122,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 12
+    seed: 1674216077
   config:
-    seed: 12
+    seed: 1674216077
     experiment:
       name: nca_emoji_template
     data:
@@ -1226,7 +1201,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 13
   overrides:
     model.family: uNCA
@@ -1240,10 +1214,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 13
+    seed: 1858720390
   config:
-    seed: 13
+    seed: 1858720390
     experiment:
       name: nca_emoji_template
     data:
@@ -1320,7 +1293,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 14
   overrides:
     model.family: uNCA
@@ -1334,10 +1306,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 14
+    seed: 9045414
   config:
-    seed: 14
+    seed: 9045414
     experiment:
       name: nca_emoji_template
     data:
@@ -1414,7 +1385,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 15
   overrides:
     model.family: uNCA
@@ -1428,10 +1398,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 15
+    seed: 1912923437
   config:
-    seed: 15
+    seed: 1912923437
     experiment:
       name: nca_emoji_template
     data:
@@ -1508,7 +1477,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 16
   overrides:
     model.family: uNCA
@@ -1522,10 +1490,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 16
+    seed: 1143881027
   config:
-    seed: 16
+    seed: 1143881027
     experiment:
       name: nca_emoji_template
     data:
@@ -1602,7 +1569,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 17
   overrides:
     model.family: uNCA
@@ -1616,10 +1582,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 17
+    seed: 982526257
   config:
-    seed: 17
+    seed: 982526257
     experiment:
       name: nca_emoji_template
     data:
@@ -1696,7 +1661,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 18
   overrides:
     model.family: uNCA
@@ -1710,10 +1674,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 18
+    seed: 439062303
   config:
-    seed: 18
+    seed: 439062303
     experiment:
       name: nca_emoji_template
     data:
@@ -1790,7 +1753,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 19
   overrides:
     model.family: uNCA
@@ -1804,10 +1766,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 19
+    seed: 1363349907
   config:
-    seed: 19
+    seed: 1363349907
     experiment:
       name: nca_emoji_template
     data:
@@ -1884,7 +1845,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 20
   overrides:
     model.family: uNCA
@@ -1898,10 +1858,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 20
+    seed: 131383004
   config:
-    seed: 20
+    seed: 131383004
     experiment:
       name: nca_emoji_template
     data:
@@ -1978,7 +1937,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 21
   overrides:
     model.family: uNCA
@@ -1992,10 +1950,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 21
+    seed: 95872739
   config:
-    seed: 21
+    seed: 95872739
     experiment:
       name: nca_emoji_template
     data:
@@ -2072,7 +2029,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 22
   overrides:
     model.family: uNCA
@@ -2086,10 +2042,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 22
+    seed: 109289145
   config:
-    seed: 22
+    seed: 109289145
     experiment:
       name: nca_emoji_template
     data:
@@ -2166,7 +2121,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 23
   overrides:
     model.family: uNCA
@@ -2180,10 +2134,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 23
+    seed: 39534911
   config:
-    seed: 23
+    seed: 39534911
     experiment:
       name: nca_emoji_template
     data:
@@ -2260,7 +2213,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 24
   overrides:
     model.family: uNCA
@@ -2274,10 +2226,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 24
+    seed: 1637259727
   config:
-    seed: 24
+    seed: 1637259727
     experiment:
       name: nca_emoji_template
     data:
@@ -2354,7 +2305,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 25
   overrides:
     model.family: uNCA
@@ -2368,10 +2318,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 25
+    seed: 930287327
   config:
-    seed: 25
+    seed: 930287327
     experiment:
       name: nca_emoji_template
     data:
@@ -2448,7 +2397,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 26
   overrides:
     model.family: uNCA
@@ -2462,10 +2410,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 26
+    seed: 1812976885
   config:
-    seed: 26
+    seed: 1812976885
     experiment:
       name: nca_emoji_template
     data:
@@ -2542,7 +2489,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 27
   overrides:
     model.family: uNCA
@@ -2556,10 +2502,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 27
+    seed: 124729223
   config:
-    seed: 27
+    seed: 124729223
     experiment:
       name: nca_emoji_template
     data:
@@ -2636,7 +2581,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 28
   overrides:
     model.family: uNCA
@@ -2650,10 +2594,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 28
+    seed: 952158461
   config:
-    seed: 28
+    seed: 952158461
     experiment:
       name: nca_emoji_template
     data:
@@ -2730,7 +2673,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 29
   overrides:
     model.family: uNCA
@@ -2744,10 +2686,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 29
+    seed: 1880712864
   config:
-    seed: 29
+    seed: 1880712864
     experiment:
       name: nca_emoji_template
     data:
@@ -2824,7 +2765,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 30
   overrides:
     model.family: uNCA
@@ -2838,10 +2778,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 30
+    seed: 2129497364
   config:
-    seed: 30
+    seed: 2129497364
     experiment:
       name: nca_emoji_template
     data:
@@ -2918,7 +2857,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 31
   overrides:
     model.family: uNCA
@@ -2932,10 +2870,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 31
+    seed: 1001090105
   config:
-    seed: 31
+    seed: 1001090105
     experiment:
       name: nca_emoji_template
     data:
@@ -3012,7 +2949,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 32
   overrides:
     model.family: uNCA
@@ -3026,10 +2962,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 32
+    seed: 1484771968
   config:
-    seed: 32
+    seed: 1484771968
     experiment:
       name: nca_emoji_template
     data:
@@ -3106,7 +3041,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 33
   overrides:
     model.family: uNCA
@@ -3120,10 +3054,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 33
+    seed: 991564255
   config:
-    seed: 33
+    seed: 991564255
     experiment:
       name: nca_emoji_template
     data:
@@ -3200,7 +3133,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 34
   overrides:
     model.family: uNCA
@@ -3214,10 +3146,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 34
+    seed: 939657385
   config:
-    seed: 34
+    seed: 939657385
     experiment:
       name: nca_emoji_template
     data:
@@ -3294,7 +3225,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 35
   overrides:
     model.family: uNCA
@@ -3308,10 +3238,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 35
+    seed: 1973981844
   config:
-    seed: 35
+    seed: 1973981844
     experiment:
       name: nca_emoji_template
     data:
@@ -3388,7 +3317,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 36
   overrides:
     model.family: uNCA
@@ -3402,10 +3330,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 36
+    seed: 1244602538
   config:
-    seed: 36
+    seed: 1244602538
     experiment:
       name: nca_emoji_template
     data:
@@ -3482,7 +3409,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 37
   overrides:
     model.family: uNCA
@@ -3496,10 +3422,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 37
+    seed: 92297589
   config:
-    seed: 37
+    seed: 92297589
     experiment:
       name: nca_emoji_template
     data:
@@ -3576,7 +3501,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 38
   overrides:
     model.family: uNCA
@@ -3590,10 +3514,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 38
+    seed: 1787479226
   config:
-    seed: 38
+    seed: 1787479226
     experiment:
       name: nca_emoji_template
     data:
@@ -3670,7 +3593,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 39
   overrides:
     model.family: uNCA
@@ -3684,10 +3606,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 39
+    seed: 429497919
   config:
-    seed: 39
+    seed: 429497919
     experiment:
       name: nca_emoji_template
     data:
@@ -3764,7 +3685,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 40
   overrides:
     model.family: uNCA
@@ -3778,10 +3698,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 40
+    seed: 798461319
   config:
-    seed: 40
+    seed: 798461319
     experiment:
       name: nca_emoji_template
     data:
@@ -3858,7 +3777,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 41
   overrides:
     model.family: uNCA
@@ -3872,10 +3790,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 41
+    seed: 1272987056
   config:
-    seed: 41
+    seed: 1272987056
     experiment:
       name: nca_emoji_template
     data:
@@ -3952,7 +3869,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 42
   overrides:
     model.family: uNCA
@@ -3966,10 +3882,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 42
+    seed: 519218416
   config:
-    seed: 42
+    seed: 519218416
     experiment:
       name: nca_emoji_template
     data:
@@ -4046,7 +3961,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 43
   overrides:
     model.family: uNCA
@@ -4060,10 +3974,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 43
+    seed: 1428914934
   config:
-    seed: 43
+    seed: 1428914934
     experiment:
       name: nca_emoji_template
     data:
@@ -4140,7 +4053,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 44
   overrides:
     model.family: uNCA
@@ -4154,10 +4066,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 44
+    seed: 1812935769
   config:
-    seed: 44
+    seed: 1812935769
     experiment:
       name: nca_emoji_template
     data:
@@ -4234,7 +4145,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 45
   overrides:
     model.family: uNCA
@@ -4248,10 +4158,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 45
+    seed: 815398389
   config:
-    seed: 45
+    seed: 815398389
     experiment:
       name: nca_emoji_template
     data:
@@ -4328,7 +4237,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 46
   overrides:
     model.family: uNCA
@@ -4342,10 +4250,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 46
+    seed: 1302957853
   config:
-    seed: 46
+    seed: 1302957853
     experiment:
       name: nca_emoji_template
     data:
@@ -4422,7 +4329,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 47
   overrides:
     model.family: uNCA
@@ -4436,10 +4342,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 47
+    seed: 1220455187
   config:
-    seed: 47
+    seed: 1220455187
     experiment:
       name: nca_emoji_template
     data:
@@ -4516,7 +4421,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 48
   overrides:
     model.family: uNCA
@@ -4530,10 +4434,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 48
+    seed: 2144743702
   config:
-    seed: 48
+    seed: 2144743702
     experiment:
       name: nca_emoji_template
     data:
@@ -4610,7 +4513,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 49
   overrides:
     model.family: uNCA
@@ -4624,10 +4526,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 49
+    seed: 1689440956
   config:
-    seed: 49
+    seed: 1689440956
     experiment:
       name: nca_emoji_template
     data:
@@ -4704,7 +4605,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 50
   overrides:
     model.family: uNCA
@@ -4718,10 +4618,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 50
+    seed: 148287319
   config:
-    seed: 50
+    seed: 148287319
     experiment:
       name: nca_emoji_template
     data:
@@ -4798,7 +4697,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 51
   overrides:
     model.family: uNCA
@@ -4812,10 +4710,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 51
+    seed: 2062559164
   config:
-    seed: 51
+    seed: 2062559164
     experiment:
       name: nca_emoji_template
     data:
@@ -4892,7 +4789,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 52
   overrides:
     model.family: uNCA
@@ -4906,10 +4802,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 52
+    seed: 1042560227
   config:
-    seed: 52
+    seed: 1042560227
     experiment:
       name: nca_emoji_template
     data:
@@ -4986,7 +4881,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 53
   overrides:
     model.family: uNCA
@@ -5000,10 +4894,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 53
+    seed: 1736404157
   config:
-    seed: 53
+    seed: 1736404157
     experiment:
       name: nca_emoji_template
     data:
@@ -5080,7 +4973,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 54
   overrides:
     model.family: uNCA
@@ -5094,10 +4986,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 54
+    seed: 1779465077
   config:
-    seed: 54
+    seed: 1779465077
     experiment:
       name: nca_emoji_template
     data:
@@ -5174,7 +5065,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 55
   overrides:
     model.family: uNCA
@@ -5188,10 +5078,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 55
+    seed: 743061144
   config:
-    seed: 55
+    seed: 743061144
     experiment:
       name: nca_emoji_template
     data:
@@ -5268,7 +5157,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 56
   overrides:
     model.family: uNCA
@@ -5282,10 +5170,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 56
+    seed: 1576784849
   config:
-    seed: 56
+    seed: 1576784849
     experiment:
       name: nca_emoji_template
     data:
@@ -5362,7 +5249,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 57
   overrides:
     model.family: uNCA
@@ -5376,10 +5262,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 57
+    seed: 1609337231
   config:
-    seed: 57
+    seed: 1609337231
     experiment:
       name: nca_emoji_template
     data:
@@ -5456,7 +5341,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 58
   overrides:
     model.family: uNCA
@@ -5470,10 +5354,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 58
+    seed: 371375481
   config:
-    seed: 58
+    seed: 371375481
     experiment:
       name: nca_emoji_template
     data:
@@ -5550,7 +5433,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 59
   overrides:
     model.family: uNCA
@@ -5564,10 +5446,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 59
+    seed: 1885325846
   config:
-    seed: 59
+    seed: 1885325846
     experiment:
       name: nca_emoji_template
     data:
@@ -5644,7 +5525,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 60
   overrides:
     model.family: uNCA
@@ -5658,10 +5538,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 60
+    seed: 463561237
   config:
-    seed: 60
+    seed: 463561237
     experiment:
       name: nca_emoji_template
     data:
@@ -5738,7 +5617,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 61
   overrides:
     model.family: uNCA
@@ -5752,10 +5630,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 61
+    seed: 703078820
   config:
-    seed: 61
+    seed: 703078820
     experiment:
       name: nca_emoji_template
     data:
@@ -5832,7 +5709,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 62
   overrides:
     model.family: uNCA
@@ -5846,10 +5722,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 62
+    seed: 1689017785
   config:
-    seed: 62
+    seed: 1689017785
     experiment:
       name: nca_emoji_template
     data:
@@ -5926,7 +5801,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 63
   overrides:
     model.family: uNCA
@@ -5940,10 +5814,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 63
+    seed: 1591382744
   config:
-    seed: 63
+    seed: 1591382744
     experiment:
       name: nca_emoji_template
     data:
@@ -6020,7 +5893,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 64
   overrides:
     model.family: uNCA
@@ -6034,10 +5906,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 64
+    seed: 2103217660
   config:
-    seed: 64
+    seed: 2103217660
     experiment:
       name: nca_emoji_template
     data:
@@ -6114,7 +5985,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 65
   overrides:
     model.family: uNCA
@@ -6128,10 +5998,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 65
+    seed: 127023494
   config:
-    seed: 65
+    seed: 127023494
     experiment:
       name: nca_emoji_template
     data:
@@ -6208,7 +6077,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 66
   overrides:
     model.family: uNCA
@@ -6222,10 +6090,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 66
+    seed: 2015714664
   config:
-    seed: 66
+    seed: 2015714664
     experiment:
       name: nca_emoji_template
     data:
@@ -6302,7 +6169,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 67
   overrides:
     model.family: uNCA
@@ -6316,10 +6182,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 67
+    seed: 186776492
   config:
-    seed: 67
+    seed: 186776492
     experiment:
       name: nca_emoji_template
     data:
@@ -6396,7 +6261,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 68
   overrides:
     model.family: uNCA
@@ -6410,10 +6274,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 68
+    seed: 1325123798
   config:
-    seed: 68
+    seed: 1325123798
     experiment:
       name: nca_emoji_template
     data:
@@ -6490,7 +6353,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 69
   overrides:
     model.family: uNCA
@@ -6504,10 +6366,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 69
+    seed: 1690497763
   config:
-    seed: 69
+    seed: 1690497763
     experiment:
       name: nca_emoji_template
     data:
@@ -6584,7 +6445,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 70
   overrides:
     model.family: uNCA
@@ -6598,10 +6458,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 70
+    seed: 731644238
   config:
-    seed: 70
+    seed: 731644238
     experiment:
       name: nca_emoji_template
     data:
@@ -6678,7 +6537,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 71
   overrides:
     model.family: uNCA
@@ -6692,10 +6550,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 71
+    seed: 724106992
   config:
-    seed: 71
+    seed: 724106992
     experiment:
       name: nca_emoji_template
     data:
@@ -6772,7 +6629,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 72
   overrides:
     model.family: uNCA
@@ -6786,10 +6642,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 72
+    seed: 974688455
   config:
-    seed: 72
+    seed: 974688455
     experiment:
       name: nca_emoji_template
     data:
@@ -6866,7 +6721,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 73
   overrides:
     model.family: uNCA
@@ -6880,10 +6734,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 73
+    seed: 52834893
   config:
-    seed: 73
+    seed: 52834893
     experiment:
       name: nca_emoji_template
     data:
@@ -6960,7 +6813,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 74
   overrides:
     model.family: uNCA
@@ -6974,10 +6826,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 74
+    seed: 856916273
   config:
-    seed: 74
+    seed: 856916273
     experiment:
       name: nca_emoji_template
     data:
@@ -7054,7 +6905,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 75
   overrides:
     model.family: uNCA
@@ -7068,10 +6918,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 75
+    seed: 997188871
   config:
-    seed: 75
+    seed: 997188871
     experiment:
       name: nca_emoji_template
     data:
@@ -7148,7 +6997,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 76
   overrides:
     model.family: uNCA
@@ -7162,10 +7010,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 76
+    seed: 1737120419
   config:
-    seed: 76
+    seed: 1737120419
     experiment:
       name: nca_emoji_template
     data:
@@ -7242,7 +7089,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 77
   overrides:
     model.family: uNCA
@@ -7256,10 +7102,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 77
+    seed: 1476720930
   config:
-    seed: 77
+    seed: 1476720930
     experiment:
       name: nca_emoji_template
     data:
@@ -7336,7 +7181,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 78
   overrides:
     model.family: uNCA
@@ -7350,10 +7194,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 78
+    seed: 1517300986
   config:
-    seed: 78
+    seed: 1517300986
     experiment:
       name: nca_emoji_template
     data:
@@ -7430,7 +7273,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 79
   overrides:
     model.family: uNCA
@@ -7444,10 +7286,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 79
+    seed: 1971955755
   config:
-    seed: 79
+    seed: 1971955755
     experiment:
       name: nca_emoji_template
     data:
@@ -7524,7 +7365,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 80
   overrides:
     model.family: uNCA
@@ -7538,10 +7378,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 80
+    seed: 1156546539
   config:
-    seed: 80
+    seed: 1156546539
     experiment:
       name: nca_emoji_template
     data:
@@ -7618,7 +7457,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 81
   overrides:
     model.family: uNCA
@@ -7632,10 +7470,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 81
+    seed: 24520513
   config:
-    seed: 81
+    seed: 24520513
     experiment:
       name: nca_emoji_template
     data:
@@ -7712,7 +7549,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 82
   overrides:
     model.family: uNCA
@@ -7726,10 +7562,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 82
+    seed: 1647934407
   config:
-    seed: 82
+    seed: 1647934407
     experiment:
       name: nca_emoji_template
     data:
@@ -7806,7 +7641,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 83
   overrides:
     model.family: uNCA
@@ -7820,10 +7654,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 83
+    seed: 555122063
   config:
-    seed: 83
+    seed: 555122063
     experiment:
       name: nca_emoji_template
     data:
@@ -7900,7 +7733,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 84
   overrides:
     model.family: uNCA
@@ -7914,10 +7746,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 84
+    seed: 882552464
   config:
-    seed: 84
+    seed: 882552464
     experiment:
       name: nca_emoji_template
     data:
@@ -7994,7 +7825,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 85
   overrides:
     model.family: uNCA
@@ -8008,10 +7838,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 85
+    seed: 1830045531
   config:
-    seed: 85
+    seed: 1830045531
     experiment:
       name: nca_emoji_template
     data:
@@ -8088,7 +7917,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 86
   overrides:
     model.family: uNCA
@@ -8102,10 +7930,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 86
+    seed: 241047738
   config:
-    seed: 86
+    seed: 241047738
     experiment:
       name: nca_emoji_template
     data:
@@ -8182,7 +8009,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 87
   overrides:
     model.family: uNCA
@@ -8196,10 +8022,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 87
+    seed: 2066316555
   config:
-    seed: 87
+    seed: 2066316555
     experiment:
       name: nca_emoji_template
     data:
@@ -8276,7 +8101,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 88
   overrides:
     model.family: uNCA
@@ -8290,10 +8114,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 88
+    seed: 1566529388
   config:
-    seed: 88
+    seed: 1566529388
     experiment:
       name: nca_emoji_template
     data:
@@ -8370,7 +8193,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 89
   overrides:
     model.family: uNCA
@@ -8384,10 +8206,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 89
+    seed: 858303752
   config:
-    seed: 89
+    seed: 858303752
     experiment:
       name: nca_emoji_template
     data:
@@ -8464,7 +8285,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 90
   overrides:
     model.family: uNCA
@@ -8478,10 +8298,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 90
+    seed: 1775539677
   config:
-    seed: 90
+    seed: 1775539677
     experiment:
       name: nca_emoji_template
     data:
@@ -8558,7 +8377,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 91
   overrides:
     model.family: uNCA
@@ -8572,10 +8390,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 91
+    seed: 2082737481
   config:
-    seed: 91
+    seed: 2082737481
     experiment:
       name: nca_emoji_template
     data:
@@ -8652,7 +8469,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 92
   overrides:
     model.family: uNCA
@@ -8666,10 +8482,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 92
+    seed: 1532401219
   config:
-    seed: 92
+    seed: 1532401219
     experiment:
       name: nca_emoji_template
     data:
@@ -8746,7 +8561,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 93
   overrides:
     model.family: uNCA
@@ -8760,10 +8574,9 @@ configs:
     model.upscale_factor: 1
     run.t: 128
     model.upsampler.radius: null
-    groups: null
-    seed: 93
+    seed: 1779939759
   config:
-    seed: 93
+    seed: 1779939759
     experiment:
       name: nca_emoji_template
     data:
@@ -8840,7 +8653,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 94
   overrides:
     model.family: uNCA
@@ -8854,10 +8666,9 @@ configs:
     model.upscale_factor: 2
     run.t: 64
     model.upsampler.radius: null
-    groups: null
-    seed: 94
+    seed: 1486393352
   config:
-    seed: 94
+    seed: 1486393352
     experiment:
       name: nca_emoji_template
     data:
@@ -8934,7 +8745,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 95
   overrides:
     model.family: uNCA
@@ -8948,10 +8758,9 @@ configs:
     model.upscale_factor: 4
     run.t: 32
     model.upsampler.radius: null
-    groups: null
-    seed: 95
+    seed: 6806440
   config:
-    seed: 95
+    seed: 6806440
     experiment:
       name: nca_emoji_template
     data:
@@ -9028,7 +8837,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 96
   overrides:
     model.family: uNCA
@@ -9042,10 +8850,9 @@ configs:
     model.upscale_factor: 8
     run.t: 16
     model.upsampler.radius: null
-    groups: null
-    seed: 96
+    seed: 1422224538
   config:
-    seed: 96
+    seed: 1422224538
     experiment:
       name: nca_emoji_template
     data:
@@ -9122,7 +8929,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups: null
 - index: 97
   overrides:
     model.family: isouNCA
@@ -9133,23 +8939,12 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 1
+    run.t: 128
     model.upsampler.fourier_modes: null
-    seed: 97
+    seed: 1967725507
   config:
-    seed: 97
+    seed: 1967725507
     experiment:
       name: nca_emoji_template
     data:
@@ -9173,7 +8968,7 @@ configs:
         depth: 2
         width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 1
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -9208,7 +9003,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 128
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -9226,17 +9021,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
 - index: 98
   overrides:
     model.family: isouNCA
@@ -9246,24 +9030,13 @@ configs:
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
-    model.upsampler.width_factor: 2
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 2
+    run.t: 64
     model.upsampler.fourier_modes: null
-    seed: 98
+    seed: 120151618
   config:
-    seed: 98
+    seed: 120151618
     experiment:
       name: nca_emoji_template
     data:
@@ -9285,9 +9058,9 @@ configs:
       upsampler:
         radius: 1
         depth: 2
-        width_factor: 2
+        width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -9322,7 +9095,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 64
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -9340,17 +9113,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
 - index: 99
   overrides:
     model.family: isouNCA
@@ -9359,25 +9121,14 @@ configs:
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
-    model.upsampler.depth: 4
+    model.upsampler.depth: 2
     model.upsampler.width_factor: 1
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 4
+    run.t: 32
     model.upsampler.fourier_modes: null
-    seed: 99
+    seed: 986146092
   config:
-    seed: 99
+    seed: 986146092
     experiment:
       name: nca_emoji_template
     data:
@@ -9398,10 +9149,10 @@ configs:
       padding: CIRCULAR
       upsampler:
         radius: 1
-        depth: 4
+        depth: 2
         width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 4
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -9436,7 +9187,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 32
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -9454,17 +9205,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
 - index: 100
   overrides:
     model.family: isouNCA
@@ -9473,25 +9213,14 @@ configs:
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
-    model.upsampler.depth: 4
-    model.upsampler.width_factor: 2
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 8
+    run.t: 16
     model.upsampler.fourier_modes: null
-    seed: 100
+    seed: 761116571
   config:
-    seed: 100
+    seed: 761116571
     experiment:
       name: nca_emoji_template
     data:
@@ -9512,10 +9241,10 @@ configs:
       padding: CIRCULAR
       upsampler:
         radius: 1
-        depth: 4
-        width_factor: 2
+        depth: 2
+        width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 8
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -9550,7 +9279,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 16
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -9568,17 +9297,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
 - index: 101
   overrides:
     model.family: isouNCA
@@ -9586,26 +9304,15 @@ configs:
     logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
-    loss.regulariser_coeffs.latent_channel_match: 1.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
-    model.upsampler.width_factor: 1
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 1
+    run.t: 128
     model.upsampler.fourier_modes: null
-    seed: 101
+    seed: 776461326
   config:
-    seed: 101
+    seed: 776461326
     experiment:
       name: nca_emoji_template
     data:
@@ -9627,9 +9334,9 @@ configs:
       upsampler:
         radius: 1
         depth: 2
-        width_factor: 1
+        width_factor: 2
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 1
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -9652,7 +9359,7 @@ configs:
         contiguous_growth: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
-        latent_channel_match: 1.0
+        latent_channel_match: 0.0
       args:
         channels: null
         experiment_groups: null
@@ -9664,7 +9371,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 128
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -9682,17 +9389,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
 - index: 102
   overrides:
     model.family: isouNCA
@@ -9700,26 +9396,15 @@ configs:
     logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
-    loss.regulariser_coeffs.latent_channel_match: 1.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 2
+    run.t: 64
     model.upsampler.fourier_modes: null
-    seed: 102
+    seed: 393425036
   config:
-    seed: 102
+    seed: 393425036
     experiment:
       name: nca_emoji_template
     data:
@@ -9743,7 +9428,7 @@ configs:
         depth: 2
         width_factor: 2
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -9766,7 +9451,7 @@ configs:
         contiguous_growth: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
-        latent_channel_match: 1.0
+        latent_channel_match: 0.0
       args:
         channels: null
         experiment_groups: null
@@ -9778,7 +9463,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 64
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -9796,17 +9481,6 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
 - index: 103
   overrides:
     model.family: isouNCA
@@ -9814,26 +9488,199 @@ configs:
     logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
-    loss.regulariser_coeffs.latent_channel_match: 1.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 1096479553
+  config:
+    seed: 1096479553
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 104
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 139410902
+  config:
+    seed: 139410902
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 105
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 1
+    run.t: 128
     model.upsampler.fourier_modes: null
-    seed: 103
+    seed: 302595366
   config:
-    seed: 103
+    seed: 302595366
     experiment:
       name: nca_emoji_template
     data:
@@ -9857,7 +9704,743 @@ configs:
         depth: 4
         width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 128
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 106
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 357487890
+  config:
+    seed: 357487890
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 107
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 71685718
+  config:
+    seed: 71685718
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 108
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 1945614990
+  config:
+    seed: 1945614990
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 109
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 1
+    run.t: 128
+    model.upsampler.fourier_modes: null
+    seed: 62534619
+  config:
+    seed: 62534619
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 128
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 110
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 1207730538
+  config:
+    seed: 1207730538
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 111
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 1071848707
+  config:
+    seed: 1071848707
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 112
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 1153807478
+  config:
+    seed: 1153807478
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 113
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 1
+    run.t: 128
+    model.upsampler.fourier_modes: null
+    seed: 470250062
+  config:
+    seed: 470250062
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 1
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -9892,7 +10475,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 128
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -9910,18 +10493,1019 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-- index: 104
+- index: 114
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 792894693
+  config:
+    seed: 792894693
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 115
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 1479284937
+  config:
+    seed: 1479284937
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 116
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 1246761692
+  config:
+    seed: 1246761692
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 117
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 1
+    run.t: 128
+    model.upsampler.fourier_modes: null
+    seed: 298566280
+  config:
+    seed: 298566280
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 128
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 118
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 719279514
+  config:
+    seed: 719279514
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 119
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 685586411
+  config:
+    seed: 685586411
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 120
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 1096144879
+  config:
+    seed: 1096144879
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 121
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 1
+    run.t: 128
+    model.upsampler.fourier_modes: null
+    seed: 722177042
+  config:
+    seed: 722177042
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 128
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 122
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 1172158589
+  config:
+    seed: 1172158589
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 123
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 1264836847
+  config:
+    seed: 1264836847
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 124
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 1952928634
+  config:
+    seed: 1952928634
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 125
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
@@ -9931,23 +11515,12 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 1
+    run.t: 128
     model.upsampler.fourier_modes: null
-    seed: 104
+    seed: 1382987043
   config:
-    seed: 104
+    seed: 1382987043
     experiment:
       name: nca_emoji_template
     data:
@@ -9971,7 +11544,7 @@ configs:
         depth: 4
         width_factor: 2
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 1
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -10006,7 +11579,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 128
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -10024,18 +11597,283 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-- index: 105
+- index: 126
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 2132424030
+  config:
+    seed: 2132424030
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 127
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 2034831019
+  config:
+    seed: 2034831019
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 128
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 1
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 490445119
+  config:
+    seed: 490445119
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 1
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 129
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
@@ -10045,23 +11883,12 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 1
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 1
+    run.t: 128
     model.upsampler.fourier_modes: null
-    seed: 105
+    seed: 101509731
   config:
-    seed: 105
+    seed: 101509731
     experiment:
       name: nca_emoji_template
     data:
@@ -10085,7 +11912,7 @@ configs:
         depth: 2
         width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 1
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -10120,7 +11947,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 128
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -10138,18 +11965,7 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-- index: 106
+- index: 130
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
@@ -10158,24 +11974,13 @@ configs:
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
-    model.upsampler.width_factor: 2
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 2
+    run.t: 64
     model.upsampler.fourier_modes: null
-    seed: 106
+    seed: 1340050970
   config:
-    seed: 106
+    seed: 1340050970
     experiment:
       name: nca_emoji_template
     data:
@@ -10197,9 +12002,9 @@ configs:
       upsampler:
         radius: 2
         depth: 2
-        width_factor: 2
+        width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -10234,7 +12039,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 64
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -10252,18 +12057,7 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-- index: 107
+- index: 131
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
@@ -10271,25 +12065,14 @@ configs:
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
-    model.upsampler.depth: 4
+    model.upsampler.depth: 2
     model.upsampler.width_factor: 1
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 4
+    run.t: 32
     model.upsampler.fourier_modes: null
-    seed: 107
+    seed: 1660250124
   config:
-    seed: 107
+    seed: 1660250124
     experiment:
       name: nca_emoji_template
     data:
@@ -10310,10 +12093,10 @@ configs:
       padding: CIRCULAR
       upsampler:
         radius: 2
-        depth: 4
+        depth: 2
         width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 4
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -10348,7 +12131,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 32
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -10366,18 +12149,7 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-- index: 108
+- index: 132
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
@@ -10385,25 +12157,14 @@ configs:
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
-    model.upsampler.depth: 4
-    model.upsampler.width_factor: 2
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 8
+    run.t: 16
     model.upsampler.fourier_modes: null
-    seed: 108
+    seed: 1474644684
   config:
-    seed: 108
+    seed: 1474644684
     experiment:
       name: nca_emoji_template
     data:
@@ -10424,10 +12185,10 @@ configs:
       padding: CIRCULAR
       upsampler:
         radius: 2
-        depth: 4
-        width_factor: 2
+        depth: 2
+        width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 8
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -10462,7 +12223,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 16
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -10480,158 +12241,22 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-- index: 109
+- index: 133
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
-    loss.regulariser_coeffs.latent_channel_match: 1.0
-    model.upsampler.depth: 2
-    model.upsampler.width_factor: 1
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
-    model.upsampler.fourier_modes: null
-    seed: 109
-  config:
-    seed: 109
-    experiment:
-      name: nca_emoji_template
-    data:
-      dataset: emojis
-      batches: 4
-      timesteps: null
-      observed_channels: 4
-      data_channels: 4
-      downsample: 1
-    model:
-      family: isouNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      fire_rate: 0.5
-      padding: CIRCULAR
-      upsampler:
-        radius: 2
-        depth: 2
-        width_factor: 1
-        fourier_modes: null
-      upscale_factor: null
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-    optimiser:
-      type: nadam
-      blocknorm: true
-      sam: false
-      learn_rate: 0.001
-      warmup_steps: 64
-      decay_rate: 0.99
-    loss:
-      primary: l2
-      regulariser_coeffs:
-        intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 1.0
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 3
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-    run:
-      t: null
-      iterations: 2000
-      warmup: 64
-      log_every: 100
-      clear_cache_every: 500
-      write_images: true
-      loop_autodiff: checkpointed
-      sparse_pruning: false
-      target_sparsity: 0.5
-    logging:
-      backend: wandb
-      wandb:
-        project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1_v2
-        tags: null
-    knockout:
-      time: null
-      channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-- index: 110
-  overrides:
-    model.family: isouNCA
-    logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
-    run.iterations: 2000
-    model.upsampler.radius: 2
-    loss.regulariser_coeffs.latent_channel_match: 1.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 2
     model.upsampler.width_factor: 2
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 1
+    run.t: 128
     model.upsampler.fourier_modes: null
-    seed: 110
+    seed: 1807831941
   config:
-    seed: 110
+    seed: 1807831941
     experiment:
       name: nca_emoji_template
     data:
@@ -10655,7 +12280,7 @@ configs:
         depth: 2
         width_factor: 2
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 1
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -10678,7 +12303,7 @@ configs:
         contiguous_growth: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
-        latent_channel_match: 1.0
+        latent_channel_match: 0.0
       args:
         channels: null
         experiment_groups: null
@@ -10690,7 +12315,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 128
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -10708,44 +12333,298 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-- index: 111
+- index: 134
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
-    loss.regulariser_coeffs.latent_channel_match: 1.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 807622668
+  config:
+    seed: 807622668
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 135
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 1109909025
+  config:
+    seed: 1109909025
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 136
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 467127923
+  config:
+    seed: 467127923
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 137
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 1
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 1
+    run.t: 128
     model.upsampler.fourier_modes: null
-    seed: 111
+    seed: 1088594442
   config:
-    seed: 111
+    seed: 1088594442
     experiment:
       name: nca_emoji_template
     data:
@@ -10769,7 +12648,7 @@ configs:
         depth: 4
         width_factor: 1
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 1
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -10792,7 +12671,7 @@ configs:
         contiguous_growth: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
-        latent_channel_match: 1.0
+        latent_channel_match: 0.0
       args:
         channels: null
         experiment_groups: null
@@ -10804,7 +12683,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 128
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -10822,44 +12701,298 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-- index: 112
+- index: 138
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
     logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
-    loss.regulariser_coeffs.latent_channel_match: 1.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 898038951
+  config:
+    seed: 898038951
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 139
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 1853946440
+  config:
+    seed: 1853946440
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 140
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 89413096
+  config:
+    seed: 89413096
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 141
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
-    model.upscale_factor: null
-    run.t: null
+    model.upscale_factor: 1
+    run.t: 128
     model.upsampler.fourier_modes: null
-    seed: 112
+    seed: 967974037
   config:
-    seed: 112
+    seed: 967974037
     experiment:
       name: nca_emoji_template
     data:
@@ -10883,7 +13016,375 @@ configs:
         depth: 4
         width_factor: 2
         fourier_modes: null
-      upscale_factor: null
+      upscale_factor: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 128
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 142
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 76727541
+  config:
+    seed: 76727541
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 143
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 1706456525
+  config:
+    seed: 1706456525
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 144
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 629048404
+  config:
+    seed: 629048404
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 145
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 1
+    run.t: 128
+    model.upsampler.fourier_modes: null
+    seed: 151724219
+  config:
+    seed: 151724219
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 1
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -10918,7 +13419,7 @@ configs:
         internal_loss_func: l2
         samples: 128
     run:
-      t: null
+      t: 128
       iterations: 2000
       warmup: 64
       log_every: 100
@@ -10936,15 +13437,1384 @@ configs:
     knockout:
       time: null
       channel: null
-    groups:
-      model.upscale_factor:
-      - 1
-      - 2
-      - 4
-      - 8
-      run.t:
-      - 128
-      - 64
-      - 32
-      - 16
+- index: 146
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 688172268
+  config:
+    seed: 688172268
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 147
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 1914131695
+  config:
+    seed: 1914131695
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 148
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 1832512323
+  config:
+    seed: 1832512323
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 149
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 1
+    run.t: 128
+    model.upsampler.fourier_modes: null
+    seed: 947468699
+  config:
+    seed: 947468699
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 128
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 150
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 1936364666
+  config:
+    seed: 1936364666
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 151
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 958618560
+  config:
+    seed: 958618560
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 152
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 2
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 131856676
+  config:
+    seed: 131856676
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 2
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 153
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 1
+    run.t: 128
+    model.upsampler.fourier_modes: null
+    seed: 1696074045
+  config:
+    seed: 1696074045
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 128
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 154
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 1379740244
+  config:
+    seed: 1379740244
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 155
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 1830941901
+  config:
+    seed: 1830941901
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 156
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 1
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 252480137
+  config:
+    seed: 252480137
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 1
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 157
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 1
+    run.t: 128
+    model.upsampler.fourier_modes: null
+    seed: 1282502805
+  config:
+    seed: 1282502805
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 128
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 158
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 2
+    run.t: 64
+    model.upsampler.fourier_modes: null
+    seed: 539805736
+  config:
+    seed: 539805736
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 64
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 159
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 4
+    run.t: 32
+    model.upsampler.fourier_modes: null
+    seed: 911098687
+  config:
+    seed: 911098687
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 32
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 160
+  overrides:
+    model.family: isouNCA
+    logging.wandb.project: nca_emoji_upscale
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
+    run.iterations: 2000
+    model.upsampler.radius: 2
+    loss.regulariser_coeffs.latent_channel_match: 1.0
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    model.upscale_factor: 8
+    run.t: 16
+    model.upsampler.fourier_modes: null
+    seed: 203753987
+  config:
+    seed: 203753987
+    experiment:
+      name: nca_emoji_template
+    data:
+      dataset: emojis
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 1
+    model:
+      family: isouNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upsampler:
+        radius: 2
+        depth: 4
+        width_factor: 2
+        fourier_modes: null
+      upscale_factor: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary: l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 1.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+    run:
+      t: 16
+      iterations: 2000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      loop_autodiff: checkpointed
+      sparse_pruning: false
+      target_sparsity: 0.5
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_emoji_upscale
+        group: nca_emoji_upscale_sweep_1_v2
+        tags: null
+    knockout:
+      time: null
+      channel: null
 emit_files: false

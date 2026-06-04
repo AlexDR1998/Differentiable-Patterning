@@ -25,9 +25,9 @@ branches:
       loss.regulariser_coeffs.latent_channel_match: [0.0, 1.0]
       model.upsampler.depth: [2,4]
       model.upsampler.width_factor: [1,2]
-      groups:
-      - model.upscale_factor: [1, 2, 4, 8]
-        run.t: [128, 64, 32, 16]
+    groups:
+    - model.upscale_factor: [1, 2, 4, 8]
+      run.t: [128, 64, 32, 16]
   - when:
       model.family: NCA
     grid:
