@@ -303,6 +303,13 @@ def load_data(cfg):
     # if H["knockout"] is not None and H["knockout_mode"]=="both":
     
         # NCA_hyperparameters["FIRE_RATE"]=1.0 # For fine tuning on both WT and KO data, we want to use all the data and not drop any updates randomly, as the dataset is already small.
+    
+    #Data and boundary_mask is of size [B,T,C,W,H].
+    # W and H are 500, we want to pad them to 512.
+    data = jnp.pad(data,((0,0),(0,0),(0,0),(6,6),(6,6)))
+    boundary_mask = jnp.pad(boundary_mask,((0,0),(0,0),(0,0),(6,6),(6,6)))
+    
+
     return data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK
     
 
