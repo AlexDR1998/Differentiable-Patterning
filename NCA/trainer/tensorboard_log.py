@@ -125,7 +125,7 @@ class NCA_Train_log(Train_log):
 			if SAVE_TRAJECTORY:
 				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])  # type: ignore
 
-			extra_zeros = (-latents[0].shape[1])%3
+			extra_zeros = (-latents.shape[1])%3
 			latents = np.pad(latents,((0,0),(0,extra_zeros),(0,0),(0,0)))
 			_cy,_cx = squarish(latents.shape[1]//3)
 			latents = rearrange(latents,"Time (cx cy C) x y  -> Time C (cx x) (cy y)",C=3,cy=_cy,cx=_cx)
