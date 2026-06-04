@@ -35,6 +35,9 @@ class DataAugmenter(DataAugmenterBasic):
             x_obs = np.concatenate(x_obs,axis=1)
             return np.pad(x_obs,((0,0),(0,data.shape[1] - 9),(0,0),(0,0)))
         x = jtu.tree_map(_reduce_to_9,x)
+        
+        x = jtu.tree_map(lambda x:self.real_to_latent(x),x)
+        
         return x,y
 
     def data_callback(self,x,y,i,key):

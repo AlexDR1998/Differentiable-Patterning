@@ -129,6 +129,11 @@ class NCA_Trainer(object):
 		# Set up boundary augmenter class
 		# length of BOUNDARY_MASK PyTree should be same as number of batches
 		
+
+		# For NCA with latent state, boundary mask should be in the latent space
+		if BOUNDARY_MASK is not None:
+			BOUNDARY_MASK = self.NCA_model.real_to_latent(BOUNDARY_MASK)
+
 		self.BOUNDARY_CALLBACK = []
 		for b in range(self.BATCHES):
 			if BOUNDARY_MASK is not None:
