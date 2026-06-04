@@ -307,7 +307,7 @@ def load_data(cfg):
     #Data and boundary_mask is of size [B,T,C,W,H].
     # W and H are 500, we want to pad them to 512.
     data = jnp.pad(data,((0,0),(0,0),(0,0),(6,6),(6,6)))
-    boundary_mask = jnp.pad(boundary_mask,((0,0),(0,0),(0,0),(6,6),(6,6)))
+    boundary_mask = jnp.pad(boundary_mask,((0,0),(0,0),(6,6),(6,6)))
     
 
     return data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK
