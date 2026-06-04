@@ -111,22 +111,47 @@ def run(cfg):
         GRAD_LOSS=cfg.trainer.grad_loss,
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
     )
-    trainer.train(
-        t=cfg.run.t,
-        iters=cfg.run.iterations,
-        REGULARISER_COEFFS={**cfg.loss.regulariser_coeffs},
-        WARMUP=cfg.run.warmup,
-        optimiser=optimiser,
-        WRITE_IMAGES=cfg.run.write_images,
-        LOSS_FUNC_STR=cfg.loss.primary,
-        wandb_args={
-            "project":cfg.logging.wandb.project,
-            "group":cfg.logging.wandb.group,
-            # "group":"baseline-9ch-train-1",
-            "tags":build_tags(cfg),
-            "name":run_name
-        },
-        # KNOCKOUT_ARGS=KNOCKOUT_ARGS,
-        LOG_EVERY=100,
-        CLEAR_CACHE_EVERY=500,
-    )
+    try:
+        trainer.train(
+            t=cfg.run.t,
+            iters=cfg.run.iterations,
+            REGULARISER_COEFFS={**cfg.loss.regulariser_coeffs},
+            WARMUP=cfg.run.warmup,
+            optimiser=optimiser,
+            WRITE_IMAGES=cfg.run.write_images,
+            LOSS_FUNC_STR=cfg.loss.primary,
+            wandb_args={
+                "project":cfg.logging.wandb.project,
+                "group":cfg.logging.wandb.group,
+                # "group":"baseline-9ch-train-1",
+                "tags":build_tags(cfg),
+                "name":run_name
+            },
+            # KNOCKOUT_ARGS=KNOCKOUT_ARGS,
+            LOG_EVERY=100,
+            CLEAR_CACHE_EVERY=500,
+            LOOP_AUTODIFF="lax"
+        )
+    except Exception as e:
+        print(f"Error during training: {e}")
+        print("Retrying with checkpointed autodiff in case of OOM...")
+        trainer.train(
+            t=cfg.run.t,
+            iters=cfg.run.iterations,
+            REGULARISER_COEFFS={**cfg.loss.regulariser_coeffs},
+            WARMUP=cfg.run.warmup,
+            optimiser=optimiser,
+            WRITE_IMAGES=cfg.run.write_images,
+            LOSS_FUNC_STR=cfg.loss.primary,
+            wandb_args={
+                "project":cfg.logging.wandb.project,
+                "group":cfg.logging.wandb.group,
+                # "group":"baseline-9ch-train-1",
+                "tags":build_tags(cfg),
+                "name":run_name
+            },
+            # KNOCKOUT_ARGS=KNOCKOUT_ARGS,
+            LOG_EVERY=100,
+            CLEAR_CACHE_EVERY=500,
+            LOOP_AUTODIFF="checkpointed"
+        )
