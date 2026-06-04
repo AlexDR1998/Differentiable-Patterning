@@ -30,11 +30,11 @@ mapfile -t PODS < <(
   kubectl get pods \
     --no-headers \
     -o custom-columns=':metadata.name' \
-  | grep -E "^${JOB_NAME}_" || true
+  | grep -E "^${JOB_NAME}" || true
 )
 
 if [[ "${#PODS[@]}" -eq 0 ]]; then
-  echo "No pods found matching: ${JOB_NAME}_* (in current kubectl namespace)"
+  echo "No pods found matching: ${JOB_NAME}* (in current kubectl namespace)"
   exit 0
 fi
 
