@@ -116,6 +116,11 @@ def main() -> None:
         default=None,
         help="Seed for deterministic generation of per-config random seeds in the manifest",
     )
+    parser.add_argument(
+        "--shuffle-indices",
+        action="store_true",
+        help="Randomly permute the per-entry 'index' values in the manifest (for better load balancing)",
+    )
     args = parser.parse_args()
     rng = random.Random(args.seed)
     experiments_path = Path(args.path_to_experiments).resolve()
@@ -138,6 +143,8 @@ def main() -> None:
 
         output_dir = _resolve_output_dir(output_root, sweep_cfg, sweep_file, len(sweep_files))
         manifest = generate_manifest(base_cfg, sweep_cfg, output_dir, emit_files=bool(args.emit_files))
+        should_resave_manifest = False
+
         if args.seed is not None:
             for item in manifest.get("configs", []):
                 new_seed = rng.randint(0, 2**31 - 1)
@@ -147,7 +154,28 @@ def main() -> None:
                 if isinstance(item.get("config"), dict) and "seed" in item["config"]:
                     item["config"]["seed"] = new_seed
 
+            should_resave_manifest = True
+
+        # If requested, shuffle the 'index' values (and update any config_path that depends on it).
+        if args.shuffle_indices:
+            configs = manifest.get("configs", [])
+            old_indices = [item.get("index") for item in configs]
+            new_indices = list(old_indices)
+            rng.shuffle(new_indices)
+
+            for item, new_idx in zip(configs, new_indices, strict=False):
+                item["index"] = int(new_idx)
+                if "config_path" in item and isinstance(item["config_path"], str):
+                    item["config_path"] = str(output_dir / f"config_{int(new_idx):04d}.yaml")
+
+            should_resave_manifest = True
+
+        # generate_manifest writes manifest.yaml internally; resave only if we changed it.
+        if should_resave_manifest:
+            from omegaconf import OmegaConf  # local import to keep changes minimal
+
             OmegaConf.save(OmegaConf.create(manifest), output_dir / "manifest.yaml")
+
 
         wrote.append((output_dir / "manifest.yaml", int(manifest["count"])))
 
