@@ -42,6 +42,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: NCA
       channels: 32
@@ -149,6 +150,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: NCA
       channels: 32
@@ -256,6 +258,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: NCA
       channels: 32
@@ -362,6 +365,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: NCA
       channels: 32
@@ -469,6 +473,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: NCA
       channels: 32
@@ -576,6 +581,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -682,6 +688,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -788,6 +795,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -894,6 +902,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1000,6 +1009,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1106,6 +1116,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1212,6 +1223,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1318,6 +1330,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1424,6 +1437,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1530,6 +1544,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1636,6 +1651,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1742,6 +1758,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1849,6 +1866,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -1957,6 +1975,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -2065,6 +2084,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -2173,6 +2193,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -2281,6 +2302,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -2389,6 +2411,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -2497,6 +2520,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -2605,6 +2629,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -2713,6 +2738,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -2821,6 +2847,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -2929,6 +2956,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3037,6 +3065,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3144,6 +3173,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3250,6 +3280,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3356,6 +3387,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3462,6 +3494,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3568,6 +3601,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3674,6 +3708,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3780,6 +3815,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3886,6 +3922,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -3992,6 +4029,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -4098,6 +4136,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -4204,6 +4243,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -4310,6 +4350,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -4416,6 +4457,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -4522,6 +4564,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -4628,6 +4671,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -4734,6 +4778,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -4840,6 +4885,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -4946,6 +4992,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -5052,6 +5099,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -5158,6 +5206,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -5264,6 +5313,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -5370,6 +5420,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -5476,6 +5527,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -5582,6 +5634,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -5689,6 +5742,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -5797,6 +5851,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -5905,6 +5960,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6013,6 +6069,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6121,6 +6178,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6229,6 +6287,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6337,6 +6396,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6445,6 +6505,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6553,6 +6614,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6661,6 +6723,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6769,6 +6832,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6877,6 +6941,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: uNCA
       channels: 32
@@ -6984,6 +7049,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -7090,6 +7156,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -7196,6 +7263,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -7302,6 +7370,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -7408,6 +7477,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -7514,6 +7584,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -7620,6 +7691,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -7726,6 +7798,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -7832,6 +7905,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -7938,6 +8012,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8044,6 +8119,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8150,6 +8226,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8256,6 +8333,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8362,6 +8440,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8468,6 +8547,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8574,6 +8654,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8680,6 +8761,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8786,6 +8868,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8892,6 +8975,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -8998,6 +9082,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -9104,6 +9189,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -9210,6 +9296,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -9316,6 +9403,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -9422,6 +9510,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -9529,6 +9618,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -9637,6 +9727,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -9745,6 +9836,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -9853,6 +9945,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -9961,6 +10054,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -10069,6 +10163,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -10177,6 +10272,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -10285,6 +10381,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -10393,6 +10490,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -10501,6 +10599,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -10609,6 +10708,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -10717,6 +10817,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -10825,6 +10926,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -10933,6 +11035,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -11041,6 +11144,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -11149,6 +11253,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -11257,6 +11362,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -11365,6 +11471,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -11473,6 +11580,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -11581,6 +11689,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -11689,6 +11798,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -11797,6 +11907,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -11905,6 +12016,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12013,6 +12125,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12120,6 +12233,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12226,6 +12340,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12332,6 +12447,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12438,6 +12554,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12544,6 +12661,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12650,6 +12768,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12756,6 +12875,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12862,6 +12982,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -12968,6 +13089,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -13074,6 +13196,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -13180,6 +13303,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -13286,6 +13410,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -13392,6 +13517,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -13498,6 +13624,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -13604,6 +13731,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -13710,6 +13838,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -13816,6 +13945,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -13922,6 +14052,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14028,6 +14159,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14134,6 +14266,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14240,6 +14373,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14346,6 +14480,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14452,6 +14587,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14558,6 +14694,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14664,6 +14801,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14770,6 +14908,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14876,6 +15015,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -14982,6 +15122,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -15088,6 +15229,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -15194,6 +15336,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -15300,6 +15443,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -15406,6 +15550,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -15512,6 +15657,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -15618,6 +15764,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -15724,6 +15871,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -15830,6 +15978,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -15936,6 +16085,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16042,6 +16192,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16148,6 +16299,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16254,6 +16406,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16360,6 +16513,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16466,6 +16620,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16572,6 +16727,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16678,6 +16834,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16784,6 +16941,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16890,6 +17048,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -16996,6 +17155,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -17102,6 +17262,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -17209,6 +17370,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -17317,6 +17479,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -17425,6 +17588,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -17533,6 +17697,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -17641,6 +17806,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -17749,6 +17915,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -17857,6 +18024,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -17965,6 +18133,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -18073,6 +18242,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -18181,6 +18351,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -18289,6 +18460,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -18397,6 +18569,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -18505,6 +18678,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -18613,6 +18787,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -18721,6 +18896,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -18829,6 +19005,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -18937,6 +19114,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -19045,6 +19223,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -19153,6 +19332,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -19261,6 +19441,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -19369,6 +19550,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -19477,6 +19659,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -19585,6 +19768,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
@@ -19693,6 +19877,7 @@ configs:
       observed_channels: 9
       data_channels: 12
       downsample: 1
+      noise_strength: 0.005
     model:
       family: isouNCA
       channels: 32
