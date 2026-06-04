@@ -13,7 +13,7 @@ data:
 model:
   family: NCA
   channels: 32
-  kernel_str: [ID, LAP, DIFF]
+  kernel_str: [ID, LAP, GRAD]
   fire_rate: 0.5
   padding: CIRCULAR
 

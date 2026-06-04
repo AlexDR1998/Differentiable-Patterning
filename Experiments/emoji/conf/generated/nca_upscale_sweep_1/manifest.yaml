@@ -9,7 +9,7 @@ configs:
   overrides:
     model.family: NCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upscale_factor: 1
     run.t: 128
@@ -37,7 +37,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -93,7 +93,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -103,7 +103,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -131,7 +131,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -187,7 +187,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -197,7 +197,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -225,7 +225,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -281,7 +281,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -291,7 +291,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -319,7 +319,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -375,7 +375,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -385,7 +385,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -413,7 +413,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -469,7 +469,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -479,7 +479,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -507,7 +507,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -563,7 +563,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -573,7 +573,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -601,7 +601,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -657,7 +657,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -667,7 +667,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -695,7 +695,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -751,7 +751,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -761,7 +761,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -789,7 +789,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -845,7 +845,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -855,7 +855,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -883,7 +883,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -939,7 +939,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -949,7 +949,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -977,7 +977,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1033,7 +1033,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1043,7 +1043,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -1071,7 +1071,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1127,7 +1127,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1137,7 +1137,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -1165,7 +1165,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1221,7 +1221,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1231,7 +1231,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -1259,7 +1259,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1315,7 +1315,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1325,7 +1325,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -1353,7 +1353,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1409,7 +1409,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1419,7 +1419,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -1447,7 +1447,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1503,7 +1503,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1513,7 +1513,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -1541,7 +1541,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1597,7 +1597,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1607,7 +1607,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -1635,7 +1635,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1691,7 +1691,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1701,7 +1701,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -1729,7 +1729,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1785,7 +1785,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1795,7 +1795,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -1823,7 +1823,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1879,7 +1879,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1889,7 +1889,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -1917,7 +1917,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -1973,7 +1973,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -1983,7 +1983,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2011,7 +2011,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2067,7 +2067,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2077,7 +2077,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2105,7 +2105,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2161,7 +2161,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2171,7 +2171,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2199,7 +2199,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2255,7 +2255,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2265,7 +2265,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2293,7 +2293,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2349,7 +2349,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2359,7 +2359,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2387,7 +2387,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2443,7 +2443,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2453,7 +2453,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2481,7 +2481,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2537,7 +2537,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2547,7 +2547,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2575,7 +2575,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2631,7 +2631,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2641,7 +2641,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2669,7 +2669,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2725,7 +2725,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2735,7 +2735,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2763,7 +2763,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2819,7 +2819,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2829,7 +2829,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2857,7 +2857,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -2913,7 +2913,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -2923,7 +2923,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -2951,7 +2951,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3007,7 +3007,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3017,7 +3017,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -3045,7 +3045,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3101,7 +3101,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3111,7 +3111,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3139,7 +3139,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3195,7 +3195,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3205,7 +3205,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3233,7 +3233,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3289,7 +3289,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3299,7 +3299,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3327,7 +3327,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3383,7 +3383,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3393,7 +3393,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3421,7 +3421,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3477,7 +3477,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3487,7 +3487,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3515,7 +3515,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3571,7 +3571,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3581,7 +3581,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3609,7 +3609,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3665,7 +3665,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3675,7 +3675,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3703,7 +3703,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3759,7 +3759,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3769,7 +3769,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3797,7 +3797,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3853,7 +3853,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3863,7 +3863,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3891,7 +3891,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -3947,7 +3947,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -3957,7 +3957,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -3985,7 +3985,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4041,7 +4041,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4051,7 +4051,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -4079,7 +4079,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4135,7 +4135,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4145,7 +4145,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -4173,7 +4173,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4229,7 +4229,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4239,7 +4239,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -4267,7 +4267,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4323,7 +4323,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4333,7 +4333,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -4361,7 +4361,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4417,7 +4417,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4427,7 +4427,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -4455,7 +4455,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4511,7 +4511,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4521,7 +4521,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -4549,7 +4549,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4605,7 +4605,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4615,7 +4615,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -4643,7 +4643,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4699,7 +4699,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4709,7 +4709,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -4737,7 +4737,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4793,7 +4793,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4803,7 +4803,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -4831,7 +4831,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4887,7 +4887,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4897,7 +4897,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -4925,7 +4925,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -4981,7 +4981,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -4991,7 +4991,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5019,7 +5019,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5075,7 +5075,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5085,7 +5085,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5113,7 +5113,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5169,7 +5169,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5179,7 +5179,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5207,7 +5207,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5263,7 +5263,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5273,7 +5273,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5301,7 +5301,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5357,7 +5357,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5367,7 +5367,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5395,7 +5395,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5451,7 +5451,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5461,7 +5461,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5489,7 +5489,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5545,7 +5545,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5555,7 +5555,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5583,7 +5583,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5639,7 +5639,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5649,7 +5649,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5677,7 +5677,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5733,7 +5733,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5743,7 +5743,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5771,7 +5771,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5827,7 +5827,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5837,7 +5837,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5865,7 +5865,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -5921,7 +5921,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -5931,7 +5931,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -5959,7 +5959,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6015,7 +6015,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6025,7 +6025,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -6053,7 +6053,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6109,7 +6109,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6119,7 +6119,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6147,7 +6147,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6203,7 +6203,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6213,7 +6213,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6241,7 +6241,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6297,7 +6297,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6307,7 +6307,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6335,7 +6335,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6391,7 +6391,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6401,7 +6401,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6429,7 +6429,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6485,7 +6485,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6495,7 +6495,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6523,7 +6523,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6579,7 +6579,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6589,7 +6589,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6617,7 +6617,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6673,7 +6673,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6683,7 +6683,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6711,7 +6711,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6767,7 +6767,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6777,7 +6777,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6805,7 +6805,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6861,7 +6861,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6871,7 +6871,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6899,7 +6899,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -6955,7 +6955,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -6965,7 +6965,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -6993,7 +6993,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7049,7 +7049,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7059,7 +7059,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -7087,7 +7087,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7143,7 +7143,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7153,7 +7153,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -7181,7 +7181,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7237,7 +7237,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7247,7 +7247,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -7275,7 +7275,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7331,7 +7331,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7341,7 +7341,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -7369,7 +7369,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7425,7 +7425,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7435,7 +7435,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -7463,7 +7463,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7519,7 +7519,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7529,7 +7529,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -7557,7 +7557,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7613,7 +7613,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7623,7 +7623,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -7651,7 +7651,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7707,7 +7707,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7717,7 +7717,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -7745,7 +7745,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7801,7 +7801,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7811,7 +7811,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -7839,7 +7839,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7895,7 +7895,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7905,7 +7905,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -7933,7 +7933,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -7989,7 +7989,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -7999,7 +7999,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8027,7 +8027,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8083,7 +8083,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8093,7 +8093,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8121,7 +8121,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8177,7 +8177,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8187,7 +8187,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8215,7 +8215,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8271,7 +8271,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8281,7 +8281,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8309,7 +8309,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8365,7 +8365,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8375,7 +8375,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8403,7 +8403,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8459,7 +8459,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8469,7 +8469,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8497,7 +8497,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8553,7 +8553,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8563,7 +8563,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8591,7 +8591,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8647,7 +8647,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8657,7 +8657,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8685,7 +8685,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8741,7 +8741,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8751,7 +8751,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8779,7 +8779,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8835,7 +8835,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8845,7 +8845,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8873,7 +8873,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -8929,7 +8929,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -8939,7 +8939,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -8967,7 +8967,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -9023,7 +9023,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -9033,7 +9033,7 @@ configs:
   overrides:
     model.family: uNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.fourier_modes: 3
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -9061,7 +9061,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -9117,7 +9117,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -9127,7 +9127,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -9165,7 +9165,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -9221,7 +9221,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -9241,7 +9241,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -9279,7 +9279,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -9335,7 +9335,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -9355,7 +9355,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -9393,7 +9393,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -9449,7 +9449,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -9469,7 +9469,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -9507,7 +9507,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -9563,7 +9563,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -9583,7 +9583,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -9621,7 +9621,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -9677,7 +9677,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -9697,7 +9697,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -9735,7 +9735,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -9791,7 +9791,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -9811,7 +9811,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -9849,7 +9849,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -9905,7 +9905,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -9925,7 +9925,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -9963,7 +9963,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -10019,7 +10019,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -10039,7 +10039,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -10077,7 +10077,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -10133,7 +10133,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -10153,7 +10153,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -10191,7 +10191,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -10247,7 +10247,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -10267,7 +10267,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -10305,7 +10305,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -10361,7 +10361,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -10381,7 +10381,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 0.0
@@ -10419,7 +10419,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -10475,7 +10475,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -10495,7 +10495,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -10533,7 +10533,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -10589,7 +10589,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -10609,7 +10609,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -10647,7 +10647,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -10703,7 +10703,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -10723,7 +10723,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -10761,7 +10761,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -10817,7 +10817,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
@@ -10837,7 +10837,7 @@ configs:
   overrides:
     model.family: isouNCA
     logging.wandb.project: nca_emoji_upscale
-    logging.wandb.group: nca_emoji_upscale_sweep_1
+    logging.wandb.group: nca_emoji_upscale_sweep_1_v2
     run.iterations: 2000
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
@@ -10875,7 +10875,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
       upsampler:
@@ -10931,7 +10931,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_emoji_upscale
-        group: nca_emoji_upscale_sweep_1
+        group: nca_emoji_upscale_sweep_1_v2
         tags: null
     knockout:
       time: null
