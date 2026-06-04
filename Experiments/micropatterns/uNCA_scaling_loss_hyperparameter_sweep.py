@@ -326,7 +326,7 @@ def run(cfg):
         data=data,
         model_filename=run_name,
         BOUNDARY_MASK=boundary_mask,
-        LOSS_TIME_CHANNEL_MASK=CHANNEL_TIMESTEP_MASK,
+        LOSS_TIME_CHANNEL_MASK=None,
         DATA_AUGMENTER=build_data_augmenter(cfg),  # pyright: ignore[reportArgumentType]
         GRAD_LOSS=cfg.trainer.grad_loss,
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
