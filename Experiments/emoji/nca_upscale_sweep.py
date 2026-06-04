@@ -20,7 +20,7 @@ from NCA.model.NCA_upsample_isotropic_model import uNCA as isouNCA
 from NCA.model.NCA_upsample_model import uNCA
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from NCA.trainer.optimizer import build_optimizer
-
+from Experiments.config_helpers import build_tags
 
 
 
@@ -69,30 +69,21 @@ def build_model(cfg):
     return model
 
 
+
+
+
 def build_filename(cfg):
     kernel_str = "_".join(cfg.model.kernel_str).lower()
+    loss_str = "_".join(cfg.loss.primary).lower()
     if cfg.model.family == "NCA":
-        filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{cfg.loss.primary}_t{cfg.run.t}"
+        filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{loss_str}_t{cfg.run.t}"
     else:
-        filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{cfg.loss.primary}_t{cfg.run.t}_up{cfg.model.upscale_factor}_ud{cfg.model.upsampler.depth}_uw{cfg.model.upsampler.width_factor}_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}"
+        filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{loss_str}_t{cfg.run.t}_up{cfg.model.upscale_factor}_ud{cfg.model.upsampler.depth}_uw{cfg.model.upsampler.width_factor}_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}"
         if cfg.model.family == "isouNCA":
             filename += f"_rad{cfg.model.upsampler.radius}"
         elif cfg.model.family == "uNCA":
             filename += f"_fm{cfg.model.upsampler.fourier_modes}"
     return filename
-
-def build_tags(cfg, prefix=""):
-    tags = []
-    for key, value in cfg.items():
-        tag_key = f"{prefix}{key}"
-        if value is None:
-            continue
-        if hasattr(value, "items"):
-            tags.extend(build_tags(value, prefix=f"{tag_key}."))
-        else:
-            tags.append(f"{tag_key}:{value}")
-    return tags
-
 def run(cfg):
     class data_augmenter_subclass(DataAugmenter):
         #Redefine how data is pre-processed before training

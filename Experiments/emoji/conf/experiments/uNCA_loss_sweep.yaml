@@ -1,0 +1,41 @@
+experiment_name: nca_emoji_upscale_loss_sweep_1
+entrypoint: Experiments.emoji.nca_upscale_sweep:run
+output_subdir: generated/nca_upscale_loss_sweep_1
+seed_mode: index
+grid:
+  model.family: [NCA, uNCA, isouNCA]
+  logging.wandb.project: [nca_emoji_upscale]
+  logging.wandb.group: [nca_emoji_upscale_loss_sweep_1]
+  run.iterations: [2000]
+  loss.primary: [[l2],[l2,vgg_3ch],[vgg_3ch]]
+branches:
+  - when:
+      model.family: uNCA
+    grid:
+      model.upsampler.fourier_modes: [4]
+      loss.regulariser_coeffs.latent_channel_match: [1.0]
+      model.upsampler.depth: [1,2,4]
+      model.upsampler.width_factor: [4]
+    groups:
+    - model.upscale_factor: [2, 4, 8, 16]
+      run.t : [64, 32, 16, 8]
+  - when:
+      model.family: isouNCA
+    grid:
+      model.upsampler.radius: [1,2]
+      loss.regulariser_coeffs.latent_channel_match: [1.0]
+      model.upsampler.depth: [1,2,4]
+      model.upsampler.width_factor: [4]
+    groups:
+    - model.upscale_factor: [2, 4, 8, 16]
+      run.t: [64, 32, 16, 8]
+  - when:
+      model.family: NCA
+    grid:
+      model.upscale_factor: [1]
+      run.t: [128]
+      loss.regulariser_coeffs.latent_channel_match: [0.0]
+      model.upsampler.depth: [null]
+      model.upsampler.width_factor: [null]
+
+
