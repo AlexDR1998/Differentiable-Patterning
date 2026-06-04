@@ -65,10 +65,11 @@ spec:
               resources:
                 limits:
                   cpu: 8
-                  memory: "80Gi"
+                  memory: "140Gi"
                   nvidia.com/gpu: 1
             nodeSelector:
-                nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
+                # nvidia.com/gpu.product: NVIDIA-H100-80GB-HBM3
+                nvidia.com/gpu.product: NVIDIA-H200
                 # nvidia.com/gpu.product: NVIDIA-A100-SXM4-80GB
             volumes:
               - name: workspace
