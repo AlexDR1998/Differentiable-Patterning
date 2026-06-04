@@ -13,13 +13,14 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upscale_factor: 1
     run.t: 128
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: null
     model.upsampler.width_factor: null
-    model.upsampler.radius: null
     model.upsampler.fourier_modes: null
+    model.upsampler.radius: null
     seed: 577090037
   config:
     seed: 577090037
@@ -45,8 +46,8 @@ configs:
       upsampler:
         depth: null
         width_factor: null
-        radius: null
         fourier_modes: null
+        radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -54,6 +55,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -108,14 +110,15 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upscale_factor: 1
     run.t: 128
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: null
     model.upsampler.width_factor: null
-    model.upsampler.radius: null
     model.upsampler.fourier_modes: null
+    model.upsampler.radius: null
     seed: 271041745
   config:
     seed: 271041745
@@ -141,8 +144,8 @@ configs:
       upsampler:
         depth: null
         width_factor: null
-        radius: null
         fourier_modes: null
+        radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -150,6 +153,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -160,7 +164,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -204,14 +208,15 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upscale_factor: 1
     run.t: 128
     loss.regulariser_coeffs.latent_channel_match: 0.0
     model.upsampler.depth: null
     model.upsampler.width_factor: null
-    model.upsampler.radius: null
     model.upsampler.fourier_modes: null
+    model.upsampler.radius: null
     seed: 1095513148
   config:
     seed: 1095513148
@@ -237,8 +242,8 @@ configs:
       upsampler:
         depth: null
         width_factor: null
-        radius: null
         fourier_modes: null
+        radius: null
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -246,6 +251,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -255,7 +261,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -300,6 +306,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -341,6 +348,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -395,6 +403,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -436,6 +445,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -490,6 +500,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -531,6 +542,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -585,6 +597,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -626,6 +639,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -680,6 +694,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -721,6 +736,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -775,6 +791,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -816,6 +833,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -870,6 +888,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -911,6 +930,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -965,6 +985,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -1006,6 +1027,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1060,6 +1082,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -1101,6 +1124,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1155,6 +1179,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -1196,6 +1221,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1250,6 +1276,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -1291,6 +1318,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1345,6 +1373,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -1386,6 +1415,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1440,7 +1470,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -1482,6 +1513,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1492,7 +1524,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -1537,7 +1569,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -1579,6 +1612,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1589,7 +1623,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -1634,7 +1668,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -1676,6 +1711,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1686,7 +1722,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -1731,7 +1767,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -1773,6 +1810,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1783,7 +1821,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -1828,7 +1866,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -1870,6 +1909,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1880,7 +1920,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -1925,7 +1965,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -1967,6 +2008,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -1977,7 +2019,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2022,7 +2064,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -2064,6 +2107,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2074,7 +2118,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2119,7 +2163,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -2161,6 +2206,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2171,7 +2217,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2216,7 +2262,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -2258,6 +2305,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2268,7 +2316,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2313,7 +2361,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -2355,6 +2404,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2365,7 +2415,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2410,7 +2460,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -2452,6 +2503,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2462,7 +2514,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2507,7 +2559,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -2549,6 +2602,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2559,7 +2613,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2603,7 +2657,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -2645,6 +2700,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2654,7 +2710,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2698,7 +2754,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -2740,6 +2797,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2749,7 +2807,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2793,7 +2851,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -2835,6 +2894,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2844,7 +2904,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2888,7 +2948,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -2930,6 +2991,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -2939,7 +3001,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -2983,7 +3045,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -3025,6 +3088,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3034,7 +3098,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -3078,7 +3142,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -3120,6 +3185,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3129,7 +3195,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -3173,7 +3239,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -3215,6 +3282,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3224,7 +3292,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -3268,7 +3336,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -3310,6 +3379,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3319,7 +3389,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -3363,7 +3433,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -3405,6 +3476,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3414,7 +3486,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -3458,7 +3530,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -3500,6 +3573,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3509,7 +3583,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -3553,7 +3627,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -3595,6 +3670,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3604,7 +3680,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -3648,7 +3724,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.fourier_modes: 4
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -3690,6 +3767,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3699,7 +3777,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -3744,6 +3822,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -3785,6 +3864,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3839,6 +3919,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -3880,6 +3961,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -3934,6 +4016,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -3975,6 +4058,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4029,6 +4113,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -4070,6 +4155,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4124,6 +4210,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -4165,6 +4252,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4219,6 +4307,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -4260,6 +4349,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4314,6 +4404,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -4355,6 +4446,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4409,6 +4501,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -4450,6 +4543,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4504,6 +4598,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -4545,6 +4640,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4599,6 +4695,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -4640,6 +4737,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4694,6 +4792,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -4735,6 +4834,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4789,6 +4889,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -4830,6 +4931,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4884,6 +4986,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -4925,6 +5028,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -4979,6 +5083,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -5020,6 +5125,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5074,6 +5180,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -5115,6 +5222,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5169,6 +5277,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -5210,6 +5319,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5264,6 +5374,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -5305,6 +5416,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5359,6 +5471,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -5400,6 +5513,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5454,6 +5568,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -5495,6 +5610,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5549,6 +5665,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -5590,6 +5707,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5644,6 +5762,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -5685,6 +5804,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5739,6 +5859,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -5780,6 +5901,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5834,6 +5956,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -5875,6 +5998,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -5929,6 +6053,7 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -5970,6 +6095,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6024,7 +6150,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -6066,6 +6193,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6076,7 +6204,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6121,7 +6249,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -6163,6 +6292,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6173,7 +6303,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6218,7 +6348,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -6260,6 +6391,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6270,7 +6402,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6315,7 +6447,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -6357,6 +6490,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6367,7 +6501,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6412,7 +6546,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -6454,6 +6589,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6464,7 +6600,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6509,7 +6645,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -6551,6 +6688,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6561,7 +6699,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6606,7 +6744,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -6648,6 +6787,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6658,7 +6798,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6703,7 +6843,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -6745,6 +6886,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6755,7 +6897,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6800,7 +6942,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -6842,6 +6985,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6852,7 +6996,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6897,7 +7041,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -6939,6 +7084,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -6949,7 +7095,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -6994,7 +7140,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -7036,6 +7183,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7046,7 +7194,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7091,7 +7239,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -7133,6 +7282,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7143,7 +7293,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7188,7 +7338,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -7230,6 +7381,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7240,7 +7392,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7285,7 +7437,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -7327,6 +7480,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7337,7 +7491,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7382,7 +7536,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -7424,6 +7579,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7434,7 +7590,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7479,7 +7635,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -7521,6 +7678,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7531,7 +7689,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7576,7 +7734,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -7618,6 +7777,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7628,7 +7788,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7673,7 +7833,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -7715,6 +7876,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7725,7 +7887,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7770,7 +7932,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -7812,6 +7975,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7822,7 +7986,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7867,7 +8031,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -7909,6 +8074,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -7919,7 +8085,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -7964,7 +8130,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -8006,6 +8173,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8016,7 +8184,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8061,7 +8229,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -8103,6 +8272,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8113,7 +8283,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8158,7 +8328,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -8200,6 +8371,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8210,7 +8382,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8255,7 +8427,8 @@ configs:
     run.iterations: 2000
     loss.primary:
     - l2
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -8297,6 +8470,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8307,7 +8481,7 @@ configs:
     loss:
       primary:
       - l2
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8351,7 +8525,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -8393,6 +8568,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8402,7 +8578,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8446,7 +8622,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -8488,6 +8665,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8497,7 +8675,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8541,7 +8719,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -8583,6 +8762,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8592,7 +8772,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8636,7 +8816,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -8678,6 +8859,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8687,7 +8869,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8731,7 +8913,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -8773,6 +8956,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8782,7 +8966,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8826,7 +9010,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -8868,6 +9053,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8877,7 +9063,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -8921,7 +9107,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -8963,6 +9150,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -8972,7 +9160,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9016,7 +9204,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -9058,6 +9247,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9067,7 +9257,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9111,7 +9301,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -9153,6 +9344,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9162,7 +9354,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9206,7 +9398,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -9248,6 +9441,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9257,7 +9451,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9301,7 +9495,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -9343,6 +9538,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9352,7 +9548,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9396,7 +9592,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 1
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -9438,6 +9635,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9447,7 +9645,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9491,7 +9689,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -9533,6 +9732,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9542,7 +9742,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9586,7 +9786,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -9628,6 +9829,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9637,7 +9839,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9681,7 +9883,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -9723,6 +9926,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9732,7 +9936,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9776,7 +9980,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 1
@@ -9818,6 +10023,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9827,7 +10033,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9871,7 +10077,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -9913,6 +10120,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -9922,7 +10130,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -9966,7 +10174,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -10008,6 +10217,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -10017,7 +10227,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -10061,7 +10271,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -10103,6 +10314,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -10112,7 +10324,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -10156,7 +10368,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 2
@@ -10198,6 +10411,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -10207,7 +10421,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -10251,7 +10465,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -10293,6 +10508,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -10302,7 +10518,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -10346,7 +10562,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -10388,6 +10605,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -10397,7 +10615,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -10441,7 +10659,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -10483,6 +10702,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -10492,7 +10712,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
@@ -10536,7 +10756,8 @@ configs:
     logging.wandb.group: nca_emoji_upscale_loss_sweep_1
     run.iterations: 2000
     loss.primary:
-    - vgg_3ch
+    - vgg
+    trainer.loop_autodiff: lax
     model.upsampler.radius: 2
     loss.regulariser_coeffs.latent_channel_match: 1.0
     model.upsampler.depth: 4
@@ -10578,6 +10799,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
+      loop_autodiff: lax
     optimiser:
       type: nadam
       blocknorm: true
@@ -10587,7 +10809,7 @@ configs:
       decay_rate: 0.99
     loss:
       primary:
-      - vgg_3ch
+      - vgg
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 0.0
