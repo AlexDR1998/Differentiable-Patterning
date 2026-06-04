@@ -1,0 +1,76 @@
+seed: 0
+
+experiment:
+  name: nca_micropattern_template
+data:
+  dataset: micropatterns
+  batches: 4
+  timesteps: [0, 12, 24, 36, 48]
+  observed_channels: 9
+  data_channels: 12
+  downsample: 1
+
+model:
+  family: NCA
+  channels: 32
+  kernel_str: [ID, LAP, DIFF]
+  fire_rate: 0.5
+  padding: CIRCULAR
+
+trainer:
+  boundary_mode: soft
+  grad_loss: true
+  sharding: null
+  model_directory: models/
+  log_directory: logs/
+  loss_time_channel_mask: null
+  loop_autodiff: checkpointed
+
+optimiser:
+  type: nadam
+  blocknorm: true
+  sam: false
+  learn_rate: 0.001
+  warmup_steps: 64
+  decay_rate: 0.99
+
+loss:
+  primary: l2
+  regulariser_coeffs:
+    intermediate_state: 1.0
+    boundary: 0.0
+    contiguous_growth: 1.0
+    update_sensitivity: 0.0
+    perturbation_conservation: 0.0
+    latent_channel_match: 0.0
+  args:
+    channels: null
+    experiment_groups: null
+    S: 1024
+    K: 5
+    D: 3
+    sharpen: true
+    epsilon: 0.1
+    internal_loss_func: l2
+    samples: 128
+
+run:
+  t: 32
+  iterations: 2000
+  warmup: 64
+  log_every: 100
+  clear_cache_every: 500
+  write_images: true
+  sparse_pruning: false
+  target_sparsity: 0.5
+
+logging:
+  backend: wandb
+  wandb:
+    project: NCA-micropattern
+    group: base-config
+    tags: null
+
+knockout:
+  time: null
+  channel: Nodal
