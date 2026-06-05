@@ -3,6 +3,8 @@
 def build_tags(cfg, prefix=""):
     tags = []
     for key, value in cfg.items():
+        if key == "seed":
+            continue
         tag_key = f"{prefix}{key}"
         if value is None:
             continue
