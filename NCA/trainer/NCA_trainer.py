@@ -575,12 +575,12 @@ class NCA_Trainer(object):
 			print( "|-|-|-|-|-|-  Loss exceded "+str(loss_thresh)+" at step "+str(error_at)+", optimisation probably diverging  -|-|-|-|-|-|")
 		if error!=0 and model_saved==False:
 			print("|-|-|-|-|-|-  Training did not converge, model was not saved  -|-|-|-|-|-|")
-		elif self.IS_LOGGING and model_saved:
+		# elif self.IS_LOGGING and model_saved:
 			
-			self.LOGGER.tb_training_end_log(
-				self.NCA_model,
-				self.DATA_AUGMENTER,
-				t=t,
-				boundary_callback=self.BOUNDARY_CALLBACK,
-				SAVE_TRAJECTORY=False)
+		# 	self.LOGGER.tb_training_end_log(
+		# 		self.NCA_model,
+		# 		self.DATA_AUGMENTER,
+		# 		t=t,
+		# 		boundary_callback=self.BOUNDARY_CALLBACK,
+		# 		SAVE_TRAJECTORY=False)
 		self.LOGGER.finish()
