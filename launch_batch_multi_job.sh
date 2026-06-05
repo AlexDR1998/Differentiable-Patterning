@@ -11,7 +11,7 @@ JOB_WORKER_COUNT="$3"
 GPU_TYPE="${4:-H200}"
 
 if [ "$GPU_TYPE" == "H200" ]; then
-  GPU_MEMORY=140
+  GPU_MEMORY=128
   GPU_FULL_NAME="NVIDIA-H200"
 elif [ "$GPU_TYPE" == "A100" ]; then
   GPU_MEMORY=80
