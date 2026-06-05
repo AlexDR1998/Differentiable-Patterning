@@ -61,7 +61,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -170,7 +170,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -279,7 +279,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -388,7 +388,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -497,7 +497,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -606,7 +606,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -715,7 +715,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -824,7 +824,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -933,7 +933,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -1042,7 +1042,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -1151,7 +1151,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -1260,7 +1260,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -1369,7 +1369,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -1478,7 +1478,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -1587,7 +1587,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -1696,7 +1696,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -1805,7 +1805,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -1914,7 +1914,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -2023,7 +2023,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -2132,7 +2132,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -2241,7 +2241,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -2350,7 +2350,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -2459,7 +2459,7 @@ configs:
       upscale_factor: 4
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
@@ -2568,7 +2568,7 @@ configs:
       upscale_factor: 2
     trainer:
       boundary_mode: soft
-      grad_loss: true
+      grad_loss: false
       sharding: null
       model_directory: models/
       log_directory: logs/
