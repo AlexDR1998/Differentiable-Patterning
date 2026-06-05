@@ -79,8 +79,8 @@ configs:
       - vgg_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -188,8 +188,8 @@ configs:
       - vgg_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -297,8 +297,8 @@ configs:
       - ott_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -406,8 +406,8 @@ configs:
       - ott_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -515,8 +515,8 @@ configs:
       - vgg_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -624,8 +624,8 @@ configs:
       - vgg_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -733,8 +733,8 @@ configs:
       - ott_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -842,8 +842,8 @@ configs:
       - ott_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -951,8 +951,8 @@ configs:
       - vgg_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -1060,8 +1060,8 @@ configs:
       - vgg_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -1169,8 +1169,8 @@ configs:
       - ott_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -1278,8 +1278,8 @@ configs:
       - ott_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -1387,8 +1387,8 @@ configs:
       - vgg_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -1496,8 +1496,8 @@ configs:
       - vgg_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -1605,8 +1605,8 @@ configs:
       - ott_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -1714,8 +1714,8 @@ configs:
       - ott_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -1823,8 +1823,8 @@ configs:
       - vgg_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -1932,8 +1932,8 @@ configs:
       - vgg_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -2041,8 +2041,8 @@ configs:
       - ott_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -2150,8 +2150,8 @@ configs:
       - ott_grouped_and_l2
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -2259,8 +2259,8 @@ configs:
       - vgg_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -2368,8 +2368,8 @@ configs:
       - vgg_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -2477,8 +2477,8 @@ configs:
       - ott_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0
@@ -2586,8 +2586,8 @@ configs:
       - ott_grouped
       regulariser_coeffs:
         intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 1.0

@@ -1,0 +1,46 @@
+experiment_name: nca_9ch_micropattern_scaling_sweep_2
+entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+output_subdir: generated/nca_9ch_micropattern_scaling_sweep_2_h200
+seed_mode: index
+grid:
+  model.family: [NCA, uNCA, isouNCA]
+  # run.scaling: [diffusive, convective]
+  run.scaling: [diffusive]
+  logging.wandb.project: [nca_micropattern_upscale]
+  logging.wandb.group: [nca_9ch_micropattern_scaling_sweep_2]
+  run.iterations: [4000]
+  loss.primary: [[vgg_grouped_and_l2],[ott_grouped_and_l2],[vgg_grouped],[ott_grouped]]
+  trainer.loop_autodiff: [checkpointed]
+  data.downsample: [1]
+  knockout.mode: [null]
+  knockout.time: [null]
+  knockout.channel: [Nodal]
+  loss.regulariser_coeffs.latent_channel_match: [1.0]
+  model.upsampler.depth: [4]
+  model.upsampler.width_factor: [2]
+  model.upsampler.radius: [2]
+  model.upsampler.fourier_modes: [5]
+branches:
+  - when:
+      run.scaling: convective
+    groups:
+      - model.upscale_factor: [32,16,8,4,2]
+        run.t : [8,16,32,64,128]    
+  - when:
+      run.scaling: diffusive
+    groups:
+      - model.upscale_factor: [4,2]
+        run.t: [512,2048]
+      # - model.upscale_factor: [32,16,8]
+        # run.t: [8,32,128]
+# branches:
+#   - when:
+#       model.family: uNCA
+#     grid:
+#       model.upsampler.fourier_modes: [4]
+#   - when:
+#       model.family: isouNCA
+#     grid:
+#       model.upsampler.radius: [2]
+
+
