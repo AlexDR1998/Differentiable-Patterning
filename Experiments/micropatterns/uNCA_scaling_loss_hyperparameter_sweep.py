@@ -72,9 +72,9 @@ def build_filename(cfg):
     kernel_str = "_".join(cfg.model.kernel_str).lower()
     loss_str = "_".join(cfg.loss.primary).lower()
     if cfg.model.family == "NCA":
-        filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{loss_str}_t{cfg.run.t}"
+        filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{loss_str}_{cfg.run.scaling}_t{cfg.run.t}"
     else:
-        filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{loss_str}_t{cfg.run.t}_up{cfg.model.upscale_factor}_ud{cfg.model.upsampler.depth}_uw{cfg.model.upsampler.width_factor}_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}"
+        filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{loss_str}_{cfg.run.scaling}_t{cfg.run.t}_up{cfg.model.upscale_factor}_ud{cfg.model.upsampler.depth}_uw{cfg.model.upsampler.width_factor}_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}"
         if cfg.model.family == "isouNCA":
             filename += f"_rad{cfg.model.upsampler.radius}"
         elif cfg.model.family == "uNCA":
