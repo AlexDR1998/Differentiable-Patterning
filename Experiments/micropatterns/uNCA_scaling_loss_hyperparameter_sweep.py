@@ -66,11 +66,18 @@ def build_model(cfg):
         )
     else:
         raise ValueError(f"Unknown model family {cfg.model.family}")
+    
+    if cfg.knockout.mode is not None:
+        model_path = build_filename(cfg)
+        model = eqx.tree_deserialise_leaves(model_path, model)
+    
     return model
 
 def build_filename(cfg):
     kernel_str = "_".join(cfg.model.kernel_str).lower()
     loss_str = "_".join(cfg.loss.primary).lower()
+    loss_str += f"_{cfg.loss.vgg_internal.lower()}"
+    loss_str += f"_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}_cc{cfg.loss.regulariser_coeffs.contiguous_growth}"
     if cfg.model.family == "NCA":
         filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{loss_str}_{cfg.run.scaling}_t{cfg.run.t}"
     else:
@@ -349,6 +356,9 @@ def run(cfg):
             # "group":"baseline-9ch-train-1",
             "tags":build_tags(cfg),
             "name":run_name
+        },
+        LOSS_ARGS={
+            "metric":cfg.loss.vgg_internal,
         },
         LOG_EVERY=100,
         CLEAR_CACHE_EVERY=500,
