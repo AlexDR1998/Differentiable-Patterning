@@ -359,7 +359,17 @@ def run(cfg):
         },
         LOSS_ARGS={
             "metric":cfg.loss.vgg_internal,
+            "channels":None,
+            "experiment_groups":None,
+            "S":1024,
+            "K":5,
+            "D":3,
+            "sharpen":True,
+            "epsilon":0.1,
+            "internal_loss_func":"l2",
+            "samples":128
         },
+        
         LOG_EVERY=100,
         CLEAR_CACHE_EVERY=500,
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff
