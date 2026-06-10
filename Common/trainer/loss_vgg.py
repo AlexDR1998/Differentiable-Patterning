@@ -12,22 +12,49 @@ import jax.random as jr
 from pyparsing import Optional
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
 
+VGG_DTYPE = jnp.bfloat16
+LOSS_DTYPE = jnp.float32
+def to_vgg_dtype(x):
+    return x.astype(VGG_DTYPE)
 
+
+def to_loss_dtype(x):
+    return x.astype(LOSS_DTYPE)
+
+
+# def tree_stop_bf16(x):
+#     return jax.tree.map(lambda z: jax.lax.stop_gradient(z.astype(VGG_DTYPE)), x)
+
+
+def cast_params_bf16(params):
+    def f(z):
+        if jnp.issubdtype(z.dtype, jnp.floating):
+            return z.astype(VGG_DTYPE)
+        return z
+    return jax.tree.map(f, params)
 
 def normalize_tensor(x, eps=1e-10):
     # Use `-1` because we are channel-last
+    x = x.astype(LOSS_DTYPE)
     norm_factor = jnp.sqrt(jnp.sum(x**2, axis=-1, keepdims=True))
     return x / (norm_factor + eps)
 
 def spatial_average(x, keepdims=True):
+
     # Mean over W, H
+    x = x.astype(LOSS_DTYPE)
     return jnp.mean(x, axis=[1, 2], keepdims=keepdims)
 
 class LPIPS_L2(LPIPS):
     @nn.compact
-    def __call__(self, x, t, key, aux):
-        x = self.vgg((x + 1) / 2)
-        t = self.vgg((t + 1) / 2)
+    def __call__(self, x, t, key, aux): # pyright: ignore[reportIncompatibleMethodOverride]
+        # x = self.vgg((x + 1) / 2)
+        # t = self.vgg((t + 1) / 2)
+        x = self.features(x)
+        if aux.get("target_feats", None) is not None:
+            t = aux["target_feats"]
+        else:
+            t = self.features(t)
             
         feats_x, feats_t, diffs = {}, {}, {}
         for i, f in enumerate(self.feature_names):
@@ -35,7 +62,7 @@ class LPIPS_L2(LPIPS):
             
             # print(f"Feature map {f} shape: ",feats_x[i].shape,flush=True)
 
-            diffs[i] = (feats_x[i] - feats_t[i]) ** 2       # B fW fH fC
+            diffs[i] = ((feats_x[i] - feats_t[i]) ** 2 ).astype(LOSS_DTYPE)      # B fW fH fC
             # print(f"Diffs {i} shape: ",diffs[i].shape,flush=True)
 
         # We should maybe vectorize this better
@@ -47,20 +74,28 @@ class LPIPS_L2(LPIPS):
         val = res[0]
         for i in range(1, len(res)):
             val += res[i]
-        return val
+        return val.astype(LOSS_DTYPE)
+    def features(self, x):
+        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
+        return self.vgg(x)
 
 
 class LPIPS_OT_CH(LPIPS):
     @nn.compact
-    def __call__(self, x, t, key, aux):
-        x = self.vgg((x + 1) / 2)
-        t = self.vgg((t + 1) / 2)
+    def __call__(self, x, t, key, aux):# pyright: ignore[reportIncompatibleMethodOverride]
+        # x = self.vgg((x + 1) / 2)
+        x = self.features(x)
+        if aux.get("target_feats", None) is not None:
+            t = aux["target_feats"]
+        else:
+            t = self.features(t)
+        # t = self.vgg((t + 1) / 2)
         # key = self.make_rng('projection')
         feats_x, feats_t, diffs = {}, {}, {}
         for i, f in enumerate(self.feature_names):
             feats_x[i], feats_t[i] = normalize_tensor(x[f]), normalize_tensor(t[f])  # B fW fH fC
             W,H,C = feats_x[i].shape[1:]
-            proj = jr.uniform(key,shape=(C,aux["samples"]))
+            proj = jr.uniform(key,shape=(C,aux["samples"]),dtype=LOSS_DTYPE)
             proj = proj / jnp.linalg.norm(proj, axis=0, keepdims=True) # C samples
 
             x_proj = einsum(feats_x[i],proj,"b w h c , c s -> b w h s") # B fW fH samples
@@ -74,7 +109,7 @@ class LPIPS_OT_CH(LPIPS):
 
             # print(f"Projected and sorted feature map {f} shape: ",feats_x[i].shape,flush=True)
 
-            _d = (x_proj - t_proj) ** 2       # B samples (fW fH)
+            _d = ((x_proj - t_proj) ** 2).astype(LOSS_DTYPE)       # B samples (fW fH)
             _d = reduce(_d,"b s wh -> b ","mean") # B
 
             diffs[i] = rearrange(_d,"b -> b 1 1 1")       # B 1 1 1
@@ -86,20 +121,28 @@ class LPIPS_OT_CH(LPIPS):
         val = res[0]
         for i in range(1, len(res)):
             val += res[i]
-        return val
+        return val.astype(LOSS_DTYPE)
+    def features(self, x):
+        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
+        return self.vgg(x)
 
 
 class LPIPS_OT_SP(LPIPS):
     @nn.compact
-    def __call__(self, x, t, key, aux):
-        x = self.vgg((x + 1) / 2)
-        t = self.vgg((t + 1) / 2)
+    def __call__(self, x, t, key, aux):# pyright: ignore[reportIncompatibleMethodOverride]
+        # x = self.vgg((x + 1) / 2)
+        x = self.features(x)
+        if aux.get("target_feats", None) is not None:
+            t = aux["target_feats"]
+        else:
+            t = self.features(t)
+        # t = self.vgg((t + 1) / 2)
         # key = self.make_rng('projection')
         feats_x, feats_t, diffs = {}, {}, {}
         for i, f in enumerate(self.feature_names):
             feats_x[i], feats_t[i] = normalize_tensor(x[f]), normalize_tensor(t[f])  # B fW fH fC
             W,H,C = feats_x[i].shape[1:]
-            proj = jr.uniform(key,shape=(W,H,aux["samples"]))
+            proj = jr.uniform(key,shape=(W,H,aux["samples"]),dtype=LOSS_DTYPE)
             proj = proj / jnp.linalg.norm(proj, axis=(0,1), keepdims=True) # C samples
 
             x_proj = einsum(feats_x[i],proj,"b w h c , w h s -> b s c") # B samples C
@@ -113,7 +156,7 @@ class LPIPS_OT_SP(LPIPS):
 
             # print(f"Projected and sorted feature map {f} shape: ",feats_x[i].shape,flush=True)
 
-            _d = (x_proj - t_proj) ** 2       # B samples C
+            _d = ((x_proj - t_proj) ** 2).astype(LOSS_DTYPE)       # B samples C
             _d = reduce(_d,"b s c -> b ","mean") # B
 
             diffs[i] = rearrange(_d,"b -> b 1 1 1")       # B 1 1 1
@@ -125,7 +168,10 @@ class LPIPS_OT_SP(LPIPS):
         val = res[0]
         for i in range(1, len(res)):
             val += res[i]
-        return val
+        return val.astype(LOSS_DTYPE)
+    def features(self, x):
+        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
+        return self.vgg(x)
 
 def oti_loss(X,Y,aux):
     """
@@ -156,9 +202,14 @@ def oti_loss(X,Y,aux):
 
 class LPIPS_EMD_SP(LPIPS):
     @nn.compact
-    def __call__(self, x, t, key, aux):
-        x = self.vgg((x + 1) / 2)
-        t = self.vgg((t + 1) / 2)
+    def __call__(self, x, t, key, aux): # pyright: ignore[reportIncompatibleMethodOverride]
+        # x = self.vgg((x + 1) / 2)
+        x = self.features(x)
+        if aux.get("target_feats", None) is not None:
+            t = aux["target_feats"]
+        else:
+            t = self.features(t)
+        # t = self.vgg((t + 1) / 2)
         # key = self.make_rng('projection')
         feats_x, feats_t, diffs = {}, {}, {}
         v_emd_loss = jax.vmap(oti_loss, in_axes=(0,0,None))
@@ -184,13 +235,21 @@ class LPIPS_EMD_SP(LPIPS):
         val = res[0]
         for i in range(1, len(res)):
             val += res[i]
-        return val
+        return val.astype(LOSS_DTYPE)
+    def features(self, x):
+        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
+        return self.vgg(x)
 
-class LPIPS_EMD_FULL(LPIPS):
+class LPIPS_EMD_FULL(LPIPS): 
     @nn.compact
-    def __call__(self, x, t, key, aux):
-        x = self.vgg((x + 1) / 2)
-        t = self.vgg((t + 1) / 2)
+    def __call__(self, x, t, key, aux): # pyright: ignore[reportIncompatibleMethodOverride]
+        # x = self.vgg((x + 1) / 2)
+        x = self.features(x)
+        if aux.get("target_feats", None) is not None:
+            t = aux["target_feats"]
+        else:
+            t = self.features(t)
+        # t = self.vgg((t + 1) / 2)
         # key = self.make_rng('projection')
         feats_x, feats_t, diffs = {}, {}, {}
         v_emd_loss = jax.vmap(oti_loss, in_axes=(0,0,None))
@@ -217,7 +276,10 @@ class LPIPS_EMD_FULL(LPIPS):
         val = res[0]
         for i in range(1, len(res)):
             val += res[i]
-        return val
+        return val.astype(LOSS_DTYPE)
+    def features(self, x):
+        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
+        return self.vgg(x)
 
 lpips_ot_ch = LPIPS_OT_CH()
 lpips_ot_sp = LPIPS_OT_SP()
@@ -235,137 +297,370 @@ lpips_variants = {
 
 
 
-@eqx.filter_jit
-def vgg(x,y, key,where=None,aux={"vgg_metric":"l2"}):
-    """
-    NOTE THAT CHANNELS IS TRUNCATED TO 3
-    NOTE WHERE HAS NO EFFECT HERE
+# @eqx.filter_jit
+# def vgg(x,y, key,where=None,aux={"vgg_metric":"l2"}):
+#     """
+#     NOTE THAT CHANNELS IS TRUNCATED TO 3
+#     NOTE WHERE HAS NO EFFECT HERE
 
-    Parameters
-    ----------
-    x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-        predictions
-    y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-        true data
-    key : jax.random.PRNGKey
-        Jax random number key. 
+#     Parameters
+#     ----------
+#     x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+#         predictions
+#     y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+#         true data
+#     key : jax.random.PRNGKey
+#         Jax random number key. 
 
-    Returns
-    -------
-    loss : float32 [N]
+#     Returns
+#     -------
+#     loss : float32 [N]
 
-    """
-    x = rearrange(x,"n c x y->n x y c")[...,:3]
-    y = rearrange(y,"n c x y->n x y c",)[...,:3]
-    lpips_model = lpips_variants[aux["vgg_metric"]]
-    # L-pips expects inputs in the range [-1,1], but we almost always use data in the range [0,1]
-    x = x*2-1
-    y = y*2-1
+#     """
+#     x = rearrange(x,"n c x y->n x y c")[...,:3]
+#     y = rearrange(y,"n c x y->n x y c",)[...,:3]
+#     lpips_model = lpips_variants[aux["vgg_metric"]]
+#     # L-pips expects inputs in the range [-1,1], but we almost always use data in the range [0,1]
+#     x = x*2-1
+#     y = y*2-1
         
-    params = lpips_model.init(key, x, y, key, aux=aux)
-    loss = lpips_model.apply(params, x, y, key, aux=aux)
+#     params = lpips_model.init(key, x, y, key, aux=aux)
+#     loss = lpips_model.apply(params, x, y, key, aux=aux)
 
-    return loss
+#     return loss
 	
-def vgg_hyperspectral_colony(x,y,key,where=None,aux={"vgg_metric":"l2"}):
+
+
+
+# ---------------------------------------------------------------------
+# Precompute target features
+# - to save compute time, sometimes we can just compute the true data
+#   target features once at the start, effectively halving VGG calls.
+# ---------------------------------------------------------------------
+
+@eqx.filter_jit
+def precompute_vgg_hyperspectral_target(y, key, where=None, aux={"vgg_metric": "l2"}):
     """
+    Returns:
+        {
+            "vgg_params": params,
+            "target_feats": target_feats,
+        }
 
-        Takes x and y with > 3 channels and computes VGG loss on each 3-channel subset, averaging the result.
-        Parameters
-        ----------
-        x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-            predictions
-        y : float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
-            true data
-        key : jax.random.PRNGKey
-            Jax random number key.
-        where : boolean array [N,CHANNELS,(),()]
-            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
-        Returns
-        -------
-        loss : float32 [N]
-            loss reduced over channel and spatial axes
+    target_feats has shape/pytree structure:
+        [num_channel_groups, ...VGG feature pytree...]
     """
-
-    # Scale to [-1,1] for lpips
-    x = x*2-1
-    y = y*2-1
-
-    # x has 8 channels but y has 11. Some specified x channels need to be repeated to match the channels in y
-    # Apply where mask
+    y = y * 2 - 1
 
     if where is not None:
-        x = x*where.astype(x.dtype)
+        y = y * where.astype(y.dtype)
+
+    y = pad_to_multiple_of_3_channels(y)
+    y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
+    y = y.astype(VGG_DTYPE)
+
+    lpips_model = lpips_variants[aux["vgg_metric"]]
+
+    init_key, call_key = jr.split(key, 2)
+    params = lpips_model.init(init_key, y[0], y[0], call_key, aux=aux)
+    params = cast_params_bf16(params)
+
+    def one_group(yg):
+        feats = lpips_model.apply(params, yg, method=lpips_model.features)
+        return feats
+
+    target_feats = jax.vmap(one_group)(y)
+
+    return {
+        "vgg_params": params,
+        "target_feats": target_feats,
+    }
+
+
+@eqx.filter_jit
+def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_metric": "l2"}):
+    """
+    Same as above, but using the colony-specific target preprocessing.
+    """
+    y = y * 2 - 1
+
+    if where is not None:
         where_y = duplicate_x_channels_9ch(where)
-        y = y*where_y.astype(y.dtype)
+        y = y * where_y.astype(y.dtype)
+
+    y = split_and_pad_by_experiment_groups_12ch(y)
+    y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
+    y = y.astype(VGG_DTYPE)
+
+    lpips_model = lpips_variants[aux["vgg_metric"]]
+
+    init_key, call_key = jr.split(key, 2)
+    params = lpips_model.init(init_key, y[0], y[0], call_key, aux=aux)
+    params = cast_params_bf16(params)
+    def one_group(yg):
+        feats = lpips_model.apply(params, yg, method=lpips_model.features)
+        return feats
+
+    target_feats = jax.vmap(one_group)(y)
+
+    return {
+        "vgg_params": params,
+        "target_feats": target_feats,
+    }
 
 
+
+
+
+
+
+# ---------------------------------------------------------------------
+# Losses
+# ---------------------------------------------------------------------
+
+def vgg_hyperspectral(x, y, key, where=None, aux={"vgg_metric": "l2"}):
+    """
+    Same signature as before.
+
+    Optional aux entries:
+        aux["vgg_params"]
+        aux["target_feats"]
+
+    If provided, skips VGG target forward pass.
+    """
+
+    x = x * 2 - 1
+    y = y * 2 - 1
+
+    if where is not None:
+        x = x * where.astype(x.dtype)
+        y = y * where.astype(y.dtype)
+
+    x = pad_to_multiple_of_3_channels(x)
+    y = pad_to_multiple_of_3_channels(y)
+
+    x = rearrange(x, "n (c vc) x y -> c n x y vc", vc=3)
+    y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
+
+    x = x.astype(VGG_DTYPE)
+    y = y.astype(VGG_DTYPE)
+
+    lpips_model = lpips_variants[aux["vgg_metric"]]
+
+    if aux.get("vgg_params", None) is None:
+        init_key, call_key = jr.split(key, 2)
+        params = lpips_model.init(init_key, x[0], y[0], call_key, aux=aux)
+        params = cast_params_bf16(params)
+    else:
+        params = aux["vgg_params"]
+
+    keys = jr.split(key, x.shape[0])
+
+    if aux.get("target_feats", None) is None:
+        losses = jax.vmap(
+            lpips_model.apply,
+            in_axes=(None, 0, 0, 0, None),
+        )(params, x, y, keys, aux)
+    else:
+        target_feats = aux["target_feats"]
+
+        def apply_one(xi, yi, ki, ti):
+            aux_i = {**aux, "target_feats": ti}
+            return lpips_model.apply(params, xi, yi, ki, aux=aux_i)
+
+        losses = jax.vmap(apply_one, in_axes=(0, 0, 0, 0))(
+            x,
+            y,
+            keys,
+            target_feats,
+        )
+
+    loss = reduce(losses.astype(LOSS_DTYPE), "c n () () () -> n", "mean")
+    return loss
+
+
+
+def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}):
+    """
+    Same signature as before.
+
+    Optional aux entries:
+        aux["vgg_params"]
+        aux["target_feats"]
+
+    If provided, skips VGG target forward pass.
+    """
+
+    x = x * 2 - 1
+    y = y * 2 - 1
+
+    if where is not None:
+        x = x * where.astype(x.dtype)
+        where_y = duplicate_x_channels_9ch(where)
+        y = y * where_y.astype(y.dtype)
 
     x = duplicate_x_channels_9ch(x)
     x = split_and_pad_by_experiment_groups_12ch(x)
-    y = split_and_pad_by_experiment_groups_12ch(y)		
-    x = rearrange(x,"n (c vc) x y -> c n x y vc",vc=3)
-    y = rearrange(y,"n (c vc) x y -> c n x y vc",vc=3)
+    y = split_and_pad_by_experiment_groups_12ch(y)
+
+    x = rearrange(x, "n (c vc) x y -> c n x y vc", vc=3)
+    y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
+
+    x = x.astype(VGG_DTYPE)
+    y = y.astype(VGG_DTYPE)
 
     lpips_model = lpips_variants[aux["vgg_metric"]]
-    init_key, call_key = jr.split(key, 2)
-    params = lpips_model.init(init_key, x[0], y[0], call_key, aux=aux)
-    
-    keys = jr.split(key, x.shape[0])
-    
-    losses = jax.vmap(lpips_model.apply, in_axes=(None,0,0,0,None))(params, x, y, keys, aux) # C N () () ()
-    # print("VGG losses shape: ",losses.shape,flush=True)
-    # Weight different loss channels - some are duplicate channels from specifying colonies, others are dummy channels introduced by vgg groupings
-    loss_weighting = jnp.array([0.5,1.0,0.5,1.0,1.0,1.0]) # Should there be an extra 1.0 here?
-    # loss_weighting = jnp.array([0.5,1.0,0.5,1.0,1.0]) # Should there be an extra 1.0 here?
-    print("Loss weighting shape: ",loss_weighting.shape,flush=True)
-    print("Losses shape before weighting: ",losses.shape,flush=True)
 
-    losses = einsum(losses,loss_weighting,"c n i j k , c -> c n i j k")
-    loss = reduce(losses,"c n () () () -> n","mean")
+    if aux.get("vgg_params", None) is None:
+        init_key, call_key = jr.split(key, 2)
+        params = lpips_model.init(init_key, x[0], y[0], call_key, aux=aux)
+        params = cast_params_bf16(params)
+    else:
+        params = aux["vgg_params"]
+
+    keys = jr.split(key, x.shape[0])
+
+    if aux.get("target_feats", None) is None:
+        losses = jax.vmap(
+            lpips_model.apply,
+            in_axes=(None, 0, 0, 0, None),
+        )(params, x, y, keys, aux)
+    else:
+        target_feats = aux["target_feats"]
+
+        def apply_one(xi, yi, ki, ti):
+            aux_i = {**aux, "target_feats": ti}
+            return lpips_model.apply(params, xi, yi, ki, aux=aux_i)
+
+        losses = jax.vmap(apply_one, in_axes=(0, 0, 0, 0))(
+            x,
+            y,
+            keys,
+            target_feats,
+        )
+
+    loss_weighting = jnp.array(
+        [0.5, 1.0, 0.5, 1.0, 1.0, 1.0],
+        dtype=LOSS_DTYPE,
+    )
+
+    losses = einsum(
+        losses.astype(LOSS_DTYPE),
+        loss_weighting,
+        "c n i j k, c -> c n i j k",
+    )
+
+    loss = reduce(losses, "c n () () () -> n", "mean")
     return loss
 
 
 
 
-def vgg_hyperspectral(x,y,key,where=None,aux={"vgg_metric":"l2"}):
-    """
 
-        Takes x and y with > 3 channels and computes VGG loss on each 3-channel subset, averaging the result.
-        Parameters
-        ----------
-        x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-            predictions
-        y : float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
-            true data
-        key : jax.random.PRNGKey
-            Jax random number key.
-        where : boolean array [N,CHANNELS,(),()]
-            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
-        Returns
-        -------
-        loss : float32 [N]
-            loss reduced over channel and spatial axes
-    """
+# def vgg_hyperspectral_colony(x,y,key,where=None,aux={"vgg_metric":"l2"}):
+#     """
 
-    # Scale to [-1,1] for lpips
-    x = x*2-1
-    y = y*2-1
-    # Apply where mask
+#         Takes x and y with > 3 channels and computes VGG loss on each 3-channel subset, averaging the result.
+#         Parameters
+#         ----------
+#         x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+#             predictions
+#         y : float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
+#             true data
+#         key : jax.random.PRNGKey
+#             Jax random number key.
+#         where : boolean array [N,CHANNELS,(),()]
+#             Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
+#         Returns
+#         -------
+#         loss : float32 [N]
+#             loss reduced over channel and spatial axes
+#     """
 
-    if where is not None:
-        x = x*where.astype(x.dtype)
-        y = y*where.astype(y.dtype)
+#     # Scale to [-1,1] for lpips
+    
+#     x = x*2-1
+#     y = y*2-1
 
-    x = pad_to_multiple_of_3_channels(x)
-    y = pad_to_multiple_of_3_channels(y)		
-    x = rearrange(x,"n (c vc) x y -> c n x y vc",vc=3)
-    y = rearrange(y,"n (c vc) x y -> c n x y vc",vc=3)
-    lpips_model = lpips_variants[aux["vgg_metric"]]
+#     # x has 8 channels but y has 11. Some specified x channels need to be repeated to match the channels in y
+#     # Apply where mask
 
-    init_key, call_key = jr.split(key, 2)
-    params = lpips_model.init(init_key, x[0], y[0], call_key, aux=aux)
-    keys = jr.split(key, x.shape[0])
-    losses = jax.vmap(lpips_model.apply, in_axes=(None,0,0,0,None))(params, x, y, keys, aux) # C N () () ()
-    loss = reduce(losses,"c n () () () -> n","mean")
-    return loss
+#     if where is not None:
+#         x = x*where.astype(x.dtype)
+#         where_y = duplicate_x_channels_9ch(where)
+#         y = y*where_y.astype(y.dtype)
+
+
+
+#     x = duplicate_x_channels_9ch(x)
+#     x = split_and_pad_by_experiment_groups_12ch(x)
+#     y = split_and_pad_by_experiment_groups_12ch(y)		
+#     x = rearrange(x,"n (c vc) x y -> c n x y vc",vc=3)
+#     y = rearrange(y,"n (c vc) x y -> c n x y vc",vc=3)
+
+#     lpips_model = lpips_variants[aux["vgg_metric"]]
+#     init_key, call_key = jr.split(key, 2)
+#     params = lpips_model.init(init_key, x[0], y[0], call_key, aux=aux)
+    
+#     keys = jr.split(key, x.shape[0])
+    
+#     losses = jax.vmap(lpips_model.apply, in_axes=(None,0,0,0,None))(params, x, y, keys, aux) # C N () () ()
+#     # print("VGG losses shape: ",losses.shape,flush=True)
+#     # Weight different loss channels - some are duplicate channels from specifying colonies, others are dummy channels introduced by vgg groupings
+#     loss_weighting = jnp.array([0.5,1.0,0.5,1.0,1.0,1.0]) # Should there be an extra 1.0 here?
+#     # loss_weighting = jnp.array([0.5,1.0,0.5,1.0,1.0]) # Should there be an extra 1.0 here?
+#     print("Loss weighting shape: ",loss_weighting.shape,flush=True)
+#     print("Losses shape before weighting: ",losses.shape,flush=True)
+
+#     losses = einsum(losses,loss_weighting,"c n i j k , c -> c n i j k")
+#     loss = reduce(losses,"c n () () () -> n","mean")
+#     return loss
+
+
+
+
+# def vgg_hyperspectral(x,y,key,where=None,aux={"vgg_metric":"l2","cache_target_features":True}):
+#     """
+
+#         Takes x and y with > 3 channels and computes VGG loss on each 3-channel subset, averaging the result.
+#         Parameters
+#         ----------
+#         x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+#             predictions
+#         y : float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
+#             true data
+#         key : jax.random.PRNGKey
+#             Jax random number key.
+#         where : boolean array [N,CHANNELS,(),()]
+#             Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
+#         Returns
+#         -------
+#         loss : float32 [N]
+#             loss reduced over channel and spatial axes
+#     """
+
+#     # Scale to [-1,1] for lpips
+#     x = x*2-1
+#     if where is not None:
+#         x = x*where.astype(x.dtype)
+#     x = pad_to_multiple_of_3_channels(x)
+#     x = rearrange(x,"n (c vc) x y -> c n x y vc",vc=3)
+    
+    
+#     if aux.get("cache_target_features", False):
+#         y = y*2-1
+#         if where is not None:
+#             y = y*where.astype(y.dtype)
+#         y = pad_to_multiple_of_3_channels(y)		
+#         y = rearrange(y,"n (c vc) x y -> c n x y vc",vc=3)
+
+#     # Apply where mask
+
+#     lpips_model = lpips_variants[aux["vgg_metric"]]
+
+#     init_key, call_key = jr.split(key, 2)
+#     params = lpips_model.init(init_key, x[0], y[0], call_key, aux=aux)
+#     keys = jr.split(key, x.shape[0])
+#     losses = jax.vmap(lpips_model.apply, in_axes=(None,0,0,0,None))(params, x, y, keys, aux) # C N () () ()
+#     loss = reduce(losses,"c n () () () -> n","mean")
+#     return loss

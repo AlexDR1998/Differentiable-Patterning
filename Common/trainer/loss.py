@@ -13,7 +13,7 @@ import equinox as eqx
 from jax.scipy.ndimage import map_coordinates
 from einops import rearrange,reduce,einsum,repeat
 import jax.random as jr
-from optax import l2_loss
+# from optax import l2_loss
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
 import Common.trainer.loss_ott as loss_ott
 import Common.trainer.loss_vgg as loss_vgg
@@ -493,8 +493,8 @@ def spectral(x,y,key=None,where=None,aux=None):
 
 def vgg_hyperspectral_colony_and_l2(x,y,key,where,aux={"vgg_metric":"l2"}):
 	vgg_loss = loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux)
-	l2_loss = l2_colony_grouped(x,y,key,where,aux)
-	return vgg_loss + l2_loss
+	_l2_loss = l2_colony_grouped(x,y,key,where,aux)
+	return vgg_loss + _l2_loss
 
 
 def l2_colony_grouped(x,y,key,where,aux=None):
@@ -504,8 +504,42 @@ def l2_colony_grouped(x,y,key,where,aux=None):
 	weighting = jnp.array([0.5,0.5,0.5,1.0,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0]) # Account for duplicate channels
 	_l2 = einsum(_l2,weighting,"n c x y , c -> n c x y")
 	where_full = duplicate_x_channels_9ch(where).astype(where.dtype)
-	l2_loss = jnp.nan_to_num(jnp.mean(_l2,axis=[-1,-2,-3],where=where_full))
-	return l2_loss
+	_l2_loss = jnp.nan_to_num(jnp.mean(_l2,axis=[-1,-2,-3],where=where_full))
+	return _l2_loss
+
+
+def build_loss_initialiser(loss_strings,loss_args):
+	"""
+		For VGG based losses, we want to pre-compute the target features once, and also initialise the model parameters once,
+		and cache them for later computation. This makes things faster and more efficient.
+	"""
+	
+	_vgg_aux = {
+		"vgg_metric":loss_args["metric"] if "metric" in loss_args else "l2",
+		"internal_loss_func":loss_args["internal_loss_func"] if "internal_loss_func" in loss_args else None,
+		"epsilon":loss_args["epsilon"] if "epsilon" in loss_args else None,
+		"tau":loss_args["tau"] if "tau" in loss_args else None,
+		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
+		"samples":loss_args["samples"] if "samples" in loss_args else None
+	}
+	LOSS_FUNC_INITS = {
+		"vgg":lambda y,key,where:loss_vgg.precompute_vgg_hyperspectral_target(y,key,where,aux=_vgg_aux),
+		"vgg_grouped":lambda y,key,where:loss_vgg.precompute_vgg_hyperspectral_colony_target(y,key,where,aux=_vgg_aux),
+		"vgg_grouped_and_l2":lambda y,key,where:loss_vgg.precompute_vgg_hyperspectral_colony_target(y,key,where,aux=_vgg_aux),
+	}
+	if isinstance(loss_strings,str):
+		loss_strings = [loss_strings]
+	
+	if "vgg_grouped_and_l2" in loss_strings:
+		return LOSS_FUNC_INITS["vgg_grouped_and_l2"]
+	elif "vgg_grouped" in loss_strings:
+		return LOSS_FUNC_INITS["vgg_grouped"]
+	elif "vgg" in loss_strings:
+		return LOSS_FUNC_INITS["vgg"]
+	else:
+		return None
+
+
 def build_loss_functions(loss_strings,loss_args):
 	"""
 		Builds a list of loss functions based on the specified loss strings.
@@ -549,7 +583,9 @@ def build_loss_functions(loss_strings,loss_args):
 		"epsilon":loss_args["epsilon"] if "epsilon" in loss_args else None,
 		"tau":loss_args["tau"] if "tau" in loss_args else None,
 		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
-		"samples":loss_args["samples"] if "samples" in loss_args else None
+		"samples":loss_args["samples"] if "samples" in loss_args else None,
+		"vgg_params":loss_args["vgg_params"] if "vgg_params" in loss_args else None,
+		"target_feats":loss_args["target_feats"] if "target_feats" in loss_args else None,
 	}
 	# _vision_extractor = None
 	# for lstr in loss_strings:
@@ -569,7 +605,7 @@ def build_loss_functions(loss_strings,loss_args):
 		"l1":l1,
 		"vgg":lambda x,y,key,where:loss_vgg.vgg_hyperspectral(x,y,key,where,aux=_vgg_aux),
 		"vgg_grouped":lambda x,y,key,where:loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux=_vgg_aux),
-		"vgg_3ch":lambda x,y,key,where:loss_vgg.vgg(x,y,key,where,aux=_vgg_aux),
+		# "vgg_3ch":lambda x,y,key,where:loss_vgg.vgg(x,y,key,where,aux=_vgg_aux),
 		"vgg_grouped_and_l2":lambda x,y,key,where:vgg_hyperspectral_colony_and_l2(x,y,key,where,aux=_vgg_aux),
 		# "clip_3ch":lambda x,y,key,where:loss_clip.clip_loss_3ch(x,y,key,where,aux=_clip_aux),
 		# "clip_grouped":lambda x,y,key,where:loss_clip.clip_loss_colony(x,y,key,where,aux=_clip_aux),
