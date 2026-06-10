@@ -25,7 +25,7 @@ import Common.trainer.loss_vgg as loss_vgg
 
 
 @jax.jit
-def cosine(x,y,key=None,where=None,aux=None):
+def cosine(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Parameters
 		----------
@@ -42,7 +42,7 @@ def cosine(x,y,key=None,where=None,aux=None):
 	return -jnp.nan_to_num(jnp.mean((x*y)/(jnp.linalg.norm(x)*jnp.linalg.norm(y)),axis=[-1,-2,-3],where=where))
 
 @jax.jit
-def l2(x,y,key=None,where=None,aux=None):
+def l2(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Parameters
 		----------
@@ -60,7 +60,7 @@ def l2(x,y,key=None,where=None,aux=None):
 	return jnp.nan_to_num(jnp.mean((x-y)**2,axis=[-1,-2,-3],where=where))
 
 @jax.jit
-def l1(x,y,key=None,where=None,aux=None):
+def l1(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Parameters
 		----------
@@ -77,7 +77,7 @@ def l1(x,y,key=None,where=None,aux=None):
 	return jnp.nan_to_num(jnp.mean(jnp.abs(x-y),axis=[-1,-2,-3],where=where))
 
 @jax.jit
-def euclidean(x,y,key=None,where=None,aux=None):
+def euclidean(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		General format of loss functions here:
 
@@ -97,7 +97,7 @@ def euclidean(x,y,key=None,where=None,aux=None):
 	return jnp.nan_to_num(jnp.sqrt(jnp.mean(((x-y)**2),axis=[-1,-2,-3],where=where)))
 
 @eqx.filter_jit
-def sliced_wasserstein_spatial(x,y,key=None,where=None,aux=None):
+def sliced_wasserstein_spatial(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Sliced Wasserstein distance in spatial domain
 
@@ -135,7 +135,7 @@ def sliced_wasserstein_spatial(x,y,key=None,where=None,aux=None):
 
 
 @eqx.filter_jit
-def sliced_wasserstein_channel(x,y,key=None,where=None,aux=None):
+def sliced_wasserstein_channel(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Sliced Wasserstein distance across channels
 
@@ -174,7 +174,7 @@ def sliced_wasserstein_channel(x,y,key=None,where=None,aux=None):
 
 
 @eqx.filter_jit
-def sliced_wasserstein_rotational(x,y,key=None,where=None,aux=None):
+def sliced_wasserstein_rotational(x,y,key=None,where=None,aux=None,cache=None):
 
 	"""
 		Sliced Wasserstein distance in spatial domain, using random rotations
@@ -251,7 +251,7 @@ def _rotate_and_project(arr, angle_deg):
 	return rotated
 
 @eqx.filter_jit
-def wasserstein_projected(x,y,key=None,where=None,aux=None):
+def wasserstein_projected(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Parameters
 		----------
@@ -289,7 +289,7 @@ def wasserstein_projected(x,y,key=None,where=None,aux=None):
 	return jnp.nan_to_num(jnp.mean((x_sorted - y_sorted)**2,axis=-1))
 
 @eqx.filter_jit
-def spectral_wasserstein_projected(x,y,key=None,where=None,aux=None):
+def spectral_wasserstein_projected(x,y,key=None,where=None,aux=None,cache=None):
 	# return loss_ott.spectral_wasserstein_projected(x,y,key,where,aux)
 	fx = jnp.fft.rfft2(x)
 	fy = jnp.fft.rfft2(y)
@@ -317,7 +317,7 @@ def spectral_wasserstein_projected(x,y,key=None,where=None,aux=None):
 
 
 @jax.jit
-def bhattacharyya_distance(x,y,key=None,where=None,aux=None):
+def bhattacharyya_distance(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Parameters
 		----------
@@ -342,7 +342,7 @@ def bhattacharyya_distance(x,y,key=None,where=None,aux=None):
 	# return -jnp.nan_to_num(jnp.log(bc + eps))
 
 @jax.jit
-def hellinger_distance(x,y,key=None,where=None,aux=None):
+def hellinger_distance(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Parameters
 		----------
@@ -365,7 +365,7 @@ def hellinger_distance(x,y,key=None,where=None,aux=None):
 	return jnp.nan_to_num(jnp.mean(H_bc,axis=[-1,-2,-3],where=where))
 
 @jax.jit
-def kl_divergence(x,y,key=None,where=None,aux=None):
+def kl_divergence(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Parameters
 		----------
@@ -387,7 +387,7 @@ def kl_divergence(x,y,key=None,where=None,aux=None):
 	return jnp.nan_to_num(jnp.mean(kl,axis=[-1,-2,-3],where=where))
 
 @jax.jit
-def average_amplitude_distance(x,y,key=None,where=None,aux=None):
+def average_amplitude_distance(x,y,key=None,where=None,aux=None,cache=None):
 	"""
 		Distance between average intensities of each channel and timestep. Removes all spatial information, 
 		can be a useful auxiliary loss when combined with losses that re-normalise X and Y
@@ -410,7 +410,7 @@ def average_amplitude_distance(x,y,key=None,where=None,aux=None):
 
 
 @jax.jit
-def random_sampled_euclidean(x,y,key,where=None,aux=16):
+def random_sampled_euclidean(x,y,key,where=None,aux=16,cache=None):
 	SAMPLES = aux
 	x_r = jnp.einsum("ncxy->cxyn",x)
 	y_r = jnp.einsum("ncxy->cxyn",y)
@@ -420,7 +420,7 @@ def random_sampled_euclidean(x,y,key,where=None,aux=16):
 
 
 @jax.jit
-def spectral_no_phase(x,y,key=None,where=None,aux=None):
+def spectral_no_phase(x,y,key=None,where=None,aux=None,cache=None):
 	""" 
 		l2 norm in fourier space (discarding phase information)
 
@@ -444,7 +444,7 @@ def spectral_no_phase(x,y,key=None,where=None,aux=None):
         
 
 @jax.jit
-def spectral_only_phase(x,y,key=None,where=None,aux=None):
+def spectral_only_phase(x,y,key=None,where=None,aux=None,cache=None):
 	""" 
 		l2 norm in fourier space, keeping only phase information.
 
@@ -468,7 +468,7 @@ def spectral_only_phase(x,y,key=None,where=None,aux=None):
 
 
 @jax.jit
-def spectral(x,y,key=None,where=None,aux=None):
+def spectral(x,y,key=None,where=None,aux=None,cache=None):
 	""" 
 		l2 norm in fourier space, keeping phase information.
 		Weighted to emphasise importance of certain frequencies
@@ -491,13 +491,13 @@ def spectral(x,y,key=None,where=None,aux=None):
 
 
 
-def vgg_hyperspectral_colony_and_l2(x,y,key,where,aux={"vgg_metric":"l2"}):
-	vgg_loss = loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux)
+def vgg_hyperspectral_colony_and_l2(x,y,key,where,aux={"vgg_metric":"l2"},cache=None):
+	vgg_loss = loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux,cache)
 	_l2_loss = l2_colony_grouped(x,y,key,where,aux)
 	return vgg_loss + _l2_loss
 
 
-def l2_colony_grouped(x,y,key,where,aux=None):
+def l2_colony_grouped(x,y,key,where,aux=None,cache=None):
 	
 	x_full = duplicate_x_channels_9ch(x)
 	_l2 = (x_full-y)**2
@@ -585,7 +585,7 @@ def build_loss_functions(loss_strings,loss_args):
 		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
 		"samples":loss_args["samples"] if "samples" in loss_args else None,
 		"vgg_params":loss_args["vgg_params"] if "vgg_params" in loss_args else None,
-		"target_feats":loss_args["target_feats"] if "target_feats" in loss_args else None,
+		# "target_feats":loss_args["target_feats"] if "target_feats" in loss_args else None,
 	}
 	# _vision_extractor = None
 	# for lstr in loss_strings:
@@ -603,10 +603,10 @@ def build_loss_functions(loss_strings,loss_args):
 		"l2":l2,
 		"l2_grouped":l2_colony_grouped,
 		"l1":l1,
-		"vgg":lambda x,y,key,where:loss_vgg.vgg_hyperspectral(x,y,key,where,aux=_vgg_aux),
-		"vgg_grouped":lambda x,y,key,where:loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux=_vgg_aux),
+		"vgg":lambda x,y,key,where,cache:loss_vgg.vgg_hyperspectral(x,y,key,where,aux=_vgg_aux,cache=cache),
+		"vgg_grouped":lambda x,y,key,where,cache:loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux=_vgg_aux,cache=cache),
 		# "vgg_3ch":lambda x,y,key,where:loss_vgg.vgg(x,y,key,where,aux=_vgg_aux),
-		"vgg_grouped_and_l2":lambda x,y,key,where:vgg_hyperspectral_colony_and_l2(x,y,key,where,aux=_vgg_aux),
+		"vgg_grouped_and_l2":lambda x,y,key,where,cache:vgg_hyperspectral_colony_and_l2(x,y,key,where,aux=_vgg_aux,cache=cache),
 		# "clip_3ch":lambda x,y,key,where:loss_clip.clip_loss_3ch(x,y,key,where,aux=_clip_aux),
 		# "clip_grouped":lambda x,y,key,where:loss_clip.clip_loss_colony(x,y,key,where,aux=_clip_aux),
 		# "clip":lambda x,y,key,where:loss_clip.clip_loss_hyperspectral(x,y,key,where,aux=_clip_aux),
@@ -616,21 +616,21 @@ def build_loss_functions(loss_strings,loss_args):
 		"spectral":spectral,
 		"spectral_no_phase":spectral_no_phase,
 		"spectral_phase":spectral_only_phase,
-		"sliced_wasserstein_spatial":lambda x,y,key,where:sliced_wasserstein_spatial(x,y,key,where,aux={"samples":loss_args["samples"]}),
-		"sliced_wasserstein_channel":lambda x,y,key,where:sliced_wasserstein_channel(x,y,key,where,aux={"samples":loss_args["samples"]}),
-		"sliced_wasserstein_full":lambda x,y,key,where:wasserstein_projected(x,y,key,where,aux={"samples":loss_args["samples"]}),
-		"sliced_wasserstein_rotational":lambda x,y,key,where:sliced_wasserstein_rotational(x,y,key,where,aux={"samples":loss_args["samples"]}),
-		"spectral_wasserstein_full":lambda x,y,key,where:spectral_wasserstein_projected(x,y,key,where,aux={"samples":loss_args["samples"]}),
+		"sliced_wasserstein_spatial":lambda x,y,key,where,cache:sliced_wasserstein_spatial(x,y,key,where,aux={"samples":loss_args["samples"]},cache=cache),
+		"sliced_wasserstein_channel":lambda x,y,key,where,cache:sliced_wasserstein_channel(x,y,key,where,aux={"samples":loss_args["samples"]},cache=cache),
+		"sliced_wasserstein_full":lambda x,y,key,where,cache:wasserstein_projected(x,y,key,where,aux={"samples":loss_args["samples"]},cache=cache),
+		"sliced_wasserstein_rotational":lambda x,y,key,where,cache:sliced_wasserstein_rotational(x,y,key,where,aux={"samples":loss_args["samples"]},cache=cache),
+		"spectral_wasserstein_full":lambda x,y,key,where,cache:spectral_wasserstein_projected(x,y,key,where,aux={"samples":loss_args["samples"]},cache=cache),
 		"bhattacharyya":bhattacharyya_distance,
 		"kl_divergence":kl_divergence,
 		"hellinger":hellinger_distance,
 		"average_amplitude":average_amplitude_distance,
-		"ott":lambda x,y,key,where:loss_ott.ott_loss(x,y,key,where,aux=_ott_aux),
-		"ott_chstack":lambda x,y,key,where:loss_ott.ott_channel_stack_loss(x,y,key,where,aux=_ott_aux),
-		"ott_grouped":lambda x,y,key,where:loss_ott.ott_grouped_loss(x,y,key,where,aux=_ott_aux),
-		"ott_grouped_and_l2":lambda x,y,key,where:loss_ott.ott_grouped_and_l2_loss(x,y,key,where,aux=_ott_aux),
-		"emd_loss":lambda x,y,key,where:loss_ott.emd_loss(x,y,key,where,aux=_emd_aux),
-		# "rand_euclidean":lambda x,y,key:loss.random_sampled_euclidean(x,y,key=key)
+		"ott":lambda x,y,key,where,cache:loss_ott.ott_loss(x,y,key,where,aux=_ott_aux),
+		"ott_chstack":lambda x,y,key,where,cache:loss_ott.ott_channel_stack_loss(x,y,key,where,aux=_ott_aux),
+		"ott_grouped":lambda x,y,key,where,cache:loss_ott.ott_grouped_loss(x,y,key,where,aux=_ott_aux),
+		"ott_grouped_and_l2":lambda x,y,key,where,cache:loss_ott.ott_grouped_and_l2_loss(x,y,key,where,aux=_ott_aux),
+		"emd_loss":lambda x,y,key,where,cache:loss_ott.emd_loss(x,y,key,where,aux=_emd_aux),
+		
 	}
 	if isinstance(loss_strings,str):
 		loss_funcs = [LOSS_FUNCS[loss_strings]]

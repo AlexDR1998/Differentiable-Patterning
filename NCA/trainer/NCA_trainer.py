@@ -198,6 +198,7 @@ class NCA_Trainer(object):
 			      x:Float[Array, "N CHANNELS x y"],  # noqa: F722
 				  y:Float[Array, "N CHANNELS x y"],  # noqa: F722
 				  channel_time_mask:Float[Array, "N OBS_CHANNELS"],  # noqa: F722
+				  loss_cache:Float[Array, " N ..."] | None,  # noqa: F722
 				  key: Key)->Float[Array, " N"]:
 		"""
 		NOTE: VMAP THIS OVER BATCHES TO HANDLE DIFFERENT SIZES OF GRID IN EACH BATCH
@@ -210,6 +211,8 @@ class NCA_Trainer(object):
 			data
 		channel_time_mask : float32 array [N,OBS_CHANNELS]
 			Masks for which channels and timesteps to include in the loss. 1 for include, 0 for exclude. 
+		loss_cache : float32 array [N,...] | None
+			Optional precomputed cache for some loss functions, such as VGG. Can save computation by avoiding recomputing some latent features of y inputs.
 		key : jr.PRNGKey
 			Jax random number key. Only useful for loss functions that are stochastic (i.e. subsampled).
 		Returns
@@ -242,7 +245,7 @@ class NCA_Trainer(object):
 			loss_mask = einsum(channel_time_mask,channel_loss_mask,"n c w h, c w h-> n c w h").astype(jnp.bool_)
 			# loss_aux = self.LOSS_FUNC_AUX[idx]
 			# losses.append(f(x_obs, y_obs, key, loss_mask, loss_aux))
-			losses.append(f(x_obs, y_obs, key, loss_mask))
+			losses.append(f(x_obs, y_obs, key, loss_mask, loss_cache))
 						
 		losses = jnp.array(losses)
 	
@@ -345,7 +348,7 @@ class NCA_Trainer(object):
 		self.setup_logging("wandb",wandb_args=wandb_args,KNOCKOUT_ARGS=KNOCKOUT_ARGS)
 
 		
-		
+		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
 		LOSS_FUNC_CHANNELS = LOSS_ARGS["channels"]
 		if LOSS_FUNC_CHANNELS is not None:
 			assert len(LOSS_FUNC_CHANNELS)==self.OBS_CHANNELS, "LOSS_FUNC_CHANNELS should be same length as number of observable channels"
@@ -430,12 +433,6 @@ class NCA_Trainer(object):
 				
 				reg_logs_internal = {name: jnp.zeros(len(x),dtype=LOSS_DTYPE) for name in REGULARISER_COEFFS.keys()}
 				
-				v_loss_func = lambda x,y,channel_loss_mask,key_array: jnp.array(
-					jtu.tree_map(
-						self.loss_func
-						,x,y,channel_loss_mask,key_array
-					)
-				)
 
 				state_shape = x[0].shape[0] # Assumes the same number of outer timesteps in each batch.
 				
@@ -456,7 +453,18 @@ class NCA_Trainer(object):
 				)
 
 				loss_key = key_pytree_gen(key, (len(x),))
-				losses = v_loss_func(x_proc, y, self.LOSS_TIME_CHANNEL_MASK, loss_key)
+				# v_loss_func = lambda x,y,channel_loss_mask,loss_cache,key_array: jnp.array(  # noqa: E731
+				# 	jtu.tree_map(
+				# 		self.loss_func,
+				# 		x,
+				# 		y,
+				# 		channel_loss_mask,
+				# 		loss_cache, # PyTree[Batches] of arrays [N, ...]
+				# 		key_array,
+				# 	)
+				# )
+				# losses = v_loss_func(x_proc, y, self.LOSS_TIME_CHANNEL_MASK, self.LOSS_CACHE, loss_key)
+				losses = jtu.tree_map(self.loss_func,x_proc,y,self.LOSS_TIME_CHANNEL_MASK,self.LOSS_CACHE,loss_key)
 				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
 				mean_loss = jnp.mean(losses) + jnp.sum(jnp.array(list(reg_loss_internal.values())))
 				return mean_loss, (x,x_proc,losses,reg_loss_internal)
@@ -498,9 +506,12 @@ class NCA_Trainer(object):
 		# If we are using a loss function that needs to initialise some cache based on the data, do that here and add to LOSS_ARGS
 		loss_initialiser = build_loss_initialiser(LOSS_FUNC_STR,LOSS_ARGS)
 		if loss_initialiser is not None:
-			vgg_target_cache = loss_initialiser(y,key,self.LOSS_TIME_CHANNEL_MASK)
-			LOSS_ARGS = {**LOSS_ARGS, **vgg_target_cache}
-		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
+			vgg_target_cache = loss_initialiser(y,key,self.LOSS_TIME_CHANNEL_MASK) # dict of {"vgg_params": ..., "target_feats": List[Batches] of arrays [N, ...]}
+			LOSS_ARGS = {**LOSS_ARGS, "vgg_params": vgg_target_cache["vgg_params"]} # Pre-trained VGG parameters for perceptual loss, if needed. Does not need batched.
+			self.LOSS_CACHE = vgg_target_cache["target_feats"] # Needs passed in at Batch level tree_map
+			print("Initialised loss cache with keys: "+str(vgg_target_cache.keys()))
+		else:
+			self.LOSS_CACHE = None
 		
 		best_loss = 100000000
 		loss_thresh = 1e16 # If loss exceeds this, training is diverging to NaN

@@ -4,6 +4,7 @@ import equinox as eqx
 from typing import Optional, Any
 from lpips_j.lpips import LPIPS
 import ott
+import jax.tree_util as jtu
 
 import flax.linen as nn
 from jax.scipy.ndimage import map_coordinates
@@ -341,6 +342,13 @@ lpips_variants = {
 @eqx.filter_jit
 def precompute_vgg_hyperspectral_target(y, key, where=None, aux={"vgg_metric": "l2"}):
     """
+    Parameters:
+        y : Pytree[Batches] of float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
+            true data
+        key : jax.random.PRNGKey
+            Jax random number key.
+        where : Pytree[Batches] of boolean array [N,CHANNELS,(),()]
+            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
     Returns:
         {
             "vgg_params": params,
@@ -350,26 +358,29 @@ def precompute_vgg_hyperspectral_target(y, key, where=None, aux={"vgg_metric": "
     target_feats has shape/pytree structure:
         [num_channel_groups, ...VGG feature pytree...]
     """
-    y = y * 2 - 1
+    def pre_process_one_batch(y,where):
+        y = y * 2 - 1
+        if where is not None:
+            y = y * where.astype(y.dtype)
+        y = pad_to_multiple_of_3_channels(y)
+        y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
+        y = y.astype(VGG_DTYPE)
+        return y
+    def apply_to_one_batch(y):
+        def one_group(yg):
+            feats = lpips_model.apply(params, yg, method=lpips_model.features)
+            return feats
 
-    if where is not None:
-        y = y * where.astype(y.dtype)
-
-    y = pad_to_multiple_of_3_channels(y)
-    y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
-    y = y.astype(VGG_DTYPE)
-
+        target_feats = jax.vmap(one_group)(y)
+        return target_feats
+    
+    y = jtu.tree_map(pre_process_one_batch, y, where)
     lpips_model = lpips_variants[aux["vgg_metric"]]
-
     init_key, call_key = jr.split(key, 2)
     params = lpips_model.init(init_key, y[0], y[0], call_key, aux=aux)
     params = cast_params_bf16(params)
+    target_feats = jtu.tree_map(apply_to_one_batch, y)
 
-    def one_group(yg):
-        feats = lpips_model.apply(params, yg, method=lpips_model.features)
-        return feats
-
-    target_feats = jax.vmap(one_group)(y)
 
     return {
         "vgg_params": params,
@@ -380,28 +391,49 @@ def precompute_vgg_hyperspectral_target(y, key, where=None, aux={"vgg_metric": "
 @eqx.filter_jit
 def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_metric": "l2"}):
     """
-    Same as above, but using the colony-specific target preprocessing.
+    Parameters:
+        y : Pytree[Batches] of float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
+            true data
+        key : jax.random.PRNGKey
+            Jax random number key.
+        where : Pytree[Batches] of boolean array [N,CHANNELS,(),()]
+            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
+    Returns:
+        {
+            "vgg_params": params,
+            "target_feats": target_feats,
+        }
     """
-    y = y * 2 - 1
+    def pre_process_one_batch(y,where):
+        y = y * 2 - 1
 
-    if where is not None:
-        where_y = duplicate_x_channels_9ch(where)
-        y = y * where_y.astype(y.dtype)
+        if where is not None:
+            where_y = duplicate_x_channels_9ch(where)
+            y = y * where_y.astype(y.dtype)
 
-    y = split_and_pad_by_experiment_groups_12ch(y)
-    y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
-    y = y.astype(VGG_DTYPE)
+        y = split_and_pad_by_experiment_groups_12ch(y)
+        y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
+        y = y.astype(VGG_DTYPE)
+
+        return y
+    def apply_to_one_batch(y):
+        def one_group(yg):
+            feats = lpips_model.apply(params, yg, method=lpips_model.features)
+            return feats
+
+        target_feats = jax.vmap(one_group)(y)
+        return target_feats
+
+
+
+    y = jtu.tree_map(pre_process_one_batch, y, where)
 
     lpips_model = lpips_variants[aux["vgg_metric"]]
-
     init_key, call_key = jr.split(key, 2)
     params = lpips_model.init(init_key, y[0], y[0], call_key, aux=aux)
     params = cast_params_bf16(params)
-    def one_group(yg):
-        feats = lpips_model.apply(params, yg, method=lpips_model.features)
-        return feats
 
-    target_feats = jax.vmap(one_group)(y)
+    target_feats = jtu.tree_map(apply_to_one_batch, y)
 
     return {
         "vgg_params": params,
@@ -418,15 +450,29 @@ def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_met
 # Losses
 # ---------------------------------------------------------------------
 
-def vgg_hyperspectral(x, y, key, where=None, aux={"vgg_metric": "l2"}):
+def vgg_hyperspectral(x, y, key, where=None, aux={"vgg_metric": "l2"}, cache=None):
     """
-    Same signature as before.
+        Takes x and y with > 3 channels and computes VGG loss on each 3-channel subset, averaging the result.
+        Parameters
+        ----------
+        x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+            predictions
+        y : float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
+            true data
+        key : jax.random.PRNGKey
+            Jax random number key.
+        where : boolean array [N,CHANNELS,(),()]
+            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
+        Returns
+        -------
+        loss : float32 [N]
+            loss reduced over channel and spatial axes
 
-    Optional aux entries:
-        aux["vgg_params"]
-        aux["target_feats"]
+        Optional aux entries:
+            aux["vgg_params"]
+            aux["target_feats"]
 
-    If provided, skips VGG target forward pass.
+        If provided, skips VGG target forward pass.
     """
 
     x = x * 2 - 1
@@ -456,13 +502,14 @@ def vgg_hyperspectral(x, y, key, where=None, aux={"vgg_metric": "l2"}):
 
     keys = jr.split(key, x.shape[0])
 
-    if aux.get("target_feats", None) is None:
+    if cache is None:
         losses = jax.vmap(
             lpips_model.apply,
             in_axes=(None, 0, 0, 0, None),
         )(params, x, y, keys, aux)
     else:
-        target_feats = aux["target_feats"]
+        # target_feats = aux["target_feats"]
+        target_feats = cache
 
         def apply_one(xi, yi, ki, ti):
             aux_i = {**aux, "target_feats": ti}
@@ -480,15 +527,30 @@ def vgg_hyperspectral(x, y, key, where=None, aux={"vgg_metric": "l2"}):
 
 
 
-def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}):
+def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}, cache=None):
     """
-    Same signature as before.
+    
+        Takes x and y with > 3 channels and computes VGG loss on each 3-channel subset, averaging the result.
+        Parameters
+        ----------
+        x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+            predictions
+        y : float32 [N,CHANNELS_DUPLICATED,WIDTH,HEIGHT]
+            true data
+        key : jax.random.PRNGKey
+            Jax random number key.
+        where : boolean array [N,CHANNELS,(),()]
+            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
+        Returns
+        -------
+        loss : float32 [N]
+            loss reduced over channel and spatial axes
 
-    Optional aux entries:
-        aux["vgg_params"]
-        aux["target_feats"]
+        Optional aux entries:
+            aux["vgg_params"]
+            aux["target_feats"]
 
-    If provided, skips VGG target forward pass.
+        If provided, skips VGG target forward pass.
     """
 
     x = x * 2 - 1
@@ -520,13 +582,13 @@ def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}):
 
     keys = jr.split(key, x.shape[0])
 
-    if aux.get("target_feats", None) is None:
+    if cache is None:
         losses = jax.vmap(
             lpips_model.apply,
             in_axes=(None, 0, 0, 0, None),
         )(params, x, y, keys, aux)
     else:
-        target_feats = aux["target_feats"]
+        target_feats = cache
 
         def apply_one(xi, yi, ki, ti):
             aux_i = {**aux, "target_feats": ti}
