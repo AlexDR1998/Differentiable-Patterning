@@ -7,7 +7,7 @@ import equinox as eqx
 import datetime
 # import Common.trainer.loss as loss
 # import Common.trainer.loss_ott as loss_ott
-from Common.trainer.loss import build_loss_functions
+from Common.trainer.loss import build_loss_functions,build_loss_initialiser
 from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, mNCA_Train_log, aNCA_Train_log, NCA_knockout_Train_log
 from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
@@ -20,6 +20,10 @@ from Common.model.boundary import model_boundary, hard_boundary, no_boundary
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key
 import time
+
+
+INTERNAL_LOOP_DTYPE = jnp.bfloat16 # dtype to use for values inside the loop over timesteps. Should be low precision to save memory, but not so low that it causes instability. Can experiment with bfloat16 or float16.
+LOSS_DTYPE = jnp.float32 # dtype to use for loss values. Higher precision as it accumulates over many timesteps and batches.
 class NCA_Trainer(object):
 	"""
 	General class for training NCA model to data trajectories
@@ -340,7 +344,7 @@ class NCA_Trainer(object):
 		
 		self.setup_logging("wandb",wandb_args=wandb_args,KNOCKOUT_ARGS=KNOCKOUT_ARGS)
 
-		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
+		
 		
 		LOSS_FUNC_CHANNELS = LOSS_ARGS["channels"]
 		if LOSS_FUNC_CHANNELS is not None:
@@ -424,7 +428,7 @@ class NCA_Trainer(object):
 				v_latent_to_real = jax.vmap(lambda model_x: _nca.latent_to_real(model_x), in_axes=0, out_axes=0)
 				vv_latent_to_real = lambda x: jtu.tree_map(v_latent_to_real, x)
 				
-				reg_logs_internal = {name: jnp.zeros(len(x)) for name in REGULARISER_COEFFS.keys()}
+				reg_logs_internal = {name: jnp.zeros(len(x),dtype=LOSS_DTYPE) for name in REGULARISER_COEFFS.keys()}
 				
 				v_loss_func = lambda x,y,channel_loss_mask,key_array: jnp.array(
 					jtu.tree_map(
@@ -458,6 +462,8 @@ class NCA_Trainer(object):
 				return mean_loss, (x,x_proc,losses,reg_loss_internal)
 
 			nca_diff,nca_static = nca.partition()
+			x = x.astype(INTERNAL_LOOP_DTYPE)
+			y = y.astype(INTERNAL_LOOP_DTYPE)
 			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)  # type: ignore
 			updates,opt_state = self.OPTIMISER.update(grads, opt_state, nca_diff)
 			nca = eqx.apply_updates(nca,updates)
@@ -489,6 +495,12 @@ class NCA_Trainer(object):
 		# x = jtu.tree_map(self.NCA_model.real_to_latent, x)
 		print(f"Initial x shape: {jnp.array(x).shape}, y shape: {jnp.array(y).shape}",flush=True)
 		
+		# If we are using a loss function that needs to initialise some cache based on the data, do that here and add to LOSS_ARGS
+		loss_initialiser = build_loss_initialiser(LOSS_FUNC_STR,LOSS_ARGS)
+		if loss_initialiser is not None:
+			vgg_target_cache = loss_initialiser(y,key,self.LOSS_TIME_CHANNEL_MASK)
+			LOSS_ARGS = {**LOSS_ARGS, **vgg_target_cache}
+		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
 		
 		best_loss = 100000000
 		loss_thresh = 1e16 # If loss exceeds this, training is diverging to NaN
