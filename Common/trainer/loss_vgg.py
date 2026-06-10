@@ -358,10 +358,10 @@ def precompute_vgg_hyperspectral_target(y, key, where=None, aux={"vgg_metric": "
     target_feats has shape/pytree structure:
         [num_channel_groups, ...VGG feature pytree...]
     """
-    def pre_process_one_batch(y,where):
+    def pre_process_one_batch(y):
         y = y * 2 - 1
-        if where is not None:
-            y = y * where.astype(y.dtype)
+        # if where is not None:
+            # y = y * where.astype(y.dtype)
         y = pad_to_multiple_of_3_channels(y)
         y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
         y = y.astype(VGG_DTYPE)
@@ -374,7 +374,7 @@ def precompute_vgg_hyperspectral_target(y, key, where=None, aux={"vgg_metric": "
         target_feats = jax.vmap(one_group)(y)
         return target_feats
     
-    y = jtu.tree_map(pre_process_one_batch, y, where)
+    y = jtu.tree_map(pre_process_one_batch, y)
     lpips_model = lpips_variants[aux["vgg_metric"]]
     init_key, call_key = jr.split(key, 2)
     params = lpips_model.init(init_key, y[0], y[0], call_key, aux=aux)
@@ -404,12 +404,12 @@ def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_met
             "target_feats": target_feats,
         }
     """
-    def pre_process_one_batch(y,where):
+    def pre_process_one_batch(y):
         y = y * 2 - 1
 
-        if where is not None:
-            where_y = duplicate_x_channels_9ch(where)
-            y = y * where_y.astype(y.dtype)
+        # if where is not None:
+            # where_y = duplicate_x_channels_9ch(where)
+            # y = y * where_y.astype(y.dtype)
 
         y = split_and_pad_by_experiment_groups_12ch(y)
         y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
@@ -426,7 +426,7 @@ def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_met
 
 
 
-    y = jtu.tree_map(pre_process_one_batch, y, where)
+    y = jtu.tree_map(pre_process_one_batch, y)
 
     lpips_model = lpips_variants[aux["vgg_metric"]]
     init_key, call_key = jr.split(key, 2)
