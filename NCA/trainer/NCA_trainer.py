@@ -464,7 +464,7 @@ class NCA_Trainer(object):
 				# 	)
 				# )
 				# losses = v_loss_func(x_proc, y, self.LOSS_TIME_CHANNEL_MASK, self.LOSS_CACHE, loss_key)
-				losses = jtu.tree_map(self.loss_func,x_proc,y,self.LOSS_TIME_CHANNEL_MASK,self.LOSS_CACHE,loss_key)
+				losses = jnp.array(jtu.tree_map(self.loss_func,x_proc,y,self.LOSS_TIME_CHANNEL_MASK,self.LOSS_CACHE,loss_key))
 				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
 				mean_loss = jnp.mean(losses) + jnp.sum(jnp.array(list(reg_loss_internal.values())))
 				return mean_loss, (x,x_proc,losses,reg_loss_internal)
