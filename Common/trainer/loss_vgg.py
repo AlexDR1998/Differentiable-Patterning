@@ -41,10 +41,12 @@ def normalize_tensor(x, eps=1e-10):
     return x / (norm_factor + eps)
 
 def spatial_average(x, keepdims=True):
-
+    print("Spatial average input shape: ",x.shape,flush=True)
     # Mean over W, H
     x = x.astype(LOSS_DTYPE)
-    return jnp.mean(x, axis=[1, 2], keepdims=keepdims)
+    x = jnp.mean(x, axis=[1, 2], keepdims=keepdims)
+    print("Spatial average output shape: ",x.shape,flush=True)
+    return x
 
 class LPIPS_L2(LPIPS):
     @nn.compact
