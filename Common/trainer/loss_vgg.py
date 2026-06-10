@@ -379,7 +379,7 @@ def precompute_vgg_hyperspectral_target(y, key, where=None, aux={"vgg_metric": "
     y = jtu.tree_map(pre_process_one_batch, y)
     lpips_model = lpips_variants[aux["vgg_metric"]]
     init_key, call_key = jr.split(key, 2)
-    params = lpips_model.init(init_key, y[0], y[0], call_key, aux=aux)
+    params = lpips_model.init(init_key, y[0][0], y[0][0], call_key, aux=aux)
     params = cast_params_bf16(params)
     target_feats = jtu.tree_map(apply_to_one_batch, y)
 
@@ -432,7 +432,7 @@ def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_met
 
     lpips_model = lpips_variants[aux["vgg_metric"]]
     init_key, call_key = jr.split(key, 2)
-    params = lpips_model.init(init_key, y[0], y[0], call_key, aux=aux)
+    params = lpips_model.init(init_key, y[0][0], y[0][0], call_key, aux=aux)
     params = cast_params_bf16(params)
 
     target_feats = jtu.tree_map(apply_to_one_batch, y)
