@@ -53,41 +53,91 @@ class PointwiseConvNet(eqx.Module):
 
 
 class IsotropicKernelUpsampler(eqx.Module):
+    """
+    Fixed isotropic radial kernel upsampling, followed by an optional learnable 1x1 projection.
+
+    Input:
+        latent: (C, Xc, Yc)
+
+    Output:
+        image: (D, scale * Xc, scale * Yc)
+
+    The spatial upsampling itself is fixed and isotropic.
+    The learnable part is only a pointwise 1x1 channel projection/mixing applied after upsampling.
+    """
+
+    decoder: PointwiseConvNet
+
     latent_channels: int = eqx.field(static=True)
     out_channels: int = eqx.field(static=True)
-    scale_x: int = eqx.field(static=True)
-    scale_y: int = eqx.field(static=True)
+    scale: int = eqx.field(static=True)
     radius: float = eqx.field(static=True)
     stencil_radius: int = eqx.field(static=True)
+    residual: bool = eqx.field(static=True)
+    residual_scale: float = eqx.field(static=True)
 
     def __init__(
         self,
         latent_channels: int,
         out_channels: int,
         *,
-        scale_x: int,
-        scale_y: int | None = None,
+        scale: int,
         radius: float = 2.0,
+        residual: bool = True,
+        decoder_depth: int = 3,
+        residual_scale: float = 0.01,
+        key: Array,
     ):
-        if scale_y is None:
-            scale_y = scale_x
-
         self.latent_channels = latent_channels
         self.out_channels = out_channels
-        self.scale_x = scale_x
-        self.scale_y = scale_y
+        self.scale = scale
         self.radius = radius
         self.stencil_radius = int(math.ceil(radius))
+        self.residual = residual
+        self.residual_scale = residual_scale
+
+
+        self.decoder = PointwiseConvNet(
+            in_channels=latent_channels,
+            out_channels=out_channels,
+            hidden_channels=latent_channels,
+            depth=decoder_depth,
+            key=key,
+        )
+        # Helpful initialization:
+        # start from either identity-like residual behaviour or near-zero learned correction.
+        self.decoder = eqx.tree_at(
+            lambda m: m.layers,
+            self.decoder,
+            self.decoder.layers[:-1] + (self._zero_conv(self.decoder.layers[-1]),),
+        )
+
+    @staticmethod
+    def _zero_conv(layer: eqx.nn.Conv2d) -> eqx.nn.Conv2d:
+        if layer.bias is None:
+            return eqx.tree_at(
+                lambda l: l.weight,
+                layer,
+                jnp.zeros_like(layer.weight),
+            )
+
+        return eqx.tree_at(
+            lambda l: (l.weight, l.bias),
+            layer,
+            (jnp.zeros_like(layer.weight), jnp.zeros_like(layer.bias)),
+        )
 
     def _geometry(self, x_coarse: int, y_coarse: int, dtype):
-        x_fine = self.scale_x * x_coarse
-        y_fine = self.scale_y * y_coarse
+        x_fine = self.scale * x_coarse
+        y_fine = self.scale * y_coarse
 
-        xs = (jnp.arange(x_fine, dtype=dtype) + 0.5) / self.scale_x - 0.5
-        ys = (jnp.arange(y_fine, dtype=dtype) + 0.5) / self.scale_y - 0.5
+        # Fine pixel centres in coarse-grid coordinates.
+        xs = (jnp.arange(x_fine, dtype=dtype) + 0.5) / self.scale - 0.5
+        ys = (jnp.arange(y_fine, dtype=dtype) + 0.5) / self.scale - 0.5
 
         qx, qy = jnp.meshgrid(xs, ys, indexing="ij")
 
+        # Nearest coarse-grid point around which to form the local stencil.
         cx = jnp.rint(qx).astype(jnp.int32)
         cy = jnp.rint(qy).astype(jnp.int32)
 
@@ -99,49 +149,81 @@ class IsotropicKernelUpsampler(eqx.Module):
             indexing="ij",
         )
 
-        offsets = jnp.stack([ox.reshape(-1), oy.reshape(-1)], axis=1)
+        offsets = jnp.stack(
+            [ox.reshape(-1), oy.reshape(-1)],
+            axis=1,
+        )  # (N, 2)
 
         ix = cx[..., None] + offsets[None, None, :, 0]
         iy = cy[..., None] + offsets[None, None, :, 1]
 
         valid = (
-            (ix >= 0) & (ix < x_coarse) &
-            (iy >= 0) & (iy < y_coarse)
+            (ix >= 0)
+            & (ix < x_coarse)
+            & (iy >= 0)
+            & (iy < y_coarse)
         )
 
-        ix = jnp.clip(ix, 0, x_coarse - 1)
-        iy = jnp.clip(iy, 0, y_coarse - 1)
+        ix_clip = jnp.clip(ix, 0, x_coarse - 1)
+        iy_clip = jnp.clip(iy, 0, y_coarse - 1)
 
         px = ix.astype(dtype)
         py = iy.astype(dtype)
 
         ddx = px - qx[..., None]
         ddy = py - qy[..., None]
+
         dist = jnp.sqrt(ddx * ddx + ddy * ddy)
 
+        # Fixed isotropic radial weights.
         w = _wendland_c2(dist, self.radius) * valid.astype(dtype)
+
+        # Nonnegative partition-of-unity weights.
         lam = w / (jnp.sum(w, axis=-1, keepdims=True) + 1e-8)
 
-        flat_idx = ix * y_coarse + iy
+        flat_idx = ix_clip * y_coarse + iy_clip
 
         return flat_idx, lam
 
-    def _interpolate_latent(self, latent: Array, flat_idx: Array, lam: Array) -> Array:
+    def _interpolate(self, latent: Array, flat_idx: Array, lam: Array) -> Array:
+        # latent: (C, Xc, Yc)
         latent_flat = rearrange(latent, "c x y -> c (x y)")
+
+        # vals: (C, Xf, Yf, N)
         vals = jnp.take(latent_flat, flat_idx, axis=1)
-        return einsum(vals, lam, "c x y n, x y n -> c x y")
+
+        # z: (C, Xf, Yf)
+        z = einsum(vals, lam, "c x y n, x y n -> c x y")
+
+        return z
 
     def __call__(self, latent: Array) -> Array:
+        """
+        latent: (C, Xc, Yc)
+        returns: (out_channels, scale * Xc, scale * Yc)
+        """
         C, Xc, Yc = latent.shape
 
         if C != self.latent_channels:
-            raise ValueError(f"Expected {self.latent_channels} latent channels, got {C}")
+            raise ValueError(
+                f"Expected {self.latent_channels} latent channels, got {C}"
+            )
 
         flat_idx, lam = self._geometry(Xc, Yc, latent.dtype)
-        z = self._interpolate_latent(latent, flat_idx, lam)
+        z = self._interpolate(latent, flat_idx, lam)
 
-        return z[: self.out_channels]
+        learned = self.decoder(z)
 
+        if self.residual:
+            if self.out_channels > self.latent_channels:
+                raise ValueError(
+                    "Residual mode requires out_channels <= latent_channels."
+                )
+
+            base = z[: self.out_channels]
+            return base + self.residual_scale * learned
+
+        return learned
 
 
 
@@ -376,19 +458,17 @@ class uNCA(NCA):
                 },
                 key=jax.random.PRNGKey(int(time.time()))):
         super().__init__(N_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, KERNEL_SCALE, key)
-        #key1,key2 = jax.random.split(key,2)
         key = jax.random.fold_in(key,1234)
-        # self.SPATIAL_UPSAMPLE = UPSAMPLER_AUX["upsample_factor"]
         self.UPSAMPLER_AUX = UPSAMPLER_AUX
         self.upsample = IsotropicKernelUpsampler(
             latent_channels=N_CHANNELS, 
             out_channels=O_CHANNELS, 
-            scale_x=UPSAMPLER_AUX["upsample_factor"], 
-            scale_y=UPSAMPLER_AUX["upsample_factor"],
-            # hidden_channels=int(UPSAMPLER_AUX["width_factor"]*N_CHANNELS),
-            # depth=UPSAMPLER_AUX["depth"],
-            radius=UPSAMPLER_AUX["radius"],)
-            # key=key)
+            scale=UPSAMPLER_AUX["upsample_factor"],
+            radius=UPSAMPLER_AUX["radius"],
+            decoder_depth=UPSAMPLER_AUX["depth"],
+            residual=True,
+            key=key)
+            
 
     def real_to_latent(self, x):
         """
