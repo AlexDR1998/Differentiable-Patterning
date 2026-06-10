@@ -51,6 +51,100 @@ class PointwiseConvNet(eqx.Module):
         return self.layers[-1](x)
 
 
+
+class IsotropicKernelUpsampler(eqx.Module):
+    latent_channels: int = eqx.field(static=True)
+    out_channels: int = eqx.field(static=True)
+    scale_x: int = eqx.field(static=True)
+    scale_y: int = eqx.field(static=True)
+    radius: float = eqx.field(static=True)
+    stencil_radius: int = eqx.field(static=True)
+
+    def __init__(
+        self,
+        latent_channels: int,
+        out_channels: int,
+        *,
+        scale_x: int,
+        scale_y: int | None = None,
+        radius: float = 2.0,
+    ):
+        if scale_y is None:
+            scale_y = scale_x
+
+        self.latent_channels = latent_channels
+        self.out_channels = out_channels
+        self.scale_x = scale_x
+        self.scale_y = scale_y
+        self.radius = radius
+        self.stencil_radius = int(math.ceil(radius))
+
+    def _geometry(self, x_coarse: int, y_coarse: int, dtype):
+        x_fine = self.scale_x * x_coarse
+        y_fine = self.scale_y * y_coarse
+
+        xs = (jnp.arange(x_fine, dtype=dtype) + 0.5) / self.scale_x - 0.5
+        ys = (jnp.arange(y_fine, dtype=dtype) + 0.5) / self.scale_y - 0.5
+
+        qx, qy = jnp.meshgrid(xs, ys, indexing="ij")
+
+        cx = jnp.rint(qx).astype(jnp.int32)
+        cy = jnp.rint(qy).astype(jnp.int32)
+
+        rr = self.stencil_radius
+
+        ox, oy = jnp.meshgrid(
+            jnp.arange(-rr, rr + 1),
+            jnp.arange(-rr, rr + 1),
+            indexing="ij",
+        )
+
+        offsets = jnp.stack([ox.reshape(-1), oy.reshape(-1)], axis=1)
+
+        ix = cx[..., None] + offsets[None, None, :, 0]
+        iy = cy[..., None] + offsets[None, None, :, 1]
+
+        valid = (
+            (ix >= 0) & (ix < x_coarse) &
+            (iy >= 0) & (iy < y_coarse)
+        )
+
+        ix = jnp.clip(ix, 0, x_coarse - 1)
+        iy = jnp.clip(iy, 0, y_coarse - 1)
+
+        px = ix.astype(dtype)
+        py = iy.astype(dtype)
+
+        ddx = px - qx[..., None]
+        ddy = py - qy[..., None]
+        dist = jnp.sqrt(ddx * ddx + ddy * ddy)
+
+        w = _wendland_c2(dist, self.radius) * valid.astype(dtype)
+        lam = w / (jnp.sum(w, axis=-1, keepdims=True) + 1e-8)
+
+        flat_idx = ix * y_coarse + iy
+
+        return flat_idx, lam
+
+    def _interpolate_latent(self, latent: Array, flat_idx: Array, lam: Array) -> Array:
+        latent_flat = rearrange(latent, "c x y -> c (x y)")
+        vals = jnp.take(latent_flat, flat_idx, axis=1)
+        return einsum(vals, lam, "c x y n, x y n -> c x y")
+
+    def __call__(self, latent: Array) -> Array:
+        C, Xc, Yc = latent.shape
+
+        if C != self.latent_channels:
+            raise ValueError(f"Expected {self.latent_channels} latent channels, got {C}")
+
+        flat_idx, lam = self._geometry(Xc, Yc, latent.dtype)
+        z = self._interpolate_latent(latent, flat_idx, lam)
+
+        return z[: self.out_channels]
+
+
+
+
 class IsotropicMLSUpsampler(eqx.Module):
     """
     Input:  latent (C, Xc, Yc)
@@ -263,7 +357,7 @@ class uNCA(NCA):
     FIRE_RATE: float
     op: Ops
     perception: callable # type: ignore
-    upsample: IsotropicMLSUpsampler
+    upsample: IsotropicKernelUpsampler
     #CONFIG: dict
 
     def __init__(self,
@@ -286,15 +380,15 @@ class uNCA(NCA):
         key = jax.random.fold_in(key,1234)
         # self.SPATIAL_UPSAMPLE = UPSAMPLER_AUX["upsample_factor"]
         self.UPSAMPLER_AUX = UPSAMPLER_AUX
-        self.upsample = IsotropicMLSUpsampler(
+        self.upsample = IsotropicKernelUpsampler(
             latent_channels=N_CHANNELS, 
             out_channels=O_CHANNELS, 
             scale_x=UPSAMPLER_AUX["upsample_factor"], 
             scale_y=UPSAMPLER_AUX["upsample_factor"],
-            hidden_channels=int(UPSAMPLER_AUX["width_factor"]*N_CHANNELS),
-            depth=UPSAMPLER_AUX["depth"],
-            radius=UPSAMPLER_AUX["radius"],
-            key=key)
+            # hidden_channels=int(UPSAMPLER_AUX["width_factor"]*N_CHANNELS),
+            # depth=UPSAMPLER_AUX["depth"],
+            radius=UPSAMPLER_AUX["radius"],)
+            # key=key)
 
     def real_to_latent(self, x):
         """
@@ -305,7 +399,7 @@ class uNCA(NCA):
             max(1, x.shape[-2] // self.UPSAMPLER_AUX["upsample_factor"]),
             max(1, x.shape[-1] // self.UPSAMPLER_AUX["upsample_factor"]),
         )
-        return jax.image.resize(x, latent_shape, method="linear")
+        return jax.image.resize(x, latent_shape, method="bicubic",antialias=True)
 
     def latent_to_real(self, x):
         if x.ndim == 3:
