@@ -470,10 +470,8 @@ class NCA_Trainer(object):
 				return mean_loss, (x,x_proc,losses,reg_loss_internal)
 
 			nca_diff,nca_static = nca.partition()
-			# x = x.astype(INTERNAL_LOOP_DTYPE)
-			# y = y.astype(INTERNAL_LOOP_DTYPE)
-			x = jtu.tree_map(lambda x: x.astype(INTERNAL_LOOP_DTYPE), x)
-			y = jtu.tree_map(lambda y: y.astype(INTERNAL_LOOP_DTYPE), y)
+			# x = jtu.tree_map(lambda x: x.astype(INTERNAL_LOOP_DTYPE), x)
+			# y = jtu.tree_map(lambda y: y.astype(INTERNAL_LOOP_DTYPE), y)
 			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)  # type: ignore
 			updates,opt_state = self.OPTIMISER.update(grads, opt_state, nca_diff)
 			nca = eqx.apply_updates(nca,updates)
