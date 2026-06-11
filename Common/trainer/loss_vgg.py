@@ -41,11 +41,11 @@ def normalize_tensor(x, eps=1e-10):
     return x / (norm_factor + eps)
 
 def spatial_average(x, keepdims=True):
-    print("Spatial average input shape: ",x.shape,flush=True)
+    # print("Spatial average input shape: ",x.shape,flush=True)
     # Mean over W, H
     x = x.astype(LOSS_DTYPE)
     x = jnp.mean(x, axis=[1, 2], keepdims=keepdims)
-    print("Spatial average output shape: ",x.shape,flush=True)
+    # print("Spatial average output shape: ",x.shape,flush=True)
     return x
 
 class LPIPS_WITH_FEATURES(LPIPS):
@@ -600,7 +600,14 @@ def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}, ca
         params = aux["vgg_params"]
 
     keys = jr.split(key, x.shape[0])
-
+    if aux.get("random_crop", False):
+        # For each N and channel group, select a random 224*224 sized crop,
+        # as this is the input size that VGG was trained on. For larger resolutions, this 
+        # should speed up training.
+        x = _random_crop_to_vgg_input(x, key)
+        y = _random_crop_to_vgg_input(y, key)
+        cache = None # Can't use cached features if we are randomly cropping.
+        
     if cache is None:
         losses = jax.vmap(
             lpips_model.apply,
