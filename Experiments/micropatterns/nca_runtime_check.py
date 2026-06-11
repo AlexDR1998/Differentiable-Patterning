@@ -23,7 +23,8 @@ def build_filename(cfg):
             filename += f"_rad{cfg.model.upsampler.radius}"
         elif cfg.model.family == "uNCA":
             filename += f"_fm{cfg.model.upsampler.fourier_modes}"
-    filename += f"_{cfg.system.precision}_loop{cfg.trainer.loop_autodiff}_crop{cfg.loss.random_crop}_xla_flags{cfg.system.xla_flags.join('-')}"
+    _xla_str = "".join(list(cfg.system.xla_flags))
+    filename += f"_{cfg.system.precision}_loop{cfg.trainer.loop_autodiff}_crop{cfg.loss.random_crop}_xla_flags{_xla_str}"
 
     return filename
 
