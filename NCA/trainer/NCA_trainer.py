@@ -495,10 +495,10 @@ class NCA_Trainer(object):
 			if not LOSS_ARGS.get("random_crop", False):
 				self.LOSS_CACHE = vgg_target_cache["target_feats"] # Needs passed in at Batch level tree_map
 			else:
-				self.LOSS_CACHE = None # If using random cropping, can't use precomputed cache of target features as different crops each time
+				self.LOSS_CACHE = [None]*len(x) # If using random cropping, can't use precomputed cache of target features as different crops each time
 			print("Initialised loss cache with keys: "+str(vgg_target_cache.keys()))
 		else:
-			self.LOSS_CACHE = None
+			self.LOSS_CACHE = [None]*len(x)
 		
 		best_loss = 100000000
 		loss_thresh = 1e16 # If loss exceeds this, training is diverging to NaN
