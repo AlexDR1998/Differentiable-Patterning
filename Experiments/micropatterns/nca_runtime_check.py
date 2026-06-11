@@ -23,13 +23,22 @@ def build_filename(cfg):
             filename += f"_rad{cfg.model.upsampler.radius}"
         elif cfg.model.family == "uNCA":
             filename += f"_fm{cfg.model.upsampler.fourier_modes}"
-    filename += f"_{cfg.system.precision}_loop{cfg.trainer.loop_autodiff}_crop{cfg.loss.random_crop}_xla_flags{cfg.system.xla_flags.replace('=','')}"
+    filename += f"_{cfg.system.precision}_loop{cfg.trainer.loop_autodiff}_crop{cfg.loss.random_crop}_xla_flags{cfg.system.xla_flags.join('-')}"
 
     return filename
 
 def run(cfg):
     # Set XLA flags and JAX precision before calling any JAX code or importing modules
-    os.environ["XLA_FLAGS"] = cfg.system.xla_flags
+    _flag_str = ""
+    if "triton_gemm" in cfg.system.xla_flags:
+        _flag_str+= "--xla_gpu_triton_gemm_any=True "
+    if "latency_hiding_scheduler" in cfg.system.xla_flags:
+        _flag_str+= "--xla_gpu_enable_latency_hiding_scheduler=true "
+    if "command_buffer" in cfg.system.xla_flags:
+        _flag_str+= "--xla_gpu_enable_command_buffer=FUSION "
+    if _flag_str != "":
+        os.environ["XLA_FLAGS"] = _flag_str
+    
     import jax
     jax.config.update("jax_default_matmul_precision", cfg.system.precision)
 
