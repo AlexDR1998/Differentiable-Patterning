@@ -1,33 +1,13 @@
 import sys
 import os
-import jax
-
-import jax.numpy as jnp
-import equinox as eqx
-import optax
-import math
 from dotenv import load_dotenv
+
 load_dotenv()
 CODE_PATH = os.getenv("PVC_PATH")
 MODEL_SAVE_PATH = os.getenv("MODEL_SAVE_PATH")
 DATA_PATH = os.getenv("DATA_PATH_BASE") + "Timecourse_seperate_colonies/" # type: ignore
 sys.path.append(CODE_PATH)  # type: ignore
 os.chdir(CODE_PATH) # type: ignore
-
-
-
-from einops import rearrange,repeat,reduce
-from NCA.model.NCA_model import NCA
-from NCA.model.NCA_upsample_isotropic_model import uNCA as isouNCA
-from NCA.model.NCA_upsample_model import uNCA
-from NCA.trainer.NCA_trainer import NCA_Trainer
-from NCA.trainer.optimizer import build_optimizer
-from NCA.trainer.data_augmenter_9ch_colony import DataAugmenter as DataAugmenterGrouped
-from Experiments.config_helpers import build_tags
-
-from Common.dataloader.micropattern import load_micropattern_circle_nodal_knockout_9ch_explicit_colony
-from Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep import build_model,build_data_augmenter,load_data
-
 
 def build_filename(cfg):
     kernel_str = "_".join(cfg.model.kernel_str).lower()
@@ -43,20 +23,29 @@ def build_filename(cfg):
             filename += f"_rad{cfg.model.upsampler.radius}"
         elif cfg.model.family == "uNCA":
             filename += f"_fm{cfg.model.upsampler.fourier_modes}"
-    filename += f"_{cfg.system.precision}_loop{cfg.trainer.loop_autodiff}_crop{cfg.loss.random_crop}"
+    filename += f"_{cfg.system.precision}_loop{cfg.trainer.loop_autodiff}_crop{cfg.loss.random_crop}_xla_flags{cfg.system.xla_flags.replace('=','')}"
 
     return filename
 
 def run(cfg):
-    # if cfg.system.precision =="tf32":
+    # Set XLA flags and JAX precision before calling any JAX code or importing modules
+    os.environ["XLA_FLAGS"] = cfg.system.xla_flags
+    import jax
     jax.config.update("jax_default_matmul_precision", cfg.system.precision)
+
+    from NCA.trainer.NCA_trainer import NCA_Trainer
+    from NCA.trainer.optimizer import build_optimizer
+    from Experiments.config_helpers import build_tags
+    from Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep import build_model,build_data_augmenter,load_data
+    
     model = build_model(cfg)
     optimiser,_ = build_optimizer(cfg)
-
     model = build_model(cfg)
     run_name = build_filename(cfg)
     optimiser,opt_name = build_optimizer(cfg)
     data,_,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_data(cfg)
+
+
     trainer = NCA_Trainer(
         NCA_model=model,
         data=data,
@@ -67,6 +56,7 @@ def run(cfg):
         GRAD_LOSS=cfg.trainer.grad_loss,
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
     )
+
     trainer.train(
         t=cfg.run.t,
         iters=cfg.run.iterations,
@@ -101,6 +91,6 @@ def run(cfg):
         },
         
         LOG_EVERY=100,
-        CLEAR_CACHE_EVERY=500,
+        CLEAR_CACHE_EVERY=600,
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff
     )
