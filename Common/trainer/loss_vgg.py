@@ -48,7 +48,15 @@ def spatial_average(x, keepdims=True):
     print("Spatial average output shape: ",x.shape,flush=True)
     return x
 
-class LPIPS_L2(LPIPS):
+class LPIPS_WITH_FEATURES(LPIPS):
+    def features(self, x):
+        # x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
+        x = x * 2.0 - 1.0
+        x = x.astype(VGG_DTYPE)
+        return self.vgg(x)
+
+
+class LPIPS_L2(LPIPS_WITH_FEATURES):
     @nn.compact
     def __call__(self, x, t, key, aux): # pyright: ignore[reportIncompatibleMethodOverride]
         # x = self.vgg((x + 1) / 2)
@@ -78,12 +86,9 @@ class LPIPS_L2(LPIPS):
         for i in range(1, len(res)):
             val += res[i]
         return val.astype(LOSS_DTYPE)
-    def features(self, x):
-        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
-        return self.vgg(x)
 
 
-class LPIPS_OT_CH(LPIPS):
+class LPIPS_OT_CH(LPIPS_WITH_FEATURES):
     @nn.compact
     def __call__(self, x, t, key, aux):# pyright: ignore[reportIncompatibleMethodOverride]
         # x = self.vgg((x + 1) / 2)
@@ -125,12 +130,10 @@ class LPIPS_OT_CH(LPIPS):
         for i in range(1, len(res)):
             val += res[i]
         return val.astype(LOSS_DTYPE)
-    def features(self, x):
-        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
-        return self.vgg(x)
 
 
-class LPIPS_OT_SP(LPIPS):
+
+class LPIPS_OT_SP(LPIPS_WITH_FEATURES):
     @nn.compact
     def __call__(self, x, t, key, aux):# pyright: ignore[reportIncompatibleMethodOverride]
         # x = self.vgg((x + 1) / 2)
@@ -172,9 +175,7 @@ class LPIPS_OT_SP(LPIPS):
         for i in range(1, len(res)):
             val += res[i]
         return val.astype(LOSS_DTYPE)
-    def features(self, x):
-        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
-        return self.vgg(x)
+
 
 def oti_loss(X,Y,aux):
     """
@@ -203,7 +204,7 @@ def oti_loss(X,Y,aux):
     return out.reg_ot_cost
 
 
-class LPIPS_EMD_SP(LPIPS):
+class LPIPS_EMD_SP(LPIPS_WITH_FEATURES):
     @nn.compact
     def __call__(self, x, t, key, aux): # pyright: ignore[reportIncompatibleMethodOverride]
         # x = self.vgg((x + 1) / 2)
@@ -239,11 +240,9 @@ class LPIPS_EMD_SP(LPIPS):
         for i in range(1, len(res)):
             val += res[i]
         return val.astype(LOSS_DTYPE)
-    def features(self, x):
-        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
-        return self.vgg(x)
+    
 
-class LPIPS_EMD_FULL(LPIPS): 
+class LPIPS_EMD_FULL(LPIPS_WITH_FEATURES): 
     @nn.compact
     def __call__(self, x, t, key, aux): # pyright: ignore[reportIncompatibleMethodOverride]
         # x = self.vgg((x + 1) / 2)
@@ -280,9 +279,7 @@ class LPIPS_EMD_FULL(LPIPS):
         for i in range(1, len(res)):
             val += res[i]
         return val.astype(LOSS_DTYPE)
-    def features(self, x):
-        x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
-        return self.vgg(x)
+    
 
 lpips_ot_ch = LPIPS_OT_CH()
 lpips_ot_sp = LPIPS_OT_SP()
@@ -361,7 +358,7 @@ def precompute_vgg_hyperspectral_target(y, key, where=None, aux={"vgg_metric": "
         [num_channel_groups, ...VGG feature pytree...]
     """
     def pre_process_one_batch(y):
-        y = y * 2 - 1
+        # y = y * 2 - 1
         # if where is not None:
             # y = y * where.astype(y.dtype)
         y = pad_to_multiple_of_3_channels(y)
@@ -407,7 +404,7 @@ def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_met
         }
     """
     def pre_process_one_batch(y):
-        y = y * 2 - 1
+        # y = y * 2 - 1
 
         # if where is not None:
             # where_y = duplicate_x_channels_9ch(where)
@@ -444,9 +441,21 @@ def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_met
 
 
 
-
-
-
+def _random_crop_to_vgg_input(x,key):
+    def crop_image(im,key): # Takes [W H C] and returns [224 224 C]
+        w,h,_ = im.shape
+        keys = jr.split(key,2)
+        crop_size = 224
+        max_x = w - crop_size
+        max_y = h - crop_size
+        x_start = jr.randint(keys[0], (), 0, max_x + 1)
+        y_start = jr.randint(keys[1], (), 0, max_y + 1)
+        cropped = jax.lax.dynamic_slice(im, (x_start,y_start,0), (crop_size, crop_size, im.shape[2]))
+        return cropped
+    keys = jr.split(key,(x.shape[0],x.shape[1])) # one key per N and channel group
+    crop_image_vmap = jax.vmap(jax.vmap(crop_image, in_axes=(0,0)), in_axes=(0,0))
+    x = crop_image_vmap(x, keys)
+    return x
 
 # ---------------------------------------------------------------------
 # Losses
@@ -477,8 +486,8 @@ def vgg_hyperspectral(x, y, key, where=None, aux={"vgg_metric": "l2"}, cache=Non
         If provided, skips VGG target forward pass.
     """
 
-    x = x * 2 - 1
-    y = y * 2 - 1
+    # x = x * 2 - 1
+    # y = y * 2 - 1
 
     if where is not None:
         x = x * where.astype(x.dtype)
@@ -503,6 +512,14 @@ def vgg_hyperspectral(x, y, key, where=None, aux={"vgg_metric": "l2"}, cache=Non
         params = aux["vgg_params"]
 
     keys = jr.split(key, x.shape[0])
+    if aux.get("random_crop", False):
+        # For each N and channel group, select a random 224*224 sized crop,
+        # as this is the input size that VGG was trained on. For larger resolutions, this 
+        # should speed up training.
+        x = _random_crop_to_vgg_input(x, key)
+        y = _random_crop_to_vgg_input(y, key)
+        cache = None # Can't use cached features if we are randomly cropping.
+        
 
     if cache is None:
         losses = jax.vmap(
@@ -555,8 +572,8 @@ def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}, ca
         If provided, skips VGG target forward pass.
     """
 
-    x = x * 2 - 1
-    y = y * 2 - 1
+    # x = x * 2 - 1
+    # y = y * 2 - 1
 
     if where is not None:
         x = x * where.astype(x.dtype)

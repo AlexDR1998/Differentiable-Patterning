@@ -430,10 +430,7 @@ class NCA_Trainer(object):
 				# provide a batched processor that maps model.latent_to_real over the batch/tree
 				v_latent_to_real = jax.vmap(lambda model_x: _nca.latent_to_real(model_x), in_axes=0, out_axes=0)
 				vv_latent_to_real = lambda x: jtu.tree_map(v_latent_to_real, x)
-				
 				reg_logs_internal = {name: jnp.zeros(len(x),dtype=LOSS_DTYPE) for name in REGULARISER_COEFFS.keys()}
-				
-
 				state_shape = x[0].shape[0] # Assumes the same number of outer timesteps in each batch.
 				
 				# Structuring this as function and lax.scan speeds up jit compile a lot
@@ -453,25 +450,12 @@ class NCA_Trainer(object):
 				)
 
 				loss_key = key_pytree_gen(key, (len(x),))
-				# v_loss_func = lambda x,y,channel_loss_mask,loss_cache,key_array: jnp.array(  # noqa: E731
-				# 	jtu.tree_map(
-				# 		self.loss_func,
-				# 		x,
-				# 		y,
-				# 		channel_loss_mask,
-				# 		loss_cache, # PyTree[Batches] of arrays [N, ...]
-				# 		key_array,
-				# 	)
-				# )
-				# losses = v_loss_func(x_proc, y, self.LOSS_TIME_CHANNEL_MASK, self.LOSS_CACHE, loss_key)
 				losses = jnp.array(jtu.tree_map(self.loss_func,x_proc,y,self.LOSS_TIME_CHANNEL_MASK,self.LOSS_CACHE,loss_key))
 				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
 				mean_loss = jnp.mean(losses) + jnp.sum(jnp.array(list(reg_loss_internal.values())))
 				return mean_loss, (x,x_proc,losses,reg_loss_internal)
 
 			nca_diff,nca_static = nca.partition()
-			# x = jtu.tree_map(lambda x: x.astype(INTERNAL_LOOP_DTYPE), x)
-			# y = jtu.tree_map(lambda y: y.astype(INTERNAL_LOOP_DTYPE), y)
 			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)  # type: ignore
 			updates,opt_state = self.OPTIMISER.update(grads, opt_state, nca_diff)
 			nca = eqx.apply_updates(nca,updates)
@@ -508,7 +492,10 @@ class NCA_Trainer(object):
 		if loss_initialiser is not None:
 			vgg_target_cache = loss_initialiser(y,key,self.LOSS_TIME_CHANNEL_MASK) # dict of {"vgg_params": ..., "target_feats": List[Batches] of arrays [N, ...]}
 			LOSS_ARGS = {**LOSS_ARGS, "vgg_params": vgg_target_cache["vgg_params"]} # Pre-trained VGG parameters for perceptual loss, if needed. Does not need batched.
-			self.LOSS_CACHE = vgg_target_cache["target_feats"] # Needs passed in at Batch level tree_map
+			if not LOSS_ARGS.get("random_crop", False):
+				self.LOSS_CACHE = vgg_target_cache["target_feats"] # Needs passed in at Batch level tree_map
+			else:
+				self.LOSS_CACHE = None # If using random cropping, can't use precomputed cache of target features as different crops each time
 			print("Initialised loss cache with keys: "+str(vgg_target_cache.keys()))
 		else:
 			self.LOSS_CACHE = None

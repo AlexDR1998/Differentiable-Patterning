@@ -367,7 +367,8 @@ def run(cfg):
             "sharpen":True,
             "epsilon":0.1,
             "internal_loss_func":"l2",
-            "samples":128
+            "samples":128,
+            "random_crop":cfg.loss.random_crop
         },
         
         LOG_EVERY=100,
