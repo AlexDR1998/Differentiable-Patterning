@@ -43,6 +43,11 @@ spec:
                 value: /workspace/writeable/Models/
               - name: XLA_PYTHON_CLIENT_MEM_FRACTION
                 value: "0.9"
+              - name: XLA_FLAGS
+                value: "--xla_gpu_enable_latency_hiding_scheduler=true"
+                # value: "--xla_gpu_enable_latency_hiding_scheduler=true --xla_gpu_triton_gemm_any=True"
+                # value: "--xla_gpu_triton_gemm_any=True"
+                # value: "--xla_gpu_enable_command_buffer=FUSION"
               - name: WANDB_DIR
                 value: /workspace/writeable/wandb-fast
               - name: WANDB_CACHE_DIR
