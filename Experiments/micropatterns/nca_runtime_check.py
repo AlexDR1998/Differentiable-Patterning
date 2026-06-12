@@ -31,15 +31,17 @@ def build_filename(cfg):
 def run(cfg):
     # Set XLA flags and JAX precision before calling any JAX code or importing modules
     _flag_str = ""
-    if "triton_gemm" in cfg.system.xla_flags:
-        _flag_str+= "--xla_gpu_triton_gemm_any=True "
-    if "latency_hiding_scheduler" in cfg.system.xla_flags:
-        _flag_str+= "--xla_gpu_enable_latency_hiding_scheduler=true "
-    if "command_buffer" in cfg.system.xla_flags:
-        _flag_str+= "--xla_gpu_enable_command_buffer=FUSION "
-    if _flag_str != "":
-        os.environ["XLA_FLAGS"] = _flag_str
-    
+    if cfg.system.xla_flags is not None:
+        # cfg.system.xla_flags = []
+        if "triton_gemm" in cfg.system.xla_flags:
+            _flag_str+= "--xla_gpu_triton_gemm_any=True "
+        if "latency_hiding_scheduler" in cfg.system.xla_flags:
+            _flag_str+= "--xla_gpu_enable_latency_hiding_scheduler=true "
+        if "command_buffer" in cfg.system.xla_flags:
+            _flag_str+= "--xla_gpu_enable_command_buffer=FUSION "
+        if _flag_str != "":
+            os.environ["XLA_FLAGS"] = _flag_str
+        
     import jax
     jax.config.update("jax_default_matmul_precision", cfg.system.precision)
 
