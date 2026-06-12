@@ -67,6 +67,7 @@ class IsotropicKernelUpsampler(eqx.Module):
     """
 
     decoder: PointwiseConvNet
+    op: Ops
 
     latent_channels: int = eqx.field(static=True)
     out_channels: int = eqx.field(static=True)
@@ -85,7 +86,8 @@ class IsotropicKernelUpsampler(eqx.Module):
         radius: float = 2.0,
         residual: bool = True,
         decoder_depth: int = 3,
-        residual_scale: float = 0.01,
+        residual_scale: float = 1.0,
+        padding="CIRCULAR",
         key: Array,
     ):
         self.latent_channels = latent_channels
@@ -95,10 +97,10 @@ class IsotropicKernelUpsampler(eqx.Module):
         self.stencil_radius = int(math.ceil(radius))
         self.residual = residual
         self.residual_scale = residual_scale
-
-
+        self.op = Ops(PADDING=padding,dx=1,KERNEL_SCALE=1,SMOOTHING=1) # type: ignore
+        
         self.decoder = PointwiseConvNet(
-            in_channels=latent_channels,
+            in_channels=3*latent_channels, # We concat laplacian and gradient magnitude to the input.
             out_channels=out_channels,
             hidden_channels=latent_channels,
             depth=decoder_depth,
@@ -111,6 +113,17 @@ class IsotropicKernelUpsampler(eqx.Module):
             self.decoder,
             self.decoder.layers[:-1] + (self._zero_conv(self.decoder.layers[-1]),),
         )
+
+    def spatial_gradients(self,x):
+        """
+            [C X Y] -> [3C X Y]
+            Returns identity, gradient magnitude and laplacian for each channel, concatenated along channel dimension
+        """
+        x_id = x
+        x_diff = self.op.GradNorm(x)
+        x_lap = self.op.Lap(x)
+        output = rearrange([x_id,x_diff,x_lap],"b C x y -> (b C) x y")
+        return output
 
     @staticmethod
     def _zero_conv(layer: eqx.nn.Conv2d) -> eqx.nn.Conv2d:
@@ -202,7 +215,7 @@ class IsotropicKernelUpsampler(eqx.Module):
         latent: (C, Xc, Yc)
         returns: (out_channels, scale * Xc, scale * Yc)
         """
-        C, Xc, Yc = latent.shape
+        C, Xc, Yc = latent.shape # Shape C Xcourse Ycourse
 
         if C != self.latent_channels:
             raise ValueError(
@@ -210,9 +223,9 @@ class IsotropicKernelUpsampler(eqx.Module):
             )
 
         flat_idx, lam = self._geometry(Xc, Yc, latent.dtype)
-        z = self._interpolate(latent, flat_idx, lam)
-
-        learned = self.decoder(z)
+        z = self._interpolate(latent, flat_idx, lam) # Shape C Xfine Yfine
+        z_spatial = self.spatial_gradients(z) # Shape 3C Xfine Yfine
+        learned = self.decoder(z_spatial) # Shape out_channels Xfine Yfine
 
         if self.residual:
             if self.out_channels > self.latent_channels:
@@ -521,3 +534,27 @@ class uNCA(NCA):
             "FIRE_RATE":self.FIRE_RATE,
             "UPSAMPLE_AUX":self.UPSAMPLER_AUX
         }
+    def partition(self):
+        """
+        Behaves like eqx.partition, but moves the hard coded kernels (a jax array) from the "trainable" pytree to the "static" pytree
+
+        Returns
+        -------
+        diff : PyTree
+            PyTree of same structure as NCA, with all non trainable parameters set to None
+        static : PyTree
+            PyTree of same structure as NCA, with all trainable parameters set to None
+
+        """
+        
+        total_diff,total_static = eqx.partition(self,eqx.is_inexact_array)
+        ops_diff,ops_static = self.op.partition()
+        up_ops_diff,up_ops_static = self.upsample.op.partition()
+        where_ops = lambda m:m.op
+        where_up_ops = lambda m:m.upsample.op
+        total_diff = eqx.tree_at(where_ops,total_diff,ops_diff)
+        total_diff = eqx.tree_at(where_up_ops,total_diff,up_ops_diff)
+        
+        total_static = eqx.tree_at(where_ops,total_static,ops_static)
+        total_static = eqx.tree_at(where_up_ops,total_static,up_ops_static)
+        return total_diff, total_static

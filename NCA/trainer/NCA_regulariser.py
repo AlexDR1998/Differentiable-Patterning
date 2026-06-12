@@ -41,14 +41,38 @@ def intermediate_reg(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
         float tracking how much of x is outwith range [0,1]
 
     """
-    def _reg(x_new,full=True):
+    def _reg(x_new_proc,full=True):
         # if not full:
             # x = x[:,:self.OBS_CHANNELS]
         # x_new = _state(x_new)
-        return jnp.mean(jnp.abs(x_new)+jnp.abs(x_new-1)-1)
-    return jnp.array(jtu.tree_map(_reg,x_new))
+        return jnp.mean(jnp.abs(x_new_proc)+jnp.abs(x_new_proc-1)-1)
+    return jnp.array(jtu.tree_map(_reg,x_new_proc))
         # v_intermediate_reg = lambda x:jnp.array(jax.tree_util.tree_map(self.intermediate_reg,x))  # noqa: E731
 		
+
+def latent_size_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
+    """
+    Regulariser to encourage the model to keep the size of the latent representation small, by penalising the mean value of the latent channels.
+
+    Parameters
+    ----------
+    x: PyTree [Batch] of Arrays [N C H W]
+    x_new: PyTree [Batch] of Arrays [N C H W]
+    x_proc: PyTree [Batch] of Arrays [N L h w]
+    x_new_proc: PyTree [Batch] of Arrays [N L h w]
+    vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
+    key: Jax PRNGkey
+    Returns
+    -------
+    reg : float32 Array [BATCH]
+        float tracking how much latent space is being used, by mean value of latent channels
+
+    """
+    def _reg(x_new):
+        return jnp.mean(jnp.abs(x_new[:,aux["OBS_CHANNELS"]:]))
+    return jnp.array(jtu.tree_map(_reg,x_new))
+
+
 def boundary_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
     """
     Penalise the model for any nonzero components outside the boundary mask

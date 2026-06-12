@@ -362,7 +362,8 @@ class NCA_Trainer(object):
 			"contiguous_growth":regularisers.contiguous_growth_regulariser,
 			"update_sensitivity":regularisers.update_sensitivity_regulariser,
 			"perturbation_conservation":regularisers.perturbation_conservation_regulariser,
-			"latent_channel_match":regularisers.latent_channel_match_regulariser
+			"latent_channel_match":regularisers.latent_channel_match_regulariser,
+			"latent_size":regularisers.latent_size_regulariser
 		}
 		
 
