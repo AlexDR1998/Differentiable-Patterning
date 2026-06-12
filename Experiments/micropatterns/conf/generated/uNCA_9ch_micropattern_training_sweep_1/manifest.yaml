@@ -30,7 +30,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 577090037
@@ -65,7 +65,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -149,7 +149,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 271041745
@@ -184,7 +184,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -268,7 +268,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1095513148
@@ -303,7 +303,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -387,7 +387,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 506456969
@@ -422,7 +422,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -506,7 +506,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 2127877499
@@ -541,7 +541,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -625,7 +625,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1930549411
@@ -660,7 +660,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -744,7 +744,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 2028277857
@@ -779,7 +779,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -863,7 +863,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1630434966
@@ -898,7 +898,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -982,7 +982,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 901749037
@@ -1017,7 +1017,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -1101,7 +1101,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 403123852
@@ -1136,7 +1136,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -1220,7 +1220,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 2095328386
@@ -1255,7 +1255,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -1339,7 +1339,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 121751464
@@ -1374,7 +1374,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -1458,7 +1458,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1674216077
@@ -1493,7 +1493,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -1577,7 +1577,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1858720390
@@ -1612,7 +1612,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -1696,7 +1696,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 9045414
@@ -1731,7 +1731,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -1815,7 +1815,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1912923437
@@ -1850,7 +1850,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -1934,7 +1934,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1143881027
@@ -1969,7 +1969,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -2053,7 +2053,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 982526257
@@ -2088,7 +2088,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -2172,7 +2172,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 439062303
@@ -2207,7 +2207,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -2291,7 +2291,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1363349907
@@ -2326,7 +2326,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -2410,7 +2410,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 131383004
@@ -2445,7 +2445,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -2529,7 +2529,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 95872739
@@ -2564,7 +2564,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -2648,7 +2648,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 109289145
@@ -2683,7 +2683,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -2767,7 +2767,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 39534911
@@ -2802,7 +2802,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -2886,7 +2886,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1637259727
@@ -2921,7 +2921,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -3005,7 +3005,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 930287327
@@ -3040,7 +3040,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -3124,7 +3124,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1812976885
@@ -3159,7 +3159,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -3243,7 +3243,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 124729223
@@ -3278,7 +3278,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -3362,7 +3362,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 952158461
@@ -3397,7 +3397,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -3481,7 +3481,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1880712864
@@ -3516,7 +3516,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -3600,7 +3600,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 2129497364
@@ -3635,7 +3635,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -3719,7 +3719,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1001090105
@@ -3754,7 +3754,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -3838,7 +3838,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1484771968
@@ -3873,7 +3873,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -3957,7 +3957,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 991564255
@@ -3992,7 +3992,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -4076,7 +4076,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 939657385
@@ -4111,7 +4111,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -4195,7 +4195,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1973981844
@@ -4230,7 +4230,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -4314,7 +4314,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1244602538
@@ -4349,7 +4349,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -4433,7 +4433,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 92297589
@@ -4468,7 +4468,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -4552,7 +4552,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1787479226
@@ -4587,7 +4587,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -4671,7 +4671,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 429497919
@@ -4706,7 +4706,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -4790,7 +4790,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 798461319
@@ -4825,7 +4825,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -4909,7 +4909,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1272987056
@@ -4944,7 +4944,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -5028,7 +5028,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 519218416
@@ -5063,7 +5063,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -5147,7 +5147,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1428914934
@@ -5182,7 +5182,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -5266,7 +5266,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1812935769
@@ -5301,7 +5301,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -5385,7 +5385,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 815398389
@@ -5420,7 +5420,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -5504,7 +5504,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1302957853
@@ -5539,7 +5539,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -5623,7 +5623,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1220455187
@@ -5658,7 +5658,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -5742,7 +5742,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 2144743702
@@ -5777,7 +5777,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -5861,7 +5861,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1689440956
@@ -5896,7 +5896,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -5980,7 +5980,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 148287319
@@ -6015,7 +6015,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -6099,7 +6099,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 2062559164
@@ -6134,7 +6134,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -6218,7 +6218,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1042560227
@@ -6253,7 +6253,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -6337,7 +6337,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1736404157
@@ -6372,7 +6372,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -6456,7 +6456,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1779465077
@@ -6491,7 +6491,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -6575,7 +6575,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 743061144
@@ -6610,7 +6610,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -6694,7 +6694,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1576784849
@@ -6729,7 +6729,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -6813,7 +6813,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1609337231
@@ -6848,7 +6848,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -6932,7 +6932,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 371375481
@@ -6967,7 +6967,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -7051,7 +7051,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1885325846
@@ -7086,7 +7086,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -7170,7 +7170,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 463561237
@@ -7205,7 +7205,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -7289,7 +7289,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 703078820
@@ -7324,7 +7324,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -7408,7 +7408,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1689017785
@@ -7443,7 +7443,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -7527,7 +7527,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1591382744
@@ -7562,7 +7562,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -7646,7 +7646,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 2103217660
@@ -7681,7 +7681,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -7765,7 +7765,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 127023494
@@ -7800,7 +7800,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -7884,7 +7884,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 2015714664
@@ -7919,7 +7919,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -8003,7 +8003,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 186776492
@@ -8038,7 +8038,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -8122,7 +8122,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1325123798
@@ -8157,7 +8157,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -8241,7 +8241,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1690497763
@@ -8276,7 +8276,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -8360,7 +8360,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 731644238
@@ -8395,7 +8395,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -8479,7 +8479,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 724106992
@@ -8514,7 +8514,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -8598,7 +8598,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 974688455
@@ -8633,7 +8633,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -8717,7 +8717,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 52834893
@@ -8752,7 +8752,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -8836,7 +8836,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 856916273
@@ -8871,7 +8871,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -8955,7 +8955,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 997188871
@@ -8990,7 +8990,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -9074,7 +9074,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1737120419
@@ -9109,7 +9109,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -9193,7 +9193,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1476720930
@@ -9228,7 +9228,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -9312,7 +9312,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1517300986
@@ -9347,7 +9347,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -9431,7 +9431,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1971955755
@@ -9466,7 +9466,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -9550,7 +9550,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1156546539
@@ -9585,7 +9585,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -9669,7 +9669,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 24520513
@@ -9704,7 +9704,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -9788,7 +9788,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1647934407
@@ -9823,7 +9823,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -9907,7 +9907,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 555122063
@@ -9942,7 +9942,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -10026,7 +10026,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 882552464
@@ -10061,7 +10061,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -10145,7 +10145,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1830045531
@@ -10180,7 +10180,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -10264,7 +10264,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 241047738
@@ -10299,7 +10299,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -10383,7 +10383,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 2066316555
@@ -10418,7 +10418,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -10502,7 +10502,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1566529388
@@ -10537,7 +10537,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -10621,7 +10621,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 858303752
@@ -10656,7 +10656,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -10740,7 +10740,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1775539677
@@ -10775,7 +10775,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -10859,7 +10859,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 2082737481
@@ -10894,7 +10894,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -10978,7 +10978,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1532401219
@@ -11013,7 +11013,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -11097,7 +11097,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1779939759
@@ -11132,7 +11132,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -11216,7 +11216,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1486393352
@@ -11251,7 +11251,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -11335,7 +11335,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 6806440
@@ -11370,7 +11370,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -11454,7 +11454,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1422224538
@@ -11489,7 +11489,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -11573,7 +11573,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1967725507
@@ -11608,7 +11608,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -11692,7 +11692,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 120151618
@@ -11727,7 +11727,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -11811,7 +11811,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 986146092
@@ -11846,7 +11846,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -11930,7 +11930,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 761116571
@@ -11965,7 +11965,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -12049,7 +12049,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 776461326
@@ -12084,7 +12084,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -12168,7 +12168,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 393425036
@@ -12203,7 +12203,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -12287,7 +12287,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1096479553
@@ -12322,7 +12322,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -12406,7 +12406,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 139410902
@@ -12441,7 +12441,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -12525,7 +12525,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 302595366
@@ -12560,7 +12560,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -12644,7 +12644,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 357487890
@@ -12679,7 +12679,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -12763,7 +12763,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 71685718
@@ -12798,7 +12798,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -12882,7 +12882,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1945614990
@@ -12917,7 +12917,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -13001,7 +13001,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 62534619
@@ -13036,7 +13036,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -13120,7 +13120,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1207730538
@@ -13155,7 +13155,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -13239,7 +13239,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1071848707
@@ -13274,7 +13274,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -13358,7 +13358,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1153807478
@@ -13393,7 +13393,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -13477,7 +13477,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 470250062
@@ -13512,7 +13512,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -13596,7 +13596,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 792894693
@@ -13631,7 +13631,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -13715,7 +13715,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1479284937
@@ -13750,7 +13750,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -13834,7 +13834,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1246761692
@@ -13869,7 +13869,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -13953,7 +13953,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 298566280
@@ -13988,7 +13988,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -14072,7 +14072,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 719279514
@@ -14107,7 +14107,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -14191,7 +14191,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 685586411
@@ -14226,7 +14226,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -14310,7 +14310,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1096144879
@@ -14345,7 +14345,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -14429,7 +14429,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 722177042
@@ -14464,7 +14464,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -14548,7 +14548,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 1172158589
@@ -14583,7 +14583,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -14667,7 +14667,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 1264836847
@@ -14702,7 +14702,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -14786,7 +14786,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.99
     seed: 1952928634
@@ -14821,7 +14821,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -14905,7 +14905,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     seed: 1382987043
@@ -14940,7 +14940,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -15024,7 +15024,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.99
     seed: 2132424030
@@ -15059,7 +15059,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -15143,7 +15143,7 @@ configs:
     model.upsampler.radius: 2
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
-    model.upsampler.width_factor: null
+    model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.0001
     optimiser.decay_rate: 0.98
     seed: 2034831019
@@ -15178,7 +15178,7 @@ configs:
         radius: 2
         fourier_modes: 4
         depth: 4
-        width_factor: null
+        width_factor: 2
     trainer:
       boundary_mode: soft
       grad_loss: false
