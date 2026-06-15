@@ -194,12 +194,15 @@ class NCA_Trainer(object):
 		print("Saving model to: "+self.MODEL_PATH)
 
 	@eqx.filter_jit	
-	def loss_func(self,
-			      x:Float[Array, "N CHANNELS x y"],  # noqa: F722
-				  y:Float[Array, "N CHANNELS x y"],  # noqa: F722
-				  channel_time_mask:Float[Array, "N OBS_CHANNELS"],  # noqa: F722
-				  loss_cache:Float[Array, " N ..."] | None,  # noqa: F722
-				  key: Key)->Float[Array, " N"]:
+	def loss_func(
+		self,
+		x_proc:Float[Array, "N CHANNELS x y"],  # noqa: F722
+		y_proc:Float[Array, "N CHANNELS x y"],  # noqa: F722
+		x_latent:Float[Array, "N L h w"],  # noqa: F722
+		y_latent:Float[Array, "N L h w"],  # noqa: F722
+		channel_time_mask:Float[Array, "N OBS_CHANNELS"],  # noqa: F722
+		loss_cache:Float[Array, " N ..."] | None,  # noqa: F722
+		key: Key)->Float[Array, " N"]:
 		"""
 		NOTE: VMAP THIS OVER BATCHES TO HANDLE DIFFERENT SIZES OF GRID IN EACH BATCH
 
@@ -223,16 +226,16 @@ class NCA_Trainer(object):
 		# if x.shape[-2:] != y.shape[-2:]:
 			# x = jax.image.resize(x, y.shape, method="linear")
 		
-		x_obs = x[:,:self.OBS_CHANNELS]
-		y_obs = y[:,:self.DATA_CHANNELS]
+		x_proc_obs = x_proc[:,:self.OBS_CHANNELS]
+		y_proc_obs = y_proc[:,:self.DATA_CHANNELS]
+		x_lat_obs = x_latent[:,:self.OBS_CHANNELS]
+		y_lat_obs = y_latent[:,:self.DATA_CHANNELS]
 		if self.GRAD_LOSS:
-			v_perception = jax.vmap(self.NCA_model.perception,in_axes=0,out_axes=0)
-			x_obs = v_perception(x_obs)
-			y_obs = v_perception(y_obs)
-			x_obs = x_obs.at[:,self.OBS_CHANNELS:].set(0.1*x_obs[:,self.OBS_CHANNELS:])
-			y_obs = y_obs.at[:,self.DATA_CHANNELS:].set(0.1*y_obs[:,self.DATA_CHANNELS:])
-		# return self._loss_func(x_obs,y_obs,key,self.LOSS_TIME_CHANNEL_MASK)
-		# if self.LOSS_FUNC_CHANNELS is not None:
+			x_proc_obs = self.grad_loss_helper(x_proc_obs)
+			y_proc_obs = self.grad_loss_helper(y_proc_obs)
+			x_lat_obs = self.grad_loss_helper(x_lat_obs)
+			y_lat_obs = self.grad_loss_helper(y_lat_obs)
+		
 		losses = []
 		for idx, f in enumerate(self._loss_func):
 			key = jr.fold_in(key,idx)
@@ -241,18 +244,29 @@ class NCA_Trainer(object):
 			channel_loss_mask = (self.LOSS_FUNC_CHANNELS == idx) | (self.LOSS_FUNC_CHANNELS == -1)
 			channel_loss_mask = repeat(channel_loss_mask,"c -> (gc c) () ()",gc=channel_time_mask.shape[1]//self.OBS_CHANNELS).astype(jnp.float32)
 			# Select only the relevant channels
-			
 			loss_mask = einsum(channel_time_mask,channel_loss_mask,"n c w h, c w h-> n c w h").astype(jnp.bool_)
-			# loss_aux = self.LOSS_FUNC_AUX[idx]
-			# losses.append(f(x_obs, y_obs, key, loss_mask, loss_aux))
-			losses.append(f(x_obs, y_obs, key, loss_mask, loss_cache))
+			
+			# Select whether each loss function applies to latents or decoded outputs, or both.
+			if self.LOSS_FUNC_LAYERS[idx]=="decoded":
+				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache))
+			elif self.LOSS_FUNC_LAYERS[idx]=="latent":
+				losses.append(f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache))
+			elif self.LOSS_FUNC_LAYERS[idx]=="both":
+				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache))
+				losses.append(f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache))
+			else:
+				print(f"Warning: LOSS_FUNC_LAYERS[{idx}] is {self.LOSS_FUNC_LAYERS[idx]}, but should be either 'decoded' or 'latent'. Defaulting to 'decoded'.")
+				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache))
 						
 		losses = jnp.array(losses)
-	
-	
-	
 		return reduce(losses,"loss_funcs N -> N","mean")
 	
+	def grad_loss_helper(self,x):
+		v_perception = jax.vmap(self.NCA_model.perception,in_axes=0,out_axes=0)
+		base_channels = x.shape[1]
+		x = v_perception(x)
+		x = x.at[:,base_channels:].set(0.1*x[:,base_channels:])
+		return x
 	
 	def train(self,
 		      t,
@@ -279,7 +293,8 @@ class NCA_Trainer(object):
 				"sharpen":True,
 				"epsilon":0.1,
 				"internal_loss_func":"l2",
-				"samples":128
+				"samples":128,
+				"layers":["decoded"] # List of length LOSS_FUNC_STR, specifying whether each loss function applies to the "latent" or "decoded" outputs. Redundant for baseline NCA.
 			  },
 			  KNOCKOUT_ARGS = {
 				  "time":None,
@@ -349,12 +364,17 @@ class NCA_Trainer(object):
 
 		
 		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
-		LOSS_FUNC_CHANNELS = LOSS_ARGS["channels"]
-		if LOSS_FUNC_CHANNELS is not None:
-			assert len(LOSS_FUNC_CHANNELS)==self.OBS_CHANNELS, "LOSS_FUNC_CHANNELS should be same length as number of observable channels"
-		elif LOSS_FUNC_CHANNELS is None:
-			LOSS_FUNC_CHANNELS = jnp.ones((self.OBS_CHANNELS,),dtype=jnp.int32)*-1
-		self.LOSS_FUNC_CHANNELS = LOSS_FUNC_CHANNELS
+		if LOSS_ARGS["layers"] is not None:
+			self.LOSS_FUNC_LAYERS = LOSS_ARGS["layers"]
+		else:
+			self.LOSS_FUNC_LAYERS = ["decoded"]*len(LOSS_FUNC_STR)
+		
+		# LOSS_FUNC_CHANNELS = 
+		if LOSS_ARGS["channels"] is not None:
+			assert len(LOSS_ARGS["channels"])==self.OBS_CHANNELS, "LOSS_FUNC_CHANNELS should be same length as number of observable channels"
+		elif LOSS_ARGS["channels"] is None:
+			LOSS_ARGS["channels"] = jnp.ones((self.OBS_CHANNELS,),dtype=jnp.int32)*-1
+		self.LOSS_FUNC_CHANNELS = LOSS_ARGS["channels"]
 		
 		REG_FUNCS = {
 			"intermediate_state":regularisers.intermediate_reg,
@@ -372,7 +392,7 @@ class NCA_Trainer(object):
 		REG_FUNCS = {name: REG_FUNCS[name] for name in REGULARISER_COEFFS.keys()}
 		#@partial(eqx.filter_jit,donate="all-except-first")
 		@eqx.filter_jit
-		def make_step(nca,x,y,t,opt_state,key):
+		def make_step(nca,x_latent,y_proc,t,opt_state,key):
 			"""
 			
 
@@ -380,12 +400,12 @@ class NCA_Trainer(object):
 			----------
 			nca : object callable - (float32 [N_CHANNELS,_,_],PRNGKey) -> (float32 [N_CHANNELS,_,_])
 				the NCA object to train
-			x : float32 array [BATCHES,N,CHANNELS,_,_]
-				NCA state
-			y : float32 array [BATCHES,N,OBS_CHANNELS,_,_]
-				true data
+			x_latent : float32 array [BATCHES,N,CHANNELS,_,_]
+				NCA latent state
+			y_proc : float32 array [BATCHES,N,OBS_CHANNELS,_,_]
+				processed true data
 			t : int
-				number of NCA timesteps between x[N] and x[N+1]
+				number of NCA timesteps between x_latent[N] and x_latent[N+1]
 			opt_state : optax.OptState
 				internal state of self.OPTIMISER
 			key : jr.PRNGKey, optional
@@ -395,12 +415,12 @@ class NCA_Trainer(object):
 			-------
 			nca : object callable - (float32 array [N_CHANNELS,_,_],PRNGKey) -> (float32 array [N_CHANNELS,_,_])
 				the NCA object with updated parameters
-			x : float32 array [BATCHES,N,CHANNELS,_,_]
-				NCA state
-			y : float32 array [BATCHES,N,OBS_CHANNELS,_,_]
-				true data
+			x_latent : float32 array [BATCHES,N,CHANNELS,_,_]
+				NCA latent state
+			y_proc : float32 array [BATCHES,N,OBS_CHANNELS,_,_]
+				processed true data
 			t : int	
-				number of NCA timesteps between x[N] and x[N+1]
+				number of NCA timesteps between x_latent[N] and x_latent[N+1]
 			opt_state : optax.OptState
 				internal state of self.OPTIMISER, updated in line with having done one update step
 			key : jr.PRNGKey
@@ -412,18 +432,18 @@ class NCA_Trainer(object):
 
 			"""
 
-			def apply_intermediate_regs(reg_logs,x,x_new,x_proc,x_new_proc,vv_nca,key):
+			def apply_intermediate_regs(reg_logs,x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,key):
 				aux = {
 					"BOUNDARY_CALLBACK": self.BOUNDARY_CALLBACK, 
 					"OBS_CHANNELS": self.OBS_CHANNELS,
 					"REAL_TO_LATENT": self.NCA_model.real_to_latent,
 					}
 				for name in REGULARISER_COEFFS.keys():
-					reg_logs[name]+=REG_FUNCS[name](x,x_new,x_proc,x_new_proc,vv_nca,aux,key)
+					reg_logs[name]+=REG_FUNCS[name](x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,aux,key)
 				return reg_logs
 			
 			@eqx.filter_value_and_grad(has_aux=True)
-			def compute_loss(nca_diff,nca_static,x,y,t,key):
+			def compute_loss(nca_diff,nca_static,x_latent,y_proc,t,key):
 				# Gradient and values of loss function computed here
 				_nca = eqx.combine(nca_diff,nca_static)
 				v_nca = jax.vmap(_nca,in_axes=(0,None,0),out_axes=0,axis_name="N") # boundary is independant of time N
@@ -431,44 +451,57 @@ class NCA_Trainer(object):
 				# provide a batched processor that maps model.latent_to_real over the batch/tree
 				v_latent_to_real = jax.vmap(lambda model_x: _nca.latent_to_real(model_x), in_axes=0, out_axes=0)
 				vv_latent_to_real = lambda x: jtu.tree_map(v_latent_to_real, x)
-				reg_logs_internal = {name: jnp.zeros(len(x),dtype=LOSS_DTYPE) for name in REGULARISER_COEFFS.keys()}
-				state_shape = x[0].shape[0] # Assumes the same number of outer timesteps in each batch.
-				
+				v_real_to_latent = jax.vmap(lambda model_x: _nca.real_to_latent(model_x), in_axes=0, out_axes=0)
+				vv_real_to_latent = lambda x: jtu.tree_map(v_real_to_latent, x)
+				# Set up internal logs for regularisers
+				reg_logs_internal = {name: jnp.zeros(len(x_latent),dtype=LOSS_DTYPE) for name in REGULARISER_COEFFS.keys()}
+				state_shape = x_latent[0].shape[0] # Assumes the same number of outer timesteps in each batch.
+
 				# Structuring this as function and lax.scan speeds up jit compile a lot
 				def nca_step(carry,j): # function of type a,b -> a
-					key,x,x_proc,reg_logs_internal = carry
+					key,x_latent,x_proc,reg_logs_internal = carry
 					# Apply NCA update step
 					key = jr.fold_in(key,j)
-					key_array = key_pytree_gen(key,(len(x),state_shape))
-					x_new = vv_nca(x,self.BOUNDARY_CALLBACK,key_array)
-					x_new_proc = vv_latent_to_real(x_new)
-					reg_logs_internal = apply_intermediate_regs(reg_logs_internal,x,x_new,x_proc,x_new_proc,vv_nca,key)
+					key_array = key_pytree_gen(key,(len(x_latent),state_shape))
+					x_new_latent = vv_nca(x_latent,self.BOUNDARY_CALLBACK,key_array)
+					x_new_proc = vv_latent_to_real(x_new_latent)
+					reg_logs_internal = apply_intermediate_regs(reg_logs_internal,x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,key)
 
-					return (key,x_new,x_new_proc,reg_logs_internal),None
-				(key,x,x_proc,reg_logs_internal),_ = eqx.internal.scan(nca_step,(key,x,vv_latent_to_real(x),reg_logs_internal),
+					return (key,x_new_latent,x_new_proc,reg_logs_internal),None
+				(key,x_latent,x_proc,reg_logs_internal),_ = eqx.internal.scan(nca_step,(key,x_latent,vv_latent_to_real(x_latent),reg_logs_internal),
 					xs=jnp.arange(t),
 					kind=LOOP_AUTODIFF  # type: ignore
 				)
 
-				loss_key = key_pytree_gen(key, (len(x),))
-				losses = jnp.array(jtu.tree_map(self.loss_func,x_proc,y,self.LOSS_TIME_CHANNEL_MASK,self.LOSS_CACHE,loss_key))
+				loss_key = key_pytree_gen(key, (len(x_latent),))
+				y_latent = vv_real_to_latent(y_proc)
+				losses = jnp.array(jtu.tree_map(
+					self.loss_func,
+					x_proc,
+					y_proc,
+					x_latent,
+					y_latent,
+					self.LOSS_TIME_CHANNEL_MASK,
+					self.LOSS_CACHE,
+					loss_key
+					))
 				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
 				mean_loss = jnp.mean(losses) + jnp.sum(jnp.array(list(reg_loss_internal.values())))
-				return mean_loss, (x,x_proc,losses,reg_loss_internal)
+				return mean_loss, (x_latent,x_proc,losses,reg_loss_internal)
 
 			nca_diff,nca_static = nca.partition()
 			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)  # type: ignore
 			updates,opt_state = self.OPTIMISER.update(grads, opt_state, nca_diff)
 			nca = eqx.apply_updates(nca,updates)
-			(mean_loss,(x,x_proc,losses,reg_loss)) = loss_x
+			(mean_loss,(x_latent,x_proc,losses,reg_loss)) = loss_x
 			log_dict = {
 				"loss": mean_loss,
-				"x_latent": x,
+				"x_latent": x_latent,
 				"x_processed": x_proc,
 				"losses": losses,
 				**reg_loss
 			}
-			return nca,x,y,t,opt_state,key,mean_loss,log_dict
+			return nca,x_latent,y_proc,t,opt_state,key,mean_loss,log_dict
 
 		nca = self.NCA_model
 		nca_diff,nca_static = nca.partition()

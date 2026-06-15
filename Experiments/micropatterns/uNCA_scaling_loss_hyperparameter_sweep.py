@@ -77,6 +77,7 @@ def build_model(cfg):
 def build_filename(cfg):
     kernel_str = "_".join(cfg.model.kernel_str).lower()
     loss_str = "_".join(cfg.loss.primary).lower()
+    loss_str += "_".join(cfg.loss.layers).lower()
     loss_str += f"_{cfg.loss.vgg_internal.lower()}"
     loss_str += f"_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}_is{cfg.loss.regulariser_coeffs.intermediate_state}_ls{cfg.loss.regulariser_coeffs.latent_size}"
     if cfg.model.family == "NCA":
@@ -370,7 +371,8 @@ def run(cfg):
             "epsilon":0.1,
             "internal_loss_func":"l2",
             "samples":128,
-            "random_crop":cfg.loss.random_crop
+            "random_crop":cfg.loss.random_crop,
+            "layers":cfg.loss.layers
         },
         
         LOG_EVERY=100,
