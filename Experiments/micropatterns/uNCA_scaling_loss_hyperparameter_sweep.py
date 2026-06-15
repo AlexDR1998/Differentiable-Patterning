@@ -79,6 +79,7 @@ def build_filename(cfg):
     loss_str = "_".join(cfg.loss.primary).lower()
     loss_str += "_".join(cfg.loss.layers).lower()
     loss_str += f"_{cfg.loss.vgg_internal.lower()}"
+    loss_str += f"_rc_{cfg.loss.random_crop}"
     loss_str += f"_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}_is{cfg.loss.regulariser_coeffs.intermediate_state}_ls{cfg.loss.regulariser_coeffs.latent_size}"
     if cfg.model.family == "NCA":
         filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{loss_str}_{cfg.run.scaling}_t{cfg.run.t}"
