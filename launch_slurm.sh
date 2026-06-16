@@ -22,6 +22,12 @@ set -u
 : "${N_JOBS:?N_JOBS is not set}"
 : "${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is not set}"
 
+if [[ "${SLURM_ENABLE_CORE_DUMPS:-0}" == "1" ]]; then
+    ulimit -c unlimited
+else
+    ulimit -c 0
+fi
+
 if (( SLURM_ARRAY_TASK_ID < 0 || SLURM_ARRAY_TASK_ID >= N_JOBS )); then
     echo "SLURM_ARRAY_TASK_ID $SLURM_ARRAY_TASK_ID is outside manifest range 0-$((N_JOBS - 1))"
     exit 1
