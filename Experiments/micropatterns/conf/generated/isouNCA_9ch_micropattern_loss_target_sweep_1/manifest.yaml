@@ -1,0 +1,782 @@
+experiment_name: isouNCA_9ch_micropattern_loss_target_sweep_1
+entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
+sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/uNCA_training_sweep.yaml
+output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/isouNCA_9ch_micropattern_loss_target_sweep_1
+count: 6
+configs:
+- index: 2
+  overrides:
+    model.family: isouNCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: isouNCA_9ch_micropattern_loss_target_sweep_1
+    run.iterations: 8000
+    loss.primary:
+    - vgg_grouped
+    - l2_grouped
+    loss.layers:
+    - decoded
+    - latent
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 1
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: true
+    model.upscale_factor: 8
+    run.t: 32
+    model.upsampler.radius: 2
+    model.upsampler.fourier_modes: 4
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.99
+    data.batches: 2
+    model.channels: 64
+    seed: 577090037
+  config:
+    seed: 577090037
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      observed_channels: 9
+      data_channels: 12
+      downsample: 1
+      noise_strength: 0.005
+    model:
+      family: isouNCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 8
+      upsampler:
+        radius: 2
+        fourier_modes: 4
+        depth: 4
+        width_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - vgg_grouped
+      - l2_grouped
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      - latent
+      vgg_internal: l2
+      random_crop: true
+    run:
+      t: 32
+      iterations: 8000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: isouNCA_9ch_micropattern_loss_target_sweep_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 4
+  overrides:
+    model.family: isouNCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: isouNCA_9ch_micropattern_loss_target_sweep_1
+    run.iterations: 8000
+    loss.primary:
+    - vgg_grouped
+    - l2_grouped
+    loss.layers:
+    - decoded
+    - latent
+    loss.vgg_internal: otsp
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 1
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: true
+    model.upscale_factor: 8
+    run.t: 32
+    model.upsampler.radius: 2
+    model.upsampler.fourier_modes: 4
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.99
+    data.batches: 2
+    model.channels: 64
+    seed: 271041745
+  config:
+    seed: 271041745
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      observed_channels: 9
+      data_channels: 12
+      downsample: 1
+      noise_strength: 0.005
+    model:
+      family: isouNCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 8
+      upsampler:
+        radius: 2
+        fourier_modes: 4
+        depth: 4
+        width_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - vgg_grouped
+      - l2_grouped
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      - latent
+      vgg_internal: otsp
+      random_crop: true
+    run:
+      t: 32
+      iterations: 8000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: isouNCA_9ch_micropattern_loss_target_sweep_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 0
+  overrides:
+    model.family: isouNCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: isouNCA_9ch_micropattern_loss_target_sweep_1
+    run.iterations: 8000
+    loss.primary:
+    - vgg_grouped
+    - l2_grouped
+    loss.layers:
+    - decoded
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 1
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: true
+    model.upscale_factor: 8
+    run.t: 32
+    model.upsampler.radius: 2
+    model.upsampler.fourier_modes: 4
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.99
+    data.batches: 2
+    model.channels: 64
+    seed: 1095513148
+  config:
+    seed: 1095513148
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      observed_channels: 9
+      data_channels: 12
+      downsample: 1
+      noise_strength: 0.005
+    model:
+      family: isouNCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 8
+      upsampler:
+        radius: 2
+        fourier_modes: 4
+        depth: 4
+        width_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - vgg_grouped
+      - l2_grouped
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      - decoded
+      vgg_internal: l2
+      random_crop: true
+    run:
+      t: 32
+      iterations: 8000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: isouNCA_9ch_micropattern_loss_target_sweep_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 1
+  overrides:
+    model.family: isouNCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: isouNCA_9ch_micropattern_loss_target_sweep_1
+    run.iterations: 8000
+    loss.primary:
+    - vgg_grouped
+    - l2_grouped
+    loss.layers:
+    - decoded
+    - decoded
+    loss.vgg_internal: otsp
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 1
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: true
+    model.upscale_factor: 8
+    run.t: 32
+    model.upsampler.radius: 2
+    model.upsampler.fourier_modes: 4
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.99
+    data.batches: 2
+    model.channels: 64
+    seed: 506456969
+  config:
+    seed: 506456969
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      observed_channels: 9
+      data_channels: 12
+      downsample: 1
+      noise_strength: 0.005
+    model:
+      family: isouNCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 8
+      upsampler:
+        radius: 2
+        fourier_modes: 4
+        depth: 4
+        width_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - vgg_grouped
+      - l2_grouped
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      - decoded
+      vgg_internal: otsp
+      random_crop: true
+    run:
+      t: 32
+      iterations: 8000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: isouNCA_9ch_micropattern_loss_target_sweep_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 5
+  overrides:
+    model.family: isouNCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: isouNCA_9ch_micropattern_loss_target_sweep_1
+    run.iterations: 8000
+    loss.primary:
+    - vgg_grouped
+    - l2_grouped
+    loss.layers:
+    - decoded
+    - both
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 1
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: true
+    model.upscale_factor: 8
+    run.t: 32
+    model.upsampler.radius: 2
+    model.upsampler.fourier_modes: 4
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.99
+    data.batches: 2
+    model.channels: 64
+    seed: 2127877499
+  config:
+    seed: 2127877499
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      observed_channels: 9
+      data_channels: 12
+      downsample: 1
+      noise_strength: 0.005
+    model:
+      family: isouNCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 8
+      upsampler:
+        radius: 2
+        fourier_modes: 4
+        depth: 4
+        width_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - vgg_grouped
+      - l2_grouped
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      - both
+      vgg_internal: l2
+      random_crop: true
+    run:
+      t: 32
+      iterations: 8000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: isouNCA_9ch_micropattern_loss_target_sweep_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 3
+  overrides:
+    model.family: isouNCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: isouNCA_9ch_micropattern_loss_target_sweep_1
+    run.iterations: 8000
+    loss.primary:
+    - vgg_grouped
+    - l2_grouped
+    loss.layers:
+    - decoded
+    - both
+    loss.vgg_internal: otsp
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 1
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: true
+    model.upscale_factor: 8
+    run.t: 32
+    model.upsampler.radius: 2
+    model.upsampler.fourier_modes: 4
+    model.upsampler.depth: 4
+    model.upsampler.width_factor: 2
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.99
+    data.batches: 2
+    model.channels: 64
+    seed: 1930549411
+  config:
+    seed: 1930549411
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      observed_channels: 9
+      data_channels: 12
+      downsample: 1
+      noise_strength: 0.005
+    model:
+      family: isouNCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 8
+      upsampler:
+        radius: 2
+        fourier_modes: 4
+        depth: 4
+        width_factor: 2
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - vgg_grouped
+      - l2_grouped
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      - both
+      vgg_internal: otsp
+      random_crop: true
+    run:
+      t: 32
+      iterations: 8000
+      warmup: 64
+      log_every: 100
+      clear_cache_every: 500
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: isouNCA_9ch_micropattern_loss_target_sweep_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+emit_files: false

@@ -66,6 +66,7 @@ class NCA_Train_log(Train_log):
 			hidden_channels = np.pad(hidden_channels,((0,0),(0,extra_zeros),(0,0),(0,0)))
 			_cy,_cx = squarish(hidden_channels.shape[1]//3) # type: ignore
 			hidden_channels_r = rearrange(hidden_channels,"Batch (cx cy C) x y -> Batch (cx x) (cy y) C",C=3,cy=_cy,cx=_cx)
+			hidden_channels_r = (np.tanh(hidden_channels_r)+1.0)/2.0
 			self.log_image(
 				f'Train/latent_batch_{b}_hidden_channels',
 				hidden_channels_r,
@@ -129,6 +130,7 @@ class NCA_Train_log(Train_log):
 			latents = np.pad(latents,((0,0),(0,extra_zeros),(0,0),(0,0)))
 			_cy,_cx = squarish(latents.shape[1]//3)
 			latents = rearrange(latents,"Time (cx cy C) x y  -> Time C (cx x) (cy y)",C=3,cy=_cy,cx=_cx)
+			latents = (np.tanh(latents)+1.0)/2.0
 			self.log_video("Evaluation/latent_trajectory",latents,step=None)
 
 		SNAPSHOTS = np.array(SNAPSHOTS)

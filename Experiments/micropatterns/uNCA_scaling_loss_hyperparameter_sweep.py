@@ -1,6 +1,7 @@
 import sys
 import os
 import jax
+jax.config.update("jax_default_matmul_precision", "tensorfloat32" ) # Decent speedup on H100
 import jax.numpy as jnp
 import equinox as eqx
 import optax
@@ -76,8 +77,10 @@ def build_model(cfg):
 def build_filename(cfg):
     kernel_str = "_".join(cfg.model.kernel_str).lower()
     loss_str = "_".join(cfg.loss.primary).lower()
+    loss_str += "_".join(cfg.loss.layers).lower()
     loss_str += f"_{cfg.loss.vgg_internal.lower()}"
-    loss_str += f"_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}_cg{cfg.loss.regulariser_coeffs.contiguous_growth}"
+    loss_str += f"_rc_{cfg.loss.random_crop}"
+    loss_str += f"_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}_is{cfg.loss.regulariser_coeffs.intermediate_state}_ls{cfg.loss.regulariser_coeffs.latent_size}"
     if cfg.model.family == "NCA":
         filename = f"{cfg.model.family}{kernel_str}_c{cfg.model.channels}_{loss_str}_{cfg.run.scaling}_t{cfg.run.t}"
     else:
@@ -86,6 +89,7 @@ def build_filename(cfg):
             filename += f"_rad{cfg.model.upsampler.radius}"
         elif cfg.model.family == "uNCA":
             filename += f"_fm{cfg.model.upsampler.fourier_modes}"
+    filename+=f"_lr{cfg.optimiser.learn_rate}_dr{cfg.optimiser.decay_rate}"
     return filename
 
 
@@ -368,7 +372,8 @@ def run(cfg):
             "epsilon":0.1,
             "internal_loss_func":"l2",
             "samples":128,
-            "random_crop":cfg.loss.random_crop
+            "random_crop":cfg.loss.random_crop,
+            "layers":cfg.loss.layers
         },
         
         LOG_EVERY=100,
