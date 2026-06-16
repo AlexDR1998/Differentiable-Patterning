@@ -35,7 +35,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 577090037
@@ -45,7 +45,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -162,7 +162,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 271041745
@@ -172,7 +172,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -289,7 +289,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1095513148
@@ -299,7 +299,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -416,7 +416,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 506456969
@@ -426,7 +426,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -543,7 +543,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 2127877499
@@ -553,7 +553,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -670,7 +670,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1930549411
@@ -680,7 +680,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -797,7 +797,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 2028277857
@@ -807,7 +807,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -924,7 +924,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1630434966
@@ -934,7 +934,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1051,7 +1051,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 901749037
@@ -1061,7 +1061,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1178,7 +1178,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 403123852
@@ -1188,7 +1188,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1305,7 +1305,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 2095328386
@@ -1315,7 +1315,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1432,7 +1432,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 121751464
@@ -1442,7 +1442,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1559,7 +1559,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1674216077
@@ -1569,7 +1569,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1686,7 +1686,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1858720390
@@ -1696,7 +1696,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1813,7 +1813,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 9045414
@@ -1823,7 +1823,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1940,7 +1940,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1912923437
@@ -1950,7 +1950,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2067,7 +2067,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1143881027
@@ -2077,7 +2077,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2194,7 +2194,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 982526257
@@ -2204,7 +2204,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2321,7 +2321,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 439062303
@@ -2331,7 +2331,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2448,7 +2448,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1363349907
@@ -2458,7 +2458,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2575,7 +2575,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 131383004
@@ -2585,7 +2585,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2702,7 +2702,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 95872739
@@ -2712,7 +2712,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2829,7 +2829,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 109289145
@@ -2839,7 +2839,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2956,7 +2956,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 39534911
@@ -2966,7 +2966,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -3083,7 +3083,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1637259727
@@ -3093,7 +3093,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -3210,7 +3210,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 930287327
@@ -3220,7 +3220,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -3337,7 +3337,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1812976885
@@ -3347,7 +3347,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -3464,7 +3464,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 124729223
@@ -3474,7 +3474,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -3591,7 +3591,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 952158461
@@ -3601,7 +3601,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -3718,7 +3718,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1880712864
@@ -3728,7 +3728,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -3845,7 +3845,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 2129497364
@@ -3855,7 +3855,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -3972,7 +3972,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1001090105
@@ -3982,7 +3982,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -4099,7 +4099,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1484771968
@@ -4109,7 +4109,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -4226,7 +4226,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 991564255
@@ -4236,7 +4236,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -4353,7 +4353,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 939657385
@@ -4363,7 +4363,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -4480,7 +4480,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1973981844
@@ -4490,7 +4490,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -4607,7 +4607,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1244602538
@@ -4617,7 +4617,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -4734,7 +4734,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 92297589
@@ -4744,7 +4744,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -4861,7 +4861,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1787479226
@@ -4871,7 +4871,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -4988,7 +4988,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 429497919
@@ -4998,7 +4998,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -5115,7 +5115,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 798461319
@@ -5125,7 +5125,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -5242,7 +5242,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1272987056
@@ -5252,7 +5252,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -5369,7 +5369,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 519218416
@@ -5379,7 +5379,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -5496,7 +5496,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1428914934
@@ -5506,7 +5506,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -5623,7 +5623,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1812935769
@@ -5633,7 +5633,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -5750,7 +5750,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 815398389
@@ -5760,7 +5760,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -5877,7 +5877,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1302957853
@@ -5887,7 +5887,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -6004,7 +6004,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1220455187
@@ -6014,7 +6014,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -6131,7 +6131,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 2144743702
@@ -6141,7 +6141,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -6258,7 +6258,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1689440956
@@ -6268,7 +6268,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -6385,7 +6385,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 148287319
@@ -6395,7 +6395,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -6512,7 +6512,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 2062559164
@@ -6522,7 +6522,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -6639,7 +6639,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1042560227
@@ -6649,7 +6649,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -6766,7 +6766,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1736404157
@@ -6776,7 +6776,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -6893,7 +6893,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1779465077
@@ -6903,7 +6903,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -7020,7 +7020,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 743061144
@@ -7030,7 +7030,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -7147,7 +7147,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1576784849
@@ -7157,7 +7157,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -7274,7 +7274,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1609337231
@@ -7284,7 +7284,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -7401,7 +7401,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 371375481
@@ -7411,7 +7411,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -7528,7 +7528,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1885325846
@@ -7538,7 +7538,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -7655,7 +7655,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 463561237
@@ -7665,7 +7665,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -7782,7 +7782,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 703078820
@@ -7792,7 +7792,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -7909,7 +7909,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1689017785
@@ -7919,7 +7919,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -8036,7 +8036,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1591382744
@@ -8046,7 +8046,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -8163,7 +8163,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 2103217660
@@ -8173,7 +8173,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -8290,7 +8290,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 127023494
@@ -8300,7 +8300,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -8417,7 +8417,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 2015714664
@@ -8427,7 +8427,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -8544,7 +8544,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 186776492
@@ -8554,7 +8554,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -8671,7 +8671,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1325123798
@@ -8681,7 +8681,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -8798,7 +8798,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 1690497763
@@ -8808,7 +8808,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -8925,7 +8925,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 731644238
@@ -8935,7 +8935,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -9052,7 +9052,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: otsp
     seed: 724106992
@@ -9062,7 +9062,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -9179,7 +9179,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 974688455
@@ -9189,7 +9189,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -9306,7 +9306,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 52834893
@@ -9316,7 +9316,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -9433,7 +9433,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 856916273
@@ -9443,7 +9443,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -9560,7 +9560,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 997188871
@@ -9570,7 +9570,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -9687,7 +9687,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1737120419
@@ -9697,7 +9697,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -9814,7 +9814,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1476720930
@@ -9824,7 +9824,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -9941,7 +9941,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1517300986
@@ -9951,7 +9951,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -10068,7 +10068,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1971955755
@@ -10078,7 +10078,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -10195,7 +10195,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1156546539
@@ -10205,7 +10205,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -10322,7 +10322,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 24520513
@@ -10332,7 +10332,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -10449,7 +10449,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1647934407
@@ -10459,7 +10459,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -10576,7 +10576,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 555122063
@@ -10586,7 +10586,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -10703,7 +10703,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 882552464
@@ -10713,7 +10713,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -10830,7 +10830,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1830045531
@@ -10840,7 +10840,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -10957,7 +10957,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 241047738
@@ -10967,7 +10967,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -11084,7 +11084,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 2066316555
@@ -11094,7 +11094,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -11211,7 +11211,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1566529388
@@ -11221,7 +11221,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -11338,7 +11338,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 858303752
@@ -11348,7 +11348,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -11465,7 +11465,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1775539677
@@ -11475,7 +11475,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -11592,7 +11592,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 2082737481
@@ -11602,7 +11602,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -11719,7 +11719,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1532401219
@@ -11729,7 +11729,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -11846,7 +11846,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1779939759
@@ -11856,7 +11856,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -11973,7 +11973,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1486393352
@@ -11983,7 +11983,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -12100,7 +12100,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 6806440
@@ -12110,7 +12110,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -12227,7 +12227,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1422224538
@@ -12237,7 +12237,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -12354,7 +12354,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1967725507
@@ -12364,7 +12364,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -12481,7 +12481,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 120151618
@@ -12491,7 +12491,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -12608,7 +12608,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 986146092
@@ -12618,7 +12618,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -12735,7 +12735,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 761116571
@@ -12745,7 +12745,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -12862,7 +12862,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 776461326
@@ -12872,7 +12872,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -12989,7 +12989,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 393425036
@@ -12999,7 +12999,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -13116,7 +13116,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 1096479553
@@ -13126,7 +13126,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -13243,7 +13243,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 139410902
@@ -13253,7 +13253,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -13370,7 +13370,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 302595366
@@ -13380,7 +13380,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -13497,7 +13497,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 357487890
@@ -13507,7 +13507,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -13624,7 +13624,7 @@ configs:
     model.upsampler.width_factor: 2
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    data.batches: 4
+    data.batches: 2
     model.channels: 64
     loss.vgg_internal: l2
     seed: 71685718
@@ -13634,7 +13634,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns
-      batches: 4
+      batches: 2
       timesteps:
       - 0
       - 12
