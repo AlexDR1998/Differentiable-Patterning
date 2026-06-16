@@ -536,20 +536,33 @@ class NCA_Trainer(object):
 			if not LOSS_ARGS.get("random_crop", False):
 				# If we are not randomly re-cropping and sampling VGG target features,
 				# just compute them once and store in LOSS_CACHE.
-				self.LOSS_CACHE = {
-					"decoded": vgg_target_cache_decoded["target_feats"],
-					"latent": vgg_target_cache_latent["target_feats"]
-				}
+				# self.LOSS_CACHE = {
+				# 	"decoded": vgg_target_cache_decoded["target_feats"],
+				# 	"latent": vgg_target_cache_latent["target_feats"]
+				# }
+				self.LOSS_CACHE = [{
+					"decoded": vgg_target_cache_decoded["target_feats"][b],
+					"latent": vgg_target_cache_latent["target_feats"][b]
+					} for b in range(len(x))]
 			else:
-				self.LOSS_CACHE = {
-					"decoded":[None]*len(x), # If using random cropping, can't use precomputed cache of target features as different crops each time
-					"latent":[None]*len(x)
-				}
+				# self.LOSS_CACHE = {
+				# 	"decoded":[None]*len(x), # If using random cropping, can't use precomputed cache of target features as different crops each time
+				# 	"latent":[None]*len(x)
+				# }
+				self.LOSS_CACHE = [{
+					"decoded": None,
+					"latent": None
+					} for b in range(len(x))]
+				
 		else:
-			self.LOSS_CACHE = {
-					"decoded":[None]*len(x), # If using random cropping, can't use precomputed cache of target features as different crops each time
-					"latent":[None]*len(x)
-				}
+			# self.LOSS_CACHE = {
+			# 		"decoded":[None]*len(x), # If using random cropping, can't use precomputed cache of target features as different crops each time
+			# 		"latent":[None]*len(x)
+			# 	}
+			self.LOSS_CACHE = [{
+				"decoded": None,
+				"latent": None
+				} for b in range(len(x))]
 			
 		
 		best_loss = 100000000
