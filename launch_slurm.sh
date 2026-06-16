@@ -56,6 +56,7 @@ export WANDB_CACHE_DIR="${WANDB_CACHE_DIR:-$WANDB_DIR/cache}"
 export WANDB_DATA_DIR="${WANDB_DATA_DIR:-$WANDB_DIR/data}"
 export WANDB_ARTIFACT_DIR="${WANDB_ARTIFACT_DIR:-$WANDB_DIR/artifacts}"
 export WANDB_FLUSH_INTERVAL="${WANDB_FLUSH_INTERVAL:-60}"
+export PYTHONFAULTHANDLER="${PYTHONFAULTHANDLER:-1}"
 
 mkdir -p "$MODEL_SAVE_PATH" "$IO_ROOT/output" "$WANDB_CACHE_DIR" "$WANDB_DATA_DIR" "$WANDB_ARTIFACT_DIR"
 
@@ -63,4 +64,9 @@ echo "Running manifest index $SLURM_ARRAY_TASK_ID/$((N_JOBS - 1)): $MANIFEST"
 echo "Using code root: $PVC_PATH"
 echo "Using job IO root: $IO_ROOT/"
 echo "Writing wandb local files to: $WANDB_DIR"
-srun python "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
+
+if [[ "${SLURM_USE_SRUN:-0}" == "1" ]]; then
+    srun python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
+else
+    python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
+fi
