@@ -70,7 +70,7 @@ sbatch \
     --nodes=1 \
     --ntasks=1 \
     --gres="gpu:1" \
-    --output="$LOG_DIR/%A_%a.out" \
-    --error="$LOG_DIR/%A_%a.err" \
+    --output="$LOG_DIR/%A/%a.out" \
+    --error="$LOG_DIR/%A/%a.err" \
     --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT" \
     "$ARRAY_SCRIPT"
