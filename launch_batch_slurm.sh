@@ -11,25 +11,47 @@ MANIFEST="$(realpath "$2")"
 [[ -f "$PY_SCRIPT" ]] || { echo "Python script not found: $PY_SCRIPT"; exit 1; }
 [[ -f "$MANIFEST" ]] || { echo "Manifest not found: $MANIFEST"; exit 1; }
 
-EXPERIMENT_NAME="$(head -1 "$MANIFEST" | sed 's/^[^:]*: //')"
-[[ -n "$EXPERIMENT_NAME" ]] || { echo "Manifest first line is empty"; exit 1; }
+extract_yaml_scalar() {
+    local key="$1"
+    local path="$2"
+    local line value
 
-# Count occurrences of "- index: N" (N is an integer) in the manifest
-N_JOBS="$(grep -E '^[[:space:]]*-+[[:space:]]*index:[[:space:]]*[0-9][0-9]*' "$MANIFEST" | wc -l | tr -d ' ')"
+    line="$(grep -m1 -E "^[[:space:]]*$key[[:space:]]*:" "$path" || true)"
+    [[ -n "$line" ]] || return 1
+
+    value="${line#*:}"
+    value="$(printf '%s' "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+    [[ -n "$value" ]] || return 1
+    printf '%s\n' "$value"
+}
+
+EXPERIMENT_NAME="$(extract_yaml_scalar experiment_name "$MANIFEST" || true)"
+[[ -n "$EXPERIMENT_NAME" ]] || EXPERIMENT_NAME="$(basename "$(dirname "$MANIFEST")")"
+[[ -n "$EXPERIMENT_NAME" ]] || { echo "Could not derive experiment name from manifest: $MANIFEST"; exit 1; }
+
+N_JOBS="$(extract_yaml_scalar count "$MANIFEST" || true)"
+if [[ -z "$N_JOBS" ]]; then
+    N_JOBS="$(grep -E '^[[:space:]]*-+[[:space:]]*index:[[:space:]]*[0-9][0-9]*' "$MANIFEST" | wc -l | tr -d ' ')"
+fi
+[[ "$N_JOBS" =~ ^[0-9]+$ ]] || { echo "Manifest count is not an integer: $N_JOBS"; exit 1; }
 [[ "$N_JOBS" -gt 0 ]] || { echo "Manifest contains no runnable lines"; exit 1; }
 
 # -------------------------
 # Slurm settings
 # -------------------------
 
-JOB_NAME="${USER}-job"
-PARTITION="pvc9"
-TIME="08:00:00"
+IO_ROOT="${SLURM_IO_ROOT:-/home/rc-rich1/rds/rds-airr-p100-NQDJLHPwRqs}"
+IO_ROOT="${IO_ROOT%/}"
 
-MEM="64G"
-GPUS=1
-ARRAY_PARALLELISM=4
-LOG_DIR="slurm_logs/$EXPERIMENT_NAME"
+JOB_NAME="${SLURM_JOB_NAME:-${USER}-job}"
+TIME="${SLURM_TIME:-08:00:00}"
+
+MEM="${SLURM_MEM:-64G}"
+ARRAY_PARALLELISM="${SLURM_ARRAY_PARALLELISM:-4}"
+LOG_DIR="${SLURM_LOG_DIR:-$IO_ROOT/slurm_logs/$EXPERIMENT_NAME}"
+
+[[ "$ARRAY_PARALLELISM" =~ ^[0-9]+$ ]] || { echo "SLURM_ARRAY_PARALLELISM must be an integer: $ARRAY_PARALLELISM"; exit 1; }
+[[ "$ARRAY_PARALLELISM" -gt 0 ]] || { echo "SLURM_ARRAY_PARALLELISM must be greater than zero"; exit 1; }
 
 mkdir -p "$LOG_DIR"
 
@@ -40,15 +62,15 @@ ARRAY_SCRIPT="$SCRIPT_DIR/launch_slurm.sh"
 
 sbatch \
     --job-name="$JOB_NAME" \
-    --partition="$PARTITION" \
-    --account=AIRR-P100-DAWN-GPU \
+    --partition="pvc9" \
+    --account="AIRR-P100-DAWN-GPU" \
     --array="0-$((N_JOBS - 1))%$ARRAY_PARALLELISM" \
     --time="$TIME" \
     --mem="$MEM" \
     --nodes=1 \
     --ntasks=1 \
-    --gres="gpu:$GPUS" \
+    --gres="gpu:1" \
     --output="$LOG_DIR/%A_%a.out" \
     --error="$LOG_DIR/%A_%a.err" \
-    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS" \
+    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT" \
     "$ARRAY_SCRIPT"
