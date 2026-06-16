@@ -42,6 +42,8 @@ fi
 
 IO_ROOT="${SLURM_IO_ROOT:-/home/rc-rich1/rds/rds-airr-p100-NQDJLHPwRqs}"
 IO_ROOT="${IO_ROOT%/}"
+CODE_ROOT="${SLURM_CODE_ROOT:-$(cd "$(dirname "$PY_SCRIPT")/.." && pwd)}"
+CODE_ROOT="${CODE_ROOT%/}"
 
 JOB_NAME="${SLURM_JOB_NAME:-${USER}-job}"
 TIME="${SLURM_TIME:-08:00:00}"
@@ -72,5 +74,5 @@ sbatch \
     --gres="gpu:1" \
     --output="$LOG_DIR/%A/%a.out" \
     --error="$LOG_DIR/%A/%a.err" \
-    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT" \
+    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT",SLURM_CODE_ROOT="$CODE_ROOT" \
     "$ARRAY_SCRIPT"

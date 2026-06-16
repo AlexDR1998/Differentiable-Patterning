@@ -37,7 +37,7 @@ export JOB_COMPLETION_INDEX="$SLURM_ARRAY_TASK_ID"
 
 IO_ROOT="${SLURM_IO_ROOT:-/home/rc-rich1/rds/rds-airr-p100-NQDJLHPwRqs}"
 IO_ROOT="${IO_ROOT%/}"
-CODE_ROOT="${SLURM_CODE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+CODE_ROOT="${SLURM_CODE_ROOT:-$(cd "$(dirname "$PY_SCRIPT")/.." && pwd)}"
 CODE_ROOT="${CODE_ROOT%/}"
 
 PVC_PATH="${PVC_PATH:-$CODE_ROOT/}"
