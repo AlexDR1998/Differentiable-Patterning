@@ -1,3 +1,5 @@
+from typing import Dict
+
 import jax
 import jax.numpy as jnp
 import jax.random as jr
@@ -201,7 +203,7 @@ class NCA_Trainer(object):
 		x_latent:Float[Array, "N L h w"],  # noqa: F722
 		y_latent:Float[Array, "N L h w"],  # noqa: F722
 		channel_time_mask:Float[Array, "N OBS_CHANNELS"],  # noqa: F722
-		loss_cache:Float[Array, " N ..."] | None,  # noqa: F722
+		loss_cache:Dict[str, Float[Array, "N ..."]],  # noqa: F722
 		key: Key)->Float[Array, " N"]:
 		"""
 		NOTE: VMAP THIS OVER BATCHES TO HANDLE DIFFERENT SIZES OF GRID IN EACH BATCH
@@ -248,15 +250,15 @@ class NCA_Trainer(object):
 			
 			# Select whether each loss function applies to latents or decoded outputs, or both.
 			if self.LOSS_FUNC_LAYERS[idx]=="decoded":
-				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache))
+				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache.get("decoded",None)))
 			elif self.LOSS_FUNC_LAYERS[idx]=="latent":
-				losses.append(f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache))
+				losses.append(f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache.get("latent",None)))
 			elif self.LOSS_FUNC_LAYERS[idx]=="both":
-				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache))
-				losses.append(f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache))
+				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache.get("decoded",None)))
+				losses.append(f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache.get("latent",None)))
 			else:
 				print(f"Warning: LOSS_FUNC_LAYERS[{idx}] is {self.LOSS_FUNC_LAYERS[idx]}, but should be either 'decoded' or 'latent'. Defaulting to 'decoded'.")
-				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache))
+				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache.get("decoded",None)))
 						
 		losses = jnp.array(losses)
 		return reduce(losses,"loss_funcs N -> N","mean")
@@ -524,15 +526,31 @@ class NCA_Trainer(object):
 		# If we are using a loss function that needs to initialise some cache based on the data, do that here and add to LOSS_ARGS
 		loss_initialiser = build_loss_initialiser(LOSS_FUNC_STR,LOSS_ARGS)
 		if loss_initialiser is not None:
-			vgg_target_cache = loss_initialiser(y,key,self.LOSS_TIME_CHANNEL_MASK) # dict of {"vgg_params": ..., "target_feats": List[Batches] of arrays [N, ...]}
-			LOSS_ARGS = {**LOSS_ARGS, "vgg_params": vgg_target_cache["vgg_params"]} # Pre-trained VGG parameters for perceptual loss, if needed. Does not need batched.
+			vgg_target_cache_decoded = loss_initialiser(y,key,self.LOSS_TIME_CHANNEL_MASK) # dict of {"vgg_params": ..., "target_feats": List[Batches] of arrays [N, ...]}
+			v_real_to_latent = jax.vmap(lambda model_x: self.NCA_model.real_to_latent(model_x), in_axes=0, out_axes=0)
+			vv_real_to_latent = lambda x: jtu.tree_map(v_real_to_latent, x)
+			_y_latent = vv_real_to_latent(y)
+			vgg_target_cache_latent = loss_initialiser(_y_latent,key,self.LOSS_TIME_CHANNEL_MASK)
+
+			LOSS_ARGS = {**LOSS_ARGS, "vgg_params": vgg_target_cache_decoded["vgg_params"]} # Pre-trained VGG parameters for perceptual loss, if needed. Does not need batched.
 			if not LOSS_ARGS.get("random_crop", False):
-				self.LOSS_CACHE = vgg_target_cache["target_feats"] # Needs passed in at Batch level tree_map
+				# If we are not randomly re-cropping and sampling VGG target features,
+				# just compute them once and store in LOSS_CACHE.
+				self.LOSS_CACHE = {
+					"decoded": vgg_target_cache_decoded["target_feats"],
+					"latent": vgg_target_cache_latent["target_feats"]
+				}
 			else:
-				self.LOSS_CACHE = [None]*len(x) # If using random cropping, can't use precomputed cache of target features as different crops each time
-			print("Initialised loss cache with keys: "+str(vgg_target_cache.keys()))
+				self.LOSS_CACHE = {
+					"decoded":[None]*len(x), # If using random cropping, can't use precomputed cache of target features as different crops each time
+					"latent":[None]*len(x)
+				}
 		else:
-			self.LOSS_CACHE = [None]*len(x)
+			self.LOSS_CACHE = {
+					"decoded":[None]*len(x), # If using random cropping, can't use precomputed cache of target features as different crops each time
+					"latent":[None]*len(x)
+				}
+			
 		
 		best_loss = 100000000
 		loss_thresh = 1e16 # If loss exceeds this, training is diverging to NaN
