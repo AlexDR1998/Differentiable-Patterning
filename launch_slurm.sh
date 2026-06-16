@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 #SBATCH --account=AIRR-P100-DAWN-GPU
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
 #SBATCH -p pvc9
 
+# Intel's conda activation hooks can read unset internal variables, so do not
+# enable nounset until after the module/conda environment is ready.
 module purge
 module load rhel9/default-dawn
 module load intelpython-conda
@@ -12,6 +14,8 @@ module load intel-oneapi-mkl
 module load intel-oneapi-ccl
 conda activate jax_intel_gpu
 python -m pip list | grep -E "jax|jaxlib|intel-extension-for-openxla"
+
+set -u
 
 : "${PY_SCRIPT:?PY_SCRIPT is not set}"
 : "${MANIFEST:?MANIFEST is not set}"
