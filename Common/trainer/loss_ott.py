@@ -1,5 +1,6 @@
 import jax.numpy as np
 import jax
+import numpy as onp
 #from ott.geometry import pointcloud
 #from ott.tools import sinkhorn_divergence
 #from ott.problems.linear import linear_problem
@@ -21,12 +22,12 @@ def _make_gaussian_kernel(sigma, nstds):
     extent = float(nstds) * sigma_x
     kmax = math.ceil(max(1.0, extent))
     
-    coords = np.linspace(-kmax, kmax, 2*kmax + 1)
-    y, x = np.meshgrid(coords, coords, indexing='ij')
+    coords = onp.linspace(-kmax, kmax, 2 * kmax + 1, dtype=onp.float32)
+    y, x = onp.meshgrid(coords, coords, indexing='ij')
     
-    gb = np.exp(-0.5 * (x**2 / (sigma_x**2) + y**2 / (sigma_x**2)))
+    gb = onp.exp(-0.5 * (x**2 / (sigma_x**2) + y**2 / (sigma_x**2)))
     
-    return gb / np.sum(gb)
+    return (gb / onp.sum(gb)).astype(onp.float32)
 
 # Pre-compute commonly used kernels as constants
 _GAUSSIAN_CACHE = {
