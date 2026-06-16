@@ -46,7 +46,7 @@ class PointwiseConvNet(eqx.Module):
 
 class local_upsample(eqx.Module):
     decoder: PointwiseConvNet
-
+    op: Ops
     fourier_modes: int
     output_channels: int = eqx.field(static=True)
     
@@ -57,6 +57,7 @@ class local_upsample(eqx.Module):
             hidden_channels: int,
             fourier_modes: int = 4,
             depth: int = 3, 
+            padding: str = "CIRCULAR",
             key=jax.random.PRNGKey(0)):
         key1, key2 = jax.random.split(key, 2)
 
@@ -65,9 +66,9 @@ class local_upsample(eqx.Module):
 
         insize = channels + 4*fourier_modes # 4 because sin and cos, for x and y
 
-
+        self.op = Ops(PADDING=padding,dx=1,KERNEL_SCALE=1,SMOOTHING=1) # type: ignore
         self.decoder = PointwiseConvNet(
-            in_channels=insize,   # z(q) + [r, r^2]
+            in_channels=3*insize,   # z(q) + [r, r^2]
             out_channels=output_channels,     # a0, a1, b1, a2, b2
             hidden_channels=hidden_channels,
             depth=depth,
@@ -176,6 +177,16 @@ class local_upsample(eqx.Module):
         return upsampled, local_coords
 
     
+    def spatial_gradients(self,x):
+        """
+            [C X Y] -> [3C X Y]
+            Returns identity, gradient magnitude and laplacian for each channel, concatenated along channel dimension
+        """
+        x_id = x
+        x_diff = self.op.GradNorm(x)
+        x_lap = self.op.Lap(x)
+        output = rearrange([x_id,x_diff,x_lap],"b C x y -> (b C) x y")
+        return output
     def __call__(self, x, resolution=4):
         """
         Args:
@@ -192,9 +203,10 @@ class local_upsample(eqx.Module):
             resolution=resolution, 
         )
         x = jnp.concatenate([x_upsampled, local_coords], axis=0)
+        x_spatial = self.spatial_gradients(x)
         # for layer in self.layers:
             # x = layer(x)
-        x = self.decoder(x)
+        x = self.decoder(x_spatial)
         return x + x_upsampled[: self.output_channels]
 
 
