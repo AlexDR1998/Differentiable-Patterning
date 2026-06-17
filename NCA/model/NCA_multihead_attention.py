@@ -28,8 +28,10 @@ class aNCA(NCA):
         FIRE_RATE=1.0,
         KERNEL_SCALE=1,
         HEADS=4,
-        key=jax.random.PRNGKey(int(time.time())),
+        key=None,
     ):
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         super().__init__(
             N_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, KERNEL_SCALE, key
         )
@@ -108,8 +110,10 @@ class aNCA(NCA):
         self,
         x: Float[Array, "{self.N_CHANNELS} x y"],
         boundary_callback=lambda x: x,
-        key: Key = jax.random.PRNGKey(int(time.time())),
+        key=None,
     ) -> Float[Array, "{self.N_CHANNEL} x y"]:
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         px = self.perception(x)
         Qx = self.attention_inputs[0](px)  # (dseq dquery) X Y
         Kx = self.attention_inputs[1](px)

@@ -23,7 +23,9 @@ class kaNCA(NCA):
                  BASIS_FUNCS=16,
                  BASIS_WIDTH=4,
                  INIT_SCALE=0.1,
-                 key=jax.random.PRNGKey(int(time.time()))):
+                 key=None):
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         super().__init__(N_CHANNELS, KERNEL_STR, jax.nn.relu, PADDING, FIRE_RATE, KERNEL_SCALE, key)
         # gaussKAN hyperparameters
         bounds = 3 # The expected range of input parameters.

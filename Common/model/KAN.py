@@ -22,8 +22,10 @@ class nKAN(eqx.Module):
                  scale,
                  use_bias=True,
                  activation= jax.nn.relu,
-                 key=jax.random.PRNGKey(int(time.time()))):
+                 key=None):
         ### Rather than using B-splines, each learnable edge activation is itself a very small 1->H->H->1 neural network with hidden layer size H as a hyperparameter
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         key1,key2,key3,key4 = jax.random.split(key,4)
         self.weight = scale*jax.random.normal(key=key1,shape=(in_features,out_features,INTRINSIC_HIDDEN_LAYERS,2+INTRINSIC_HIDDEN_LAYERS))#/(1.0*in_features)
         
@@ -65,7 +67,7 @@ class funcKAN(eqx.Module):
                  out_features,
                  ORDER,
                  scale,
-                 key=jax.random.PRNGKey(int(time.time()))):
+                 key=None):
         """ General superclass for KANs with a function of type f:R x R^ORDER -> R to each edge.
             Subclass into using polynomials or rbfs 
 
@@ -78,6 +80,8 @@ class funcKAN(eqx.Module):
             activation (_type_, optional): _description_. Defaults to jax.nn.relu.
             key (_type_, optional): _description_. Defaults to jax.random.PRNGKey(int(time.time())).
         """
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         self.weight = scale*jax.random.normal(key=key,shape=(in_features,out_features,ORDER))#/(1.0*in_features)
         self.ORDER = ORDER
         self.in_features = in_features
@@ -156,8 +160,10 @@ class gaussKAN(funcKAN):
                  scale,
                  bounds,
                  width,
-                 key=jax.random.PRNGKey(int(time.time()))):
+                 key=None):
         #super().__init__(in_features,out_features,ORDER,scale,key)
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         key1,key2 = jax.random.split(key,2)
         self.weight = scale*jax.random.normal(key=key1,shape=(in_features,out_features,ORDER))
             

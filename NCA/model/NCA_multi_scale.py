@@ -31,8 +31,10 @@ class mNCA(AbstractModel):
                 PADDING="CIRCULAR", 
                 FIRE_RATE=1.0, 
                 KERNEL_SCALE = 1, 
-                key=jr.PRNGKey(int(time.time()))):
+                key=None):
         #assert len(SCALES)==N_CHANNELS
+        if key is None:
+            key = jr.PRNGKey(int(time.time()))
         assert N_CHANNELS%len(SCALES)==0
 
         
@@ -88,8 +90,10 @@ class mNCA(AbstractModel):
         }
     def __call__(self,
                  X: Float[Array,"{self.N_CHANNELS} x y"],
-				 boundary_callback=lambda x:x,
-				 key: Key=jr.PRNGKey(int(time.time())))->Float[Array, "{self.N_CHANNEL} x y"]:
+                 boundary_callback=lambda x:x,
+                 key=None)->Float[Array, "{self.N_CHANNEL} x y"]:
+        if key is None:
+            key = jr.PRNGKey(int(time.time()))
         keys = jr.split(key,len(self.SCALES))
         dXS = [self.subNCAs[i](X,boundary_callback,keys[i]) for i in range(len(self.SCALES))]
         dX = np.concatenate(dXS,axis=0)
@@ -99,8 +103,10 @@ class mNCA(AbstractModel):
             iters: Int[Scalar, ""],
             x: Float[Array, "{self.N_CHANNELS} x y"],
             boundary_callback=lambda x:x,
-            key: Key =jax.random.PRNGKey(int(time.time())))->Float[Array,"{iters} {self.N_CHANNELS} x y"]:
+            key=None)->Float[Array,"{iters} {self.N_CHANNELS} x y"]:
         
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         trajectory = []
         trajectory.append(x)
         for i in range(iters):

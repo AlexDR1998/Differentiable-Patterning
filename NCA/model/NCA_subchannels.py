@@ -30,7 +30,9 @@ class sub_NCA(NCA):
                 PADDING="CIRCULAR", 
                 FIRE_RATE=1.0, 
                 KERNEL_SCALE = 1, 
-                key=jax.random.PRNGKey(int(time.time()))):
+                key=None):
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         super().__init__(N_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, KERNEL_SCALE, key)
         self.OUTPUT_CHANNELS = OUTPUT_CHANNELS
         self.OUTPUT_CHANNEL_NUMBER = onp.count_nonzero(OUTPUT_CHANNELS)
@@ -71,7 +73,7 @@ class sub_NCA(NCA):
     def __call__(self,
                     x: Float[Array,"{self.N_CHANNELS} x y"],
                     boundary_callback=lambda x:x,
-                    key: Key=jax.random.PRNGKey(int(time.time())))->Float[Array, "{self.OUTPUT_CHANNELS} x y"]:
+                    key=None)->Float[Array, "{self.OUTPUT_CHANNELS} x y"]:
         """
         
 
@@ -90,6 +92,8 @@ class sub_NCA(NCA):
             output NCA lattice state.
 
         """
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         x = reduce(x, "C (h h2) (w w2) -> C h w ", "mean", h2=self.SCALE, w2=self.SCALE)
         #print(x.shape)
         dx = self.perception(x)
