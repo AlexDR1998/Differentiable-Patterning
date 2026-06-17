@@ -113,46 +113,10 @@ export MODEL_SAVE_PATH="${MODEL_SAVE_PATH:-$IO_ROOT/Models/}"
 export INTEL_MAX_GPU_VRAM_GB="${INTEL_MAX_GPU_VRAM_GB:-128}"
 export XLA_PYTHON_CLIENT_MEM_FRACTION="${XLA_PYTHON_CLIENT_MEM_FRACTION:-0.98}"
 export ZE_FLAT_DEVICE_HIERARCHY="${ZE_FLAT_DEVICE_HIERARCHY:-COMPOSITE}"
-
-if [[ -z "${ZE_AFFINITY_MASK:-}" ]]; then
-    case "${SLURM_ZE_AFFINITY_MASK:-auto}" in
-        auto)
-            if [[ -n "${SLURM_JOB_GPUS:-}" ]]; then
-                SLURM_FIRST_GPU="${SLURM_JOB_GPUS%%,*}"
-                if [[ "$SLURM_FIRST_GPU" =~ ^[0-9]+$ ]]; then
-                    export ZE_AFFINITY_MASK="$SLURM_FIRST_GPU"
-                else
-                    echo "Not setting ZE_AFFINITY_MASK from non-numeric SLURM_JOB_GPUS=$SLURM_JOB_GPUS"
-                fi
-            fi
-            ;;
-        local)
-            export ZE_AFFINITY_MASK=0
-            ;;
-        none)
-            unset ZE_AFFINITY_MASK
-            ;;
-        *)
-            export ZE_AFFINITY_MASK="$SLURM_ZE_AFFINITY_MASK"
-            ;;
-    esac
-fi
+export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0}"
 export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:gpu}"
 export SYCL_DEVICE_FILTER="${SYCL_DEVICE_FILTER:-level_zero:gpu}"
 export JAX_PLATFORMS="${JAX_PLATFORMS:-sycl}"
-
-if [[ "${SLURM_VALIDATE_ZE_AFFINITY:-1}" == "1" && -n "${ZE_AFFINITY_MASK:-}" ]] && command -v sycl-ls >/dev/null 2>&1; then
-    SYCL_FILTERED_DEVICES="$(sycl-ls 2>&1 || true)"
-    if [[ "$SYCL_FILTERED_DEVICES" != *"[level_zero:gpu]"* ]]; then
-        echo "No Level Zero GPU visible with ZE_AFFINITY_MASK=$ZE_AFFINITY_MASK."
-        if [[ "${SLURM_ZE_AFFINITY_FALLBACK:-local}" == "local" ]]; then
-            echo "Retrying with ZE_AFFINITY_MASK=0. Set SLURM_ZE_AFFINITY_FALLBACK=none to disable this fallback."
-            export ZE_AFFINITY_MASK=0
-        else
-            echo "ZE affinity fallback disabled; continuing with ZE_AFFINITY_MASK=$ZE_AFFINITY_MASK."
-        fi
-    fi
-fi
 
 WANDB_TASK_ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-manual}}_${SLURM_ARRAY_TASK_ID}"
 WANDB_SCRATCH_ROOT="${WANDB_SCRATCH_ROOT:-$IO_ROOT/wandb-fast}"
@@ -172,6 +136,13 @@ echo "Using job IO root: $IO_ROOT/"
 echo "Writing wandb local files to: $WANDB_DIR"
 echo "Expected Intel GPU VRAM: ${INTEL_MAX_GPU_VRAM_GB} GB"
 echo "XLA memory claim fraction: $XLA_PYTHON_CLIENT_MEM_FRACTION"
+python - <<'PY'
+import os
+
+vram_gb = float(os.environ["INTEL_MAX_GPU_VRAM_GB"])
+fraction = float(os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"])
+print(f"Expected XLA preallocation target: {vram_gb * fraction:.1f} GB")
+PY
 
 if [[ "${SLURM_GPU_DIAGNOSTICS:-1}" == "1" ]]; then
     echo "GPU diagnostics:"
