@@ -25,6 +25,7 @@ else
 fi
 conda activate jax_intel_gpu
 python -m pip list | grep -E "jax|jaxlib|intel-extension-for-openxla"
+python -m pip show jax jaxlib intel-extension-for-openxla intel_extension_for_openxla 2>/dev/null || true
 
 set -u
 
@@ -96,14 +97,33 @@ if [[ "${SLURM_GPU_DIAGNOSTICS:-1}" == "1" ]]; then
     echo "  ZE_AFFINITY_MASK: ${ZE_AFFINITY_MASK:-unset}"
     echo "  ONEAPI_DEVICE_SELECTOR: ${ONEAPI_DEVICE_SELECTOR:-unset}"
     echo "  SYCL_DEVICE_FILTER: ${SYCL_DEVICE_FILTER:-unset}"
+    echo "  JAX_PLATFORMS: ${JAX_PLATFORMS:-unset}"
+    echo "  JAX_PLATFORM_NAME: ${JAX_PLATFORM_NAME:-unset}"
     command -v sycl-ls >/dev/null 2>&1 && sycl-ls || echo "  sycl-ls: not found"
     command -v ze_info >/dev/null 2>&1 && ze_info | sed -n '1,80p' || echo "  ze_info: not found"
 fi
 
-if [[ "${SLURM_JAX_SMOKE_TEST:-0}" == "1" ]]; then
-    python -X faulthandler -c 'import jax; print("JAX devices:"); print(jax.devices())'
-    exit 0
-fi
+case "${SLURM_JAX_SMOKE_TEST:-0}" in
+    0)
+        ;;
+    1|devices)
+        python -X faulthandler -c 'import jax; print("JAX devices:"); print(jax.devices())'
+        exit 0
+        ;;
+    import)
+        python -X faulthandler -c 'import jax; print("Imported JAX", jax.__version__)'
+        exit 0
+        ;;
+    cpu)
+        JAX_PLATFORMS=cpu python -X faulthandler -c 'import jax; print("JAX CPU devices:"); print(jax.devices())'
+        exit 0
+        ;;
+    *)
+        echo "Unknown SLURM_JAX_SMOKE_TEST mode: $SLURM_JAX_SMOKE_TEST"
+        echo "Use one of: 0, 1, devices, import, cpu"
+        exit 1
+        ;;
+esac
 
 if [[ "${SLURM_USE_SRUN:-0}" == "1" ]]; then
     srun python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
