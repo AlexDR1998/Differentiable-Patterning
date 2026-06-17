@@ -17,15 +17,61 @@ module purge
 module load rhel9/default-dawn
 module load intelpython-conda
 module load intel-oneapi-mkl
-if [[ "${SLURM_LOAD_CCL:-0}" == "1" ]]; then
-    echo "Loading optional intel-oneapi-ccl because SLURM_LOAD_CCL=1."
-    module load intel-oneapi-ccl
-else
-    echo "Skipping intel-oneapi-ccl because SLURM_LOAD_CCL=${SLURM_LOAD_CCL:-0}."
-fi
+echo "Skipping intel-oneapi-ccl; these jobs run one JAX process per array task."
 conda activate jax_intel_gpu
 python -m pip list | grep -E "jax|jaxlib|intel-extension-for-openxla"
 python -m pip show jax jaxlib intel-extension-for-openxla intel_extension_for_openxla 2>/dev/null || true
+
+if [[ "${SLURM_CHECK_OPENXLA_VERSION_COMPAT:-1}" == "1" ]]; then
+    python - <<'PY'
+from importlib import metadata
+import sys
+
+
+def package_version(name):
+    try:
+        return metadata.version(name)
+    except metadata.PackageNotFoundError:
+        return None
+
+
+jax = package_version("jax")
+jaxlib = package_version("jaxlib")
+openxla = (
+    package_version("intel-extension-for-openxla")
+    or package_version("intel_extension_for_openxla")
+)
+
+compatibility = {
+    "0.7.0": ("0.5.0", "0.5.0"),
+    "0.6.0": ("0.4.38", "0.4.38"),
+    "0.5.0": ("0.4.30", "0.4.30"),
+    "0.4.0": ("0.4.26", "0.4.26"),
+    "0.3.0": ("0.4.24", "0.4.24"),
+}
+
+if not openxla:
+    print("Intel Extension for OpenXLA is not installed; skipping compatibility check.")
+elif openxla in compatibility:
+    expected_jaxlib, expected_jax = compatibility[openxla]
+    if jaxlib != expected_jaxlib or jax != expected_jax:
+        print("Incompatible Intel OpenXLA/JAX package versions detected.", file=sys.stderr)
+        print(f"  intel-extension-for-openxla: {openxla}", file=sys.stderr)
+        print(f"  installed jaxlib: {jaxlib}", file=sys.stderr)
+        print(f"  installed jax: {jax}", file=sys.stderr)
+        print(f"  expected jaxlib for OpenXLA {openxla}: {expected_jaxlib}", file=sys.stderr)
+        print(f"  expected jax for OpenXLA {openxla}: {expected_jax}", file=sys.stderr)
+        print("Refusing to continue because JAX backend discovery may segfault.", file=sys.stderr)
+        print("Set SLURM_CHECK_OPENXLA_VERSION_COMPAT=0 to bypass this guard.", file=sys.stderr)
+        sys.exit(2)
+else:
+    print(
+        f"Warning: no local compatibility rule for intel-extension-for-openxla {openxla}; "
+        "continuing without a version guard.",
+        file=sys.stderr,
+    )
+PY
+fi
 
 set -u
 
@@ -64,13 +110,49 @@ export PVC_PATH
 export DATA_PATH_BASE="${DATA_PATH_BASE:-$IO_ROOT/Data/}"
 export MODEL_SAVE_PATH="${MODEL_SAVE_PATH:-$IO_ROOT/Models/}"
 
-export XLA_PYTHON_CLIENT_MEM_FRACTION="${XLA_PYTHON_CLIENT_MEM_FRACTION:-0.9}"
+export INTEL_MAX_GPU_VRAM_GB="${INTEL_MAX_GPU_VRAM_GB:-128}"
+export XLA_PYTHON_CLIENT_MEM_FRACTION="${XLA_PYTHON_CLIENT_MEM_FRACTION:-0.98}"
+export ZE_FLAT_DEVICE_HIERARCHY="${ZE_FLAT_DEVICE_HIERARCHY:-COMPOSITE}"
 
-if [[ -n "${SLURM_JOB_GPUS:-}" && -z "${ZE_AFFINITY_MASK:-}" ]]; then
-    export ZE_AFFINITY_MASK="$SLURM_JOB_GPUS"
+if [[ -z "${ZE_AFFINITY_MASK:-}" ]]; then
+    case "${SLURM_ZE_AFFINITY_MASK:-auto}" in
+        auto)
+            if [[ -n "${SLURM_JOB_GPUS:-}" ]]; then
+                SLURM_FIRST_GPU="${SLURM_JOB_GPUS%%,*}"
+                if [[ "$SLURM_FIRST_GPU" =~ ^[0-9]+$ ]]; then
+                    export ZE_AFFINITY_MASK="$SLURM_FIRST_GPU"
+                else
+                    echo "Not setting ZE_AFFINITY_MASK from non-numeric SLURM_JOB_GPUS=$SLURM_JOB_GPUS"
+                fi
+            fi
+            ;;
+        local)
+            export ZE_AFFINITY_MASK=0
+            ;;
+        none)
+            unset ZE_AFFINITY_MASK
+            ;;
+        *)
+            export ZE_AFFINITY_MASK="$SLURM_ZE_AFFINITY_MASK"
+            ;;
+    esac
 fi
 export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:gpu}"
 export SYCL_DEVICE_FILTER="${SYCL_DEVICE_FILTER:-level_zero:gpu}"
+export JAX_PLATFORMS="${JAX_PLATFORMS:-sycl}"
+
+if [[ "${SLURM_VALIDATE_ZE_AFFINITY:-1}" == "1" && -n "${ZE_AFFINITY_MASK:-}" ]] && command -v sycl-ls >/dev/null 2>&1; then
+    SYCL_FILTERED_DEVICES="$(sycl-ls 2>&1 || true)"
+    if [[ "$SYCL_FILTERED_DEVICES" != *"[level_zero:gpu]"* ]]; then
+        echo "No Level Zero GPU visible with ZE_AFFINITY_MASK=$ZE_AFFINITY_MASK."
+        if [[ "${SLURM_ZE_AFFINITY_FALLBACK:-local}" == "local" ]]; then
+            echo "Retrying with ZE_AFFINITY_MASK=0. Set SLURM_ZE_AFFINITY_FALLBACK=none to disable this fallback."
+            export ZE_AFFINITY_MASK=0
+        else
+            echo "ZE affinity fallback disabled; continuing with ZE_AFFINITY_MASK=$ZE_AFFINITY_MASK."
+        fi
+    fi
+fi
 
 WANDB_TASK_ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-manual}}_${SLURM_ARRAY_TASK_ID}"
 WANDB_SCRATCH_ROOT="${WANDB_SCRATCH_ROOT:-$IO_ROOT/wandb-fast}"
@@ -88,6 +170,8 @@ echo "Running manifest index $SLURM_ARRAY_TASK_ID/$((N_JOBS - 1)): $MANIFEST"
 echo "Using code root: $PVC_PATH"
 echo "Using job IO root: $IO_ROOT/"
 echo "Writing wandb local files to: $WANDB_DIR"
+echo "Expected Intel GPU VRAM: ${INTEL_MAX_GPU_VRAM_GB} GB"
+echo "XLA memory claim fraction: $XLA_PYTHON_CLIENT_MEM_FRACTION"
 
 if [[ "${SLURM_GPU_DIAGNOSTICS:-1}" == "1" ]]; then
     echo "GPU diagnostics:"
@@ -95,10 +179,12 @@ if [[ "${SLURM_GPU_DIAGNOSTICS:-1}" == "1" ]]; then
     echo "  SLURM_JOB_ID: ${SLURM_JOB_ID:-unset}"
     echo "  SLURM_JOB_GPUS: ${SLURM_JOB_GPUS:-unset}"
     echo "  ZE_AFFINITY_MASK: ${ZE_AFFINITY_MASK:-unset}"
+    echo "  ZE_FLAT_DEVICE_HIERARCHY: ${ZE_FLAT_DEVICE_HIERARCHY:-unset}"
     echo "  ONEAPI_DEVICE_SELECTOR: ${ONEAPI_DEVICE_SELECTOR:-unset}"
     echo "  SYCL_DEVICE_FILTER: ${SYCL_DEVICE_FILTER:-unset}"
     echo "  JAX_PLATFORMS: ${JAX_PLATFORMS:-unset}"
     echo "  JAX_PLATFORM_NAME: ${JAX_PLATFORM_NAME:-unset}"
+    echo "  XLA_PYTHON_CLIENT_MEM_FRACTION: ${XLA_PYTHON_CLIENT_MEM_FRACTION:-unset}"
     command -v sycl-ls >/dev/null 2>&1 && sycl-ls || echo "  sycl-ls: not found"
     command -v ze_info >/dev/null 2>&1 && ze_info | sed -n '1,80p' || echo "  ze_info: not found"
 fi
