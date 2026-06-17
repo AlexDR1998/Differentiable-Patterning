@@ -625,9 +625,9 @@ class NCA_Trainer(object):
 			
 			# Do data augmentation update
 			if error==0:
-				if (loss_diff<loss_diff_thresh or i<WARMUP):
+				# if (loss_diff<loss_diff_thresh or i<WARMUP):
 					# x_for_callback = log_dict.get("x_processed", x_new)
-					x, y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
+				x, y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
 					# x = jtu.tree_map(self.NCA_model.real_to_latent, x_aug)
 					# y = y_aug
 				
