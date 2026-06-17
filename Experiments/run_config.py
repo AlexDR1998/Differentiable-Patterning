@@ -4,6 +4,7 @@ import argparse
 import importlib
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any, Callable, cast
 
@@ -50,15 +51,24 @@ def run_entrypoint(entrypoint_spec: str, cfg: Any) -> None:
     profile_dir = Path(os.getenv("RUN_CONFIG_PROFILE_DIR", default_profile_dir()))
     profile_dir.mkdir(parents=True, exist_ok=True)
     print(f"Writing JAX profile to: {profile_dir}")
+    (profile_dir / "profile_started.txt").write_text(f"{time.time()}\n")
 
-    create_perfetto_link = env_flag("RUN_CONFIG_PROFILE_PERFETTO_LINK")
-    with jax.profiler.trace(str(profile_dir), create_perfetto_link=create_perfetto_link):
+    if env_flag("RUN_CONFIG_PROFILE_TRACE"):
+        create_perfetto_link = env_flag("RUN_CONFIG_PROFILE_PERFETTO_LINK")
+        with jax.profiler.trace(str(profile_dir), create_perfetto_link=create_perfetto_link):
+            entrypoint(cfg)
+    else:
         entrypoint(cfg)
+
+    for device in jax.devices():
+        device.synchronize_all_activity()
+    time.sleep(float(os.getenv("RUN_CONFIG_PROFILE_FLUSH_SECONDS", "2")))
 
     if env_flag("RUN_CONFIG_PROFILE_MEMORY", "1"):
         memory_profile = profile_dir / "device_memory.prof"
         jax.profiler.save_device_memory_profile(str(memory_profile))
         print(f"Writing JAX device memory profile to: {memory_profile}")
+    (profile_dir / "profile_finished.txt").write_text(f"{time.time()}\n")
 
 
 def main() -> None:

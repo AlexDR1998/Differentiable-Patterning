@@ -51,11 +51,11 @@ TIME="${SLURM_TIME:-08:00:00}"
 MEM="${SLURM_MEM:-64G}"
 ARRAY_PARALLELISM="${SLURM_ARRAY_PARALLELISM:-4}"
 LOG_DIR="${SLURM_LOG_DIR:-$IO_ROOT/slurm_logs/$EXPERIMENT_NAME}"
-GPU_VRAM_GB="${INTEL_MAX_GPU_VRAM_GB:-128}"
+PROFILE_GPU="${PROFILE_GPU:-0}"
 
 [[ "$ARRAY_PARALLELISM" =~ ^[0-9]+$ ]] || { echo "SLURM_ARRAY_PARALLELISM must be an integer: $ARRAY_PARALLELISM"; exit 1; }
 [[ "$ARRAY_PARALLELISM" -gt 0 ]] || { echo "SLURM_ARRAY_PARALLELISM must be greater than zero"; exit 1; }
-[[ "$GPU_VRAM_GB" =~ ^[0-9]+$ ]] || { echo "INTEL_MAX_GPU_VRAM_GB must be an integer: $GPU_VRAM_GB"; exit 1; }
+[[ "$PROFILE_GPU" == "0" || "$PROFILE_GPU" == "1" ]] || { echo "PROFILE_GPU must be 0 or 1: $PROFILE_GPU"; exit 1; }
 
 mkdir -p "$LOG_DIR"
 
@@ -64,13 +64,11 @@ ARRAY_SCRIPT="$SCRIPT_DIR/launch_slurm.sh"
 
 [[ -f "$ARRAY_SCRIPT" ]] || { echo "Missing array script: $ARRAY_SCRIPT"; exit 1; }
 
-LAUNCH_VERSION="$(date -u +%Y%m%dT%H%M%SZ)"
-LAUNCH_SHA256="$(sha256sum "$ARRAY_SCRIPT" | awk '{print $1}')"
-
 echo "Submitting Slurm array with launch script: $ARRAY_SCRIPT"
-echo "launch_slurm.sh version: $LAUNCH_VERSION"
-echo "launch_slurm.sh sha256: $LAUNCH_SHA256"
-echo "Expected Intel GPU VRAM per allocated GPU: ${GPU_VRAM_GB} GB"
+echo "Experiment: $EXPERIMENT_NAME"
+echo "Array: 0-$((N_JOBS - 1))%$ARRAY_PARALLELISM"
+echo "Logs: $LOG_DIR"
+echo "GPU profiling: $PROFILE_GPU"
 
 sbatch \
     --job-name="$JOB_NAME" \
@@ -84,5 +82,5 @@ sbatch \
     --gres="gpu:1" \
     --output="$LOG_DIR/%A/%a.out" \
     --error="$LOG_DIR/%A/%a.err" \
-    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT",SLURM_CODE_ROOT="$CODE_ROOT",INTEL_MAX_GPU_VRAM_GB="$GPU_VRAM_GB",SLURM_LAUNCH_VERSION="$LAUNCH_VERSION",SLURM_LAUNCH_SHA256="$LAUNCH_SHA256" \
+    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT",SLURM_CODE_ROOT="$CODE_ROOT",PROFILE_GPU="$PROFILE_GPU" \
     "$ARRAY_SCRIPT"

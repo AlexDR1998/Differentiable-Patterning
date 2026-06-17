@@ -5,25 +5,15 @@ set -eo pipefail
 #SBATCH --gres=gpu:1
 #SBATCH -p pvc9
 
-# Intel's conda activation hooks can read unset internal variables, so do not
-# enable nounset until after the module/conda environment is ready.
-echo "launch_slurm.sh version: ${SLURM_LAUNCH_VERSION:-unknown}"
-echo "launch_slurm.sh submitted sha256: ${SLURM_LAUNCH_SHA256:-unknown}"
-if command -v sha256sum >/dev/null 2>&1; then
-    echo "launch_slurm.sh runtime sha256: $(sha256sum "${BASH_SOURCE[0]}" | awk '{print $1}')"
-fi
-
+# Intel's conda hooks can read unset internal variables, so enable nounset only
+# after the module/conda environment is ready.
 module purge
 module load rhel9/default-dawn
 module load intelpython-conda
 module load intel-oneapi-mkl
-echo "Skipping intel-oneapi-ccl; these jobs run one JAX process per array task."
 conda activate jax_intel_gpu
-python -m pip list | grep -E "jax|jaxlib|intel-extension-for-openxla"
-python -m pip show jax jaxlib intel-extension-for-openxla intel_extension_for_openxla 2>/dev/null || true
 
-if [[ "${SLURM_CHECK_OPENXLA_VERSION_COMPAT:-1}" == "1" ]]; then
-    python - <<'PY'
+python - <<'PY'
 from importlib import metadata
 import sys
 
@@ -51,27 +41,23 @@ compatibility = {
 }
 
 if not openxla:
-    print("Intel Extension for OpenXLA is not installed; skipping compatibility check.")
-elif openxla in compatibility:
-    expected_jaxlib, expected_jax = compatibility[openxla]
+    print("Intel Extension for OpenXLA is not installed.", file=sys.stderr)
+    sys.exit(2)
+
+expected = compatibility.get(openxla)
+if expected is not None:
+    expected_jaxlib, expected_jax = expected
     if jaxlib != expected_jaxlib or jax != expected_jax:
-        print("Incompatible Intel OpenXLA/JAX package versions detected.", file=sys.stderr)
-        print(f"  intel-extension-for-openxla: {openxla}", file=sys.stderr)
-        print(f"  installed jaxlib: {jaxlib}", file=sys.stderr)
-        print(f"  installed jax: {jax}", file=sys.stderr)
-        print(f"  expected jaxlib for OpenXLA {openxla}: {expected_jaxlib}", file=sys.stderr)
-        print(f"  expected jax for OpenXLA {openxla}: {expected_jax}", file=sys.stderr)
-        print("Refusing to continue because JAX backend discovery may segfault.", file=sys.stderr)
-        print("Set SLURM_CHECK_OPENXLA_VERSION_COMPAT=0 to bypass this guard.", file=sys.stderr)
+        print(
+            "Incompatible Intel OpenXLA/JAX stack: "
+            f"openxla={openxla}, jaxlib={jaxlib}, jax={jax}; "
+            f"expected jaxlib={expected_jaxlib}, jax={expected_jax}",
+            file=sys.stderr,
+        )
         sys.exit(2)
-else:
-    print(
-        f"Warning: no local compatibility rule for intel-extension-for-openxla {openxla}; "
-        "continuing without a version guard.",
-        file=sys.stderr,
-    )
+
+print(f"JAX stack: openxla={openxla}, jaxlib={jaxlib}, jax={jax}")
 PY
-fi
 
 set -u
 
@@ -79,21 +65,19 @@ set -u
 : "${MANIFEST:?MANIFEST is not set}"
 : "${N_JOBS:?N_JOBS is not set}"
 : "${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is not set}"
+: "${PROFILE_GPU:=0}"
 
-if [[ "${SLURM_ENABLE_CORE_DUMPS:-0}" == "1" ]]; then
-    ulimit -c unlimited
-else
-    ulimit -c 0
+if [[ "$PROFILE_GPU" != "0" && "$PROFILE_GPU" != "1" ]]; then
+    echo "PROFILE_GPU must be 0 or 1, got: $PROFILE_GPU"
+    exit 1
 fi
+
+ulimit -c 0
 
 if (( SLURM_ARRAY_TASK_ID < 0 || SLURM_ARRAY_TASK_ID >= N_JOBS )); then
     echo "SLURM_ARRAY_TASK_ID $SLURM_ARRAY_TASK_ID is outside manifest range 0-$((N_JOBS - 1))"
     exit 1
 fi
-
-# -------------------------
-# Kubernetes-style env vars
-# -------------------------
 
 export JOB_WORKER_INDEX=0
 export JOB_WORKER_COUNT=1
@@ -117,6 +101,11 @@ export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0}"
 export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:gpu}"
 export SYCL_DEVICE_FILTER="${SYCL_DEVICE_FILTER:-level_zero:gpu}"
 export JAX_PLATFORMS="${JAX_PLATFORMS:-sycl}"
+export ZE_ENABLE_TRACING_LAYER="${ZE_ENABLE_TRACING_LAYER:-1}"
+export UseCyclesPerSecondTimer="${UseCyclesPerSecondTimer:-1}"
+export RUN_CONFIG_PROFILE="$PROFILE_GPU"
+export RUN_CONFIG_PROFILE_TRACE=0
+export RUN_CONFIG_PROFILE_MEMORY=1
 
 WANDB_TASK_ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-manual}}_${SLURM_ARRAY_TASK_ID}"
 WANDB_SCRATCH_ROOT="${WANDB_SCRATCH_ROOT:-$IO_ROOT/wandb-fast}"
@@ -134,8 +123,8 @@ echo "Running manifest index $SLURM_ARRAY_TASK_ID/$((N_JOBS - 1)): $MANIFEST"
 echo "Using code root: $PVC_PATH"
 echo "Using job IO root: $IO_ROOT/"
 echo "Writing wandb local files to: $WANDB_DIR"
-echo "Expected Intel GPU VRAM: ${INTEL_MAX_GPU_VRAM_GB} GB"
-echo "XLA memory claim fraction: $XLA_PYTHON_CLIENT_MEM_FRACTION"
+echo "Intel GPU target: ${INTEL_MAX_GPU_VRAM_GB} GB, XLA fraction $XLA_PYTHON_CLIENT_MEM_FRACTION"
+echo "GPU profiling: $PROFILE_GPU"
 python - <<'PY'
 import os
 
@@ -144,46 +133,12 @@ fraction = float(os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"])
 print(f"Expected XLA preallocation target: {vram_gb * fraction:.1f} GB")
 PY
 
-if [[ "${SLURM_GPU_DIAGNOSTICS:-1}" == "1" ]]; then
-    echo "GPU diagnostics:"
-    echo "  Host: $(hostname)"
-    echo "  SLURM_JOB_ID: ${SLURM_JOB_ID:-unset}"
-    echo "  SLURM_JOB_GPUS: ${SLURM_JOB_GPUS:-unset}"
-    echo "  ZE_AFFINITY_MASK: ${ZE_AFFINITY_MASK:-unset}"
-    echo "  ZE_FLAT_DEVICE_HIERARCHY: ${ZE_FLAT_DEVICE_HIERARCHY:-unset}"
-    echo "  ONEAPI_DEVICE_SELECTOR: ${ONEAPI_DEVICE_SELECTOR:-unset}"
-    echo "  SYCL_DEVICE_FILTER: ${SYCL_DEVICE_FILTER:-unset}"
-    echo "  JAX_PLATFORMS: ${JAX_PLATFORMS:-unset}"
-    echo "  JAX_PLATFORM_NAME: ${JAX_PLATFORM_NAME:-unset}"
-    echo "  XLA_PYTHON_CLIENT_MEM_FRACTION: ${XLA_PYTHON_CLIENT_MEM_FRACTION:-unset}"
-    command -v sycl-ls >/dev/null 2>&1 && sycl-ls || echo "  sycl-ls: not found"
-    command -v ze_info >/dev/null 2>&1 && ze_info | sed -n '1,80p' || echo "  ze_info: not found"
-fi
+echo "GPU view:"
+echo "  Host: $(hostname)"
+echo "  SLURM_JOB_ID: ${SLURM_JOB_ID:-unset}"
+echo "  SLURM_JOB_GPUS: ${SLURM_JOB_GPUS:-unset}"
+echo "  ZE_AFFINITY_MASK: $ZE_AFFINITY_MASK"
+echo "  ZE_FLAT_DEVICE_HIERARCHY: $ZE_FLAT_DEVICE_HIERARCHY"
+command -v sycl-ls >/dev/null 2>&1 && sycl-ls || echo "  sycl-ls: not found"
 
-case "${SLURM_JAX_SMOKE_TEST:-0}" in
-    0)
-        ;;
-    1|devices)
-        python -X faulthandler -c 'import jax; print("JAX devices:"); print(jax.devices())'
-        exit 0
-        ;;
-    import)
-        python -X faulthandler -c 'import jax; print("Imported JAX", jax.__version__)'
-        exit 0
-        ;;
-    cpu)
-        JAX_PLATFORMS=cpu python -X faulthandler -c 'import jax; print("JAX CPU devices:"); print(jax.devices())'
-        exit 0
-        ;;
-    *)
-        echo "Unknown SLURM_JAX_SMOKE_TEST mode: $SLURM_JAX_SMOKE_TEST"
-        echo "Use one of: 0, 1, devices, import, cpu"
-        exit 1
-        ;;
-esac
-
-if [[ "${SLURM_USE_SRUN:-0}" == "1" ]]; then
-    srun python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
-else
-    python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
-fi
+python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
