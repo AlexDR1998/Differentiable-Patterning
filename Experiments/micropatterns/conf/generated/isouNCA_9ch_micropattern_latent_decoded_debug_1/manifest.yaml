@@ -10,7 +10,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -128,7 +128,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -139,7 +139,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -257,7 +257,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -268,7 +268,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -386,7 +386,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -397,7 +397,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -515,7 +515,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -526,7 +526,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -644,7 +644,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -655,7 +655,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -773,7 +773,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -784,7 +784,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -902,7 +902,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -913,7 +913,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -1031,7 +1031,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -1042,7 +1042,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -1160,7 +1160,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -1171,7 +1171,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -1289,7 +1289,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -1300,7 +1300,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -1418,7 +1418,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -1429,7 +1429,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - vgg_grouped
@@ -1547,7 +1547,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -1558,7 +1558,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - ott_grouped
@@ -1676,7 +1676,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -1687,7 +1687,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - ott_grouped
@@ -1805,7 +1805,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -1816,7 +1816,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - ott_grouped
@@ -1934,7 +1934,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -1945,7 +1945,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - ott_grouped
@@ -2063,7 +2063,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -2074,7 +2074,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - ott_grouped
@@ -2192,7 +2192,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
@@ -2203,7 +2203,7 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+    logging.wandb.group: isouNCA_micropattern_latent_debug_1
     run.iterations: 2000
     loss.primary:
     - ott_grouped
@@ -2321,7 +2321,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_9ch_micropattern_latent_decoded_debug_1
+        group: isouNCA_micropattern_latent_debug_1
         tags: null
     knockout:
       time: null
