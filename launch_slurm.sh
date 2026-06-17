@@ -11,7 +11,11 @@ module purge
 module load rhel9/default-dawn
 module load intelpython-conda
 module load intel-oneapi-mkl
-module load intel-oneapi-ccl
+if [[ "${SLURM_LOAD_CCL:-0}" == "1" ]]; then
+    module load intel-oneapi-ccl
+else
+    echo "Skipping intel-oneapi-ccl; set SLURM_LOAD_CCL=1 to load it."
+fi
 conda activate jax_intel_gpu
 python -m pip list | grep -E "jax|jaxlib|intel-extension-for-openxla"
 
@@ -87,6 +91,11 @@ if [[ "${SLURM_GPU_DIAGNOSTICS:-1}" == "1" ]]; then
     echo "  SYCL_DEVICE_FILTER: ${SYCL_DEVICE_FILTER:-unset}"
     command -v sycl-ls >/dev/null 2>&1 && sycl-ls || echo "  sycl-ls: not found"
     command -v ze_info >/dev/null 2>&1 && ze_info | sed -n '1,80p' || echo "  ze_info: not found"
+fi
+
+if [[ "${SLURM_JAX_SMOKE_TEST:-0}" == "1" ]]; then
+    python -X faulthandler -c 'import jax; print("JAX devices:"); print(jax.devices())'
+    exit 0
 fi
 
 if [[ "${SLURM_USE_SRUN:-0}" == "1" ]]; then
