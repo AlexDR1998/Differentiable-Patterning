@@ -5,7 +5,7 @@ import importlib
 import os
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Callable, cast
 
 from omegaconf import OmegaConf
 
@@ -26,6 +26,39 @@ def initialise_jax_backend() -> None:
     import jax
 
     jax.devices()
+
+
+def env_flag(name: str, default: str = "0") -> bool:
+    return os.getenv(name, default).lower() in {"1", "true", "yes", "on"}
+
+
+def default_profile_dir() -> Path:
+    job_id = os.getenv("SLURM_JOB_ID", "manual")
+    task_id = os.getenv("SLURM_ARRAY_TASK_ID", "0")
+    root = Path(os.getenv("SLURM_IO_ROOT", REPO_ROOT / "output"))
+    return root / "profiles" / f"{job_id}_{task_id}"
+
+
+def run_entrypoint(entrypoint_spec: str, cfg: Any) -> None:
+    entrypoint: Callable[[Any], Any] = import_callable(entrypoint_spec)
+    if not env_flag("RUN_CONFIG_PROFILE"):
+        entrypoint(cfg)
+        return
+
+    import jax
+
+    profile_dir = Path(os.getenv("RUN_CONFIG_PROFILE_DIR", default_profile_dir()))
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Writing JAX profile to: {profile_dir}")
+
+    create_perfetto_link = env_flag("RUN_CONFIG_PROFILE_PERFETTO_LINK")
+    with jax.profiler.trace(str(profile_dir), create_perfetto_link=create_perfetto_link):
+        entrypoint(cfg)
+
+    if env_flag("RUN_CONFIG_PROFILE_MEMORY", "1"):
+        memory_profile = profile_dir / "device_memory.prof"
+        jax.profiler.save_device_memory_profile(str(memory_profile))
+        print(f"Writing JAX device memory profile to: {memory_profile}")
 
 
 def main() -> None:
@@ -61,7 +94,7 @@ def main() -> None:
         entrypoint_spec = args.entrypoint
         if not entrypoint_spec:
             raise ValueError("--entrypoint is required when running a standalone config file")
-        import_callable(entrypoint_spec)(cfg)
+        run_entrypoint(entrypoint_spec, cfg)
         return
 
     if not args.manifest:
@@ -88,7 +121,7 @@ def main() -> None:
     if not entrypoint_spec:
         raise ValueError("No entrypoint specified. Set it in the manifest or pass --entrypoint")
 
-    import_callable(entrypoint_spec)(cfg)
+    run_entrypoint(entrypoint_spec, cfg)
 
 
 if __name__ == "__main__":
