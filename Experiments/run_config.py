@@ -19,6 +19,15 @@ load_config_from_entry = workflow.load_config_from_entry
 resolve_manifest_index = workflow.resolve_manifest_index
 
 
+def initialise_jax_backend() -> None:
+    if os.getenv("RUN_CONFIG_INITIALISE_JAX_BACKEND", "1") != "1":
+        return
+
+    import jax
+
+    jax.devices()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run one config from a manifest or a standalone YAML file")
     parser.add_argument("--config-file", required=False, help="Run one concrete YAML config directly")
@@ -42,6 +51,7 @@ def main() -> None:
         help="Python callable in the form module.path:function_name. Overrides the manifest entrypoint.",
     )
     args = parser.parse_args()
+    initialise_jax_backend()
 
     if args.config_file:
         config_path = Path(args.config_file)
