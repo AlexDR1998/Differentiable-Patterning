@@ -7,14 +7,21 @@ set -eo pipefail
 
 # Intel's conda activation hooks can read unset internal variables, so do not
 # enable nounset until after the module/conda environment is ready.
+echo "launch_slurm.sh version: ${SLURM_LAUNCH_VERSION:-unknown}"
+echo "launch_slurm.sh submitted sha256: ${SLURM_LAUNCH_SHA256:-unknown}"
+if command -v sha256sum >/dev/null 2>&1; then
+    echo "launch_slurm.sh runtime sha256: $(sha256sum "${BASH_SOURCE[0]}" | awk '{print $1}')"
+fi
+
 module purge
 module load rhel9/default-dawn
 module load intelpython-conda
 module load intel-oneapi-mkl
 if [[ "${SLURM_LOAD_CCL:-0}" == "1" ]]; then
+    echo "Loading optional intel-oneapi-ccl because SLURM_LOAD_CCL=1."
     module load intel-oneapi-ccl
 else
-    echo "Skipping intel-oneapi-ccl; set SLURM_LOAD_CCL=1 to load it."
+    echo "Skipping intel-oneapi-ccl because SLURM_LOAD_CCL=${SLURM_LOAD_CCL:-0}."
 fi
 conda activate jax_intel_gpu
 python -m pip list | grep -E "jax|jaxlib|intel-extension-for-openxla"

@@ -51,9 +51,11 @@ TIME="${SLURM_TIME:-08:00:00}"
 MEM="${SLURM_MEM:-64G}"
 ARRAY_PARALLELISM="${SLURM_ARRAY_PARALLELISM:-4}"
 LOG_DIR="${SLURM_LOG_DIR:-$IO_ROOT/slurm_logs/$EXPERIMENT_NAME}"
+LOAD_CCL="${SLURM_LOAD_CCL:-0}"
 
 [[ "$ARRAY_PARALLELISM" =~ ^[0-9]+$ ]] || { echo "SLURM_ARRAY_PARALLELISM must be an integer: $ARRAY_PARALLELISM"; exit 1; }
 [[ "$ARRAY_PARALLELISM" -gt 0 ]] || { echo "SLURM_ARRAY_PARALLELISM must be greater than zero"; exit 1; }
+[[ "$LOAD_CCL" == "0" || "$LOAD_CCL" == "1" ]] || { echo "SLURM_LOAD_CCL must be 0 or 1: $LOAD_CCL"; exit 1; }
 
 mkdir -p "$LOG_DIR"
 
@@ -61,6 +63,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ARRAY_SCRIPT="$SCRIPT_DIR/launch_slurm.sh"
 
 [[ -f "$ARRAY_SCRIPT" ]] || { echo "Missing array script: $ARRAY_SCRIPT"; exit 1; }
+
+LAUNCH_VERSION="$(date -u +%Y%m%dT%H%M%SZ)"
+LAUNCH_SHA256="$(sha256sum "$ARRAY_SCRIPT" | awk '{print $1}')"
+
+echo "Submitting Slurm array with launch script: $ARRAY_SCRIPT"
+echo "launch_slurm.sh version: $LAUNCH_VERSION"
+echo "launch_slurm.sh sha256: $LAUNCH_SHA256"
 
 sbatch \
     --job-name="$JOB_NAME" \
@@ -74,5 +83,5 @@ sbatch \
     --gres="gpu:1" \
     --output="$LOG_DIR/%A/%a.out" \
     --error="$LOG_DIR/%A/%a.err" \
-    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT",SLURM_CODE_ROOT="$CODE_ROOT" \
+    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT",SLURM_CODE_ROOT="$CODE_ROOT",SLURM_LOAD_CCL="$LOAD_CCL",SLURM_LAUNCH_VERSION="$LAUNCH_VERSION",SLURM_LAUNCH_SHA256="$LAUNCH_SHA256" \
     "$ARRAY_SCRIPT"
