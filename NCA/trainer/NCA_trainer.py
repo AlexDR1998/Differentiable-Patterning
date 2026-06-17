@@ -365,7 +365,7 @@ class NCA_Trainer(object):
 		self.setup_logging("wandb",wandb_args=wandb_args,KNOCKOUT_ARGS=KNOCKOUT_ARGS)
 
 		
-		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
+		
 		if LOSS_ARGS["layers"] is not None:
 			self.LOSS_FUNC_LAYERS = LOSS_ARGS["layers"]
 		else:
@@ -564,7 +564,7 @@ class NCA_Trainer(object):
 				"latent": None
 				} for b in range(len(x))]
 			
-		
+		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
 		best_loss = 100000000
 		loss_thresh = 1e16 # If loss exceeds this, training is diverging to NaN
 		model_saved = False
