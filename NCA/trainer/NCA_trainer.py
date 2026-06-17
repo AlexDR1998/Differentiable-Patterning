@@ -305,10 +305,10 @@ class NCA_Trainer(object):
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
-			  wandb_args={"project":"NCA",
-				 		  "group":"group_1",
-				 		  "tags":["training"]},
-			  key=jr.PRNGKey(int(time.time()))):
+				  wandb_args={"project":"NCA",
+					 		  "group":"group_1",
+					 		  "tags":["training"]},
+				  key=None):
 		"""
 		Perform t steps of NCA on x, compare output to y, compute loss and gradients of loss wrt model parameters, and update parameters.
 
@@ -346,6 +346,9 @@ class NCA_Trainer(object):
 
 		None
 		"""
+
+		if key is None:
+			key = jr.PRNGKey(int(time.time()))
 
 		self.TRAIN_CONFIG = {
 			"t":t,

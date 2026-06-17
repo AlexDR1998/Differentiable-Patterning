@@ -98,10 +98,10 @@ class DataAugmenterAbstract(object):
 		
 	@eqx.filter_jit
 	def random_N_select(self,
-					 	x:PyTree[Float[Array, "N C W H"]],
-						y:PyTree[Float[Array, "N C W H"]],
-						n,
-						key:Key =jr.PRNGKey(int(time.time()))):
+							x:PyTree[Float[Array, "N C W H"]],
+							y:PyTree[Float[Array, "N C W H"]],
+							n,
+							key=None):
 		"""
 		Randomly sample n pairs of states from x and y
 
@@ -122,6 +122,8 @@ class DataAugmenterAbstract(object):
 			sampled final states.
 
 		"""
+		if key is None:
+			key = jr.PRNGKey(int(time.time()))
 		#print(x)
 		ns = jr.choice(key,jnp.arange(x[0].shape[0]),shape=(n,),replace=False)
 		x_sampled = jtu.tree_map(lambda data:data[ns],x)
@@ -178,7 +180,7 @@ class DataAugmenterAbstract(object):
 	def shift(self,
 		      data:PyTree[Float[Array, "N C W H"]],
 			  am,
-			  key:Key=jr.PRNGKey(int(time.time()))):
+			  key=None):
 		"""
 		Randomly shifts each trajectory. 
 
@@ -197,7 +199,8 @@ class DataAugmenterAbstract(object):
 			data randomly shifted in spatial dimensions
 
 		"""
-
+		if key is None:
+			key = jr.PRNGKey(int(time.time()))
 		shifts = jr.randint(key,minval=-am,maxval=am,shape=(len(data),2))
 		for b in range(len(data)):
 			data[b] = jnp.roll(data[b],shifts[b],axis=(-1,-2))
@@ -237,7 +240,7 @@ class DataAugmenterAbstract(object):
 		   	  data:PyTree[Float[Array, "N C W H"]],
 			  am,
 			  mode="full",
-			  key:Key=jr.PRNGKey(int(time.time()))):
+			  key=None):
 		"""
 		Adds gaussian noise to the data
 		
@@ -257,6 +260,8 @@ class DataAugmenterAbstract(object):
 			noisy data
 
 		"""
+		if key is None:
+			key = jr.PRNGKey(int(time.time()))
 		key_array = key_pytree_gen(key, [len(data)])
 		
 		noisy = jtu.tree_map(lambda x,key:am*jr.normal(key,shape=x.shape) + (1-am)*x,data,key_array)

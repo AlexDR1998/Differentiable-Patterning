@@ -58,7 +58,9 @@ class local_upsample(eqx.Module):
             fourier_modes: int = 4,
             depth: int = 3, 
             padding: str = "CIRCULAR",
-            key=jax.random.PRNGKey(0)):
+            key=None):
+        if key is None:
+            key = jax.random.PRNGKey(0)
         key1, key2 = jax.random.split(key, 2)
 
         if output_channels > channels:
@@ -241,7 +243,9 @@ class uNCA(NCA):
                     "fourier_modes": 2,
                     "upsample_factor": 4
                 },
-                key=jax.random.PRNGKey(int(time.time()))):
+                key=None):
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         super().__init__(N_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, KERNEL_SCALE, key)
         #key1,key2 = jax.random.split(key,2)
         key = jax.random.fold_in(key,1234)
@@ -282,7 +286,9 @@ class uNCA(NCA):
     def __call__(self,
 			  	 x,
 				 boundary_callback=lambda x:x,
-				 key: Key=jax.random.PRNGKey(int(time.time()))):
+				 key=None):
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         dx = self.perception(x)
         for layer in self.layers:
             dx = layer(dx)

@@ -88,14 +88,16 @@ class NCA_Train_log(Train_log):
 							# x: PyTree[Float[Array, "N CHANNELS x y"], "B"],  # noqa: F722, F821
 							DATA_AUGMENTER,
 							t,
-							boundary_callback,
-							SAVE_TRAJECTORY=False,
-							write_images=True,
-							key=jr.PRNGKey(int(time.time()))):
+								boundary_callback,
+								SAVE_TRAJECTORY=False,
+								write_images=True,
+								key=None):
 		"""
 			Log trained NCA model trajectory after training
 
 		"""
+		if key is None:
+			key = jr.PRNGKey(int(time.time()))
 		x,y = DATA_AUGMENTER.split_x_y(1)
 		x,y = DATA_AUGMENTER.data_callback(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]
@@ -160,16 +162,18 @@ class NCA_knockout_Train_log(NCA_Train_log):
 							# x: PyTree[Float[Array, "N CHANNELS x y"], "B"],  # noqa: F722, F821
 							DATA_AUGMENTER,
 							t,
-							boundary_callback,
-							SAVE_TRAJECTORY=False,
-							write_images=True,
-							key=jr.PRNGKey(int(time.time()))):
+								boundary_callback,
+								SAVE_TRAJECTORY=False,
+								write_images=True,
+								key=None):
 		"""
 		
 
 			Log trained NCA model trajectory after training
 
 		"""
+		if key is None:
+			key = jr.PRNGKey(int(time.time()))
 		x,y = DATA_AUGMENTER.split_x_y(1)
 		x,y = DATA_AUGMENTER.data_callback(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]

@@ -267,7 +267,9 @@ class uNCA(NCA):
                     "radius": 2,
                     "upsample_factor": 4
                 },
-                key=jax.random.PRNGKey(int(time.time()))):
+                key=None):
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         super().__init__(N_CHANNELS, KERNEL_STR, ACTIVATION, PADDING, FIRE_RATE, KERNEL_SCALE, key)
         key = jax.random.fold_in(key,1234)
         self.UPSAMPLER_AUX = UPSAMPLER_AUX
@@ -303,7 +305,9 @@ class uNCA(NCA):
     def __call__(self,
 			  	 x,
 				 boundary_callback=lambda x:x,
-				 key: Key=jax.random.PRNGKey(int(time.time()))):
+				 key=None):
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
         dx = self.perception(x)
         for layer in self.layers:
             dx = layer(dx)

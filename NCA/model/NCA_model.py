@@ -18,11 +18,11 @@ class NCA(AbstractModel):
 	def __init__(self,
 			     N_CHANNELS,
 				 KERNEL_STR=["ID","LAP"],
-				 ACTIVATION=jax.nn.relu,
-				 PADDING="CIRCULAR",
-				 FIRE_RATE=1.0,
-				 KERNEL_SCALE = 1,
-				 key=jax.random.PRNGKey(int(time.time()))):
+					 ACTIVATION=jax.nn.relu,
+					 PADDING="CIRCULAR",
+					 FIRE_RATE=1.0,
+					 KERNEL_SCALE = 1,
+					 key=None):
 		"""
 		
 
@@ -49,6 +49,8 @@ class NCA(AbstractModel):
 		"""
 		
 		
+		if key is None:
+			key = jax.random.PRNGKey(int(time.time()))
 		key1,key2 = jax.random.split(key,2)
 		self.N_CHANNELS = N_CHANNELS
 		self.FIRE_RATE = FIRE_RATE
@@ -127,9 +129,9 @@ class NCA(AbstractModel):
 		}
 		
 	def __call__(self,
-			  	 x: Float[Array,"{self.N_CHANNELS} x y"],
-				 boundary_callback=lambda x:x,
-				 key: Key=jax.random.PRNGKey(int(time.time())))->Float[Array, "{self.N_CHANNEL} x y"]:
+				  	 x: Float[Array,"{self.N_CHANNELS} x y"],
+					 boundary_callback=lambda x:x,
+					 key=None)->Float[Array, "{self.N_CHANNEL} x y"]:
 		"""
 		
 
@@ -149,6 +151,8 @@ class NCA(AbstractModel):
 
 		"""
 		
+		if key is None:
+			key = jax.random.PRNGKey(int(time.time()))
 		dx = self.perception(x)
 		for layer in self.layers:
 			dx = layer(dx)
@@ -159,7 +163,7 @@ class NCA(AbstractModel):
 	def call_with_activations(self,
 					   x: Float[Array,"{self.N_CHANNELS} x y"],
 					   boundary_callback=lambda x:x,
-					   key: Key=jax.random.PRNGKey(int(time.time()))):
+					   key=None):
 		"""
 		Parameters
 		----------
@@ -179,6 +183,8 @@ class NCA(AbstractModel):
 
 		
 		"""
+		if key is None:
+			key = jax.random.PRNGKey(int(time.time()))
 		dx = self.perception(x)
 		activations = [dx]
 		for layer in self.layers:
@@ -197,7 +203,9 @@ class NCA(AbstractModel):
 								"positions":None,
 								"values":1.0},
 				   boundary_callback=lambda x:x,
-				   key: Key=jax.random.PRNGKey(int(time.time()))):
+				   key=None):
+		if key is None:
+			key = jax.random.PRNGKey(int(time.time()))
 		layer_name_dict = {"perception":0,"linear_hidden":1,"activation":2,"linear_output":3,"gate_func":4}
 		#vSAE = jax.vmap(SAE,in_axes=0,out_axes=0)
 		vENC = jax.vmap(SAE.encode,in_axes=0,out_axes=0)
@@ -277,8 +285,10 @@ class NCA(AbstractModel):
 			x: Float[Array, "{self.N_CHANNELS} x y"],
 			callback=lambda x:x,
 			SAVE_LATENTS=False,
-			key: Key =jax.random.PRNGKey(int(time.time())))->tuple[Float[Array,"{iters} {self.N_CHANNELS} x y"], Float[Array,"{iters} {self.N_CHANNELS} x y"]]:
+			key=None)->tuple[Float[Array,"{iters} {self.N_CHANNELS} x y"], Float[Array,"{iters} {self.N_CHANNELS} x y"]]:
 		
+		if key is None:
+			key = jax.random.PRNGKey(int(time.time()))
 		trajectory = []
 		trajectory.append(self.latent_to_real(x))
 		latents = [x]
