@@ -20,7 +20,7 @@ resolve_manifest_index = workflow.resolve_manifest_index
 
 
 def initialise_jax_backend() -> None:
-    if os.getenv("RUN_CONFIG_INITIALISE_JAX_BACKEND", "1") != "1":
+    if os.getenv("RUN_CONFIG_INITIALISE_JAX_BACKEND", "0") != "1":
         return
 
     import jax

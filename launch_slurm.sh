@@ -71,6 +71,18 @@ echo "Using code root: $PVC_PATH"
 echo "Using job IO root: $IO_ROOT/"
 echo "Writing wandb local files to: $WANDB_DIR"
 
+if [[ "${SLURM_GPU_DIAGNOSTICS:-1}" == "1" ]]; then
+    echo "GPU diagnostics:"
+    echo "  Host: $(hostname)"
+    echo "  SLURM_JOB_ID: ${SLURM_JOB_ID:-unset}"
+    echo "  SLURM_JOB_GPUS: ${SLURM_JOB_GPUS:-unset}"
+    echo "  ZE_AFFINITY_MASK: ${ZE_AFFINITY_MASK:-unset}"
+    echo "  ONEAPI_DEVICE_SELECTOR: ${ONEAPI_DEVICE_SELECTOR:-unset}"
+    echo "  SYCL_DEVICE_FILTER: ${SYCL_DEVICE_FILTER:-unset}"
+    command -v sycl-ls >/dev/null 2>&1 && sycl-ls || echo "  sycl-ls: not found"
+    command -v ze_info >/dev/null 2>&1 && ze_info | sed -n '1,80p' || echo "  ze_info: not found"
+fi
+
 if [[ "${SLURM_USE_SRUN:-0}" == "1" ]]; then
     srun python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
 else
