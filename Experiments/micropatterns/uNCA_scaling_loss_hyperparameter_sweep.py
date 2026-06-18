@@ -377,7 +377,7 @@ def run(cfg):
             "layers":cfg.loss.layers
         },
         
-        LOG_EVERY=100,
-        CLEAR_CACHE_EVERY=500,
+        LOG_EVERY=cfg.trainer.log_every,
+        CLEAR_CACHE_EVERY=cfg.trainer.clear_cache_every,
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff
     )

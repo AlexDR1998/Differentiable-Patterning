@@ -614,9 +614,10 @@ class NCA_Trainer(object):
 		#--- Do training run ---
 		for i in pbar:
 			#prev_loss = mean_loss
-			if i%CLEAR_CACHE_EVERY==0:
-				#print(f"Clearing cache at step {i}")
-				jax.clear_caches()
+			if CLEAR_CACHE_EVERY is not None and CLEAR_CACHE_EVERY>0:
+				if i>0 and i%CLEAR_CACHE_EVERY==0:
+					#print(f"Clearing cache at step {i}")
+					jax.clear_caches()
 			key = jr.fold_in(key,i)
 			
 			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = make_step(nca, x, y, t, opt_state,key)  # type: ignore
