@@ -9,6 +9,14 @@ import jax.tree_util as jtu
 
 
 
+def _cfg_get(cfg, key, default=None):
+    """Read an optional config value without requiring all configs to define it."""
+    try:
+        return getattr(cfg, key)
+    except (AttributeError, KeyError):
+        return default
+
+
 def build_muon_dnums(params):
     return jtu.tree_map(
         lambda x: optax.contrib.MuonDimensionNumbers(
@@ -91,20 +99,41 @@ def build_optimizer(cfg):
         boundaries=[cfg.optimiser.warmup_steps],
     )
     if cfg.optimiser.type == "nadam":
-        optimizer = optax.nadam(schedule)
+        base_optimizer = optax.nadam(schedule)
         opt_name = "nadam"
     elif cfg.optimiser.type == "muon":
-        optimizer = muon_optimizer(schedule)
+        base_optimizer = muon_optimizer(schedule)
         opt_name = "muon"
     elif cfg.optimiser.type == "adamw":
-        optimizer = optax.adamw(schedule)
+        base_optimizer = optax.adamw(schedule)
         opt_name = "adamw"
     else:
         raise ValueError(f"Unsupported optimizer type: {cfg.optimiser.type}")
+
+    preprocessors = []
+
+    gradient_clip_norm = _cfg_get(cfg.optimiser, "gradient_clip_norm", None)
+    if gradient_clip_norm is not None:
+        preprocessors.append(optax.clip_by_global_norm(gradient_clip_norm))
+        opt_name += f"_clip{gradient_clip_norm:g}"
+
     if cfg.optimiser.blocknorm:
-        optimizer = optax.chain(optax.scale_by_param_block_norm(), optimizer)
+        preprocessors.append(optax.scale_by_param_block_norm())
         opt_name += "_blocknorm"
+
+    optimizer = optax.chain(*preprocessors, base_optimizer)
+
     if cfg.optimiser.sam:
         optimizer = sam_optimizer(optimizer, rho=cfg.optimiser.sam_rho, sync_period=cfg.optimiser.sam_sync_period)  
         opt_name += "_sam"
+
+    apply_if_finite = _cfg_get(cfg.optimiser, "apply_if_finite", False)
+    if apply_if_finite:
+        max_consecutive_errors = _cfg_get(cfg.optimiser, "max_consecutive_errors", 8)
+        optimizer = optax.apply_if_finite(
+            optimizer,
+            max_consecutive_errors=max_consecutive_errors,
+        )
+        opt_name += f"_finite{max_consecutive_errors}"
+
     return optimizer, opt_name
