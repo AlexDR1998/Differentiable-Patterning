@@ -1,0 +1,67 @@
+experiment_name: uNCA_9ch_micropattern_loss_target_sweep_1
+entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+output_subdir: generated/uNCA_9ch_micropattern_loss_target_sweep_2
+seed_mode: index
+grid:
+  model.family: [uNCA]
+  run.scaling: [convective]
+  logging.wandb.project: [nca_micropattern_upscale]
+  logging.wandb.group: [uNCA_9ch_micropattern_loss_target_sweep_1]
+  run.iterations: [8000]
+  loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
+  loss.layers: [[decoded,latent],[decoded,decoded],[decoded,both]]
+  trainer.loop_autodiff: [checkpointed]
+  data.downsample: [1]
+  # data.batches: [4]
+  knockout.mode: [null]
+  knockout.time: [null]
+  knockout.channel: [Nodal]
+  loss.regulariser_coeffs.latent_channel_match: [0.0]
+  loss.regulariser_coeffs.contiguous_growth: [0.0]
+  loss.regulariser_coeffs.latent_size: [0.0]
+  loss.regulariser_coeffs.intermediate_state: [0.0]
+  loss.random_crop: [True,False]
+  model.upscale_factor: [8]
+  run.t: [32,64]
+  model.upsampler.fourier_modes: [1,2,4]
+  model.upsampler.depth: [4]
+  model.upsampler.width_factor: [2]
+  optimiser.learn_rate: [1e-3]
+  optimiser.decay_rate: [0.98]
+groups:
+  - data.batches: [2]
+    model.channels: [64]    
+branches:
+  - when:
+      loss.primary: [vgg_grouped,l2_grouped]
+      # model.family: uNCA
+    grid:
+      loss.vgg_internal: [l2,otsp]
+      # loss.random_crop: [True,False]
+  - when:
+      loss.primary: [ott_grouped,l2_grouped]
+      # model.family: uNCA
+    grid:
+      loss.vgg_internal: [l2]
+
+    # grid:
+      # model.upsampler.fourier_modes: [4]
+#       model.upsampler.depth: [2]
+#       model.upsampler.width_factor: [4]
+    
+#   - when:
+#       model.family: isouNCA
+#     grid:
+#       model.upsampler.radius: [1,2,4]
+#       model.upsampler.depth: [2]
+#       model.upsampler.width_factor: [4]
+#   - when:
+#       model.family: NCA
+#     grid:
+#       model.upscale_factor: [1]
+#       run.t: [128]
+#       loss.regulariser_coeffs.latent_channel_match: [0.0]
+#       model.upsampler.depth: [null]
+      # model.upsampler.width_factor: [null]
+
+

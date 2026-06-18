@@ -1,0 +1,64 @@
+experiment_name: intel_baseline_nca_runtime_1
+entrypoint: Experiments.micropatterns.nca_runtime_check:run
+output_subdir: generated/intel_baseline_nca_runtime_1
+seed_mode: index
+grid:
+  model.family: [NCA]
+  model.channels: [64]
+  run.scaling: [convective]
+  logging.wandb.project: [nca_micropattern_upscale]
+  logging.wandb.group: [intel_baseline_nca_runtime_1]
+  run.iterations: [32]
+  loss.primary: [[l2_grouped]]
+  loss.layers: [[decoded]]
+  loss.vgg_internal: [l2]
+  trainer.loop_autodiff: [checkpointed]
+  data.downsample: [1]
+  knockout.mode: [null]
+  knockout.time: [null]
+  knockout.channel: [Nodal]
+  loss.regulariser_coeffs.boundary: [0.0]
+  loss.regulariser_coeffs.latent_channel_match: [0.0]
+  loss.regulariser_coeffs.contiguous_growth: [0.0]
+  loss.regulariser_coeffs.latent_size: [0.0]
+  loss.regulariser_coeffs.intermediate_state: [0.0]
+  loss.random_crop: [False]
+  model.upscale_factor: [1]
+  run.t: [32,64]
+  model.upsampler.radius: [null]
+  model.upsampler.depth: [null]
+  model.upsampler.width_factor: [null]
+  system.precision: [highest,bfloat16,tensorfloat32]
+  system.gpu: [intel]
+  # system.xla_flags: ["--xla_gpu_enable_latency_hiding_scheduler=true", "--xla_gpu_enable_latency_hiding_scheduler=true --xla_gpu_triton_gemm_any=True", "--xla_gpu_triton_gemm_any=True", "--xla_gpu_enable_command_buffer=FUSION"]
+  system.xla_flags: [[triton_gemm],[latency_hiding_scheduler],[command_buffer],[triton_gemm,latency_hiding_scheduler],null]
+  # system.xla_flags: [null]
+  # system.xla_flags: ["--xla_gpu_enable_latency_hiding_scheduler=true"]
+  
+
+# groups:
+  # - model.upscale_factor: [16,8,4,2]
+    # run.t : [16,32,64,128]    
+# branches:
+#   - when:
+#       model.family: uNCA
+#     grid:
+#       model.upsampler.fourier_modes: [1,2,4]
+#       model.upsampler.depth: [2]
+#       model.upsampler.width_factor: [4]
+    
+#   - when:
+#       model.family: isouNCA
+#     grid:
+#       model.upsampler.radius: [1,2,4]
+#       model.upsampler.depth: [2]
+#       model.upsampler.width_factor: [4]
+#   - when:
+#       model.family: NCA
+#     grid:
+#       model.upscale_factor: [1]
+#       run.t: [128]
+#       loss.regulariser_coeffs.latent_channel_match: [0.0]
+#       model.upsampler.depth: [null]
+      # model.upsampler.width_factor: [null]
+

@@ -13,7 +13,7 @@ data:
 
 model:
   family: NCA
-  channels: 64
+  channels: 32
   kernel_str: [ID, LAP, DIFF]
   fire_rate: 0.5
   padding: CIRCULAR
@@ -31,6 +31,9 @@ optimiser:
   type: nadam
   blocknorm: true
   sam: false
+  gradient_clip_norm: 1.0
+  apply_if_finite: true
+  max_consecutive_errors: 8
   learn_rate: 0.001
   warmup_steps: 64
   decay_rate: 0.99
@@ -44,12 +47,14 @@ loss:
     update_sensitivity: 0.0
     perturbation_conservation: 0.0
     latent_channel_match: 1.0
+    latent_size: 0.0
+  random_crop: true
   args:
     channels: null
     experiment_groups: null
     S: 1024
     K: 5
-    D: 3
+    D: 4
     sharpen: true
     epsilon: 0.1
     internal_loss_func: l2
