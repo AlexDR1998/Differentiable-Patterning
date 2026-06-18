@@ -1,5 +1,5 @@
 experiment_name: intel_gpu_profile_1
-entrypoint: Experiments.micropatterns.nca_runtime_check:run
+entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_runtime_sweep.yaml
 output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/intel_gpu_profile_1
@@ -14,6 +14,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -76,6 +78,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -99,6 +104,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -135,6 +142,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -197,6 +206,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -220,6 +232,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -256,6 +270,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -318,6 +334,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -341,6 +360,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -377,6 +398,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -440,6 +463,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -463,6 +489,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -500,6 +528,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -561,6 +591,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -584,6 +617,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -619,6 +654,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -681,6 +718,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -704,6 +744,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -740,6 +782,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -802,6 +846,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -825,6 +872,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -861,6 +910,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -923,6 +974,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -946,6 +1000,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -982,6 +1038,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -1045,6 +1103,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -1068,6 +1129,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -1105,6 +1168,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -1166,6 +1231,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -1189,6 +1257,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -1224,6 +1294,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -1286,6 +1358,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -1309,6 +1384,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -1345,6 +1422,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -1407,6 +1486,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -1430,6 +1512,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -1466,6 +1550,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -1528,6 +1614,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -1551,6 +1640,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -1587,6 +1678,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -1650,6 +1743,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -1673,6 +1769,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -1710,6 +1808,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 1
@@ -1771,6 +1871,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -1794,6 +1897,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -1829,6 +1934,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -1891,6 +1998,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -1914,6 +2024,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -1950,6 +2062,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -2012,6 +2126,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -2035,6 +2152,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -2071,6 +2190,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -2133,6 +2254,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -2156,6 +2280,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -2192,6 +2318,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -2255,6 +2383,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -2278,6 +2409,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -2315,6 +2448,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -2376,6 +2511,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -2399,6 +2537,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -2434,6 +2574,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -2496,6 +2638,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -2519,6 +2664,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -2555,6 +2702,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -2617,6 +2766,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -2640,6 +2792,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -2676,6 +2830,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -2738,6 +2894,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -2761,6 +2920,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -2797,6 +2958,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -2860,6 +3023,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -2883,6 +3049,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -2920,6 +3088,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -2981,6 +3151,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -3004,6 +3177,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -3039,6 +3214,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -3101,6 +3278,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -3124,6 +3304,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -3160,6 +3342,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -3222,6 +3406,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -3245,6 +3432,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -3281,6 +3470,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -3343,6 +3534,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -3366,6 +3560,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -3402,6 +3598,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -3465,6 +3663,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -3488,6 +3689,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
@@ -3525,6 +3728,8 @@ configs:
     run.iterations: 4
     loss.primary:
     - vgg_grouped_and_l2
+    loss.layers:
+    - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: lax
     data.downsample: 1
@@ -3586,6 +3791,9 @@ configs:
       type: nadam
       blocknorm: true
       sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
@@ -3609,6 +3817,8 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
+      layers:
+      - decoded
       vgg_internal: l2
       random_crop: true
     run:
