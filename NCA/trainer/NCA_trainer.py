@@ -1,4 +1,6 @@
 from typing import Dict
+import os
+from pathlib import Path
 
 import jax
 import jax.numpy as jnp
@@ -26,6 +28,31 @@ import time
 
 INTERNAL_LOOP_DTYPE = jnp.bfloat16 # dtype to use for values inside the loop over timesteps. Should be low precision to save memory, but not so low that it causes instability. Can experiment with bfloat16 or float16.
 LOSS_DTYPE = jnp.float32 # dtype to use for loss values. Higher precision as it accumulates over many timesteps and batches.
+
+def maybe_save_gpu_profile(step):
+	if os.getenv("PROFILE_GPU", "0") != "1":
+		return
+
+	profile_step = int(os.getenv("PROFILE_GPU_STEP", "0"))
+	if step != profile_step:
+		return
+
+	job_id = os.getenv("SLURM_JOB_ID", "manual")
+	task_id = os.getenv("SLURM_ARRAY_TASK_ID", "0")
+	root = Path(os.getenv("SLURM_IO_ROOT", "output"))
+	profile_dir = root / "profiles" / f"{job_id}_{task_id}"
+	profile_dir.mkdir(parents=True, exist_ok=True)
+	profile_path = profile_dir / f"train_step_{step}_device_memory.prof"
+
+	try:
+		jax.block_until_ready(jax.device_put(0))
+		jax.profiler.save_device_memory_profile(str(profile_path))
+		print(f"Writing train-step device memory profile to: {profile_path}", flush=True)
+	except Exception as exc:
+		error_path = profile_dir / f"train_step_{step}_device_memory_error.txt"
+		error_path.write_text(f"{exc!r}\n")
+		print(f"Warning: train-step device memory profile failed: {exc!r}", flush=True)
+
 class NCA_Trainer(object):
 	"""
 	General class for training NCA model to data trajectories
@@ -589,6 +616,7 @@ class NCA_Trainer(object):
 			key = jr.fold_in(key,i)
 			
 			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = make_step(nca, x, y, t, opt_state,key)  # type: ignore
+			maybe_save_gpu_profile(i)
 			loss_diff = mean_loss - best_loss
 
 			log_dict["best_loss"] = best_loss
