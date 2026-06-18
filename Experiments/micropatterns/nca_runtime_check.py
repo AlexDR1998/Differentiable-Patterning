@@ -86,7 +86,8 @@ def run(cfg):
             "epsilon":0.1,
             "internal_loss_func":"l2",
             "samples":128,
-            "random_crop":cfg.loss.random_crop
+            "random_crop":cfg.loss.random_crop,
+            "layers":cfg.loss.layers
         },
         
         LOG_EVERY=100,
