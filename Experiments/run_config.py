@@ -20,15 +20,6 @@ load_config_from_entry = workflow.load_config_from_entry
 resolve_manifest_index = workflow.resolve_manifest_index
 
 
-def initialise_jax_backend() -> None:
-    if os.getenv("RUN_CONFIG_INITIALISE_JAX_BACKEND", "0") != "1":
-        return
-
-    import jax
-
-    jax.devices()
-
-
 def env_flag(name: str, default: str = "0") -> bool:
     return os.getenv(name, default).lower() in {"1", "true", "yes", "on"}
 
@@ -40,13 +31,58 @@ def default_profile_dir() -> Path:
     return root / "profiles" / f"{job_id}_{task_id}"
 
 
+def synchronize_jax(jax_module: Any) -> None:
+    if hasattr(jax_module, "effects_barrier"):
+        jax_module.effects_barrier()
+
+    jax_module.block_until_ready(jax_module.device_put(0))
+
+
+def optional_cfg_value(cfg: Any, path: str, default: Any = None) -> Any:
+    value = OmegaConf.select(cfg, path, default=default)
+    return value
+
+
+def configure_xla_flags(cfg: Any) -> None:
+    xla_flag_map = {
+        "triton_gemm": "--xla_gpu_triton_gemm_any=True",
+        "latency_hiding_scheduler": "--xla_gpu_enable_latency_hiding_scheduler=true",
+        "command_buffer": "--xla_gpu_enable_command_buffer=FUSION",
+    }
+
+    xla_flags = optional_cfg_value(cfg, "system.xla_flags")
+    if xla_flags:
+        flag_parts: list[str] = []
+        for flag in xla_flags:
+            flag_parts.append(xla_flag_map.get(str(flag), str(flag)))
+        os.environ["XLA_FLAGS"] = " ".join(flag_parts)
+        print(f"XLA_FLAGS={os.environ['XLA_FLAGS']}")
+    else:
+        os.environ.pop("XLA_FLAGS", None)
+        print("XLA_FLAGS=<unset>")
+
+
+def configure_jax_runtime(cfg: Any) -> Any:
+    configure_xla_flags(cfg)
+
+    import jax
+
+    precision = optional_cfg_value(cfg, "system.precision", default="highest")
+    jax.config.update("jax_default_matmul_precision", str(precision))
+    print(f"jax_default_matmul_precision={precision}")
+
+    if env_flag("RUN_CONFIG_INITIALISE_JAX_BACKEND"):
+        jax.devices()
+
+    return jax
+
+
 def run_entrypoint(entrypoint_spec: str, cfg: Any) -> None:
+    jax = configure_jax_runtime(cfg)
     entrypoint: Callable[[Any], Any] = import_callable(entrypoint_spec)
     if not env_flag("RUN_CONFIG_PROFILE"):
         entrypoint(cfg)
         return
-
-    import jax
 
     profile_dir = Path(os.getenv("RUN_CONFIG_PROFILE_DIR", default_profile_dir()))
     profile_dir.mkdir(parents=True, exist_ok=True)
@@ -60,14 +96,20 @@ def run_entrypoint(entrypoint_spec: str, cfg: Any) -> None:
     else:
         entrypoint(cfg)
 
-    for device in jax.devices():
-        device.synchronize_all_activity()
-    time.sleep(float(os.getenv("RUN_CONFIG_PROFILE_FLUSH_SECONDS", "2")))
+    try:
+        synchronize_jax(jax)
+        time.sleep(float(os.getenv("RUN_CONFIG_PROFILE_FLUSH_SECONDS", "2")))
+    except Exception as exc:
+        print(f"Warning: JAX profiling synchronization failed: {exc!r}", file=sys.stderr)
 
     if env_flag("RUN_CONFIG_PROFILE_MEMORY", "1"):
         memory_profile = profile_dir / "device_memory.prof"
-        jax.profiler.save_device_memory_profile(str(memory_profile))
-        print(f"Writing JAX device memory profile to: {memory_profile}")
+        try:
+            jax.profiler.save_device_memory_profile(str(memory_profile))
+            print(f"Writing JAX device memory profile to: {memory_profile}")
+        except Exception as exc:
+            (profile_dir / "device_memory_error.txt").write_text(f"{exc!r}\n")
+            print(f"Warning: JAX device memory profile failed: {exc!r}", file=sys.stderr)
     (profile_dir / "profile_finished.txt").write_text(f"{time.time()}\n")
 
 
@@ -94,7 +136,6 @@ def main() -> None:
         help="Python callable in the form module.path:function_name. Overrides the manifest entrypoint.",
     )
     args = parser.parse_args()
-    initialise_jax_backend()
 
     if args.config_file:
         config_path = Path(args.config_file)
