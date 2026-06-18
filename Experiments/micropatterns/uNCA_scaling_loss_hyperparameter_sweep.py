@@ -331,6 +331,7 @@ def run(cfg):
     model = build_model(cfg)
     run_name = build_filename(cfg)
     optimiser,opt_name = build_optimizer(cfg)
+    run_name += f"_{opt_name}"
     data,_,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_data(cfg)
     trainer = NCA_Trainer(
         NCA_model=model,
