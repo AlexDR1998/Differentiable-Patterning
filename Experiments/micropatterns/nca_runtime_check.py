@@ -38,8 +38,8 @@ def run(cfg):
     from Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep import build_model,build_data_augmenter,load_data
     
     model = build_model(cfg)
-    optimiser,_ = build_optimizer(cfg)
-    model = build_model(cfg)
+    # optimiser,_ = build_optimizer(cfg)
+    # model = build_model(cfg)
     run_name = build_filename(cfg)
     optimiser,opt_name = build_optimizer(cfg)
     data,_,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_data(cfg)
