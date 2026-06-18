@@ -25,8 +25,12 @@ def env_flag(name: str, default: str = "0") -> bool:
 
 
 def default_profile_dir() -> Path:
-    job_id = os.getenv("SLURM_JOB_ID", "manual")
     task_id = os.getenv("SLURM_ARRAY_TASK_ID", "0")
+    array_log_dir = os.getenv("SLURM_ARRAY_LOG_DIR")
+    if array_log_dir:
+        return Path(array_log_dir) / f"{task_id}.profile"
+
+    job_id = os.getenv("SLURM_JOB_ID", "manual")
     root = Path(os.getenv("SLURM_IO_ROOT", REPO_ROOT / "output"))
     return root / "profiles" / f"{job_id}_{task_id}"
 

@@ -37,10 +37,14 @@ def maybe_save_gpu_profile(step):
 	if step != profile_step:
 		return
 
-	job_id = os.getenv("SLURM_JOB_ID", "manual")
 	task_id = os.getenv("SLURM_ARRAY_TASK_ID", "0")
-	root = Path(os.getenv("SLURM_IO_ROOT", "output"))
-	profile_dir = root / "profiles" / f"{job_id}_{task_id}"
+	profile_dir_env = os.getenv("PROFILE_GPU_DIR") or os.getenv("RUN_CONFIG_PROFILE_DIR")
+	if profile_dir_env is None:
+		job_id = os.getenv("SLURM_JOB_ID", "manual")
+		root = Path(os.getenv("SLURM_IO_ROOT", "output"))
+		profile_dir = root / "profiles" / f"{job_id}_{task_id}"
+	else:
+		profile_dir = Path(profile_dir_env)
 	profile_dir.mkdir(parents=True, exist_ok=True)
 	profile_path = profile_dir / f"train_step_{step}_device_memory.prof"
 
