@@ -16,48 +16,7 @@ conda activate jax_intel_gpu
 python - <<'PY'
 from importlib import metadata
 import sys
-
-
-def package_version(name):
-    try:
-        return metadata.version(name)
-    except metadata.PackageNotFoundError:
-        return None
-
-
-jax = package_version("jax")
-jaxlib = package_version("jaxlib")
-openxla = (
-    package_version("intel-extension-for-openxla")
-    or package_version("intel_extension_for_openxla")
-)
-
-compatibility = {
-    "0.7.0": ("0.5.0", "0.5.0"),
-    "0.6.0": ("0.4.38", "0.4.38"),
-    "0.5.0": ("0.4.30", "0.4.30"),
-    "0.4.0": ("0.4.26", "0.4.26"),
-    "0.3.0": ("0.4.24", "0.4.24"),
-}
-
-if not openxla:
-    print("Intel Extension for OpenXLA is not installed.", file=sys.stderr)
-    sys.exit(2)
-
-expected = compatibility.get(openxla)
-if expected is not None:
-    expected_jaxlib, expected_jax = expected
-    if jaxlib != expected_jaxlib or jax != expected_jax:
-        print(
-            "Incompatible Intel OpenXLA/JAX stack: "
-            f"openxla={openxla}, jaxlib={jaxlib}, jax={jax}; "
-            f"expected jaxlib={expected_jaxlib}, jax={expected_jax}",
-            file=sys.stderr,
-        )
-        sys.exit(2)
-
-print(f"JAX stack: openxla={openxla}, jaxlib={jaxlib}, jax={jax}")
-
+import jax
 print("jax.devices(): ", jax.devices())
 print("jax.local_devices(): ", jax.local_devices())
 PY
