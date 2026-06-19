@@ -57,6 +57,9 @@ if expected is not None:
         sys.exit(2)
 
 print(f"JAX stack: openxla={openxla}, jaxlib={jaxlib}, jax={jax}")
+
+print("jax.devices(): ", jax.devices())
+print("jax.local_devices(): ", jax.local_devices())
 PY
 
 set -u
