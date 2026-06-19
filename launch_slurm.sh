@@ -64,15 +64,6 @@ export PVC_PATH
 export DATA_PATH_BASE="${DATA_PATH_BASE:-$IO_ROOT/Data/}"
 export MODEL_SAVE_PATH="${MODEL_SAVE_PATH:-$IO_ROOT/Models/}"
 
-export INTEL_MAX_GPU_VRAM_GB="${INTEL_MAX_GPU_VRAM_GB:-128}"
-export XLA_PYTHON_CLIENT_MEM_FRACTION="${XLA_PYTHON_CLIENT_MEM_FRACTION:-0.98}"
-export ZE_FLAT_DEVICE_HIERARCHY="${ZE_FLAT_DEVICE_HIERARCHY:-COMPOSITE}"
-export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0}"
-export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:gpu}"
-export SYCL_DEVICE_FILTER="${SYCL_DEVICE_FILTER:-level_zero:gpu}"
-export JAX_PLATFORMS="${JAX_PLATFORMS:-sycl}"
-export ZE_ENABLE_TRACING_LAYER="${ZE_ENABLE_TRACING_LAYER:-1}"
-export UseCyclesPerSecondTimer="${UseCyclesPerSecondTimer:-1}"
 export RUN_CONFIG_PROFILE="$PROFILE_GPU"
 export RUN_CONFIG_PROFILE_TRACE=0
 export RUN_CONFIG_PROFILE_MEMORY=1
@@ -93,23 +84,13 @@ echo "Running manifest index $SLURM_ARRAY_TASK_ID/$((N_JOBS - 1)): $MANIFEST"
 echo "Using code root: $PVC_PATH"
 echo "Using job IO root: $IO_ROOT/"
 echo "Writing wandb local files to: $WANDB_DIR"
-echo "Intel GPU target: ${INTEL_MAX_GPU_VRAM_GB} GB, XLA fraction $XLA_PYTHON_CLIENT_MEM_FRACTION"
 echo "GPU profiling: $PROFILE_GPU"
 echo "JAX profiles: $RUN_CONFIG_PROFILE_DIR"
-python - <<'PY'
-import os
-
-vram_gb = float(os.environ["INTEL_MAX_GPU_VRAM_GB"])
-fraction = float(os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"])
-print(f"Expected XLA preallocation target: {vram_gb * fraction:.1f} GB")
-PY
 
 echo "GPU view:"
 echo "  Host: $(hostname)"
 echo "  SLURM_JOB_ID: ${SLURM_JOB_ID:-unset}"
 echo "  SLURM_JOB_GPUS: ${SLURM_JOB_GPUS:-unset}"
-echo "  ZE_AFFINITY_MASK: $ZE_AFFINITY_MASK"
-echo "  ZE_FLAT_DEVICE_HIERARCHY: $ZE_FLAT_DEVICE_HIERARCHY"
 command -v sycl-ls >/dev/null 2>&1 && sycl-ls || echo "  sycl-ls: not found"
 
 python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
