@@ -12,7 +12,7 @@ configs:
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
     logging.wandb.group: intel_debug_basic
-    run.iterations: 32
+    run.iterations: 8
     loss.primary:
     - vgg_grouped
     - l2_grouped
@@ -120,7 +120,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 32
+      iterations: 8
       warmup: 64
       log_every: 100
       clear_cache_every: 500
@@ -149,7 +149,7 @@ configs:
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
     logging.wandb.group: intel_debug_basic
-    run.iterations: 32
+    run.iterations: 8
     loss.primary:
     - vgg_grouped
     - l2_grouped
@@ -257,7 +257,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 32
+      iterations: 8
       warmup: 64
       log_every: 100
       clear_cache_every: 500
@@ -286,7 +286,7 @@ configs:
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
     logging.wandb.group: intel_debug_basic
-    run.iterations: 32
+    run.iterations: 8
     loss.primary:
     - vgg_grouped
     - l2_grouped
@@ -394,7 +394,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 32
+      iterations: 8
       warmup: 64
       log_every: 100
       clear_cache_every: 500
