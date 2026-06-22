@@ -615,14 +615,32 @@ class NCA_Trainer(object):
 		for i in pbar:
 			#prev_loss = mean_loss
 			key = jr.fold_in(key,i)
-			if CLEAR_CACHE_EVERY is not None and CLEAR_CACHE_EVERY>0:
-				if i>0 and i%CLEAR_CACHE_EVERY==0:
-					#print(f"Clearing cache at step {i}")
-					jax.block_until_ready((x, y, opt_state))
-					jax.clear_caches()
-					_dummy_outputs = make_step(nca, x, y, t, opt_state,key)  # type: ignore # Do a dummy step to recompile and clear cache
-					jax.block_until_ready(_dummy_outputs)
-					del _dummy_outputs
+			CLEAR_CACHE_STEP = (
+				CLEAR_CACHE_EVERY is not None 
+				and CLEAR_CACHE_EVERY>0
+				and i>0
+				and i%CLEAR_CACHE_EVERY==0
+			)
+			if CLEAR_CACHE_STEP:
+				print(f"Clearing cache at step {i}")
+				jax.block_until_ready((x, y, opt_state))
+				jax.clear_caches()
+				dry_outputs = make_step(nca, x, y, t, opt_state, key)
+				jax.block_until_ready(dry_outputs)
+
+				_, dry_x_new, dry_y_new, _, _, _, _, _ = dry_outputs
+				key, dry_callback_key = jr.split(key)
+				dry_callback_outputs = self.DATA_AUGMENTER.data_callback(
+					dry_x_new,
+					dry_y_new,
+					i,
+					dry_callback_key,
+				)
+				jax.block_until_ready(dry_callback_outputs)
+
+				del dry_outputs
+				del dry_callback_outputs
+
 			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = make_step(nca, x, y, t, opt_state,key)  # type: ignore
 			maybe_save_gpu_profile(i)
 			loss_diff = mean_loss - best_loss
@@ -653,7 +671,7 @@ class NCA_Trainer(object):
 				error = 1
 				error_at=i
 				break
-			elif any(list(map(lambda x: jnp.any(jnp.isnan(x)), x))):
+			elif any(list(map(lambda x: jnp.any(jnp.isnan(x)), x_new))):
 				error = 2
 				error_at=i
 				break
@@ -663,7 +681,7 @@ class NCA_Trainer(object):
 				break
 			
 			# Do data augmentation update
-			if error==0:
+			if error==0 and not CLEAR_CACHE_STEP:
 				# if (loss_diff<loss_diff_thresh or i<WARMUP):
 					# x_for_callback = log_dict.get("x_processed", x_new)
 				x, y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)

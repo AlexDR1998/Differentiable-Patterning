@@ -11,7 +11,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -129,7 +129,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -145,7 +145,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -263,7 +263,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -279,7 +279,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -397,7 +397,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -413,7 +413,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -531,7 +531,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -547,7 +547,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -665,7 +665,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -681,7 +681,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -799,7 +799,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -815,7 +815,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -933,7 +933,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -949,7 +949,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -1067,7 +1067,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -1083,7 +1083,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -1201,7 +1201,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -1217,7 +1217,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -1335,7 +1335,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -1351,7 +1351,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -1469,7 +1469,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -1485,7 +1485,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -1603,7 +1603,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -1619,7 +1619,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -1737,7 +1737,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -1753,7 +1753,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -1871,7 +1871,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -1887,7 +1887,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -2005,7 +2005,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
@@ -2021,7 +2021,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_loss_cache_spike_debug_3
+    logging.wandb.group: nca_loss_cache_spike_debug_4
     run.iterations: 400
     loss.primary:
     - l2_grouped
@@ -2139,7 +2139,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: nca_loss_cache_spike_debug_3
+        group: nca_loss_cache_spike_debug_4
         tags: null
     knockout:
       time: null
