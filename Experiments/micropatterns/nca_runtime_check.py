@@ -32,12 +32,15 @@ def build_filename(cfg):
     return filename
 
 def run(cfg):
+    import jax
     from NCA.trainer.NCA_trainer import NCA_Trainer
     from NCA.trainer.optimizer import build_optimizer
     from Experiments.config_helpers import build_tags
     from Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep import build_model,build_data_augmenter,load_data
     
-    model = build_model(cfg)
+    key = jax.random.PRNGKey(cfg.seed)
+    model_key, train_key = jax.random.split(key)
+    model = build_model(cfg, key=model_key)
     # optimiser,_ = build_optimizer(cfg)
     # model = build_model(cfg)
     run_name = build_filename(cfg)
@@ -92,5 +95,6 @@ def run(cfg):
         
         LOG_EVERY=100,
         CLEAR_CACHE_EVERY=600,
-        LOOP_AUTODIFF=cfg.trainer.loop_autodiff
+        LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
+        key=train_key,
     )

@@ -1,5 +1,5 @@
 experiment_name: nca_loss_cache_spike_debug
-entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+entrypoint: Experiments.micropatterns.nca_runtime_check:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_loss_cache_debug.yaml
 output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/nca_loss_cache_spike_debug
