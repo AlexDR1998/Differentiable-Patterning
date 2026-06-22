@@ -25,13 +25,14 @@ from Experiments.config_helpers import build_tags
 
 from Common.dataloader.micropattern import load_micropattern_circle_nodal_knockout_9ch_explicit_colony
 
-def build_model(cfg):
+def build_model(cfg, key=None):
     if cfg.model.family == "NCA":
         model = NCA(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
             FIRE_RATE=cfg.model.fire_rate,
             PADDING=cfg.model.padding,
+            key=key,
         )
     elif cfg.model.family == "uNCA":
         model = uNCA(
@@ -46,7 +47,8 @@ def build_model(cfg):
                 "width_factor": cfg.model.upsampler.width_factor,
                 "fourier_modes" : cfg.model.upsampler.fourier_modes,
                 "upsample_factor": cfg.model.upscale_factor
-            }
+            },
+            key=key,
             
         )
     elif cfg.model.family == "isouNCA":
@@ -63,7 +65,8 @@ def build_model(cfg):
                 "width_factor": cfg.model.upsampler.width_factor,
                 "radius" : cfg.model.upsampler.radius,
                 "upsample_factor": cfg.model.upscale_factor
-            }
+            },
+            key=key,
         )
     else:
         raise ValueError(f"Unknown model family {cfg.model.family}")
@@ -325,10 +328,9 @@ def load_data(cfg):
     
 
 def run(cfg):
-    model = build_model(cfg)
-    optimiser,_ = build_optimizer(cfg)
-
-    model = build_model(cfg)
+    key = jax.random.PRNGKey(cfg.seed)
+    model_key, train_key = jax.random.split(key)
+    model = build_model(cfg, key=model_key)
     run_name = build_filename(cfg)
     optimiser,opt_name = build_optimizer(cfg)
     run_name += f"_{opt_name}"
@@ -379,5 +381,6 @@ def run(cfg):
         
         LOG_EVERY=cfg.trainer.log_every,
         CLEAR_CACHE_EVERY=cfg.trainer.clear_cache_every,
-        LOOP_AUTODIFF=cfg.trainer.loop_autodiff
+        LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
+        key=train_key,
     )
