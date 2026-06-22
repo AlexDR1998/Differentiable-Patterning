@@ -13,6 +13,7 @@ PVC_PATH = os.getenv("PVC_PATH")
 LOG_BACKEND = os.environ.get("LOG_BACKEND", "wandb")
 # PVC_PATH = "mnt/ceph/ar-dp/"  # Path to the PVC where the data is stored
 #if LOG_BACKEND=="wandb":
+from Common.utils import get_jax_memory_stats
 from Common.trainer.abstract_wandb_log import Train_log
 #elif LOG_BACKEND=="tensorboard":
 #	from Common.trainer.abstract_tensorboard_log import Train_log
@@ -45,6 +46,9 @@ class NCA_Train_log(Train_log):
 					"x_processed": PyTree[Float[Array, "N CHANNELS x y"], "B"]}
 			i: training step
 		"""
+		memory_stats = get_jax_memory_stats()
+		for key in memory_stats:
+			self.log_scalar(f"Memory/{key}",memory_stats[key],step=i)
 		x_latent = x["x_latent"]
 		x_processed = x["x_processed"]
 		BATCHES = len(x_latent)
