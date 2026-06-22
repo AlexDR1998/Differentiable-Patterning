@@ -385,6 +385,7 @@ def run(cfg):
         POOL_ADMISSION_CONFIG={
             "enabled": cfg.trainer.get("pool_admission_enabled", True),
             "relative_threshold": cfg.trainer.get("pool_admission_relative_threshold", 1.25),
+            "previous_relative_threshold": cfg.trainer.get("pool_admission_previous_relative_threshold", 1.10),
             "absolute_threshold": cfg.trainer.get("pool_admission_absolute_threshold", None),
             "ema_decay": cfg.trainer.get("pool_admission_ema_decay", 0.95),
             "warmup": cfg.trainer.get("pool_admission_warmup", None),

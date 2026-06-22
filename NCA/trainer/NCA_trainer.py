@@ -65,25 +65,36 @@ class PoolAdmissionController:
 		self,
 		enabled=True,
 		relative_threshold=1.25,
+		previous_relative_threshold=1.10,
 		absolute_threshold=None,
 		ema_decay=0.95,
 		warmup=0,
 	):
 		self.enabled = enabled
 		self.relative_threshold = relative_threshold
+		self.previous_relative_threshold = previous_relative_threshold
 		self.absolute_threshold = absolute_threshold
 		self.ema_decay = ema_decay
 		self.warmup = warmup
 		self.loss_ema = None
+		self.previous_admitted_loss = None
 		self.admit_count = 0
 		self.reject_count = 0
 
 	def decide(self, loss_value, step, cache_clear_step, error=0):
 		loss_ref = loss_value if self.loss_ema is None else self.loss_ema
 		loss_ratio = loss_value / max(loss_ref, 1e-12)
+		previous_loss_ref = loss_value if self.previous_admitted_loss is None else self.previous_admitted_loss
+		previous_loss_ratio = loss_value / max(previous_loss_ref, 1e-12)
 		check_loss_spike = self.enabled and self.loss_ema is not None and step >= self.warmup
 		reject_cache_clear = bool(cache_clear_step)
 		reject_relative = check_loss_spike and loss_ratio > self.relative_threshold
+		reject_previous_relative = (
+			self.enabled
+			and self.previous_admitted_loss is not None
+			and step >= self.warmup
+			and previous_loss_ratio > self.previous_relative_threshold
+		)
 		reject_absolute = (
 			check_loss_spike
 			and self.absolute_threshold is not None
@@ -93,20 +104,25 @@ class PoolAdmissionController:
 			error == 0
 			and not reject_cache_clear
 			and not reject_relative
+			and not reject_previous_relative
 			and not reject_absolute
 		)
 		return {
 			"admit": admit,
 			"reject_cache_clear": reject_cache_clear,
 			"reject_relative": reject_relative,
+			"reject_previous_relative": reject_previous_relative,
 			"reject_absolute": reject_absolute,
 			"loss_ref": loss_ref,
 			"loss_ratio": loss_ratio,
+			"previous_loss_ref": previous_loss_ref,
+			"previous_loss_ratio": previous_loss_ratio,
 		}
 
 	def update(self, decision, loss_value):
 		if decision["admit"]:
 			self.admit_count += 1
+			self.previous_admitted_loss = loss_value
 			if self.enabled:
 				if self.loss_ema is None:
 					self.loss_ema = loss_value
@@ -124,9 +140,12 @@ class PoolAdmissionController:
 			"pool/reject": int(not decision["admit"]),
 			"pool/reject_cache_clear": int(decision["reject_cache_clear"]),
 			"pool/reject_relative": int(decision["reject_relative"]),
+			"pool/reject_previous_relative": int(decision["reject_previous_relative"]),
 			"pool/reject_absolute": int(decision["reject_absolute"]),
 			"pool/loss_ref": decision["loss_ref"],
 			"pool/loss_ratio": decision["loss_ratio"],
+			"pool/previous_loss_ref": decision["previous_loss_ref"],
+			"pool/previous_loss_ratio": decision["previous_loss_ratio"],
 			"pool/admit_count": self.admit_count,
 			"pool/reject_count": self.reject_count,
 		}
@@ -459,6 +478,7 @@ class NCA_Trainer(object):
 		pool_admission_config = {
 			"enabled": True,
 			"relative_threshold": 1.25,
+			"previous_relative_threshold": 1.10,
 			"absolute_threshold": None,
 			"ema_decay": 0.95,
 			"warmup": None,
@@ -695,6 +715,7 @@ class NCA_Trainer(object):
 		pool_admission = PoolAdmissionController(
 			enabled=pool_admission_config["enabled"],
 			relative_threshold=pool_admission_config["relative_threshold"],
+			previous_relative_threshold=pool_admission_config["previous_relative_threshold"],
 			absolute_threshold=pool_admission_config["absolute_threshold"],
 			ema_decay=pool_admission_config["ema_decay"],
 			warmup=WARMUP if pool_admission_config["warmup"] is None else pool_admission_config["warmup"],

@@ -28,6 +28,10 @@ def build_filename(cfg):
     else:
         _xla_str = ""
     filename += f"_{cfg.system.precision}_loop{cfg.trainer.loop_autodiff}_crop{cfg.loss.random_crop}_{_xla_str}"
+    pool_enabled = cfg.trainer.get("pool_admission_enabled", True)
+    pool_rel = cfg.trainer.get("pool_admission_relative_threshold", 1.25)
+    pool_prev_rel = cfg.trainer.get("pool_admission_previous_relative_threshold", 1.10)
+    filename += f"_pool{pool_enabled}_ema{pool_rel}_prev{pool_prev_rel}"
 
     return filename
 
@@ -100,6 +104,7 @@ def run(cfg):
         POOL_ADMISSION_CONFIG={
             "enabled": cfg.trainer.get("pool_admission_enabled", True),
             "relative_threshold": cfg.trainer.get("pool_admission_relative_threshold", 1.25),
+            "previous_relative_threshold": cfg.trainer.get("pool_admission_previous_relative_threshold", 1.10),
             "absolute_threshold": cfg.trainer.get("pool_admission_absolute_threshold", None),
             "ema_decay": cfg.trainer.get("pool_admission_ema_decay", 0.95),
             "warmup": cfg.trainer.get("pool_admission_warmup", None),
