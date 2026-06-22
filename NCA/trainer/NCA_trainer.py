@@ -618,8 +618,11 @@ class NCA_Trainer(object):
 			if CLEAR_CACHE_EVERY is not None and CLEAR_CACHE_EVERY>0:
 				if i>0 and i%CLEAR_CACHE_EVERY==0:
 					#print(f"Clearing cache at step {i}")
+					jax.block_until_ready((x, y, opt_state))
 					jax.clear_caches()
-					_,_,_,_,_,_,_,_ = make_step(nca, x, y, t, opt_state,key)  # type: ignore # Do a dummy step to recompile and clear cache
+					_dummy_outputs = make_step(nca, x, y, t, opt_state,key)  # type: ignore # Do a dummy step to recompile and clear cache
+					jax.block_until_ready(_dummy_outputs)
+					del _dummy_outputs
 			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = make_step(nca, x, y, t, opt_state,key)  # type: ignore
 			maybe_save_gpu_profile(i)
 			loss_diff = mean_loss - best_loss
