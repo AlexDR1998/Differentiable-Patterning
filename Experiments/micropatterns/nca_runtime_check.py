@@ -45,6 +45,7 @@ def run(cfg):
     # model = build_model(cfg)
     run_name = build_filename(cfg)
     optimiser,opt_name = build_optimizer(cfg)
+    run_name += f"_{opt_name}"
     data,_,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_data(cfg)
 
 
@@ -93,8 +94,8 @@ def run(cfg):
             "layers":cfg.loss.layers
         },
         
-        LOG_EVERY=100,
-        CLEAR_CACHE_EVERY=600,
+        LOG_EVERY=cfg.trainer.log_every,
+        CLEAR_CACHE_EVERY=cfg.trainer.clear_cache_every,
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
         key=train_key,
     )
