@@ -382,5 +382,12 @@ def run(cfg):
         LOG_EVERY=cfg.trainer.log_every,
         CLEAR_CACHE_EVERY=cfg.trainer.clear_cache_every,
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
+        POOL_ADMISSION_CONFIG={
+            "enabled": cfg.trainer.get("pool_admission_enabled", True),
+            "relative_threshold": cfg.trainer.get("pool_admission_relative_threshold", 1.25),
+            "absolute_threshold": cfg.trainer.get("pool_admission_absolute_threshold", None),
+            "ema_decay": cfg.trainer.get("pool_admission_ema_decay", 0.95),
+            "warmup": cfg.trainer.get("pool_admission_warmup", None),
+        },
         key=train_key,
     )

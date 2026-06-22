@@ -57,6 +57,81 @@ def maybe_save_gpu_profile(step):
 		error_path.write_text(f"{exc!r}\n")
 		print(f"Warning: train-step device memory profile failed: {exc!r}", flush=True)
 
+
+class PoolAdmissionController:
+	"""Tracks whether a rollout should be admitted into the recurrent state pool."""
+
+	def __init__(
+		self,
+		enabled=True,
+		relative_threshold=1.25,
+		absolute_threshold=None,
+		ema_decay=0.95,
+		warmup=0,
+	):
+		self.enabled = enabled
+		self.relative_threshold = relative_threshold
+		self.absolute_threshold = absolute_threshold
+		self.ema_decay = ema_decay
+		self.warmup = warmup
+		self.loss_ema = None
+		self.admit_count = 0
+		self.reject_count = 0
+
+	def decide(self, loss_value, step, cache_clear_step, error=0):
+		loss_ref = loss_value if self.loss_ema is None else self.loss_ema
+		loss_ratio = loss_value / max(loss_ref, 1e-12)
+		check_loss_spike = self.enabled and self.loss_ema is not None and step >= self.warmup
+		reject_cache_clear = bool(cache_clear_step)
+		reject_relative = check_loss_spike and loss_ratio > self.relative_threshold
+		reject_absolute = (
+			check_loss_spike
+			and self.absolute_threshold is not None
+			and loss_value > loss_ref + self.absolute_threshold
+		)
+		admit = (
+			error == 0
+			and not reject_cache_clear
+			and not reject_relative
+			and not reject_absolute
+		)
+		return {
+			"admit": admit,
+			"reject_cache_clear": reject_cache_clear,
+			"reject_relative": reject_relative,
+			"reject_absolute": reject_absolute,
+			"loss_ref": loss_ref,
+			"loss_ratio": loss_ratio,
+		}
+
+	def update(self, decision, loss_value):
+		if decision["admit"]:
+			self.admit_count += 1
+			if self.enabled:
+				if self.loss_ema is None:
+					self.loss_ema = loss_value
+				else:
+					self.loss_ema = (
+						self.ema_decay * self.loss_ema
+						+ (1 - self.ema_decay) * loss_value
+					)
+		else:
+			self.reject_count += 1
+
+	def log_dict(self, decision):
+		return {
+			"pool/admit": int(decision["admit"]),
+			"pool/reject": int(not decision["admit"]),
+			"pool/reject_cache_clear": int(decision["reject_cache_clear"]),
+			"pool/reject_relative": int(decision["reject_relative"]),
+			"pool/reject_absolute": int(decision["reject_absolute"]),
+			"pool/loss_ref": decision["loss_ref"],
+			"pool/loss_ratio": decision["loss_ratio"],
+			"pool/admit_count": self.admit_count,
+			"pool/reject_count": self.reject_count,
+		}
+
+
 class NCA_Trainer(object):
 	"""
 	General class for training NCA model to data trajectories
@@ -333,6 +408,7 @@ class NCA_Trainer(object):
 				  "time":None,
 				  "channel":None
 			  },
+			  POOL_ADMISSION_CONFIG = None,
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
@@ -380,6 +456,15 @@ class NCA_Trainer(object):
 
 		if key is None:
 			key = jr.PRNGKey(int(time.time()))
+		pool_admission_config = {
+			"enabled": True,
+			"relative_threshold": 1.25,
+			"absolute_threshold": None,
+			"ema_decay": 0.95,
+			"warmup": None,
+		}
+		if POOL_ADMISSION_CONFIG is not None:
+			pool_admission_config.update(POOL_ADMISSION_CONFIG)
 
 		self.TRAIN_CONFIG = {
 			"t":t,
@@ -391,9 +476,10 @@ class NCA_Trainer(object):
 			"CLEAR_CACHE_EVERY":CLEAR_CACHE_EVERY,
 			"WRITE_IMAGES":WRITE_IMAGES,
 			"LOSS_FUNC_STR":LOSS_FUNC_STR,
+			"POOL_ADMISSION_CONFIG":pool_admission_config,
 			"LOOP_AUTODIFF":LOOP_AUTODIFF,
 			"SPARSE_PRUNING":SPARSE_PRUNING,
-			"TARGET_SPARSITY":TARGET_SPARSITY
+			"TARGET_SPARSITY":TARGET_SPARSITY,
 		}
 		
 		self.setup_logging("wandb",wandb_args=wandb_args,KNOCKOUT_ARGS=KNOCKOUT_ARGS)
@@ -602,12 +688,17 @@ class NCA_Trainer(object):
 		best_loss = 100000000
 		loss_thresh = 1e16 # If loss exceeds this, training is diverging to NaN
 		model_saved = False
-		loss_diff = 0
 		#prev_loss = 0
 		mean_loss = 0
-		loss_diff_thresh = 1e-2 # How much the loss needs to improve by to trigger a data update.
 		error = 0
 		error_at = 0
+		pool_admission = PoolAdmissionController(
+			enabled=pool_admission_config["enabled"],
+			relative_threshold=pool_admission_config["relative_threshold"],
+			absolute_threshold=pool_admission_config["absolute_threshold"],
+			ema_decay=pool_admission_config["ema_decay"],
+			warmup=WARMUP if pool_admission_config["warmup"] is None else pool_admission_config["warmup"],
+		)
 		# SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
 		
 		pbar = tqdm(range(iters))
@@ -643,12 +734,9 @@ class NCA_Trainer(object):
 
 			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = make_step(nca, x, y, t, opt_state,key)  # type: ignore
 			maybe_save_gpu_profile(i)
-			loss_diff = mean_loss - best_loss
+			mean_loss_value = float(jax.device_get(mean_loss))
 
 			log_dict["best_loss"] = best_loss
-			# print_dict = {k: v if isinstance(v, (int, float)) else str(v.shape) for k, v in log_dict.items()}
-			print_dict = {k:v for k,v in log_dict.items() if k not in ['x_latent','x_processed']}
-			pbar.set_postfix(print_dict)
 
 			# if SPARSE_PRUNING:
 				
@@ -663,10 +751,6 @@ class NCA_Trainer(object):
 			# 		nca.set_weights(ws)
 
 			
-			if self.IS_LOGGING:
-				# log_x = jtu.tree_map(self.NCA_model.latent_to_real, x_new)
-				self.LOGGER.tb_training_loop_log_sequence(log_dict, i, nca,write_images=WRITE_IMAGES,LOG_EVERY=LOG_EVERY)
-			
 			if jnp.isnan(mean_loss):
 				error = 1
 				error_at=i
@@ -680,21 +764,33 @@ class NCA_Trainer(object):
 				error_at=i
 				break
 			
-			# Do data augmentation update
-			if error==0 and not CLEAR_CACHE_STEP:
-				# if (loss_diff<loss_diff_thresh or i<WARMUP):
-					# x_for_callback = log_dict.get("x_processed", x_new)
-				x, y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
-					# x = jtu.tree_map(self.NCA_model.real_to_latent, x_aug)
-					# y = y_aug
-				
-				# Save model whenever mean_loss beats the previous best loss
-				if i>WARMUP:
-					if mean_loss < best_loss:
-						model_saved=True
-						self.NCA_model = nca
-						self.NCA_model.save(self.MODEL_PATH,overwrite=True)
-						best_loss = mean_loss
+			pool_decision = pool_admission.decide(
+				loss_value=mean_loss_value,
+				step=i,
+				cache_clear_step=CLEAR_CACHE_STEP,
+				error=error,
+			)
+			if pool_decision["admit"]:
+				key, callback_key = jr.split(key)
+				x, y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, callback_key)
+			pool_admission.update(pool_decision, mean_loss_value)
+			log_dict.update(pool_admission.log_dict(pool_decision))
+
+			# print_dict = {k: v if isinstance(v, (int, float)) else str(v.shape) for k, v in log_dict.items()}
+			print_dict = {k:v for k,v in log_dict.items() if k not in ['x_latent','x_processed']}
+			pbar.set_postfix(print_dict)
+			
+			# Save model whenever mean_loss beats the previous best loss
+			if i>WARMUP:
+				if mean_loss < best_loss:
+					model_saved=True
+					self.NCA_model = nca
+					self.NCA_model.save(self.MODEL_PATH,overwrite=True)
+					best_loss = mean_loss
+
+			if self.IS_LOGGING:
+				# log_x = jtu.tree_map(self.NCA_model.latent_to_real, x_new)
+				self.LOGGER.tb_training_loop_log_sequence(log_dict, i, nca,write_images=WRITE_IMAGES,LOG_EVERY=LOG_EVERY)
 						
 		
 		if error==0:

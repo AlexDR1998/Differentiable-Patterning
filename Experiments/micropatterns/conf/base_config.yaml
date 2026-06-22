@@ -26,6 +26,13 @@ trainer:
   log_directory: logs/
   loss_time_channel_mask: null
   loop_autodiff: checkpointed
+  clear_cache_every: 500
+  log_every: 100
+  pool_admission_enabled: true
+  pool_admission_relative_threshold: 1.25
+  pool_admission_absolute_threshold: null
+  pool_admission_ema_decay: 0.95
+  pool_admission_warmup: null
 
 optimiser:
   type: nadam
@@ -64,8 +71,6 @@ run:
   t: 32
   iterations: 2000
   warmup: 64
-  log_every: 100
-  clear_cache_every: 500
   write_images: true
   sparse_pruning: false
   target_sparsity: 0.5
