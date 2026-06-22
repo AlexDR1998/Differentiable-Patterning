@@ -27,6 +27,19 @@ from scipy.ndimage import shift, center_of_mass
 import itertools
 # Some convenient helper functions
 
+def get_jax_memory_stats():
+  """
+  Returns dict of memory usage stats for each jax device.
+  """
+  stats = {}
+  for d in jax.devices():
+    if hasattr(d, "memory_stats"):
+      s = d.memory_stats() or {}
+      for k, v in s.items():
+        if isinstance(v, (int, float)):
+          stats[f"memory/device_{d.id}/{k}"] = v
+  return stats
+
 
 def squarish(H):
   a = int(H**0.5)
