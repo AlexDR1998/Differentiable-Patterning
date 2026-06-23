@@ -8,15 +8,10 @@ MODEL_SAVE_PATH = os.getenv("MODEL_SAVE_PATH")
 sys.path.append(CODE_PATH)  # type: ignore
 os.chdir(CODE_PATH) # type: ignore
 
+from Experiments.micropatterns.config_helpers import build_loss_filename
+
 def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
-    loss_str = "_".join(cfg.loss.primary).lower()
-    loss_str += f"_vgg{cfg.loss.vgg_internal.lower()}"
-    loss_str += f"_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}"
-    loss_str += f"_cg{cfg.loss.regulariser_coeffs.contiguous_growth}"
-    if cfg.loss.random_crop:
-        loss_str += "_rc"
-    if cfg.loss.get("random_channel_shuffle", False):
-        loss_str += "_chshuffle"
+    loss_str = build_loss_filename(cfg)
     if cfg.system.xla_flags is not None:
         _xla_str = "xla_flags_"+"".join(list(cfg.system.xla_flags))
     else:

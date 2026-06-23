@@ -21,6 +21,49 @@ def _compact_value(value):
     return str(value)
 
 
+def compact_nonzero_config_string(values, aliases=None):
+    aliases = aliases or {}
+    parts = []
+    for key, value in values.items():
+        if value is None or value == 0:
+            continue
+        parts.append(f"{aliases.get(key, key)}{_compact_value(value)}")
+    return "_".join(parts)
+
+
+def uses_vgg_loss(loss_primary):
+    if isinstance(loss_primary, str):
+        loss_primary = [loss_primary]
+    return any("vgg" in loss_name for loss_name in loss_primary)
+
+
+def build_loss_filename(cfg, include_layers=False):
+    loss_str = "_".join(cfg.loss.primary).lower()
+    if include_layers:
+        loss_str += f"_layers{'-'.join(cfg.loss.layers).lower()}"
+    if uses_vgg_loss(cfg.loss.primary):
+        loss_str += f"_vgg{cfg.loss.vgg_internal.lower()}"
+        if cfg.loss.random_crop:
+            loss_str += "_rc"
+        if cfg.loss.get("random_channel_shuffle", False):
+            loss_str += "_chshuffle"
+    reg_str = compact_nonzero_config_string(
+        cfg.loss.regulariser_coeffs,
+        aliases={
+            "boundary": "bd",
+            "contiguous_growth": "cg",
+            "intermediate_state": "is",
+            "latent_channel_match": "lcm",
+            "latent_size": "ls",
+            "perturbation_conservation": "pc",
+            "update_sensitivity": "us",
+        },
+    )
+    if reg_str:
+        loss_str += f"_{reg_str}"
+    return loss_str
+
+
 def build_data_augmenter(cfg):
     if cfg.knockout.mode is None:
         @eqx.filter_jit
@@ -279,9 +322,9 @@ def build_model(cfg, key=None):
         f"model_{cfg.model.family}"
         f"_c{cfg.model.channels}"
         f"_dc{cfg.data.data_channels}"
-        f"_k{_compact_value(list(cfg.model.kernel_str))}"
-        f"_fr{cfg.model.fire_rate}"
-        f"_pad{cfg.model.padding}"
+        # f"_k{_compact_value(list(cfg.model.kernel_str))}"
+        # f"_fr{cfg.model.fire_rate}"
+        # f"_pad{cfg.model.padding}"
     )
     if cfg.model.family == "NCA":
         model = NCA(

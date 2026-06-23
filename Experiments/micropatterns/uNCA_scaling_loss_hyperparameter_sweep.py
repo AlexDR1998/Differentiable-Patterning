@@ -15,27 +15,17 @@ os.chdir(CODE_PATH) # type: ignore
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from NCA.trainer.optimizer import build_optimizer
 from Experiments.config_helpers import build_tags
-from Experiments.micropatterns.config_helpers import build_data_augmenter, load_data, build_model
+from Experiments.micropatterns.config_helpers import build_data_augmenter, build_loss_filename, load_data, build_model
 
 
 
 def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
-    loss_str = "_".join(cfg.loss.primary).lower()
-    loss_str += f"_layers{'-'.join(cfg.loss.layers).lower()}"
-    loss_str += f"_vgg{cfg.loss.vgg_internal.lower()}"
-    if cfg.loss.random_crop:
-        loss_str += "_rc"
-    if cfg.loss.get("random_channel_shuffle", False):
-        loss_str += "_chshuffle"
-    loss_str += f"_lcm{cfg.loss.regulariser_coeffs.latent_channel_match}"
-    loss_str += f"_is{cfg.loss.regulariser_coeffs.intermediate_state}"
-    loss_str += f"_ls{cfg.loss.regulariser_coeffs.latent_size}"
+    loss_str = build_loss_filename(cfg, include_layers=True)
     train_str = (
         f"train_{cfg.run.scaling}"
         f"_t{cfg.run.t}"
         f"_lr{cfg.optimiser.learn_rate}"
         f"_dr{cfg.optimiser.decay_rate}"
-        f"_loop{cfg.trainer.loop_autodiff}"
     )
     return "_".join([
         model_cfg_str,
