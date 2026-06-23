@@ -26,6 +26,7 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         f"runtime_t{cfg.run.t}"
         f"_{cfg.system.precision}"
         f"_loop{cfg.trainer.loop_autodiff}"
+        f"_gpu{cfg.system.gpu}"
     )
     if pool_enabled:
         pool_rel = cfg.trainer.get("pool_admission_relative_threshold", 1.25)
