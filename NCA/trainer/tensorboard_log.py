@@ -15,8 +15,28 @@ LOG_BACKEND = os.environ.get("LOG_BACKEND", "wandb")
 #if LOG_BACKEND=="wandb":
 from Common.utils import get_jax_memory_stats
 from Common.trainer.abstract_wandb_log import Train_log
+from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch
 #elif LOG_BACKEND=="tensorboard":
 #	from Common.trainer.abstract_tensorboard_log import Train_log
+
+
+def _is_grouped_9ch_colony_augmenter(data_augmenter):
+	return (
+		getattr(data_augmenter, "OBS_CHANNELS", None) == 12
+		and any(
+			cls.__module__ == "NCA.trainer.data_augmenter_9ch_colony"
+			and cls.__name__ == "DataAugmenter"
+			for cls in type(data_augmenter).__mro__
+		)
+	)
+
+
+def _trajectory_snapshot_channels(T, data_augmenter, t):
+	T_snapshot = T[::t]
+	if _is_grouped_9ch_colony_augmenter(data_augmenter):
+		return duplicate_x_channels_9ch(T_snapshot[:,:9])
+	return T_snapshot[:,:data_augmenter.OBS_CHANNELS]
+
 
 class NCA_Train_log(Train_log):
 	"""
@@ -124,7 +144,7 @@ class NCA_Train_log(Train_log):
 		for b in tqdm(range(BATCHES)):
 			T, latents = nca.run(t*NUMBER_OF_IMAGES, x[b][0], boundary_callback[b], SAVE_LATENTS=True)  # Shape T C x y
 			self.log_video("Evaluation/trajectory",T[:,:3],step=None)
-			T_snapshot = T[::t,:DATA_AUGMENTER.OBS_CHANNELS]
+			T_snapshot = _trajectory_snapshot_channels(T, DATA_AUGMENTER, t)
 			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
 			T_snapshot = repeat(T_snapshot,"x y -> x y 3")
 			SNAPSHOTS.append(T_snapshot)
@@ -215,7 +235,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 			_T_mono = rearrange(T[:,:9],"T (cx cy) X Y -> T () (cx X) (cy Y)",cx=3,cy=3)
 			_T_mono = repeat(_T_mono,"T () x y -> T 3 x y")
 			self.log_video("Evaluation/trajectory_monochrome",_T_mono,step=None) # type: ignore
-			T_snapshot = T[::t,:DATA_AUGMENTER.OBS_CHANNELS]
+			T_snapshot = _trajectory_snapshot_channels(T, DATA_AUGMENTER, t)
 			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
 			T_snapshot = repeat(T_snapshot,"x y -> x y 3")
 			SNAPSHOTS.append(T_snapshot)
