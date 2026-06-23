@@ -7,11 +7,15 @@ set -eo pipefail
 
 # Intel's conda hooks can read unset internal variables, so enable nounset only
 # after the module/conda environment is ready.
-module purge
-module load rhel9/default-dawn
-module load intelpython-conda
-module load intel-oneapi-mkl
-conda activate jax_intel_gpu
+# module purge
+# module load rhel9/default-dawn
+# module load intelpython-conda
+# module load intel-oneapi-mkl
+# conda activate jax_intel_gpu
+
+bash ~/dawn-jax/envs/jax-setup.sh
+conda activate jax
+
 
 python - <<'PY'
 from importlib import metadata
