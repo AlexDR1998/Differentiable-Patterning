@@ -520,7 +520,7 @@ def build_loss_initialiser(loss_strings,loss_args):
 		"epsilon":loss_args["epsilon"] if "epsilon" in loss_args else None,
 		"tau":loss_args["tau"] if "tau" in loss_args else None,
 		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
-		"samples":loss_args["samples"] if "samples" in loss_args else None
+		"samples":loss_args["samples"] if "samples" in loss_args else None,
 	}
 	LOSS_FUNC_INITS = {
 		"vgg":lambda y,key,where:loss_vgg.precompute_vgg_hyperspectral_target(y,key,where,aux=_vgg_aux),
@@ -585,6 +585,8 @@ def build_loss_functions(loss_strings,loss_args):
 		"normalize":loss_args["normalize"] if "normalize" in loss_args else None,
 		"samples":loss_args["samples"] if "samples" in loss_args else None,
 		"vgg_params":loss_args["vgg_params"] if "vgg_params" in loss_args else None,
+		"random_crop":loss_args["random_crop"] if "random_crop" in loss_args else False,
+		"random_channel_shuffle":loss_args["random_channel_shuffle"] if "random_channel_shuffle" in loss_args else False,
 		# "target_feats":loss_args["target_feats"] if "target_feats" in loss_args else None,
 	}
 	# _vision_extractor = None

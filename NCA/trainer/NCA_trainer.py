@@ -673,7 +673,11 @@ class NCA_Trainer(object):
 			vgg_target_cache_latent = loss_initialiser(_y_latent,key,self.LOSS_TIME_CHANNEL_MASK)
 
 			LOSS_ARGS = {**LOSS_ARGS, "vgg_params": vgg_target_cache_decoded["vgg_params"]} # Pre-trained VGG parameters for perceptual loss, if needed. Does not need batched.
-			if not LOSS_ARGS.get("random_crop", False):
+			use_cached_vgg_targets = (
+				not LOSS_ARGS.get("random_crop", False)
+				and not LOSS_ARGS.get("random_channel_shuffle", False)
+			)
+			if use_cached_vgg_targets:
 				# If we are not randomly re-cropping and sampling VGG target features,
 				# just compute them once and store in LOSS_CACHE.
 				# self.LOSS_CACHE = {
@@ -798,7 +802,10 @@ class NCA_Trainer(object):
 			log_dict.update(pool_admission.log_dict(pool_decision))
 
 			# print_dict = {k: v if isinstance(v, (int, float)) else str(v.shape) for k, v in log_dict.items()}
-			print_dict = {k:v for k,v in log_dict.items() if k not in ['x_latent','x_processed']}
+			print_dict = {
+				k:v for k,v in log_dict.items()
+				if k not in ['x_latent','x_processed'] and not k.startswith("pool/")
+			}
 			pbar.set_postfix(print_dict)
 			
 			# Save model whenever mean_loss beats the previous best loss

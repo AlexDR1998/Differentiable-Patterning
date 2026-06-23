@@ -1,18 +1,20 @@
-experiment_name: intel_baseline_nca_runtime_2
+experiment_name: nca_loss_cache_spike_debug
 entrypoint: Experiments.micropatterns.nca_runtime_check:run
-output_subdir: generated/intel_baseline_nca_runtime_2
-seed_mode: fixed
+output_subdir: generated/nca_loss_cache_spike_debug
+seed_mode: index
 grid:
   model.family: [NCA]
   model.channels: [32]
   run.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
-  logging.wandb.group: [intel_baseline_nca_runtime_2]
-  run.iterations: [100]
+  logging.wandb.group: [nca_loss_cache_spike_pool_gate_2]
+  run.iterations: [400]
   loss.primary: [[l2_grouped]]
   loss.layers: [[decoded]]
   loss.vgg_internal: [l2]
-  trainer.loop_autodiff: [checkpointed,lax]
+  trainer.loop_autodiff: [lax]
+  # trainer.loop_autodiff: [lax]
+  trainer.clear_cache_every: [150]
   data.downsample: [4]
   knockout.mode: [null]
   knockout.time: [null]
@@ -28,24 +30,35 @@ grid:
   model.upsampler.radius: [null]
   model.upsampler.depth: [null]
   model.upsampler.width_factor: [null]
-  system.precision: [highest,bfloat16,tensorfloat32]
-  system.gpu: [intel]
+  system.precision: [tensorfloat32]
+  trainer.pool_admission_enabled: [true,false]
+  trainer.pool_admission_relative_threshold: [null]
+  trainer.pool_admission_previous_relative_threshold: [null]
+  trainer.pool_admission_absolute_threshold: [null]
+  trainer.pool_admission_ema_decay: [0.95]
+  trainer.pool_admission_warmup: [null]
+  # optimiser.type: [muon]
+  trainer.log_every: [10]
   optimiser.type: [nadam,muon]
+  system.gpu: [H100]
+  seed: [1234]
   # system.xla_flags: ["--xla_gpu_enable_latency_hiding_scheduler=true", "--xla_gpu_enable_latency_hiding_scheduler=true --xla_gpu_triton_gemm_any=True", "--xla_gpu_triton_gemm_any=True", "--xla_gpu_enable_command_buffer=FUSION"]
-  system.xla_flags: [[triton_gemm],[latency_hiding_scheduler],[command_buffer],[triton_gemm,latency_hiding_scheduler],null]
-  seed: [5678]
-  # system.xla_flags: [null]
+  # system.xla_flags: [[triton_gemm],[latency_hiding_scheduler],[command_buffer],[triton_gemm,latency_hiding_scheduler],null]
+  system.xla_flags: [null]
   # system.xla_flags: [null]
   # system.xla_flags: ["--xla_gpu_enable_latency_hiding_scheduler=true"]
-  
-
 # groups:
   # - model.upscale_factor: [16,8,4,2]
     # run.t : [16,32,64,128]    
-# branches:
-#   - when:
-#       model.family: uNCA
-#     grid:
+branches:
+  - when:
+      trainer.pool_admission_enabled: true
+    grid:
+      trainer.pool_admission_relative_threshold: [1.1]
+      trainer.pool_admission_previous_relative_threshold: [1.0,1.1,1.2,1.3,1.4,1.5]
+      trainer.pool_admission_absolute_threshold: [null]
+      trainer.pool_admission_ema_decay: [0.95]
+      trainer.pool_admission_warmup: [null]
 #       model.upsampler.fourier_modes: [1,2,4]
 #       model.upsampler.depth: [2]
 #       model.upsampler.width_factor: [4]
