@@ -457,6 +457,42 @@ def _random_crop_to_vgg_input(x,key):
     x = crop_image_vmap(x, keys)
     return x
 
+
+def _permute_matching_channels(x, y, key):
+    """
+    Randomly permute matched channel order before making 3-channel VGG inputs.
+
+    x, y: float array [N, C, H, W]
+    key: jax.random.PRNGKey
+    returns: x, y with shape [N, C, H, W]
+    """
+    perm = jr.permutation(key, x.shape[1])
+    x = jnp.take(x, perm, axis=1)
+    y = jnp.take(y, perm, axis=1)
+    return x, y
+
+
+def _permute_matching_channel_groups(x, y, key, group_sizes):
+    """
+    Randomly permute matched channel order within fixed experiment groups.
+
+    x, y: float array [N, C, H, W]
+    key: jax.random.PRNGKey
+    group_sizes: sequence of int summing to C
+    returns: x, y with shape [N, C, H, W]
+    """
+    keys = jr.split(key, len(group_sizes))
+    xs = []
+    ys = []
+    start = 0
+    for group_size, group_key in zip(group_sizes, keys):
+        end = start + group_size
+        perm = jr.permutation(group_key, group_size)
+        xs.append(jnp.take(x[:, start:end], perm, axis=1))
+        ys.append(jnp.take(y[:, start:end], perm, axis=1))
+        start = end
+    return jnp.concatenate(xs, axis=1), jnp.concatenate(ys, axis=1)
+
 # ---------------------------------------------------------------------
 # Losses
 # ---------------------------------------------------------------------
@@ -495,6 +531,10 @@ def vgg_hyperspectral(x, y, key, where=None, aux={"vgg_metric": "l2"}, cache=Non
 
     x = pad_to_multiple_of_3_channels(x)
     y = pad_to_multiple_of_3_channels(y)
+
+    use_target_cache = cache is not None and not aux.get("random_crop", False)
+    if aux.get("random_channel_shuffle", False) and not use_target_cache:
+        x, y = _permute_matching_channels(x, y, jr.fold_in(key, 0))
 
     x = rearrange(x, "n (c vc) x y -> c n x y vc", vc=3)
     y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
@@ -584,6 +624,16 @@ def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}, ca
     x = split_and_pad_by_experiment_groups_12ch(x)
     y = split_and_pad_by_experiment_groups_12ch(y)
 
+    use_target_cache = cache is not None and not aux.get("random_crop", False)
+    random_channel_shuffle = aux.get("random_channel_shuffle", False) and not use_target_cache
+    if random_channel_shuffle:
+        x, y = _permute_matching_channel_groups(
+            x,
+            y,
+            jr.fold_in(key, 1),
+            group_sizes=(6, 6, 3, 3),
+        )
+
     x = rearrange(x, "n (c vc) x y -> c n x y vc", vc=3)
     y = rearrange(y, "n (c vc) x y -> c n x y vc", vc=3)
 
@@ -627,10 +677,16 @@ def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}, ca
             target_feats,
         )
 
-    loss_weighting = jnp.array(
-        [0.5, 1.0, 0.5, 1.0, 1.0, 1.0],
-        dtype=LOSS_DTYPE,
-    )
+    if random_channel_shuffle:
+        loss_weighting = jnp.array(
+            [0.75, 0.75, 0.75, 0.75, 1.0, 1.0],
+            dtype=LOSS_DTYPE,
+        )
+    else:
+        loss_weighting = jnp.array(
+            [0.5, 1.0, 0.5, 1.0, 1.0, 1.0],
+            dtype=LOSS_DTYPE,
+        )
 
     losses = einsum(
         losses.astype(LOSS_DTYPE),
