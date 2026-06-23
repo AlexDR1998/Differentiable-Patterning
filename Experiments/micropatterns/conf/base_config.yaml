@@ -30,6 +30,7 @@ trainer:
   log_every: 100
   pool_admission_enabled: true
   pool_admission_relative_threshold: 1.25
+  pool_admission_previous_relative_threshold: 1.10
   pool_admission_absolute_threshold: null
   pool_admission_ema_decay: 0.95
   pool_admission_warmup: null
@@ -56,6 +57,7 @@ loss:
     latent_channel_match: 1.0
     latent_size: 0.0
   random_crop: true
+  random_channel_shuffle: false
   args:
     channels: null
     experiment_groups: null
