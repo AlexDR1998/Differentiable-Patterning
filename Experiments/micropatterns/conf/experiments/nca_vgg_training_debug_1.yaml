@@ -1,17 +1,18 @@
-experiment_name: isouNCA_micropattern_optimiser_debug_2
+experiment_name: isouNCA_micropattern_optimiser_loss_4
 entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
-output_subdir: generated/isouNCA_micropattern_optimiser_debug_2
-seed_mode: index
+output_subdir: generated/isouNCA_micropattern_optimiser_loss_4
+seed_mode: fixed
 grid:
   model.family: [isouNCA]
   run.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
-  logging.wandb.group: [isouNCA_micropattern_optimiser_debug_2]
+  logging.wandb.group: [isouNCA_micropattern_optimiser_loss_4]
   run.iterations: [2000]
   # loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
   # loss.layers: [[decoded,latent],[decoded,decoded],[decoded,both]]
-  loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
-  loss.layers: [[decoded,latent]]
+  # loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
+  loss.primary: [[vgg_grouped,l2_grouped]]
+  loss.layers: [[decoded,latent], [decoded,decoded],[decoded,both],[both,latent], [both,decoded],[both,both]]
   trainer.loop_autodiff: [checkpointed]
   data.downsample: [1]
   # data.batches: [4]
@@ -25,15 +26,18 @@ grid:
   loss.random_crop: [True]
   model.upscale_factor: [8]
   run.t: [64]
-  model.upsampler.radius: [2]
+  model.upsampler.radius: [1,2,3]
   model.upsampler.fourier_modes: [4]
   model.upsampler.depth: [4]
   model.upsampler.width_factor: [2]
   optimiser.learn_rate: [1e-3]
   optimiser.decay_rate: [0.98]
-  optimiser.gradient_clip_norm: [null,0.1,1.0,10.0]
-  optimiser.apply_if_finite: [false,true]
-  optimiser.max_consecutive_errors: [8,16,32]
+  optimiser.type: [nadam,muon]
+  optimiser.gradient_clip_norm: [1.0]
+  optimiser.apply_if_finite: [true]
+  optimiser.max_consecutive_errors: [16]
+  trainer.log_every: [100]
+  trainer.clear_cache_every: [null]
 groups:
   - data.batches: [2]
     model.channels: [64]    
