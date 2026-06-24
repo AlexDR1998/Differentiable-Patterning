@@ -1,0 +1,23 @@
+experiment_name: emoji_noise_sweep
+entrypoint: Experiments.emoji.emoji_training_sweep:run
+output_subdir: generated/emoji_noise_sweep
+seed_mode: index
+grid:
+  logging.wandb.project: [nca-emojis-thesis-ch1]
+  logging.wandb.group: [emoji-noise-sweep]
+  model.family: [nNCA, gnNCA]
+  model.channels: [16]
+  model.kernel_str: [[ID, LAP, GRAD]]
+  model.fire_rate: [0.5]
+  model.parameter_noise_level: [0.0, 0.001, 0.005, 0.01, 0.05, 0.1]
+  data.downsample: [1]
+  data.noise_strength: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+  data.regenerate: [true]
+  run.t: [128]
+  run.iterations: [8000]
+  loss.primary: [[l2]]
+  loss.regulariser_coeffs.intermediate_state: [0.0]
+  loss.regulariser_coeffs.boundary: [0.0]
+  loss.regulariser_coeffs.contiguous_growth: [0.0]
+  loss.regulariser_coeffs.perturbation_conservation: [0.0]
+  loss.regulariser_coeffs.update_sensitivity: [0.0]

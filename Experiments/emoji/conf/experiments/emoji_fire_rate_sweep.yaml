@@ -1,0 +1,21 @@
+experiment_name: emoji_fire_rate_sweep
+entrypoint: Experiments.emoji.emoji_training_sweep:run
+output_subdir: generated/emoji_fire_rate_sweep
+seed_mode: index
+grid:
+  logging.wandb.project: [nca-emojis-thesis-ch1]
+  logging.wandb.group: [emoji-fire-rate-sweep]
+  model.family: [gNCA]
+  model.channels: [16]
+  model.kernel_str: [[ID, LAP, GRAD]]
+  model.fire_rate: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  data.downsample: [1]
+  data.regenerate: [false]
+  run.derive_t_from_fire_rate: [true]
+  run.iterations: [8000]
+  loss.primary: [[l2]]
+  loss.regulariser_coeffs.intermediate_state: [0.0]
+  loss.regulariser_coeffs.boundary: [0.0]
+  loss.regulariser_coeffs.contiguous_growth: [0.0]
+  loss.regulariser_coeffs.perturbation_conservation: [0.0]
+  loss.regulariser_coeffs.update_sensitivity: [0.0]

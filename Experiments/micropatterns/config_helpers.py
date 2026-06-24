@@ -7,61 +7,12 @@ import jax.numpy as jnp
 from einops import repeat
 
 from Common.dataloader.micropattern import load_micropattern_circle_nodal_knockout_9ch_explicit_colony
+from Experiments.config_helpers import (
+    _compact_value,
+    build_loss_filename,
+    build_model,
+)
 from NCA.trainer.data_augmenter_9ch_colony import DataAugmenter as DataAugmenterGrouped
-from NCA.model.NCA_model import NCA
-from NCA.model.NCA_upsample_isotropic_model import uNCA as isouNCA
-from NCA.model.NCA_upsample_model import uNCA
-
-
-def _compact_value(value):
-    if value is None:
-        return "none"
-    if isinstance(value, (list, tuple)):
-        return "-".join(str(v) for v in value)
-    return str(value)
-
-
-def compact_nonzero_config_string(values, aliases=None):
-    aliases = aliases or {}
-    parts = []
-    for key, value in values.items():
-        if value is None or value == 0:
-            continue
-        parts.append(f"{aliases.get(key, key)}{_compact_value(value)}")
-    return "_".join(parts)
-
-
-def uses_vgg_loss(loss_primary):
-    if isinstance(loss_primary, str):
-        loss_primary = [loss_primary]
-    return any("vgg" in loss_name for loss_name in loss_primary)
-
-
-def build_loss_filename(cfg, include_layers=False):
-    loss_str = "_".join(cfg.loss.primary).lower()
-    if include_layers:
-        loss_str += f"_layers{'-'.join(cfg.loss.layers).lower()}"
-    if uses_vgg_loss(cfg.loss.primary):
-        loss_str += f"_vgg{cfg.loss.vgg_internal.lower()}"
-        if cfg.loss.random_crop:
-            loss_str += "_rc"
-        if cfg.loss.get("random_channel_shuffle", False):
-            loss_str += "_chshuffle"
-    reg_str = compact_nonzero_config_string(
-        cfg.loss.regulariser_coeffs,
-        aliases={
-            "boundary": "bd",
-            "contiguous_growth": "cg",
-            "intermediate_state": "is",
-            "latent_channel_match": "lcm",
-            "latent_size": "ls",
-            "perturbation_conservation": "pc",
-            "update_sensitivity": "us",
-        },
-    )
-    if reg_str:
-        loss_str += f"_{reg_str}"
-    return loss_str
 
 
 def build_data_augmenter(cfg):
@@ -315,76 +266,3 @@ def load_data(cfg, impath=None):
         cfg_str += "_custompath"
 
     return data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK,cfg_str
-
-
-def build_model(cfg, key=None):
-    cfg_str = (
-        f"model_{cfg.model.family}"
-        f"_c{cfg.model.channels}"
-        f"_dc{cfg.data.data_channels}"
-        # f"_k{_compact_value(list(cfg.model.kernel_str))}"
-        # f"_fr{cfg.model.fire_rate}"
-        # f"_pad{cfg.model.padding}"
-    )
-    if cfg.model.family == "NCA":
-        model = NCA(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            key=key,
-        )
-    elif cfg.model.family == "uNCA":
-        cfg_str += (
-            f"_up{cfg.model.upscale_factor}"
-            f"_ud{cfg.model.upsampler.depth}"
-            f"_uw{cfg.model.upsampler.width_factor}"
-            f"_fm{cfg.model.upsampler.fourier_modes}"
-        )
-        model = uNCA(
-            N_CHANNELS=cfg.model.channels,
-            O_CHANNELS=cfg.data.data_channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            # SPATIAL_UPSAMPLE = cfg.model.upscale_factor,
-            UPSAMPLER_AUX = {
-                "depth": cfg.model.upsampler.depth,
-                "width_factor": cfg.model.upsampler.width_factor,
-                "fourier_modes" : cfg.model.upsampler.fourier_modes,
-                "upsample_factor": cfg.model.upscale_factor
-            },
-            key=key,
-            
-        )
-    elif cfg.model.family == "isouNCA":
-        cfg_str += (
-            f"_up{cfg.model.upscale_factor}"
-            f"_ud{cfg.model.upsampler.depth}"
-            f"_uw{cfg.model.upsampler.width_factor}"
-            f"_rad{cfg.model.upsampler.radius}"
-        )
-        model = isouNCA(
-            N_CHANNELS=cfg.model.channels,
-            O_CHANNELS=cfg.data.data_channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            # SPATIAL_UPSAMPLE = cfg.model.upscale_factor,
-            # RADIUS=cfg.model.upsampler.radius
-            UPSAMPLER_AUX = {
-                "depth": cfg.model.upsampler.depth,
-                "width_factor": cfg.model.upsampler.width_factor,
-                "radius" : cfg.model.upsampler.radius,
-                "upsample_factor": cfg.model.upscale_factor
-            },
-            key=key,
-        )
-    else:
-        raise ValueError(f"Unknown model family {cfg.model.family}")
-    
-    # if cfg.knockout.mode is not None:
-        # model_path = build_filename(cfg)
-        # model = eqx.tree_deserialise_leaves(model_path, model)
-    
-    return model, cfg_str

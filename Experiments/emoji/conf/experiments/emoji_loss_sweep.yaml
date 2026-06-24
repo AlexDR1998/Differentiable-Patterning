@@ -1,0 +1,30 @@
+experiment_name: emoji_loss_sweep
+entrypoint: Experiments.emoji.emoji_training_sweep:run
+output_subdir: generated/emoji_loss_sweep
+seed_mode: index
+grid:
+  logging.wandb.project: [nca-emojis-thesis-ch1]
+  logging.wandb.group: [emoji-loss-sweep]
+  model.family: [NCA]
+  model.channels: [32]
+  model.kernel_str: [[ID, LAP, GRAD]]
+  model.fire_rate: [0.5]
+  data.downsample: [1]
+  data.regenerate: [true]
+  run.t: [64]
+  run.iterations: [8000]
+  optimiser.learn_rate: [0.001]
+  loss.regulariser_coeffs.intermediate_state: [0.0]
+  loss.regulariser_coeffs.boundary: [0.0]
+  loss.regulariser_coeffs.contiguous_growth: [0.0]
+  loss.regulariser_coeffs.perturbation_conservation: [0.0]
+  loss.regulariser_coeffs.update_sensitivity: [0.0]
+groups:
+  - loss.primary: [[l2], [sliced_wasserstein_channel], [ott], [emd_loss]]
+    loss.layers: [[decoded], [decoded], [decoded], [decoded]]
+    loss.args.samples: [128, 64, 128, 64]
+    loss.args.normalize: [null, null, null, true]
+    loss.args.tau: [null, null, null, 1.0]
+    loss.args.epsilon: [0.1, 0.1, 0.1, 0.1]
+    loss.args.amplitude_penalty: [null, null, null, true]
+    loss.args.internal_loss_func: [l2, l2, l2, l2]

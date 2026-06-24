@@ -2,20 +2,56 @@ seed: 0
 
 experiment:
   name: nca_emoji_template
+
+system:
+  precision: tensorfloat32
+  gpu: null
+  xla_flags: null
+
 data:
   dataset: emojis
+  sequence: [alien_monster.png, microbe.png, rooster.png, rooster.png]
+  sequence_alias: al_mi_ro
   batches: 4
   timesteps: null
   observed_channels: 4
   data_channels: 4
   downsample: 1
+  crop_square: false
+  pad: [10, 10, 10, 10]
+  shift_amount: 2
+  noise_strength: 0.005
+  noise_mode: full
+  regenerate: true
 
 model:
   family: NCA
   channels: 32
   kernel_str: [ID, LAP, GRAD]
+  activation: relu
   fire_rate: 0.5
-  padding: CIRCULAR
+  padding: REPLICATE
+  kernel_scale: 1
+  parameter_noise_level: 0.01
+  upscale_factor: 1
+  upsampler:
+    depth: null
+    width_factor: null
+    fourier_modes: null
+    radius: null
+  kan:
+    hidden_features: null
+    num_basis: 8
+    grid_min: -2.0
+    grid_max: 2.0
+    rbf_width: null
+    trainable_width: true
+    use_base_branch: true
+    base_activation: identity
+    use_layernorm: true
+    spline_init_scale: 0.1
+    base_init_scale: 0.1
+    final_zero_init: true
 
 trainer:
   boundary_mode: soft
@@ -24,23 +60,41 @@ trainer:
   model_directory: models/
   log_directory: logs/
   loss_time_channel_mask: null
+  loop_autodiff: checkpointed
+  clear_cache_every: 500
+  log_every: 100
+  pool_admission_enabled: true
+  pool_admission_relative_threshold: 1.25
+  pool_admission_previous_relative_threshold: 1.10
+  pool_admission_absolute_threshold: null
+  pool_admission_ema_decay: 0.95
+  pool_admission_warmup: null
 
 optimiser:
   type: nadam
   blocknorm: true
   sam: false
+  gradient_clip_norm: null
+  apply_if_finite: false
+  max_consecutive_errors: 8
   learn_rate: 0.001
   warmup_steps: 64
   decay_rate: 0.99
 
 loss:
-  primary: l2
+  primary: [l2]
+  layers: [decoded]
+  vgg_internal: l2
+  random_crop: false
+  random_channel_shuffle: false
   regulariser_coeffs:
     intermediate_state: 1.0
     boundary: 0.0
     contiguous_growth: 1.0
     update_sensitivity: 0.0
     perturbation_conservation: 0.0
+    latent_channel_match: 0.0
+    latent_size: 0.0
   args:
     channels: null
     experiment_groups: null
@@ -51,17 +105,20 @@ loss:
     epsilon: 0.1
     internal_loss_func: l2
     samples: 128
+    normalize: null
+    tau: null
+    amplitude_penalty: null
 
 run:
-  t: 32
-  iterations: 2000
-  warmup: 64
-  log_every: 100
-  clear_cache_every: 500
+  t: 64
+  derive_t_from_fire_rate: false
+  fire_rate_step_numerator: null
+  iterations: 8000
+  warmup: 10
   write_images: true
-  loop_autodiff: checkpointed
   sparse_pruning: false
   target_sparsity: 0.5
+  filename_mode: hydra
 
 logging:
   backend: wandb

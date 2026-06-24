@@ -41,7 +41,7 @@ def run(cfg):
     import jax
     from NCA.trainer.NCA_trainer import NCA_Trainer
     from NCA.trainer.optimizer import build_optimizer
-    from Experiments.config_helpers import build_tags
+    from Experiments.config_helpers import build_loss_args, build_pool_admission_config, build_tags
     from Experiments.micropatterns.config_helpers import build_data_augmenter, load_data, build_model
     
     
@@ -92,32 +92,11 @@ def run(cfg):
             "tags":build_tags(cfg),
             "name":run_name
         },
-        LOSS_ARGS={
-            "metric":cfg.loss.vgg_internal,
-            "channels":None,
-            "experiment_groups":None,
-            "S":1024,
-            "K":5,
-            "D":3,
-            "sharpen":True,
-            "epsilon":0.1,
-            "internal_loss_func":"l2",
-            "samples":128,
-            "random_crop":cfg.loss.random_crop,
-            "random_channel_shuffle":cfg.loss.get("random_channel_shuffle", False),
-            "layers":cfg.loss.layers
-        },
+        LOSS_ARGS=build_loss_args(cfg, overrides={"D": 3}),
         
         LOG_EVERY=cfg.trainer.log_every,
         CLEAR_CACHE_EVERY=cfg.trainer.clear_cache_every,
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
-        POOL_ADMISSION_CONFIG={
-            "enabled": cfg.trainer.get("pool_admission_enabled", True),
-            "relative_threshold": cfg.trainer.get("pool_admission_relative_threshold", 1.25),
-            "previous_relative_threshold": cfg.trainer.get("pool_admission_previous_relative_threshold", 1.10),
-            "absolute_threshold": cfg.trainer.get("pool_admission_absolute_threshold", None),
-            "ema_decay": cfg.trainer.get("pool_admission_ema_decay", 0.95),
-            "warmup": cfg.trainer.get("pool_admission_warmup", None),
-        },
+        POOL_ADMISSION_CONFIG=build_pool_admission_config(cfg),
         key=train_key,
     )

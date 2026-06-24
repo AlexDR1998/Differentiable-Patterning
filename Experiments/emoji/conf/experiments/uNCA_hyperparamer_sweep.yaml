@@ -1,5 +1,5 @@
 experiment_name: nca_emoji_upscale_sweep_1
-entrypoint: Experiments.emoji.nca_upscale_sweep:run
+entrypoint: Experiments.emoji.emoji_upscale_sweep:run
 output_subdir: generated/nca_upscale_sweep_1
 seed_mode: index
 grid:
@@ -7,6 +7,7 @@ grid:
   logging.wandb.project: [nca_emoji_upscale]
   logging.wandb.group: [nca_emoji_upscale_sweep_1_v2]
   run.iterations: [2000]
+  data.pad: [[20, 20, 20, 20]]
 branches:
   - when:
       model.family: uNCA
@@ -36,5 +37,4 @@ branches:
       loss.regulariser_coeffs.latent_channel_match: [0.0]
       model.upsampler.depth: [null]
       model.upsampler.width_factor: [null]
-
 
