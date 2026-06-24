@@ -5,7 +5,6 @@ from Experiments.config_helpers import (
     _as_list,
     _compact_value,
     _cfg_get,
-    build_loss_args,
     build_loss_filename as _shared_build_loss_filename,
 )
 from NCA.trainer.data_augmenter_nca import DataAugmenter
@@ -145,4 +144,3 @@ def build_legacy_training_filename(cfg):
         f"_pcc{cfg.loss.regulariser_coeffs.perturbation_conservation}"
         f"_usc{cfg.loss.regulariser_coeffs.update_sensitivity}"
     )
-
