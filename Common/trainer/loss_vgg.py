@@ -442,10 +442,10 @@ def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_met
 
 
 def _random_crop_to_vgg_input(x,key):
-    def crop_image(im,key): # Takes [W H C] and returns [224 224 C]
+    def crop_image(im,key): # Takes [W H C] and returns [min(224,W,H) min(224,W,H) C]
         w,h,_ = im.shape
         keys = jr.split(key,2)
-        crop_size = 224
+        crop_size = min(224, w, h)
         max_x = w - crop_size
         max_y = h - crop_size
         x_start = jr.randint(keys[0], (), 0, max_x + 1)
