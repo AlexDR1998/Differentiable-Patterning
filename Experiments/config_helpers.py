@@ -1,5 +1,328 @@
 
 
+from NCA.model.NCA_fast_KAN_model import FastKaNCA
+from NCA.model.NCA_gated_model import gNCA
+from NCA.model.NCA_gated_noise_model import gnNCA
+from NCA.model.NCA_model import NCA
+from NCA.model.NCA_noise_model import nNCA
+from NCA.model.NCA_upsample_isotropic_model import uNCA as isouNCA
+from NCA.model.NCA_upsample_model import uNCA
+
+
+def _cfg_get(cfg, key, default=None):
+    if cfg is None:
+        return default
+    if hasattr(cfg, "get"):
+        return cfg.get(key, default)
+    return getattr(cfg, key, default)
+
+
+def _compact_value(value):
+    if value is None:
+        return "none"
+    if isinstance(value, (list, tuple)):
+        return "-".join(str(v) for v in value)
+    return str(value)
+
+
+def _as_list(value):
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    return list(value)
+
+
+def compact_nonzero_config_string(values, aliases=None):
+    aliases = aliases or {}
+    parts = []
+    for key, value in values.items():
+        if value is None or value == 0:
+            continue
+        parts.append(f"{aliases.get(key, key)}{_compact_value(value)}")
+    return "_".join(parts)
+
+
+def uses_vgg_loss(loss_primary):
+    return any("vgg" in loss_name for loss_name in _as_list(loss_primary))
+
+
+def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
+    loss_str = "_".join(_as_list(cfg.loss.primary)).lower()
+    layers = _cfg_get(cfg.loss, "layers", None)
+    if include_layers and layers is not None:
+        loss_str += f"_layers{'-'.join(_as_list(layers)).lower()}"
+    if uses_vgg_loss(cfg.loss.primary):
+        vgg_internal = _cfg_get(
+            cfg.loss,
+            "vgg_internal",
+            _cfg_get(_cfg_get(cfg.loss, "args", None), "internal_loss_func", "l2"),
+        )
+        loss_str += f"_vgg{str(vgg_internal).lower()}"
+        if _cfg_get(cfg.loss, "random_crop", False):
+            loss_str += "_rc"
+        if _cfg_get(cfg.loss, "random_channel_shuffle", False):
+            loss_str += "_chshuffle"
+
+    loss_args = _cfg_get(cfg.loss, "args", None)
+    if include_loss_args and loss_args is not None:
+        arg_str = compact_nonzero_config_string(
+            {
+                "samples": _cfg_get(loss_args, "samples", None),
+                "epsilon": _cfg_get(loss_args, "epsilon", None),
+                "tau": _cfg_get(loss_args, "tau", None),
+                "normalize": _cfg_get(loss_args, "normalize", None),
+                "amplitude_penalty": _cfg_get(loss_args, "amplitude_penalty", None),
+            },
+            aliases={
+                "samples": "s",
+                "epsilon": "eps",
+                "tau": "tau",
+                "normalize": "norm",
+                "amplitude_penalty": "ap",
+            },
+        )
+        if arg_str:
+            loss_str += f"_{arg_str}"
+
+    reg_str = compact_nonzero_config_string(
+        cfg.loss.regulariser_coeffs,
+        aliases={
+            "boundary": "bd",
+            "contiguous_growth": "cg",
+            "intermediate_state": "is",
+            "latent_channel_match": "lcm",
+            "latent_size": "ls",
+            "perturbation_conservation": "pc",
+            "update_sensitivity": "us",
+        },
+    )
+    if reg_str:
+        loss_str += f"_{reg_str}"
+    return loss_str
+
+
+def build_loss_args(cfg, overrides=None):
+    loss_args_cfg = _cfg_get(cfg.loss, "args", None)
+    loss_args = {
+        "channels": _cfg_get(loss_args_cfg, "channels", None),
+        "experiment_groups": _cfg_get(loss_args_cfg, "experiment_groups", None),
+        "S": _cfg_get(loss_args_cfg, "S", 1024),
+        "K": _cfg_get(loss_args_cfg, "K", 5),
+        "D": _cfg_get(loss_args_cfg, "D", 3),
+        "sharpen": _cfg_get(loss_args_cfg, "sharpen", True),
+        "epsilon": _cfg_get(loss_args_cfg, "epsilon", 0.1),
+        "internal_loss_func": _cfg_get(loss_args_cfg, "internal_loss_func", "l2"),
+        "samples": _cfg_get(loss_args_cfg, "samples", 128),
+        "layers": _cfg_get(cfg.loss, "layers", ["decoded"]),
+        "random_crop": _cfg_get(cfg.loss, "random_crop", False),
+        "random_channel_shuffle": _cfg_get(cfg.loss, "random_channel_shuffle", False),
+    }
+    vgg_internal = _cfg_get(cfg.loss, "vgg_internal", None)
+    if vgg_internal is not None:
+        loss_args["metric"] = vgg_internal
+    for optional_key in ("normalize", "tau", "amplitude_penalty"):
+        value = _cfg_get(loss_args_cfg, optional_key, None)
+        if value is not None:
+            loss_args[optional_key] = value
+    if overrides is not None:
+        loss_args.update(overrides)
+    return loss_args
+
+
+def build_pool_admission_config(cfg):
+    return {
+        "enabled": _cfg_get(cfg.trainer, "pool_admission_enabled", True),
+        "relative_threshold": _cfg_get(cfg.trainer, "pool_admission_relative_threshold", 1.25),
+        "previous_relative_threshold": _cfg_get(
+            cfg.trainer, "pool_admission_previous_relative_threshold", 1.10
+        ),
+        "absolute_threshold": _cfg_get(cfg.trainer, "pool_admission_absolute_threshold", None),
+        "ema_decay": _cfg_get(cfg.trainer, "pool_admission_ema_decay", 0.95),
+        "warmup": _cfg_get(cfg.trainer, "pool_admission_warmup", None),
+    }
+
+
+def set_matmul_precision(cfg):
+    precision = _cfg_get(_cfg_get(cfg, "system", None), "precision", None)
+    if precision is None:
+        return
+    import jax
+
+    jax.config.update("jax_default_matmul_precision", precision)
+
+
+def _build_kan_aux(cfg):
+    kan_cfg = _cfg_get(cfg.model, "kan", None)
+    hidden_features = _cfg_get(kan_cfg, "hidden_features", None)
+    kan_aux = {
+        "num_basis": _cfg_get(kan_cfg, "num_basis", 8),
+        "grid_min": _cfg_get(kan_cfg, "grid_min", -2.0),
+        "grid_max": _cfg_get(kan_cfg, "grid_max", 2.0),
+        "rbf_width": _cfg_get(kan_cfg, "rbf_width", None),
+        "trainable_width": _cfg_get(kan_cfg, "trainable_width", True),
+        "use_base_branch": _cfg_get(kan_cfg, "use_base_branch", True),
+        "base_activation": _cfg_get(kan_cfg, "base_activation", "identity"),
+        "use_layernorm": _cfg_get(kan_cfg, "use_layernorm", True),
+        "spline_init_scale": _cfg_get(kan_cfg, "spline_init_scale", 0.1),
+        "base_init_scale": _cfg_get(kan_cfg, "base_init_scale", 0.1),
+        "final_zero_init": _cfg_get(kan_cfg, "final_zero_init", True),
+    }
+    if hidden_features is not None:
+        kan_aux["hidden_features"] = hidden_features
+    return kan_aux
+
+
+def _build_activation(cfg):
+    import jax
+
+    activation_name = _cfg_get(cfg.model, "activation", "relu")
+    if activation_name in {None, "relu"}:
+        return jax.nn.relu
+    if activation_name == "tanh":
+        return jax.nn.tanh
+    if activation_name == "swish":
+        return jax.nn.swish
+    if activation_name == "gelu":
+        return jax.nn.gelu
+    if activation_name == "linear":
+        return lambda x: x
+    raise ValueError(f"Unsupported activation {activation_name}")
+
+
+def build_model_config_string(cfg):
+    cfg_str = (
+        f"model_{cfg.model.family}"
+        f"_c{cfg.model.channels}"
+        f"_dc{_cfg_get(cfg.data, 'data_channels', 'na')}"
+        f"_k{_compact_value(list(cfg.model.kernel_str))}"
+        f"_fr{cfg.model.fire_rate}"
+        f"_pad{_cfg_get(cfg.model, 'padding', 'na')}"
+        f"_ks{_cfg_get(cfg.model, 'kernel_scale', 1)}"
+    )
+    activation = _cfg_get(cfg.model, "activation", None)
+    if activation is not None:
+        cfg_str += f"_act{activation}"
+    if cfg.model.family in {"nNCA", "gnNCA"}:
+        cfg_str += f"_pn{_cfg_get(cfg.model, 'parameter_noise_level', 0.01)}"
+    if cfg.model.family == "FastKaNCA":
+        kan_cfg = _cfg_get(cfg.model, "kan", None)
+        cfg_str += (
+            f"_kb{_cfg_get(kan_cfg, 'num_basis', 8)}"
+            f"_kh{_compact_value(_cfg_get(kan_cfg, 'hidden_features', 'nf'))}"
+            f"_kbase{_cfg_get(kan_cfg, 'base_activation', 'identity')}"
+            f"_kln{_cfg_get(kan_cfg, 'use_layernorm', True)}"
+            f"_kzero{_cfg_get(kan_cfg, 'final_zero_init', True)}"
+        )
+    elif cfg.model.family in {"uNCA", "isouNCA"}:
+        upsampler = _cfg_get(cfg.model, "upsampler", None)
+        cfg_str += (
+            f"_up{cfg.model.upscale_factor}"
+            f"_ud{_cfg_get(upsampler, 'depth', 'none')}"
+            f"_uw{_cfg_get(upsampler, 'width_factor', 'none')}"
+        )
+        if cfg.model.family == "uNCA":
+            cfg_str += f"_fm{_cfg_get(upsampler, 'fourier_modes', 'none')}"
+        else:
+            cfg_str += f"_rad{_cfg_get(upsampler, 'radius', 'none')}"
+    return cfg_str
+
+
+def build_model(cfg, key=None):
+    activation = _build_activation(cfg)
+    kernel_scale = _cfg_get(cfg.model, "kernel_scale", 1)
+    if cfg.model.family == "NCA":
+        model = NCA(
+            N_CHANNELS=cfg.model.channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            key=key,
+        )
+    elif cfg.model.family == "gNCA":
+        model = gNCA(
+            N_CHANNELS=cfg.model.channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            key=key,
+        )
+    elif cfg.model.family == "nNCA":
+        model = nNCA(
+            N_CHANNELS=cfg.model.channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            PARAMETER_NOISE_LEVEL=_cfg_get(cfg.model, "parameter_noise_level", 0.01),
+            key=key,
+        )
+    elif cfg.model.family == "gnNCA":
+        model = gnNCA(
+            N_CHANNELS=cfg.model.channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            PARAMETER_NOISE_LEVEL=_cfg_get(cfg.model, "parameter_noise_level", 0.01),
+            key=key,
+        )
+    elif cfg.model.family == "FastKaNCA":
+        model = FastKaNCA(
+            N_CHANNELS=cfg.model.channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            KAN_AUX=_build_kan_aux(cfg),
+            key=key,
+        )
+    elif cfg.model.family == "uNCA":
+        model = uNCA(
+            N_CHANNELS=cfg.model.channels,
+            O_CHANNELS=cfg.data.data_channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            UPSAMPLER_AUX={
+                "depth": cfg.model.upsampler.depth,
+                "width_factor": cfg.model.upsampler.width_factor,
+                "fourier_modes": cfg.model.upsampler.fourier_modes,
+                "upsample_factor": cfg.model.upscale_factor,
+            },
+            key=key,
+        )
+    elif cfg.model.family == "isouNCA":
+        model = isouNCA(
+            N_CHANNELS=cfg.model.channels,
+            O_CHANNELS=cfg.data.data_channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            UPSAMPLER_AUX={
+                "depth": cfg.model.upsampler.depth,
+                "width_factor": cfg.model.upsampler.width_factor,
+                "radius": cfg.model.upsampler.radius,
+                "upsample_factor": cfg.model.upscale_factor,
+            },
+            key=key,
+        )
+    else:
+        raise ValueError(f"Unknown model family {cfg.model.family}")
+    return model, build_model_config_string(cfg)
+
+
 def build_tags(cfg, prefix=""):
     tags = []
     for key, value in cfg.items():
