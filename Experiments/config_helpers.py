@@ -1,5 +1,7 @@
 
 
+import hashlib
+
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_gated_model import gNCA
 from NCA.model.NCA_gated_noise_model import gnNCA
@@ -7,6 +9,9 @@ from NCA.model.NCA_model import NCA
 from NCA.model.NCA_noise_model import nNCA
 from NCA.model.NCA_upsample_isotropic_model import uNCA as isouNCA
 from NCA.model.NCA_upsample_model import uNCA
+
+
+MAX_WANDB_TAG_LENGTH = 64
 
 
 def _cfg_get(cfg, key, default=None):
@@ -23,6 +28,24 @@ def _compact_value(value):
     if isinstance(value, (list, tuple)):
         return "-".join(str(v) for v in value)
     return str(value)
+
+
+def _sequence_alias(sequence):
+    aliases = []
+    for filename in _as_list(sequence):
+        basename = str(filename).rsplit("/", 1)[-1].split(".", 1)[0]
+        alias = basename[:2].lower()
+        if aliases and aliases[-1] == alias:
+            continue
+        aliases.append(alias)
+    return "_".join(aliases)
+
+
+def _safe_wandb_tag(tag, max_length=MAX_WANDB_TAG_LENGTH):
+    if len(tag) <= max_length:
+        return tag
+    digest = hashlib.sha1(tag.encode("utf-8")).hexdigest()[:8]
+    return f"{tag[: max_length - 9]}~{digest}"
 
 
 def _as_list(value):
@@ -334,5 +357,9 @@ def build_tags(cfg, prefix=""):
         if hasattr(value, "items"):
             tags.extend(build_tags(value, prefix=f"{tag_key}."))
         else:
-            tags.append(f"{tag_key}:{value}")
+            if tag_key == "data.sequence":
+                value = _sequence_alias(value)
+            else:
+                value = _compact_value(value)
+            tags.append(_safe_wandb_tag(f"{tag_key}:{value}"))
     return tags
