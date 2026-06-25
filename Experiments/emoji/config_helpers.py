@@ -3,8 +3,8 @@ import os
 from Common.dataloader.emoji import load_emoji_sequence
 from Experiments.config_helpers import (
     _as_list,
-    _compact_value,
     _cfg_get,
+    _sequence_alias,
     build_loss_filename as _shared_build_loss_filename,
 )
 from NCA.trainer.data_augmenter_nca import DataAugmenter
@@ -20,22 +20,21 @@ def _pad_tuple(value):
 
 
 def build_loss_filename(cfg, include_layers=True):
+    include_layers = include_layers and cfg.model.family in {"uNCA", "isouNCA"}
+    include_loss_args = cfg.model.family in {"uNCA", "isouNCA"}
     return _shared_build_loss_filename(
         cfg,
         include_layers=include_layers,
-        include_loss_args=True,
+        include_loss_args=include_loss_args,
     )
 
 
 def build_data_config_string(cfg):
     return (
-        f"data_{_compact_value(_as_list(cfg.data.sequence))}"
+        f"data_{_sequence_alias(cfg.data.sequence)}"
         f"_b{cfg.data.batches}"
         f"_ds{cfg.data.downsample}"
-        f"_pad{_compact_value(_pad_tuple(cfg.data.pad))}"
         f"_regen{cfg.data.regenerate}"
-        f"_shift{cfg.data.shift_amount}"
-        f"_noise{cfg.data.noise_strength}"
     )
 
 
@@ -94,12 +93,7 @@ def build_data_augmenter(cfg):
             self.PREVIOUS_KEY = key
             return x, y
 
-    cfg_str = (
-        f"da_pad{_compact_value(pad)}"
-        f"_regen{regenerate}"
-        f"_shift{shift_amount}"
-        f"_noise{noise_strength}"
-    )
+    cfg_str = "da"
     return EmojiDataAugmenter, cfg_str
 
 
@@ -121,12 +115,12 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
 
     loss_str = build_loss_filename(cfg)
     train_str = (
-        f"train_t{resolve_run_t(cfg)}"
-        f"_iters{cfg.run.iterations}"
+        f"_t{resolve_run_t(cfg)}"
+        # f"_iters{cfg.run.iterations}"
         f"_lr{cfg.optimiser.learn_rate}"
         f"_dr{cfg.optimiser.decay_rate}"
     )
-    return "_".join([model_cfg_str, data_cfg_str, data_augmenter_cfg_str, loss_str, train_str])
+    return "_".join([model_cfg_str, data_cfg_str, loss_str, train_str])
 
 
 def build_legacy_training_filename(cfg):

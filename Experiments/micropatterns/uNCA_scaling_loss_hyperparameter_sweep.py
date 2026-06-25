@@ -20,7 +20,10 @@ from Experiments.micropatterns.config_helpers import build_data_augmenter, build
 
 
 def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
-    loss_str = build_loss_filename(cfg, include_layers=True)
+    loss_str = build_loss_filename(
+        cfg,
+        include_layers=cfg.model.family in {"uNCA", "isouNCA"},
+    )
     train_str = (
         f"train_{cfg.run.scaling}"
         f"_t{cfg.run.t}"

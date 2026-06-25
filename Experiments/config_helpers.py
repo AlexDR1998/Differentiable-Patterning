@@ -228,28 +228,32 @@ def _build_activation(cfg):
 
 def build_model_config_string(cfg):
     cfg_str = (
-        f"model_{cfg.model.family}"
+        f"{cfg.model.family}"
         f"_c{cfg.model.channels}"
-        f"_dc{_cfg_get(cfg.data, 'data_channels', 'na')}"
-        f"_k{_compact_value(list(cfg.model.kernel_str))}"
-        f"_fr{cfg.model.fire_rate}"
-        f"_pad{_cfg_get(cfg.model, 'padding', 'na')}"
-        f"_ks{_cfg_get(cfg.model, 'kernel_scale', 1)}"
+        # f"_k{_compact_value(list(cfg.model.kernel_str))}"
+        # f"_fr{cfg.model.fire_rate}"
     )
     activation = _cfg_get(cfg.model, "activation", None)
-    if activation is not None:
+    if activation not in {None, "relu"}:
         cfg_str += f"_act{activation}"
+    kernel_scale = _cfg_get(cfg.model, "kernel_scale", 1)
+    if kernel_scale != 1:
+        cfg_str += f"_ks{kernel_scale}"
     if cfg.model.family in {"nNCA", "gnNCA"}:
         cfg_str += f"_pn{_cfg_get(cfg.model, 'parameter_noise_level', 0.01)}"
     if cfg.model.family == "FastKaNCA":
         kan_cfg = _cfg_get(cfg.model, "kan", None)
-        cfg_str += (
-            f"_kb{_cfg_get(kan_cfg, 'num_basis', 8)}"
-            f"_kh{_compact_value(_cfg_get(kan_cfg, 'hidden_features', 'nf'))}"
-            f"_kbase{_cfg_get(kan_cfg, 'base_activation', 'identity')}"
-            f"_kln{_cfg_get(kan_cfg, 'use_layernorm', True)}"
-            f"_kzero{_cfg_get(kan_cfg, 'final_zero_init', True)}"
-        )
+        cfg_str += f"_kb{_cfg_get(kan_cfg, 'num_basis', 8)}"
+        hidden_features = _cfg_get(kan_cfg, "hidden_features", None)
+        if hidden_features is not None:
+            cfg_str += f"_kh{hidden_features}"
+        base_activation = _cfg_get(kan_cfg, "base_activation", "identity")
+        if base_activation != "identity":
+            cfg_str += f"_kbase{base_activation}"
+        if not _cfg_get(kan_cfg, "use_layernorm", True):
+            cfg_str += "_noln"
+        if not _cfg_get(kan_cfg, "final_zero_init", True):
+            cfg_str += "_nozero"
     elif cfg.model.family in {"uNCA", "isouNCA"}:
         upsampler = _cfg_get(cfg.model, "upsampler", None)
         cfg_str += (
