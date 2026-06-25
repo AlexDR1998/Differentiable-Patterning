@@ -506,10 +506,20 @@ class NCA_Trainer(object):
 
 		
 		
-		if LOSS_ARGS["layers"] is not None:
-			self.LOSS_FUNC_LAYERS = LOSS_ARGS["layers"]
-		else:
-			self.LOSS_FUNC_LAYERS = ["decoded"]*len(LOSS_FUNC_STR)
+		def resolve_loss_layers(layers, loss_count):
+			if layers is None:
+				return ["decoded"]*loss_count
+			if isinstance(layers, str):
+				layers = [layers]
+			else:
+				layers = list(layers)
+			if len(layers)==0:
+				return ["decoded"]*loss_count
+			if len(layers)<loss_count:
+				layers = layers + [layers[-1]]*(loss_count-len(layers))
+			return layers[:loss_count]
+		loss_func_count = 1 if isinstance(LOSS_FUNC_STR, str) else len(LOSS_FUNC_STR)
+		self.LOSS_FUNC_LAYERS = resolve_loss_layers(LOSS_ARGS["layers"], loss_func_count)
 		
 		# LOSS_FUNC_CHANNELS = 
 		if LOSS_ARGS["channels"] is not None:

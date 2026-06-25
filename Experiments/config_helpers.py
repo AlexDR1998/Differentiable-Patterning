@@ -70,11 +70,23 @@ def uses_vgg_loss(loss_primary):
     return any("vgg" in loss_name for loss_name in _as_list(loss_primary))
 
 
+def resolve_loss_layers(loss_primary, layers):
+    loss_count = len(_as_list(loss_primary))
+    layers = _as_list(layers)
+    if loss_count == 0:
+        return layers
+    if not layers:
+        return ["decoded"] * loss_count
+    if len(layers) < loss_count:
+        layers = layers + [layers[-1]] * (loss_count - len(layers))
+    return layers[:loss_count]
+
+
 def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
     loss_str = "_".join(_as_list(cfg.loss.primary)).lower()
     layers = _cfg_get(cfg.loss, "layers", None)
     if include_layers and layers is not None:
-        loss_str += f"_layers{'-'.join(_as_list(layers)).lower()}"
+        loss_str += f"_layers{'-'.join(resolve_loss_layers(cfg.loss.primary, layers)).lower()}"
     if uses_vgg_loss(cfg.loss.primary):
         vgg_internal = _cfg_get(
             cfg.loss,
@@ -127,6 +139,7 @@ def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
 
 def build_loss_args(cfg, overrides=None):
     loss_args_cfg = _cfg_get(cfg.loss, "args", None)
+    layers = resolve_loss_layers(cfg.loss.primary, _cfg_get(cfg.loss, "layers", None))
     loss_args = {
         "channels": _cfg_get(loss_args_cfg, "channels", None),
         "experiment_groups": _cfg_get(loss_args_cfg, "experiment_groups", None),
@@ -137,7 +150,7 @@ def build_loss_args(cfg, overrides=None):
         "epsilon": _cfg_get(loss_args_cfg, "epsilon", 0.1),
         "internal_loss_func": _cfg_get(loss_args_cfg, "internal_loss_func", "l2"),
         "samples": _cfg_get(loss_args_cfg, "samples", 128),
-        "layers": _cfg_get(cfg.loss, "layers", ["decoded"]),
+        "layers": layers,
         "random_crop": _cfg_get(cfg.loss, "random_crop", False),
         "random_channel_shuffle": _cfg_get(cfg.loss, "random_channel_shuffle", False),
     }
