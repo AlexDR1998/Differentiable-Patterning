@@ -42,7 +42,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -136,7 +136,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -240,7 +240,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -334,7 +334,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -438,7 +438,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -532,7 +532,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -636,7 +636,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -730,7 +730,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -834,7 +834,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -928,7 +928,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -1032,7 +1032,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -1126,7 +1126,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -1230,7 +1230,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -1324,7 +1324,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -1428,7 +1428,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -1522,7 +1522,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -1626,7 +1626,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -1720,7 +1720,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -1824,7 +1824,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -1918,7 +1918,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -2022,7 +2022,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -2116,7 +2116,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -2220,7 +2220,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -2314,7 +2314,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -2418,7 +2418,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -2512,7 +2512,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -2616,7 +2616,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -2710,7 +2710,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -2814,7 +2814,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -2908,7 +2908,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -3012,7 +3012,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -3106,7 +3106,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -3210,7 +3210,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -3304,7 +3304,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -3408,7 +3408,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -3502,7 +3502,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -3606,7 +3606,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -3700,7 +3700,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -3804,7 +3804,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -3898,7 +3898,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -4002,7 +4002,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -4096,7 +4096,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -4200,7 +4200,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -4294,7 +4294,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -4398,7 +4398,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -4492,7 +4492,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -4596,7 +4596,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -4690,7 +4690,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -4794,7 +4794,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -4888,7 +4888,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -4992,7 +4992,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -5086,7 +5086,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -5190,7 +5190,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -5284,7 +5284,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -5388,7 +5388,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -5482,7 +5482,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -5586,7 +5586,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -5680,7 +5680,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -5784,7 +5784,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -5878,7 +5878,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -5982,7 +5982,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -6076,7 +6076,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -6180,7 +6180,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -6274,7 +6274,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -6378,7 +6378,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -6472,7 +6472,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -6576,7 +6576,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -6670,7 +6670,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -6774,7 +6774,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -6868,7 +6868,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
@@ -6972,7 +6972,7 @@ configs:
     run.sparse_pruning: false
     trainer.log_every: 50
     trainer.clear_cache_every: 500
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     loss.primary:
     - l2
     loss.layers:
@@ -7066,7 +7066,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: 500
       log_every: 50
       pool_admission_enabled: true
