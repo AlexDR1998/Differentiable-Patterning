@@ -10,11 +10,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -23,7 +23,7 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -38,7 +38,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: l2
+    loss.vgg_internal: null
     seed: 577090037
   config:
     seed: 577090037
@@ -53,7 +53,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -95,10 +94,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -117,10 +116,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: l2
+      vgg_internal: null
     run:
       t: 32
-      iterations: 2000
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -130,7 +129,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -141,11 +140,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -154,14 +153,14 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: true
     model.upscale_factor: null
     run.t: 32
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
@@ -169,7 +168,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
+    loss.vgg_internal: null
     seed: 271041745
   config:
     seed: 271041745
@@ -184,7 +183,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -215,7 +213,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -226,10 +224,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -248,10 +246,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
+      vgg_internal: null
     run:
       t: 32
-      iterations: 2000
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -261,7 +259,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -272,11 +270,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -285,14 +283,14 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: true
     model.upscale_factor: null
-    run.t: 32
+    run.t: 64
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    optimiser.type: muon
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
@@ -300,7 +298,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: l2
+    loss.vgg_internal: null
     seed: 1095513148
   config:
     seed: 1095513148
@@ -315,7 +313,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -346,7 +343,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: muon
+      type: nadam
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -357,10 +354,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -379,10 +376,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: l2
+      vgg_internal: null
     run:
-      t: 32
-      iterations: 2000
+      t: 64
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -392,7 +389,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -403,11 +400,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -416,11 +413,11 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: true
     model.upscale_factor: null
-    run.t: 32
+    run.t: 64
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     optimiser.type: muon
@@ -431,7 +428,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
+    loss.vgg_internal: null
     seed: 506456969
   config:
     seed: 506456969
@@ -446,7 +443,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -488,10 +484,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -510,10 +506,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
+      vgg_internal: null
     run:
-      t: 32
-      iterations: 2000
+      t: 64
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -523,7 +519,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -534,11 +530,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -547,11 +543,11 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: true
     model.upscale_factor: null
-    run.t: 64
+    run.t: 128
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
@@ -562,7 +558,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: l2
+    loss.vgg_internal: null
     seed: 2127877499
   config:
     seed: 2127877499
@@ -577,7 +573,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -619,10 +614,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -641,10 +636,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: l2
+      vgg_internal: null
     run:
-      t: 64
-      iterations: 2000
+      t: 128
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -654,7 +649,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -665,11 +660,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -678,14 +673,14 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: true
     model.upscale_factor: null
-    run.t: 64
+    run.t: 128
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
@@ -693,7 +688,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
+    loss.vgg_internal: null
     seed: 1930549411
   config:
     seed: 1930549411
@@ -708,7 +703,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -739,7 +733,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -750,10 +744,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -772,10 +766,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
+      vgg_internal: null
     run:
-      t: 64
-      iterations: 2000
+      t: 128
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -785,7 +779,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -796,11 +790,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -809,14 +803,14 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
-    loss.random_channel_shuffle: true
+    loss.random_channel_shuffle: false
     model.upscale_factor: null
-    run.t: 64
+    run.t: 32
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    optimiser.type: muon
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
@@ -824,7 +818,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: l2
+    loss.vgg_internal: null
     seed: 2028277857
   config:
     seed: 2028277857
@@ -839,7 +833,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -870,7 +863,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: muon
+      type: nadam
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -881,10 +874,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -892,7 +885,7 @@ configs:
         latent_channel_match: 0.0
         latent_size: 0.0
       random_crop: true
-      random_channel_shuffle: true
+      random_channel_shuffle: false
       args:
         channels: null
         experiment_groups: null
@@ -903,10 +896,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: l2
+      vgg_internal: null
     run:
-      t: 64
-      iterations: 2000
+      t: 32
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -916,7 +909,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -927,11 +920,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -940,11 +933,11 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
-    loss.random_channel_shuffle: true
+    loss.random_channel_shuffle: false
     model.upscale_factor: null
-    run.t: 64
+    run.t: 32
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     optimiser.type: muon
@@ -955,7 +948,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
+    loss.vgg_internal: null
     seed: 1630434966
   config:
     seed: 1630434966
@@ -970,7 +963,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -1012,10 +1004,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1023,7 +1015,7 @@ configs:
         latent_channel_match: 0.0
         latent_size: 0.0
       random_crop: true
-      random_channel_shuffle: true
+      random_channel_shuffle: false
       args:
         channels: null
         experiment_groups: null
@@ -1034,10 +1026,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
+      vgg_internal: null
     run:
-      t: 64
-      iterations: 2000
+      t: 32
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1047,7 +1039,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -1058,11 +1050,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -1071,11 +1063,11 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
-    loss.random_channel_shuffle: true
+    loss.random_channel_shuffle: false
     model.upscale_factor: null
-    run.t: 128
+    run.t: 64
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
@@ -1086,7 +1078,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: l2
+    loss.vgg_internal: null
     seed: 901749037
   config:
     seed: 901749037
@@ -1101,7 +1093,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -1143,10 +1134,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1154,7 +1145,7 @@ configs:
         latent_channel_match: 0.0
         latent_size: 0.0
       random_crop: true
-      random_channel_shuffle: true
+      random_channel_shuffle: false
       args:
         channels: null
         experiment_groups: null
@@ -1165,10 +1156,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: l2
+      vgg_internal: null
     run:
-      t: 128
-      iterations: 2000
+      t: 64
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1178,7 +1169,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -1189,11 +1180,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -1202,14 +1193,14 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
-    loss.random_channel_shuffle: true
+    loss.random_channel_shuffle: false
     model.upscale_factor: null
-    run.t: 128
+    run.t: 64
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
@@ -1217,7 +1208,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
+    loss.vgg_internal: null
     seed: 403123852
   config:
     seed: 403123852
@@ -1232,7 +1223,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -1263,7 +1253,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -1274,10 +1264,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1285,7 +1275,7 @@ configs:
         latent_channel_match: 0.0
         latent_size: 0.0
       random_crop: true
-      random_channel_shuffle: true
+      random_channel_shuffle: false
       args:
         channels: null
         experiment_groups: null
@@ -1296,10 +1286,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
+      vgg_internal: null
     run:
-      t: 128
-      iterations: 2000
+      t: 64
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1309,7 +1299,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -1320,11 +1310,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -1333,14 +1323,14 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
-    loss.random_channel_shuffle: true
+    loss.random_channel_shuffle: false
     model.upscale_factor: null
     run.t: 128
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    optimiser.type: muon
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
@@ -1348,7 +1338,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: l2
+    loss.vgg_internal: null
     seed: 2095328386
   config:
     seed: 2095328386
@@ -1363,7 +1353,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -1394,7 +1383,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: muon
+      type: nadam
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -1405,10 +1394,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1416,7 +1405,7 @@ configs:
         latent_channel_match: 0.0
         latent_size: 0.0
       random_crop: true
-      random_channel_shuffle: true
+      random_channel_shuffle: false
       args:
         channels: null
         experiment_groups: null
@@ -1427,10 +1416,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: l2
+      vgg_internal: null
     run:
       t: 128
-      iterations: 2000
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1440,7 +1429,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -1451,11 +1440,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - vgg
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -1464,9 +1453,9 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
-    loss.random_channel_shuffle: true
+    loss.random_channel_shuffle: false
     model.upscale_factor: null
     run.t: 128
     optimiser.learn_rate: 0.001
@@ -1479,7 +1468,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
+    loss.vgg_internal: null
     seed: 121751464
   config:
     seed: 121751464
@@ -1494,7 +1483,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -1536,10 +1524,140 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - vgg
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: true
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      vgg_internal: null
+    run:
+      t: 128
+      iterations: 4000
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: NCA_4ch_micropattern_vgg_swap_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 5
+  overrides:
+    model.family: NCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
+    loss.primary:
+    - ott
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: true
+    loss.random_channel_shuffle: true
+    model.upscale_factor: null
+    run.t: 32
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.98
+    optimiser.type: nadam
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.log_every: 100
+    trainer.clear_cache_every: null
+    data.batches: 4
+    model.channels: 64
+    loss.vgg_internal: null
+    seed: 1674216077
+  config:
+    seed: 1674216077
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+    model:
+      family: NCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.98
+    loss:
+      primary:
+      - ott
+      - l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1558,141 +1676,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
-    run:
-      t: 128
-      iterations: 2000
-      warmup: 64
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      scaling: convective
-    logging:
-      backend: wandb
-      wandb:
-        project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
-        tags: null
-    knockout:
-      time: null
-      channel: Nodal
-      mode: null
-- index: 5
-  overrides:
-    model.family: NCA
-    run.scaling: convective
-    logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
-    loss.primary:
-    - vgg_grouped
-    - l2_grouped
-    trainer.loop_autodiff: checkpointed
-    data.downsample: 4
-    knockout.mode: null
-    knockout.time: null
-    knockout.channel: Nodal
-    loss.regulariser_coeffs.latent_channel_match: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 0.0
-    loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.random_crop: true
-    loss.random_channel_shuffle: false
-    model.upscale_factor: null
-    run.t: 32
-    optimiser.learn_rate: 0.001
-    optimiser.decay_rate: 0.98
-    optimiser.type: nadam
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 16
-    trainer.log_every: 100
-    trainer.clear_cache_every: null
-    data.batches: 4
-    model.channels: 64
-    loss.vgg_internal: l2
-    seed: 1674216077
-  config:
-    seed: 1674216077
-    experiment:
-      name: nca_micropattern_template
-    data:
-      dataset: micropatterns
-      batches: 4
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      observed_channels: 9
-      data_channels: 12
-      downsample: 4
-      noise_strength: 0.005
-    model:
-      family: NCA
-      channels: 64
-      kernel_str:
-      - ID
-      - LAP
-      - DIFF
-      fire_rate: 0.5
-      padding: CIRCULAR
-      upscale_factor: null
-    trainer:
-      boundary_mode: soft
-      grad_loss: false
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 100
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: nadam
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 16
-      learn_rate: 0.001
-      warmup_steps: 64
-      decay_rate: 0.98
-    loss:
-      primary:
-      - vgg_grouped
-      - l2_grouped
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 5.0
-        contiguous_growth: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      random_crop: true
-      random_channel_shuffle: false
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 4
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-      vgg_internal: l2
+      vgg_internal: null
     run:
       t: 32
-      iterations: 2000
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1702,7 +1689,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -1713,11 +1700,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - ott
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -1726,14 +1713,14 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
-    loss.random_channel_shuffle: false
+    loss.random_channel_shuffle: true
     model.upscale_factor: null
     run.t: 32
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
@@ -1741,7 +1728,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
+    loss.vgg_internal: null
     seed: 1858720390
   config:
     seed: 1858720390
@@ -1756,7 +1743,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -1787,7 +1773,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -1798,10 +1784,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - ott
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1809,7 +1795,7 @@ configs:
         latent_channel_match: 0.0
         latent_size: 0.0
       random_crop: true
-      random_channel_shuffle: false
+      random_channel_shuffle: true
       args:
         channels: null
         experiment_groups: null
@@ -1820,10 +1806,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
+      vgg_internal: null
     run:
       t: 32
-      iterations: 2000
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1833,7 +1819,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -1844,11 +1830,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - ott
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -1857,14 +1843,14 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
-    loss.random_channel_shuffle: false
+    loss.random_channel_shuffle: true
     model.upscale_factor: null
-    run.t: 32
+    run.t: 64
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    optimiser.type: muon
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
@@ -1872,7 +1858,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: l2
+    loss.vgg_internal: null
     seed: 9045414
   config:
     seed: 9045414
@@ -1887,7 +1873,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -1918,7 +1903,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: muon
+      type: nadam
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -1929,10 +1914,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - ott
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1940,7 +1925,7 @@ configs:
         latent_channel_match: 0.0
         latent_size: 0.0
       random_crop: true
-      random_channel_shuffle: false
+      random_channel_shuffle: true
       args:
         channels: null
         experiment_groups: null
@@ -1951,10 +1936,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: l2
+      vgg_internal: null
     run:
-      t: 32
-      iterations: 2000
+      t: 64
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1964,7 +1949,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -1975,11 +1960,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - ott
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -1988,7 +1973,527 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: true
+    loss.random_channel_shuffle: true
+    model.upscale_factor: null
+    run.t: 64
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.98
+    optimiser.type: muon
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.log_every: 100
+    trainer.clear_cache_every: null
+    data.batches: 4
+    model.channels: 64
+    loss.vgg_internal: null
+    seed: 1912923437
+  config:
+    seed: 1912923437
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+    model:
+      family: NCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: muon
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.98
+    loss:
+      primary:
+      - ott
+      - l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: true
+      random_channel_shuffle: true
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      vgg_internal: null
+    run:
+      t: 64
+      iterations: 4000
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: NCA_4ch_micropattern_vgg_swap_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 14
+  overrides:
+    model.family: NCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
+    loss.primary:
+    - ott
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: true
+    loss.random_channel_shuffle: true
+    model.upscale_factor: null
+    run.t: 128
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.98
+    optimiser.type: nadam
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.log_every: 100
+    trainer.clear_cache_every: null
+    data.batches: 4
+    model.channels: 64
+    loss.vgg_internal: null
+    seed: 1143881027
+  config:
+    seed: 1143881027
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+    model:
+      family: NCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.98
+    loss:
+      primary:
+      - ott
+      - l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: true
+      random_channel_shuffle: true
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      vgg_internal: null
+    run:
+      t: 128
+      iterations: 4000
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: NCA_4ch_micropattern_vgg_swap_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 7
+  overrides:
+    model.family: NCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
+    loss.primary:
+    - ott
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: true
+    loss.random_channel_shuffle: true
+    model.upscale_factor: null
+    run.t: 128
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.98
+    optimiser.type: muon
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.log_every: 100
+    trainer.clear_cache_every: null
+    data.batches: 4
+    model.channels: 64
+    loss.vgg_internal: null
+    seed: 982526257
+  config:
+    seed: 982526257
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+    model:
+      family: NCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: muon
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.98
+    loss:
+      primary:
+      - ott
+      - l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: true
+      random_channel_shuffle: true
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      vgg_internal: null
+    run:
+      t: 128
+      iterations: 4000
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: NCA_4ch_micropattern_vgg_swap_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 16
+  overrides:
+    model.family: NCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
+    loss.primary:
+    - ott
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: true
+    loss.random_channel_shuffle: false
+    model.upscale_factor: null
+    run.t: 32
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.98
+    optimiser.type: nadam
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.log_every: 100
+    trainer.clear_cache_every: null
+    data.batches: 4
+    model.channels: 64
+    loss.vgg_internal: null
+    seed: 439062303
+  config:
+    seed: 439062303
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+    model:
+      family: NCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.98
+    loss:
+      primary:
+      - ott
+      - l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: true
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      vgg_internal: null
+    run:
+      t: 32
+      iterations: 4000
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: NCA_4ch_micropattern_vgg_swap_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 0
+  overrides:
+    model.family: NCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
+    loss.primary:
+    - ott
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -2003,10 +2508,10 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
-    seed: 1912923437
+    loss.vgg_internal: null
+    seed: 1363349907
   config:
-    seed: 1912923437
+    seed: 1363349907
     experiment:
       name: nca_micropattern_template
     data:
@@ -2018,7 +2523,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -2060,10 +2564,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - ott
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -2082,10 +2586,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
+      vgg_internal: null
     run:
       t: 32
-      iterations: 2000
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2095,531 +2599,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
-        tags: null
-    knockout:
-      time: null
-      channel: Nodal
-      mode: null
-- index: 14
-  overrides:
-    model.family: NCA
-    run.scaling: convective
-    logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
-    loss.primary:
-    - vgg_grouped
-    - l2_grouped
-    trainer.loop_autodiff: checkpointed
-    data.downsample: 4
-    knockout.mode: null
-    knockout.time: null
-    knockout.channel: Nodal
-    loss.regulariser_coeffs.latent_channel_match: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 0.0
-    loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.random_crop: true
-    loss.random_channel_shuffle: false
-    model.upscale_factor: null
-    run.t: 64
-    optimiser.learn_rate: 0.001
-    optimiser.decay_rate: 0.98
-    optimiser.type: nadam
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 16
-    trainer.log_every: 100
-    trainer.clear_cache_every: null
-    data.batches: 4
-    model.channels: 64
-    loss.vgg_internal: l2
-    seed: 1143881027
-  config:
-    seed: 1143881027
-    experiment:
-      name: nca_micropattern_template
-    data:
-      dataset: micropatterns
-      batches: 4
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      observed_channels: 9
-      data_channels: 12
-      downsample: 4
-      noise_strength: 0.005
-    model:
-      family: NCA
-      channels: 64
-      kernel_str:
-      - ID
-      - LAP
-      - DIFF
-      fire_rate: 0.5
-      padding: CIRCULAR
-      upscale_factor: null
-    trainer:
-      boundary_mode: soft
-      grad_loss: false
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 100
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: nadam
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 16
-      learn_rate: 0.001
-      warmup_steps: 64
-      decay_rate: 0.98
-    loss:
-      primary:
-      - vgg_grouped
-      - l2_grouped
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 5.0
-        contiguous_growth: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      random_crop: true
-      random_channel_shuffle: false
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 4
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-      vgg_internal: l2
-    run:
-      t: 64
-      iterations: 2000
-      warmup: 64
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      scaling: convective
-    logging:
-      backend: wandb
-      wandb:
-        project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
-        tags: null
-    knockout:
-      time: null
-      channel: Nodal
-      mode: null
-- index: 7
-  overrides:
-    model.family: NCA
-    run.scaling: convective
-    logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
-    loss.primary:
-    - vgg_grouped
-    - l2_grouped
-    trainer.loop_autodiff: checkpointed
-    data.downsample: 4
-    knockout.mode: null
-    knockout.time: null
-    knockout.channel: Nodal
-    loss.regulariser_coeffs.latent_channel_match: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 0.0
-    loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.random_crop: true
-    loss.random_channel_shuffle: false
-    model.upscale_factor: null
-    run.t: 64
-    optimiser.learn_rate: 0.001
-    optimiser.decay_rate: 0.98
-    optimiser.type: nadam
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 16
-    trainer.log_every: 100
-    trainer.clear_cache_every: null
-    data.batches: 4
-    model.channels: 64
-    loss.vgg_internal: otsp
-    seed: 982526257
-  config:
-    seed: 982526257
-    experiment:
-      name: nca_micropattern_template
-    data:
-      dataset: micropatterns
-      batches: 4
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      observed_channels: 9
-      data_channels: 12
-      downsample: 4
-      noise_strength: 0.005
-    model:
-      family: NCA
-      channels: 64
-      kernel_str:
-      - ID
-      - LAP
-      - DIFF
-      fire_rate: 0.5
-      padding: CIRCULAR
-      upscale_factor: null
-    trainer:
-      boundary_mode: soft
-      grad_loss: false
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 100
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: nadam
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 16
-      learn_rate: 0.001
-      warmup_steps: 64
-      decay_rate: 0.98
-    loss:
-      primary:
-      - vgg_grouped
-      - l2_grouped
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 5.0
-        contiguous_growth: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      random_crop: true
-      random_channel_shuffle: false
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 4
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-      vgg_internal: otsp
-    run:
-      t: 64
-      iterations: 2000
-      warmup: 64
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      scaling: convective
-    logging:
-      backend: wandb
-      wandb:
-        project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
-        tags: null
-    knockout:
-      time: null
-      channel: Nodal
-      mode: null
-- index: 16
-  overrides:
-    model.family: NCA
-    run.scaling: convective
-    logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
-    loss.primary:
-    - vgg_grouped
-    - l2_grouped
-    trainer.loop_autodiff: checkpointed
-    data.downsample: 4
-    knockout.mode: null
-    knockout.time: null
-    knockout.channel: Nodal
-    loss.regulariser_coeffs.latent_channel_match: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 0.0
-    loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.random_crop: true
-    loss.random_channel_shuffle: false
-    model.upscale_factor: null
-    run.t: 64
-    optimiser.learn_rate: 0.001
-    optimiser.decay_rate: 0.98
-    optimiser.type: muon
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 16
-    trainer.log_every: 100
-    trainer.clear_cache_every: null
-    data.batches: 4
-    model.channels: 64
-    loss.vgg_internal: l2
-    seed: 439062303
-  config:
-    seed: 439062303
-    experiment:
-      name: nca_micropattern_template
-    data:
-      dataset: micropatterns
-      batches: 4
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      observed_channels: 9
-      data_channels: 12
-      downsample: 4
-      noise_strength: 0.005
-    model:
-      family: NCA
-      channels: 64
-      kernel_str:
-      - ID
-      - LAP
-      - DIFF
-      fire_rate: 0.5
-      padding: CIRCULAR
-      upscale_factor: null
-    trainer:
-      boundary_mode: soft
-      grad_loss: false
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 100
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: muon
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 16
-      learn_rate: 0.001
-      warmup_steps: 64
-      decay_rate: 0.98
-    loss:
-      primary:
-      - vgg_grouped
-      - l2_grouped
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 5.0
-        contiguous_growth: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      random_crop: true
-      random_channel_shuffle: false
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 4
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-      vgg_internal: l2
-    run:
-      t: 64
-      iterations: 2000
-      warmup: 64
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      scaling: convective
-    logging:
-      backend: wandb
-      wandb:
-        project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
-        tags: null
-    knockout:
-      time: null
-      channel: Nodal
-      mode: null
-- index: 0
-  overrides:
-    model.family: NCA
-    run.scaling: convective
-    logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
-    loss.primary:
-    - vgg_grouped
-    - l2_grouped
-    trainer.loop_autodiff: checkpointed
-    data.downsample: 4
-    knockout.mode: null
-    knockout.time: null
-    knockout.channel: Nodal
-    loss.regulariser_coeffs.latent_channel_match: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 0.0
-    loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.random_crop: true
-    loss.random_channel_shuffle: false
-    model.upscale_factor: null
-    run.t: 64
-    optimiser.learn_rate: 0.001
-    optimiser.decay_rate: 0.98
-    optimiser.type: muon
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 16
-    trainer.log_every: 100
-    trainer.clear_cache_every: null
-    data.batches: 4
-    model.channels: 64
-    loss.vgg_internal: otsp
-    seed: 1363349907
-  config:
-    seed: 1363349907
-    experiment:
-      name: nca_micropattern_template
-    data:
-      dataset: micropatterns
-      batches: 4
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      observed_channels: 9
-      data_channels: 12
-      downsample: 4
-      noise_strength: 0.005
-    model:
-      family: NCA
-      channels: 64
-      kernel_str:
-      - ID
-      - LAP
-      - DIFF
-      fire_rate: 0.5
-      padding: CIRCULAR
-      upscale_factor: null
-    trainer:
-      boundary_mode: soft
-      grad_loss: false
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 100
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: muon
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 16
-      learn_rate: 0.001
-      warmup_steps: 64
-      decay_rate: 0.98
-    loss:
-      primary:
-      - vgg_grouped
-      - l2_grouped
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 5.0
-        contiguous_growth: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      random_crop: true
-      random_channel_shuffle: false
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 4
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-      vgg_internal: otsp
-    run:
-      t: 64
-      iterations: 2000
-      warmup: 64
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      scaling: convective
-    logging:
-      backend: wandb
-      wandb:
-        project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -2630,11 +2610,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - ott
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -2643,11 +2623,11 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: false
     model.upscale_factor: null
-    run.t: 128
+    run.t: 64
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
@@ -2658,7 +2638,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: l2
+    loss.vgg_internal: null
     seed: 131383004
   config:
     seed: 131383004
@@ -2673,7 +2653,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -2715,10 +2694,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - ott
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -2737,10 +2716,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: l2
+      vgg_internal: null
     run:
-      t: 128
-      iterations: 2000
+      t: 64
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2750,7 +2729,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -2761,11 +2740,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - ott
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -2774,14 +2753,14 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: false
     model.upscale_factor: null
-    run.t: 128
+    run.t: 64
     optimiser.learn_rate: 0.001
     optimiser.decay_rate: 0.98
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
@@ -2789,7 +2768,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
+    loss.vgg_internal: null
     seed: 95872739
   config:
     seed: 95872739
@@ -2804,7 +2783,136 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+    model:
+      family: NCA
+      channels: 64
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: muon
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.98
+    loss:
+      primary:
+      - ott
+      - l2
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: true
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      vgg_internal: null
+    run:
+      t: 64
+      iterations: 4000
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      wandb:
+        project: nca_micropattern_upscale
+        group: NCA_4ch_micropattern_vgg_swap_1
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+- index: 21
+  overrides:
+    model.family: NCA
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
+    loss.primary:
+    - ott
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: true
+    loss.random_channel_shuffle: false
+    model.upscale_factor: null
+    run.t: 128
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.98
+    optimiser.type: nadam
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.log_every: 100
+    trainer.clear_cache_every: null
+    data.batches: 4
+    model.channels: 64
+    loss.vgg_internal: null
+    seed: 109289145
+  config:
+    seed: 109289145
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -2846,10 +2954,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - ott
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -2868,10 +2976,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
+      vgg_internal: null
     run:
       t: 128
-      iterations: 2000
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2881,138 +2989,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
-        tags: null
-    knockout:
-      time: null
-      channel: Nodal
-      mode: null
-- index: 21
-  overrides:
-    model.family: NCA
-    run.scaling: convective
-    logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
-    loss.primary:
-    - vgg_grouped
-    - l2_grouped
-    trainer.loop_autodiff: checkpointed
-    data.downsample: 4
-    knockout.mode: null
-    knockout.time: null
-    knockout.channel: Nodal
-    loss.regulariser_coeffs.latent_channel_match: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 0.0
-    loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.random_crop: true
-    loss.random_channel_shuffle: false
-    model.upscale_factor: null
-    run.t: 128
-    optimiser.learn_rate: 0.001
-    optimiser.decay_rate: 0.98
-    optimiser.type: muon
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 16
-    trainer.log_every: 100
-    trainer.clear_cache_every: null
-    data.batches: 4
-    model.channels: 64
-    loss.vgg_internal: l2
-    seed: 109289145
-  config:
-    seed: 109289145
-    experiment:
-      name: nca_micropattern_template
-    data:
-      dataset: micropatterns
-      batches: 4
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      observed_channels: 9
-      data_channels: 12
-      downsample: 4
-      noise_strength: 0.005
-    model:
-      family: NCA
-      channels: 64
-      kernel_str:
-      - ID
-      - LAP
-      - DIFF
-      fire_rate: 0.5
-      padding: CIRCULAR
-      upscale_factor: null
-    trainer:
-      boundary_mode: soft
-      grad_loss: false
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 100
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: muon
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 16
-      learn_rate: 0.001
-      warmup_steps: 64
-      decay_rate: 0.98
-    loss:
-      primary:
-      - vgg_grouped
-      - l2_grouped
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 5.0
-        contiguous_growth: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      random_crop: true
-      random_channel_shuffle: false
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 4
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-      vgg_internal: l2
-    run:
-      t: 128
-      iterations: 2000
-      warmup: 64
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      scaling: convective
-    logging:
-      backend: wandb
-      wandb:
-        project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null
@@ -3023,11 +3000,11 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_micropattern_vgg_swap_1
-    run.iterations: 2000
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_1
+    run.iterations: 4000
     loss.primary:
-    - vgg_grouped
-    - l2_grouped
+    - ott
+    - l2
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     knockout.mode: null
@@ -3036,7 +3013,7 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: true
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -3051,7 +3028,7 @@ configs:
     trainer.clear_cache_every: null
     data.batches: 4
     model.channels: 64
-    loss.vgg_internal: otsp
+    loss.vgg_internal: null
     seed: 39534911
   config:
     seed: 39534911
@@ -3066,7 +3043,6 @@ configs:
       - 24
       - 36
       - 48
-      observed_channels: 9
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
@@ -3108,10 +3084,10 @@ configs:
       decay_rate: 0.98
     loss:
       primary:
-      - vgg_grouped
-      - l2_grouped
+      - ott
+      - l2
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -3130,10 +3106,10 @@ configs:
         epsilon: 0.1
         internal_loss_func: l2
         samples: 128
-      vgg_internal: otsp
+      vgg_internal: null
     run:
       t: 128
-      iterations: 2000
+      iterations: 4000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -3143,7 +3119,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_micropattern_vgg_swap_1
+        group: NCA_4ch_micropattern_vgg_swap_1
         tags: null
     knockout:
       time: null

@@ -6,20 +6,33 @@ import jax
 import jax.numpy as jnp
 from einops import repeat
 
-from Common.dataloader.micropattern import load_micropattern_circle_nodal_knockout_9ch_explicit_colony
+from Common.dataloader.micropattern import (
+    load_micropattern_circle_4ch_individual,
+    load_micropattern_circle_nodal_knockout_9ch_explicit_colony,
+)
 from Experiments.config_helpers import (
     _compact_value,
     build_loss_filename,
     build_model,
 )
+from NCA.trainer.data_augmenter_4ch_colony import DataAugmenter as DataAugmenter4Ch
 from NCA.trainer.data_augmenter_9ch_colony import DataAugmenter as DataAugmenterGrouped
 
 
 def build_data_augmenter(cfg):
+    data_channels = cfg.data.data_channels
+    if data_channels == 4 and cfg.knockout.mode is not None:
+        raise ValueError("data.data_channels=4 is only supported for no-knockout group-A data.")
+    if data_channels == 4:
+        data_augmenter_base = DataAugmenter4Ch
+    elif data_channels == 12:
+        data_augmenter_base = DataAugmenterGrouped
+    else:
+        raise ValueError(f"Unsupported data.data_channels={data_channels}. Expected 4 or 12.")
+
     if cfg.knockout.mode is None:
         @eqx.filter_jit
         def jittable_callback_bit(x,x_true,OBS_CHANNELS): # pyright: ignore[reportRedeclaration]
-            # Here we only want 9 channels - no duplicates - as this is what the NCA sees.
             propagate_xn = lambda x:x.at[1:].set(x[:-1])
             reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
             x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
@@ -86,7 +99,7 @@ def build_data_augmenter(cfg):
         else:
             raise ValueError(f"Unknown knockout mode {cfg.knockout.mode}")
     
-    class DA_subclass(DataAugmenterGrouped):
+    class DA_subclass(data_augmenter_base):
         def data_callback(self,x,y,i,key):
             x_true,_ =self.split_x_y(1)	
             x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
@@ -103,13 +116,40 @@ def build_data_augmenter(cfg):
 
 def load_data(cfg, impath=None):
     custom_impath = impath is not None
+    data_channels = cfg.data.data_channels
+    if data_channels not in {4, 12}:
+        raise ValueError(f"Unsupported data.data_channels={data_channels}. Expected 4 or 12.")
+    if data_channels == 4 and cfg.knockout.mode is not None:
+        raise ValueError("data.data_channels=4 is only supported for no-knockout group-A data.")
+
     if impath is None:
         data_path_base = os.getenv("DATA_PATH_BASE")
         if data_path_base is None:
             raise ValueError("DATA_PATH_BASE must be set when load_data is called without impath.")
         impath = data_path_base + "Timecourse_seperate_colonies/"
 
-    if cfg.knockout.mode is None:
+    if cfg.knockout.mode is None and data_channels == 4:
+        data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_micropattern_circle_4ch_individual(
+            impath=os.path.join(impath, "A/*"),
+            BATCHES=cfg.data.batches,
+            DOWNSAMPLE=cfg.data.downsample,
+            TIMESTEPS=list(cfg.data.timesteps),
+            PROCESSING_MODES={
+                "map_to_0_1",
+                "downsample"
+            }
+        )
+        CHANNEL_NAMES = [
+            channel_name if channel_name.startswith("A-") else f"A-{channel_name}"
+            for channel_name in CHANNEL_NAMES
+        ]
+        if len(CHANNEL_TIMESTEP_MASK.shape) == 2:
+            CHANNEL_TIMESTEP_MASK = repeat(
+                CHANNEL_TIMESTEP_MASK,
+                "t c -> b t c",
+                b=cfg.data.batches,
+            )
+    elif cfg.knockout.mode is None:
         data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=cfg.knockout.time,
@@ -257,6 +297,7 @@ def load_data(cfg, impath=None):
 
     cfg_str = (
         f"data_b{cfg.data.batches}"
+        f"_c{data_channels}"
         f"_ds{cfg.data.downsample}"
         f"_ts{_compact_value(list(cfg.data.timesteps))}"
         f"_ko{_compact_value(cfg.knockout.mode)}"

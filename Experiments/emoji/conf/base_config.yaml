@@ -11,7 +11,6 @@ system:
 data:
   dataset: emojis
   sequence: [alien_monster.png, microbe.png, rooster.png, rooster.png]
-  sequence_alias: al_mi_ro
   batches: 4
   timesteps: null
   observed_channels: 4

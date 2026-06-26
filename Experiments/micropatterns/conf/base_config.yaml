@@ -6,7 +6,8 @@ data:
   dataset: micropatterns
   batches: 2
   timesteps: [0, 12, 24, 36, 48]
-  observed_channels: 9
+  # observed_channels: 9
+  # data_channels: 4 loads group-A fate channels only; 12 loads the full colony dataset.
   data_channels: 12
   downsample: 1
   noise_strength: 0.005

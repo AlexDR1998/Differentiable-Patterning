@@ -1,22 +1,24 @@
-experiment_name: nca_micropattern_vgg_swap_1
+experiment_name: isouNCA_micropattern_vgg_swap_1
 entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
-output_subdir: generated/nca_micropattern_vgg_swap_1
+output_subdir: generated/isouNCA_micropattern_vgg_swap_1
 seed_mode: index
 grid:
-  model.family: [NCA]
+  model.family: [isouNCA]
   run.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
-  logging.wandb.group: [NCA_4ch_micropattern_vgg_swap_1]
+  logging.wandb.group: [isouNCA_4ch_micropattern_vgg_swap_1]
   run.iterations: [4000]
   # loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
   # loss.layers: [[decoded,latent],[decoded,decoded],[decoded,both]]
   # loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
+  data.data_channels: [4] 
+  # data_channels: 12
   # loss.primary: [[vgg_grouped,l2_grouped]]
   loss.primary: [[vgg,l2],[ott,l2]]
-  # loss.layers: [[decoded,latent], [decoded,decoded],[decoded,both],[both,latent], [both,decoded],[both,both]]
+  loss.layers: [[decoded,latent], [decoded,decoded],[decoded,both],[both,latent], [both,decoded],[both,both]]
   # loss.layers: [[both,latent], [both,decoded],[both,both]]
   trainer.loop_autodiff: [checkpointed]
-  data.downsample: [4]
+  data.downsample: [1]
   # data.batches: [4]
   knockout.mode: [null]
   knockout.time: [null]
@@ -27,12 +29,12 @@ grid:
   loss.regulariser_coeffs.intermediate_state: [1.0]
   loss.random_crop: [True]
   loss.random_channel_shuffle: [True, False]
-  model.upscale_factor: [null]
-  run.t: [32,64,128]
-  # model.upsampler.radius: [2]
-  # model.upsampler.fourier_modes: [4]
-  # model.upsampler.depth: [4]
-  # model.upsampler.width_factor: [2]
+  model.upscale_factor: [8]
+  run.t: [64]
+  model.upsampler.radius: [2]
+  model.upsampler.fourier_modes: [4]
+  model.upsampler.depth: [4]
+  model.upsampler.width_factor: [2]
   optimiser.learn_rate: [1e-3]
   optimiser.decay_rate: [0.98]
   optimiser.type: [nadam,muon]
@@ -42,9 +44,20 @@ grid:
   trainer.log_every: [100]
   trainer.clear_cache_every: [null]
 groups:
-  - data.batches: [4]
+  - data.batches: [2]
     model.channels: [64]    
 branches:
+  - when:
+      loss.primary: [vgg,l2]
+      # model.family: uNCA
+    grid:
+      loss.vgg_internal: [l2,otsp]
+      # loss.random_crop: [True,False]
+  - when:
+      loss.primary: [ott,l2]
+      # model.family: uNCA
+    grid:
+      loss.vgg_internal: [l2]
   - when:
       loss.primary: [vgg_grouped,l2_grouped]
       # model.family: uNCA
