@@ -12,6 +12,11 @@ from NCA.model.NCA_upsample_model import uNCA
 
 
 MAX_WANDB_TAG_LENGTH = 64
+EXCLUDED_WANDB_TAG_KEYS = {
+    "logging.wandb.project",
+    "logging.wandb.group",
+    "logging.wandb.tags",
+}
 
 
 def _cfg_get(cfg, key, default=None):
@@ -369,6 +374,8 @@ def build_tags(cfg, prefix=""):
         if key == "seed":
             continue
         tag_key = f"{prefix}{key}"
+        if tag_key in EXCLUDED_WANDB_TAG_KEYS:
+            continue
         if value is None:
             continue
         if hasattr(value, "items"):

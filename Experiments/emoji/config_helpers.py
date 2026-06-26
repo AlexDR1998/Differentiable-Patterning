@@ -124,7 +124,7 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
 
 
 def build_legacy_training_filename(cfg):
-    sequence_alias = _cfg_get(cfg.data, "sequence_alias", "al_mi_ro")
+    sequence_alias = _sequence_alias(cfg.data.sequence)
     regen_str = "regenerate_" if cfg.data.regenerate else ""
     loss_mode = "_".join(_as_list(cfg.loss.primary)).lower()
     return (
