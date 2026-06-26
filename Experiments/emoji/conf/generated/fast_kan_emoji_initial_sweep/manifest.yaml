@@ -52,7 +52,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -144,7 +144,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -248,7 +248,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -340,7 +340,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -444,7 +444,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -536,7 +536,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -640,7 +640,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -732,7 +732,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -836,7 +836,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -928,7 +928,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -1032,7 +1032,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -1124,7 +1124,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -1228,7 +1228,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -1320,7 +1320,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -1424,7 +1424,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -1516,7 +1516,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -1620,7 +1620,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -1712,7 +1712,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -1816,7 +1816,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -1908,7 +1908,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -2012,7 +2012,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -2104,7 +2104,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -2208,7 +2208,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -2300,7 +2300,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -2404,7 +2404,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -2496,7 +2496,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -2600,7 +2600,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -2692,7 +2692,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -2796,7 +2796,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -2888,7 +2888,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -2992,7 +2992,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -3084,7 +3084,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -3188,7 +3188,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -3280,7 +3280,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -3384,7 +3384,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -3476,7 +3476,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -3580,7 +3580,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -3672,7 +3672,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -3776,7 +3776,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -3868,7 +3868,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -3972,7 +3972,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -4064,7 +4064,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -4168,7 +4168,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -4260,7 +4260,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -4364,7 +4364,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -4456,7 +4456,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -4560,7 +4560,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -4652,7 +4652,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -4756,7 +4756,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -4848,7 +4848,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -4952,7 +4952,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -5044,7 +5044,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -5148,7 +5148,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -5240,7 +5240,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -5344,7 +5344,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -5436,7 +5436,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -5540,7 +5540,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -5632,7 +5632,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -5736,7 +5736,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -5828,7 +5828,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -5932,7 +5932,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -6024,7 +6024,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -6128,7 +6128,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -6220,7 +6220,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -6324,7 +6324,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -6416,7 +6416,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -6520,7 +6520,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -6612,7 +6612,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -6716,7 +6716,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -6808,7 +6808,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -6912,7 +6912,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -7004,7 +7004,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -7108,7 +7108,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -7200,7 +7200,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -7304,7 +7304,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -7396,7 +7396,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -7500,7 +7500,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -7592,7 +7592,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -7696,7 +7696,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -7788,7 +7788,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -7892,7 +7892,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -7984,7 +7984,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -8088,7 +8088,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -8180,7 +8180,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -8284,7 +8284,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -8376,7 +8376,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -8480,7 +8480,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -8572,7 +8572,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -8676,7 +8676,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -8768,7 +8768,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -8872,7 +8872,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -8964,7 +8964,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -9068,7 +9068,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -9160,7 +9160,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -9264,7 +9264,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -9356,7 +9356,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -9460,7 +9460,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -9552,7 +9552,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -9656,7 +9656,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -9748,7 +9748,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -9852,7 +9852,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -9944,7 +9944,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -10048,7 +10048,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -10140,7 +10140,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -10244,7 +10244,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -10336,7 +10336,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -10440,7 +10440,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -10532,7 +10532,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -10636,7 +10636,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -10728,7 +10728,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -10832,7 +10832,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -10924,7 +10924,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -11028,7 +11028,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -11120,7 +11120,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -11224,7 +11224,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -11316,7 +11316,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -11420,7 +11420,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -11512,7 +11512,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -11616,7 +11616,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -11708,7 +11708,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -11812,7 +11812,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -11904,7 +11904,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -12008,7 +12008,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -12100,7 +12100,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -12204,7 +12204,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -12296,7 +12296,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -12400,7 +12400,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -12492,7 +12492,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -12596,7 +12596,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -12688,7 +12688,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -12792,7 +12792,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -12884,7 +12884,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -12988,7 +12988,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -13080,7 +13080,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -13184,7 +13184,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -13276,7 +13276,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -13380,7 +13380,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -13472,7 +13472,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -13576,7 +13576,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -13668,7 +13668,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -13772,7 +13772,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -13864,7 +13864,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -13968,7 +13968,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -14060,7 +14060,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -14164,7 +14164,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -14256,7 +14256,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -14360,7 +14360,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -14452,7 +14452,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -14556,7 +14556,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -14648,7 +14648,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -14752,7 +14752,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -14844,7 +14844,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -14948,7 +14948,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -15040,7 +15040,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -15144,7 +15144,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -15236,7 +15236,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -15340,7 +15340,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -15432,7 +15432,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -15536,7 +15536,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -15628,7 +15628,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -15732,7 +15732,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -15824,7 +15824,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -15928,7 +15928,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -16020,7 +16020,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -16124,7 +16124,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -16216,7 +16216,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -16320,7 +16320,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -16412,7 +16412,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -16516,7 +16516,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -16608,7 +16608,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -16712,7 +16712,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -16804,7 +16804,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -16908,7 +16908,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -17000,7 +17000,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -17104,7 +17104,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -17196,7 +17196,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -17300,7 +17300,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -17392,7 +17392,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -17496,7 +17496,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -17588,7 +17588,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -17692,7 +17692,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -17784,7 +17784,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -17888,7 +17888,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -17980,7 +17980,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -18084,7 +18084,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -18176,7 +18176,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -18280,7 +18280,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.99
@@ -18372,7 +18372,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -18476,7 +18476,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -18568,7 +18568,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
@@ -18672,7 +18672,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
     loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: nadam
+    optimiser.type: muon
     optimiser.learn_rate: 0.0003
     optimiser.warmup_steps: 64
     optimiser.decay_rate: 0.98
@@ -18764,7 +18764,7 @@ configs:
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
     optimiser:
-      type: nadam
+      type: muon
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
