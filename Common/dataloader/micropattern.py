@@ -755,7 +755,7 @@ def load_micropattern_circle_8ch_individual(
 
 
 def load_micropattern_circle_4ch_individual(
-    impath="../Data/Timecourse Individual Images/*",
+    impath="../Data/Timecourse Separate Colonies/A/*",
     DOWNSAMPLE=1,
     BATCHES=1,
     BACKGROUND_RADIUS=20,

@@ -133,7 +133,10 @@ class NCA_Train_log(Train_log):
 		
 		for name in log_dict.keys():
 			if name not in ["x_latent", "x_processed"]:
-				self.log_scalar(f"Train/{name}",log_dict[name],step=i)
+				if name.startswith("pool/"):
+					self.log_scalar(f"StatePool/{name.removeprefix('pool/')}",log_dict[name],step=i)
+				else:
+					self.log_scalar(f"Train/{name}",log_dict[name],step=i)
 		if i%LOG_EVERY==0 and i>0:
 			self.log_model_parameters(model,i)
 			if write_images:
