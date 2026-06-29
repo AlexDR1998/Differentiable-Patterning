@@ -78,7 +78,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		
 		x_true,_ =self.split_x_y(1)
 				
-		x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
+		x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS,key)
 
 		#print(x[0].shape)
 		#print(len(x))
@@ -91,15 +91,32 @@ class DataAugmenter(DataAugmenterAbstract):
 		
 
 @eqx.filter_jit
-def jittable_callback_bit(x,x_true,OBS_CHANNELS):
+def jittable_callback_bit(x,x_true,OBS_CHANNELS,key):
 	propagate_xn = lambda x:x.at[1:].set(x[:-1])
 	reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
 	
 	x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
 	x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-			
-	for b in range(len(x)//2):
-		x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
+
+	B = len(x)
+	T = x[0].shape[0]
+	N_ELIGIBLE = B * (T - 1)
+	N_INJECT = N_ELIGIBLE // 2
+
+	if N_INJECT > 0:
+		scores = jax.random.uniform(key, shape=(N_ELIGIBLE,))
+		inject_inds = jnp.argsort(scores)[:N_INJECT]
+		inject_mask = jnp.zeros((N_ELIGIBLE,), dtype=bool).at[inject_inds].set(True)
+		inject_mask = inject_mask.reshape((B, T - 1))
+
+		for b in range(B):
+			mask = inject_mask[b, :, None, None, None]
+			x_obs = jnp.where(
+				mask,
+				x_true[b][1:, :OBS_CHANNELS],
+				x[b][1:, :OBS_CHANNELS],
+			)
+			x[b] = x[b].at[1:, :OBS_CHANNELS].set(x_obs)
 	return x
 	
 	

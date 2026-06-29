@@ -1,5 +1,7 @@
 import os
 
+import jax
+
 from Common.dataloader.emoji import load_emoji_sequence
 from Experiments.config_helpers import (
     _as_list,
@@ -80,7 +82,12 @@ def build_data_augmenter(cfg):
                 y = self.unshift(y, shift_amount, self.PREVIOUS_KEY)
 
             x_true, _ = self.split_x_y(1)
-            x = jittable_callback_bit(x, x_true, self.OBS_CHANNELS)
+            x = jittable_callback_bit(
+                x,
+                x_true,
+                self.OBS_CHANNELS,
+                jax.random.fold_in(key, 0),
+            )
 
             if shift_amount:
                 x = self.shift(x, shift_amount, key=key)

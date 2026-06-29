@@ -65,11 +65,10 @@ class DataAugmenter(DataAugmenterBasic):
 
         
         x_true,_ =self.split_x_y(1)
-        x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
+        x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS,key)
         x = self.noise(x,0.01,key=key) # type: ignore
         self.PREVIOUS_KEY = key
         return x,y
 		
-
 
 

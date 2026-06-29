@@ -15,6 +15,9 @@ from Experiments.config_helpers import (
     build_loss_filename,
     build_model,
 )
+from NCA.trainer.data_augmenter_nca_basic import (
+    jittable_callback_bit as baseline_jittable_callback_bit,
+)
 from NCA.trainer.data_augmenter_4ch_colony import DataAugmenter as DataAugmenter4Ch
 from NCA.trainer.data_augmenter_9ch_colony import DataAugmenter as DataAugmenterGrouped
 
@@ -31,15 +34,7 @@ def build_data_augmenter(cfg):
         raise ValueError(f"Unsupported data.data_channels={data_channels}. Expected 4 or 12.")
 
     if cfg.knockout.mode is None:
-        @eqx.filter_jit
-        def jittable_callback_bit(x,x_true,OBS_CHANNELS): # pyright: ignore[reportRedeclaration]
-            propagate_xn = lambda x:x.at[1:].set(x[:-1])
-            reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
-            x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-            x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-            for b in range(len(x)//2):
-                x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
-            return x
+        jittable_callback_bit = baseline_jittable_callback_bit
         
         
     else:
@@ -102,7 +97,15 @@ def build_data_augmenter(cfg):
     class DA_subclass(data_augmenter_base):
         def data_callback(self,x,y,i,key):
             x_true,_ =self.split_x_y(1)	
-            x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
+            if cfg.knockout.mode is None:
+                x = jittable_callback_bit(
+                    x,
+                    x_true,
+                    self.OBS_CHANNELS,
+                    jax.random.fold_in(key, 0),
+                )
+            else:
+                x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
             x = self.noise(x,cfg.data.noise_strength,key=key)
             self.PREVIOUS_KEY = key
             return x,y

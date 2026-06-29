@@ -1,6 +1,8 @@
 import jax.tree_util as jtu
-import equinox as eqx
-from NCA.trainer.data_augmenter_nca_basic import DataAugmenter as DataAugmenterBasic
+from NCA.trainer.data_augmenter_nca_basic import (
+    DataAugmenter as DataAugmenterBasic,
+    jittable_callback_bit,
+)
 
 
 class DataAugmenter(DataAugmenterBasic):
@@ -41,20 +43,7 @@ class DataAugmenter(DataAugmenterBasic):
 
         
         x_true,_ =self.split_x_y(1)
-        x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
+        x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS,key)
         x = self.noise(x,0.01,key=key)
         self.PREVIOUS_KEY = key
         return x,y
-		
-
-@eqx.filter_jit
-def jittable_callback_bit(x,x_true,OBS_CHANNELS):
-	propagate_xn = lambda x:x.at[1:].set(x[:-1])
-	reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
-	
-	x = jtu.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-	x = jtu.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-			
-	for b in range(len(x)//2):
-		x[b*2] = x[b*2].at[:,:OBS_CHANNELS].set(x_true[b*2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
-	return x

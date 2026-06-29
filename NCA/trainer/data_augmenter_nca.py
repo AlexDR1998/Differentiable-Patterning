@@ -67,7 +67,12 @@ class DataAugmenter(DataAugmenterBasic):
 
 		x_true,_ =self.split_x_y(1)
 				
-		x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
+		x = jittable_callback_bit(
+			x,
+			x_true,
+			self.OBS_CHANNELS,
+			jax.random.fold_in(key, 0),
+		)
 
 		x = self.shift(x,am,key=key)
 		y = self.shift(y,am,key=key)
