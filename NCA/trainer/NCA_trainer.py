@@ -12,7 +12,14 @@ import datetime
 # import Common.trainer.loss as loss
 # import Common.trainer.loss_ott as loss_ott
 from Common.trainer.loss import build_loss_functions,build_loss_initialiser
-from NCA.trainer.tensorboard_log import NCA_Train_log, kaNCA_Train_log, mNCA_Train_log, aNCA_Train_log, NCA_knockout_Train_log
+from NCA.trainer.tensorboard_log import (
+	NCA_Train_log,
+	kaNCA_Train_log,
+	mNCA_Train_log,
+	aNCA_Train_log,
+	NCA_knockout_Train_log,
+	uses_fast_kan_diagnostics,
+)
 from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
 from NCA.model.NCA_multihead_attention import aNCA
@@ -28,6 +35,14 @@ import time
 
 INTERNAL_LOOP_DTYPE = jnp.bfloat16 # dtype to use for values inside the loop over timesteps. Should be low precision to save memory, but not so low that it causes instability. Can experiment with bfloat16 or float16.
 LOSS_DTYPE = jnp.float32 # dtype to use for loss values. Higher precision as it accumulates over many timesteps and batches.
+
+
+def select_wandb_train_logger_class(model, knockout_time=None):
+	if knockout_time is not None:
+		return NCA_knockout_Train_log
+	if uses_fast_kan_diagnostics(model):
+		return kaNCA_Train_log
+	return NCA_Train_log
 
 def maybe_save_gpu_profile(step):
 	if os.getenv("PROFILE_GPU", "0") != "1":
@@ -290,7 +305,7 @@ class NCA_Trainer(object):
 			if BACKEND=="tensorboard":
 				self.IS_LOGGING = True
 				self.LOG_DIR = self._LOG_DIRECTORY+self.model_filename+"/train"
-				if isinstance(self.NCA_model ,kaNCA):
+				if isinstance(self.NCA_model ,kaNCA) or uses_fast_kan_diagnostics(self.NCA_model):
 					self.LOGGER = kaNCA_Train_log(self.LOG_DIR,self._data_raw)
 				elif isinstance(self.NCA_model , mNCA):
 					self.LOGGER = mNCA_Train_log(self.LOG_DIR,self._data_raw)
@@ -315,7 +330,8 @@ class NCA_Trainer(object):
 						knockout_time=KNOCKOUT_ARGS["time"],
 						knockout_channel=KNOCKOUT_ARGS["channel"])
 				else:
-					self.LOGGER = NCA_Train_log(data=self._data_raw,wandb_config=wandb_args)
+					logger_class = select_wandb_train_logger_class(self.NCA_model)
+					self.LOGGER = logger_class(data=self._data_raw,wandb_config=wandb_args)
 				print("Logging training to: "+self.LOG_DIR)
 		self.MODEL_PATH = self._MODEL_DIRECTORY+self.model_filename
 		print("Saving model to: "+self.MODEL_PATH)

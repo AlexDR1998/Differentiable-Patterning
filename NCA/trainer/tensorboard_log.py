@@ -1,10 +1,16 @@
 from einops import rearrange,repeat
-from NCA.NCA_visualiser import plot_weight_matrices,plot_weight_kernel_boxplot
+from NCA.NCA_visualiser import (
+	plot_to_image,
+	plot_weight_matrices,
+	plot_weight_kernel_boxplot,
+)
 import numpy as np
 from Common.utils import squarish
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key,PyTree
 import os
+import jax
+import jax.numpy as jnp
 import jax.random as jr
 import time
 from dotenv import load_dotenv
@@ -36,6 +42,33 @@ def _trajectory_snapshot_channels(T, data_augmenter, t):
 	if _is_grouped_9ch_colony_augmenter(data_augmenter):
 		return duplicate_x_channels_9ch(T_snapshot[:,:9])
 	return T_snapshot[:,:data_augmenter.OBS_CHANNELS]
+
+
+def uses_fast_kan_diagnostics(model):
+	return (
+		hasattr(model, "get_edge_norms")
+		and hasattr(model, "evaluate_edge_functions")
+	)
+
+
+def _kan_layer(model, layer_index):
+	layer = model.layers[layer_index]
+	return getattr(layer, "layer", layer)
+
+
+def _kan_layer_width(layer):
+	if hasattr(layer, "_width"):
+		return float(jax.device_get(layer._width()))
+	if getattr(layer, "log_rbf_width", None) is not None:
+		return float(np.exp(np.array(jax.device_get(layer.log_rbf_width))))
+	return float(getattr(layer, "rbf_width", np.nan))
+
+
+def _normalise_label(label, max_length=32):
+	label = str(label)
+	if len(label) <= max_length:
+		return label
+	return label[: max_length - 3] + "..."
 
 
 class NCA_Train_log(Train_log):
@@ -260,11 +293,127 @@ class aNCA_Train_log(NCA_Train_log):
 			
 
 class kaNCA_Train_log(NCA_Train_log):
-	def log_model_parameters(self,nca,i):
+	def _log_legacy_kan_parameters(self,nca,i):
 		#Log weights and biasses of model every 10 training epochs
-		w1,w2 = nca.get_weights()		
-		self.log_histogram('Input layer weights',w1,step=i)
-		self.log_histogram('Output layer weights',w2,step=i)
+		weights = nca.get_weights()
+		if len(weights) >= 2:
+			self.log_histogram('Input layer weights',weights[0],step=i)
+			self.log_histogram('Output layer weights',weights[1],step=i)
+			return
+		for idx, w in enumerate(weights):
+			self.log_histogram(f"Train/KAN/weight_{idx}", np.squeeze(w), step=i)
+
+	def _log_fast_kan_weight_histograms(self,nca,i):
+		for idx, w in enumerate(nca.get_weights()):
+			self.log_histogram(f"Train/KAN/weight_{idx}", np.squeeze(w), step=i)
+
+	def _edge_norm_summary(self,edge_norms):
+		edge_norms = np.asarray(jax.device_get(edge_norms))
+		max_norm = float(np.max(edge_norms)) if edge_norms.size else 0.0
+		active_fraction = 0.0
+		if max_norm > 0.0:
+			active_fraction = float(np.mean(edge_norms > 0.1 * max_norm))
+		return {
+			"max": max_norm,
+			"mean": float(np.mean(edge_norms)) if edge_norms.size else 0.0,
+			"median": float(np.median(edge_norms)) if edge_norms.size else 0.0,
+			"active_fraction": active_fraction,
+		}
+
+	def _plot_edge_norms(self,edge_norms,layer_index):
+		import matplotlib.pyplot as plt
+
+		edge_norms = np.asarray(jax.device_get(edge_norms))
+		fig, ax = plt.subplots(figsize=(6, 5))
+		image = ax.imshow(edge_norms.T, aspect="auto", origin="lower")
+		ax.set_xlabel("Input edge")
+		ax.set_ylabel("Output edge")
+		ax.set_title(f"KAN layer {layer_index} edge norms")
+		fig.colorbar(image, ax=ax, label="Edge norm")
+		fig.tight_layout()
+		return plot_to_image(fig)
+
+	def _plot_top_edge_functions(self,nca,layer_index,k=12,xs=None):
+		import matplotlib.pyplot as plt
+
+		layer = _kan_layer(nca, layer_index)
+		if xs is None:
+			xs = jnp.linspace(layer.grid_min, layer.grid_max, 200)
+		xs_np = np.asarray(jax.device_get(xs))
+		edge_values = np.asarray(jax.device_get(nca.evaluate_edge_functions(xs)[layer_index]))
+		if hasattr(nca, "get_top_edges"):
+			top_edges = nca.get_top_edges(k=k, layer_index=layer_index)
+		else:
+			edge_norms = np.asarray(jax.device_get(nca.get_edge_norms()[layer_index]))
+			flat_order = np.argsort(edge_norms.ravel())[::-1][:k]
+			input_indices, output_indices = np.unravel_index(flat_order, edge_norms.shape)
+			top_edges = [
+				{
+					"rank": rank,
+					"input_index": int(input_index),
+					"output_index": int(output_index),
+				}
+				for rank, (input_index, output_index) in enumerate(
+					zip(input_indices, output_indices),
+					start=1,
+				)
+			]
+		fig, ax = plt.subplots(figsize=(8, 4))
+		for edge in top_edges:
+			input_index = edge["input_index"]
+			output_index = edge["output_index"]
+			label_input = edge.get("input_name", f"in {input_index}")
+			label_output = edge.get("output_name", f"out {output_index}")
+			label = (
+				f"{edge['rank']}: {_normalise_label(label_input)}"
+				f" -> {_normalise_label(label_output)}"
+			)
+			ax.plot(
+				xs_np,
+				edge_values[input_index, output_index],
+				label=label,
+				alpha=0.8,
+			)
+		ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.4)
+		ax.set_xlabel("Input value")
+		ax.set_ylabel("Edge contribution")
+		ax.set_title(f"KAN layer {layer_index} top {len(top_edges)} edge functions")
+		if top_edges:
+			ax.legend(fontsize="x-small", ncols=2)
+		fig.tight_layout()
+		return plot_to_image(fig)
+
+	def log_fast_kan_diagnostics(self,nca,i,k=12):
+		self._log_fast_kan_weight_histograms(nca,i)
+		for layer_index, edge_norms in enumerate(nca.get_edge_norms()):
+			summary = self._edge_norm_summary(edge_norms)
+			for name, value in summary.items():
+				self.log_scalar(
+					f"Train/KAN/layer_{layer_index}/edge_norm_{name}",
+					value,
+					step=i,
+				)
+			self.log_scalar(
+				f"Train/KAN/layer_{layer_index}/rbf_width",
+				_kan_layer_width(_kan_layer(nca, layer_index)),
+				step=i,
+			)
+			self.log_image(
+				f"Train/KAN/layer_{layer_index}_edge_norms",
+				self._plot_edge_norms(edge_norms,layer_index),
+				step=i,
+			)
+			self.log_image(
+				f"Train/KAN/layer_{layer_index}_top_edge_functions",
+				self._plot_top_edge_functions(nca,layer_index,k=k),
+				step=i,
+			)
+
+	def log_model_parameters(self,nca,i):
+		if uses_fast_kan_diagnostics(nca):
+			self.log_fast_kan_diagnostics(nca,i)
+		else:
+			self._log_legacy_kan_parameters(nca,i)
 		
 
 
