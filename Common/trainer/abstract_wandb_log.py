@@ -15,6 +15,19 @@ if wandb_api_key:
 else:
     print("Warning: WANDB_API_KEY not found in environment variables. Wandb login skipped.")
 
+
+def _to_uint8_rgb_image(image):
+    image = np.array(image)
+    if image.dtype != np.uint8:
+        image = np.clip(image * 255, 0, 255).astype(np.uint8)
+    if image.ndim == 3 and image.shape[-1] == 4:
+        alpha = image[..., 3:4].astype(np.float32) / 255.0
+        rgb = image[..., :3].astype(np.float32)
+        background = np.full_like(rgb, 255.0)
+        image = (rgb * alpha + background * (1.0 - alpha)).astype(np.uint8)
+    return image
+
+
 class Train_log(object):
     def __init__(
         self,
@@ -60,8 +73,7 @@ class Train_log(object):
             assert len(image.shape) == 3, "Image must be 3D"
             
             # Convert to PIL Image
-            if image.dtype != np.uint8:
-                image = np.clip(image * 255 , 0, 255).astype(np.uint8)
+            image = _to_uint8_rgb_image(image)
             # if image.dtype == np.float32 or image.dtype == np.float64:
                 # image = np.clip(image, 0, 1)
 
@@ -91,8 +103,7 @@ class Train_log(object):
         for img in image:
             try:
                 # Convert to PIL Image
-                if img.dtype != np.uint8:
-                    img = np.clip(img * 255, 0, 255).astype(np.uint8)
+                img = _to_uint8_rgb_image(img)
                 # if img.dtype == np.float32 or img.dtype == np.float64:
                     # img = np.clip(img,0,1)
 
