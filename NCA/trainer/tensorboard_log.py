@@ -341,7 +341,7 @@ class kaNCA_Train_log(NCA_Train_log):
 
 		layer = _kan_layer(nca, layer_index)
 		if xs is None:
-			xs = jnp.linspace(layer.grid_min, layer.grid_max, 200)
+			xs = jnp.linspace(layer.grid_min-2, layer.grid_max+2, 200)
 		xs_np = np.asarray(jax.device_get(xs))
 		edge_values = np.asarray(jax.device_get(nca.evaluate_edge_functions(xs)[layer_index]))
 		if hasattr(nca, "get_top_edges"):
