@@ -292,10 +292,28 @@ def load_data(cfg, impath=None):
     
         # NCA_hyperparameters["FIRE_RATE"]=1.0 # For fine tuning on both WT and KO data, we want to use all the data and not drop any updates randomly, as the dataset is already small.
     
+    if cfg.data.get("duplicate_final_timestep", False):
+        data = jnp.concatenate([data, data[:, -1:]], axis=1)
+        if len(CHANNEL_TIMESTEP_MASK.shape) == 2:
+            CHANNEL_TIMESTEP_MASK = jnp.concatenate(
+                [CHANNEL_TIMESTEP_MASK, CHANNEL_TIMESTEP_MASK[-1:]],
+                axis=0,
+            )
+        elif len(CHANNEL_TIMESTEP_MASK.shape) == 3:
+            CHANNEL_TIMESTEP_MASK = jnp.concatenate(
+                [CHANNEL_TIMESTEP_MASK, CHANNEL_TIMESTEP_MASK[:, -1:]],
+                axis=1,
+            )
+        else:
+            raise ValueError(
+                "CHANNEL_TIMESTEP_MASK must have shape [T, C] or [B, T, C] "
+                f"when duplicate_final_timestep is enabled. Got {CHANNEL_TIMESTEP_MASK.shape}."
+            )
+
     #Data and boundary_mask is of size [B,T,C,W,H].
     # W and H are 500, we want to pad them to 512.
-    data = jnp.pad(data,((0,0),(0,0),(0,0),(6,6),(6,6)))
-    boundary_mask = jnp.pad(boundary_mask,((0,0),(0,0),(6,6),(6,6)))
+    # data = jnp.pad(data,((0,0),(0,0),(0,0),(6,6),(6,6)))
+    # boundary_mask = jnp.pad(boundary_mask,((0,0),(0,0),(6,6),(6,6)))
     
 
     cfg_str = (
