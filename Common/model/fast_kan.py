@@ -18,10 +18,12 @@ def resolve_base_activation(base_activation: Union[str, Callable, None]):
         return identity, "identity"
     if base_activation == "silu":
         return jax.nn.silu, "silu"
+    if base_activation == "relu":
+        return jax.nn.relu, "relu"
     if callable(base_activation):
         return base_activation, getattr(base_activation, "__name__", "callable")
     raise ValueError(
-        "base_activation must be one of 'identity', 'silu', 'none', None, "
+        "base_activation must be one of 'identity', 'silu', 'relu', 'none', None, "
         "or a callable."
     )
 

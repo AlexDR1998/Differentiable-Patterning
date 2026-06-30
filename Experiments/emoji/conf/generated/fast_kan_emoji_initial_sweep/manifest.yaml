@@ -21,7 +21,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 4
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -122,7 +122,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -217,7 +217,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 4
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -318,7 +318,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -413,7 +413,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 4
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -514,7 +514,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -609,7 +609,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 4
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -710,7 +710,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -1589,7 +1589,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 8
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -1690,7 +1690,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -1785,7 +1785,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 8
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -1886,7 +1886,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -1981,7 +1981,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 8
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -2082,7 +2082,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -2177,7 +2177,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 8
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -2278,7 +2278,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -3157,7 +3157,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 12
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -3258,7 +3258,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -3353,7 +3353,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 12
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -3454,7 +3454,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -3549,7 +3549,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 12
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -3650,7 +3650,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -3745,7 +3745,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 12
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -3846,7 +3846,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -4725,7 +4725,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 16
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -4826,7 +4826,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -4921,7 +4921,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 16
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -5022,7 +5022,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -5117,7 +5117,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 16
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -5218,7 +5218,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
@@ -5313,7 +5313,7 @@ configs:
     model.kernel_scale: 1
     model.kan.hidden_features: null
     model.kan.num_basis: 16
-    model.kan.base_activation: identity
+    model.kan.base_activation: null
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
@@ -5414,7 +5414,7 @@ configs:
         rbf_width: null
         trainable_width: true
         use_base_branch: true
-        base_activation: identity
+        base_activation: null
         use_layernorm: true
         spline_init_scale: 0.1
         base_init_scale: 0.1
