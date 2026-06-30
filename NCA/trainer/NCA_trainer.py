@@ -692,10 +692,11 @@ class NCA_Trainer(object):
 		# If we are using a loss function that needs to initialise some cache based on the data, do that here and add to LOSS_ARGS
 		loss_initialiser = build_loss_initialiser(LOSS_FUNC_STR,LOSS_ARGS)
 		if loss_initialiser is not None:
-			vgg_target_cache_decoded = loss_initialiser(y,key,self.LOSS_TIME_CHANNEL_MASK) # dict of {"vgg_params": ..., "target_feats": List[Batches] of arrays [N, ...]}
+			y_decoded_obs = jtu.tree_map(lambda yi: yi[:, :self.DATA_CHANNELS], y)
+			vgg_target_cache_decoded = loss_initialiser(y_decoded_obs,key,self.LOSS_TIME_CHANNEL_MASK) # dict of {"vgg_params": ..., "target_feats": List[Batches] of arrays [N, ...]}
 			v_real_to_latent = jax.vmap(lambda model_x: self.NCA_model.real_to_latent(model_x), in_axes=0, out_axes=0)
 			vv_real_to_latent = lambda x: jtu.tree_map(v_real_to_latent, x)
-			_y_latent = vv_real_to_latent(y)
+			_y_latent = vv_real_to_latent(y_decoded_obs)
 			vgg_target_cache_latent = loss_initialiser(_y_latent,key,self.LOSS_TIME_CHANNEL_MASK)
 
 			LOSS_ARGS = {**LOSS_ARGS, "vgg_params": vgg_target_cache_decoded["vgg_params"]} # Pre-trained VGG parameters for perceptual loss, if needed. Does not need batched.
