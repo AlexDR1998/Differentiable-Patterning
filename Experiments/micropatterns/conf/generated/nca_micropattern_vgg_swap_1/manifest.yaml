@@ -15,7 +15,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -77,7 +77,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -150,7 +150,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -212,7 +212,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -285,7 +285,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -347,7 +347,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -420,7 +420,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -482,7 +482,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -555,7 +555,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -617,7 +617,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -690,7 +690,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -752,7 +752,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -825,7 +825,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -887,7 +887,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -960,7 +960,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -1022,7 +1022,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1095,7 +1095,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -1157,7 +1157,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1230,7 +1230,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -1292,7 +1292,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1365,7 +1365,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -1427,7 +1427,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1500,7 +1500,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -1562,7 +1562,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1635,7 +1635,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -1697,7 +1697,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1770,7 +1770,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -1832,7 +1832,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1905,7 +1905,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -1967,7 +1967,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -2040,7 +2040,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -2102,7 +2102,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -2175,7 +2175,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -2237,7 +2237,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -2310,7 +2310,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -2372,7 +2372,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -2445,7 +2445,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -2507,7 +2507,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -2580,7 +2580,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -2642,7 +2642,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -2715,7 +2715,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -2777,7 +2777,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -2850,7 +2850,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -2912,7 +2912,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -2985,7 +2985,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -3047,7 +3047,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -3120,7 +3120,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -3182,7 +3182,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -3255,7 +3255,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -3317,7 +3317,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -3390,7 +3390,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -3452,7 +3452,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -3525,7 +3525,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -3587,7 +3587,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -3660,7 +3660,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -3722,7 +3722,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -3795,7 +3795,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -3857,7 +3857,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -3930,7 +3930,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -3992,7 +3992,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -4065,7 +4065,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -4127,7 +4127,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -4200,7 +4200,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -4262,7 +4262,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -4335,7 +4335,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -4397,7 +4397,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -4470,7 +4470,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -4532,7 +4532,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -4605,7 +4605,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -4667,7 +4667,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -4740,7 +4740,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -4802,7 +4802,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -4875,7 +4875,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -4937,7 +4937,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -5010,7 +5010,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -5072,7 +5072,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -5145,7 +5145,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -5207,7 +5207,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -5280,7 +5280,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -5342,7 +5342,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -5415,7 +5415,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -5477,7 +5477,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -5550,7 +5550,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -5612,7 +5612,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -5685,7 +5685,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -5747,7 +5747,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -5820,7 +5820,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -5882,7 +5882,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -5955,7 +5955,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -6017,7 +6017,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -6090,7 +6090,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -6152,7 +6152,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -6225,7 +6225,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -6287,7 +6287,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -6360,7 +6360,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -6422,7 +6422,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -6495,7 +6495,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -6557,7 +6557,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -6630,7 +6630,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -6692,7 +6692,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -6765,7 +6765,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -6827,7 +6827,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -6900,7 +6900,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -6962,7 +6962,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -7035,7 +7035,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -7097,7 +7097,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -7170,7 +7170,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -7232,7 +7232,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -7305,7 +7305,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -7367,7 +7367,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -7440,7 +7440,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -7502,7 +7502,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -7575,7 +7575,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -7637,7 +7637,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -7710,7 +7710,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -7772,7 +7772,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -7845,7 +7845,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -7907,7 +7907,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -7980,7 +7980,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -8042,7 +8042,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -8115,7 +8115,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -8177,7 +8177,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -8250,7 +8250,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -8312,7 +8312,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -8385,7 +8385,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -8447,7 +8447,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -8520,7 +8520,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -8582,7 +8582,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -8655,7 +8655,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -8717,7 +8717,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -8790,7 +8790,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -8852,7 +8852,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -8925,7 +8925,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -8987,7 +8987,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -9060,7 +9060,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -9122,7 +9122,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -9195,7 +9195,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -9257,7 +9257,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -9330,7 +9330,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -9392,7 +9392,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -9465,7 +9465,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -9527,7 +9527,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -9600,7 +9600,7 @@ configs:
     loss.primary:
     - vgg
     - l2
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 4
     data.duplicate_final_timestep: true
@@ -9662,7 +9662,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
