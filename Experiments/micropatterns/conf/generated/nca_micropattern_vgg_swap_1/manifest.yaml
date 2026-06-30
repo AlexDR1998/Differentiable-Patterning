@@ -10,7 +10,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_4
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_5
     run.iterations: 4000
     loss.primary:
     - vgg
@@ -132,7 +132,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_4ch_micropattern_vgg_swap_4
+        group: NCA_4ch_micropattern_vgg_swap_5
         tags: null
     knockout:
       time: null
@@ -143,7 +143,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_4
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_5
     run.iterations: 4000
     loss.primary:
     - vgg
@@ -265,7 +265,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_4ch_micropattern_vgg_swap_4
+        group: NCA_4ch_micropattern_vgg_swap_5
         tags: null
     knockout:
       time: null
@@ -276,7 +276,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_4
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_5
     run.iterations: 4000
     loss.primary:
     - vgg
@@ -398,7 +398,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_4ch_micropattern_vgg_swap_4
+        group: NCA_4ch_micropattern_vgg_swap_5
         tags: null
     knockout:
       time: null
@@ -409,7 +409,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_4
+    logging.wandb.group: NCA_4ch_micropattern_vgg_swap_5
     run.iterations: 4000
     loss.primary:
     - vgg
@@ -531,7 +531,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_4ch_micropattern_vgg_swap_4
+        group: NCA_4ch_micropattern_vgg_swap_5
         tags: null
     knockout:
       time: null

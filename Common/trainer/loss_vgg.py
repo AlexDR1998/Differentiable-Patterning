@@ -50,10 +50,11 @@ def spatial_average(x, keepdims=True):
 
 class LPIPS_WITH_FEATURES(LPIPS):
     def features(self, x):
+        # Expects x in range [0,1]
         # x = ((x + 1.0) / 2.0).astype(VGG_DTYPE)
-        x = x * 2.0 - 1.0
+        # x = x * 2.0 - 1.0
         x = x.astype(VGG_DTYPE)
-        return self.vgg(x)
+        return self.vgg(x) # expects x in range [0,1]
 
 
 class LPIPS_L2(LPIPS_WITH_FEATURES):
