@@ -14,10 +14,12 @@ import datetime
 from Common.trainer.loss import build_loss_functions,build_loss_initialiser
 from NCA.trainer.tensorboard_log import (
 	NCA_Train_log,
-	kaNCA_Train_log,
 	mNCA_Train_log,
 	aNCA_Train_log,
 	NCA_knockout_Train_log,
+)
+from NCA.trainer.kan_tensorboard_log import (
+	kaNCA_Train_log,
 	uses_fast_kan_diagnostics,
 )
 from NCA.model.NCA_KAN_model import kaNCA

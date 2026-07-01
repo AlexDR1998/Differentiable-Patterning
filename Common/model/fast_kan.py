@@ -125,6 +125,10 @@ class FastRBFKANLayer(eqx.Module):
             return self.rbf_width
         return jnp.exp(self.log_rbf_width)
 
+    def _basis_from_values(self, x):
+        grid = jnp.linspace(self.grid_min, self.grid_max, self.num_basis)
+        return jnp.exp(-((x[..., None] - grid[None, :]) / self._width()) ** 2)
+
     def _validate_vector_input(self, x):
         if x.ndim != 1 or x.shape[0] != self.in_features:
             raise ValueError(
@@ -133,14 +137,20 @@ class FastRBFKANLayer(eqx.Module):
                 "SpatialFastRBFKANLayer for channel-first image tensors."
             )
 
+    def _validate_sample_input(self, x):
+        if x.ndim != 2 or x.shape[1] != self.in_features:
+            raise ValueError(
+                "FastRBFKANLayer edge diagnostics expect inputs of shape "
+                f"(samples, {self.in_features}), got {x.shape}."
+            )
+
     def basis(
         self, x: Float[Array, "{self.in_features}"]
     ) -> Float[Array, "{self.in_features} {self.num_basis}"]:
         self._validate_vector_input(x)
         if self.layernorm is not None:
             x = self.layernorm(x)
-        grid = jnp.linspace(self.grid_min, self.grid_max, self.num_basis)
-        return jnp.exp(-((x[:, None] - grid[None, :]) / self._width()) ** 2)
+        return self._basis_from_values(x)
 
     def __call__(
         self, x: Float[Array, "{self.in_features}"], key=None
@@ -168,11 +178,33 @@ class FastRBFKANLayer(eqx.Module):
         If layernorm is enabled, these are functions of the post-normalisation
         scalar coordinate used by the RBF branch.
         """
-        grid = jnp.linspace(self.grid_min, self.grid_max, self.num_basis)
-        basis = jnp.exp(-((xs[:, None] - grid[None, :]) / self._width()) ** 2)
+        basis = self._basis_from_values(xs)
         edge_values = jnp.einsum("sk,iok->ios", basis, self.spline_weight)
         if self.base_weight is not None and self.base_activation is not None:
             base_values = self.base_weight.T[:, :, None] * self.base_activation(xs)
+            edge_values = edge_values + base_values
+        return edge_values
+
+    def edge_contributions_from_inputs(
+        self, x: Float[Array, "samples {self.in_features}"]
+    ) -> Float[Array, "{self.in_features} {self.out_features} samples"]:
+        """Evaluate per-edge contributions on real layer input vectors.
+
+        This is diagnostic-only. Unlike evaluate_edge_functions, this receives
+        full input vectors so layernorm is applied exactly as in the forward
+        pass before evaluating spline/RBF contributions.
+        """
+        self._validate_sample_input(x)
+        spline_x = x
+        if self.layernorm is not None:
+            spline_x = jax.vmap(self.layernorm)(x)
+        basis = self._basis_from_values(spline_x)
+        edge_values = jnp.einsum("sik,iok->ios", basis, self.spline_weight)
+        if self.base_weight is not None and self.base_activation is not None:
+            base_x = self.base_activation(x)
+            base_values = self.base_weight.T[:, :, None] * jnp.swapaxes(
+                base_x, 0, 1
+            )[:, None, :]
             edge_values = edge_values + base_values
         return edge_values
 
@@ -241,6 +273,9 @@ class FastLinearSplineKANLayer(FastRBFKANLayer):
             in_grid = (x >= self.grid_min) & (x <= self.grid_max)
             basis = basis * in_grid[..., None]
         return basis
+
+    def _basis_from_values(self, x):
+        return self._linear_spline_basis(x)
 
     def evaluate_edge_functions(
         self, xs: Float[Array, "samples"]

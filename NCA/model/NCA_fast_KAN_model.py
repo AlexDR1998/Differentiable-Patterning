@@ -152,6 +152,26 @@ class FastKaNCA(NCA):
     def evaluate_edge_functions(self, xs):
         return [layer.layer.evaluate_edge_functions(xs) for layer in self.layers]
 
+    def get_kan_layer_inputs_outputs(self, x):
+        """Return diagnostic KAN layer input/output tensors for one NCA state.
+
+        This intentionally avoids fire-rate masking and boundary callbacks. It
+        exposes the deterministic update rule internals used by the KAN layers.
+        """
+        if x.ndim != 3 or x.shape[0] != self.N_CHANNELS:
+            raise ValueError(
+                "FastKaNCA KAN diagnostics expect one state of shape "
+                f"({self.N_CHANNELS}, x, y), got {x.shape}."
+            )
+        layer0_input = self.perception(x)
+        layer0_output = self.layers[0](layer0_input)
+        layer1_input = layer0_output
+        layer1_output = self.layers[1](layer1_input)
+        return (
+            (layer0_input, layer0_output),
+            (layer1_input, layer1_output),
+        )
+
     def get_top_edges(self, k: int, layer_index: int = 0):
         top_edges = get_top_edges_from_layer(self.layers[layer_index].layer, k)
         if layer_index != 0:
