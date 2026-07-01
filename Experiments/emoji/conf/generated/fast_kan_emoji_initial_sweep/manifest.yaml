@@ -3,12 +3,12 @@ entrypoint: Experiments.emoji.emoji_training_sweep:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/experiments/fast_kan_emoji_initial_sweep.yaml
 output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/generated/fast_kan_emoji_initial_sweep
-count: 8
+count: 12
 configs:
-- index: 2
+- index: 10
   overrides:
     logging.wandb.project: KAN-NCA
-    logging.wandb.group: fast-kan-emoji-model-sweep-5
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
     model.family: FastKaNCA
     model.channels: 32
     model.kernel_str:
@@ -20,7 +20,9 @@ configs:
     model.padding: REPLICATE
     model.kernel_scale: 1
     model.kan.hidden_features: null
-    model.kan.num_basis: 4
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: constant
+    model.kan.num_basis: 8
     model.kan.base_activation: null
     model.kan.spline_init_scale: 0.0001
     model.kan.base_init_scale: 0.0
@@ -118,402 +120,6 @@ configs:
         radius: null
       kan:
         hidden_features: null
-        num_basis: 4
-        grid_min: -2.0
-        grid_max: 2.0
-        rbf_width: null
-        trainable_width: true
-        use_base_branch: true
-        base_activation: null
-        use_layernorm: true
-        spline_init_scale: 0.0001
-        base_init_scale: 0.0
-        final_zero_init: true
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 25
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: adamw
-      blocknorm: false
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.0001
-      warmup_steps: 64
-      decay_rate: 0.99
-    loss:
-      primary:
-      - l2
-      layers:
-      - decoded
-      vgg_internal: l2
-      random_crop: false
-      random_channel_shuffle: false
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
-        contiguous_growth: 1.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 3
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-        normalize: null
-        tau: null
-        amplitude_penalty: null
-    run:
-      t: 64
-      derive_t_from_fire_rate: false
-      fire_rate_step_numerator: null
-      iterations: 500
-      warmup: 10
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      filename_mode: hydra
-    logging:
-      backend: wandb
-      wandb:
-        project: KAN-NCA
-        group: fast-kan-emoji-model-sweep-5
-        tags: null
-    knockout:
-      time: null
-      channel: null
-- index: 4
-  overrides:
-    logging.wandb.project: KAN-NCA
-    logging.wandb.group: fast-kan-emoji-model-sweep-5
-    model.family: FastKaNCA
-    model.channels: 32
-    model.kernel_str:
-    - ID
-    - LAP
-    - GRAD
-    model.activation: relu
-    model.fire_rate: 0.5
-    model.padding: REPLICATE
-    model.kernel_scale: 1
-    model.kan.hidden_features: null
-    model.kan.num_basis: 4
-    model.kan.base_activation: identity
-    model.kan.spline_init_scale: 0.0001
-    model.kan.base_init_scale: 0.0
-    model.kan.use_layernorm: true
-    model.kan.trainable_width: true
-    model.kan.final_zero_init: true
-    data.downsample: 2
-    data.batches: 4
-    data.pad:
-    - 10
-    - 10
-    - 10
-    - 10
-    data.regenerate: true
-    data.shift_amount: 10
-    data.noise_strength: 0.005
-    run.t: 64
-    run.iterations: 500
-    run.warmup: 10
-    run.write_images: true
-    run.sparse_pruning: false
-    trainer.log_every: 25
-    trainer.clear_cache_every: null
-    trainer.loop_autodiff: checkpointed
-    loss.primary:
-    - l2
-    loss.layers:
-    - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 1.0
-    loss.regulariser_coeffs.update_sensitivity: 0.0
-    loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: adamw
-    optimiser.learn_rate: 0.0001
-    optimiser.warmup_steps: 64
-    optimiser.decay_rate: 0.99
-    optimiser.blocknorm: false
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 8
-    data.sequence:
-    - alien_monster.png
-    - microbe.png
-    - rooster.png
-    - rooster.png
-    seed: 271041745
-  config:
-    seed: 271041745
-    experiment:
-      name: nca_emoji_template
-    system:
-      precision: tensorfloat32
-      gpu: null
-      xla_flags: null
-    data:
-      dataset: emojis
-      sequence:
-      - alien_monster.png
-      - microbe.png
-      - rooster.png
-      - rooster.png
-      batches: 4
-      timesteps: null
-      observed_channels: 4
-      data_channels: 4
-      downsample: 2
-      crop_square: false
-      pad:
-      - 10
-      - 10
-      - 10
-      - 10
-      shift_amount: 10
-      noise_strength: 0.005
-      noise_mode: full
-      regenerate: true
-    model:
-      family: FastKaNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      activation: relu
-      fire_rate: 0.5
-      padding: REPLICATE
-      kernel_scale: 1
-      parameter_noise_level: 0.01
-      upscale_factor: 1
-      upsampler:
-        depth: null
-        width_factor: null
-        fourier_modes: null
-        radius: null
-      kan:
-        hidden_features: null
-        num_basis: 4
-        grid_min: -2.0
-        grid_max: 2.0
-        rbf_width: null
-        trainable_width: true
-        use_base_branch: true
-        base_activation: identity
-        use_layernorm: true
-        spline_init_scale: 0.0001
-        base_init_scale: 0.0
-        final_zero_init: true
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 25
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: adamw
-      blocknorm: false
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.0001
-      warmup_steps: 64
-      decay_rate: 0.99
-    loss:
-      primary:
-      - l2
-      layers:
-      - decoded
-      vgg_internal: l2
-      random_crop: false
-      random_channel_shuffle: false
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
-        contiguous_growth: 1.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 3
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-        normalize: null
-        tau: null
-        amplitude_penalty: null
-    run:
-      t: 64
-      derive_t_from_fire_rate: false
-      fire_rate_step_numerator: null
-      iterations: 500
-      warmup: 10
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      filename_mode: hydra
-    logging:
-      backend: wandb
-      wandb:
-        project: KAN-NCA
-        group: fast-kan-emoji-model-sweep-5
-        tags: null
-    knockout:
-      time: null
-      channel: null
-- index: 1
-  overrides:
-    logging.wandb.project: KAN-NCA
-    logging.wandb.group: fast-kan-emoji-model-sweep-5
-    model.family: FastKaNCA
-    model.channels: 32
-    model.kernel_str:
-    - ID
-    - LAP
-    - GRAD
-    model.activation: relu
-    model.fire_rate: 0.5
-    model.padding: REPLICATE
-    model.kernel_scale: 1
-    model.kan.hidden_features: null
-    model.kan.num_basis: 8
-    model.kan.base_activation: null
-    model.kan.spline_init_scale: 0.0001
-    model.kan.base_init_scale: 0.0
-    model.kan.use_layernorm: true
-    model.kan.trainable_width: true
-    model.kan.final_zero_init: true
-    data.downsample: 2
-    data.batches: 4
-    data.pad:
-    - 10
-    - 10
-    - 10
-    - 10
-    data.regenerate: true
-    data.shift_amount: 10
-    data.noise_strength: 0.005
-    run.t: 64
-    run.iterations: 500
-    run.warmup: 10
-    run.write_images: true
-    run.sparse_pruning: false
-    trainer.log_every: 25
-    trainer.clear_cache_every: null
-    trainer.loop_autodiff: checkpointed
-    loss.primary:
-    - l2
-    loss.layers:
-    - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 1.0
-    loss.regulariser_coeffs.update_sensitivity: 0.0
-    loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: adamw
-    optimiser.learn_rate: 0.0001
-    optimiser.warmup_steps: 64
-    optimiser.decay_rate: 0.99
-    optimiser.blocknorm: false
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 8
-    data.sequence:
-    - alien_monster.png
-    - microbe.png
-    - rooster.png
-    - rooster.png
-    seed: 1095513148
-  config:
-    seed: 1095513148
-    experiment:
-      name: nca_emoji_template
-    system:
-      precision: tensorfloat32
-      gpu: null
-      xla_flags: null
-    data:
-      dataset: emojis
-      sequence:
-      - alien_monster.png
-      - microbe.png
-      - rooster.png
-      - rooster.png
-      batches: 4
-      timesteps: null
-      observed_channels: 4
-      data_channels: 4
-      downsample: 2
-      crop_square: false
-      pad:
-      - 10
-      - 10
-      - 10
-      - 10
-      shift_amount: 10
-      noise_strength: 0.005
-      noise_mode: full
-      regenerate: true
-    model:
-      family: FastKaNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      activation: relu
-      fire_rate: 0.5
-      padding: REPLICATE
-      kernel_scale: 1
-      parameter_noise_level: 0.01
-      upscale_factor: 1
-      upsampler:
-        depth: null
-        width_factor: null
-        fourier_modes: null
-        radius: null
-      kan:
-        hidden_features: null
         num_basis: 8
         grid_min: -2.0
         grid_max: 2.0
@@ -525,6 +131,8 @@ configs:
         spline_init_scale: 0.0001
         base_init_scale: 0.0
         final_zero_init: true
+        basis: linear_spline
+        extrapolation: constant
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -594,799 +202,7 @@ configs:
       backend: wandb
       wandb:
         project: KAN-NCA
-        group: fast-kan-emoji-model-sweep-5
-        tags: null
-    knockout:
-      time: null
-      channel: null
-- index: 5
-  overrides:
-    logging.wandb.project: KAN-NCA
-    logging.wandb.group: fast-kan-emoji-model-sweep-5
-    model.family: FastKaNCA
-    model.channels: 32
-    model.kernel_str:
-    - ID
-    - LAP
-    - GRAD
-    model.activation: relu
-    model.fire_rate: 0.5
-    model.padding: REPLICATE
-    model.kernel_scale: 1
-    model.kan.hidden_features: null
-    model.kan.num_basis: 8
-    model.kan.base_activation: identity
-    model.kan.spline_init_scale: 0.0001
-    model.kan.base_init_scale: 0.0
-    model.kan.use_layernorm: true
-    model.kan.trainable_width: true
-    model.kan.final_zero_init: true
-    data.downsample: 2
-    data.batches: 4
-    data.pad:
-    - 10
-    - 10
-    - 10
-    - 10
-    data.regenerate: true
-    data.shift_amount: 10
-    data.noise_strength: 0.005
-    run.t: 64
-    run.iterations: 500
-    run.warmup: 10
-    run.write_images: true
-    run.sparse_pruning: false
-    trainer.log_every: 25
-    trainer.clear_cache_every: null
-    trainer.loop_autodiff: checkpointed
-    loss.primary:
-    - l2
-    loss.layers:
-    - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 1.0
-    loss.regulariser_coeffs.update_sensitivity: 0.0
-    loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: adamw
-    optimiser.learn_rate: 0.0001
-    optimiser.warmup_steps: 64
-    optimiser.decay_rate: 0.99
-    optimiser.blocknorm: false
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 8
-    data.sequence:
-    - alien_monster.png
-    - microbe.png
-    - rooster.png
-    - rooster.png
-    seed: 506456969
-  config:
-    seed: 506456969
-    experiment:
-      name: nca_emoji_template
-    system:
-      precision: tensorfloat32
-      gpu: null
-      xla_flags: null
-    data:
-      dataset: emojis
-      sequence:
-      - alien_monster.png
-      - microbe.png
-      - rooster.png
-      - rooster.png
-      batches: 4
-      timesteps: null
-      observed_channels: 4
-      data_channels: 4
-      downsample: 2
-      crop_square: false
-      pad:
-      - 10
-      - 10
-      - 10
-      - 10
-      shift_amount: 10
-      noise_strength: 0.005
-      noise_mode: full
-      regenerate: true
-    model:
-      family: FastKaNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      activation: relu
-      fire_rate: 0.5
-      padding: REPLICATE
-      kernel_scale: 1
-      parameter_noise_level: 0.01
-      upscale_factor: 1
-      upsampler:
-        depth: null
-        width_factor: null
-        fourier_modes: null
-        radius: null
-      kan:
-        hidden_features: null
-        num_basis: 8
-        grid_min: -2.0
-        grid_max: 2.0
-        rbf_width: null
-        trainable_width: true
-        use_base_branch: true
-        base_activation: identity
-        use_layernorm: true
-        spline_init_scale: 0.0001
-        base_init_scale: 0.0
-        final_zero_init: true
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 25
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: adamw
-      blocknorm: false
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.0001
-      warmup_steps: 64
-      decay_rate: 0.99
-    loss:
-      primary:
-      - l2
-      layers:
-      - decoded
-      vgg_internal: l2
-      random_crop: false
-      random_channel_shuffle: false
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
-        contiguous_growth: 1.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 3
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-        normalize: null
-        tau: null
-        amplitude_penalty: null
-    run:
-      t: 64
-      derive_t_from_fire_rate: false
-      fire_rate_step_numerator: null
-      iterations: 500
-      warmup: 10
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      filename_mode: hydra
-    logging:
-      backend: wandb
-      wandb:
-        project: KAN-NCA
-        group: fast-kan-emoji-model-sweep-5
-        tags: null
-    knockout:
-      time: null
-      channel: null
-- index: 6
-  overrides:
-    logging.wandb.project: KAN-NCA
-    logging.wandb.group: fast-kan-emoji-model-sweep-5
-    model.family: FastKaNCA
-    model.channels: 32
-    model.kernel_str:
-    - ID
-    - LAP
-    - GRAD
-    model.activation: relu
-    model.fire_rate: 0.5
-    model.padding: REPLICATE
-    model.kernel_scale: 1
-    model.kan.hidden_features: null
-    model.kan.num_basis: 12
-    model.kan.base_activation: null
-    model.kan.spline_init_scale: 0.0001
-    model.kan.base_init_scale: 0.0
-    model.kan.use_layernorm: true
-    model.kan.trainable_width: true
-    model.kan.final_zero_init: true
-    data.downsample: 2
-    data.batches: 4
-    data.pad:
-    - 10
-    - 10
-    - 10
-    - 10
-    data.regenerate: true
-    data.shift_amount: 10
-    data.noise_strength: 0.005
-    run.t: 64
-    run.iterations: 500
-    run.warmup: 10
-    run.write_images: true
-    run.sparse_pruning: false
-    trainer.log_every: 25
-    trainer.clear_cache_every: null
-    trainer.loop_autodiff: checkpointed
-    loss.primary:
-    - l2
-    loss.layers:
-    - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 1.0
-    loss.regulariser_coeffs.update_sensitivity: 0.0
-    loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: adamw
-    optimiser.learn_rate: 0.0001
-    optimiser.warmup_steps: 64
-    optimiser.decay_rate: 0.99
-    optimiser.blocknorm: false
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 8
-    data.sequence:
-    - alien_monster.png
-    - microbe.png
-    - rooster.png
-    - rooster.png
-    seed: 2127877499
-  config:
-    seed: 2127877499
-    experiment:
-      name: nca_emoji_template
-    system:
-      precision: tensorfloat32
-      gpu: null
-      xla_flags: null
-    data:
-      dataset: emojis
-      sequence:
-      - alien_monster.png
-      - microbe.png
-      - rooster.png
-      - rooster.png
-      batches: 4
-      timesteps: null
-      observed_channels: 4
-      data_channels: 4
-      downsample: 2
-      crop_square: false
-      pad:
-      - 10
-      - 10
-      - 10
-      - 10
-      shift_amount: 10
-      noise_strength: 0.005
-      noise_mode: full
-      regenerate: true
-    model:
-      family: FastKaNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      activation: relu
-      fire_rate: 0.5
-      padding: REPLICATE
-      kernel_scale: 1
-      parameter_noise_level: 0.01
-      upscale_factor: 1
-      upsampler:
-        depth: null
-        width_factor: null
-        fourier_modes: null
-        radius: null
-      kan:
-        hidden_features: null
-        num_basis: 12
-        grid_min: -2.0
-        grid_max: 2.0
-        rbf_width: null
-        trainable_width: true
-        use_base_branch: true
-        base_activation: null
-        use_layernorm: true
-        spline_init_scale: 0.0001
-        base_init_scale: 0.0
-        final_zero_init: true
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 25
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: adamw
-      blocknorm: false
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.0001
-      warmup_steps: 64
-      decay_rate: 0.99
-    loss:
-      primary:
-      - l2
-      layers:
-      - decoded
-      vgg_internal: l2
-      random_crop: false
-      random_channel_shuffle: false
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
-        contiguous_growth: 1.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 3
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-        normalize: null
-        tau: null
-        amplitude_penalty: null
-    run:
-      t: 64
-      derive_t_from_fire_rate: false
-      fire_rate_step_numerator: null
-      iterations: 500
-      warmup: 10
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      filename_mode: hydra
-    logging:
-      backend: wandb
-      wandb:
-        project: KAN-NCA
-        group: fast-kan-emoji-model-sweep-5
-        tags: null
-    knockout:
-      time: null
-      channel: null
-- index: 7
-  overrides:
-    logging.wandb.project: KAN-NCA
-    logging.wandb.group: fast-kan-emoji-model-sweep-5
-    model.family: FastKaNCA
-    model.channels: 32
-    model.kernel_str:
-    - ID
-    - LAP
-    - GRAD
-    model.activation: relu
-    model.fire_rate: 0.5
-    model.padding: REPLICATE
-    model.kernel_scale: 1
-    model.kan.hidden_features: null
-    model.kan.num_basis: 12
-    model.kan.base_activation: identity
-    model.kan.spline_init_scale: 0.0001
-    model.kan.base_init_scale: 0.0
-    model.kan.use_layernorm: true
-    model.kan.trainable_width: true
-    model.kan.final_zero_init: true
-    data.downsample: 2
-    data.batches: 4
-    data.pad:
-    - 10
-    - 10
-    - 10
-    - 10
-    data.regenerate: true
-    data.shift_amount: 10
-    data.noise_strength: 0.005
-    run.t: 64
-    run.iterations: 500
-    run.warmup: 10
-    run.write_images: true
-    run.sparse_pruning: false
-    trainer.log_every: 25
-    trainer.clear_cache_every: null
-    trainer.loop_autodiff: checkpointed
-    loss.primary:
-    - l2
-    loss.layers:
-    - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 1.0
-    loss.regulariser_coeffs.update_sensitivity: 0.0
-    loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: adamw
-    optimiser.learn_rate: 0.0001
-    optimiser.warmup_steps: 64
-    optimiser.decay_rate: 0.99
-    optimiser.blocknorm: false
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 8
-    data.sequence:
-    - alien_monster.png
-    - microbe.png
-    - rooster.png
-    - rooster.png
-    seed: 1930549411
-  config:
-    seed: 1930549411
-    experiment:
-      name: nca_emoji_template
-    system:
-      precision: tensorfloat32
-      gpu: null
-      xla_flags: null
-    data:
-      dataset: emojis
-      sequence:
-      - alien_monster.png
-      - microbe.png
-      - rooster.png
-      - rooster.png
-      batches: 4
-      timesteps: null
-      observed_channels: 4
-      data_channels: 4
-      downsample: 2
-      crop_square: false
-      pad:
-      - 10
-      - 10
-      - 10
-      - 10
-      shift_amount: 10
-      noise_strength: 0.005
-      noise_mode: full
-      regenerate: true
-    model:
-      family: FastKaNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      activation: relu
-      fire_rate: 0.5
-      padding: REPLICATE
-      kernel_scale: 1
-      parameter_noise_level: 0.01
-      upscale_factor: 1
-      upsampler:
-        depth: null
-        width_factor: null
-        fourier_modes: null
-        radius: null
-      kan:
-        hidden_features: null
-        num_basis: 12
-        grid_min: -2.0
-        grid_max: 2.0
-        rbf_width: null
-        trainable_width: true
-        use_base_branch: true
-        base_activation: identity
-        use_layernorm: true
-        spline_init_scale: 0.0001
-        base_init_scale: 0.0
-        final_zero_init: true
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 25
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: adamw
-      blocknorm: false
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.0001
-      warmup_steps: 64
-      decay_rate: 0.99
-    loss:
-      primary:
-      - l2
-      layers:
-      - decoded
-      vgg_internal: l2
-      random_crop: false
-      random_channel_shuffle: false
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
-        contiguous_growth: 1.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 3
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-        normalize: null
-        tau: null
-        amplitude_penalty: null
-    run:
-      t: 64
-      derive_t_from_fire_rate: false
-      fire_rate_step_numerator: null
-      iterations: 500
-      warmup: 10
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      filename_mode: hydra
-    logging:
-      backend: wandb
-      wandb:
-        project: KAN-NCA
-        group: fast-kan-emoji-model-sweep-5
-        tags: null
-    knockout:
-      time: null
-      channel: null
-- index: 0
-  overrides:
-    logging.wandb.project: KAN-NCA
-    logging.wandb.group: fast-kan-emoji-model-sweep-5
-    model.family: FastKaNCA
-    model.channels: 32
-    model.kernel_str:
-    - ID
-    - LAP
-    - GRAD
-    model.activation: relu
-    model.fire_rate: 0.5
-    model.padding: REPLICATE
-    model.kernel_scale: 1
-    model.kan.hidden_features: null
-    model.kan.num_basis: 16
-    model.kan.base_activation: null
-    model.kan.spline_init_scale: 0.0001
-    model.kan.base_init_scale: 0.0
-    model.kan.use_layernorm: true
-    model.kan.trainable_width: true
-    model.kan.final_zero_init: true
-    data.downsample: 2
-    data.batches: 4
-    data.pad:
-    - 10
-    - 10
-    - 10
-    - 10
-    data.regenerate: true
-    data.shift_amount: 10
-    data.noise_strength: 0.005
-    run.t: 64
-    run.iterations: 500
-    run.warmup: 10
-    run.write_images: true
-    run.sparse_pruning: false
-    trainer.log_every: 25
-    trainer.clear_cache_every: null
-    trainer.loop_autodiff: checkpointed
-    loss.primary:
-    - l2
-    loss.layers:
-    - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
-    loss.regulariser_coeffs.contiguous_growth: 1.0
-    loss.regulariser_coeffs.update_sensitivity: 0.0
-    loss.regulariser_coeffs.perturbation_conservation: 0.0
-    optimiser.type: adamw
-    optimiser.learn_rate: 0.0001
-    optimiser.warmup_steps: 64
-    optimiser.decay_rate: 0.99
-    optimiser.blocknorm: false
-    optimiser.gradient_clip_norm: 1.0
-    optimiser.apply_if_finite: true
-    optimiser.max_consecutive_errors: 8
-    data.sequence:
-    - alien_monster.png
-    - microbe.png
-    - rooster.png
-    - rooster.png
-    seed: 2028277857
-  config:
-    seed: 2028277857
-    experiment:
-      name: nca_emoji_template
-    system:
-      precision: tensorfloat32
-      gpu: null
-      xla_flags: null
-    data:
-      dataset: emojis
-      sequence:
-      - alien_monster.png
-      - microbe.png
-      - rooster.png
-      - rooster.png
-      batches: 4
-      timesteps: null
-      observed_channels: 4
-      data_channels: 4
-      downsample: 2
-      crop_square: false
-      pad:
-      - 10
-      - 10
-      - 10
-      - 10
-      shift_amount: 10
-      noise_strength: 0.005
-      noise_mode: full
-      regenerate: true
-    model:
-      family: FastKaNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      activation: relu
-      fire_rate: 0.5
-      padding: REPLICATE
-      kernel_scale: 1
-      parameter_noise_level: 0.01
-      upscale_factor: 1
-      upsampler:
-        depth: null
-        width_factor: null
-        fourier_modes: null
-        radius: null
-      kan:
-        hidden_features: null
-        num_basis: 16
-        grid_min: -2.0
-        grid_max: 2.0
-        rbf_width: null
-        trainable_width: true
-        use_base_branch: true
-        base_activation: null
-        use_layernorm: true
-        spline_init_scale: 0.0001
-        base_init_scale: 0.0
-        final_zero_init: true
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      sharding: null
-      model_directory: models/
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      clear_cache_every: null
-      log_every: 25
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
-    optimiser:
-      type: adamw
-      blocknorm: false
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.0001
-      warmup_steps: 64
-      decay_rate: 0.99
-    loss:
-      primary:
-      - l2
-      layers:
-      - decoded
-      vgg_internal: l2
-      random_crop: false
-      random_channel_shuffle: false
-      regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
-        contiguous_growth: 1.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        latent_channel_match: 0.0
-        latent_size: 0.0
-      args:
-        channels: null
-        experiment_groups: null
-        S: 1024
-        K: 5
-        D: 3
-        sharpen: true
-        epsilon: 0.1
-        internal_loss_func: l2
-        samples: 128
-        normalize: null
-        tau: null
-        amplitude_penalty: null
-    run:
-      t: 64
-      derive_t_from_fire_rate: false
-      fire_rate_step_numerator: null
-      iterations: 500
-      warmup: 10
-      write_images: true
-      sparse_pruning: false
-      target_sparsity: 0.5
-      filename_mode: hydra
-    logging:
-      backend: wandb
-      wandb:
-        project: KAN-NCA
-        group: fast-kan-emoji-model-sweep-5
+        group: fast-kan-emoji-model-sweep-6
         tags: null
     knockout:
       time: null
@@ -1394,7 +210,7 @@ configs:
 - index: 3
   overrides:
     logging.wandb.project: KAN-NCA
-    logging.wandb.group: fast-kan-emoji-model-sweep-5
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
     model.family: FastKaNCA
     model.channels: 32
     model.kernel_str:
@@ -1406,7 +222,1221 @@ configs:
     model.padding: REPLICATE
     model.kernel_scale: 1
     model.kan.hidden_features: null
-    model.kan.num_basis: 16
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: constant
+    model.kan.num_basis: 8
+    model.kan.base_activation: identity
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 271041745
+  config:
+    seed: 271041745
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 8
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: identity
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: constant
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 4
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: constant
+    model.kan.num_basis: 12
+    model.kan.base_activation: null
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 1095513148
+  config:
+    seed: 1095513148
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 12
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: null
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: constant
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 8
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: constant
+    model.kan.num_basis: 12
+    model.kan.base_activation: identity
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 506456969
+  config:
+    seed: 506456969
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 12
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: identity
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: constant
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 1
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: linear
+    model.kan.num_basis: 8
+    model.kan.base_activation: null
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 2127877499
+  config:
+    seed: 2127877499
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 8
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: null
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: linear
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 5
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: linear
+    model.kan.num_basis: 8
+    model.kan.base_activation: identity
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 1930549411
+  config:
+    seed: 1930549411
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 8
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: identity
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: linear
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 2
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: linear
+    model.kan.num_basis: 12
+    model.kan.base_activation: null
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 2028277857
+  config:
+    seed: 2028277857
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 12
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: null
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: linear
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 7
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: linear
+    model.kan.num_basis: 12
     model.kan.base_activation: identity
     model.kan.spline_init_scale: 0.0001
     model.kan.base_init_scale: 0.0
@@ -1504,7 +1534,7 @@ configs:
         radius: null
       kan:
         hidden_features: null
-        num_basis: 16
+        num_basis: 12
         grid_min: -2.0
         grid_max: 2.0
         rbf_width: null
@@ -1515,6 +1545,8 @@ configs:
         spline_init_scale: 0.0001
         base_init_scale: 0.0
         final_zero_init: true
+        basis: linear_spline
+        extrapolation: linear
     trainer:
       boundary_mode: soft
       grad_loss: true
@@ -1584,7 +1616,815 @@ configs:
       backend: wandb
       wandb:
         project: KAN-NCA
-        group: fast-kan-emoji-model-sweep-5
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 0
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: zero
+    model.kan.num_basis: 8
+    model.kan.base_activation: null
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 901749037
+  config:
+    seed: 901749037
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 8
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: null
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: zero
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 9
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: zero
+    model.kan.num_basis: 8
+    model.kan.base_activation: identity
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 403123852
+  config:
+    seed: 403123852
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 8
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: identity
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: zero
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 11
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: zero
+    model.kan.num_basis: 12
+    model.kan.base_activation: null
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 2095328386
+  config:
+    seed: 2095328386
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 12
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: null
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: zero
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
+        tags: null
+    knockout:
+      time: null
+      channel: null
+- index: 6
+  overrides:
+    logging.wandb.project: KAN-NCA
+    logging.wandb.group: fast-kan-emoji-model-sweep-6
+    model.family: FastKaNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.activation: relu
+    model.fire_rate: 0.5
+    model.padding: REPLICATE
+    model.kernel_scale: 1
+    model.kan.hidden_features: null
+    model.kan.basis: linear_spline
+    model.kan.extrapolation: zero
+    model.kan.num_basis: 12
+    model.kan.base_activation: identity
+    model.kan.spline_init_scale: 0.0001
+    model.kan.base_init_scale: 0.0
+    model.kan.use_layernorm: true
+    model.kan.trainable_width: true
+    model.kan.final_zero_init: true
+    data.downsample: 2
+    data.batches: 4
+    data.pad:
+    - 10
+    - 10
+    - 10
+    - 10
+    data.regenerate: true
+    data.shift_amount: 10
+    data.noise_strength: 0.005
+    run.t: 64
+    run.iterations: 500
+    run.warmup: 10
+    run.write_images: true
+    run.sparse_pruning: false
+    trainer.log_every: 25
+    trainer.clear_cache_every: null
+    trainer.loop_autodiff: checkpointed
+    loss.primary:
+    - l2
+    loss.layers:
+    - decoded
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 1.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    optimiser.type: adamw
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 64
+    optimiser.decay_rate: 0.99
+    optimiser.blocknorm: false
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 8
+    data.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    - rooster.png
+    seed: 121751464
+  config:
+    seed: 121751464
+    experiment:
+      name: nca_emoji_template
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      sequence:
+      - alien_monster.png
+      - microbe.png
+      - rooster.png
+      - rooster.png
+      batches: 4
+      timesteps: null
+      observed_channels: 4
+      data_channels: 4
+      downsample: 2
+      crop_square: false
+      pad:
+      - 10
+      - 10
+      - 10
+      - 10
+      shift_amount: 10
+      noise_strength: 0.005
+      noise_mode: full
+      regenerate: true
+    model:
+      family: FastKaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      upscale_factor: 1
+      upsampler:
+        depth: null
+        width_factor: null
+        fourier_modes: null
+        radius: null
+      kan:
+        hidden_features: null
+        num_basis: 12
+        grid_min: -2.0
+        grid_max: 2.0
+        rbf_width: null
+        trainable_width: true
+        use_base_branch: true
+        base_activation: identity
+        use_layernorm: true
+        spline_init_scale: 0.0001
+        base_init_scale: 0.0
+        final_zero_init: true
+        basis: linear_spline
+        extrapolation: zero
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 25
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: adamw
+      blocknorm: false
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 64
+      decay_rate: 0.99
+    loss:
+      primary:
+      - l2
+      layers:
+      - decoded
+      vgg_internal: l2
+      random_crop: false
+      random_channel_shuffle: false
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 3
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+        normalize: null
+        tau: null
+        amplitude_penalty: null
+    run:
+      t: 64
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 500
+      warmup: 10
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: KAN-NCA
+        group: fast-kan-emoji-model-sweep-6
         tags: null
     knockout:
       time: null

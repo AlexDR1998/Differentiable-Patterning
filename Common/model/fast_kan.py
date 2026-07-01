@@ -51,6 +51,7 @@ class FastRBFKANLayer(eqx.Module):
     base_bias: Optional[Array]
     log_rbf_width: Optional[Array]
     layernorm: Optional[eqx.nn.LayerNorm]
+    extrapolation: str
 
     def __init__(
         self,
@@ -68,6 +69,7 @@ class FastRBFKANLayer(eqx.Module):
         spline_init_scale: float = 0.1,
         base_init_scale: float = 0.1,
         final_zero_init: bool = False,
+        extrapolation: str = "constant",
         key=None,
     ):
         if key is None:
@@ -84,6 +86,7 @@ class FastRBFKANLayer(eqx.Module):
         self.grid_max = grid_max
         self.rbf_width = float(rbf_width)
         self.trainable_width = trainable_width
+        self.extrapolation = extrapolation
         resolved_base_activation, base_activation_name = resolve_base_activation(
             base_activation
         )
@@ -185,6 +188,69 @@ class FastRBFKANLayer(eqx.Module):
             base_bias_where = lambda layer: layer.base_bias
             zeroed = eqx.tree_at(base_bias_where, zeroed, jnp.zeros_like(self.base_bias))
         return zeroed
+
+
+class FastLinearSplineKANLayer(FastRBFKANLayer):
+    """Vectorised fixed-grid piecewise-linear KAN layer for vector inputs."""
+
+    def __init__(self, *args, extrapolation: str = "constant", **kwargs):
+        if extrapolation not in {"constant", "zero", "linear"}:
+            raise ValueError(
+                "extrapolation must be one of 'constant', 'zero', or 'linear'."
+            )
+        kwargs["trainable_width"] = False
+        super().__init__(*args, extrapolation=extrapolation, **kwargs)
+        if self.num_basis < 2:
+            raise ValueError("FastLinearSplineKANLayer requires at least two knots.")
+
+    def basis(
+        self, x: Float[Array, "{self.in_features}"]
+    ) -> Float[Array, "{self.in_features} {self.num_basis}"]:
+        self._validate_vector_input(x)
+        if self.layernorm is not None:
+            x = self.layernorm(x)
+        return self._linear_spline_basis(x)
+
+    def _linear_spline_basis(self, x):
+        grid = jnp.linspace(self.grid_min, self.grid_max, self.num_basis)
+        step = (self.grid_max - self.grid_min) / max(self.num_basis - 1, 1)
+        if self.num_basis == 1:
+            return jnp.ones((*x.shape, 1))
+
+        if self.extrapolation == "linear":
+            left_t = (x - grid[0]) / step
+            right_t = (x - grid[-2]) / step
+            interior = jnp.maximum(1.0 - jnp.abs(x[..., None] - grid[None, :]) / step, 0.0)
+            interior = interior.at[..., 0].set(
+                jnp.where(x < self.grid_min, 1.0 - left_t, interior[..., 0])
+            )
+            interior = interior.at[..., 1].set(
+                jnp.where(x < self.grid_min, left_t, interior[..., 1])
+            )
+            interior = interior.at[..., -2].set(
+                jnp.where(x > self.grid_max, 1.0 - right_t, interior[..., -2])
+            )
+            interior = interior.at[..., -1].set(
+                jnp.where(x > self.grid_max, right_t, interior[..., -1])
+            )
+            return interior
+
+        x_clipped = jnp.clip(x, self.grid_min, self.grid_max)
+        basis = jnp.maximum(1.0 - jnp.abs(x_clipped[..., None] - grid[None, :]) / step, 0.0)
+        if self.extrapolation == "zero":
+            in_grid = (x >= self.grid_min) & (x <= self.grid_max)
+            basis = basis * in_grid[..., None]
+        return basis
+
+    def evaluate_edge_functions(
+        self, xs: Float[Array, "samples"]
+    ) -> Float[Array, "{self.in_features} {self.out_features} samples"]:
+        basis = self._linear_spline_basis(xs)
+        edge_values = jnp.einsum("sk,iok->ios", basis, self.spline_weight)
+        if self.base_weight is not None and self.base_activation is not None:
+            base_values = self.base_weight.T[:, :, None] * self.base_activation(xs)
+            edge_values = edge_values + base_values
+        return edge_values
 
 
 class FastRBFKAN(eqx.Module):

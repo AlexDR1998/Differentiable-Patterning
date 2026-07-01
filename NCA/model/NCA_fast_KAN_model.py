@@ -5,7 +5,11 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from Common.model.fast_kan import FastRBFKANLayer, get_top_edges_from_layer
+from Common.model.fast_kan import (
+    FastLinearSplineKANLayer,
+    FastRBFKANLayer,
+    get_top_edges_from_layer,
+)
 from NCA.model.NCA_model import NCA, Ops
 
 
@@ -54,12 +58,14 @@ class FastKaNCA(NCA):
         )
 
         default_kan_aux = {
+            "basis": "rbf",
             "hidden_features": self.N_FEATURES,
             "num_basis": 8,
             "grid_min": -2.0,
             "grid_max": 2.0,
             "rbf_width": None,
             "trainable_width": True,
+            "extrapolation": "constant",
             "use_base_branch": True,
             "base_activation": "identity",
             "use_layernorm": True,
@@ -73,8 +79,9 @@ class FastKaNCA(NCA):
 
         hidden_features = self.KAN_AUX["hidden_features"]
         key1, key2 = jax.random.split(key, 2)
+        layer_cls = self._resolve_kan_layer_class(self.KAN_AUX["basis"])
 
-        input_layer = FastRBFKANLayer(
+        input_layer = layer_cls(
             self.N_FEATURES,
             hidden_features,
             num_basis=self.KAN_AUX["num_basis"],
@@ -82,6 +89,7 @@ class FastKaNCA(NCA):
             grid_max=self.KAN_AUX["grid_max"],
             rbf_width=self.KAN_AUX["rbf_width"],
             trainable_width=self.KAN_AUX["trainable_width"],
+            extrapolation=self.KAN_AUX["extrapolation"],
             use_base_branch=self.KAN_AUX["use_base_branch"],
             base_activation=self.KAN_AUX["base_activation"],
             use_layernorm=self.KAN_AUX["use_layernorm"],
@@ -90,7 +98,7 @@ class FastKaNCA(NCA):
             final_zero_init=False,
             key=key1,
         )
-        output_layer = FastRBFKANLayer(
+        output_layer = layer_cls(
             hidden_features,
             self.N_CHANNELS,
             num_basis=self.KAN_AUX["num_basis"],
@@ -98,6 +106,7 @@ class FastKaNCA(NCA):
             grid_max=self.KAN_AUX["grid_max"],
             rbf_width=self.KAN_AUX["rbf_width"],
             trainable_width=self.KAN_AUX["trainable_width"],
+            extrapolation=self.KAN_AUX["extrapolation"],
             use_base_branch=self.KAN_AUX["use_base_branch"],
             base_activation=self.KAN_AUX["base_activation"],
             use_layernorm=self.KAN_AUX["use_layernorm"],
@@ -111,6 +120,13 @@ class FastKaNCA(NCA):
             SpatialFastRBFKANLayer(input_layer),
             SpatialFastRBFKANLayer(output_layer),
         ]
+
+    def _resolve_kan_layer_class(self, basis):
+        if basis == "rbf":
+            return FastRBFKANLayer
+        if basis == "linear_spline":
+            return FastLinearSplineKANLayer
+        raise ValueError("KAN_AUX['basis'] must be 'rbf' or 'linear_spline'.")
 
     def get_config(self):
         return {

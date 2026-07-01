@@ -216,11 +216,13 @@ def _build_kan_aux(cfg):
     kan_cfg = _cfg_get(cfg.model, "kan", None)
     hidden_features = _cfg_get(kan_cfg, "hidden_features", None)
     kan_aux = {
+        "basis": _cfg_get(kan_cfg, "basis", "rbf"),
         "num_basis": _cfg_get(kan_cfg, "num_basis", 8),
         "grid_min": _cfg_get(kan_cfg, "grid_min", -2.0),
         "grid_max": _cfg_get(kan_cfg, "grid_max", 2.0),
         "rbf_width": _cfg_get(kan_cfg, "rbf_width", None),
         "trainable_width": _cfg_get(kan_cfg, "trainable_width", True),
+        "extrapolation": _cfg_get(kan_cfg, "extrapolation", "constant"),
         "use_base_branch": _cfg_get(kan_cfg, "use_base_branch", True),
         "base_activation": _cfg_get(kan_cfg, "base_activation", "identity"),
         "use_layernorm": _cfg_get(kan_cfg, "use_layernorm", True),
@@ -268,6 +270,14 @@ def build_model_config_string(cfg):
     if cfg.model.family == "FastKaNCA":
         kan_cfg = _cfg_get(cfg.model, "kan", None)
         cfg_str += f"_kb{_cfg_get(kan_cfg, 'num_basis', 8)}"
+        basis = _cfg_get(kan_cfg, "basis", "rbf")
+        if basis == "linear_spline":
+            cfg_str += "_klin"
+        elif basis != "rbf":
+            cfg_str += f"_k{basis}"
+        extrapolation = _cfg_get(kan_cfg, "extrapolation", "constant")
+        if extrapolation != "constant":
+            cfg_str += f"_kex{extrapolation}"
         hidden_features = _cfg_get(kan_cfg, "hidden_features", None)
         if hidden_features is not None:
             cfg_str += f"_kh{hidden_features}"
