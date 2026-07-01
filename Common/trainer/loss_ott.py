@@ -239,8 +239,6 @@ def ott_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen":True,"epsilo
     vv_ot_loss = jax.vmap(v_ot_loss,in_axes=(0,0,0),out_axes=0) # Vectorized over N
     losses = vv_ot_loss(x,y,keys) # N C
     where = where[:,:,0,0]
-    print(f"OTT losses shape: {losses.shape}")
-    print(f"where shape: {where.shape}")
     return np.nan_to_num(np.mean(losses,axis=1,where=where)) # N
         
 

@@ -18,11 +18,19 @@ from Experiments.config_helpers import build_loss_args, build_pool_admission_con
 from Experiments.micropatterns.config_helpers import build_data_augmenter, build_loss_filename, load_data, build_model
 
 
+def _as_list(value):
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    return list(value)
+
 
 def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
     loss_str = build_loss_filename(
         cfg,
         include_layers=cfg.model.family in {"uNCA", "isouNCA"},
+        include_loss_args=any("ott" in loss_name for loss_name in _as_list(cfg.loss.primary)),
     )
     train_str = (
         f"train_{cfg.run.scaling}"
@@ -82,7 +90,7 @@ def run(cfg):
             "tags":build_tags(cfg),
             "name":run_name
         },
-        LOSS_ARGS=build_loss_args(cfg, overrides={"D": 3}),
+        LOSS_ARGS=build_loss_args(cfg),
         
         LOG_EVERY=cfg.trainer.log_every,
         CLEAR_CACHE_EVERY=cfg.trainer.clear_cache_every,

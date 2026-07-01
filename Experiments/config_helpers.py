@@ -106,22 +106,41 @@ def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
 
     loss_args = _cfg_get(cfg.loss, "args", None)
     if include_loss_args and loss_args is not None:
-        arg_str = compact_nonzero_config_string(
-            {
+        uses_ott = any("ott" in loss_name for loss_name in _as_list(cfg.loss.primary))
+        if uses_ott:
+            sharpen = _cfg_get(loss_args, "sharpen", None)
+            arg_values = {
+                "S": _cfg_get(loss_args, "S", None),
+                "K": _cfg_get(loss_args, "K", None),
+                "D": _cfg_get(loss_args, "D", None),
+                "epsilon": _cfg_get(loss_args, "epsilon", None),
+                "sharpen": None if sharpen is None else str(sharpen).lower(),
+                "internal_loss_func": _cfg_get(loss_args, "internal_loss_func", None),
+            }
+            aliases = {
+                "S": "S",
+                "K": "K",
+                "D": "D",
+                "epsilon": "eps",
+                "sharpen": "sharp",
+                "internal_loss_func": "metric",
+            }
+        else:
+            arg_values = {
                 "samples": _cfg_get(loss_args, "samples", None),
                 "epsilon": _cfg_get(loss_args, "epsilon", None),
                 "tau": _cfg_get(loss_args, "tau", None),
                 "normalize": _cfg_get(loss_args, "normalize", None),
                 "amplitude_penalty": _cfg_get(loss_args, "amplitude_penalty", None),
-            },
-            aliases={
+            }
+            aliases = {
                 "samples": "s",
                 "epsilon": "eps",
                 "tau": "tau",
                 "normalize": "norm",
                 "amplitude_penalty": "ap",
-            },
-        )
+            }
+        arg_str = compact_nonzero_config_string(arg_values, aliases=aliases)
         if arg_str:
             loss_str += f"_{arg_str}"
 
