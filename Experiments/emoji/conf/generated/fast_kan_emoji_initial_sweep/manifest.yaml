@@ -22,7 +22,7 @@ configs:
     model.kan.hidden_features: null
     model.kan.num_basis: 8
     model.kan.base_activation: null
-    model.kan.spline_init_scale: 0.0
+    model.kan.spline_init_scale: 0.0001
     model.kan.base_init_scale: 0.0
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
@@ -126,7 +126,7 @@ configs:
         use_base_branch: true
         base_activation: null
         use_layernorm: true
-        spline_init_scale: 0.0
+        spline_init_scale: 0.0001
         base_init_scale: 0.0
         final_zero_init: true
     trainer:
@@ -220,7 +220,7 @@ configs:
     model.kan.hidden_features: null
     model.kan.num_basis: 8
     model.kan.base_activation: null
-    model.kan.spline_init_scale: 0.0
+    model.kan.spline_init_scale: 0.0001
     model.kan.base_init_scale: 0.0
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
@@ -324,7 +324,7 @@ configs:
         use_base_branch: true
         base_activation: null
         use_layernorm: true
-        spline_init_scale: 0.0
+        spline_init_scale: 0.0001
         base_init_scale: 0.0
         final_zero_init: true
     trainer:
@@ -418,7 +418,7 @@ configs:
     model.kan.hidden_features: null
     model.kan.num_basis: 8
     model.kan.base_activation: identity
-    model.kan.spline_init_scale: 0.0
+    model.kan.spline_init_scale: 0.0001
     model.kan.base_init_scale: 0.0
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
@@ -522,7 +522,7 @@ configs:
         use_base_branch: true
         base_activation: identity
         use_layernorm: true
-        spline_init_scale: 0.0
+        spline_init_scale: 0.0001
         base_init_scale: 0.0
         final_zero_init: true
     trainer:
@@ -616,7 +616,7 @@ configs:
     model.kan.hidden_features: null
     model.kan.num_basis: 8
     model.kan.base_activation: identity
-    model.kan.spline_init_scale: 0.0
+    model.kan.spline_init_scale: 0.0001
     model.kan.base_init_scale: 0.0
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
@@ -720,7 +720,7 @@ configs:
         use_base_branch: true
         base_activation: identity
         use_layernorm: true
-        spline_init_scale: 0.0
+        spline_init_scale: 0.0001
         base_init_scale: 0.0
         final_zero_init: true
     trainer:
