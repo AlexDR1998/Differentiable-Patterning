@@ -10,9 +10,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -36,7 +37,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -65,7 +66,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -104,7 +105,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -137,7 +138,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -147,7 +148,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -159,9 +160,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -185,7 +187,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -214,7 +216,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -253,7 +255,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -286,7 +288,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -296,7 +298,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -308,9 +310,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -334,7 +337,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -363,7 +366,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -402,7 +405,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -435,7 +438,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -445,7 +448,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -457,9 +460,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -483,7 +487,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -512,7 +516,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -551,7 +555,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -584,7 +588,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -594,7 +598,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -606,9 +610,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -632,7 +637,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -661,7 +666,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -700,7 +705,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -733,7 +738,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -743,7 +748,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -755,9 +760,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -781,7 +787,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -810,7 +816,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -849,7 +855,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -882,7 +888,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -892,7 +898,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -904,9 +910,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -930,7 +937,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -959,7 +966,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -998,7 +1005,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -1031,7 +1038,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1041,7 +1048,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -1053,9 +1060,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -1079,7 +1087,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -1108,7 +1116,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -1147,7 +1155,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -1180,7 +1188,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1190,7 +1198,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -1202,9 +1210,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -1228,7 +1237,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -1257,7 +1266,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -1296,7 +1305,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -1329,7 +1338,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1339,7 +1348,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -1351,9 +1360,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -1377,7 +1387,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -1406,7 +1416,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -1445,7 +1455,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -1478,7 +1488,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1488,7 +1498,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -1500,9 +1510,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -1526,7 +1537,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -1555,7 +1566,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -1594,7 +1605,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -1627,7 +1638,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1637,7 +1648,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -1649,9 +1660,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -1675,7 +1687,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -1704,7 +1716,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -1743,7 +1755,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -1776,7 +1788,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1786,7 +1798,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -1798,9 +1810,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -1824,7 +1837,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -1853,7 +1866,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -1892,7 +1905,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -1925,7 +1938,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1935,7 +1948,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -1947,9 +1960,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -1973,7 +1987,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -2002,7 +2016,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -2041,7 +2055,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -2074,7 +2088,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2084,7 +2098,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -2096,9 +2110,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -2122,7 +2137,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -2151,7 +2166,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -2190,7 +2205,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -2223,7 +2238,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2233,7 +2248,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -2245,9 +2260,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -2271,7 +2287,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -2300,7 +2316,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -2339,7 +2355,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -2372,7 +2388,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2382,7 +2398,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -2394,9 +2410,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -2420,7 +2437,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -2449,7 +2466,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -2488,7 +2505,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -2521,7 +2538,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2531,7 +2548,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -2543,9 +2560,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -2569,7 +2587,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -2598,7 +2616,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -2637,7 +2655,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -2670,7 +2688,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2680,7 +2698,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -2692,9 +2710,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -2718,7 +2737,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -2747,7 +2766,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -2786,7 +2805,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -2819,7 +2838,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2829,7 +2848,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -2841,9 +2860,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -2867,7 +2887,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -2896,7 +2916,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -2935,7 +2955,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -2968,7 +2988,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -2978,7 +2998,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -2990,9 +3010,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -3016,7 +3037,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -3045,7 +3066,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -3084,7 +3105,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -3117,7 +3138,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -3127,7 +3148,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -3139,9 +3160,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -3165,7 +3187,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -3194,7 +3216,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -3233,7 +3255,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -3266,7 +3288,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -3276,7 +3298,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -3288,9 +3310,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -3314,7 +3337,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -3343,7 +3366,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -3382,7 +3405,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -3415,7 +3438,7 @@ configs:
       vgg_internal: l2
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -3425,7 +3448,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
@@ -3437,9 +3460,10 @@ configs:
     model.family: isouNCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_2
-    run.iterations: 1000
+    logging.wandb.group: isouNCA_4ch_micropattern_vgg_swap_3
+    run.iterations: 2000
     data.data_channels: 4
+    data.duplicate_final_timestep: true
     loss.primary:
     - vgg
     - l2
@@ -3463,7 +3487,7 @@ configs:
     model.upsampler.fourier_modes: 4
     model.upsampler.depth: 4
     model.upsampler.width_factor: 2
-    optimiser.learn_rate: 0.0001
+    optimiser.learn_rate: 0.0005
     optimiser.decay_rate: 0.98
     optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
@@ -3492,7 +3516,7 @@ configs:
       data_channels: 4
       downsample: 1
       noise_strength: 0.005
-      duplicate_final_timestep: false
+      duplicate_final_timestep: true
     model:
       family: isouNCA
       channels: 64
@@ -3531,7 +3555,7 @@ configs:
       gradient_clip_norm: 1.0
       apply_if_finite: true
       max_consecutive_errors: 16
-      learn_rate: 0.0001
+      learn_rate: 0.0005
       warmup_steps: 64
       decay_rate: 0.98
     loss:
@@ -3564,7 +3588,7 @@ configs:
       vgg_internal: otsp
     run:
       t: 128
-      iterations: 1000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -3574,7 +3598,7 @@ configs:
       backend: wandb
       wandb:
         project: nca_micropattern_upscale
-        group: isouNCA_4ch_micropattern_vgg_swap_2
+        group: isouNCA_4ch_micropattern_vgg_swap_3
         tags: null
     knockout:
       time: null
