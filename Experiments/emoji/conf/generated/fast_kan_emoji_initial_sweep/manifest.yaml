@@ -29,7 +29,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -39,8 +39,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -89,7 +89,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -189,10 +189,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -231,7 +231,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -241,8 +241,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -291,7 +291,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -391,10 +391,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -433,7 +433,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -443,8 +443,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -493,7 +493,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -593,10 +593,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -635,7 +635,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -645,8 +645,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -695,7 +695,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -795,10 +795,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -837,7 +837,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -847,8 +847,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -897,7 +897,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -997,10 +997,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -1039,7 +1039,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -1049,8 +1049,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -1099,7 +1099,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -1199,10 +1199,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -1241,7 +1241,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -1251,8 +1251,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -1301,7 +1301,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -1401,10 +1401,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -1443,7 +1443,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -1453,8 +1453,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -1503,7 +1503,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -1603,10 +1603,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -1645,7 +1645,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -1655,8 +1655,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -1705,7 +1705,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -1805,10 +1805,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -1847,7 +1847,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -1857,8 +1857,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -1907,7 +1907,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -2007,10 +2007,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -2049,7 +2049,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -2059,8 +2059,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -2109,7 +2109,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -2209,10 +2209,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -2251,7 +2251,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -2261,8 +2261,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -2311,7 +2311,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -2411,10 +2411,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -2453,7 +2453,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -2463,8 +2463,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -2513,7 +2513,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -2613,10 +2613,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -2655,7 +2655,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -2665,8 +2665,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -2715,7 +2715,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -2815,10 +2815,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -2857,7 +2857,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -2867,8 +2867,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -2917,7 +2917,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -3017,10 +3017,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -3059,7 +3059,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -3069,8 +3069,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -3119,7 +3119,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -3219,10 +3219,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -3261,7 +3261,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -3271,8 +3271,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -3321,7 +3321,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -3421,10 +3421,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -3463,7 +3463,7 @@ configs:
     model.kan.use_layernorm: true
     model.kan.trainable_width: true
     model.kan.final_zero_init: true
-    data.downsample: 1
+    data.downsample: 2
     data.batches: 4
     data.pad:
     - 10
@@ -3473,8 +3473,8 @@ configs:
     data.regenerate: true
     data.shift_amount: 10
     data.noise_strength: 0.005
-    run.t: 128
-    run.iterations: 4000
+    run.t: 64
+    run.iterations: 2000
     run.warmup: 10
     run.write_images: true
     run.sparse_pruning: false
@@ -3523,7 +3523,7 @@ configs:
       timesteps: null
       observed_channels: 4
       data_channels: 4
-      downsample: 1
+      downsample: 2
       crop_square: false
       pad:
       - 10
@@ -3623,10 +3623,10 @@ configs:
         tau: null
         amplitude_penalty: null
     run:
-      t: 128
+      t: 64
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 4000
+      iterations: 2000
       warmup: 10
       write_images: true
       sparse_pruning: false
