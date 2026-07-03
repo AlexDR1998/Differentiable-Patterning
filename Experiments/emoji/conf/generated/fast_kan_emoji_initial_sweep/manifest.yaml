@@ -51,7 +51,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -170,7 +170,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -255,7 +255,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -374,7 +374,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -459,7 +459,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -578,7 +578,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -663,7 +663,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -782,7 +782,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -867,7 +867,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -986,7 +986,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -1071,7 +1071,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -1190,7 +1190,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -1275,7 +1275,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -1394,7 +1394,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -1479,7 +1479,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -1598,7 +1598,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -1683,7 +1683,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -1802,7 +1802,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -1887,7 +1887,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -2006,7 +2006,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -2091,7 +2091,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -2210,7 +2210,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -2295,7 +2295,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -2414,7 +2414,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -2499,7 +2499,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -2618,7 +2618,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -2703,7 +2703,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -2822,7 +2822,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -2907,7 +2907,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -3026,7 +3026,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -3111,7 +3111,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -3230,7 +3230,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -3315,7 +3315,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -3434,7 +3434,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -3519,7 +3519,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -3638,7 +3638,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -3723,7 +3723,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -3842,7 +3842,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -3927,7 +3927,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -4046,7 +4046,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -4131,7 +4131,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -4250,7 +4250,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -4335,7 +4335,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -4454,7 +4454,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -4539,7 +4539,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -4658,7 +4658,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
@@ -4743,7 +4743,7 @@ configs:
     - l2
     loss.layers:
     - decoded
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 5.0
     loss.regulariser_coeffs.boundary: 0.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
     loss.regulariser_coeffs.update_sensitivity: 0.0
@@ -4862,7 +4862,7 @@ configs:
       random_crop: false
       random_channel_shuffle: false
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 5.0
         boundary: 0.0
         contiguous_growth: 1.0
         update_sensitivity: 0.0
