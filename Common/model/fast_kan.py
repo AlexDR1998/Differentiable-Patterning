@@ -185,6 +185,15 @@ class FastRBFKANLayer(eqx.Module):
             edge_values = edge_values + base_values
         return edge_values
 
+    def spline_inputs_from_inputs(
+        self, x: Float[Array, "samples {self.in_features}"]
+    ) -> Float[Array, "samples {self.in_features}"]:
+        """Return the scalar inputs seen by the spline/RBF branch."""
+        self._validate_sample_input(x)
+        if self.layernorm is None:
+            return x
+        return jax.vmap(self.layernorm)(x)
+
     def edge_contributions_from_inputs(
         self, x: Float[Array, "samples {self.in_features}"]
     ) -> Float[Array, "{self.in_features} {self.out_features} samples"]:
@@ -195,9 +204,7 @@ class FastRBFKANLayer(eqx.Module):
         pass before evaluating spline/RBF contributions.
         """
         self._validate_sample_input(x)
-        spline_x = x
-        if self.layernorm is not None:
-            spline_x = jax.vmap(self.layernorm)(x)
+        spline_x = self.spline_inputs_from_inputs(x)
         basis = self._basis_from_values(spline_x)
         edge_values = jnp.einsum("sik,iok->ios", basis, self.spline_weight)
         if self.base_weight is not None and self.base_activation is not None:

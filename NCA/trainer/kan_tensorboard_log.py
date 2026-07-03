@@ -47,6 +47,13 @@ def _subsample_rows(x, max_samples):
 	return x[indices]
 
 
+def _fraction_abs_below(x, eps):
+	x = np.asarray(x)
+	if x.size == 0:
+		return 0.0
+	return float(np.mean(np.abs(x) < eps))
+
+
 class kaNCA_Train_log(NCA_Train_log):
 	def _log_legacy_kan_parameters(self,nca,i):
 		#Log weights and biasses of model every 10 training epochs
@@ -227,12 +234,19 @@ class kaNCA_Train_log(NCA_Train_log):
 				layer_outputs.append(_flatten_channel_first_samples(layer_output))
 			layer_inputs = _subsample_rows(np.concatenate(layer_inputs, axis=0), max_samples)
 			layer_outputs = _subsample_rows(np.concatenate(layer_outputs, axis=0), max_samples)
+			kan_layer = _kan_layer(nca, layer_index)
+			spline_inputs = np.asarray(
+				jax.device_get(
+					kan_layer.spline_inputs_from_inputs(jnp.asarray(layer_inputs))
+				)
+			)
 			edge_var = self._edge_contribution_variance(
-				_kan_layer(nca, layer_index),
+				kan_layer,
 				layer_inputs,
 			)
 			edge_std = np.sqrt(edge_var)
 			input_std = np.std(layer_inputs, axis=0)
+			spline_input_std = np.std(spline_inputs, axis=0)
 			output_std = np.std(layer_outputs, axis=0)
 			output_var = np.var(layer_outputs, axis=0)
 			relative_score = edge_var / (output_var[None, :] + 1e-8)
@@ -246,11 +260,13 @@ class kaNCA_Train_log(NCA_Train_log):
 				{
 					"layer_index": layer_index,
 					"input_samples": layer_inputs,
+					"spline_input_samples": spline_inputs,
 					"output_samples": layer_outputs,
 					"edge_var": edge_var,
 					"edge_std": edge_std,
 					"relative_score": relative_score,
 					"input_std": input_std,
+					"spline_input_std": spline_input_std,
 					"output_std": output_std,
 					"input_labels": input_labels,
 					"output_labels": output_labels,
@@ -276,6 +292,49 @@ class kaNCA_Train_log(NCA_Train_log):
 		ax.set_ylabel("Output feature")
 		ax.set_title(f"KAN layer {layer_index} rollout edge variance")
 		fig.colorbar(image, ax=ax, label="Var(edge contribution)")
+		fig.tight_layout()
+		return plot_to_image(fig)
+
+	def _plot_rollout_sorted_feature_std(self,stats):
+		import matplotlib.pyplot as plt
+
+		layer_index = stats["layer_index"]
+		input_std = np.sort(stats["input_std"])[::-1]
+		spline_input_std = np.sort(stats["spline_input_std"])[::-1]
+		output_std = np.sort(stats["output_std"])[::-1]
+		fig, axes = plt.subplots(3, 1, figsize=(8, 6), sharex=False)
+		axes[0].plot(input_std)
+		axes[0].set_ylabel("raw in std")
+		axes[0].set_title(f"KAN layer {layer_index} sorted feature std")
+		axes[1].plot(spline_input_std)
+		axes[1].set_ylabel("spline in std")
+		axes[2].plot(output_std)
+		axes[2].set_ylabel("out std")
+		axes[2].set_xlabel("Feature rank")
+		for ax in axes:
+			ax.set_yscale("symlog", linthresh=1e-4)
+			ax.grid(alpha=0.2)
+		fig.tight_layout()
+		return plot_to_image(fig)
+
+	def _plot_rollout_pre_post_layernorm_histograms(self,stats):
+		import matplotlib.pyplot as plt
+
+		layer_index = stats["layer_index"]
+		raw_inputs = stats["input_samples"].ravel()
+		spline_inputs = stats["spline_input_samples"].ravel()
+		outputs = stats["output_samples"].ravel()
+		fig, axes = plt.subplots(3, 1, figsize=(8, 6), sharex=False)
+		axes[0].hist(raw_inputs, bins=80, color="tab:blue", alpha=0.75)
+		axes[0].set_title(f"KAN layer {layer_index} raw input distribution")
+		axes[1].hist(spline_inputs, bins=80, color="tab:orange", alpha=0.75)
+		axes[1].set_title("Spline/RBF input distribution after layernorm")
+		axes[2].hist(outputs, bins=80, color="tab:green", alpha=0.75)
+		axes[2].set_title("Layer output distribution")
+		for ax in axes:
+			ax.axvline(0.0, color="black", linewidth=0.8, alpha=0.5)
+			ax.set_ylabel("count")
+		axes[2].set_xlabel("value")
 		fig.tight_layout()
 		return plot_to_image(fig)
 
@@ -403,9 +462,41 @@ class kaNCA_Train_log(NCA_Train_log):
 				float(np.mean(stats["output_std"])) if stats["output_std"].size else 0.0,
 				step=i,
 			)
+			self.log_scalar(
+				f"Train/KAN/layer_{layer_index}/rollout_spline_input_std_mean",
+				float(np.mean(stats["spline_input_std"])) if stats["spline_input_std"].size else 0.0,
+				step=i,
+			)
+			for eps in [1e-3, 1e-2, 1e-1]:
+				eps_tag = f"{eps:g}".replace(".", "p").replace("-", "m")
+				self.log_scalar(
+					f"Train/KAN/layer_{layer_index}/frac_abs_raw_input_lt_{eps_tag}",
+					_fraction_abs_below(stats["input_samples"], eps),
+					step=i,
+				)
+				self.log_scalar(
+					f"Train/KAN/layer_{layer_index}/frac_abs_spline_input_lt_{eps_tag}",
+					_fraction_abs_below(stats["spline_input_samples"], eps),
+					step=i,
+				)
+				self.log_scalar(
+					f"Train/KAN/layer_{layer_index}/frac_abs_output_lt_{eps_tag}",
+					_fraction_abs_below(stats["output_samples"], eps),
+					step=i,
+				)
 			self.log_image(
 				f"Train/KAN/layer_{layer_index}_rollout_edge_variance",
 				self._plot_rollout_edge_variance(stats),
+				step=i,
+			)
+			self.log_image(
+				f"Train/KAN/layer_{layer_index}_rollout_sorted_feature_std",
+				self._plot_rollout_sorted_feature_std(stats),
+				step=i,
+			)
+			self.log_image(
+				f"Train/KAN/layer_{layer_index}_rollout_pre_post_layernorm_histograms",
+				self._plot_rollout_pre_post_layernorm_histograms(stats),
 				step=i,
 			)
 			self.log_image(
