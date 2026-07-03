@@ -43,10 +43,96 @@ def _trajectory_snapshot_channels(T, data_augmenter, t):
 	return T_snapshot[:,:data_augmenter.OBS_CHANNELS]
 
 
+def _singular_value_logging_config(config=None):
+	defaults = {
+		"enabled": False,
+		"plot_spectra": True,
+		"epsilon": 1e-8,
+	}
+	if config is None:
+		return defaults
+	for key in defaults:
+		try:
+			if config.get(key) is not None:
+				defaults[key] = config.get(key)
+		except AttributeError:
+			if key in config:
+				defaults[key] = config[key]
+	defaults["enabled"] = bool(defaults["enabled"])
+	defaults["plot_spectra"] = bool(defaults["plot_spectra"])
+	defaults["epsilon"] = float(defaults["epsilon"])
+	return defaults
+
+
+def _flatten_weight_tree(weights):
+	if isinstance(weights, (list, tuple)):
+		for weight in weights:
+			yield from _flatten_weight_tree(weight)
+	else:
+		yield weights
+
+
+def extract_dense_weight_singular_values(nca, epsilon=1e-8):
+	"""Return singular-value diagnostics for squeezed 2D weights."""
+	diagnostics = []
+	for idx, weight in enumerate(_flatten_weight_tree(nca.get_weights())):
+		matrix = np.squeeze(np.array(weight))
+		if matrix.ndim != 2:
+			continue
+		singular_values = np.linalg.svd(
+			matrix.astype(np.float32),
+			compute_uv=False,
+		)
+		if singular_values.size == 0:
+			continue
+		total = np.sum(singular_values)
+		if total > epsilon:
+			probs = singular_values / total
+			effective_rank = float(np.exp(-np.sum(probs * np.log(probs + epsilon))))
+		else:
+			effective_rank = 0.0
+		max_singular = float(np.max(singular_values))
+		min_singular = float(np.min(singular_values))
+		diagnostics.append({
+			"idx": idx,
+			"shape": matrix.shape,
+			"singular_values": singular_values,
+			"summary": {
+				"max": max_singular,
+				"min": min_singular,
+				"mean": float(np.mean(singular_values)),
+				"median": float(np.median(singular_values)),
+				"condition_number": max_singular / max(min_singular, epsilon),
+				"effective_rank": effective_rank,
+			},
+		})
+	return diagnostics
+
+
+def plot_singular_value_spectrum(singular_values, title):
+	import matplotlib.pyplot as plt
+
+	plot_values = np.maximum(np.array(singular_values), 1e-12)
+	figure = plt.figure(figsize=(6,4))
+	ax = figure.add_subplot(111)
+	ax.plot(np.arange(len(plot_values)), plot_values, marker="o", linewidth=1)
+	ax.set_yscale("log")
+	ax.set_xlabel("Index")
+	ax.set_ylabel("Singular value")
+	ax.set_title(title)
+	ax.grid(True, which="both", alpha=0.25)
+	figure.tight_layout()
+	return plot_to_image(figure)
+
+
 class NCA_Train_log(Train_log):
 	"""
 		Class for logging training behaviour of NCA_Trainer classes
 	"""
+
+	def __init__(self, *args, singular_value_config=None, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.singular_value_config = _singular_value_logging_config(singular_value_config)
 
 	def log_model_parameters(self,nca,i):  # type: ignore
 		"""Log model parameters
@@ -63,6 +149,34 @@ class NCA_Train_log(Train_log):
 			if len(w.shape) == 2:
 				w = repeat(w,"W H -> W H 3")
 				self.log_image(f"Train/weight_image_{idx}", self.normalise_images(w), step=i)
+		self.log_singular_value_spectra(nca,i)
+
+	def log_singular_value_spectra(self,nca,i):
+		if not self.singular_value_config["enabled"]:
+			return
+		diagnostics = extract_dense_weight_singular_values(
+			nca,
+			epsilon=self.singular_value_config["epsilon"],
+		)
+		for diagnostic in diagnostics:
+			idx = diagnostic["idx"]
+			tag_prefix = f"Train/SVD/weight_{idx}"
+			self.log_histogram(
+				f"{tag_prefix}/singular_values",
+				diagnostic["singular_values"],
+				step=i,
+			)
+			for name, value in diagnostic["summary"].items():
+				self.log_scalar(f"{tag_prefix}/{name}", value, step=i)
+			if self.singular_value_config["plot_spectra"]:
+				self.log_image(
+					f"{tag_prefix}/spectrum",
+					plot_singular_value_spectrum(
+						diagnostic["singular_values"],
+						f"Weight {idx} singular values",
+					),
+					step=i,
+				)
 			
 
 	def log_model_outputs(self,x,i):
@@ -182,8 +296,13 @@ class NCA_knockout_Train_log(NCA_Train_log):
         wandb_config=None,
 		knockout_time=None,
 		knockout_channel=None,
+		singular_value_config=None,
     ):
-		super().__init__(data, wandb_config)
+		super().__init__(
+			data,
+			wandb_config,
+			singular_value_config=singular_value_config,
+		)
 		assert knockout_time is not None, "knockout_time must be provided for NCA_knockout_Train_log"
 		assert knockout_channel is not None, "knockout_channel must be provided for NCA_knockout_Train_log"
 		self.knockout_time = knockout_time

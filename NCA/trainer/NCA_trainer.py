@@ -297,7 +297,7 @@ class NCA_Trainer(object):
 		self.model_filename = model_filename
 		#print(jax.tree_util.tree_structure(self.BOUNDARY_CALLBACK))
 		
-	def setup_logging(self,BACKEND,wandb_args,KNOCKOUT_ARGS):
+	def setup_logging(self,BACKEND,wandb_args,KNOCKOUT_ARGS,SINGULAR_VALUE_LOGGING_CONFIG=None):
 		# Set logging behvaiour based on provided filename
 		print(f"Raw data shape: {jnp.array(self._data_raw).shape}")
 		if self.model_filename is None:
@@ -316,7 +316,11 @@ class NCA_Trainer(object):
 				# elif isinstance(self.NCA_model, uNCA):
 					# self.LOGGER = uNCA_Train_log(self.LOG_DIR, self._data_raw)
 				else:
-					self.LOGGER = NCA_Train_log(self.LOG_DIR, self._data_raw)
+					self.LOGGER = NCA_Train_log(
+						self.LOG_DIR,
+						self._data_raw,
+						singular_value_config=SINGULAR_VALUE_LOGGING_CONFIG,
+					)
 				print("Logging training to: "+self.LOG_DIR)
 			elif BACKEND=="wandb":
 				self.IS_LOGGING = True
@@ -330,10 +334,15 @@ class NCA_Trainer(object):
 						data=self._data_raw,
 						wandb_config=wandb_args,
 						knockout_time=KNOCKOUT_ARGS["time"],
-						knockout_channel=KNOCKOUT_ARGS["channel"])
+						knockout_channel=KNOCKOUT_ARGS["channel"],
+						singular_value_config=SINGULAR_VALUE_LOGGING_CONFIG)
 				else:
 					logger_class = select_wandb_train_logger_class(self.NCA_model)
-					self.LOGGER = logger_class(data=self._data_raw,wandb_config=wandb_args)
+					self.LOGGER = logger_class(
+						data=self._data_raw,
+						wandb_config=wandb_args,
+						singular_value_config=SINGULAR_VALUE_LOGGING_CONFIG,
+					)
 				print("Logging training to: "+self.LOG_DIR)
 		self.MODEL_PATH = self._MODEL_DIRECTORY+self.model_filename
 		print("Saving model to: "+self.MODEL_PATH)
@@ -446,6 +455,7 @@ class NCA_Trainer(object):
 				  "channel":None
 			  },
 			  POOL_ADMISSION_CONFIG = None,
+			  SINGULAR_VALUE_LOGGING_CONFIG = None,
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
@@ -503,6 +513,22 @@ class NCA_Trainer(object):
 		}
 		if POOL_ADMISSION_CONFIG is not None:
 			pool_admission_config.update(POOL_ADMISSION_CONFIG)
+		singular_value_logging_config = {
+			"enabled": False,
+			"plot_spectra": True,
+			"epsilon": 1e-8,
+		}
+		if SINGULAR_VALUE_LOGGING_CONFIG is not None:
+			for key in singular_value_logging_config:
+				try:
+					value = SINGULAR_VALUE_LOGGING_CONFIG.get(key)
+				except AttributeError:
+					value = SINGULAR_VALUE_LOGGING_CONFIG[key]
+				if value is not None:
+					singular_value_logging_config[key] = value
+		singular_value_logging_config["enabled"] = bool(singular_value_logging_config["enabled"])
+		singular_value_logging_config["plot_spectra"] = bool(singular_value_logging_config["plot_spectra"])
+		singular_value_logging_config["epsilon"] = float(singular_value_logging_config["epsilon"])
 
 		self.TRAIN_CONFIG = {
 			"t":t,
@@ -515,12 +541,18 @@ class NCA_Trainer(object):
 			"WRITE_IMAGES":WRITE_IMAGES,
 			"LOSS_FUNC_STR":LOSS_FUNC_STR,
 			"POOL_ADMISSION_CONFIG":pool_admission_config,
+			"SINGULAR_VALUE_LOGGING_CONFIG":singular_value_logging_config,
 			"LOOP_AUTODIFF":LOOP_AUTODIFF,
 			"SPARSE_PRUNING":SPARSE_PRUNING,
 			"TARGET_SPARSITY":TARGET_SPARSITY,
 		}
 		
-		self.setup_logging("wandb",wandb_args=wandb_args,KNOCKOUT_ARGS=KNOCKOUT_ARGS)
+		self.setup_logging(
+			"wandb",
+			wandb_args=wandb_args,
+			KNOCKOUT_ARGS=KNOCKOUT_ARGS,
+			SINGULAR_VALUE_LOGGING_CONFIG=singular_value_logging_config,
+		)
 
 		
 		
