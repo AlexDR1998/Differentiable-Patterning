@@ -98,5 +98,6 @@ def run(cfg):
         CLEAR_CACHE_EVERY=cfg.trainer.clear_cache_every,
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
         POOL_ADMISSION_CONFIG=build_pool_admission_config(cfg),
+        SINGULAR_VALUE_LOGGING_CONFIG=cfg.logging.get("singular_values", None),
         key=train_key,
     )

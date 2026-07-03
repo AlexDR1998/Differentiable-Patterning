@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.18.4"
+__generated_with = "0.23.10"
 app = marimo.App(width="columns")
 
 with app.setup:
@@ -25,11 +25,37 @@ with app.setup:
     from NCA.model.NCA_gated_noise_model import gnNCA
     # from Common.dataloader.micropattern import load_micropattern_circle_8ch_individual,load_micropattern_circle_8ch_individual_explicit_colony
     from Common.model.boundary import model_boundary
-    from Common.save_to_video import save_to_video_rgb
-    from Experiments.emoji.time_gate_stability_comparison import H_to_filename as H_to_filename_gate
-    from Experiments.emoji.parameter_noise_sweep import H_to_filename as H_to_filename_noise
-    from Experiments.emoji.fire_rate_sweep import H_to_filename as H_to_filename_fr
-    from Experiments.emoji.local_perturbation import run as run_local_perturbations
+    try:
+        from Common.save_to_video import save_to_video_rgb
+    except ModuleNotFoundError as e:
+        _save_video_import_error = e
+        def save_to_video_rgb(*args, **kwargs):
+            raise ModuleNotFoundError(
+                "save_to_video_rgb requires optional video dependencies such as cv2."
+            ) from _save_video_import_error
+    def _missing_optional_helper(name, error):
+        def _helper(*args, **kwargs):
+            raise ModuleNotFoundError(
+                f"{name} requires optional experiment dependencies that are not installed."
+            ) from error
+        return _helper
+
+    try:
+        from Experiments.emoji.old_scripts.time_gate_stability_comparison import H_to_filename as H_to_filename_gate
+    except ModuleNotFoundError as e:
+        H_to_filename_gate = _missing_optional_helper("H_to_filename_gate", e)
+    try:
+        from Experiments.emoji.old_scripts.parameter_noise_sweep import H_to_filename as H_to_filename_noise
+    except ModuleNotFoundError as e:
+        H_to_filename_noise = _missing_optional_helper("H_to_filename_noise", e)
+    try:
+        from Experiments.emoji.old_scripts.fire_rate_sweep import H_to_filename as H_to_filename_fr
+    except ModuleNotFoundError as e:
+        H_to_filename_fr = _missing_optional_helper("H_to_filename_fr", e)
+    try:
+        from Experiments.emoji.old_scripts.local_perturbation import run as run_local_perturbations
+    except ModuleNotFoundError as e:
+        run_local_perturbations = _missing_optional_helper("run_local_perturbations", e)
     from marimo_utils import plot_matrix,generate_hyperparameter_combinations,generate_hyperparameter_combinations_indexed
     import matplotlib.pyplot as plt
     from pprint import pprint
@@ -1085,6 +1111,207 @@ def load_emoji_models_contig(H):
     return nca
 
 
+@app.function(hide_code=True)
+def make_emoji_web_initial_state(data, channels, frame=0, pad=10):
+    """Build the padded latent initial state used by the emoji NCA rollouts."""
+    x0 = onp.asarray(data[frame], dtype=onp.float32)
+    if x0.ndim != 3:
+        raise ValueError(f"Expected data[frame] to have shape [C, H, W], got {x0.shape}.")
+    if x0.shape[0] > channels:
+        raise ValueError(f"Initial state has {x0.shape[0]} channels, but model has {channels}.")
+    return onp.pad(
+        x0,
+        ((0, channels - x0.shape[0]), (pad, pad), (pad, pad)),
+        mode="constant",
+    ).astype(onp.float32)
+
+
+@app.function(hide_code=True)
+def export_nca_web_assets(
+    nca,
+    model_id,
+    x0=None,
+    grid_size=None,
+    output_dir="WebDemo/public/models",
+    reference_steps=8,
+    display_channels=(0, 1, 2),
+):
+    """
+    Export an already-loaded plain NCA to the WebDemo static asset format.
+
+    Example:
+        nca, H = models_reg[0]
+        x0 = make_emoji_web_initial_state(data, H["channels"])
+        export_nca_web_assets(nca, "emoji_good_reg_model", x0=x0)
+    """
+    import json
+    from pathlib import Path
+
+    def _expanded_kernel_count(kernels):
+        count = 0
+        for kernel in kernels:
+            if kernel == "GRAD":
+                count += 2
+            else:
+                count += 1
+        return count
+
+    def _tensor_entry(name, arr, offset):
+        nbytes = int(arr.nbytes)
+        return (
+            {
+                "name": name,
+                "dtype": "float32",
+                "shape": list(arr.shape),
+                "byteOffset": offset,
+                "byteLength": nbytes,
+            },
+            offset + nbytes,
+        )
+
+    def _as_float32(value):
+        return onp.asarray(jax.device_get(value), dtype=onp.float32)
+
+    source_kernels = list(nca.KERNEL_STR)
+    supported_kernel_set = {"ID", "GRAD", "LAP"}
+    if set(source_kernels) != supported_kernel_set:
+        raise ValueError(
+            "The current WebGL runtime supports plain anisotropic NCA with exactly "
+            f"{sorted(supported_kernel_set)}; got {source_kernels}."
+        )
+
+    if len(nca.layers) != 3:
+        raise ValueError(
+            "The current WebGL asset contract supports plain NCA only. "
+            "gNCA/noisy/KAN variants need a matching runtime shader first."
+        )
+
+    activation_name = getattr(nca.layers[1], "__name__", None)
+    if activation_name != "relu":
+        raise ValueError(f"Only relu activation is currently supported; got {activation_name}.")
+
+    padding = nca.op.PADDING
+    if padding not in ["CIRCULAR", "REPLICATE"]:
+        raise ValueError(f"Only CIRCULAR and REPLICATE padding are currently supported; got {padding}.")
+
+    channels = int(nca.N_CHANNELS)
+    kernels = ["ID", "GRAD", "LAP"]
+    expected_features = channels * _expanded_kernel_count(kernels)
+    if int(nca.N_FEATURES) != expected_features:
+        raise ValueError(
+            f"Feature mismatch: model has {nca.N_FEATURES}, expected {expected_features}."
+        )
+
+    w0 = _as_float32(np.squeeze(nca.layers[0].weight))
+    w1 = _as_float32(np.squeeze(nca.layers[2].weight))
+    b1 = _as_float32(np.squeeze(nca.layers[2].bias))
+    grad_x = _as_float32(np.squeeze(nca.op.grad_x.weight))
+    grad_y = _as_float32(np.squeeze(nca.op.grad_y.weight))
+    lap = _as_float32(np.squeeze(nca.op.laplacian.weight))
+    average = _as_float32(np.squeeze(nca.op.average.weight))
+
+    if w0.shape != (expected_features, expected_features):
+        raise ValueError(f"Unexpected w0 shape {w0.shape}; expected {(expected_features, expected_features)}.")
+    if w1.shape != (channels, expected_features):
+        raise ValueError(f"Unexpected w1 shape {w1.shape}; expected {(channels, expected_features)}.")
+    if b1.shape != (channels,):
+        raise ValueError(f"Unexpected b1 shape {b1.shape}; expected {(channels,)}.")
+    for name, kernel in {
+        "grad_x": grad_x,
+        "grad_y": grad_y,
+        "lap": lap,
+        "average": average,
+    }.items():
+        if kernel.shape != (3, 3):
+            raise ValueError(f"{name} has shape {kernel.shape}; current WebGL runtime supports 3x3 kernels.")
+
+    if x0 is None:
+        if grid_size is None:
+            grid_size = (96, 96)
+        height, width = map(int, grid_size)
+        x0_array = onp.zeros((channels, height, width), dtype=onp.float32)
+        x0_array[3:, height // 2, width // 2] = 1.0
+    else:
+        x0_array = onp.asarray(jax.device_get(x0), dtype=onp.float32)
+        if x0_array.ndim != 3:
+            raise ValueError(f"x0 must have shape [C, H, W], got {x0_array.shape}.")
+        if x0_array.shape[0] != channels:
+            raise ValueError(f"x0 has {x0_array.shape[0]} channels, but model has {channels}.")
+        height, width = map(int, x0_array.shape[1:])
+        if grid_size is not None and tuple(map(int, grid_size)) != (height, width):
+            raise ValueError(f"grid_size {grid_size} does not match x0 spatial shape {(height, width)}.")
+
+    out_dir = Path(output_dir) / model_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    arrays = {
+        "w0": w0,
+        "w1": w1,
+        "b1": b1,
+        "grad_x": grad_x,
+        "grad_y": grad_y,
+        "lap": lap,
+        "average": average,
+    }
+    tensor_entries = {}
+    offset = 0
+    with (out_dir / "weights.bin").open("wb") as f:
+        for name, arr in arrays.items():
+            arr.tofile(f)
+            tensor_entries[name], offset = _tensor_entry(name, arr, offset)
+
+    x0_array.tofile(out_dir / "x0.bin")
+
+    deterministic = eqx.tree_at(lambda m: m.FIRE_RATE, nca, 1.0)
+    reference, _ = deterministic.run(
+        iters=reference_steps,
+        x=np.asarray(x0_array),
+        SAVE_LATENTS=False,
+        key=jr.PRNGKey(0),
+    )
+    reference = onp.asarray(reference[-1], dtype=onp.float32)
+    reference.tofile(out_dir / "reference.bin")
+
+    manifest = {
+        "modelId": model_id,
+        "family": "NCA",
+        "channels": channels,
+        "kernels": kernels,
+        "sourceKernels": source_kernels,
+        "activation": "relu",
+        "padding": padding,
+        "fireRate": float(nca.FIRE_RATE),
+        "gridSize": [width, height],
+        "featureChannels": expected_features,
+        "hiddenChannels": expected_features,
+        "weights": {
+            "path": "weights.bin",
+            "tensors": tensor_entries,
+        },
+        "initialState": {
+            "path": "x0.bin",
+            "dtype": "float32",
+            "shape": [channels, height, width],
+        },
+        "display": {
+            "channels": list(display_channels),
+            "range": [0.0, 1.0],
+        },
+        "validation": {
+            "referenceSteps": int(reference_steps),
+            "referenceFireRate": 1.0,
+            "reference": {
+                "path": "reference.bin",
+                "dtype": "float32",
+                "shape": [channels, height, width],
+            },
+        },
+    }
+    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    print(f"Exported WebGL assets to {out_dir}")
+    return out_dir
+
+
 @app.cell
 def _(plot_emoji_snapshots):
     def plot_all_models(Trs,models,title_strings):
@@ -1116,6 +1343,7 @@ def _(plot_emoji_snapshots):
         # axs[-1].set_xlabel("T")
 
         return plt.gca()
+
     return (plot_all_models_losses,)
 
 
@@ -1414,6 +1642,7 @@ def _():
         # Note: You may need to experiment with mode, cval, etc.
         rotated = map_coordinates(arr, coords, order=1, mode='constant', cval=0.0)
         return rotated
+
     return (rotate_array,)
 
 

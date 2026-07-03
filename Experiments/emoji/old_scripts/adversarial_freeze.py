@@ -24,9 +24,9 @@ from NCA.model.NCA_gated_noise_model import gnNCA
 from einops import repeat
 # from Experiments.emoji.local_perturbation import prepare_data
 from Common.dataloader.emoji import load_emoji_sequence
-from Experiments.emoji.fire_rate_sweep import H_to_filename as H_to_filename_fr
-from Experiments.emoji.time_gate_stability_comparison import H_to_filename as H_to_filename_gate
-from Experiments.emoji.parameter_noise_sweep import H_to_filename as H_to_filename_noise
+from Experiments.emoji.old_scripts.fire_rate_sweep import H_to_filename as H_to_filename_fr
+from Experiments.emoji.old_scripts.time_gate_stability_comparison import H_to_filename as H_to_filename_gate
+from Experiments.emoji.old_scripts.parameter_noise_sweep import H_to_filename as H_to_filename_noise
 
 def prepare_data(H):
     data = load_emoji_sequence(

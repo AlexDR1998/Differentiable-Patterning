@@ -33,7 +33,6 @@ def _():
         num_basis=30,
         base_activation="silu",
         base_init_scale=0.05)
-
     return (kan,)
 
 
@@ -53,7 +52,6 @@ def _(kan):
         xs=np.linspace(-4, 4, 200),
     )
     fig
-
     return
 
 
@@ -87,12 +85,12 @@ def _():
 @app.cell
 def _(model):
     diff,static = model.partition()
-    return (static,)
+    return (diff,)
 
 
 @app.cell
-def _(static):
-    print(static)
+def _(diff):
+    print(diff)
     return
 
 
