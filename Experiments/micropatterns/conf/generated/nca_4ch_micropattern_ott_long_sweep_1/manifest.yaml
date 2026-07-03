@@ -1,8 +1,8 @@
-experiment_name: nca_4ch_micropattern_ott_sweep_1
+experiment_name: nca_4ch_micropattern_ott_long_sweep_1
 entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_ott_sweep.yaml
-output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/nca_4ch_micropattern_ott_sweep_1
+output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/nca_4ch_micropattern_ott_long_sweep_1
 count: 64
 configs:
 - index: 3

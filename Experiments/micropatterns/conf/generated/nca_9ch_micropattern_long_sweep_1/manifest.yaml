@@ -1,8 +1,8 @@
-experiment_name: nca_micropattern_vgg_swap_1
+experiment_name: nca_9ch_micropattern_long_sweep_1
 entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_vgg_channel_swap_targets.yaml
-output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/nca_micropattern_vgg_swap_1
+output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/nca_9ch_micropattern_long_sweep_1
 count: 32
 configs:
 - index: 19
