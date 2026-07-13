@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# -lt 4 ]; then
-  echo "Usage: $0 <path_to_python_script> <path_to_experiment_config> <number_of_workers> <gpu_type>"
+  echo "Usage: $0 <path_to_python_script> <path_to_experiment_config> <number_of_workers> <gpu_type> [start_index]"
   exit 1
 fi
 
@@ -9,6 +9,12 @@ FILE="$1"
 CONFIGS="$2"
 JOB_WORKER_COUNT="$3"
 GPU_TYPE="${4:-H200}"
+START_INDEX="${5:-0}"
+
+if ! [[ "$START_INDEX" =~ ^[0-9]+$ ]]; then
+  echo "Start index must be a non-negative integer: $START_INDEX"
+  exit 1
+fi
 
 if [ "$GPU_TYPE" == "H200" ]; then
   GPU_MEMORY=128
@@ -25,8 +31,13 @@ else
 fi
 
 TOTAL_CONFIGS=$(grep -c '^-[[:space:]]*index:' "$CONFIGS")
-BASE_PODS=$((TOTAL_CONFIGS / JOB_WORKER_COUNT))
-REMAINDER=$((TOTAL_CONFIGS % JOB_WORKER_COUNT))
+if (( START_INDEX >= TOTAL_CONFIGS )); then
+  echo "Start index $START_INDEX is outside manifest range 0-$((TOTAL_CONFIGS - 1))"
+  exit 1
+fi
+REMAINING_CONFIGS=$((TOTAL_CONFIGS - START_INDEX))
+BASE_PODS=$((REMAINING_CONFIGS / JOB_WORKER_COUNT))
+REMAINDER=$((REMAINING_CONFIGS % JOB_WORKER_COUNT))
 
 
 
@@ -35,6 +46,7 @@ export PATH_TO_PYTHON_SCRIPT=$FILE
 # export COMPLETION_INDEX=$CONFIGS
 export PATH_TO_EXPERIMENT_CONFIG=$CONFIGS
 export JOB_WORKER_COUNT=$JOB_WORKER_COUNT
+export MANIFEST_START_INDEX=$START_INDEX
 export GPU_TYPE=$GPU_FULL_NAME
 export GPU_MEM_LIMIT="${GPU_MEMORY}Gi"
 
@@ -52,4 +64,3 @@ for ((i=0; i<JOB_WORKER_COUNT; i++)); do
   envsubst < run.tpl.yml > run_$i.yml
   kubectl create -f run_$i.yml
 done
-

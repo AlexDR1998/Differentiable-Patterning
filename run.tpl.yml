@@ -35,6 +35,8 @@ spec:
                 value: "$JOB_WORKER_INDEX"
               - name: JOB_WORKER_COUNT
                 value: "$JOB_WORKER_COUNT"
+              - name: MANIFEST_START_INDEX
+                value: "$MANIFEST_START_INDEX"
               - name: PVC_PATH
                 value: /workspace
               - name: DATA_PATH_BASE
@@ -88,4 +90,3 @@ spec:
               - name: wandb-fast
                 emptyDir: 
                   sizeLimit: 20Gi
-

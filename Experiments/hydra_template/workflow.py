@@ -159,12 +159,13 @@ def resolve_manifest_index(
     local_index = int(index if index is not None else os.getenv("JOB_COMPLETION_INDEX", 0))
     resolved_worker_index = int(worker_index if worker_index is not None else os.getenv("JOB_WORKER_INDEX", 0))
     resolved_worker_count = int(worker_count if worker_count is not None else os.getenv("JOB_WORKER_COUNT", 1))
+    start_index = int(os.getenv("MANIFEST_START_INDEX", 0))
     if resolved_worker_count <= 0:
         raise ValueError("worker_count must be greater than zero")
     if not 0 <= resolved_worker_index < resolved_worker_count:
         raise ValueError(f"worker_index must be in [0, {resolved_worker_count - 1}]")
 
-    resolved_index = local_index * resolved_worker_count + resolved_worker_index
+    resolved_index = start_index + local_index * resolved_worker_count + resolved_worker_index
     configs = manifest_cfg.get("configs", [])
     if not configs:
         raise ValueError("Manifest contains no configs")
