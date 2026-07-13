@@ -39,6 +39,30 @@ INTERNAL_LOOP_DTYPE = jnp.bfloat16 # dtype to use for values inside the loop ove
 LOSS_DTYPE = jnp.float32 # dtype to use for loss values. Higher precision as it accumulates over many timesteps and batches.
 
 
+def resolve_loss_component_weights(weights, loss_count):
+	"""Validate and normalise configuration shape for loss-component weights."""
+	if weights is None:
+		return jnp.ones((loss_count,), dtype=LOSS_DTYPE)
+	weights = list(weights)
+	if len(weights) != loss_count:
+		raise ValueError(
+			"loss.component_weights must have one value per configured loss "
+			f"({loss_count} expected, got {len(weights)})"
+		)
+	if any(float(weight) < 0 for weight in weights):
+		raise ValueError("loss.component_weights cannot contain negative weights")
+	if not any(float(weight) > 0 for weight in weights):
+		raise ValueError("loss.component_weights must contain at least one positive weight")
+	return jnp.asarray(weights, dtype=LOSS_DTYPE)
+
+
+def combine_loss_components(losses, weights):
+	"""Return a normalized weighted mean over the leading loss-component axis."""
+	losses = jnp.stack(losses)
+	weights = jnp.asarray(weights, dtype=losses.dtype)
+	return jnp.sum(losses * weights[:, None], axis=0) / jnp.sum(weights)
+
+
 def select_wandb_train_logger_class(model, knockout_time=None):
 	if knockout_time is not None:
 		return NCA_knockout_Train_log
@@ -402,18 +426,20 @@ class NCA_Trainer(object):
 			
 			# Select whether each loss function applies to latents or decoded outputs, or both.
 			if self.LOSS_FUNC_LAYERS[idx]=="decoded":
-				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache.get("decoded",None)))
+				component_losses = [f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache.get("decoded",None))]
 			elif self.LOSS_FUNC_LAYERS[idx]=="latent":
-				losses.append(f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache.get("latent",None)))
+				component_losses = [f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache.get("latent",None))]
 			elif self.LOSS_FUNC_LAYERS[idx]=="both":
-				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache.get("decoded",None)))
-				losses.append(f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache.get("latent",None)))
+				component_losses = [
+					f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache.get("decoded",None)),
+					f(x_lat_obs, y_lat_obs, key, loss_mask, loss_cache.get("latent",None)),
+				]
 			else:
 				print(f"Warning: LOSS_FUNC_LAYERS[{idx}] is {self.LOSS_FUNC_LAYERS[idx]}, but should be either 'decoded' or 'latent'. Defaulting to 'decoded'.")
-				losses.append(f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache.get("decoded",None)))
+				component_losses = [f(x_proc_obs, y_proc_obs, key, loss_mask, loss_cache.get("decoded",None))]
+			losses.append(jnp.mean(jnp.stack(component_losses), axis=0))
 						
-		losses = jnp.array(losses)
-		return reduce(losses,"loss_funcs N -> N","mean")
+		return combine_loss_components(losses, self.LOSS_COMPONENT_WEIGHTS)
 	
 	def grad_loss_helper(self,x):
 		v_perception = jax.vmap(self.NCA_model.perception,in_axes=0,out_axes=0)
@@ -529,6 +555,10 @@ class NCA_Trainer(object):
 		singular_value_logging_config["enabled"] = bool(singular_value_logging_config["enabled"])
 		singular_value_logging_config["plot_spectra"] = bool(singular_value_logging_config["plot_spectra"])
 		singular_value_logging_config["epsilon"] = float(singular_value_logging_config["epsilon"])
+		loss_func_count = 1 if isinstance(LOSS_FUNC_STR, str) else len(LOSS_FUNC_STR)
+		self.LOSS_COMPONENT_WEIGHTS = resolve_loss_component_weights(
+			LOSS_ARGS.get("component_weights", None), loss_func_count
+		)
 
 		self.TRAIN_CONFIG = {
 			"t":t,
@@ -540,6 +570,8 @@ class NCA_Trainer(object):
 			"CLEAR_CACHE_EVERY":CLEAR_CACHE_EVERY,
 			"WRITE_IMAGES":WRITE_IMAGES,
 			"LOSS_FUNC_STR":LOSS_FUNC_STR,
+			"LOSS_COMPONENT_WEIGHTS":[float(weight) for weight in self.LOSS_COMPONENT_WEIGHTS],
+			"CHANNEL_IMPORTANCE":LOSS_ARGS.get("channel_importance", None),
 			"POOL_ADMISSION_CONFIG":pool_admission_config,
 			"SINGULAR_VALUE_LOGGING_CONFIG":singular_value_logging_config,
 			"LOOP_AUTODIFF":LOOP_AUTODIFF,
@@ -568,7 +600,6 @@ class NCA_Trainer(object):
 			if len(layers)<loss_count:
 				layers = layers + [layers[-1]]*(loss_count-len(layers))
 			return layers[:loss_count]
-		loss_func_count = 1 if isinstance(LOSS_FUNC_STR, str) else len(LOSS_FUNC_STR)
 		self.LOSS_FUNC_LAYERS = resolve_loss_layers(LOSS_ARGS["layers"], loss_func_count)
 		
 		# LOSS_FUNC_CHANNELS = 

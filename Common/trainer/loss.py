@@ -498,12 +498,34 @@ def vgg_hyperspectral_colony_and_l2(x,y,key,where,aux={"vgg_metric":"l2"},cache=
 
 
 def l2_colony_grouped(x,y,key,where,aux=None,cache=None):
-	
+	aux = {} if aux is None else aux
 	x_full = duplicate_x_channels_9ch(x)
 	_l2 = (x_full-y)**2
-	weighting = jnp.array([0.5,0.5,0.5,1.0,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0]) # Account for duplicate channels
-	_l2 = einsum(_l2,weighting,"n c x y , c -> n c x y")
-	where_full = duplicate_x_channels_9ch(where).astype(where.dtype)
+	if where is None:
+		where_full = None
+	elif where.shape[1] == y.shape[1]:
+		where_full = where.astype(where.dtype)
+	else:
+		where_full = duplicate_x_channels_9ch(where).astype(where.dtype)
+	base_weighting = jnp.array(
+		[0.5,0.5,0.5,1.0,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0],
+		dtype=_l2.dtype,
+	) # Account for duplicate channels
+	channel_importance = aux.get("channel_importance", None)
+	if channel_importance is None:
+		weighting = base_weighting
+	else:
+		channel_importance = jnp.asarray(channel_importance, dtype=_l2.dtype)
+		if where is None:
+			active = jnp.ones((x.shape[0], y.shape[1]), dtype=_l2.dtype)
+		else:
+			active = jnp.any(where_full, axis=(-1, -2)).astype(_l2.dtype)
+		base_total = jnp.sum(active * base_weighting[None, :], axis=1, keepdims=True)
+		weighted = base_weighting * channel_importance
+		weighted_total = jnp.sum(active * weighted[None, :], axis=1, keepdims=True)
+		scale = jnp.where(weighted_total > 0, base_total / weighted_total, 1.0)
+		weighting = weighted[None, :] * scale
+	_l2 = _l2 * weighting[..., None, None]
 	_l2_loss = jnp.nan_to_num(jnp.mean(_l2,axis=[-1,-2,-3],where=where_full))
 	return _l2_loss
 
@@ -561,6 +583,8 @@ def build_loss_functions(loss_strings,loss_args):
 	"""
 
 
+	configured_loss_names = [loss_strings] if isinstance(loss_strings, str) else list(loss_strings)
+
 	_ott_aux = {
 		"D":loss_args["D"] if "D" in loss_args else None,
 		"S":loss_args["S"] if "S" in loss_args else None,
@@ -587,7 +611,11 @@ def build_loss_functions(loss_strings,loss_args):
 		"vgg_params":loss_args["vgg_params"] if "vgg_params" in loss_args else None,
 		"random_crop":loss_args["random_crop"] if "random_crop" in loss_args else False,
 		"random_channel_shuffle":loss_args["random_channel_shuffle"] if "random_channel_shuffle" in loss_args else False,
+		"channel_importance":loss_args["channel_importance"] if "channel_importance" in loss_args else None,
 		# "target_feats":loss_args["target_feats"] if "target_feats" in loss_args else None,
+	}
+	_grouped_aux = {
+		"channel_importance":loss_args["channel_importance"] if "channel_importance" in loss_args else None,
 	}
 	# _vision_extractor = None
 	# for lstr in loss_strings:
@@ -603,7 +631,7 @@ def build_loss_functions(loss_strings,loss_args):
 
 	LOSS_FUNCS = {
 		"l2":l2,
-		"l2_grouped":l2_colony_grouped,
+		"l2_grouped":lambda x,y,key,where,cache:l2_colony_grouped(x,y,key,where,aux=_grouped_aux,cache=cache),
 		"l1":l1,
 		"vgg":lambda x,y,key,where,cache:loss_vgg.vgg_hyperspectral(x,y,key,where,aux=_vgg_aux,cache=cache),
 		"vgg_grouped":lambda x,y,key,where,cache:loss_vgg.vgg_hyperspectral_colony(x,y,key,where,aux=_vgg_aux,cache=cache),
@@ -641,5 +669,23 @@ def build_loss_functions(loss_strings,loss_args):
 		loss_funcs = [LOSS_FUNCS[f] for f in loss_strings]
 	else:
 		raise ValueError("loss_strings must be a string or sequence of strings. Got {}".format(type(loss_strings)))
+
+	channel_importance = loss_args.get("channel_importance", None)
+	if channel_importance is not None:
+		if len(channel_importance) != 12:
+			raise ValueError(
+				"loss.channel_importance must contain 12 target-channel weights for grouped micropattern losses"
+			)
+		if any(float(weight) < 0 for weight in channel_importance):
+			raise ValueError("loss.channel_importance cannot contain negative weights")
+		if not any(float(weight) > 0 for weight in channel_importance):
+			raise ValueError("loss.channel_importance must contain at least one positive weight")
+		grouped_losses = {"l2_grouped", "vgg_grouped", "vgg_grouped_and_l2"}
+		unsupported = [name for name in configured_loss_names if name not in grouped_losses]
+		if unsupported:
+			raise ValueError(
+				"loss.channel_importance is only supported for grouped micropattern losses; "
+				f"unsupported losses: {unsupported}"
+			)
 		
 	return loss_funcs

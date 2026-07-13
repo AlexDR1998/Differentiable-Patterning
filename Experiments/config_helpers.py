@@ -104,6 +104,22 @@ def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
         if _cfg_get(cfg.loss, "random_channel_shuffle", False):
             loss_str += "_chshuffle"
 
+    channel_importance = _cfg_get(cfg.loss, "channel_importance", None)
+    if channel_importance is not None:
+        non_default = [
+            f"{index + 1}x{_compact_value(weight)}"
+            for index, weight in enumerate(channel_importance)
+            if float(weight) != 1.0
+        ]
+        if non_default:
+            loss_str += "_ci" + "-".join(non_default)
+
+    component_weights = _cfg_get(cfg.loss, "component_weights", None)
+    if component_weights is not None and any(
+        float(weight) != 1.0 for weight in component_weights
+    ):
+        loss_str += "_cw" + "-".join(_compact_value(weight) for weight in component_weights)
+
     loss_args = _cfg_get(cfg.loss, "args", None)
     if include_loss_args and loss_args is not None:
         uses_ott = any("ott" in loss_name for loss_name in _as_list(cfg.loss.primary))
@@ -177,6 +193,8 @@ def build_loss_args(cfg, overrides=None):
         "layers": layers,
         "random_crop": _cfg_get(cfg.loss, "random_crop", False),
         "random_channel_shuffle": _cfg_get(cfg.loss, "random_channel_shuffle", False),
+        "channel_importance": _cfg_get(cfg.loss, "channel_importance", None),
+        "component_weights": _cfg_get(cfg.loss, "component_weights", None),
     }
     vgg_internal = _cfg_get(cfg.loss, "vgg_internal", None)
     if vgg_internal is not None:

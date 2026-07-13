@@ -494,6 +494,88 @@ def _permute_matching_channel_groups(x, y, key, group_sizes):
         start = end
     return jnp.concatenate(xs, axis=1), jnp.concatenate(ys, axis=1)
 
+
+def _permute_grouped_channels(x, key, group_sizes, axis=0):
+    """Apply the same deterministic within-group permutation used for grouped VGG inputs."""
+    keys = jr.split(key, len(group_sizes))
+    outputs = []
+    start = 0
+    for group_size, group_key in zip(group_sizes, keys):
+        end = start + group_size
+        perm = jr.permutation(group_key, group_size)
+        outputs.append(jnp.take(x, start + perm, axis=axis))
+        start = end
+    return jnp.concatenate(outputs, axis=axis)
+
+
+def _pad_grouped_12ch_values(values, pad_value=0):
+    """Pad values in the same four colony groups as grouped VGG image channels."""
+    groups = [values[0:4], values[4:8], values[8:11], values[11:12]]
+    return jnp.concatenate(
+        [
+            jnp.pad(group, (0, (3 - group.shape[0] % 3) % 3), constant_values=pad_value)
+            for group in groups
+        ]
+    )
+
+
+def grouped_vgg_triplet_weights(
+    channel_importance,
+    where=None,
+    random_channel_shuffle=False,
+    key=None,
+):
+    """Map 12 target-channel weights onto the six grouped VGG comparisons.
+
+    Mixed RGB triplets receive the mean importance of their active biological
+    channels. The result includes the existing duplicate/group compensation and
+    is renormalised per sample so uniform importance exactly preserves it.
+    """
+    if random_channel_shuffle:
+        base_weighting = jnp.array(
+            [0.75, 0.75, 0.75, 0.75, 1.0, 1.0], dtype=LOSS_DTYPE
+        )
+    else:
+        base_weighting = jnp.array(
+            [0.5, 1.0, 0.5, 1.0, 1.0, 1.0], dtype=LOSS_DTYPE
+        )
+    importance = _pad_grouped_12ch_values(
+        jnp.asarray(channel_importance, dtype=LOSS_DTYPE)
+    )
+    validity = _pad_grouped_12ch_values(jnp.ones((12,), dtype=LOSS_DTYPE))
+
+    if where is None:
+        active = validity[None, :]
+    else:
+        active = jnp.any(where, axis=(-1, -2)).astype(LOSS_DTYPE)
+        active = jax.vmap(_pad_grouped_12ch_values)(active) * validity[None, :]
+
+    if random_channel_shuffle:
+        if key is None:
+            raise ValueError("key is required when random_channel_shuffle is enabled")
+        permutation_key = jr.fold_in(key, 1)
+        importance = _permute_grouped_channels(
+            importance, permutation_key, (6, 6, 3, 3)
+        )
+        active = _permute_grouped_channels(
+            active, permutation_key, (6, 6, 3, 3), axis=1
+        )
+
+    active = rearrange(active, "n (c vc) -> c n vc", vc=3)
+    importance = rearrange(importance, "(c vc) -> c vc", vc=3)
+    active_count = jnp.sum(active, axis=-1)
+    triplet_importance = jnp.sum(
+        active * importance[:, None, :], axis=-1
+    ) / jnp.maximum(active_count, 1.0)
+
+    base_total = jnp.sum(
+        base_weighting[:, None] * (active_count > 0), axis=0, keepdims=True
+    )
+    weighted = base_weighting[:, None] * triplet_importance
+    weighted_total = jnp.sum(weighted, axis=0, keepdims=True)
+    scale = jnp.where(weighted_total > 0, base_total / weighted_total, 1.0)
+    return weighted * scale
+
 # ---------------------------------------------------------------------
 # Losses
 # ---------------------------------------------------------------------
@@ -616,9 +698,10 @@ def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}, ca
     # x = x * 2 - 1
     # y = y * 2 - 1
 
+    where_y = None
     if where is not None:
         x = x * where.astype(x.dtype)
-        where_y = duplicate_x_channels_9ch(where)
+        where_y = where if where.shape[1] == y.shape[1] else duplicate_x_channels_9ch(where)
         y = y * where_y.astype(y.dtype)
 
     x = duplicate_x_channels_9ch(x)
@@ -678,22 +761,36 @@ def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}, ca
             target_feats,
         )
 
-    if random_channel_shuffle:
-        loss_weighting = jnp.array(
-            [0.75, 0.75, 0.75, 0.75, 1.0, 1.0],
-            dtype=LOSS_DTYPE,
+    channel_importance = aux.get("channel_importance", None)
+    if channel_importance is not None:
+        loss_weighting = grouped_vgg_triplet_weights(
+            channel_importance,
+            where=where_y,
+            random_channel_shuffle=random_channel_shuffle,
+            key=key,
+        )
+        losses = einsum(
+            losses.astype(LOSS_DTYPE),
+            loss_weighting,
+            "c n i j k, c n -> c n i j k",
         )
     else:
-        loss_weighting = jnp.array(
-            [0.5, 1.0, 0.5, 1.0, 1.0, 1.0],
-            dtype=LOSS_DTYPE,
-        )
+        if random_channel_shuffle:
+            loss_weighting = jnp.array(
+                [0.75, 0.75, 0.75, 0.75, 1.0, 1.0],
+                dtype=LOSS_DTYPE,
+            )
+        else:
+            loss_weighting = jnp.array(
+                [0.5, 1.0, 0.5, 1.0, 1.0, 1.0],
+                dtype=LOSS_DTYPE,
+            )
 
-    losses = einsum(
-        losses.astype(LOSS_DTYPE),
-        loss_weighting,
-        "c n i j k, c -> c n i j k",
-    )
+        losses = einsum(
+            losses.astype(LOSS_DTYPE),
+            loss_weighting,
+            "c n i j k, c -> c n i j k",
+        )
 
     loss = reduce(losses, "c n () () () -> n", "mean")
     return loss
