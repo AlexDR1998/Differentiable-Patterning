@@ -570,6 +570,7 @@ class kaNCA_Train_log(NCA_Train_log):
 				self.log_fast_kan_rollout_diagnostics(model,log_dict,i)
 			else:
 				self.log_model_parameters(model,i)
+			self.log_channel_time_diagnostics(log_dict,i)
 			if write_images:
 				self.log_model_outputs(log_dict,i)
 

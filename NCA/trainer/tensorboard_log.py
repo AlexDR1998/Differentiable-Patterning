@@ -43,6 +43,302 @@ def _trajectory_snapshot_channels(T, data_augmenter, t):
 	return T_snapshot[:,:data_augmenter.OBS_CHANNELS]
 
 
+def _target_aligned_diagnostic_channels(outputs, grouped_channels=False):
+	"""Convert model outputs to the target channel layout used by diagnostics."""
+	outputs = np.array(outputs)
+	if not grouped_channels:
+		return outputs
+	if outputs.shape[2] < 9:
+		raise ValueError("Grouped micropattern diagnostics require at least 9 model channels")
+	return np.concatenate(
+		[
+			outputs[:, :, 0:4],
+			outputs[:, :, 0:3],
+			outputs[:, :, 4:8],
+			outputs[:, :, 8:9],
+		],
+		axis=2,
+	)
+
+
+def compute_channel_time_diagnostics(
+	predictions,
+	targets,
+	boundary_masks=None,
+	radial_bins=16,
+):
+	"""Compute total intensity and mean radial intensity per channel/timestep.
+
+	Inputs use [batch, time, channel, x, y]. Radial distance is measured from
+	the centroid of each boundary mask and normalized by its maximum in-mask
+	radius. Profiles are averaged over batches and over pixels in each annulus.
+	"""
+	predictions = np.asarray(predictions, dtype=np.float32)
+	targets = np.asarray(targets, dtype=np.float32)
+	if predictions.shape != targets.shape:
+		raise ValueError(
+			f"Diagnostic prediction/target shapes must match, got {predictions.shape} and {targets.shape}"
+		)
+	if predictions.ndim != 5:
+		raise ValueError("Diagnostics expect [batch, time, channel, x, y] arrays")
+	if radial_bins <= 0:
+		raise ValueError("radial_bins must be positive")
+
+	batch_count, time_count, channel_count, width, height = predictions.shape
+	if boundary_masks is None:
+		boundary_masks = np.ones((batch_count, width, height), dtype=bool)
+	else:
+		boundary_masks = np.asarray(boundary_masks)
+		if boundary_masks.ndim == 4 and boundary_masks.shape[1] == 1:
+			boundary_masks = boundary_masks[:, 0]
+		if boundary_masks.shape != (batch_count, width, height):
+			raise ValueError(
+				"Boundary masks must have shape [batch, 1, x, y] or [batch, x, y]; "
+				f"got {boundary_masks.shape}"
+			)
+		boundary_masks = boundary_masks.astype(bool)
+
+	prediction_totals = np.zeros((batch_count, time_count, channel_count), dtype=np.float64)
+	target_totals = np.zeros_like(prediction_totals)
+	prediction_profiles = np.zeros(
+		(batch_count, time_count, channel_count, radial_bins), dtype=np.float64
+	)
+	target_profiles = np.zeros_like(prediction_profiles)
+	bin_edges = np.linspace(0.0, 1.0, radial_bins + 1)
+
+	grid_x, grid_y = np.meshgrid(
+		np.arange(width, dtype=np.float32),
+		np.arange(height, dtype=np.float32),
+		indexing="ij",
+	)
+	for batch_index in range(batch_count):
+		mask = boundary_masks[batch_index]
+		if not np.any(mask):
+			continue
+		centre_x = float(np.mean(grid_x[mask]))
+		centre_y = float(np.mean(grid_y[mask]))
+		radius = np.sqrt((grid_x - centre_x) ** 2 + (grid_y - centre_y) ** 2)
+		max_radius = float(np.max(radius[mask]))
+		normalized_radius = radius / max(max_radius, 1e-8)
+
+		prediction_totals[batch_index] = np.sum(
+			predictions[batch_index] * mask[None, None], axis=(-1, -2)
+		)
+		target_totals[batch_index] = np.sum(
+			targets[batch_index] * mask[None, None], axis=(-1, -2)
+		)
+		prediction_pixels = predictions[batch_index].reshape(
+			time_count, channel_count, -1
+		)
+		target_pixels = targets[batch_index].reshape(
+			time_count, channel_count, -1
+		)
+
+		for bin_index in range(radial_bins):
+			if bin_index == radial_bins - 1:
+				annulus = mask & (normalized_radius >= bin_edges[bin_index]) & (normalized_radius <= bin_edges[bin_index + 1])
+			else:
+				annulus = mask & (normalized_radius >= bin_edges[bin_index]) & (normalized_radius < bin_edges[bin_index + 1])
+			if not np.any(annulus):
+				continue
+			annulus_flat = annulus.reshape(-1)
+			prediction_profiles[batch_index, :, :, bin_index] = np.mean(
+				prediction_pixels[:, :, annulus_flat], axis=-1
+			)
+			target_profiles[batch_index, :, :, bin_index] = np.mean(
+				target_pixels[:, :, annulus_flat], axis=-1
+			)
+
+	return {
+		"prediction_total_intensity": np.mean(prediction_totals, axis=0),
+		"target_total_intensity": np.mean(target_totals, axis=0),
+		"prediction_radial_profile": np.mean(prediction_profiles, axis=0),
+		"target_radial_profile": np.mean(target_profiles, axis=0),
+		"radius": 0.5 * (bin_edges[:-1] + bin_edges[1:]),
+	}
+
+
+def compute_channel_correlation_diagnostics(
+	predictions,
+	targets,
+	boundary_masks=None,
+	epsilon=1e-8,
+):
+	"""Compute masked pixelwise Pearson channel correlations per timestep.
+
+	Correlations are calculated independently for each batch from all pixels
+	inside its adhesion mask, then averaged across batches. Constant channels
+	are assigned zero correlation because Pearson correlation is undefined.
+	"""
+	predictions = np.asarray(predictions, dtype=np.float32)
+	targets = np.asarray(targets, dtype=np.float32)
+	if predictions.shape != targets.shape:
+		raise ValueError(
+			f"Correlation prediction/target shapes must match, got {predictions.shape} and {targets.shape}"
+		)
+	if predictions.ndim != 5:
+		raise ValueError("Correlations expect [batch, time, channel, x, y] arrays")
+
+	batch_count, time_count, channel_count, width, height = predictions.shape
+	if boundary_masks is None:
+		boundary_masks = np.ones((batch_count, width, height), dtype=bool)
+	else:
+		boundary_masks = np.asarray(boundary_masks)
+		if boundary_masks.ndim == 4 and boundary_masks.shape[1] == 1:
+			boundary_masks = boundary_masks[:, 0]
+		if boundary_masks.shape != (batch_count, width, height):
+			raise ValueError(
+				"Boundary masks must have shape [batch, 1, x, y] or [batch, x, y]; "
+				f"got {boundary_masks.shape}"
+			)
+		boundary_masks = boundary_masks.astype(bool)
+
+	def correlation_matrix(values):
+		values = values - np.mean(values, axis=1, keepdims=True)
+		channel_norms = np.sqrt(np.sum(values**2, axis=1))
+		denominator = channel_norms[:, None] * channel_norms[None, :]
+		numerator = values @ values.T
+		return np.divide(
+			numerator,
+			denominator,
+			out=np.zeros((channel_count, channel_count), dtype=np.float64),
+			where=denominator > epsilon,
+		)
+
+	prediction_correlations = np.zeros(
+		(batch_count, time_count, channel_count, channel_count), dtype=np.float64
+	)
+	target_correlations = np.zeros_like(prediction_correlations)
+	for batch_index in range(batch_count):
+		mask_flat = boundary_masks[batch_index].reshape(-1)
+		if not np.any(mask_flat):
+			continue
+		prediction_pixels = predictions[batch_index].reshape(
+			time_count, channel_count, -1
+		)[:, :, mask_flat]
+		target_pixels = targets[batch_index].reshape(
+			time_count, channel_count, -1
+		)[:, :, mask_flat]
+		for time_index in range(time_count):
+			prediction_correlations[batch_index, time_index] = correlation_matrix(
+				prediction_pixels[time_index]
+			)
+			target_correlations[batch_index, time_index] = correlation_matrix(
+				target_pixels[time_index]
+			)
+
+	prediction_mean = np.mean(prediction_correlations, axis=0)
+	target_mean = np.mean(target_correlations, axis=0)
+	return {
+		"prediction_channel_correlation": prediction_mean,
+		"target_channel_correlation": target_mean,
+		"channel_correlation_difference": prediction_mean - target_mean,
+	}
+
+
+def plot_radial_intensity_diagnostics(diagnostics, channel_names, timepoint_names=None):
+	"""Plot target, prediction, and absolute-error radial profiles as heatmaps."""
+	import matplotlib.pyplot as plt
+
+	target = diagnostics["target_radial_profile"]
+	prediction = diagnostics["prediction_radial_profile"]
+	time_count, channel_count, _ = target.shape
+	if timepoint_names is None or len(timepoint_names) != time_count:
+		timepoint_names = [f"t{index + 1}" for index in range(time_count)]
+	target_rows = rearrange(target, "t c r -> (c t) r")
+	prediction_rows = rearrange(prediction, "t c r -> (c t) r")
+	error_rows = np.abs(prediction_rows - target_rows)
+	row_labels = [
+		f"{channel_names[channel_index]} · {timepoint_names[time_index]}"
+		for channel_index in range(channel_count)
+		for time_index in range(time_count)
+	]
+	shared_max = max(float(np.max(target_rows)), float(np.max(prediction_rows)), 1e-8)
+	figure_height = max(6.0, 0.18 * len(row_labels))
+	figure, axes = plt.subplots(1, 3, figsize=(15, figure_height), sharey=True)
+	for axis, values, title, vmax in (
+		(axes[0], target_rows, "Target radial mean intensity", shared_max),
+		(axes[1], prediction_rows, "Prediction radial mean intensity", shared_max),
+		(axes[2], error_rows, "Absolute profile error", max(float(np.max(error_rows)), 1e-8)),
+	):
+		image = axis.imshow(values, aspect="auto", origin="upper", vmin=0.0, vmax=vmax)
+		axis.set_title(title)
+		axis.set_xlabel("Normalized radius (centre → boundary)")
+		axis.set_xticks(
+			np.linspace(0, values.shape[1] - 1, 5),
+			labels=["0.0", "0.25", "0.5", "0.75", "1.0"],
+		)
+		figure.colorbar(image, ax=axis, fraction=0.025, pad=0.02)
+	axes[0].set_yticks(np.arange(len(row_labels)), labels=row_labels, fontsize=6)
+	figure.tight_layout()
+	return plot_to_image(figure)
+
+
+def plot_channel_correlation_diagnostics(
+	diagnostics,
+	channel_names,
+	timepoint_names=None,
+	experiment_group_sizes=None,
+):
+	"""Plot predicted channel correlation and prediction-minus-target per time."""
+	import matplotlib.pyplot as plt
+
+	prediction = diagnostics["prediction_channel_correlation"]
+	difference = diagnostics["channel_correlation_difference"]
+	time_count, channel_count, _ = prediction.shape
+	if timepoint_names is None or len(timepoint_names) != time_count:
+		timepoint_names = [f"t{index + 1}" for index in range(time_count)]
+	if channel_names is None or len(channel_names) != channel_count:
+		channel_names = [f"channel_{index + 1}" for index in range(channel_count)]
+	group_boundaries = []
+	if experiment_group_sizes is not None and sum(experiment_group_sizes) == channel_count:
+		group_boundaries = np.cumsum(experiment_group_sizes)[:-1] - 0.5
+
+	difference_limit = max(float(np.max(np.abs(difference))), 0.05)
+	figure, axes = plt.subplots(
+		time_count,
+		2,
+		figsize=(13, max(4.0, 3.4 * time_count)),
+		squeeze=False,
+	)
+	for time_index in range(time_count):
+		panels = (
+			(axes[time_index, 0], prediction[time_index], "NCA correlation", 1.0),
+			(
+				axes[time_index, 1],
+				difference[time_index],
+				"NCA − true correlation",
+				difference_limit,
+			),
+		)
+		for axis, values, title, limit in panels:
+			image = axis.imshow(
+				values,
+				cmap="coolwarm",
+				vmin=-limit,
+				vmax=limit,
+				interpolation="nearest",
+			)
+			axis.set_title(f"{timepoint_names[time_index]} · {title}")
+			axis.set_xticks(
+				np.arange(channel_count),
+				labels=channel_names,
+				rotation=90,
+				fontsize=6,
+			)
+			axis.set_yticks(
+				np.arange(channel_count),
+				labels=channel_names,
+				fontsize=6,
+			)
+			for boundary in group_boundaries:
+				axis.axhline(boundary, color="black", linewidth=1.25)
+				axis.axvline(boundary, color="black", linewidth=1.25)
+			figure.colorbar(image, ax=axis, fraction=0.046, pad=0.04)
+	figure.tight_layout()
+	return plot_to_image(figure)
+
+
 def _singular_value_logging_config(config=None):
 	defaults = {
 		"enabled": False,
@@ -130,9 +426,105 @@ class NCA_Train_log(Train_log):
 		Class for logging training behaviour of NCA_Trainer classes
 	"""
 
-	def __init__(self, *args, singular_value_config=None, **kwargs):
+	def __init__(
+		self,
+		*args,
+		singular_value_config=None,
+		boundary_mask=None,
+		channel_names=None,
+		timepoint_names=None,
+		data_augmenter=None,
+		radial_bins=16,
+		**kwargs,
+	):
+		data = kwargs.get("data", args[0] if args else None)
+		self.diagnostic_targets = None if data is None else np.array(data)[:, 1:]
+		self.diagnostic_boundary_mask = None if boundary_mask is None else np.array(boundary_mask)
+		self.diagnostic_grouped_channels = (
+			False if data_augmenter is None else _is_grouped_9ch_colony_augmenter(data_augmenter)
+		)
+		self.radial_bins = int(radial_bins)
+		if self.diagnostic_targets is None:
+			self.channel_names = []
+		else:
+			channel_count = self.diagnostic_targets.shape[2]
+			if channel_names is None or len(channel_names) != channel_count:
+				self.channel_names = [f"channel_{index + 1}" for index in range(channel_count)]
+			else:
+				self.channel_names = [str(name) for name in channel_names]
+		time_count = 0 if self.diagnostic_targets is None else self.diagnostic_targets.shape[1]
+		if timepoint_names is None or len(timepoint_names) != time_count:
+			self.timepoint_names = [f"t{index + 1}" for index in range(time_count)]
+		else:
+			self.timepoint_names = [str(name) for name in timepoint_names]
 		super().__init__(*args, **kwargs)
 		self.singular_value_config = _singular_value_logging_config(singular_value_config)
+
+	def log_channel_time_diagnostics(self, log_dict, i):
+		"""Log per-channel/timestep totals and radial profiles to W&B."""
+		if self.diagnostic_targets is None or "x_processed" not in log_dict:
+			return
+		try:
+			predictions = np.array(log_dict["x_processed"])
+			predictions = _target_aligned_diagnostic_channels(
+				predictions,
+				grouped_channels=self.diagnostic_grouped_channels,
+			)
+			targets = self.diagnostic_targets
+			predictions = predictions[:, :targets.shape[1], :targets.shape[2]]
+			if predictions.shape != targets.shape:
+				raise ValueError(
+					f"aligned predictions have shape {predictions.shape}, targets have shape {targets.shape}"
+				)
+			diagnostics = compute_channel_time_diagnostics(
+				predictions,
+				targets,
+				boundary_masks=self.diagnostic_boundary_mask,
+				radial_bins=self.radial_bins,
+			)
+			correlation_diagnostics = compute_channel_correlation_diagnostics(
+				predictions,
+				targets,
+				boundary_masks=self.diagnostic_boundary_mask,
+			)
+			total_scalars = {}
+			prediction_totals = diagnostics["prediction_total_intensity"]
+			target_totals = diagnostics["target_total_intensity"]
+			for time_index in range(prediction_totals.shape[0]):
+				for channel_index, channel_name in enumerate(self.channel_names):
+					safe_name = channel_name.replace("/", "-").replace(" ", "_")
+					safe_time = self.timepoint_names[time_index].replace("/", "-").replace(" ", "_")
+					prefix = f"Diagnostics/total_intensity/{safe_name}/{safe_time}"
+					total_scalars[f"{prefix}/prediction"] = prediction_totals[time_index, channel_index]
+					total_scalars[f"{prefix}/target"] = target_totals[time_index, channel_index]
+					total_scalars[f"{prefix}/absolute_error"] = abs(
+						prediction_totals[time_index, channel_index]
+						- target_totals[time_index, channel_index]
+					)
+			self.log_scalars(total_scalars, step=i)
+			self.log_image(
+				"Diagnostics/radial_intensity_profiles",
+				plot_radial_intensity_diagnostics(
+					diagnostics,
+					self.channel_names,
+					self.timepoint_names,
+				),
+				step=i,
+			)
+			self.log_image(
+				"Diagnostics/channel_correlation",
+				plot_channel_correlation_diagnostics(
+					correlation_diagnostics,
+					self.channel_names,
+					self.timepoint_names,
+					experiment_group_sizes=(4, 4, 3, 1)
+					if self.diagnostic_grouped_channels
+					else None,
+				),
+				step=i,
+			)
+		except Exception as exc:
+			print(f"Warning: Failed to log channel/time diagnostics: {exc}", flush=True)
 
 	def log_model_parameters(self,nca,i):  # type: ignore
 		"""Log model parameters
@@ -225,6 +617,7 @@ class NCA_Train_log(Train_log):
 					self.log_scalar(f"Train/{name}",log_dict[name],step=i)
 		if i%LOG_EVERY==0 and i>0:
 			self.log_model_parameters(model,i)
+			self.log_channel_time_diagnostics(log_dict,i)
 			if write_images:
 				self.log_model_outputs(log_dict,i)
 
@@ -297,11 +690,21 @@ class NCA_knockout_Train_log(NCA_Train_log):
 		knockout_time=None,
 		knockout_channel=None,
 		singular_value_config=None,
+		boundary_mask=None,
+		channel_names=None,
+		timepoint_names=None,
+		data_augmenter=None,
+		radial_bins=16,
     ):
 		super().__init__(
 			data,
 			wandb_config,
 			singular_value_config=singular_value_config,
+			boundary_mask=boundary_mask,
+			channel_names=channel_names,
+			timepoint_names=timepoint_names,
+			data_augmenter=data_augmenter,
+			radial_bins=radial_bins,
 		)
 		assert knockout_time is not None, "knockout_time must be provided for NCA_knockout_Train_log"
 		assert knockout_channel is not None, "knockout_channel must be provided for NCA_knockout_Train_log"

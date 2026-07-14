@@ -208,6 +208,8 @@ class NCA_Trainer(object):
 				 GRAD_LOSS = True,
 				 OBS_CHANNELS = None,
 				 DATA_CHANNELS = None,
+				 CHANNEL_NAMES = None,
+				 TIMEPOINT_NAMES = None,
 				 LOSS_TIME_CHANNEL_MASK = None, # If none, is overwritten to ones mask that does nothing
 				 MODEL_DIRECTORY="models/",
 				 LOG_DIRECTORY="logs/"):
@@ -252,6 +254,9 @@ class NCA_Trainer(object):
 
 		"""
 		self.NCA_model = NCA_model
+		self.CHANNEL_NAMES = CHANNEL_NAMES
+		self.TIMEPOINT_NAMES = TIMEPOINT_NAMES
+		self.DIAGNOSTIC_BOUNDARY_MASK = BOUNDARY_MASK
 		
 		# Set up variables 
 		self.CHANNELS = self.NCA_model.N_CHANNELS
@@ -357,6 +362,10 @@ class NCA_Trainer(object):
 					self.LOGGER = NCA_knockout_Train_log(
 						data=self._data_raw,
 						wandb_config=wandb_args,
+						boundary_mask=self.DIAGNOSTIC_BOUNDARY_MASK,
+						channel_names=self.CHANNEL_NAMES,
+						timepoint_names=self.TIMEPOINT_NAMES,
+						data_augmenter=self.DATA_AUGMENTER,
 						knockout_time=KNOCKOUT_ARGS["time"],
 						knockout_channel=KNOCKOUT_ARGS["channel"],
 						singular_value_config=SINGULAR_VALUE_LOGGING_CONFIG)
@@ -365,6 +374,10 @@ class NCA_Trainer(object):
 					self.LOGGER = logger_class(
 						data=self._data_raw,
 						wandb_config=wandb_args,
+						boundary_mask=self.DIAGNOSTIC_BOUNDARY_MASK,
+						channel_names=self.CHANNEL_NAMES,
+						timepoint_names=self.TIMEPOINT_NAMES,
+						data_augmenter=self.DATA_AUGMENTER,
 						singular_value_config=SINGULAR_VALUE_LOGGING_CONFIG,
 					)
 				print("Logging training to: "+self.LOG_DIR)

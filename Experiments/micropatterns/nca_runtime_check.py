@@ -42,7 +42,12 @@ def run(cfg):
     from NCA.trainer.NCA_trainer import NCA_Trainer
     from NCA.trainer.optimizer import build_optimizer
     from Experiments.config_helpers import build_loss_args, build_pool_admission_config, build_tags
-    from Experiments.micropatterns.config_helpers import build_data_augmenter, load_data, build_model
+    from Experiments.micropatterns.config_helpers import (
+        build_data_augmenter,
+        build_model,
+        expand_channel_timestep_mask_for_loss,
+        load_data,
+    )
     
     
     key = jax.random.PRNGKey(cfg.seed)
@@ -52,7 +57,11 @@ def run(cfg):
     # model = build_model(cfg)
     optimiser,opt_name = build_optimizer(cfg)
     data,_,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK,_data_cfg_str = load_data(cfg)
-    data_augmenter,_data_augmenter_cfg_str = build_data_augmenter(cfg)
+    data_augmenter,_data_augmenter_cfg_str = build_data_augmenter(cfg, CHANNEL_TIMESTEP_MASK)
+    loss_time_channel_mask = expand_channel_timestep_mask_for_loss(cfg, CHANNEL_TIMESTEP_MASK)
+    target_timepoints = [f"t{time}h" for time in list(cfg.data.timesteps)[1:]]
+    if cfg.data.get("duplicate_final_timestep", False):
+        target_timepoints.append(f"{target_timepoints[-1]}_steady")
     run_name = build_filename(
         cfg,
         _model_cfg_str,
@@ -67,7 +76,9 @@ def run(cfg):
         data=data,
         model_filename=run_name,
         BOUNDARY_MASK=boundary_mask,
-        LOSS_TIME_CHANNEL_MASK=None,
+        CHANNEL_NAMES=CHANNEL_NAMES,
+        TIMEPOINT_NAMES=target_timepoints,
+        LOSS_TIME_CHANNEL_MASK=loss_time_channel_mask,
         DATA_AUGMENTER=data_augmenter,  # pyright: ignore[reportArgumentType]
         GRAD_LOSS=cfg.trainer.grad_loss,
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore

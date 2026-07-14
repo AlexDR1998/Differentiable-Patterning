@@ -14,8 +14,14 @@ os.chdir(CODE_PATH) # type: ignore
 
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from NCA.trainer.optimizer import build_optimizer
-from Experiments.config_helpers import build_loss_args, build_pool_admission_config, build_tags
-from Experiments.micropatterns.config_helpers import build_data_augmenter, build_loss_filename, load_data, build_model
+from Experiments.config_helpers import _cfg_get, build_loss_args, build_pool_admission_config, build_tags
+from Experiments.micropatterns.config_helpers import (
+    build_data_augmenter,
+    build_loss_filename,
+    build_model,
+    expand_channel_timestep_mask_for_loss,
+    load_data,
+)
 
 
 def _as_list(value):
@@ -38,6 +44,9 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         f"_lr{cfg.optimiser.learn_rate}"
         f"_dr{cfg.optimiser.decay_rate}"
     )
+    repeat = _cfg_get(cfg.run, "repeat", None)
+    if repeat is not None:
+        train_str += f"_rep{repeat}"
     return "_".join([
         model_cfg_str,
         # data_cfg_str,
@@ -53,7 +62,11 @@ def run(cfg):
     model,_model_cfg_str = build_model(cfg, key=model_key)
     optimiser,opt_name = build_optimizer(cfg)
     data,_,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK,_data_cfg_str = load_data(cfg)
-    data_augmenter,_data_augmenter_cfg_str = build_data_augmenter(cfg)
+    data_augmenter,_data_augmenter_cfg_str = build_data_augmenter(cfg, CHANNEL_TIMESTEP_MASK)
+    loss_time_channel_mask = expand_channel_timestep_mask_for_loss(cfg, CHANNEL_TIMESTEP_MASK)
+    target_timepoints = [f"t{time}h" for time in list(cfg.data.timesteps)[1:]]
+    if cfg.data.get("duplicate_final_timestep", False):
+        target_timepoints.append(f"{target_timepoints[-1]}_steady")
     run_name = build_filename(
         cfg,
         _model_cfg_str,
@@ -66,7 +79,9 @@ def run(cfg):
         data=data,
         model_filename=run_name,
         BOUNDARY_MASK=boundary_mask,
-        LOSS_TIME_CHANNEL_MASK=None,
+        CHANNEL_NAMES=CHANNEL_NAMES,
+        TIMEPOINT_NAMES=target_timepoints,
+        LOSS_TIME_CHANNEL_MASK=loss_time_channel_mask,
         DATA_AUGMENTER=data_augmenter,  # pyright: ignore[reportArgumentType]
         GRAD_LOSS=cfg.trainer.grad_loss,
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
@@ -96,5 +111,6 @@ def run(cfg):
         CLEAR_CACHE_EVERY=cfg.trainer.clear_cache_every,
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
         POOL_ADMISSION_CONFIG=build_pool_admission_config(cfg),
+        SINGULAR_VALUE_LOGGING_CONFIG=cfg.logging.get("singular_values", None),
         key=train_key,
     )
