@@ -558,13 +558,13 @@ class NCA_Trainer(object):
 			"epsilon": 1e-8,
 		}
 		if SINGULAR_VALUE_LOGGING_CONFIG is not None:
-			for key in singular_value_logging_config:
+			for config_key in singular_value_logging_config:
 				try:
-					value = SINGULAR_VALUE_LOGGING_CONFIG.get(key)
+					value = SINGULAR_VALUE_LOGGING_CONFIG.get(config_key)
 				except AttributeError:
-					value = SINGULAR_VALUE_LOGGING_CONFIG[key]
+					value = SINGULAR_VALUE_LOGGING_CONFIG[config_key]
 				if value is not None:
-					singular_value_logging_config[key] = value
+					singular_value_logging_config[config_key] = value
 		singular_value_logging_config["enabled"] = bool(singular_value_logging_config["enabled"])
 		singular_value_logging_config["plot_spectra"] = bool(singular_value_logging_config["plot_spectra"])
 		singular_value_logging_config["epsilon"] = float(singular_value_logging_config["epsilon"])
