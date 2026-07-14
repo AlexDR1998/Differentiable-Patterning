@@ -1,6 +1,8 @@
 
 
 import hashlib
+import os
+from pathlib import Path
 
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_gated_model import gNCA
@@ -413,6 +415,51 @@ def build_model(cfg, key=None):
     else:
         raise ValueError(f"Unknown model family {cfg.model.family}")
     return model, build_model_config_string(cfg)
+
+
+def resolve_checkpoint_path(cfg, env=None):
+    """Resolve a configured checkpoint path and require an existing ``.eqx`` file.
+
+    Relative paths are resolved against ``checkpoint.base_directory`` when it
+    is set. Otherwise the environment variable named by
+    ``checkpoint.base_env`` is used when available, followed by the current
+    working directory.
+    """
+
+    checkpoint_cfg = _cfg_get(cfg, "checkpoint", None)
+    configured_path = _cfg_get(checkpoint_cfg, "path", None)
+    if not configured_path:
+        raise ValueError("checkpoint.path must be set")
+
+    path = Path(str(configured_path)).expanduser()
+    if path.suffix != ".eqx":
+        path = path.with_suffix(".eqx")
+    if not path.is_absolute():
+        base_directory = _cfg_get(checkpoint_cfg, "base_directory", None)
+        environment = os.environ if env is None else env
+        base_env = _cfg_get(checkpoint_cfg, "base_env", "MODEL_SAVE_PATH")
+        if base_directory is None and base_env:
+            base_directory = environment.get(str(base_env))
+        if base_directory is not None:
+            path = Path(str(base_directory)).expanduser() / path
+    path = path.resolve()
+    if not path.is_file():
+        raise FileNotFoundError(f"Model checkpoint not found: {path}")
+    return path
+
+
+def load_model_checkpoint(cfg, key=None, env=None):
+    """Construct the configured model architecture and load checkpoint leaves.
+
+    The model section must describe the same architecture used to create the
+    checkpoint. Returns the loaded model, its compact configuration string,
+    and the resolved checkpoint path.
+    """
+
+    model, model_cfg_str = build_model(cfg, key=key)
+    checkpoint_path = resolve_checkpoint_path(cfg, env=env)
+    model = model.load(checkpoint_path)
+    return model, model_cfg_str, checkpoint_path
 
 
 def build_tags(cfg, prefix=""):
