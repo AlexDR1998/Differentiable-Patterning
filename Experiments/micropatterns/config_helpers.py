@@ -15,14 +15,107 @@ from Experiments.config_helpers import (
     build_loss_filename,
     build_model,
 )
-from NCA.trainer.data_augmenter_nca_basic import (
-    jittable_callback_bit as baseline_jittable_callback_bit,
-)
 from NCA.trainer.data_augmenter_4ch_colony import DataAugmenter as DataAugmenter4Ch
 from NCA.trainer.data_augmenter_9ch_colony import DataAugmenter as DataAugmenterGrouped
 
 
-def build_data_augmenter(cfg):
+NODAL_CHANNEL = 7
+
+
+def build_knockout_times(mode, knockout_time, batches):
+    if mode is None:
+        return [None] * batches
+    if mode == "only_one_ko":
+        pattern = [knockout_time]
+    elif mode == "one_ko_and_baseline":
+        pattern = [knockout_time, None]
+    elif mode == "both_ko_and_baseline":
+        pattern = [0, 24, None]
+    elif mode == "only_both_ko":
+        pattern = [0, 24]
+    else:
+        raise ValueError(f"Unknown knockout mode {mode}")
+    return [pattern[i % len(pattern)] for i in range(batches)]
+
+
+def _as_tree(data):
+    if isinstance(data, list):
+        return data
+    try:
+        return [data[i] for i in range(data.shape[0])]
+    except AttributeError:
+        return list(data)
+
+
+def expand_channel_timestep_mask_for_loss(cfg, channel_timestep_mask):
+    mask = jnp.asarray(channel_timestep_mask)
+    if cfg.data.data_channels == 12 and mask.shape[-1] == 9:
+        mask = jnp.concatenate(
+            [
+                mask[..., 0:4],
+                mask[..., 0:3],
+                mask[..., 4:8],
+                mask[..., 8:9],
+            ],
+            axis=-1,
+        )
+    return mask
+
+
+@eqx.filter_jit
+def masked_reinject_callback_bit(
+    x,
+    x_true,
+    obs_channels,
+    key,
+    channel_timestep_mask,
+    knockout_times,
+):
+    propagate_xn = lambda xi: xi.at[1:].set(xi[:-1])
+    reset_x0 = lambda xi, xi_true: xi.at[0].set(xi_true[0])
+
+    x = jax.tree_util.tree_map(propagate_xn, x)
+    x = jax.tree_util.tree_map(reset_x0, x, x_true)
+
+    B = len(x)
+    T = x[0].shape[0]
+    N_ELIGIBLE = B * (T - 1)
+    N_INJECT = N_ELIGIBLE // 2
+
+    if N_INJECT > 0:
+        scores = jax.random.uniform(key, shape=(N_ELIGIBLE,))
+        inject_inds = jnp.argsort(scores)[:N_INJECT]
+        inject_mask = jnp.zeros((N_ELIGIBLE,), dtype=bool).at[inject_inds].set(True)
+        inject_mask = inject_mask.reshape((B, T - 1))
+
+        for b in range(B):
+            measured = channel_timestep_mask[b, : T - 1]
+            if measured.shape[1] < obs_channels:
+                measured = jnp.pad(
+                    measured,
+                    ((0, 0), (0, obs_channels - measured.shape[1])),
+                    constant_values=0,
+                )
+            measured = measured[:, :obs_channels]
+            mask = inject_mask[b, :, None] & measured.astype(bool)
+            mask = mask[:, :, None, None]
+            x_obs = jnp.where(
+                mask,
+                x_true[b][1:, :obs_channels],
+                x[b][1:, :obs_channels],
+            )
+            x[b] = x[b].at[1:, :obs_channels].set(x_obs)
+
+    for b in range(B):
+        knockout_time = knockout_times[b]
+        knockout_index = knockout_time // 12
+        zero_mask = (knockout_time >= 0) & (jnp.arange(T) >= knockout_index)
+        nodal = jnp.where(zero_mask[:, None, None], 0.0, x[b][:, NODAL_CHANNEL])
+        x[b] = x[b].at[:, NODAL_CHANNEL].set(nodal)
+    return x
+
+
+def build_data_augmenter(cfg, channel_timestep_mask=None):
     data_channels = cfg.data.data_channels
     if data_channels == 4 and cfg.knockout.mode is not None:
         raise ValueError("data.data_channels=4 is only supported for no-knockout group-A data.")
@@ -33,79 +126,44 @@ def build_data_augmenter(cfg):
     else:
         raise ValueError(f"Unsupported data.data_channels={data_channels}. Expected 4 or 12.")
 
-    if cfg.knockout.mode is None:
-        jittable_callback_bit = baseline_jittable_callback_bit
-        
-        
-    else:
-        # _KNOCKOUT = H["knockout"]//12
-        _KNOCKOUT = cfg.knockout.time//12 # Convert knockout time in hours to index (assuming 12h between each timepoint)
-        if cfg.knockout.mode=="only_one_ko":
-            @eqx.filter_jit
-            def jittable_callback_bit(x,x_true,OBS_CHANNELS): # pyright: ignore[reportRedeclaration]
-                propagate_xn = lambda x:x.at[1:].set(x[:-1])
-                reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
-                knockout_nodal = lambda x:x.at[_KNOCKOUT:,7].set(0.0) # Set nodal channel to 0 at and after knockout time
-                x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-                x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-                x = jax.tree_util.tree_map(knockout_nodal,x)
-                
-                return x
-        elif cfg.knockout.mode=="one_ko_and_baseline":
-            @eqx.filter_jit
-            def jittable_callback_bit(x,x_true,OBS_CHANNELS): # pyright: ignore[reportRedeclaration]
-                propagate_xn = lambda x:x.at[1:].set(x[:-1])
-                reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
-                # knockout_nodal = lambda x:x.at[_KNOCKOUT:,7].set(0.0) # Set nodal channel to 0 at and after knockout time
-                x = jax.tree_util.tree_map(propagate_xn,x) 
-                x = jax.tree_util.tree_map(reset_x0,x,x_true)
-                
-                for b in range(len(x)//3):
-                    x[b*3] = x[b*3].at[_KNOCKOUT:,7].set(0.0) # Set nodal channel to 0 at and after knockout time for every even batch
-                    x[b*3+1] = x[b*3+1].at[:,:OBS_CHANNELS].set(x_true[b*3+1][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
-                
-                return x
-        elif cfg.knockout.mode=="both_ko_and_baseline":
-            @eqx.filter_jit
-            def jittable_callback_bit(x,x_true,OBS_CHANNELS): # pyright: ignore[reportRedeclaration]
-                # Here we only want 9 channels - no duplicates - as this is what the NCA sees.
-                propagate_xn = lambda x:x.at[1:].set(x[:-1])
-                reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
-                x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-                x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-                # x[0] = x[0].at[0:,7].set(0.0) # 0h nodal knockout batch
-                # x[1] = x[1].at[2:,7].set(0.0) # 24h nodal knockout batch
-                for b in range(len(x)//4):
-                    x[b*4] = x[b*4].at[0:,7].set(0.0) # Set nodal channel to 0 at and after knockout time for every even batch
-                    x[b*4+1] = x[b*4+1].at[2:,7].set(0.0) # Set nodal channel to 0 at and after knockout time for every odd batch
-                    x[b*4+2] = x[b*4+2].at[:,:OBS_CHANNELS].set(x_true[b*4+2][:,:OBS_CHANNELS]) # Set every other batch of intermediate initial conditions to correct initial conditions
-                return x
-        elif cfg.knockout.mode=="only_both_ko":
-            @eqx.filter_jit
-            def jittable_callback_bit(x,x_true,OBS_CHANNELS): # pyright: ignore[reportRedeclaration]
-                propagate_xn = lambda x:x.at[1:].set(x[:-1])
-                reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
-                x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
-                x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct
-                for b in range(len(x)//2):
-                    x[b*2] = x[b*2].at[0:,7].set(0.0) # Set nodal channel to 0 at and after knockout time for every even batch
-                    x[b*2+1] = x[b*2+1].at[2:,7].set(0.0) # Set nodal channel to 0 at and after knockout time for every odd batch
-                return x
-        else:
-            raise ValueError(f"Unknown knockout mode {cfg.knockout.mode}")
+    if cfg.knockout.mode is not None:
+        build_knockout_times(cfg.knockout.mode, cfg.knockout.time, cfg.data.batches)
     
     class DA_subclass(data_augmenter_base):
-        def data_callback(self,x,y,i,key):
-            x_true,_ =self.split_x_y(1)	
-            if cfg.knockout.mode is None:
-                x = jittable_callback_bit(
-                    x,
-                    x_true,
-                    self.OBS_CHANNELS,
-                    jax.random.fold_in(key, 0),
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            if channel_timestep_mask is None:
+                mask = jnp.ones(
+                    (
+                        len(self.data_true),
+                        self.data_true[0].shape[0] - 1,
+                        self.OBS_CHANNELS,
+                    ),
+                    dtype=jnp.float32,
                 )
             else:
-                x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
+                mask = jnp.asarray(channel_timestep_mask, dtype=jnp.float32)
+            self.channel_timestep_mask = mask
+            knockout_times = build_knockout_times(
+                cfg.knockout.mode,
+                cfg.knockout.time,
+                len(self.data_true),
+            )
+            self.knockout_times = jnp.array(
+                [-1 if knockout_time is None else knockout_time for knockout_time in knockout_times],
+                dtype=jnp.int32,
+            )
+
+        def data_callback(self,x,y,i,key):
+            x_true,_ =self.split_x_y(1)	
+            x = masked_reinject_callback_bit(
+                _as_tree(x),
+                _as_tree(x_true),
+                self.OBS_CHANNELS,
+                jax.random.fold_in(key, 0),
+                self.channel_timestep_mask,
+                self.knockout_times,
+            )
             x = self.noise(x,cfg.data.noise_strength,key=key)
             self.PREVIOUS_KEY = key
             return x,y
