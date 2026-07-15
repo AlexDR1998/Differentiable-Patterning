@@ -144,7 +144,7 @@ configs:
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
-      clear_cache_every: 500
+      clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
@@ -349,7 +349,7 @@ configs:
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
-      clear_cache_every: 500
+      clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
@@ -554,7 +554,7 @@ configs:
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
-      clear_cache_every: 500
+      clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
@@ -759,7 +759,7 @@ configs:
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
-      clear_cache_every: 500
+      clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
@@ -964,7 +964,7 @@ configs:
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
-      clear_cache_every: 500
+      clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
@@ -1169,7 +1169,7 @@ configs:
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
-      clear_cache_every: 500
+      clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
@@ -1374,7 +1374,7 @@ configs:
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
-      clear_cache_every: 500
+      clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
@@ -1579,7 +1579,7 @@ configs:
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
-      clear_cache_every: 500
+      clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
