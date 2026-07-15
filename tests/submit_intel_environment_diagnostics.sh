@@ -67,18 +67,21 @@ else
 fi
 
 section "MATCH TRAINING ENVIRONMENT"
-JAX_SETUP_SCRIPT="${JAX_SETUP_SCRIPT:-${HOME}/dawn-jax/envs/jax-setup.sh}"
-JAX_CONDA_ENV="${JAX_CONDA_ENV:-jax}"
+JAX_SETUP_SCRIPT="${JAX_SETUP_SCRIPT:-${HOME}/dawn-jax/envs/jaxeqx-setup.sh}"
+JAX_CONDA_ENV="${JAX_CONDA_ENV:-}"
 echo "JAX_SETUP_SCRIPT=${JAX_SETUP_SCRIPT}"
-echo "JAX_CONDA_ENV=${JAX_CONDA_ENV}"
+echo "JAX_CONDA_ENV=${JAX_CONDA_ENV:-<setup-script-managed>}"
 
 if [[ -f "${JAX_SETUP_SCRIPT}" ]]; then
-    run_optional "JAX cluster setup" bash "${JAX_SETUP_SCRIPT}"
+    # Source rather than execute so oneAPI's LD_LIBRARY_PATH and related exports
+    # remain available when the Intel PJRT plugin is imported below.
+    # shellcheck disable=SC1090
+    run_optional "JAX cluster setup" source "${JAX_SETUP_SCRIPT}"
 else
     echo "JAX_SETUP_SCRIPT_STATUS=not_found"
 fi
 
-if command -v conda >/dev/null 2>&1; then
+if [[ -n "${JAX_CONDA_ENV}" ]] && command -v conda >/dev/null 2>&1; then
     # shellcheck disable=SC1091
     eval "$(conda shell.bash hook)"
     if conda activate "${JAX_CONDA_ENV}"; then
@@ -86,8 +89,10 @@ if command -v conda >/dev/null 2>&1; then
     else
         echo "CONDA_ACTIVATE_STATUS=FAIL"
     fi
-else
+elif [[ -n "${JAX_CONDA_ENV}" ]]; then
     echo "CONDA_COMMAND=not_found"
+else
+    echo "CONDA_ACTIVATE_STATUS=managed_by_setup_script"
 fi
 
 # Intel/Conda activation scripts may read unset internal variables. Match the
@@ -195,6 +200,7 @@ print("RELEVANT_DISTRIBUTIONS_END")
 
 module_names = (
     "jax_plugins.intel_extension_for_openxla",
+    "jax_plugins.intel_extension_for_openxla.python.xpu_plugin_extension",
     "intel_extension_for_openxla",
     "xpu_plugin_extension",
 )
