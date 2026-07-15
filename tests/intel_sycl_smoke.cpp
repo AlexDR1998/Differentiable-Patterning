@@ -111,7 +111,7 @@ int main() {
     });
     queue.wait_and_throw();
 
-    const sycl::event event = queue.parallel_for(
+    sycl::event event = queue.parallel_for(
         sycl::range<1>(kElementCount), [=](sycl::id<1> index) {
           const std::size_t i = index[0];
           device_output[i] = 1.5F * device_a[i] + device_b[i];

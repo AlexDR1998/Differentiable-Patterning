@@ -10,7 +10,7 @@
 #SBATCH --output=intel-sycl-smoke-%j.out
 #SBATCH --error=intel-sycl-smoke-%j.err
 
-set -euo pipefail
+set -eo pipefail
 
 ORIGINAL_SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -43,6 +43,20 @@ if [[ ! -f "${SOURCE_FILE}" ]]; then
     echo "Expected source file: ${SOURCE_FILE}" >&2
     exit 12
 fi
+
+SYCL_SETUP_SCRIPT="${SYCL_SETUP_SCRIPT:-${HOME}/dawn-jax/envs/jaxeqx-setup.sh}"
+echo "SYCL_SETUP_SCRIPT=${SYCL_SETUP_SCRIPT}"
+if [[ -f "${SYCL_SETUP_SCRIPT}" ]]; then
+    # Keep oneAPI 2025.2 compiler/runtime exports in this job shell. This also
+    # matches the ABI used by intel_extension_for_openxla 0.7.0.
+    # shellcheck disable=SC1090
+    source "${SYCL_SETUP_SCRIPT}"
+else
+    echo "SYCL_SETUP_SCRIPT_STATUS=not_found"
+fi
+
+# oneAPI/Conda activation may inspect unset internal variables.
+set -u
 
 BUILD_ROOT="${SYCL_SMOKE_BUILD_DIR:-${TMPDIR:-/tmp}/differentiable_patterning_sycl_smoke}"
 BUILD_DIR="${BUILD_ROOT}/${SLURM_JOB_ID:-local}_${SLURM_PROCID:-0}"
