@@ -99,6 +99,21 @@ def maybe_save_gpu_profile(step):
 		print(f"Warning: train-step device memory profile failed: {exc!r}", flush=True)
 
 
+def compile_and_time(jitted_function, *args):
+	"""Compile a jitted function explicitly and return wall-clock seconds."""
+	start = time.perf_counter()
+	compiled_function = jitted_function.lower(*args).compile()
+	return compiled_function, time.perf_counter() - start
+
+
+def call_and_time(compiled_function, *args):
+	"""Run a compiled function and include asynchronous device work in timing."""
+	start = time.perf_counter()
+	outputs = compiled_function(*args)
+	jax.block_until_ready(outputs)
+	return outputs, time.perf_counter() - start
+
+
 class PoolAdmissionController:
 	"""Tracks whether a rollout should be admitted into the recurrent state pool."""
 
@@ -815,6 +830,36 @@ class NCA_Trainer(object):
 				} for b in range(len(x))]
 			
 		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
+		compiled_make_step, initial_compile_seconds = compile_and_time(
+			make_step,
+			nca,
+			x,
+			y,
+			t,
+			opt_state,
+			key,
+		)
+		runtime_tracker = {
+			"jit_compile_seconds": initial_compile_seconds,
+			"total_compile_seconds": initial_compile_seconds,
+			"compile_count": 1,
+			"first_execution_seconds": None,
+			"step_compute_seconds": None,
+			"step_compute_per_second": None,
+			"steady_step_mean_seconds": None,
+			"steady_step_mean_per_second": None,
+			"steady_step_count": 0,
+			"iteration_excluding_logging_seconds": None,
+			"steady_iteration_mean_seconds": None,
+			"steady_iteration_mean_per_second": None,
+			"steady_iteration_count": 0,
+			"_steady_step_seconds_total": 0.0,
+			"_steady_iteration_seconds_total": 0.0,
+		}
+		print(
+			f"Initial JIT compile time: {initial_compile_seconds:.6f} seconds",
+			flush=True,
+		)
 		best_loss = 100000000
 		loss_thresh = 1e16 # If loss exceeds this, training is diverging to NaN
 		model_saved = False
@@ -835,6 +880,7 @@ class NCA_Trainer(object):
 		pbar = tqdm(range(iters))
 		#--- Do training run ---
 		for i in pbar:
+			iteration_start = time.perf_counter()
 			#prev_loss = mean_loss
 			key = jr.fold_in(key,i)
 			CLEAR_CACHE_STEP = (
@@ -847,8 +893,20 @@ class NCA_Trainer(object):
 				print(f"Clearing cache at step {i}")
 				jax.block_until_ready((x, y, opt_state))
 				jax.clear_caches()
-				dry_outputs = make_step(nca, x, y, t, opt_state, key)
-				jax.block_until_ready(dry_outputs)
+				compiled_make_step, latest_compile_seconds = compile_and_time(
+					make_step,
+					nca,
+					x,
+					y,
+					t,
+					opt_state,
+					key,
+				)
+				runtime_tracker["compile_count"] += 1
+				runtime_tracker["total_compile_seconds"] += latest_compile_seconds
+				dry_outputs, _ = call_and_time(
+					compiled_make_step, nca, x, y, t, opt_state, key
+				)
 
 				_, dry_x_new, dry_y_new, _, _, _, _, _ = dry_outputs
 				key, dry_callback_key = jr.split(key)
@@ -863,9 +921,31 @@ class NCA_Trainer(object):
 				del dry_outputs
 				del dry_callback_outputs
 
-			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = make_step(nca, x, y, t, opt_state,key)  # type: ignore
+			step_outputs, step_compute_seconds = call_and_time(
+				compiled_make_step, nca, x, y, t, opt_state, key
+			)
+			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = step_outputs  # type: ignore
 			maybe_save_gpu_profile(i)
 			mean_loss_value = float(jax.device_get(mean_loss))
+			if runtime_tracker["first_execution_seconds"] is None:
+				runtime_tracker["first_execution_seconds"] = step_compute_seconds
+			elif not CLEAR_CACHE_STEP:
+				runtime_tracker["_steady_step_seconds_total"] += step_compute_seconds
+				runtime_tracker["steady_step_count"] += 1
+
+			runtime_tracker["step_compute_seconds"] = step_compute_seconds
+			runtime_tracker["step_compute_per_second"] = 1.0 / max(
+				step_compute_seconds, 1e-12
+			)
+			if runtime_tracker["steady_step_count"] > 0:
+				runtime_tracker["steady_step_mean_seconds"] = (
+					runtime_tracker["_steady_step_seconds_total"]
+					/ runtime_tracker["steady_step_count"]
+				)
+				runtime_tracker["steady_step_mean_per_second"] = (
+					1.0
+					/ max(runtime_tracker["steady_step_mean_seconds"], 1e-12)
+				)
 			if LEARNING_RATE_SCHEDULE is not None:
 				log_dict["learning_rate"] = float(
 					jax.device_get(LEARNING_RATE_SCHEDULE(i))
@@ -910,11 +990,33 @@ class NCA_Trainer(object):
 				x, y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, callback_key)
 			pool_admission.update(pool_decision, mean_loss_value)
 			log_dict.update(pool_admission.log_dict(pool_decision))
+			runtime_tracker["iteration_excluding_logging_seconds"] = (
+				time.perf_counter() - iteration_start
+			)
+			if i > 0 and not CLEAR_CACHE_STEP:
+				runtime_tracker["_steady_iteration_seconds_total"] += (
+					runtime_tracker["iteration_excluding_logging_seconds"]
+				)
+				runtime_tracker["steady_iteration_count"] += 1
+				runtime_tracker["steady_iteration_mean_seconds"] = (
+					runtime_tracker["_steady_iteration_seconds_total"]
+					/ runtime_tracker["steady_iteration_count"]
+				)
+				runtime_tracker["steady_iteration_mean_per_second"] = (
+					1.0
+					/ max(runtime_tracker["steady_iteration_mean_seconds"], 1e-12)
+				)
+			log_dict.update({
+				f"runtime/{name}": value
+				for name, value in runtime_tracker.items()
+				if not name.startswith("_") and value is not None
+			})
 
 			# print_dict = {k: v if isinstance(v, (int, float)) else str(v.shape) for k, v in log_dict.items()}
 			print_dict = {
 				k:v for k,v in log_dict.items()
-				if k not in ['x_latent','x_processed'] and not k.startswith("pool/")
+				if k not in ['x_latent','x_processed']
+				and not k.startswith(("pool/", "runtime/"))
 			}
 			pbar.set_postfix(print_dict)
 			
