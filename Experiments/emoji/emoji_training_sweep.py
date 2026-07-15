@@ -37,7 +37,10 @@ def run(cfg):
     model_key, train_key = jax.random.split(key)
 
     model, model_cfg_str = build_model(cfg, key=model_key)
-    optimiser, opt_name = build_optimizer(cfg)
+    optimiser, opt_name, learning_rate_schedule = build_optimizer(
+        cfg,
+        return_schedule=True,
+    )
     data, data_cfg_str = load_data(cfg)
     data_augmenter, data_augmenter_cfg_str = build_data_augmenter(cfg)
 
@@ -64,6 +67,7 @@ def run(cfg):
         REGULARISER_COEFFS={**cfg.loss.regulariser_coeffs},
         WARMUP=cfg.run.warmup,
         optimiser=optimiser,
+        LEARNING_RATE_SCHEDULE=learning_rate_schedule,
         WRITE_IMAGES=cfg.run.write_images,
         LOSS_FUNC_STR=cfg.loss.primary,
         LOSS_ARGS=build_loss_args(cfg),

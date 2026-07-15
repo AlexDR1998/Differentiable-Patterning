@@ -554,6 +554,8 @@ class kaNCA_Train_log(NCA_Train_log):
 			if name not in ["x_latent", "x_processed"]:
 				if name.startswith("pool/"):
 					self.log_scalar(f"StatePool/{name.removeprefix('pool/')}",log_dict[name],step=i)
+				elif name == "learning_rate":
+					self.log_scalar("Training/learning_rate", log_dict[name], step=i)
 				else:
 					self.log_scalar(f"Train/{name}",log_dict[name],step=i)
 		if i%LOG_EVERY==0 and i>0:

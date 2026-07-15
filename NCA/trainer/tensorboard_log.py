@@ -236,6 +236,53 @@ def compute_channel_correlation_diagnostics(
 	}
 
 
+def plot_total_intensity_diagnostics(diagnostics, channel_names, timepoint_names=None):
+	"""Plot target, prediction, and absolute-error totals as compact heatmaps."""
+	import matplotlib.pyplot as plt
+
+	target = diagnostics["target_total_intensity"].T
+	prediction = diagnostics["prediction_total_intensity"].T
+	error = np.abs(prediction - target)
+	channel_count, time_count = target.shape
+	if channel_names is None or len(channel_names) != channel_count:
+		channel_names = [f"channel_{index + 1}" for index in range(channel_count)]
+	if timepoint_names is None or len(timepoint_names) != time_count:
+		timepoint_names = [f"t{index + 1}" for index in range(time_count)]
+
+	shared_min = min(float(np.min(target)), float(np.min(prediction)), 0.0)
+	shared_max = max(float(np.max(target)), float(np.max(prediction)), 1e-8)
+	figure, axes = plt.subplots(1, 3, figsize=(14, max(5.0, 0.35 * channel_count)))
+	for axis, values, title, cmap, vmin, vmax in (
+		(axes[0], target, "Target total intensity", "viridis", shared_min, shared_max),
+		(axes[1], prediction, "Prediction total intensity", "viridis", shared_min, shared_max),
+		(axes[2], error, "Absolute total-intensity error", "magma", 0.0, max(float(np.max(error)), 1e-8)),
+	):
+		image = axis.imshow(
+			values,
+			aspect="auto",
+			interpolation="nearest",
+			cmap=cmap,
+			vmin=vmin,
+			vmax=vmax,
+		)
+		axis.set_title(title)
+		axis.set_xticks(
+			np.arange(time_count),
+			labels=timepoint_names,
+			rotation=45,
+			ha="right",
+			fontsize=7,
+		)
+		axis.set_yticks(
+			np.arange(channel_count),
+			labels=channel_names,
+			fontsize=7,
+		)
+		figure.colorbar(image, ax=axis, fraction=0.046, pad=0.04)
+	figure.tight_layout()
+	return plot_to_image(figure)
+
+
 def plot_radial_intensity_diagnostics(diagnostics, channel_names, timepoint_names=None):
 	"""Plot target, prediction, and absolute-error radial profiles as heatmaps."""
 	import matplotlib.pyplot as plt
@@ -487,21 +534,22 @@ class NCA_Train_log(Train_log):
 				targets,
 				boundary_masks=self.diagnostic_boundary_mask,
 			)
-			total_scalars = {}
 			prediction_totals = diagnostics["prediction_total_intensity"]
 			target_totals = diagnostics["target_total_intensity"]
-			for time_index in range(prediction_totals.shape[0]):
-				for channel_index, channel_name in enumerate(self.channel_names):
-					safe_name = channel_name.replace("/", "-").replace(" ", "_")
-					safe_time = self.timepoint_names[time_index].replace("/", "-").replace(" ", "_")
-					prefix = f"Diagnostics/total_intensity/{safe_name}/{safe_time}"
-					total_scalars[f"{prefix}/prediction"] = prediction_totals[time_index, channel_index]
-					total_scalars[f"{prefix}/target"] = target_totals[time_index, channel_index]
-					total_scalars[f"{prefix}/absolute_error"] = abs(
-						prediction_totals[time_index, channel_index]
-						- target_totals[time_index, channel_index]
-					)
-			self.log_scalars(total_scalars, step=i)
+			self.log_scalar(
+				"Diagnostics/total_intensity/mean_absolute_error",
+				float(np.mean(np.abs(prediction_totals - target_totals))),
+				step=i,
+			)
+			self.log_image(
+				"Diagnostics/total_intensity",
+				plot_total_intensity_diagnostics(
+					diagnostics,
+					self.channel_names,
+					self.timepoint_names,
+				),
+				step=i,
+			)
 			self.log_image(
 				"Diagnostics/radial_intensity_profiles",
 				plot_radial_intensity_diagnostics(
@@ -613,6 +661,8 @@ class NCA_Train_log(Train_log):
 			if name not in ["x_latent", "x_processed"]:
 				if name.startswith("pool/"):
 					self.log_scalar(f"StatePool/{name.removeprefix('pool/')}",log_dict[name],step=i)
+				elif name == "learning_rate":
+					self.log_scalar("Training/learning_rate", log_dict[name], step=i)
 				else:
 					self.log_scalar(f"Train/{name}",log_dict[name],step=i)
 		if i%LOG_EVERY==0 and i>0:

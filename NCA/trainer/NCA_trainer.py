@@ -498,10 +498,11 @@ class NCA_Trainer(object):
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
-				  wandb_args={"project":"NCA",
-					 		  "group":"group_1",
-					 		  "tags":["training"]},
-				  key=None):
+			  wandb_args={"project":"NCA",
+					  "group":"group_1",
+					  "tags":["training"]},
+			  LEARNING_RATE_SCHEDULE=None,
+			  key=None):
 		"""
 		Perform t steps of NCA on x, compare output to y, compute loss and gradients of loss wrt model parameters, and update parameters.
 
@@ -865,6 +866,10 @@ class NCA_Trainer(object):
 			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = make_step(nca, x, y, t, opt_state,key)  # type: ignore
 			maybe_save_gpu_profile(i)
 			mean_loss_value = float(jax.device_get(mean_loss))
+			if LEARNING_RATE_SCHEDULE is not None:
+				log_dict["learning_rate"] = float(
+					jax.device_get(LEARNING_RATE_SCHEDULE(i))
+				)
 
 			log_dict["best_loss"] = best_loss
 

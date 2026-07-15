@@ -55,7 +55,10 @@ def run(cfg):
     model,_model_cfg_str = build_model(cfg, key=model_key)
     # optimiser,_ = build_optimizer(cfg)
     # model = build_model(cfg)
-    optimiser,opt_name = build_optimizer(cfg)
+    optimiser,opt_name,learning_rate_schedule = build_optimizer(
+        cfg,
+        return_schedule=True,
+    )
     data,_,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK,_data_cfg_str = load_data(cfg)
     data_augmenter,_data_augmenter_cfg_str = build_data_augmenter(cfg, CHANNEL_TIMESTEP_MASK)
     loss_time_channel_mask = expand_channel_timestep_mask_for_loss(cfg, CHANNEL_TIMESTEP_MASK)
@@ -90,6 +93,7 @@ def run(cfg):
         REGULARISER_COEFFS={**cfg.loss.regulariser_coeffs},
         WARMUP=cfg.run.warmup,
         optimiser=optimiser,
+        LEARNING_RATE_SCHEDULE=learning_rate_schedule,
         WRITE_IMAGES=cfg.run.write_images,
         LOSS_FUNC_STR=cfg.loss.primary,
         KNOCKOUT_ARGS={
