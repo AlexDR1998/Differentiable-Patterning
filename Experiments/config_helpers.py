@@ -8,6 +8,7 @@ from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_gated_model import gNCA
 from NCA.model.NCA_gated_noise_model import gnNCA
 from NCA.model.NCA_model import NCA
+from NCA.model.NCA_model_fast import NCA as NCAFast
 from NCA.model.NCA_noise_model import nNCA
 from NCA.model.NCA_upsample_isotropic_model import uNCA as isouNCA
 from NCA.model.NCA_upsample_model import uNCA
@@ -327,6 +328,16 @@ def build_model(cfg, key=None):
     kernel_scale = _cfg_get(cfg.model, "kernel_scale", 1)
     if cfg.model.family == "NCA":
         model = NCA(
+            N_CHANNELS=cfg.model.channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            key=key,
+        )
+    elif cfg.model.family == "NCA_fast":
+        model = NCAFast(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
             ACTIVATION=activation,

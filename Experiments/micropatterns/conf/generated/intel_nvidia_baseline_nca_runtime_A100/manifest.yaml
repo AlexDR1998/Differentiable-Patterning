@@ -7,7 +7,7 @@ count: 90
 configs:
 - index: 81
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -56,8 +56,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -96,9 +97,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -132,6 +140,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -147,7 +159,7 @@ configs:
       - triton_gemm
 - index: 59
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -196,8 +208,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -236,9 +249,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -272,6 +292,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -287,7 +311,7 @@ configs:
       - latency_hiding_scheduler
 - index: 65
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -336,8 +360,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -376,9 +401,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -412,6 +444,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -427,7 +463,7 @@ configs:
       - command_buffer
 - index: 67
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -477,8 +513,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -517,9 +554,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -553,6 +597,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -569,7 +617,7 @@ configs:
       - latency_hiding_scheduler
 - index: 40
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -617,8 +665,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -657,9 +706,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -693,6 +749,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -707,7 +767,7 @@ configs:
       xla_flags: null
 - index: 86
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -756,8 +816,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -796,9 +857,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -832,6 +900,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -847,7 +919,7 @@ configs:
       - triton_gemm
 - index: 84
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -896,8 +968,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -936,9 +1009,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -972,6 +1052,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -987,7 +1071,7 @@ configs:
       - latency_hiding_scheduler
 - index: 47
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -1036,8 +1120,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -1076,9 +1161,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -1112,6 +1204,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -1127,7 +1223,7 @@ configs:
       - command_buffer
 - index: 34
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -1177,8 +1273,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -1217,9 +1314,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -1253,6 +1357,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -1269,7 +1377,7 @@ configs:
       - latency_hiding_scheduler
 - index: 43
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -1317,8 +1425,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -1357,9 +1466,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -1393,6 +1509,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -1407,7 +1527,7 @@ configs:
       xla_flags: null
 - index: 27
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -1456,8 +1576,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -1496,9 +1617,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -1532,6 +1660,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -1547,7 +1679,7 @@ configs:
       - triton_gemm
 - index: 25
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -1596,8 +1728,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -1636,9 +1769,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -1672,6 +1812,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -1687,7 +1831,7 @@ configs:
       - latency_hiding_scheduler
 - index: 46
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -1736,8 +1880,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -1776,9 +1921,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -1812,6 +1964,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -1827,7 +1983,7 @@ configs:
       - command_buffer
 - index: 28
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -1877,8 +2033,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -1917,9 +2074,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -1953,6 +2117,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -1969,7 +2137,7 @@ configs:
       - latency_hiding_scheduler
 - index: 54
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -2017,8 +2185,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -2057,9 +2226,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -2093,6 +2269,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -2107,7 +2287,7 @@ configs:
       xla_flags: null
 - index: 14
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -2156,8 +2336,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -2196,9 +2377,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -2232,6 +2420,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -2247,7 +2439,7 @@ configs:
       - triton_gemm
 - index: 5
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -2296,8 +2488,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -2336,9 +2529,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -2372,6 +2572,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -2387,7 +2591,7 @@ configs:
       - latency_hiding_scheduler
 - index: 36
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -2436,8 +2640,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -2476,9 +2681,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -2512,6 +2724,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -2527,7 +2743,7 @@ configs:
       - command_buffer
 - index: 56
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -2577,8 +2793,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -2617,9 +2834,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -2653,6 +2877,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -2669,7 +2897,7 @@ configs:
       - latency_hiding_scheduler
 - index: 55
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -2717,8 +2945,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -2757,9 +2986,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -2793,6 +3029,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -2807,7 +3047,7 @@ configs:
       xla_flags: null
 - index: 85
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -2856,8 +3096,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -2896,9 +3137,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -2932,6 +3180,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -2947,7 +3199,7 @@ configs:
       - triton_gemm
 - index: 37
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -2996,8 +3248,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -3036,9 +3289,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -3072,6 +3332,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -3087,7 +3351,7 @@ configs:
       - latency_hiding_scheduler
 - index: 83
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -3136,8 +3400,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -3176,9 +3441,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -3212,6 +3484,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -3227,7 +3503,7 @@ configs:
       - command_buffer
 - index: 13
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -3277,8 +3553,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -3317,9 +3594,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -3353,6 +3637,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -3369,7 +3657,7 @@ configs:
       - latency_hiding_scheduler
 - index: 35
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -3417,8 +3705,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -3457,9 +3746,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -3493,6 +3789,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -3507,7 +3807,7 @@ configs:
       xla_flags: null
 - index: 6
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -3556,8 +3856,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -3596,9 +3897,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -3632,6 +3940,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -3647,7 +3959,7 @@ configs:
       - triton_gemm
 - index: 61
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -3696,8 +4008,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -3736,9 +4049,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -3772,6 +4092,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -3787,7 +4111,7 @@ configs:
       - latency_hiding_scheduler
 - index: 71
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -3836,8 +4160,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -3876,9 +4201,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -3912,6 +4244,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -3927,7 +4263,7 @@ configs:
       - command_buffer
 - index: 38
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -3977,8 +4313,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -4017,9 +4354,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -4053,6 +4397,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -4069,7 +4417,7 @@ configs:
       - latency_hiding_scheduler
 - index: 75
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -4117,8 +4465,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -4157,9 +4506,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -4193,6 +4549,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -4207,7 +4567,7 @@ configs:
       xla_flags: null
 - index: 8
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -4256,8 +4616,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -4296,9 +4657,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -4332,6 +4700,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -4347,7 +4719,7 @@ configs:
       - triton_gemm
 - index: 12
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -4396,8 +4768,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -4436,9 +4809,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -4472,6 +4852,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -4487,7 +4871,7 @@ configs:
       - latency_hiding_scheduler
 - index: 26
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -4536,8 +4920,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -4576,9 +4961,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -4612,6 +5004,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -4627,7 +5023,7 @@ configs:
       - command_buffer
 - index: 21
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -4677,8 +5073,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -4717,9 +5114,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -4753,6 +5157,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -4769,7 +5177,7 @@ configs:
       - latency_hiding_scheduler
 - index: 24
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -4817,8 +5225,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -4857,9 +5266,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -4893,6 +5309,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -4907,7 +5327,7 @@ configs:
       xla_flags: null
 - index: 19
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -4956,8 +5376,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -4996,9 +5417,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -5032,6 +5460,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -5047,7 +5479,7 @@ configs:
       - triton_gemm
 - index: 63
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -5096,8 +5528,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -5136,9 +5569,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -5172,6 +5612,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -5187,7 +5631,7 @@ configs:
       - latency_hiding_scheduler
 - index: 89
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -5236,8 +5680,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -5276,9 +5721,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -5312,6 +5764,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -5327,7 +5783,7 @@ configs:
       - command_buffer
 - index: 30
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -5377,8 +5833,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -5417,9 +5874,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -5453,6 +5917,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -5469,7 +5937,7 @@ configs:
       - latency_hiding_scheduler
 - index: 31
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -5517,8 +5985,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -5557,9 +6026,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -5593,6 +6069,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -5607,7 +6087,7 @@ configs:
       xla_flags: null
 - index: 20
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -5656,8 +6136,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -5696,9 +6177,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -5732,6 +6220,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -5747,7 +6239,7 @@ configs:
       - triton_gemm
 - index: 74
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -5796,8 +6288,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -5836,9 +6329,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -5872,6 +6372,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -5887,7 +6391,7 @@ configs:
       - latency_hiding_scheduler
 - index: 88
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -5936,8 +6440,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -5976,9 +6481,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -6012,6 +6524,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -6027,7 +6543,7 @@ configs:
       - command_buffer
 - index: 41
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -6077,8 +6593,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -6117,9 +6634,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -6153,6 +6677,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -6169,7 +6697,7 @@ configs:
       - latency_hiding_scheduler
 - index: 77
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -6217,8 +6745,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -6257,9 +6786,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -6293,6 +6829,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -6307,7 +6847,7 @@ configs:
       xla_flags: null
 - index: 80
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -6356,8 +6896,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -6396,9 +6937,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -6432,6 +6980,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -6447,7 +6999,7 @@ configs:
       - triton_gemm
 - index: 49
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -6496,8 +7048,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -6536,9 +7089,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -6572,6 +7132,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -6587,7 +7151,7 @@ configs:
       - latency_hiding_scheduler
 - index: 33
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -6636,8 +7200,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -6676,9 +7241,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -6712,6 +7284,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -6727,7 +7303,7 @@ configs:
       - command_buffer
 - index: 16
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -6777,8 +7353,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -6817,9 +7394,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -6853,6 +7437,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -6869,7 +7457,7 @@ configs:
       - latency_hiding_scheduler
 - index: 50
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -6917,8 +7505,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -6957,9 +7546,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -6993,6 +7589,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -7007,7 +7607,7 @@ configs:
       xla_flags: null
 - index: 66
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -7056,8 +7656,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -7096,9 +7697,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -7132,6 +7740,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -7147,7 +7759,7 @@ configs:
       - triton_gemm
 - index: 82
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -7196,8 +7808,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -7236,9 +7849,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -7272,6 +7892,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -7287,7 +7911,7 @@ configs:
       - latency_hiding_scheduler
 - index: 18
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -7336,8 +7960,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -7376,9 +8001,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -7412,6 +8044,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -7427,7 +8063,7 @@ configs:
       - command_buffer
 - index: 73
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -7477,8 +8113,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -7517,9 +8154,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -7553,6 +8197,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -7569,7 +8217,7 @@ configs:
       - latency_hiding_scheduler
 - index: 72
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -7617,8 +8265,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -7657,9 +8306,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -7693,6 +8349,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -7707,7 +8367,7 @@ configs:
       xla_flags: null
 - index: 39
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -7756,8 +8416,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -7796,9 +8457,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -7832,6 +8500,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -7847,7 +8519,7 @@ configs:
       - triton_gemm
 - index: 51
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -7896,8 +8568,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -7936,9 +8609,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -7972,6 +8652,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -7987,7 +8671,7 @@ configs:
       - latency_hiding_scheduler
 - index: 7
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -8036,8 +8720,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -8076,9 +8761,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -8112,6 +8804,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -8127,7 +8823,7 @@ configs:
       - command_buffer
 - index: 60
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -8177,8 +8873,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -8217,9 +8914,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -8253,6 +8957,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -8269,7 +8977,7 @@ configs:
       - latency_hiding_scheduler
 - index: 15
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -8317,8 +9025,9 @@ configs:
       data_channels: 12
       downsample: 8
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -8357,9 +9066,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -8393,6 +9109,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -8407,7 +9127,7 @@ configs:
       xla_flags: null
 - index: 17
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -8456,8 +9176,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -8496,9 +9217,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -8532,6 +9260,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -8547,7 +9279,7 @@ configs:
       - triton_gemm
 - index: 87
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -8596,8 +9328,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -8636,9 +9369,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -8672,6 +9412,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -8687,7 +9431,7 @@ configs:
       - latency_hiding_scheduler
 - index: 48
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -8736,8 +9480,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -8776,9 +9521,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -8812,6 +9564,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -8827,7 +9583,7 @@ configs:
       - command_buffer
 - index: 1
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -8877,8 +9633,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -8917,9 +9674,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -8953,6 +9717,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -8969,7 +9737,7 @@ configs:
       - latency_hiding_scheduler
 - index: 57
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -9017,8 +9785,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -9057,9 +9826,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -9093,6 +9869,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -9107,7 +9887,7 @@ configs:
       xla_flags: null
 - index: 2
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -9156,8 +9936,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -9196,9 +9977,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -9232,6 +10020,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -9247,7 +10039,7 @@ configs:
       - triton_gemm
 - index: 10
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -9296,8 +10088,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -9336,9 +10129,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -9372,6 +10172,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -9387,7 +10191,7 @@ configs:
       - latency_hiding_scheduler
 - index: 9
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -9436,8 +10240,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -9476,9 +10281,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -9512,6 +10324,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -9527,7 +10343,7 @@ configs:
       - command_buffer
 - index: 4
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -9577,8 +10393,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -9617,9 +10434,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -9653,6 +10477,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -9669,7 +10497,7 @@ configs:
       - latency_hiding_scheduler
 - index: 32
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -9717,8 +10545,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -9757,9 +10586,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -9793,6 +10629,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -9807,7 +10647,7 @@ configs:
       xla_flags: null
 - index: 11
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -9856,8 +10696,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -9896,9 +10737,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -9932,6 +10780,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -9947,7 +10799,7 @@ configs:
       - triton_gemm
 - index: 23
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -9996,8 +10848,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -10036,9 +10889,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -10072,6 +10932,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -10087,7 +10951,7 @@ configs:
       - latency_hiding_scheduler
 - index: 70
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -10136,8 +11000,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -10176,9 +11041,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -10212,6 +11084,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -10227,7 +11103,7 @@ configs:
       - command_buffer
 - index: 22
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -10277,8 +11153,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -10317,9 +11194,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -10353,6 +11237,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -10369,7 +11257,7 @@ configs:
       - latency_hiding_scheduler
 - index: 29
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -10417,8 +11305,9 @@ configs:
       data_channels: 12
       downsample: 4
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -10457,9 +11346,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -10493,6 +11389,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -10507,7 +11407,7 @@ configs:
       xla_flags: null
 - index: 3
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -10556,8 +11456,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -10596,9 +11497,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -10632,6 +11540,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -10647,7 +11559,7 @@ configs:
       - triton_gemm
 - index: 76
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -10696,8 +11608,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -10736,9 +11649,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -10772,6 +11692,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -10787,7 +11711,7 @@ configs:
       - latency_hiding_scheduler
 - index: 58
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -10836,8 +11760,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -10876,9 +11801,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -10912,6 +11844,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -10927,7 +11863,7 @@ configs:
       - command_buffer
 - index: 42
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -10977,8 +11913,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -11017,9 +11954,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -11053,6 +11997,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -11069,7 +12017,7 @@ configs:
       - latency_hiding_scheduler
 - index: 78
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -11117,8 +12065,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -11157,9 +12106,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -11193,6 +12149,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -11207,7 +12167,7 @@ configs:
       xla_flags: null
 - index: 79
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -11256,8 +12216,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -11296,9 +12257,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -11332,6 +12300,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -11347,7 +12319,7 @@ configs:
       - triton_gemm
 - index: 69
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -11396,8 +12368,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -11436,9 +12409,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -11472,6 +12452,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -11487,7 +12471,7 @@ configs:
       - latency_hiding_scheduler
 - index: 68
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -11536,8 +12520,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -11576,9 +12561,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -11612,6 +12604,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -11627,7 +12623,7 @@ configs:
       - command_buffer
 - index: 0
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -11677,8 +12673,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -11717,9 +12714,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -11753,6 +12757,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -11769,7 +12777,7 @@ configs:
       - latency_hiding_scheduler
 - index: 44
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -11817,8 +12825,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -11857,9 +12866,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -11893,6 +12909,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -11907,7 +12927,7 @@ configs:
       xla_flags: null
 - index: 53
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -11956,8 +12976,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -11996,9 +13017,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -12032,6 +13060,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -12047,7 +13079,7 @@ configs:
       - triton_gemm
 - index: 45
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -12096,8 +13128,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -12136,9 +13169,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -12172,6 +13212,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -12187,7 +13231,7 @@ configs:
       - latency_hiding_scheduler
 - index: 62
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -12236,8 +13280,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -12276,9 +13321,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -12312,6 +13364,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -12327,7 +13383,7 @@ configs:
       - command_buffer
 - index: 52
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -12377,8 +13433,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -12417,9 +13474,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -12453,6 +13517,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime
@@ -12469,7 +13537,7 @@ configs:
       - latency_hiding_scheduler
 - index: 64
   overrides:
-    model.family: NCA
+    model.family: NCA_fast
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
@@ -12517,8 +13585,9 @@ configs:
       data_channels: 12
       downsample: 2
       noise_strength: 0.005
+      duplicate_final_timestep: false
     model:
-      family: NCA
+      family: NCA_fast
       channels: 32
       kernel_str:
       - ID
@@ -12557,9 +13626,16 @@ configs:
       learn_rate: 0.001
       warmup_steps: 64
       decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
     loss:
       primary:
       - l2_grouped
+      channel_importance: null
+      component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
@@ -12593,6 +13669,10 @@ configs:
       scaling: convective
     logging:
       backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
         group: intel_nvidia_baseline_nca_runtime

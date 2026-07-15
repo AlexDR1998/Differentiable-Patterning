@@ -2,7 +2,7 @@ experiment_name: intel_nvidia_baseline_nca_runtime
 entrypoint: Experiments.micropatterns.nca_runtime_check:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_runtime_sweep.yaml
-output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/intel_nvidia_baseline_nca_runtime_intel
+output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/intel_nvidia_baseline_nca_runtime_H200
 count: 90
 configs:
 - index: 81
@@ -35,7 +35,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -154,7 +154,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 59
@@ -187,7 +187,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -306,7 +306,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 65
@@ -339,7 +339,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -458,7 +458,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 67
@@ -491,7 +491,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -611,7 +611,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -645,7 +645,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 2127877499
@@ -763,7 +763,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 86
   overrides:
@@ -795,7 +795,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -914,7 +914,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 84
@@ -947,7 +947,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -1066,7 +1066,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 47
@@ -1099,7 +1099,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -1218,7 +1218,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 34
@@ -1251,7 +1251,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -1371,7 +1371,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -1405,7 +1405,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 403123852
@@ -1523,7 +1523,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 27
   overrides:
@@ -1555,7 +1555,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -1674,7 +1674,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 25
@@ -1707,7 +1707,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -1826,7 +1826,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 46
@@ -1859,7 +1859,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -1978,7 +1978,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 28
@@ -2011,7 +2011,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -2131,7 +2131,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -2165,7 +2165,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 9045414
@@ -2283,7 +2283,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 14
   overrides:
@@ -2315,7 +2315,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -2434,7 +2434,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 5
@@ -2467,7 +2467,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -2586,7 +2586,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 36
@@ -2619,7 +2619,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -2738,7 +2738,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 56
@@ -2771,7 +2771,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -2891,7 +2891,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -2925,7 +2925,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 1363349907
@@ -3043,7 +3043,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 85
   overrides:
@@ -3075,7 +3075,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -3194,7 +3194,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 37
@@ -3227,7 +3227,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -3346,7 +3346,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 83
@@ -3379,7 +3379,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -3498,7 +3498,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 13
@@ -3531,7 +3531,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -3651,7 +3651,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -3685,7 +3685,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 1637259727
@@ -3803,7 +3803,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 6
   overrides:
@@ -3835,7 +3835,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -3954,7 +3954,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 61
@@ -3987,7 +3987,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -4106,7 +4106,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 71
@@ -4139,7 +4139,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -4258,7 +4258,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 38
@@ -4291,7 +4291,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -4411,7 +4411,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -4445,7 +4445,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 1880712864
@@ -4563,7 +4563,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 8
   overrides:
@@ -4595,7 +4595,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -4714,7 +4714,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 12
@@ -4747,7 +4747,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -4866,7 +4866,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 26
@@ -4899,7 +4899,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -5018,7 +5018,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 21
@@ -5051,7 +5051,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -5171,7 +5171,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -5205,7 +5205,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 939657385
@@ -5323,7 +5323,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 19
   overrides:
@@ -5355,7 +5355,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -5474,7 +5474,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 63
@@ -5507,7 +5507,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -5626,7 +5626,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 89
@@ -5659,7 +5659,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -5778,7 +5778,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 30
@@ -5811,7 +5811,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -5931,7 +5931,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -5965,7 +5965,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 429497919
@@ -6083,7 +6083,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 20
   overrides:
@@ -6115,7 +6115,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -6234,7 +6234,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 74
@@ -6267,7 +6267,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -6386,7 +6386,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 88
@@ -6419,7 +6419,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -6538,7 +6538,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 41
@@ -6571,7 +6571,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -6691,7 +6691,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -6725,7 +6725,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 1812935769
@@ -6843,7 +6843,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 80
   overrides:
@@ -6875,7 +6875,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -6994,7 +6994,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 49
@@ -7027,7 +7027,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -7146,7 +7146,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 33
@@ -7179,7 +7179,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -7298,7 +7298,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 16
@@ -7331,7 +7331,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -7451,7 +7451,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -7485,7 +7485,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 1689440956
@@ -7603,7 +7603,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 66
   overrides:
@@ -7635,7 +7635,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -7754,7 +7754,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 82
@@ -7787,7 +7787,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -7906,7 +7906,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 18
@@ -7939,7 +7939,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -8058,7 +8058,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 73
@@ -8091,7 +8091,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -8211,7 +8211,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -8245,7 +8245,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 1779465077
@@ -8363,7 +8363,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 39
   overrides:
@@ -8395,7 +8395,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -8514,7 +8514,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 51
@@ -8547,7 +8547,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -8666,7 +8666,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 7
@@ -8699,7 +8699,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -8818,7 +8818,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 60
@@ -8851,7 +8851,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -8971,7 +8971,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -9005,7 +9005,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 1885325846
@@ -9123,7 +9123,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 17
   overrides:
@@ -9155,7 +9155,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -9274,7 +9274,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 87
@@ -9307,7 +9307,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -9426,7 +9426,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 48
@@ -9459,7 +9459,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -9578,7 +9578,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 1
@@ -9611,7 +9611,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -9731,7 +9731,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -9765,7 +9765,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 2103217660
@@ -9883,7 +9883,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 2
   overrides:
@@ -9915,7 +9915,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -10034,7 +10034,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 10
@@ -10067,7 +10067,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -10186,7 +10186,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 9
@@ -10219,7 +10219,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -10338,7 +10338,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 4
@@ -10371,7 +10371,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -10491,7 +10491,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -10525,7 +10525,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 1690497763
@@ -10643,7 +10643,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 11
   overrides:
@@ -10675,7 +10675,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -10794,7 +10794,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 23
@@ -10827,7 +10827,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -10946,7 +10946,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 70
@@ -10979,7 +10979,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -11098,7 +11098,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 22
@@ -11131,7 +11131,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -11251,7 +11251,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -11285,7 +11285,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 856916273
@@ -11403,7 +11403,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 3
   overrides:
@@ -11435,7 +11435,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -11554,7 +11554,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 76
@@ -11587,7 +11587,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -11706,7 +11706,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 58
@@ -11739,7 +11739,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -11858,7 +11858,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 42
@@ -11891,7 +11891,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -12011,7 +12011,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -12045,7 +12045,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: highest
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 1971955755
@@ -12163,7 +12163,7 @@ configs:
       mode: null
     system:
       precision: highest
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 79
   overrides:
@@ -12195,7 +12195,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -12314,7 +12314,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 69
@@ -12347,7 +12347,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -12466,7 +12466,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 68
@@ -12499,7 +12499,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -12618,7 +12618,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 0
@@ -12651,7 +12651,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -12771,7 +12771,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -12805,7 +12805,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: bfloat16
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 882552464
@@ -12923,7 +12923,7 @@ configs:
       mode: null
     system:
       precision: bfloat16
-      gpu: intel
+      gpu: H200
       xla_flags: null
 - index: 53
   overrides:
@@ -12955,7 +12955,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -13074,7 +13074,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
 - index: 45
@@ -13107,7 +13107,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
@@ -13226,7 +13226,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - latency_hiding_scheduler
 - index: 62
@@ -13259,7 +13259,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - command_buffer
@@ -13378,7 +13378,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - command_buffer
 - index: 52
@@ -13411,7 +13411,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags:
     - triton_gemm
@@ -13531,7 +13531,7 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags:
       - triton_gemm
       - latency_hiding_scheduler
@@ -13565,7 +13565,7 @@ configs:
     model.upsampler.depth: null
     model.upsampler.width_factor: null
     system.precision: tensorfloat32
-    system.gpu: intel
+    system.gpu: H200
     optimiser.type: nadam
     system.xla_flags: null
     seed: 858303752
@@ -13683,6 +13683,6 @@ configs:
       mode: null
     system:
       precision: tensorfloat32
-      gpu: intel
+      gpu: H200
       xla_flags: null
 emit_files: false
