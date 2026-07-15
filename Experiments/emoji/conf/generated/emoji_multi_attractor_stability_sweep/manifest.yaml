@@ -8,7 +8,7 @@ configs:
 - index: 2
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration
+    logging.wandb.group: stability-and-regeneration-2
     model.family: NCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -205,7 +205,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration
+        group: stability-and-regeneration-2
         tags: null
     knockout:
       time: null
@@ -213,7 +213,7 @@ configs:
 - index: 4
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration
+    logging.wandb.group: stability-and-regeneration-2
     model.family: NCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -410,7 +410,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration
+        group: stability-and-regeneration-2
         tags: null
     knockout:
       time: null
@@ -418,7 +418,7 @@ configs:
 - index: 1
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration
+    logging.wandb.group: stability-and-regeneration-2
     model.family: NCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -615,7 +615,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration
+        group: stability-and-regeneration-2
         tags: null
     knockout:
       time: null
@@ -623,7 +623,7 @@ configs:
 - index: 5
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration
+    logging.wandb.group: stability-and-regeneration-2
     model.family: NCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -820,7 +820,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration
+        group: stability-and-regeneration-2
         tags: null
     knockout:
       time: null
@@ -828,7 +828,7 @@ configs:
 - index: 6
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration
+    logging.wandb.group: stability-and-regeneration-2
     model.family: gNCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -1025,7 +1025,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration
+        group: stability-and-regeneration-2
         tags: null
     knockout:
       time: null
@@ -1033,7 +1033,7 @@ configs:
 - index: 7
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration
+    logging.wandb.group: stability-and-regeneration-2
     model.family: gNCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -1230,7 +1230,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration
+        group: stability-and-regeneration-2
         tags: null
     knockout:
       time: null
@@ -1238,7 +1238,7 @@ configs:
 - index: 0
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration
+    logging.wandb.group: stability-and-regeneration-2
     model.family: gNCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -1435,7 +1435,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration
+        group: stability-and-regeneration-2
         tags: null
     knockout:
       time: null
@@ -1443,7 +1443,7 @@ configs:
 - index: 3
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration
+    logging.wandb.group: stability-and-regeneration-2
     model.family: gNCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -1640,7 +1640,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration
+        group: stability-and-regeneration-2
         tags: null
     knockout:
       time: null
