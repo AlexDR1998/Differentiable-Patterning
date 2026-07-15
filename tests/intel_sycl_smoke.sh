@@ -1,8 +1,49 @@
 #!/usr/bin/env bash
+#SBATCH --job-name=intel-sycl-smoke
+#SBATCH --account=AIRR-P100-DAWN-GPU
+#SBATCH --partition=pvc9
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --gres=gpu:1
+#SBATCH --time=00:10:00
+#SBATCH --mem=8G
+#SBATCH --output=intel-sycl-smoke-%j.out
+#SBATCH --error=intel-sycl-smoke-%j.err
+
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_FILE="${SCRIPT_DIR}/intel_sycl_smoke.cpp"
+ORIGINAL_SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ -z "${SLURM_JOB_ID:-}" ]]; then
+    if ! command -v sbatch >/dev/null 2>&1; then
+        echo "SYCL_SMOKE_RESULT=FAIL_NO_SBATCH" >&2
+        exit 11
+    fi
+    JOB_ID="$(sbatch --parsable \
+        --export=ALL,SYCL_SMOKE_SOURCE_DIR="${ORIGINAL_SCRIPT_DIR}" \
+        "$(realpath "${BASH_SOURCE[0]}")")"
+    echo "Submitted Intel SYCL smoke job ${JOB_ID}"
+    echo "Expected logs in the submission directory:"
+    echo "  intel-sycl-smoke-${JOB_ID}.out"
+    echo "  intel-sycl-smoke-${JOB_ID}.err"
+    exit 0
+fi
+
+if [[ -n "${SYCL_SMOKE_SOURCE_DIR:-}" ]]; then
+    SOURCE_DIR="${SYCL_SMOKE_SOURCE_DIR}"
+elif [[ -f "${SLURM_SUBMIT_DIR:-}/tests/intel_sycl_smoke.cpp" ]]; then
+    SOURCE_DIR="${SLURM_SUBMIT_DIR}/tests"
+else
+    SOURCE_DIR="${ORIGINAL_SCRIPT_DIR}"
+fi
+
+SOURCE_FILE="${SOURCE_DIR}/intel_sycl_smoke.cpp"
+if [[ ! -f "${SOURCE_FILE}" ]]; then
+    echo "SYCL_SMOKE_RESULT=FAIL_SOURCE_NOT_FOUND" >&2
+    echo "Expected source file: ${SOURCE_FILE}" >&2
+    exit 12
+fi
+
 BUILD_ROOT="${SYCL_SMOKE_BUILD_DIR:-${TMPDIR:-/tmp}/differentiable_patterning_sycl_smoke}"
 BUILD_DIR="${BUILD_ROOT}/${SLURM_JOB_ID:-local}_${SLURM_PROCID:-0}"
 BINARY="${BUILD_DIR}/intel_sycl_smoke"
