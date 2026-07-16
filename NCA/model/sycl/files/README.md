@@ -17,4 +17,6 @@ The implementation uses the legacy custom-call ABI required by JAX 0.5.0 and
 Intel Extension for OpenXLA 0.7.0. It is a correctness-oriented implementation,
 not yet an XMX-tiled one. `nca_sycl_backward.cpp` implements the custom VJP for
 the state and trainable pointwise-layer parameters using native SYCL kernels.
-The fixed perception kernels and random update mask are non-trainable.
+Vmapped execution uses one batched backward custom call and emits per-example
+parameter cotangents for JAX to reduce correctly. The fixed perception kernels
+and random update mask are non-trainable.

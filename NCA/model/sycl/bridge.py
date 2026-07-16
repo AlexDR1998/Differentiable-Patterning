@@ -12,7 +12,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import core
-from jax import lax
 from jax.interpreters import batching, mlir
 from jaxlib.hlo_helpers import custom_call
 
@@ -234,6 +233,7 @@ def _backward_abstract_eval(
     *,
     kernel_flags,
     padding,
+    per_example_weights,
 ):
     del bias_output, kernel_flags, padding
     if output_cotangent.shape != state.shape:
@@ -261,11 +261,19 @@ def _backward_abstract_eval(
     )
     if any(value.dtype != np.dtype(np.float32) for value in operands):
         raise TypeError("The baseline NCA SYCL backward call accepts float32 only")
+    if per_example_weights:
+        if state.ndim != 4:
+            raise ValueError(
+                "Per-example NCA SYCL gradients require a batched state"
+            )
+        parameter_prefix = (state.shape[0],)
+    else:
+        parameter_prefix = ()
     return (
         core.ShapedArray(state.shape, dtype),
-        core.ShapedArray(weight_hidden.shape, dtype),
-        core.ShapedArray(weight_output.shape, dtype),
-        core.ShapedArray((state.shape[-3],), dtype),
+        core.ShapedArray((*parameter_prefix, *weight_hidden.shape), dtype),
+        core.ShapedArray((*parameter_prefix, *weight_output.shape), dtype),
+        core.ShapedArray((*parameter_prefix, state.shape[-3]), dtype),
         core.ShapedArray(scratch_shape, dtype),
         core.ShapedArray(scratch_shape, dtype),
     )
@@ -274,7 +282,11 @@ def _backward_abstract_eval(
 _nca_backward_p.def_abstract_eval(_backward_abstract_eval)
 
 
-def _backward_batching_rule(args, dimensions, *, kernel_flags, padding):
+def _backward_batching_rule(
+    args, dimensions, *, kernel_flags, padding, per_example_weights
+):
+    if per_example_weights:
+        raise NotImplementedError("Nested vmap of NCA_sycl backward is unsupported")
     (
         state,
         kernels,
@@ -309,28 +321,20 @@ def _backward_batching_rule(args, dimensions, *, kernel_flags, padding):
     update_mask = batching.moveaxis(update_mask, mask_dim, 0)
     output_cotangent = batching.moveaxis(output_cotangent, cotangent_dim, 0)
 
-    # A vmapped model has shared parameters. Produce one parameter cotangent
-    # per mapped example and let JAX's transpose of vmap perform the required
-    # reduction. Returning an already-reduced gradient here would count the
-    # batch multiple times.
-    def backward_one(mapped_operands):
-        state_value, mask_value, cotangent_value = mapped_operands
-        return tuple(
-            _nca_backward_p.bind(
-                state_value,
-                kernels,
-                weight_hidden,
-                weight_output,
-                bias_output,
-                mask_value,
-                cotangent_value,
-                kernel_flags=kernel_flags,
-                padding=padding,
-            )
-        )
-
-    results = lax.map(
-        backward_one, (state, update_mask, output_cotangent)
+    # Emit one batched custom call, but retain a leading batch dimension on
+    # parameter cotangents. JAX's transpose of vmap then performs the reduction
+    # required for parameters shared by all examples.
+    results = _nca_backward_p.bind(
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        update_mask,
+        output_cotangent,
+        kernel_flags=kernel_flags,
+        padding=padding,
+        per_example_weights=True,
     )
     return results, (0,) * len(results)
 
@@ -338,8 +342,14 @@ def _backward_batching_rule(args, dimensions, *, kernel_flags, padding):
 batching.primitive_batchers[_nca_backward_p] = _backward_batching_rule
 
 
-def _metadata_from_avals(state_aval, weight_hidden_aval, kernels_aval,
-                         kernel_flags, padding):
+def _metadata_from_avals(
+    state_aval,
+    weight_hidden_aval,
+    kernels_aval,
+    kernel_flags,
+    padding,
+    per_example_weights,
+):
     if state_aval.ndim == 3:
         batch = 1
         channels, height, width = state_aval.shape
@@ -351,7 +361,7 @@ def _metadata_from_avals(state_aval, weight_hidden_aval, kernels_aval,
     while workgroup_size < max(features, channels):
         workgroup_size *= 2
     return struct.pack(
-        "=10q",
+        "=11q",
         _METADATA_VERSION,
         batch,
         channels,
@@ -362,13 +372,16 @@ def _metadata_from_avals(state_aval, weight_hidden_aval, kernels_aval,
         int(kernel_flags),
         int(padding),
         workgroup_size,
+        int(per_example_weights),
     )
 
 
-def _backward_lowering(ctx, *operands, kernel_flags, padding):
+def _backward_lowering(
+    ctx, *operands, kernel_flags, padding, per_example_weights
+):
     metadata = _metadata_from_avals(
         ctx.avals_in[0], ctx.avals_in[2], ctx.avals_in[1],
-        kernel_flags, padding
+        kernel_flags, padding, per_example_weights
     )
     operand_layouts = [
         tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_in
@@ -398,6 +411,7 @@ def _bind_native_backward(
     output_cotangent,
     kernel_flags,
     padding,
+    per_example_weights=False,
 ):
     results = _nca_backward_p.bind(
         state,
@@ -409,6 +423,7 @@ def _bind_native_backward(
         output_cotangent,
         kernel_flags=kernel_flags,
         padding=padding,
+        per_example_weights=per_example_weights,
     )
     state_gradient, hidden_gradient, output_gradient, bias_gradient = results[:4]
     return state_gradient, hidden_gradient, output_gradient, bias_gradient

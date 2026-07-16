@@ -32,9 +32,10 @@ struct Metadata {
   std::int64_t kernel_flags;
   std::int64_t padding;
   std::int64_t workgroup_size;
+  std::int64_t per_example_weights;
 };
 
-static_assert(sizeof(Metadata) == 10 * sizeof(std::int64_t));
+static_assert(sizeof(Metadata) == 11 * sizeof(std::int64_t));
 
 inline std::int64_t MapCoordinate(std::int64_t coordinate,
                                   std::int64_t extent,
@@ -178,6 +179,8 @@ bool ValidMetadata(const Metadata& metadata) {
          metadata.channels > 0 && metadata.height > 0 && metadata.width > 0 &&
          metadata.features > 0 && metadata.features <= 256 &&
          metadata.kernel_size > 0 && metadata.kernel_size % 2 == 1 &&
+         (metadata.per_example_weights == 0 ||
+          metadata.per_example_weights == 1) &&
          metadata.workgroup_size >=
              std::max(metadata.features, metadata.channels);
 }
@@ -253,8 +256,12 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
   });
 
   // Reduce output-layer weight and bias gradients across all cells.
-  const std::int64_t output_reduction_groups =
+  const std::int64_t output_groups_per_example =
       metadata.channels * metadata.features + metadata.channels;
+  const std::int64_t output_reduction_groups =
+      metadata.per_example_weights
+          ? metadata.batch * output_groups_per_example
+          : output_groups_per_example;
   queue->submit([&](sycl::handler& handler) {
     sycl::local_accessor<float, 1> reduction(sycl::range<1>(local_size),
                                               handler);
@@ -265,12 +272,25 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
         [=](sycl::nd_item<1> item) {
           const std::int64_t group = item.get_group_linear_id();
           const std::int64_t local = item.get_local_linear_id();
+          const std::int64_t gradient_batch =
+              metadata.per_example_weights ? group / output_groups_per_example
+                                           : -1;
+          const std::int64_t local_group =
+              metadata.per_example_weights ? group % output_groups_per_example
+                                           : group;
+          const std::int64_t reduction_cells =
+              metadata.per_example_weights ? spatial_size : cell_count;
           float sum = 0.0F;
-          if (group < metadata.channels * metadata.features) {
-            const std::int64_t channel = group / metadata.features;
-            const std::int64_t feature = group % metadata.features;
-            for (std::int64_t cell = local; cell < cell_count;
-                 cell += local_size) {
+          if (local_group < metadata.channels * metadata.features) {
+            const std::int64_t channel = local_group / metadata.features;
+            const std::int64_t feature = local_group % metadata.features;
+            for (std::int64_t reduction_cell = local;
+                 reduction_cell < reduction_cells;
+                 reduction_cell += local_size) {
+              const std::int64_t cell = metadata.per_example_weights
+                                            ? gradient_batch * spatial_size +
+                                                  reduction_cell
+                                            : reduction_cell;
               const std::int64_t batch = cell / spatial_size;
               const std::int64_t spatial = cell % spatial_size;
               const std::int64_t y = spatial / metadata.width;
@@ -284,9 +304,14 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
             }
           } else {
             const std::int64_t channel =
-                group - metadata.channels * metadata.features;
-            for (std::int64_t cell = local; cell < cell_count;
-                 cell += local_size) {
+                local_group - metadata.channels * metadata.features;
+            for (std::int64_t reduction_cell = local;
+                 reduction_cell < reduction_cells;
+                 reduction_cell += local_size) {
+              const std::int64_t cell = metadata.per_example_weights
+                                            ? gradient_batch * spatial_size +
+                                                  reduction_cell
+                                            : reduction_cell;
               const std::int64_t batch = cell / spatial_size;
               const std::int64_t spatial = cell % spatial_size;
               const std::int64_t y = spatial / metadata.width;
@@ -303,10 +328,20 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
             item.barrier(sycl::access::fence_space::local_space);
           }
           if (local == 0) {
-            if (group < metadata.channels * metadata.features) {
-              output_weight_gradient[group] = reduction[0];
+            const std::int64_t output_offset =
+                metadata.per_example_weights
+                    ? gradient_batch * metadata.channels * metadata.features
+                    : 0;
+            const std::int64_t bias_offset =
+                metadata.per_example_weights
+                    ? gradient_batch * metadata.channels
+                    : 0;
+            if (local_group < metadata.channels * metadata.features) {
+              output_weight_gradient
+                  [output_offset + local_group] = reduction[0];
             } else {
-              bias_gradient[group - metadata.channels * metadata.features] =
+              bias_gradient[bias_offset + local_group -
+                            metadata.channels * metadata.features] =
                   reduction[0];
             }
           }
@@ -335,8 +370,12 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
       });
 
   // Reduce hidden-layer weight gradients across all cells.
-  const std::int64_t hidden_weight_count =
+  const std::int64_t hidden_weights_per_example =
       metadata.features * metadata.features;
+  const std::int64_t hidden_weight_count =
+      metadata.per_example_weights
+          ? metadata.batch * hidden_weights_per_example
+          : hidden_weights_per_example;
   queue->submit([&](sycl::handler& handler) {
     sycl::local_accessor<float, 1> reduction(sycl::range<1>(local_size),
                                               handler);
@@ -344,13 +383,26 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
         sycl::nd_range<1>(sycl::range<1>(hidden_weight_count * local_size),
                           sycl::range<1>(local_size)),
         [=](sycl::nd_item<1> item) {
-          const std::int64_t weight = item.get_group_linear_id();
+          const std::int64_t group = item.get_group_linear_id();
           const std::int64_t local = item.get_local_linear_id();
+          const std::int64_t gradient_batch =
+              metadata.per_example_weights ? group / hidden_weights_per_example
+                                           : -1;
+          const std::int64_t weight =
+              metadata.per_example_weights ? group % hidden_weights_per_example
+                                           : group;
           const std::int64_t output_feature = weight / metadata.features;
           const std::int64_t input_feature = weight % metadata.features;
+          const std::int64_t reduction_cells =
+              metadata.per_example_weights ? spatial_size : cell_count;
           float sum = 0.0F;
-          for (std::int64_t cell = local; cell < cell_count;
-               cell += local_size) {
+          for (std::int64_t reduction_cell = local;
+               reduction_cell < reduction_cells;
+               reduction_cell += local_size) {
+            const std::int64_t cell = metadata.per_example_weights
+                                          ? gradient_batch * spatial_size +
+                                                reduction_cell
+                                          : reduction_cell;
             const std::int64_t batch = cell / spatial_size;
             const std::int64_t spatial = cell % spatial_size;
             const std::int64_t y = spatial / metadata.width;
@@ -366,7 +418,13 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
             if (local < stride) reduction[local] += reduction[local + stride];
             item.barrier(sycl::access::fence_space::local_space);
           }
-          if (local == 0) hidden_weight_gradient[weight] = reduction[0];
+          if (local == 0) {
+            const std::int64_t output_weight =
+                metadata.per_example_weights
+                    ? gradient_batch * hidden_weights_per_example + weight
+                    : weight;
+            hidden_weight_gradient[output_weight] = reduction[0];
+          }
         });
   });
 

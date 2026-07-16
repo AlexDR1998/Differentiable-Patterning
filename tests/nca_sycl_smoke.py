@@ -86,6 +86,7 @@ def main() -> None:
     print(f"JAX_DEFAULT_BACKEND={jax.default_backend()}")
     print(f"JAX_DEVICES={jax.devices()}")
     print("BACKWARD_IMPLEMENTATION=SYCL_CUSTOM_CALL")
+    print("BACKWARD_BATCHING=SINGLE_CUSTOM_CALL")
     if jax.default_backend() != "sycl":
         raise RuntimeError("NCA SYCL smoke test requires the 'sycl' JAX backend")
 
