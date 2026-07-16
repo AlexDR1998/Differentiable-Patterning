@@ -75,7 +75,10 @@ def _sycl_axpy_lowering(ctx: mlir.LoweringRuleContext, x, y):
         result_types=[mlir.aval_to_ir_type(output_aval)],
         operands=[x, y],
         backend_config=struct.pack("=Q", element_count),
-        api_version=0,
+        # StableHLO/XLA numbers the original custom-call ABI as 1. This is
+        # distinct from register_custom_call_target's api_version=0 above,
+        # where 0 means an untyped registration.
+        api_version=1,
         operand_layouts=[layout, layout],
         result_layouts=[layout],
     )
