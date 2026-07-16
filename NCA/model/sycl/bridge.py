@@ -17,7 +17,7 @@ from jaxlib.hlo_helpers import custom_call
 
 _FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_forward"
 _BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_backward"
-_METADATA_VERSION = 1
+_METADATA_VERSION = 2
 _LIBRARY: ctypes.CDLL | None = None
 _CAPSULES: tuple[object, object] | None = None
 _REGISTERED = False
@@ -87,6 +87,7 @@ def _register_custom_call() -> None:
 
 
 _nca_forward_p = core.Primitive("nca_sycl_forward")
+_nca_forward_p.multiple_results = True
 
 
 def _abstract_eval(
@@ -142,7 +143,15 @@ def _abstract_eval(
     operands = (state, kernels, weight_hidden, weight_output, bias_output, update_mask)
     if any(value.dtype != np.dtype(np.float32) for value in operands):
         raise TypeError("The baseline NCA SYCL custom call accepts float32 only")
-    return core.ShapedArray(state.shape, state.dtype)
+    if state.ndim == 3:
+        scratch_shape = (features, *state.shape[-2:])
+    else:
+        scratch_shape = (state.shape[0], features, *state.shape[-2:])
+    return (
+        core.ShapedArray(state.shape, state.dtype),
+        core.ShapedArray(scratch_shape, state.dtype),
+        core.ShapedArray(scratch_shape, state.dtype),
+    )
 
 
 _nca_forward_p.def_abstract_eval(_abstract_eval)
@@ -177,10 +186,12 @@ def _lowering(ctx, *operands, kernel_flags, padding):
     operand_layouts = [
         tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_in
     ]
-    output_layout = tuple(range(state_aval.ndim - 1, -1, -1))
+    result_layouts = [
+        tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_out
+    ]
     operation = custom_call(
         _FORWARD_TARGET_NAME,
-        result_types=[mlir.aval_to_ir_type(ctx.avals_out[0])],
+        result_types=[mlir.aval_to_ir_type(aval) for aval in ctx.avals_out],
         operands=operands,
         backend_config=metadata,
         # StableHLO/XLA's API_VERSION_ORIGINAL enum value is 1. Registration
@@ -188,7 +199,7 @@ def _lowering(ctx, *operands, kernel_flags, padding):
         # 0 to distinguish an untyped target from typed FFI.
         api_version=1,
         operand_layouts=operand_layouts,
-        result_layouts=[output_layout],
+        result_layouts=result_layouts,
     )
     return operation.results
 
@@ -202,7 +213,7 @@ def _batching_rule(args, dimensions, *, kernel_flags, padding):
         raise ValueError("state and update mask must be batched together")
     state = batching.moveaxis(state, state_dim, 0)
     update_mask = batching.moveaxis(update_mask, mask_dim, 0)
-    result = _nca_forward_p.bind(
+    results = _nca_forward_p.bind(
         state,
         kernels,
         weight_hidden,
@@ -212,7 +223,7 @@ def _batching_rule(args, dimensions, *, kernel_flags, padding):
         kernel_flags=kernel_flags,
         padding=padding,
     )
-    return result, 0
+    return results, (0, 0, 0)
 
 
 batching.primitive_batchers[_nca_forward_p] = _batching_rule
@@ -439,7 +450,7 @@ def _bind_native_forward(
     kernel_flags,
     padding,
 ):
-    return _nca_forward_p.bind(
+    results = _nca_forward_p.bind(
         state,
         kernels,
         weight_hidden,
@@ -449,6 +460,7 @@ def _bind_native_forward(
         kernel_flags=kernel_flags,
         padding=padding,
     )
+    return results[0]
 
 
 @partial(jax.custom_vjp, nondiff_argnums=(6, 7))

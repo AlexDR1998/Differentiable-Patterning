@@ -81,12 +81,16 @@ def _make_models(key):
 
 
 def main() -> None:
-    print("NCA_SYCL_SMOKE_VERSION=1")
+    print("NCA_SYCL_SMOKE_VERSION=2")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEFAULT_BACKEND={jax.default_backend()}")
     print(f"JAX_DEVICES={jax.devices()}")
     print("BACKWARD_IMPLEMENTATION=SYCL_CUSTOM_CALL")
     print("BACKWARD_BATCHING=SINGLE_CUSTOM_CALL")
+    print("FORWARD_DENSE_TILING=16X16_FP32")
+    print("PERCEPTION_SPATIAL_TILING=8X16_SLM")
+    print("BACKWARD_DENSE_TILING=16X16_FP32")
+    print("CIRCULAR_BACKWARD_STENCIL=ATOMIC_FREE_GATHER")
     if jax.default_backend() != "sycl":
         raise RuntimeError("NCA SYCL smoke test requires the 'sycl' JAX backend")
 

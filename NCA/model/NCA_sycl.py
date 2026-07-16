@@ -82,8 +82,8 @@ class NCA(FastNCA):
         if flags == 0:
             raise ValueError("NCA_sycl requires at least one perception kernel")
 
-        # The baseline kernel uses two feature-sized arrays in workgroup-local
-        # memory and one work-item per feature/channel.
+        # The tiled FP32 kernels currently keep this cap to bound generated
+        # code and scratch-buffer sizes. Multiples of 16 use the fast path.
         if self.N_FEATURES > 256:
             raise NotImplementedError(
                 "The baseline SYCL kernel supports at most 256 features; "

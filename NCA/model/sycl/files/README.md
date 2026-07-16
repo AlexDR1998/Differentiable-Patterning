@@ -9,14 +9,20 @@ NCA/model/sycl/files/build_nca_sycl.sh /tmp/libnca_sycl.so
 export NCA_SYCL_LIBRARY=/tmp/libnca_sycl.so
 ```
 
-`nca_sycl.cpp` currently implements the float32 baseline NCA forward update
+`nca_sycl.cpp` currently implements the float32 NCA forward update
 with ID, gradient norm, gradient, average, and Laplacian perception features;
 ReLU; all existing padding modes; the fire-rate mask; and the residual update.
 
 The implementation uses the legacy custom-call ABI required by JAX 0.5.0 and
-Intel Extension for OpenXLA 0.7.0. It is a correctness-oriented implementation,
-not yet an XMX-tiled one. `nca_sycl_backward.cpp` implements the custom VJP for
-the state and trainable pointwise-layer parameters using native SYCL kernels.
+Intel Extension for OpenXLA 0.7.0. Perception uses an 8x16 spatial tile with a
+halo in shared local memory. Pointwise layers and their backward matrix
+products use exact-FP32 16x16 tiles; channel and feature dimensions divisible
+by 16 are the intended fast path. XMX is deliberately not enabled here because
+Max-series XMX floating-point modes require TF32, BF16, or FP16 operands.
+`nca_sycl_backward.cpp` implements the custom VJP for the state and trainable
+pointwise-layer parameters using native SYCL kernels. Circular and zero-padding
+stencil transposes use a deterministic gather instead of global atomics;
+reflect and replicate padding retain a correctness fallback using atomics.
 Vmapped execution uses one batched backward custom call and emits per-example
 parameter cotangents for JAX to reduce correctly. The fixed perception kernels
 and random update mask are non-trainable.
