@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import time
+import os
 
 import equinox as eqx
 import jax
@@ -20,8 +21,10 @@ WIDTH = 16
 BATCH = 2
 KERNEL_STR = ["ID", "LAP", "DIFF"]
 FIRE_RATE = 0.5
-RTOL = 2.0e-4
-ATOL = 2.0e-5
+# BF16 XMX multiplies accumulate into FP32. These bounds detect structural
+# gradient errors while allowing the intended operand-rounding difference.
+RTOL = 2.0e-2
+ATOL = 2.0e-3
 
 
 def _max_absolute_error(actual, expected) -> float:
@@ -81,16 +84,23 @@ def _make_models(key):
 
 
 def main() -> None:
+    os.environ.setdefault("NCA_SYCL_XMX_MODE", "bf16")
     print("NCA_SYCL_SMOKE_VERSION=2")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEFAULT_BACKEND={jax.default_backend()}")
     print(f"JAX_DEVICES={jax.devices()}")
     print("BACKWARD_IMPLEMENTATION=SYCL_CUSTOM_CALL")
     print("BACKWARD_BATCHING=SINGLE_CUSTOM_CALL")
-    print("FORWARD_DENSE_TILING=16X16_FP32")
+    print("FORWARD_DENSE_IMPLEMENTATION=ONEMKL_GEMM")
     print("PERCEPTION_SPATIAL_TILING=8X16_SLM")
-    print("BACKWARD_DENSE_TILING=16X16_FP32")
-    print("CIRCULAR_BACKWARD_STENCIL=ATOMIC_FREE_GATHER")
+    print("BACKWARD_DENSE_IMPLEMENTATION=ONEMKL_GEMM")
+    print("CIRCULAR_DIFF_BACKWARD_STENCIL=SINGLE_RECOMPUTE_ATOMIC_SCATTER")
+    print(
+        "NCA_SYCL_XMX_MODE="
+        f"{os.environ.get('NCA_SYCL_XMX_MODE', str(jax.config.jax_default_matmul_precision))}"
+    )
+    print("DENSE_IMPLEMENTATION=ONEMKL_XMX_COMPUTE_MODE")
+    print(f"NUMERICAL_TOLERANCE=rtol:{RTOL},atol:{ATOL}")
     if jax.default_backend() != "sycl":
         raise RuntimeError("NCA SYCL smoke test requires the 'sycl' JAX backend")
 

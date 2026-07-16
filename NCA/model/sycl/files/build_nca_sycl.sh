@@ -19,6 +19,7 @@ set -x
 "${SYCL_CXX}" \
     -fsycl \
     -O3 \
+    -qmkl=sequential \
     -std=c++17 \
     -fPIC \
     -shared \

@@ -51,6 +51,7 @@ set -u
 BUILD_ROOT="${NCA_SYCL_SMOKE_BUILD_DIR:-${TMPDIR:-/tmp}/differentiable_patterning_nca_sycl_smoke}"
 BUILD_DIR="${BUILD_ROOT}/${SLURM_JOB_ID}_${SLURM_PROCID:-0}"
 export NCA_SYCL_LIBRARY="${BUILD_DIR}/libnca_sycl.so"
+export MKL_VERBOSE="${MKL_VERBOSE:-1}"
 mkdir -p "${BUILD_DIR}"
 
 echo "REPO_ROOT=${REPO_ROOT}"

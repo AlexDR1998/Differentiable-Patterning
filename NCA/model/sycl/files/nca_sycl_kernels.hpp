@@ -6,7 +6,7 @@
 
 namespace nca_sycl {
 
-constexpr std::int64_t kMetadataVersion = 2;
+constexpr std::int64_t kMetadataVersion = 3;
 constexpr std::int64_t kIdFlag = 1 << 0;
 constexpr std::int64_t kDiffFlag = 1 << 1;
 constexpr std::int64_t kGradFlag = 1 << 2;
@@ -191,11 +191,10 @@ inline void SubmitPerceptionImpl(sycl::queue& queue, const float* state,
 
           const std::int64_t spatial = y * shape.width + x;
           const std::int64_t spatial_size = shape.height * shape.width;
+          const std::int64_t cell = batch * spatial_size + spatial;
           std::int64_t feature = 0;
           auto store = [&](float value) {
-            perception[(batch * shape.features + feature + channel) *
-                           spatial_size +
-                       spatial] = value;
+            perception[cell * shape.features + feature + channel] = value;
             feature += shape.channels;
           };
           if (shape.kernel_flags & kIdFlag) {
@@ -227,6 +226,7 @@ inline void SubmitPerception(sycl::queue& queue, const float* state,
   }
 }
 
+#if 0  // Superseded by oneMKL XMX GEMMs; retained temporarily for comparison.
 template <bool FeatureAligned>
 inline void SubmitHiddenImpl(sycl::queue& queue, const float* perception,
                              const float* weight_hidden, float* hidden,
@@ -364,5 +364,6 @@ inline void SubmitOutput(sycl::queue& queue, const float* state,
                                    bias_output, update_mask, output, shape);
   }
 }
+#endif
 
 }  // namespace nca_sycl

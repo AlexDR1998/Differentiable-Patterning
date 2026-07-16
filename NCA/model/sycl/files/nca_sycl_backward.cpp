@@ -1,4 +1,5 @@
 #include "nca_sycl_kernels.hpp"
+#include "nca_sycl_onemkl.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -19,9 +20,10 @@ struct Metadata {
   std::int64_t padding;
   std::int64_t workgroup_size;
   std::int64_t per_example_weights;
+  std::int64_t xmx_mode;
 };
 
-static_assert(sizeof(Metadata) == 11 * sizeof(std::int64_t));
+static_assert(sizeof(Metadata) == 12 * sizeof(std::int64_t));
 
 bool ValidMetadata(const Metadata& metadata) {
   return metadata.version == nca_sycl::kMetadataVersion &&
@@ -74,6 +76,7 @@ inline void ScatterFilterGradient(float* state_gradient, const float* kernels,
   }
 }
 
+#if 0  // Superseded by the oneMKL XMX backward path.
 void SubmitOutputWeightAndBiasGradients(
     sycl::queue& queue, const float* hidden, const float* update_mask,
     const float* output_cotangent, float* output_weight_gradient,
@@ -357,6 +360,7 @@ void SubmitPerceptionGradient(sycl::queue& queue, const float* weight_hidden,
         });
   });
 }
+#endif
 
 void SubmitGatheredStateGradient(
     sycl::queue& queue, const float* state, const float* kernels,
@@ -377,8 +381,9 @@ void SubmitGatheredStateGradient(
 
     auto gradient_at = [&](std::int64_t feature, std::int64_t yy,
                            std::int64_t xx) {
-      return perception_gradient[nca_sycl::TensorIndex(
-          batch, feature, yy, xx, shape.features, shape)];
+      const std::int64_t source_cell =
+          batch * spatial_size + yy * shape.width + xx;
+      return perception_gradient[source_cell * shape.features + feature];
     };
     if (shape.kernel_flags & nca_sycl::kIdFlag) {
       value += gradient_at(feature_offset + channel, y, x);
@@ -465,8 +470,8 @@ void SubmitAtomicStateGradientFallback(
     const std::int64_t x = spatial % shape.width;
     std::int64_t feature = 0;
     auto gradient = [&](std::int64_t index) {
-      return perception_gradient[nca_sycl::TensorIndex(
-          batch, index, y, x, shape.features, shape)];
+      const std::int64_t cell = batch * spatial_size + spatial;
+      return perception_gradient[cell * shape.features + index];
     };
     if (shape.kernel_flags & nca_sycl::kIdFlag) {
       AtomicAdd(state_gradient + linear, gradient(feature + channel));
@@ -507,10 +512,85 @@ void SubmitAtomicStateGradientFallback(
   });
 }
 
+void SubmitDeltaGradient(sycl::queue& queue, const float* update_mask,
+                         const float* output_cotangent, float* delta_gradient,
+                         const nca_sycl::Shape& shape) {
+  const std::int64_t spatial_size = shape.height * shape.width;
+  const std::int64_t cells = shape.batch * spatial_size;
+  queue.parallel_for(
+      sycl::range<1>(cells * shape.channels), [=](sycl::id<1> id) {
+        const std::int64_t linear = id[0];
+        const std::int64_t channel = linear % shape.channels;
+        const std::int64_t cell = linear / shape.channels;
+        const std::int64_t batch = cell / spatial_size;
+        const std::int64_t spatial = cell % spatial_size;
+        const std::int64_t state_index =
+            (batch * shape.channels + channel) * spatial_size + spatial;
+        delta_gradient[linear] =
+            output_cotangent[state_index] * update_mask[state_index];
+      });
+}
+
+void SubmitBiasGradient(sycl::queue& queue, const float* delta_gradient,
+                        float* bias_gradient,
+                        const nca_sycl::Shape& shape,
+                        bool per_example_weights,
+                        std::size_t local_size) {
+  const std::int64_t spatial_size = shape.height * shape.width;
+  const std::int64_t gradient_batches =
+      per_example_weights ? shape.batch : 1;
+  queue.submit([&](sycl::handler& handler) {
+    sycl::local_accessor<float, 1> reduction(sycl::range<1>(local_size),
+                                              handler);
+    handler.parallel_for(
+        sycl::nd_range<1>(
+            sycl::range<1>(gradient_batches * shape.channels * local_size),
+            sycl::range<1>(local_size)),
+        [=](sycl::nd_item<1> item) {
+          const std::int64_t group = item.get_group_linear_id();
+          const std::int64_t local = item.get_local_linear_id();
+          const std::int64_t gradient_batch = group / shape.channels;
+          const std::int64_t channel = group % shape.channels;
+          const std::int64_t reduction_cells =
+              per_example_weights ? spatial_size
+                                  : shape.batch * spatial_size;
+          const std::int64_t cell_offset =
+              per_example_weights ? gradient_batch * spatial_size : 0;
+          float value = 0.0F;
+          for (std::int64_t cell = local; cell < reduction_cells;
+               cell += local_size) {
+            value += delta_gradient[(cell_offset + cell) * shape.channels +
+                                    channel];
+          }
+          reduction[local] = value;
+          item.barrier(sycl::access::fence_space::local_space);
+          for (std::int64_t stride = local_size / 2; stride > 0;
+               stride /= 2) {
+            if (local < stride) reduction[local] += reduction[local + stride];
+            item.barrier(sycl::access::fence_space::local_space);
+          }
+          if (local == 0) {
+            const std::int64_t offset =
+                per_example_weights ? gradient_batch * shape.channels : 0;
+            bias_gradient[offset + channel] = reduction[0];
+          }
+        });
+  });
+}
+
+void ApplyReluGradient(sycl::queue& queue, const float* activated_hidden,
+                       float* hidden_gradient,
+                       std::int64_t element_count) {
+  queue.parallel_for(sycl::range<1>(element_count), [=](sycl::id<1> id) {
+    const std::int64_t index = id[0];
+    if (activated_hidden[index] <= 0.0F) hidden_gradient[index] = 0.0F;
+  });
+}
+
 }  // namespace
 
 // Operands: state, kernels, W0, W1, bias, mask, output cotangent.
-// Results: d_state, d_W0, d_W1, d_bias, perception scratch, hidden scratch.
+// Results: d_state, d_W0, d_W1, d_bias, perception, hidden, and dHidden.
 extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
                                   const char* opaque,
                                   std::size_t opaque_len) {
@@ -534,6 +614,7 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
   auto* bias_gradient = static_cast<float*>(buffers[10]);
   auto* perception = static_cast<float*>(buffers[11]);
   auto* hidden = static_cast<float*>(buffers[12]);
+  auto* hidden_gradient = static_cast<float*>(buffers[13]);
 
   const nca_sycl::Shape shape{
       metadata.batch,       metadata.channels, metadata.height,
@@ -543,21 +624,95 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
   const bool per_example_weights = metadata.per_example_weights != 0;
   const std::size_t reduction_local_size =
       static_cast<std::size_t>(metadata.workgroup_size);
+  const std::int64_t spatial_size = metadata.height * metadata.width;
+  const std::int64_t cells = metadata.batch * spatial_size;
 
   nca_sycl::SubmitPerception(*queue, state, kernels, perception, shape);
-  nca_sycl::SubmitHidden(*queue, perception, weight_hidden, hidden, shape);
-  SubmitOutputWeightAndBiasGradients(
-      *queue, hidden, update_mask, output_cotangent, output_weight_gradient,
-      bias_gradient, shape, per_example_weights, reduction_local_size);
-  SubmitHiddenGradient(*queue, weight_output, update_mask, output_cotangent,
-                       hidden, shape);
-  SubmitHiddenWeightGradients(*queue, hidden, perception,
-                              hidden_weight_gradient, shape,
-                              per_example_weights);
-  SubmitPerceptionGradient(*queue, weight_hidden, hidden, perception, shape);
+  nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
+                 oneapi::mkl::transpose::trans, cells, metadata.features,
+                 metadata.features, perception, metadata.features,
+                 weight_hidden, metadata.features, hidden, metadata.features,
+                 metadata.xmx_mode);
+  queue->parallel_for(sycl::range<1>(cells * metadata.features),
+                      [=](sycl::id<1> id) {
+                        const std::int64_t index = id[0];
+                        hidden[index] =
+                            hidden[index] > 0.0F ? hidden[index] : 0.0F;
+                      });
 
-  if (shape.padding == nca_sycl::Padding::kCircular ||
-      shape.padding == nca_sycl::Padding::kZeros) {
+  // dDelta is packed directly into cell-major form in dState's result buffer.
+  // That buffer is overwritten with the final state gradient after every GEMM
+  // consuming dDelta has completed.
+  SubmitDeltaGradient(*queue, update_mask, output_cotangent, state_gradient,
+                      shape);
+  SubmitBiasGradient(*queue, state_gradient, bias_gradient, shape,
+                     per_example_weights, reduction_local_size);
+
+  auto output_weight_gemm = [&](std::int64_t batch, std::int64_t count) {
+    const std::int64_t cell_offset = batch * spatial_size;
+    const std::int64_t output_offset =
+        per_example_weights ? batch * metadata.channels * metadata.features : 0;
+    nca_sycl::Gemm(
+        *queue, oneapi::mkl::transpose::trans,
+        oneapi::mkl::transpose::nontrans, metadata.channels,
+        metadata.features, count,
+        state_gradient + cell_offset * metadata.channels, metadata.channels,
+        hidden + cell_offset * metadata.features, metadata.features,
+        output_weight_gradient + output_offset, metadata.features,
+        metadata.xmx_mode);
+  };
+  if (per_example_weights) {
+    for (std::int64_t batch = 0; batch < metadata.batch; ++batch) {
+      output_weight_gemm(batch, spatial_size);
+    }
+  } else {
+    output_weight_gemm(0, cells);
+  }
+
+  nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
+                 oneapi::mkl::transpose::nontrans, cells, metadata.features,
+                 metadata.channels, state_gradient, metadata.channels,
+                 weight_output, metadata.features, hidden_gradient,
+                 metadata.features, metadata.xmx_mode);
+  ApplyReluGradient(*queue, hidden, hidden_gradient,
+                    cells * metadata.features);
+
+  auto hidden_weight_gemm = [&](std::int64_t batch, std::int64_t count) {
+    const std::int64_t cell_offset = batch * spatial_size;
+    const std::int64_t output_offset =
+        per_example_weights ? batch * metadata.features * metadata.features : 0;
+    nca_sycl::Gemm(
+        *queue, oneapi::mkl::transpose::trans,
+        oneapi::mkl::transpose::nontrans, metadata.features,
+        metadata.features, count,
+        hidden_gradient + cell_offset * metadata.features, metadata.features,
+        perception + cell_offset * metadata.features, metadata.features,
+        hidden_weight_gradient + output_offset, metadata.features,
+        metadata.xmx_mode);
+  };
+  if (per_example_weights) {
+    for (std::int64_t batch = 0; batch < metadata.batch; ++batch) {
+      hidden_weight_gemm(batch, spatial_size);
+    }
+  } else {
+    hidden_weight_gemm(0, cells);
+  }
+
+  nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
+                 oneapi::mkl::transpose::nontrans, cells, metadata.features,
+                 metadata.features, hidden_gradient, metadata.features,
+                 weight_hidden, metadata.features, perception,
+                 metadata.features, metadata.xmx_mode);
+
+  const bool gather_padding =
+      shape.padding == nca_sycl::Padding::kCircular ||
+      shape.padding == nca_sycl::Padding::kZeros;
+  // DIFF's nonlinear transpose needs gx and gy at every source cell. The
+  // gather formulation would recompute both 3x3 filters once per tap, so the
+  // single-recompute atomic scatter is faster until those derivatives are
+  // explicitly cached. Linear stencils retain the deterministic gather.
+  if (gather_padding &&
+      (shape.kernel_flags & nca_sycl::kDiffFlag) == 0) {
     SubmitGatheredStateGradient(*queue, state, kernels, perception,
                                 output_cotangent, state_gradient, shape);
   } else {

@@ -17,7 +17,7 @@ from jaxlib.hlo_helpers import custom_call
 
 _FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_forward"
 _BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_backward"
-_METADATA_VERSION = 2
+_METADATA_VERSION = 3
 _LIBRARY: ctypes.CDLL | None = None
 _CAPSULES: tuple[object, object] | None = None
 _REGISTERED = False
@@ -30,6 +30,34 @@ def _default_library_path() -> pathlib.Path:
 def _library_path() -> pathlib.Path:
     configured = os.environ.get("NCA_SYCL_LIBRARY")
     return pathlib.Path(configured).expanduser() if configured else _default_library_path()
+
+
+def _xmx_mode() -> int:
+    """Map the sweep's JAX precision setting onto a oneMKL XMX mode."""
+    override = os.environ.get("NCA_SYCL_XMX_MODE")
+    precision = (
+        override
+        if override is not None
+        else str(jax.config.jax_default_matmul_precision)
+    ).lower()
+    modes = {
+        "highest": 0,
+        "none": 0,
+        "float32": 0,
+        "standard": 0,
+        "tensorfloat32": 1,
+        "tf32": 1,
+        "bfloat16": 2,
+        "bf16": 2,
+        "bf16x2": 3,
+        "bf16x3": 4,
+    }
+    try:
+        return modes[precision]
+    except KeyError as exc:
+        raise ValueError(
+            f"Unsupported NCA_SYCL_XMX_MODE/matmul precision: {precision!r}"
+        ) from exc
 
 
 def _register_custom_call() -> None:
@@ -151,6 +179,7 @@ def _abstract_eval(
         core.ShapedArray(state.shape, state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
+        core.ShapedArray(state.shape, state.dtype),
     )
 
 
@@ -171,7 +200,7 @@ def _lowering(ctx, *operands, kernel_flags, padding):
         workgroup_size *= 2
 
     metadata = struct.pack(
-        "=10q",
+        "=11q",
         _METADATA_VERSION,
         batch,
         channels,
@@ -182,6 +211,7 @@ def _lowering(ctx, *operands, kernel_flags, padding):
         int(kernel_flags),
         int(padding),
         workgroup_size,
+        _xmx_mode(),
     )
     operand_layouts = [
         tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_in
@@ -223,7 +253,7 @@ def _batching_rule(args, dimensions, *, kernel_flags, padding):
         kernel_flags=kernel_flags,
         padding=padding,
     )
-    return results, (0, 0, 0)
+    return results, (0, 0, 0, 0)
 
 
 batching.primitive_batchers[_nca_forward_p] = _batching_rule
@@ -285,6 +315,7 @@ def _backward_abstract_eval(
         core.ShapedArray((*parameter_prefix, *weight_hidden.shape), dtype),
         core.ShapedArray((*parameter_prefix, *weight_output.shape), dtype),
         core.ShapedArray((*parameter_prefix, state.shape[-3]), dtype),
+        core.ShapedArray(scratch_shape, dtype),
         core.ShapedArray(scratch_shape, dtype),
         core.ShapedArray(scratch_shape, dtype),
     )
@@ -372,7 +403,7 @@ def _metadata_from_avals(
     while workgroup_size < max(features, channels):
         workgroup_size *= 2
     return struct.pack(
-        "=11q",
+        "=12q",
         _METADATA_VERSION,
         batch,
         channels,
@@ -384,6 +415,7 @@ def _metadata_from_avals(
         int(padding),
         workgroup_size,
         int(per_example_weights),
+        _xmx_mode(),
     )
 
 

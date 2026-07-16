@@ -1,4 +1,5 @@
 #include "nca_sycl_kernels.hpp"
+#include "nca_sycl_onemkl.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -18,9 +19,10 @@ struct Metadata {
   std::int64_t kernel_flags;
   std::int64_t padding;
   std::int64_t workgroup_size;
+  std::int64_t xmx_mode;
 };
 
-static_assert(sizeof(Metadata) == 10 * sizeof(std::int64_t));
+static_assert(sizeof(Metadata) == 11 * sizeof(std::int64_t));
 
 bool ValidMetadata(const Metadata& metadata) {
   return metadata.version == nca_sycl::kMetadataVersion &&
@@ -34,7 +36,7 @@ bool ValidMetadata(const Metadata& metadata) {
 }  // namespace
 
 // Intel Extension for OpenXLA 0.7.0 legacy custom-call ABI. Buffers are the
-// six operands followed by output, perception scratch, and hidden scratch.
+// six operands followed by output, perception, hidden, and delta scratch.
 extern "C" void nca_sycl_forward(sycl::queue* queue, void** buffers,
                                  const char* opaque,
                                  std::size_t opaque_len) {
@@ -56,6 +58,7 @@ extern "C" void nca_sycl_forward(sycl::queue* queue, void** buffers,
   auto* output = static_cast<float*>(buffers[6]);
   auto* perception = static_cast<float*>(buffers[7]);
   auto* hidden = static_cast<float*>(buffers[8]);
+  auto* delta = static_cast<float*>(buffers[9]);
 
   const nca_sycl::Shape shape{
       metadata.batch,       metadata.channels, metadata.height,
@@ -63,11 +66,40 @@ extern "C" void nca_sycl_forward(sycl::queue* queue, void** buffers,
       metadata.kernel_flags,
       static_cast<nca_sycl::Padding>(metadata.padding)};
 
-  // The state is spatially tiled through SLM. The two pointwise layers are
-  // exact-FP32 16x16 tiled matrix products; dimensions that are multiples of
-  // 16 avoid all edge lanes and are the intended fast path.
+  const std::int64_t cells =
+      metadata.batch * metadata.height * metadata.width;
   nca_sycl::SubmitPerception(*queue, state, kernels, perception, shape);
-  nca_sycl::SubmitHidden(*queue, perception, weight_hidden, hidden, shape);
-  nca_sycl::SubmitOutput(*queue, state, hidden, weight_output, bias_output,
-                         update_mask, output, shape);
+  nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
+                 oneapi::mkl::transpose::trans, cells, metadata.features,
+                 metadata.features, perception, metadata.features,
+                 weight_hidden, metadata.features, hidden, metadata.features,
+                 metadata.xmx_mode);
+  queue->parallel_for(sycl::range<1>(cells * metadata.features),
+                      [=](sycl::id<1> id) {
+                        const std::int64_t index = id[0];
+                        hidden[index] =
+                            hidden[index] > 0.0F ? hidden[index] : 0.0F;
+                      });
+  nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
+                 oneapi::mkl::transpose::trans, cells, metadata.channels,
+                 metadata.features, hidden, metadata.features, weight_output,
+                 metadata.features, delta, metadata.channels,
+                 metadata.xmx_mode);
+  // Fuse bias, fire mask, residual update, and the cell-major to NCHW layout
+  // conversion into one epilogue.
+  queue->parallel_for(
+      sycl::range<1>(cells * metadata.channels), [=](sycl::id<1> id) {
+        const std::int64_t linear = id[0];
+        const std::int64_t channel = linear % metadata.channels;
+        const std::int64_t cell = linear / metadata.channels;
+        const std::int64_t spatial_size = metadata.height * metadata.width;
+        const std::int64_t batch = cell / spatial_size;
+        const std::int64_t spatial = cell % spatial_size;
+        const std::int64_t state_index =
+            (batch * metadata.channels + channel) * spatial_size + spatial;
+        output[state_index] =
+            state[state_index] +
+            update_mask[state_index] *
+                (delta[linear] + bias_output[channel]);
+      });
 }
