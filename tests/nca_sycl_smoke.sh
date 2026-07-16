@@ -64,4 +64,4 @@ echo "NCA_SYCL_COMPILE_RESULT=PASS"
 
 cd "${REPO_ROOT}"
 PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}" \
-    python "${PYTHON_TEST}"
+    python -u "${PYTHON_TEST}"

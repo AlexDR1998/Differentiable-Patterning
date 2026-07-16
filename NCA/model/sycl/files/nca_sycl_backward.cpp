@@ -99,7 +99,7 @@ void SubmitOutputWeightAndBiasGradients(
                 nca_sycl::RoundUp(shape.features, nca_sycl::kDenseTile)),
             sycl::range<3>(1, nca_sycl::kDenseTile,
                            nca_sycl::kDenseTile)),
-        [=](sycl::nd_item<3> item) [[intel::reqd_sub_group_size(16)]] {
+        [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(16)]] {
           const std::int64_t gradient_batch = item.get_global_id(0);
           const std::int64_t channel = item.get_global_id(1);
           const std::int64_t feature = item.get_global_id(2);
@@ -198,7 +198,7 @@ void SubmitHiddenGradient(sycl::queue& queue, const float* weight_output,
                 nca_sycl::RoundUp(cells, nca_sycl::kDenseTile)),
             sycl::range<2>(nca_sycl::kDenseTile,
                            nca_sycl::kDenseTile)),
-        [=](sycl::nd_item<2> item) [[intel::reqd_sub_group_size(16)]] {
+        [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(16)]] {
           const std::int64_t feature = item.get_global_id(0);
           const std::int64_t cell = item.get_global_id(1);
           const std::int64_t local_row = item.get_local_id(0);
@@ -256,7 +256,7 @@ void SubmitHiddenWeightGradients(
                 nca_sycl::RoundUp(shape.features, nca_sycl::kDenseTile)),
             sycl::range<3>(1, nca_sycl::kDenseTile,
                            nca_sycl::kDenseTile)),
-        [=](sycl::nd_item<3> item) [[intel::reqd_sub_group_size(16)]] {
+        [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(16)]] {
           const std::int64_t gradient_batch = item.get_global_id(0);
           const std::int64_t output_feature = item.get_global_id(1);
           const std::int64_t input_feature = item.get_global_id(2);
@@ -322,7 +322,7 @@ void SubmitPerceptionGradient(sycl::queue& queue, const float* weight_hidden,
                 nca_sycl::RoundUp(cells, nca_sycl::kDenseTile)),
             sycl::range<2>(nca_sycl::kDenseTile,
                            nca_sycl::kDenseTile)),
-        [=](sycl::nd_item<2> item) [[intel::reqd_sub_group_size(16)]] {
+        [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(16)]] {
           const std::int64_t input_feature = item.get_global_id(0);
           const std::int64_t cell = item.get_global_id(1);
           const std::int64_t local_row = item.get_local_id(0);

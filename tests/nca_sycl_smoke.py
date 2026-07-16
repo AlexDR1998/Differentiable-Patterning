@@ -105,11 +105,13 @@ def main() -> None:
     fast_forward = eqx.filter_jit(_batched_outputs)
     sycl_forward = eqx.filter_jit(_batched_outputs)
 
+    print("PHASE=JAX_REFERENCE_FORWARD", flush=True)
     start = time.perf_counter()
     expected = fast_forward(fast_model, states, keys)
     expected.block_until_ready()
     print(f"JAX_REFERENCE_FORWARD_COMPILE_EXECUTE_SECONDS={time.perf_counter() - start}")
 
+    print("PHASE=SYCL_FORWARD", flush=True)
     start = time.perf_counter()
     actual = sycl_forward(sycl_model, states, keys)
     actual.block_until_ready()
@@ -120,6 +122,7 @@ def main() -> None:
     value_and_grad = eqx.filter_jit(
         eqx.filter_value_and_grad(_joint_loss, has_aux=True)
     )
+    print("PHASE=JAX_REFERENCE_BACKWARD", flush=True)
     start = time.perf_counter()
     (expected_loss, _), (expected_gradients, expected_state_gradient) = (
         value_and_grad((fast_model, states), keys)
@@ -138,6 +141,7 @@ def main() -> None:
         f"{time.perf_counter() - start}"
     )
 
+    print("PHASE=SYCL_BACKWARD", flush=True)
     start = time.perf_counter()
     (actual_loss, _), (actual_gradients, actual_state_gradient) = value_and_grad(
         (sycl_model, states), keys

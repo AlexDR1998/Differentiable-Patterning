@@ -133,7 +133,7 @@ inline void SubmitPerceptionImpl(sycl::queue& queue, const float* state,
         sycl::nd_range<1>(
             sycl::range<1>(group_count * kSpatialTileY * kSpatialTileX),
             sycl::range<1>(kSpatialTileY * kSpatialTileX)),
-        [=](sycl::nd_item<1> item) [[intel::reqd_sub_group_size(16)]] {
+        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(16)]] {
           const std::int64_t local = item.get_local_linear_id();
           std::int64_t group = item.get_group_linear_id();
           const std::int64_t tile_x = group % tile_cols;
@@ -242,7 +242,7 @@ inline void SubmitHiddenImpl(sycl::queue& queue, const float* perception,
             sycl::range<2>(RoundUp(shape.features, kDenseTile),
                            RoundUp(cells, kDenseTile)),
             sycl::range<2>(kDenseTile, kDenseTile)),
-        [=](sycl::nd_item<2> item) [[intel::reqd_sub_group_size(16)]] {
+        [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(16)]] {
           const std::int64_t row = item.get_global_id(0);
           const std::int64_t cell = item.get_global_id(1);
           const std::int64_t local_row = item.get_local_id(0);
@@ -306,7 +306,7 @@ inline void SubmitOutputImpl(sycl::queue& queue, const float* state,
             sycl::range<2>(RoundUp(shape.channels, kDenseTile),
                            RoundUp(cells, kDenseTile)),
             sycl::range<2>(kDenseTile, kDenseTile)),
-        [=](sycl::nd_item<2> item) [[intel::reqd_sub_group_size(16)]] {
+        [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(16)]] {
           const std::int64_t channel = item.get_global_id(0);
           const std::int64_t cell = item.get_global_id(1);
           const std::int64_t local_row = item.get_local_id(0);
