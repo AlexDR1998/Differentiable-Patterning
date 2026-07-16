@@ -12,6 +12,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import core
+from jax import lax
 from jax.interpreters import batching, mlir
 from jaxlib.hlo_helpers import custom_call
 
@@ -271,6 +272,70 @@ def _backward_abstract_eval(
 
 
 _nca_backward_p.def_abstract_eval(_backward_abstract_eval)
+
+
+def _backward_batching_rule(args, dimensions, *, kernel_flags, padding):
+    (
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        update_mask,
+        output_cotangent,
+    ) = args
+    (
+        state_dim,
+        kernels_dim,
+        hidden_dim,
+        output_dim,
+        bias_dim,
+        mask_dim,
+        cotangent_dim,
+    ) = dimensions
+    if any(
+        dim is not None
+        for dim in (kernels_dim, hidden_dim, output_dim, bias_dim)
+    ):
+        raise NotImplementedError(
+            "NCA_sycl does not support vmapped model parameters"
+        )
+    if state_dim is None or mask_dim is None or cotangent_dim is None:
+        raise ValueError(
+            "state, update mask, and output cotangent must be batched together"
+        )
+
+    state = batching.moveaxis(state, state_dim, 0)
+    update_mask = batching.moveaxis(update_mask, mask_dim, 0)
+    output_cotangent = batching.moveaxis(output_cotangent, cotangent_dim, 0)
+
+    # A vmapped model has shared parameters. Produce one parameter cotangent
+    # per mapped example and let JAX's transpose of vmap perform the required
+    # reduction. Returning an already-reduced gradient here would count the
+    # batch multiple times.
+    def backward_one(mapped_operands):
+        state_value, mask_value, cotangent_value = mapped_operands
+        return tuple(
+            _nca_backward_p.bind(
+                state_value,
+                kernels,
+                weight_hidden,
+                weight_output,
+                bias_output,
+                mask_value,
+                cotangent_value,
+                kernel_flags=kernel_flags,
+                padding=padding,
+            )
+        )
+
+    results = lax.map(
+        backward_one, (state, update_mask, output_cotangent)
+    )
+    return results, (0,) * len(results)
+
+
+batching.primitive_batchers[_nca_backward_p] = _backward_batching_rule
 
 
 def _metadata_from_avals(state_aval, weight_hidden_aval, kernels_aval,
