@@ -3,9 +3,9 @@ entrypoint: Experiments.micropatterns.nca_runtime_check:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_runtime_sweep.yaml
 output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/intel_nvidia_baseline_nca_runtime_intel
-count: 16
+count: 32
 configs:
-- index: 2
+- index: 19
   overrides:
     model.family: NCA
     model.channels: 32
@@ -157,7 +157,7 @@ configs:
       xla_flags:
       - latency_hiding_scheduler
       precision: highest
-- index: 13
+- index: 26
   overrides:
     model.family: NCA
     model.channels: 32
@@ -309,7 +309,7 @@ configs:
       xla_flags:
       - latency_hiding_scheduler
       precision: bfloat16
-- index: 10
+- index: 2
   overrides:
     model.family: NCA
     model.channels: 32
@@ -461,7 +461,7 @@ configs:
       xla_flags:
       - latency_hiding_scheduler
       precision: tensorfloat32
-- index: 6
+- index: 1
   overrides:
     model.family: NCA
     model.channels: 32
@@ -564,6 +564,912 @@ configs:
       component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags: null
+      precision: highest
+- index: 11
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags: null
+    seed: 2127877499
+    system.precision: bfloat16
+  config:
+    seed: 2127877499
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags: null
+      precision: bfloat16
+- index: 27
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags: null
+    seed: 1930549411
+    system.precision: tensorfloat32
+  config:
+    seed: 1930549411
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags: null
+      precision: tensorfloat32
+- index: 18
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags:
+    - latency_hiding_scheduler
+    seed: 2028277857
+    system.precision: highest
+  config:
+    seed: 2028277857
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags:
+      - latency_hiding_scheduler
+      precision: highest
+- index: 6
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags:
+    - latency_hiding_scheduler
+    seed: 1630434966
+    system.precision: bfloat16
+  config:
+    seed: 1630434966
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags:
+      - latency_hiding_scheduler
+      precision: bfloat16
+- index: 28
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags:
+    - latency_hiding_scheduler
+    seed: 901749037
+    system.precision: tensorfloat32
+  config:
+    seed: 901749037
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags:
+      - latency_hiding_scheduler
+      precision: tensorfloat32
+- index: 12
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags: null
+    seed: 403123852
+    system.precision: highest
+  config:
+    seed: 403123852
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -633,7 +1539,7 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: false
     model.upscale_factor: 1
     run.t: 64
@@ -643,10 +1549,10 @@ configs:
     system.gpu: intel
     optimiser.type: nadam
     system.xla_flags: null
-    seed: 2127877499
+    seed: 2095328386
     system.precision: bfloat16
   config:
-    seed: 2127877499
+    seed: 2095328386
     experiment:
       name: nca_micropattern_template
     data:
@@ -713,7 +1619,7 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -761,7 +1667,7 @@ configs:
       gpu: intel
       xla_flags: null
       precision: bfloat16
-- index: 14
+- index: 31
   overrides:
     model.family: NCA
     model.channels: 32
@@ -783,7 +1689,7 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: false
     model.upscale_factor: 1
     run.t: 64
@@ -793,10 +1699,10 @@ configs:
     system.gpu: intel
     optimiser.type: nadam
     system.xla_flags: null
-    seed: 1930549411
+    seed: 121751464
     system.precision: tensorfloat32
   config:
-    seed: 1930549411
+    seed: 121751464
     experiment:
       name: nca_micropattern_template
     data:
@@ -863,7 +1769,7 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -911,7 +1817,7 @@ configs:
       gpu: intel
       xla_flags: null
       precision: tensorfloat32
-- index: 7
+- index: 16
   overrides:
     model.family: NCA
     model.channels: 32
@@ -944,10 +1850,10 @@ configs:
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
-    seed: 2028277857
+    seed: 1674216077
     system.precision: highest
   config:
-    seed: 2028277857
+    seed: 1674216077
     experiment:
       name: nca_micropattern_template
     data:
@@ -1096,10 +2002,10 @@ configs:
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
-    seed: 1630434966
+    seed: 1858720390
     system.precision: bfloat16
   config:
-    seed: 1630434966
+    seed: 1858720390
     experiment:
       name: nca_micropattern_template
     data:
@@ -1215,7 +2121,7 @@ configs:
       xla_flags:
       - latency_hiding_scheduler
       precision: bfloat16
-- index: 0
+- index: 8
   overrides:
     model.family: NCA
     model.channels: 32
@@ -1248,10 +2154,10 @@ configs:
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
-    seed: 901749037
+    seed: 9045414
     system.precision: tensorfloat32
   config:
-    seed: 901749037
+    seed: 9045414
     experiment:
       name: nca_micropattern_template
     data:
@@ -1367,6 +2273,608 @@ configs:
       xla_flags:
       - latency_hiding_scheduler
       precision: tensorfloat32
+- index: 23
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: lax
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags: null
+    seed: 1912923437
+    system.precision: highest
+  config:
+    seed: 1912923437
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags: null
+      precision: highest
+- index: 10
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: lax
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags: null
+    seed: 1143881027
+    system.precision: bfloat16
+  config:
+    seed: 1143881027
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags: null
+      precision: bfloat16
+- index: 29
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: lax
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags: null
+    seed: 982526257
+    system.precision: tensorfloat32
+  config:
+    seed: 982526257
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags: null
+      precision: tensorfloat32
+- index: 25
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: lax
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags:
+    - latency_hiding_scheduler
+    seed: 439062303
+    system.precision: highest
+  config:
+    seed: 439062303
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags:
+      - latency_hiding_scheduler
+      precision: highest
 - index: 5
   overrides:
     model.family: NCA
@@ -1389,7 +2897,7 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: false
     model.upscale_factor: 1
     run.t: 64
@@ -1398,11 +2906,12 @@ configs:
     model.upsampler.width_factor: null
     system.gpu: intel
     optimiser.type: nadam
-    system.xla_flags: null
-    seed: 403123852
-    system.precision: highest
+    system.xla_flags:
+    - latency_hiding_scheduler
+    seed: 1363349907
+    system.precision: bfloat16
   config:
-    seed: 403123852
+    seed: 1363349907
     experiment:
       name: nca_micropattern_template
     data:
@@ -1469,7 +2978,310 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags:
+      - latency_hiding_scheduler
+      precision: bfloat16
+- index: 3
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: lax
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags:
+    - latency_hiding_scheduler
+    seed: 131383004
+    system.precision: tensorfloat32
+  config:
+    seed: 131383004
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags:
+      - latency_hiding_scheduler
+      precision: tensorfloat32
+- index: 20
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: lax
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags: null
+    seed: 95872739
+    system.precision: highest
+  config:
+    seed: 95872739
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1517,7 +3329,7 @@ configs:
       gpu: intel
       xla_flags: null
       precision: highest
-- index: 1
+- index: 17
   overrides:
     model.family: NCA
     model.channels: 32
@@ -1539,7 +3351,7 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: false
     model.upscale_factor: 1
     run.t: 64
@@ -1549,10 +3361,10 @@ configs:
     system.gpu: intel
     optimiser.type: nadam
     system.xla_flags: null
-    seed: 2095328386
+    seed: 109289145
     system.precision: bfloat16
   config:
-    seed: 2095328386
+    seed: 109289145
     experiment:
       name: nca_micropattern_template
     data:
@@ -1619,7 +3431,7 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1667,7 +3479,7 @@ configs:
       gpu: intel
       xla_flags: null
       precision: bfloat16
-- index: 9
+- index: 13
   overrides:
     model.family: NCA
     model.channels: 32
@@ -1689,7 +3501,7 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
     loss.random_crop: false
     model.upscale_factor: 1
     run.t: 64
@@ -1699,10 +3511,10 @@ configs:
     system.gpu: intel
     optimiser.type: nadam
     system.xla_flags: null
-    seed: 121751464
+    seed: 39534911
     system.precision: tensorfloat32
   config:
-    seed: 121751464
+    seed: 39534911
     experiment:
       name: nca_micropattern_template
     data:
@@ -1769,7 +3581,7 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
+        intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
@@ -1817,7 +3629,7 @@ configs:
       gpu: intel
       xla_flags: null
       precision: tensorfloat32
-- index: 3
+- index: 0
   overrides:
     model.family: NCA_sycl
     model.channels: 32
@@ -1850,10 +3662,10 @@ configs:
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
-    seed: 1674216077
+    seed: 1637259727
     system.precision: highest
   config:
-    seed: 1674216077
+    seed: 1637259727
     experiment:
       name: nca_micropattern_template
     data:
@@ -1969,7 +3781,7 @@ configs:
       xla_flags:
       - latency_hiding_scheduler
       precision: highest
-- index: 12
+- index: 9
   overrides:
     model.family: NCA_sycl
     model.channels: 32
@@ -2001,10 +3813,10 @@ configs:
     system.gpu: intel
     optimiser.type: nadam
     system.xla_flags: null
-    seed: 1858720390
+    seed: 930287327
     system.precision: highest
   config:
-    seed: 1858720390
+    seed: 930287327
     experiment:
       name: nca_micropattern_template
     data:
@@ -2119,7 +3931,309 @@ configs:
       gpu: intel
       xla_flags: null
       precision: highest
-- index: 11
+- index: 14
+  overrides:
+    model.family: NCA_sycl
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags:
+    - latency_hiding_scheduler
+    seed: 1812976885
+    system.precision: highest
+  config:
+    seed: 1812976885
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_sycl
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags:
+      - latency_hiding_scheduler
+      precision: highest
+- index: 24
+  overrides:
+    model.family: NCA_sycl
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags: null
+    seed: 124729223
+    system.precision: highest
+  config:
+    seed: 124729223
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_sycl
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags: null
+      precision: highest
+- index: 30
   overrides:
     model.family: NCA_sycl
     model.channels: 32
@@ -2152,10 +4266,10 @@ configs:
     optimiser.type: nadam
     system.xla_flags:
     - latency_hiding_scheduler
-    seed: 9045414
+    seed: 952158461
     system.precision: highest
   config:
-    seed: 9045414
+    seed: 952158461
     experiment:
       name: nca_micropattern_template
     data:
@@ -2271,7 +4385,7 @@ configs:
       xla_flags:
       - latency_hiding_scheduler
       precision: highest
-- index: 8
+- index: 21
   overrides:
     model.family: NCA_sycl
     model.channels: 32
@@ -2303,10 +4417,10 @@ configs:
     system.gpu: intel
     optimiser.type: nadam
     system.xla_flags: null
-    seed: 1912923437
+    seed: 1880712864
     system.precision: highest
   config:
-    seed: 1912923437
+    seed: 1880712864
     experiment:
       name: nca_micropattern_template
     data:
@@ -2374,6 +4488,308 @@ configs:
       component_weights: null
       regulariser_coeffs:
         intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags: null
+      precision: highest
+- index: 7
+  overrides:
+    model.family: NCA_sycl
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: lax
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags:
+    - latency_hiding_scheduler
+    seed: 2129497364
+    system.precision: highest
+  config:
+    seed: 2129497364
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_sycl
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+      vgg_internal: l2
+    run:
+      t: 64
+      iterations: 100
+      warmup: 64
+      write_images: true
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: intel_nvidia_baseline_nca_runtime_kernel_2
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: intel
+      xla_flags:
+      - latency_hiding_scheduler
+      precision: highest
+- index: 22
+  overrides:
+    model.family: NCA_sycl
+    model.channels: 32
+    run.scaling: convective
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: intel_nvidia_baseline_nca_runtime_kernel_2
+    run.iterations: 100
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.vgg_internal: l2
+    trainer.loop_autodiff: lax
+    data.downsample: 4
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.random_crop: false
+    model.upscale_factor: 1
+    run.t: 64
+    model.upsampler.radius: null
+    model.upsampler.depth: null
+    model.upsampler.width_factor: null
+    system.gpu: intel
+    optimiser.type: nadam
+    system.xla_flags: null
+    seed: 1001090105
+    system.precision: highest
+  config:
+    seed: 1001090105
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 2
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_sycl
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+      upsampler:
+        radius: null
+        depth: null
+        width_factor: null
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      clear_cache_every: 500
+      log_every: 100
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
