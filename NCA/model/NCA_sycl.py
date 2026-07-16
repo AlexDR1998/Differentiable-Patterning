@@ -4,9 +4,9 @@ The model keeps the parameter PyTree and public call signature of the standard
 NCA. Only the main update is replaced; perception remains available as a JAX
 callable for diagnostics and gradient-based losses.
 
-Gradients are supplied by a custom VJP which recomputes the update in portable
-JAX during the backward pass. This enables training while retaining the native
-SYCL forward path; a native backward kernel can replace it later.
+Gradients for the state and trainable pointwise layers are supplied by a native
+SYCL backward custom call. The fixed perception kernels and stochastic mask are
+non-trainable and therefore receive zero cotangents.
 """
 
 from collections.abc import Callable

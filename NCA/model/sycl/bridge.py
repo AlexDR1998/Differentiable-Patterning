@@ -9,18 +9,17 @@ import pathlib
 import struct
 
 import jax
+import jax.numpy as jnp
 import numpy as np
 from jax import core
 from jax.interpreters import batching, mlir
 from jaxlib.hlo_helpers import custom_call
 
-from NCA.model.sycl.reference import jax_nca_forward
-
-
-_TARGET_NAME = "differentiable_patterning_nca_sycl_forward"
+_FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_forward"
+_BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_backward"
 _METADATA_VERSION = 1
 _LIBRARY: ctypes.CDLL | None = None
-_CAPSULE: object | None = None
+_CAPSULES: tuple[object, object] | None = None
 _REGISTERED = False
 
 
@@ -34,7 +33,7 @@ def _library_path() -> pathlib.Path:
 
 
 def _register_custom_call() -> None:
-    global _LIBRARY, _CAPSULE, _REGISTERED
+    global _LIBRARY, _CAPSULES, _REGISTERED
     if _REGISTERED:
         return
 
@@ -54,26 +53,36 @@ def _register_custom_call() -> None:
         )
 
     library = ctypes.CDLL(str(path), mode=ctypes.RTLD_GLOBAL)
-    function = library.nca_sycl_forward
-    address = ctypes.cast(function, ctypes.c_void_p).value
-    if address is None:
-        raise RuntimeError("nca_sycl_forward resolved to a null address")
-
     capsule_new = ctypes.pythonapi.PyCapsule_New
     capsule_new.restype = ctypes.py_object
     capsule_new.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p]
-    capsule = capsule_new(
-        ctypes.c_void_p(address), b"xla._CUSTOM_CALL_TARGET", None
-    )
+
+    def make_capsule(symbol_name: str):
+        function = getattr(library, symbol_name)
+        address = ctypes.cast(function, ctypes.c_void_p).value
+        if address is None:
+            raise RuntimeError(f"{symbol_name} resolved to a null address")
+        return capsule_new(
+            ctypes.c_void_p(address), b"xla._CUSTOM_CALL_TARGET", None
+        )
+
+    forward_capsule = make_capsule("nca_sycl_forward")
+    backward_capsule = make_capsule("nca_sycl_backward")
 
     from jax._src.lib import xla_client
 
     xla_client.register_custom_call_target(
-        _TARGET_NAME, capsule, platform="SYCL", api_version=0
+        _FORWARD_TARGET_NAME, forward_capsule, platform="SYCL", api_version=0
+    )
+    xla_client.register_custom_call_target(
+        _BACKWARD_TARGET_NAME, backward_capsule, platform="SYCL", api_version=0
     )
     mlir.register_lowering(_nca_forward_p, _lowering, platform="sycl")
+    mlir.register_lowering(
+        _nca_backward_p, _backward_lowering, platform="sycl"
+    )
     _LIBRARY = library
-    _CAPSULE = capsule
+    _CAPSULES = (forward_capsule, backward_capsule)
     _REGISTERED = True
 
 
@@ -170,7 +179,7 @@ def _lowering(ctx, *operands, kernel_flags, padding):
     ]
     output_layout = tuple(range(state_aval.ndim - 1, -1, -1))
     operation = custom_call(
-        _TARGET_NAME,
+        _FORWARD_TARGET_NAME,
         result_types=[mlir.aval_to_ir_type(ctx.avals_out[0])],
         operands=operands,
         backend_config=metadata,
@@ -207,6 +216,137 @@ def _batching_rule(args, dimensions, *, kernel_flags, padding):
 
 
 batching.primitive_batchers[_nca_forward_p] = _batching_rule
+
+
+_nca_backward_p = core.Primitive("nca_sycl_backward")
+_nca_backward_p.multiple_results = True
+
+
+def _backward_abstract_eval(
+    state,
+    kernels,
+    weight_hidden,
+    weight_output,
+    bias_output,
+    update_mask,
+    output_cotangent,
+    *,
+    kernel_flags,
+    padding,
+):
+    del bias_output, kernel_flags, padding
+    if output_cotangent.shape != state.shape:
+        raise ValueError("NCA SYCL output cotangent must match the state shape")
+    if state.shape != update_mask.shape:
+        raise ValueError("NCA SYCL update mask must match the state shape")
+    if state.ndim == 3:
+        scratch_shape = (weight_hidden.shape[0], *state.shape[-2:])
+    elif state.ndim == 4:
+        scratch_shape = (
+            state.shape[0],
+            weight_hidden.shape[0],
+            *state.shape[-2:],
+        )
+    else:
+        raise ValueError("NCA SYCL backward expects rank-three or rank-four state")
+    dtype = state.dtype
+    operands = (
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        update_mask,
+        output_cotangent,
+    )
+    if any(value.dtype != np.dtype(np.float32) for value in operands):
+        raise TypeError("The baseline NCA SYCL backward call accepts float32 only")
+    return (
+        core.ShapedArray(state.shape, dtype),
+        core.ShapedArray(weight_hidden.shape, dtype),
+        core.ShapedArray(weight_output.shape, dtype),
+        core.ShapedArray((state.shape[-3],), dtype),
+        core.ShapedArray(scratch_shape, dtype),
+        core.ShapedArray(scratch_shape, dtype),
+    )
+
+
+_nca_backward_p.def_abstract_eval(_backward_abstract_eval)
+
+
+def _metadata_from_avals(state_aval, weight_hidden_aval, kernels_aval,
+                         kernel_flags, padding):
+    if state_aval.ndim == 3:
+        batch = 1
+        channels, height, width = state_aval.shape
+    else:
+        batch, channels, height, width = state_aval.shape
+    features = weight_hidden_aval.shape[0]
+    kernel_size = kernels_aval.shape[-1]
+    workgroup_size = 1
+    while workgroup_size < max(features, channels):
+        workgroup_size *= 2
+    return struct.pack(
+        "=10q",
+        _METADATA_VERSION,
+        batch,
+        channels,
+        height,
+        width,
+        features,
+        kernel_size,
+        int(kernel_flags),
+        int(padding),
+        workgroup_size,
+    )
+
+
+def _backward_lowering(ctx, *operands, kernel_flags, padding):
+    metadata = _metadata_from_avals(
+        ctx.avals_in[0], ctx.avals_in[2], ctx.avals_in[1],
+        kernel_flags, padding
+    )
+    operand_layouts = [
+        tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_in
+    ]
+    result_layouts = [
+        tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_out
+    ]
+    operation = custom_call(
+        _BACKWARD_TARGET_NAME,
+        result_types=[mlir.aval_to_ir_type(aval) for aval in ctx.avals_out],
+        operands=operands,
+        backend_config=metadata,
+        api_version=1,
+        operand_layouts=operand_layouts,
+        result_layouts=result_layouts,
+    )
+    return operation.results
+
+
+def _bind_native_backward(
+    state,
+    kernels,
+    weight_hidden,
+    weight_output,
+    bias_output,
+    update_mask,
+    output_cotangent,
+    kernel_flags,
+    padding,
+):
+    results = _nca_backward_p.bind(
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        update_mask,
+        output_cotangent,
+        kernel_flags=kernel_flags,
+        padding=padding,
+    )
+    state_gradient, hidden_gradient, output_gradient, bias_gradient = results[:4]
+    return state_gradient, hidden_gradient, output_gradient, bias_gradient
 
 
 def _bind_native_forward(
@@ -286,13 +426,35 @@ def _forward_vjp_rule(
 
 
 def _backward_vjp_rule(kernel_flags, padding, residuals, output_cotangent):
-    def reference(*operands):
-        return jax_nca_forward(
-            *operands, kernel_flags=kernel_flags, padding=padding
+    (
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        update_mask,
+    ) = residuals
+    state_gradient, hidden_gradient, output_gradient, bias_gradient = (
+        _bind_native_backward(
+            state,
+            kernels,
+            weight_hidden,
+            weight_output,
+            bias_output,
+            update_mask,
+            output_cotangent,
+            kernel_flags,
+            padding,
         )
-
-    _, pullback = jax.vjp(reference, *residuals)
-    return pullback(output_cotangent)
+    )
+    return (
+        state_gradient,
+        jnp.zeros_like(kernels),
+        hidden_gradient,
+        output_gradient,
+        bias_gradient,
+        jnp.zeros_like(update_mask),
+    )
 
 
 _differentiable_forward.defvjp(_forward_vjp_rule, _backward_vjp_rule)

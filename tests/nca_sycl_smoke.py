@@ -44,18 +44,10 @@ def _batched_outputs(model, states, keys):
     return jax.vmap(lambda state, key: model(state, key=key))(states, keys)
 
 
-def _loss(model, states, keys):
+def _joint_loss(model_and_states, keys):
+    model, states = model_and_states
     outputs = _batched_outputs(model, states, keys)
     return jnp.mean(outputs**2), outputs
-
-
-def _state_loss(model, states, keys):
-    outputs = _batched_outputs(model, states, keys)
-    return jnp.mean(outputs**2)
-
-
-def _state_loss_from_states(states, model, keys):
-    return _state_loss(model, states, keys)
 
 
 def _make_models(key):
@@ -93,6 +85,7 @@ def main() -> None:
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEFAULT_BACKEND={jax.default_backend()}")
     print(f"JAX_DEVICES={jax.devices()}")
+    print("BACKWARD_IMPLEMENTATION=SYCL_CUSTOM_CALL")
     if jax.default_backend() != "sycl":
         raise RuntimeError("NCA SYCL smoke test requires the 'sycl' JAX backend")
 
@@ -120,11 +113,11 @@ def main() -> None:
     print(f"OUTPUT_DEVICE={actual.device}")
 
     value_and_grad = eqx.filter_jit(
-        eqx.filter_value_and_grad(_loss, has_aux=True)
+        eqx.filter_value_and_grad(_joint_loss, has_aux=True)
     )
     start = time.perf_counter()
-    (expected_loss, _), expected_gradients = value_and_grad(
-        fast_model, states, keys
+    (expected_loss, _), (expected_gradients, expected_state_gradient) = (
+        value_and_grad((fast_model, states), keys)
     )
     jax.block_until_ready(
         (
@@ -132,6 +125,7 @@ def main() -> None:
             expected_gradients.layers[0].weight,
             expected_gradients.layers[2].weight,
             expected_gradients.layers[2].bias,
+            expected_state_gradient,
         )
     )
     print(
@@ -140,13 +134,16 @@ def main() -> None:
     )
 
     start = time.perf_counter()
-    (actual_loss, _), actual_gradients = value_and_grad(sycl_model, states, keys)
+    (actual_loss, _), (actual_gradients, actual_state_gradient) = value_and_grad(
+        (sycl_model, states), keys
+    )
     jax.block_until_ready(
         (
             actual_loss,
             actual_gradients.layers[0].weight,
             actual_gradients.layers[2].weight,
             actual_gradients.layers[2].bias,
+            actual_state_gradient,
         )
     )
     print(f"SYCL_VJP_COMPILE_EXECUTE_SECONDS={time.perf_counter() - start}")
@@ -166,11 +163,6 @@ def main() -> None:
         actual_gradients.layers[2].bias,
         expected_gradients.layers[2].bias,
     )
-
-    state_gradient = eqx.filter_jit(eqx.filter_grad(_state_loss_from_states))
-    expected_state_gradient = state_gradient(states, fast_model, keys)
-    actual_state_gradient = state_gradient(states, sycl_model, keys)
-    jax.block_until_ready((expected_state_gradient, actual_state_gradient))
     _assert_close("STATE_GRADIENT", actual_state_gradient, expected_state_gradient)
 
     print("NCA_SYCL_SMOKE_RESULT=PASS")

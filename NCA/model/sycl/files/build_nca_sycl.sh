@@ -4,6 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE="${SCRIPT_DIR}/nca_sycl.cpp"
+BACKWARD_SOURCE="${SCRIPT_DIR}/nca_sycl_backward.cpp"
 OUTPUT="${1:-${SCRIPT_DIR}/libnca_sycl.so}"
 SYCL_CXX="${CXX:-icpx}"
 
@@ -22,6 +23,7 @@ set -x
     -fPIC \
     -shared \
     "${SOURCE}" \
+    "${BACKWARD_SOURCE}" \
     -o "${OUTPUT}"
 set +x
 
