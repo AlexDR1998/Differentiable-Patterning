@@ -10,7 +10,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -27,7 +27,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -60,9 +60,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -91,7 +88,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -183,22 +180,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 1
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -215,7 +208,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -248,9 +241,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -279,7 +269,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -371,22 +361,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 23
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -403,7 +389,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -436,9 +422,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -467,7 +450,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -559,22 +542,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 22
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -591,7 +570,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -624,9 +603,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -655,7 +631,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -747,22 +723,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 18
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -779,7 +751,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -812,9 +784,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -843,7 +812,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -935,22 +904,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 9
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -967,7 +932,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -1000,9 +965,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -1031,7 +993,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -1123,22 +1085,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 19
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -1155,7 +1113,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -1188,9 +1146,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -1219,7 +1174,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -1311,22 +1266,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 4
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -1343,7 +1294,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -1376,9 +1327,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -1407,7 +1355,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -1499,22 +1447,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 17
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -1531,7 +1475,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -1564,9 +1508,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -1595,7 +1536,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -1687,22 +1628,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 11
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -1719,7 +1656,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -1752,9 +1689,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -1783,7 +1717,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -1875,22 +1809,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 10
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -1907,7 +1837,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -1940,9 +1870,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -1971,7 +1898,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -2063,22 +1990,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 20
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -2095,7 +2018,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: true
     model.upscale_factor: null
@@ -2128,9 +2051,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -2159,7 +2079,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -2251,22 +2171,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 5
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -2283,7 +2199,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -2316,9 +2232,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -2347,7 +2260,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -2439,22 +2352,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 3
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -2471,7 +2380,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -2504,9 +2413,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -2535,7 +2441,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -2627,22 +2533,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 8
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -2659,7 +2561,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -2692,9 +2594,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -2723,7 +2622,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -2815,22 +2714,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 15
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -2847,7 +2742,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -2880,9 +2775,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -2911,7 +2803,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -3003,22 +2895,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 14
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -3035,7 +2923,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -3068,9 +2956,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -3099,7 +2984,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -3191,22 +3076,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 7
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -3223,7 +3104,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -3256,9 +3137,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -3287,7 +3165,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -3379,22 +3257,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 16
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -3411,7 +3285,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -3444,9 +3318,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -3475,7 +3346,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -3567,22 +3438,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 0
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -3599,7 +3466,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -3632,9 +3499,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -3663,7 +3527,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -3755,22 +3619,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 13
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -3787,7 +3647,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -3820,9 +3680,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -3851,7 +3708,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -3943,22 +3800,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 6
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -3975,7 +3828,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -4008,9 +3861,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -4039,7 +3889,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -4131,22 +3981,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 21
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -4163,7 +4009,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -4196,9 +4042,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -4227,7 +4070,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -4319,22 +4162,18 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 - index: 12
   overrides:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule
+    logging.wandb.group: NCA_9ch_micropattern_channel_importance_schedule_2
     run.iterations: 8000
     run.repeat: 0
     loss.primary:
@@ -4351,7 +4190,7 @@ configs:
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
     loss.regulariser_coeffs.intermediate_state: 1.0
-    model.fire_rate: 1.0
+    model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
     model.upscale_factor: null
@@ -4384,9 +4223,6 @@ configs:
     optimiser.max_consecutive_errors: 16
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    system.xla_flags:
-    - command_buffer
-    system.precision: bfloat16
     data.batches: 4
     run.t: 128
     loss.vgg_internal: l2
@@ -4415,7 +4251,7 @@ configs:
       - ID
       - LAP
       - DIFF
-      fire_rate: 1.0
+      fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: null
     trainer:
@@ -4507,14 +4343,10 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: NCA_9ch_micropattern_channel_importance_schedule
+        group: NCA_9ch_micropattern_channel_importance_schedule_2
         tags: null
     knockout:
       time: null
       channel: Nodal
       mode: null
-    system:
-      xla_flags:
-      - command_buffer
-      precision: bfloat16
 emit_files: false
