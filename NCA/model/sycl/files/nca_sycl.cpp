@@ -94,7 +94,8 @@ extern "C" void nca_sycl_forward(sycl::queue* queue, void** buffers,
                                     std::int64_t extent) {
             if (coordinate >= 0 && coordinate < extent) return coordinate;
             if (padding == Padding::kReplicate) {
-              return sycl::clamp<std::int64_t>(coordinate, 0, extent - 1);
+              if (coordinate < 0) return std::int64_t{0};
+              return extent - 1;
             }
             if (padding == Padding::kCircular) {
               return ((coordinate % extent) + extent) % extent;
