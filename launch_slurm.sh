@@ -7,6 +7,36 @@ set -eo pipefail
 
 # Intel's conda hooks can read unset internal variables, so enable nounset only
 # after the module/conda environment is ready.
+# Capture the pre-activation Python environment when diagnosing intermittent
+# Conda imports across Slurm array tasks. Keep this probe non-fatal: its output
+# is evidence for comparing successful and failed nodes, not a job prerequisite.
+echo "PRE_SETUP_HOSTNAME=${HOSTNAME:-$(hostname)}"
+echo "PRE_SETUP_PYTHONHOME=${PYTHONHOME-<unset>}"
+echo "PRE_SETUP_PYTHONPATH=${PYTHONPATH-<unset>}"
+
+PRE_SETUP_CONDA_ROOT="${CONDA_DIAGNOSTIC_ROOT:-/rds/project/rds-NQDJLHPwRqs/my_conda}"
+PRE_SETUP_PYTHON="${PRE_SETUP_CONDA_ROOT}/bin/python"
+PRE_SETUP_LOGGING_INIT="${PRE_SETUP_CONDA_ROOT}/lib/python3.13/logging/__init__.py"
+echo "PRE_SETUP_CONDA_ROOT=${PRE_SETUP_CONDA_ROOT}"
+ls -l "${PRE_SETUP_LOGGING_INIT}" 2>&1 \
+    || echo "PRE_SETUP_LOGGING_INIT_RESULT=UNAVAILABLE"
+if [[ -x "${PRE_SETUP_PYTHON}" ]]; then
+    if "${PRE_SETUP_PYTHON}" -S -c \
+        'import importlib.util, sys; print("PRE_SETUP_SYS_PATH=" + repr(sys.path)); print("PRE_SETUP_LOGGING_SPEC=" + repr(importlib.util.find_spec("logging")))'
+    then
+        echo "PRE_SETUP_PYTHON_RESULT=PASS"
+    else
+        echo "PRE_SETUP_PYTHON_RESULT=FAIL"
+    fi
+else
+    echo "PRE_SETUP_PYTHON_RESULT=UNAVAILABLE"
+fi
+
+# Slurm submission uses --export=ALL. Do not let an inherited project or module
+# PYTHONPATH shadow Python's standard library while the setup script invokes
+# Conda (for example, a namespace package named ``logging``).
+unset PYTHONHOME
+unset PYTHONPATH
 # module purge
 # module load rhel9/default-dawn
 # module load intelpython-conda
