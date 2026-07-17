@@ -13,8 +13,48 @@ set -eo pipefail
 # module load intel-oneapi-mkl
 # conda activate jax_intel_gpu
 
-bash ~/dawn-jax/envs/jax-setup.sh
-conda activate jax
+# bash ~/dawn-jax/envs/jax-setup.sh
+source ~/dawn-jax/envs/jaxeqx-setup.sh
+
+ONEAPI_ROOT=/usr/local/dawn/software/external/intel-oneapi/2025.2.1
+
+# UNITRACE="$(command -v unitrace || true)"
+
+# if [[ -z "$UNITRACE" ]]; then
+#     UNITRACE="$(
+#         find "$ONEAPI_ROOT" -type f -name unitrace -executable \
+#             2>/dev/null | head -n 1
+#     )"
+# fi
+
+# if [[ -z "$UNITRACE" ]]; then
+#     echo "unitrace was not found."
+#     echo "Available PTI-related modules:"
+#     module avail 2>&1 | grep -Ei 'pti|profil' || true
+#     echo "VTune location: $(command -v vtune || echo unavailable)"
+#     exit 20
+# fi
+
+# echo "UNITRACE=$UNITRACE"
+# "$UNITRACE" --version
+
+
+SYCL_BUILD_DIR="${SLURM_TMPDIR:-/tmp}/nca-sycl-${SLURM_JOB_ID}"
+mkdir -p "${SYCL_BUILD_DIR}"
+
+NCA/model/sycl/files/build_nca_sycl.sh \
+    "${SYCL_BUILD_DIR}/libnca_sycl.so"
+
+export NCA_SYCL_LIBRARY="${SYCL_BUILD_DIR}/libnca_sycl.so"
+
+# module purge
+# module load rhel9/default-dawn
+# source /usr/local/dawn/software/external/intel-oneapi/2025.2.1/setvars.sh
+# if [[ -z "${ZE_FLAT_DEVICE_HIERARCHY}" ]]; then
+#     export ZE_FLAT_DEVICE_HIERARCHY="FLAT"
+# fi 
+# source /home/rc-rich1/miniforge3/bin/activate
+# conda activate jax
 
 
 python - <<'PY'
@@ -97,4 +137,26 @@ echo "  SLURM_JOB_ID: ${SLURM_JOB_ID:-unset}"
 echo "  SLURM_JOB_GPUS: ${SLURM_JOB_GPUS:-unset}"
 command -v sycl-ls >/dev/null 2>&1 && sycl-ls || echo "  sycl-ls: not found"
 
-python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
+# python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
+
+VTUNE=/usr/local/dawn/software/external/intel-oneapi/2025.2.1/vtune/2025.4/bin64/vtune
+
+PROFILE_PARENT="$SLURM_ARRAY_LOG_DIR"
+VTUNE_RESULT="$PROFILE_PARENT/${SLURM_ARRAY_TASK_ID}-vtune-offload"
+
+export MKL_VERBOSE=0
+export ZE_ENABLE_TRACING_LAYER=1
+export UseCyclesPerSecondTimer=1
+
+
+"$VTUNE" \
+    -collect gpu-offload \
+    -knob gpu-counters-mode=none \
+    -knob collect-programming-api=true \
+    -result-dir "$VTUNE_RESULT" \
+    -- \
+    python -X faulthandler "$PY_SCRIPT" \
+        --manifest "$MANIFEST" \
+        --index "$SLURM_ARRAY_TASK_ID"
+
+
