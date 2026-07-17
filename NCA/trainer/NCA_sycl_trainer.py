@@ -10,6 +10,7 @@ from __future__ import annotations
 from numbers import Integral
 
 import equinox as eqx
+import jax
 import jax.numpy as jnp
 import jax.random as jr
 import jax.tree_util as jtu
@@ -54,6 +55,42 @@ class NCA_sycl_Trainer(NCA_Trainer):
             return fallback
 
         def apply_batched(x, callbacks, key_array):
+            leaves, tree_definition = jtu.tree_flatten(x)
+            if leaves and all(leaf.ndim == 5 for leaf in leaves):
+                key_leaves = tree_definition.flatten_up_to(key_array)
+                callback_leaves = tree_definition.flatten_up_to(callbacks)
+                updated_leaves = []
+                for state, keys, callback in zip(
+                    leaves, key_leaves, callback_leaves
+                ):
+                    updated = jax.vmap(nca.batched_call)(state, keys)
+                    if isinstance(callback, no_boundary):
+                        updated = jax.vmap(jax.vmap(callback))(updated)
+                    elif isinstance(callback, model_boundary):
+                        mask = jnp.asarray(callback.MASK, dtype=state.dtype)
+                        mask_in_axes = 0 if mask.ndim == 4 else None
+                        updated = jax.vmap(
+                            lambda tile_states, tile_mask: jax.vmap(
+                                model_boundary(tile_mask)
+                            )(tile_states),
+                            in_axes=(0, mask_in_axes),
+                        )(updated, mask)
+                    elif isinstance(callback, hard_boundary):
+                        mask = jnp.asarray(callback.MASK, dtype=state.dtype)
+                        mask_in_axes = 0 if mask.ndim == 3 else None
+                        updated = jax.vmap(
+                            lambda tile_states, tile_mask: jax.vmap(
+                                hard_boundary(tile_mask[None])
+                            )(tile_states),
+                            in_axes=(0, mask_in_axes),
+                        )(updated, mask)
+                    else:
+                        raise TypeError(
+                            "Unsupported mapped NCA boundary: "
+                            f"{type(callback)}"
+                        )
+                    updated_leaves.append(updated)
+                return jtu.tree_unflatten(tree_definition, updated_leaves)
             # Boundary callbacks remain the established JAX operations for
             # now. A future fused epilogue belongs in this subclass/path.
             return apply_flat_batched_nca(
@@ -82,6 +119,56 @@ class NCA_sycl_Trainer(NCA_Trainer):
         for leaf, leaf_keys, callback in zip(
             state_leaves, key_leaves, callback_leaves
         ):
+            # ``checkpointed`` scan performs a nested eval_shape while the
+            # complete step is being transformed by pmap. During that shape
+            # probe only, JAX exposes the mapped tile axis explicitly, giving
+            # [tiles,N,C,H,W] instead of the replica-local [N,C,H,W]. Map this
+            # temporary axis back into replica-local rollout calls. Actual
+            # compiled pmap execution takes the ordinary rank-four branch.
+            if leaf.ndim == 5:
+                if isinstance(callback, no_boundary):
+                    final, trajectory = jax.vmap(
+                        lambda tile_state, tile_keys: nca.batched_rollout(
+                            tile_state, tile_keys
+                        )
+                    )(leaf, leaf_keys)
+                elif isinstance(callback, model_boundary):
+                    mask = jnp.asarray(callback.MASK, dtype=leaf.dtype)
+                    mask_in_axes = 0 if mask.ndim == 4 else None
+                    final, trajectory = jax.vmap(
+                        lambda tile_state, tile_keys, tile_mask: (
+                            nca.batched_rollout(
+                                tile_state,
+                                tile_keys,
+                                boundary_code=1,
+                                boundary_mask=tile_mask,
+                                boundary_channels=tile_mask.shape[0],
+                            )
+                        ),
+                        in_axes=(0, 0, mask_in_axes),
+                    )(leaf, leaf_keys, mask)
+                elif isinstance(callback, hard_boundary):
+                    mask = jnp.asarray(callback.MASK, dtype=leaf.dtype)
+                    mask_in_axes = 0 if mask.ndim == 3 else None
+                    final, trajectory = jax.vmap(
+                        lambda tile_state, tile_keys, tile_mask: (
+                            nca.batched_rollout(
+                                tile_state,
+                                tile_keys,
+                                boundary_code=2,
+                                boundary_mask=tile_mask,
+                            )
+                        ),
+                        in_axes=(0, 0, mask_in_axes),
+                    )(leaf, leaf_keys, mask)
+                else:
+                    raise TypeError(
+                        "Unsupported mapped fused-rollout boundary: "
+                        f"{type(callback)}"
+                    )
+                final_leaves.append(final)
+                trajectory_leaves.append(trajectory)
+                continue
             boundary_code, boundary_mask, boundary_channels = (
                 self._boundary_spec(callback, leaf.dtype)
             )
