@@ -11,6 +11,7 @@ import jax.random as jr
 import jax.tree_util as jtu
 
 from Common.model.boundary import hard_boundary, model_boundary, no_boundary
+from NCA.trainer.sycl_filter_pmap import filter_pmap_no_probe
 from NCA.trainer.training_execution import TrainingExecution
 
 
@@ -37,7 +38,7 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def transform_step(self, make_step):
-        return eqx.filter_pmap(
+        return filter_pmap_no_probe(
             make_step,
             axis_name=self.AXIS_NAME,
             in_axes=(None, 0, 0, None, None, 0),

@@ -2,11 +2,8 @@ import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
 
-from NCA.trainer.sycl_batching import (
-    apply_flat_batched_nca,
-    shape_probe_losses,
-    shape_probe_rollout,
-)
+from NCA.trainer.sycl_batching import apply_flat_batched_nca
+from NCA.trainer.sycl_filter_pmap import filter_pmap_no_probe
 
 
 class _BatchableReferenceModel:
@@ -33,13 +30,41 @@ class _RecordingBatchableReferenceModel(_BatchableReferenceModel):
         return super().batched_call(states, keys)
 
 
-def test_two_tile_shape_probe_does_not_interpret_unmapped_keys():
-    states = jnp.zeros((2, 4, 32, 5, 6), dtype=jnp.float32)
-    final, trajectory = shape_probe_rollout(states, 8)
+def test_filtered_pmap_traces_scan_with_replica_local_shapes():
+    def step(model, states, targets, steps, opt_state, keys):
+        def scan_step(state, _):
+            if state.ndim != 4:
+                raise AssertionError(f"scan received non-local shape {state.shape}")
+            return state + 1.0, None
 
-    assert final.shape == (2, 4, 32, 5, 6)
-    assert trajectory.shape == (2, 8, 4, 32, 5, 6)
-    assert shape_probe_losses(final).shape == (2, 4)
+        final, _ = jax.lax.scan(
+            scan_step, states[0], xs=None, length=steps
+        )
+        loss = jnp.mean((final[:, :3] - targets[0][:, :3]) ** 2)
+        return (
+            model,
+            [final],
+            targets,
+            steps,
+            opt_state,
+            keys,
+            loss,
+            {"loss": loss, "x_latent": [final]},
+        )
+
+    mapped = filter_pmap_no_probe(
+        step,
+        axis_name="tiles",
+        in_axes=(None, 0, 0, None, None, 0),
+        out_axes=(None, 0, 0, None, None, 0, None, 0),
+    )
+    states = [jnp.zeros((1, 4, 5, 3, 3), dtype=jnp.float32)]
+    keys = jnp.zeros((1, 2), dtype=jnp.uint32)
+    compiled = mapped.lower(None, states, states, 2, None, keys).compile()
+    output = compiled(None, states, states, 2, None, keys)
+
+    assert output[1][0].shape == (1, 4, 5, 3, 3)
+    assert output[7]["x_latent"][0].shape == (1, 4, 5, 3, 3)
 
 
 def test_sycl_trainer_flat_batch_matches_reference_tree_vmap():

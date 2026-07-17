@@ -20,8 +20,6 @@ from Common.utils import key_pytree_gen
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from NCA.trainer.sycl_batching import (
     apply_flat_batched_nca,
-    shape_probe_losses,
-    shape_probe_rollout,
 )
 from NCA.trainer.sycl_execution import SyclTwoTileExecution
 
@@ -41,36 +39,6 @@ class NCA_sycl_Trainer(NCA_Trainer):
         if fused_steps < 1:
             raise ValueError("SYCL_FUSED_STEPS must be a positive integer")
         self.ROLLOUT_STEPS = fused_steps
-
-    def loss_func(
-        self,
-        x_proc,
-        y_proc,
-        x_latent,
-        y_latent,
-        channel_time_mask,
-        loss_cache,
-        key,
-    ):
-        # filter_pmap uses a preliminary vmap/eval_shape pass to determine its
-        # output PyTree. Nested scan tracing materialises the mapped tile axis
-        # during that pass, producing [tiles,N,C,H,W]. The established losses
-        # intentionally consume replica-local [N,C,H,W] values and several of
-        # them use axis 1 as the channel axis, so executing them on this
-        # temporary representation gives false shape errors. Only the abstract
-        # [tiles,N] loss shape is needed here; the real pmap compilation and
-        # execution take the rank-four branch below.
-        if x_proc.ndim == 5:
-            return shape_probe_losses(x_proc)
-        return super().loss_func(
-            x_proc,
-            y_proc,
-            x_latent,
-            y_latent,
-            channel_time_mask,
-            loss_cache,
-            key,
-        )
 
     def _training_execution(self):
         if self.SHARDING in (None, 1):
@@ -153,23 +121,6 @@ class NCA_sycl_Trainer(NCA_Trainer):
         for leaf, leaf_keys, callback in zip(
             state_leaves, key_leaves, callback_leaves
         ):
-            # Equinox determines the output PyTree of filter_pmap with an
-            # eval_shape call on the *unmapped* inputs. During that probe the
-            # tile axis is therefore still visible: [tiles,N,C,H,W]. Keys in
-            # the same probe are not replica-local either, so trying to vmap a
-            # real rollout here gives ambiguous [K,tiles,...] key layouts.
-            #
-            # Only the result structure is consumed from this branch. The
-            # actual pmap trace receives replica-local rank-four states and
-            # takes the native rollout branch below. Return shape-correct
-            # placeholders and avoid issuing a custom call during eval_shape.
-            if leaf.ndim == 5:
-                final, trajectory = shape_probe_rollout(
-                    leaf, self.ROLLOUT_STEPS
-                )
-                final_leaves.append(final)
-                trajectory_leaves.append(trajectory)
-                continue
             boundary_code, boundary_mask, boundary_channels = (
                 self._boundary_spec(callback, leaf.dtype)
             )
@@ -234,9 +185,6 @@ class NCA_sycl_Trainer(NCA_Trainer):
             )
 
         state_shape = x_latent[0].shape[0]
-        mapped_shape_probe = x_latent[0].ndim == 5
-        if mapped_shape_probe:
-            state_shape = x_latent[0].shape[1]
 
         def rollout_chunk(carry, chunk_start):
             step_key, state, processed, reg_logs = carry
@@ -258,14 +206,9 @@ class NCA_sycl_Trainer(NCA_Trainer):
             previous_state = state
             previous_processed = processed
             for offset in range(self.ROLLOUT_STEPS):
-                if mapped_shape_probe:
-                    new_state = jtu.tree_map(
-                        lambda values: values[:, offset], trajectory
-                    )
-                else:
-                    new_state = jtu.tree_map(
-                        lambda values: values[offset], trajectory
-                    )
+                new_state = jtu.tree_map(
+                    lambda values: values[offset], trajectory
+                )
                 new_processed = vv_latent_to_real(new_state)
                 reg_logs = apply_intermediate_regs(
                     reg_logs,
