@@ -49,10 +49,10 @@ class NCA(FastNCA):
         return config
 
     def _validate_sycl_configuration(self, x: Array) -> tuple[int, int]:
-        if x.ndim != 3 or x.shape[0] != self.N_CHANNELS:
+        if x.ndim not in (3, 4) or x.shape[-3] != self.N_CHANNELS:
             raise ValueError(
-                "NCA_sycl expects one state with shape "
-                f"({self.N_CHANNELS}, H, W), got {x.shape}"
+                "NCA_sycl expects [C,H,W] or [B,C,H,W] with "
+                f"C={self.N_CHANNELS}, got {x.shape}"
             )
         if x.dtype != jnp.float32:
             raise TypeError(f"NCA_sycl currently supports float32, got {x.dtype}")
@@ -91,20 +91,7 @@ class NCA(FastNCA):
             )
         return flags, padding
 
-    def __call__(
-        self,
-        x: Float[Array, "{self.N_CHANNELS} H W"],
-        boundary_callback: Callable[[Array], Array] = lambda value: value,
-        key: Array | None = None,
-    ) -> Float[Array, "{self.N_CHANNELS} H W"]:
-        flags, padding = self._validate_sycl_configuration(x)
-        if key is None:
-            key = jax.random.PRNGKey(int(time.time()))
-
-        # Import lazily so ordinary CPU-side model/config inspection does not
-        # require the Intel-specific JAX 0.5 custom-call API.
-        from NCA.model.sycl.bridge import sycl_nca_forward
-
+    def _sycl_parameters(self):
         kernels = jnp.concatenate(
             (
                 self.op.grad_x.weight,
@@ -117,11 +104,19 @@ class NCA(FastNCA):
         weight_hidden = self.layers[0].weight[:, :, 0, 0]
         weight_output = self.layers[2].weight[:, :, 0, 0]
         bias_output = self.layers[2].bias.reshape(self.N_CHANNELS)
-        update_mask = jax.random.bernoulli(
-            key, p=self.FIRE_RATE, shape=x.shape
-        ).astype(x.dtype)
+        return kernels, weight_hidden, weight_output, bias_output
 
-        updated = sycl_nca_forward(
+    def _sycl_update(self, x: Array, update_mask: Array) -> Array:
+        flags, padding = self._validate_sycl_configuration(x)
+
+        # Import lazily so ordinary CPU-side model/config inspection does not
+        # require the Intel-specific JAX 0.5 custom-call API.
+        from NCA.model.sycl.bridge import sycl_nca_forward
+
+        kernels, weight_hidden, weight_output, bias_output = (
+            self._sycl_parameters()
+        )
+        return sycl_nca_forward(
             x,
             kernels,
             weight_hidden,
@@ -131,6 +126,40 @@ class NCA(FastNCA):
             kernel_flags=flags,
             padding=padding,
         )
+
+    def batched_call(self, x: Array, keys: Array) -> Array:
+        """Update ``[B,C,H,W]`` directly with shared-parameter gradients.
+
+        Unlike ``vmap(self)``, this enters the custom VJP with an already
+        batched state. The native backward call can therefore sum parameter
+        gradients over all examples with one set of GEMMs instead of emitting
+        per-example matrices for JAX to reduce later.
+        """
+        if x.ndim != 4:
+            raise ValueError(f"batched_call expects [B,C,H,W], got {x.shape}")
+        if keys.shape[0] != x.shape[0]:
+            raise ValueError(
+                f"Expected {x.shape[0]} random keys, got shape {keys.shape}"
+            )
+        update_mask = jax.vmap(
+            lambda item_key: jax.random.bernoulli(
+                item_key, p=self.FIRE_RATE, shape=x.shape[1:]
+            )
+        )(keys).astype(x.dtype)
+        return self._sycl_update(x, update_mask)
+
+    def __call__(
+        self,
+        x: Float[Array, "{self.N_CHANNELS} H W"],
+        boundary_callback: Callable[[Array], Array] = lambda value: value,
+        key: Array | None = None,
+    ) -> Float[Array, "{self.N_CHANNELS} H W"]:
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
+        update_mask = jax.random.bernoulli(
+            key, p=self.FIRE_RATE, shape=x.shape
+        ).astype(x.dtype)
+        updated = self._sycl_update(x, update_mask)
         return boundary_callback(updated)
 
 

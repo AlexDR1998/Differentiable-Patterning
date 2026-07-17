@@ -16,11 +16,12 @@ from NCA.model.NCA_sycl import NCA as SyclNCA
 
 
 CHANNELS = 32
-HEIGHT = 16
-WIDTH = 16
+HEIGHT = int(os.environ.get("NCA_SYCL_SMOKE_HEIGHT", "17"))
+WIDTH = int(os.environ.get("NCA_SYCL_SMOKE_WIDTH", "19"))
 BATCH = 2
 KERNEL_STR = ["ID", "LAP", "DIFF"]
 FIRE_RATE = 0.5
+PADDING = os.environ.get("NCA_SYCL_SMOKE_PADDING", "CIRCULAR").upper()
 # BF16 XMX multiplies accumulate into FP32. These bounds detect structural
 # gradient errors while allowing the intended operand-rounding difference.
 RTOL = 2.0e-2
@@ -53,18 +54,24 @@ def _joint_loss(model_and_states, keys):
     return jnp.mean(outputs**2), outputs
 
 
+def _direct_batched_joint_loss(model_and_states, keys):
+    model, states = model_and_states
+    outputs = model.batched_call(states, keys)
+    return jnp.mean(outputs**2), outputs
+
+
 def _make_models(key):
     fast_model = FastNCA(
         CHANNELS,
         KERNEL_STR=KERNEL_STR,
-        PADDING="CIRCULAR",
+        PADDING=PADDING,
         FIRE_RATE=FIRE_RATE,
         key=key,
     )
     sycl_model = SyclNCA(
         CHANNELS,
         KERNEL_STR=KERNEL_STR,
-        PADDING="CIRCULAR",
+        PADDING=PADDING,
         FIRE_RATE=FIRE_RATE,
         key=key,
     )
@@ -85,22 +92,25 @@ def _make_models(key):
 
 def main() -> None:
     os.environ.setdefault("NCA_SYCL_XMX_MODE", "bf16")
-    print("NCA_SYCL_SMOKE_VERSION=2")
+    print("NCA_SYCL_SMOKE_VERSION=3")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEFAULT_BACKEND={jax.default_backend()}")
     print(f"JAX_DEVICES={jax.devices()}")
     print("BACKWARD_IMPLEMENTATION=SYCL_CUSTOM_CALL")
     print("BACKWARD_BATCHING=SINGLE_CUSTOM_CALL")
+    print("TRAINER_BATCHING=FLATTEN_BXN_SHARED_GRADIENTS")
     print("FORWARD_DENSE_IMPLEMENTATION=ONEMKL_GEMM")
     print("PERCEPTION_SPATIAL_TILING=8X16_SLM")
     print("BACKWARD_DENSE_IMPLEMENTATION=ONEMKL_GEMM")
-    print("CIRCULAR_DIFF_BACKWARD_STENCIL=SINGLE_RECOMPUTE_ATOMIC_SCATTER")
+    print("DIFF_BACKWARD_STENCIL=TILED_ATOMIC_FREE_GATHER_WHEN_SUPPORTED")
     print(
         "NCA_SYCL_XMX_MODE="
         f"{os.environ.get('NCA_SYCL_XMX_MODE', str(jax.config.jax_default_matmul_precision))}"
     )
     print("DENSE_IMPLEMENTATION=ONEMKL_XMX_COMPUTE_MODE")
     print(f"NUMERICAL_TOLERANCE=rtol:{RTOL},atol:{ATOL}")
+    print(f"TEST_SHAPE={BATCH}X{CHANNELS}X{HEIGHT}X{WIDTH}")
+    print(f"TEST_PADDING={PADDING}")
     if jax.default_backend() != "sycl":
         raise RuntimeError("NCA SYCL smoke test requires the 'sycl' JAX backend")
 
@@ -128,6 +138,16 @@ def main() -> None:
     print(f"SYCL_FORWARD_COMPILE_EXECUTE_SECONDS={time.perf_counter() - start}")
     _assert_close("FORWARD", actual, expected)
     print(f"OUTPUT_DEVICE={actual.device}")
+
+    # Final trainer evaluation calls model.__call__ directly from a Python
+    # rollout rather than through filter_jit. Exercise the primitive's eager
+    # dispatch rule explicitly so that training cannot succeed and evaluation
+    # subsequently fail.
+    print("PHASE=SYCL_EAGER_FORWARD", flush=True)
+    expected_eager = fast_model(states[0], key=keys[0])
+    actual_eager = sycl_model(states[0], key=keys[0])
+    actual_eager.block_until_ready()
+    _assert_close("EAGER_FORWARD", actual_eager, expected_eager)
 
     value_and_grad = eqx.filter_jit(
         eqx.filter_value_and_grad(_joint_loss, has_aux=True)
@@ -183,6 +203,55 @@ def main() -> None:
         expected_gradients.layers[2].bias,
     )
     _assert_close("STATE_GRADIENT", actual_state_gradient, expected_state_gradient)
+
+    # Exercise the trainer-specialized route: the state is already batched
+    # when it enters the custom VJP, so shared parameter gradients are reduced
+    # inside one native backward call rather than materialized per example.
+    direct_value_and_grad = eqx.filter_jit(
+        eqx.filter_value_and_grad(_direct_batched_joint_loss, has_aux=True)
+    )
+    print("PHASE=SYCL_DIRECT_BATCHED_BACKWARD", flush=True)
+    start = time.perf_counter()
+    (direct_loss, direct_outputs), (
+        direct_gradients,
+        direct_state_gradient,
+    ) = direct_value_and_grad((sycl_model, states), keys)
+    jax.block_until_ready(
+        (
+            direct_loss,
+            direct_outputs,
+            direct_gradients.layers[0].weight,
+            direct_gradients.layers[2].weight,
+            direct_gradients.layers[2].bias,
+            direct_state_gradient,
+        )
+    )
+    print(
+        "SYCL_DIRECT_BATCHED_VJP_COMPILE_EXECUTE_SECONDS="
+        f"{time.perf_counter() - start}"
+    )
+    _assert_close("DIRECT_BATCHED_FORWARD", direct_outputs, expected)
+    _assert_close("DIRECT_BATCHED_LOSS", direct_loss, expected_loss)
+    _assert_close(
+        "DIRECT_BATCHED_HIDDEN_WEIGHT_GRADIENT",
+        direct_gradients.layers[0].weight,
+        expected_gradients.layers[0].weight,
+    )
+    _assert_close(
+        "DIRECT_BATCHED_OUTPUT_WEIGHT_GRADIENT",
+        direct_gradients.layers[2].weight,
+        expected_gradients.layers[2].weight,
+    )
+    _assert_close(
+        "DIRECT_BATCHED_OUTPUT_BIAS_GRADIENT",
+        direct_gradients.layers[2].bias,
+        expected_gradients.layers[2].bias,
+    )
+    _assert_close(
+        "DIRECT_BATCHED_STATE_GRADIENT",
+        direct_state_gradient,
+        expected_state_gradient,
+    )
 
     print("NCA_SYCL_SMOKE_RESULT=PASS")
 

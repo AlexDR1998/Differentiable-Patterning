@@ -22,10 +22,14 @@ respectively, with FP32 accumulation; `highest` selects standard FP32 GEMM.
 `NCA_SYCL_XMX_MODE` can override this with `standard`, `tf32`, `bf16`,
 `bf16x2`, or `bf16x3`.
 `nca_sycl_backward.cpp` implements the custom VJP for the state and trainable
-pointwise-layer parameters using native SYCL kernels. Circular and zero-padding
-linear stencil transposes use a deterministic gather. DIFF uses a faster
-single-recompute atomic scatter to avoid recomputing both filters per tap;
-reflect and replicate padding also use the atomic fallback.
-Vmapped execution uses one batched backward custom call and emits per-example
-parameter cotangents for JAX to reduce correctly. The fixed perception kernels
-and random update mask are non-trainable.
+pointwise-layer parameters using native SYCL kernels. Circular and zero-padded
+3x3 DIFF transposes use an atomic-free 8x16 tiled gather that caches the state,
+gx, gy, and perception cotangents in shared local memory. Other linear
+stencils use the deterministic gather; unsupported nonlinear/padding cases
+retain the conservative atomic fallback.
+
+Ordinary `vmap` execution still emits per-example parameter cotangents for JAX
+to reduce correctly. `NCA_sycl.batched_call`, used by `NCA_sycl_Trainer`,
+instead enters the custom VJP with a pre-batched `[B*N,C,H,W]` state and
+accumulates shared-parameter gradients directly over all cells. The fixed
+perception kernels and random update mask are non-trainable.

@@ -451,6 +451,189 @@ void SubmitGatheredStateGradient(
   });
 }
 
+// Atomic-free transpose of the common 3x3 perception operator. Each
+// workgroup owns one output tile, caches the state with a two-cell halo, and
+// computes gx/gy once for every source cell that can contribute to the tile.
+// This is especially important for DIFF: the scatter formulation performs 18
+// contended global atomics per state element, while a naive gather recomputes
+// both 3x3 filters once per stencil tap.
+void SubmitGatheredDiffStateGradient3x3(
+    sycl::queue& queue, const float* state, const float* kernels,
+    const float* perception_gradient, const float* output_cotangent,
+    float* state_gradient, const nca_sycl::Shape& shape) {
+  constexpr std::int64_t kRadius = 1;
+  constexpr std::int64_t kStateHalo = 2;
+  constexpr std::int64_t kOutputY = nca_sycl::kSpatialTileY;
+  constexpr std::int64_t kOutputX = nca_sycl::kSpatialTileX;
+  constexpr std::int64_t kSourceY = kOutputY + 2 * kRadius;
+  constexpr std::int64_t kSourceX = kOutputX + 2 * kRadius;
+  constexpr std::int64_t kStateY = kOutputY + 2 * kStateHalo;
+  constexpr std::int64_t kStateX = kOutputX + 2 * kStateHalo;
+  constexpr std::int64_t kLocalSize = kOutputY * kOutputX;
+  constexpr std::int64_t kKernelValues = 4 * 3 * 3;
+
+  const std::int64_t spatial_size = shape.height * shape.width;
+  const std::int64_t tile_rows =
+      (shape.height + kOutputY - 1) / kOutputY;
+  const std::int64_t tile_cols =
+      (shape.width + kOutputX - 1) / kOutputX;
+  const std::int64_t group_count =
+      shape.batch * shape.channels * tile_rows * tile_cols;
+  const std::int64_t feature_blocks = shape.features / shape.channels;
+
+  queue.submit([&](sycl::handler& handler) {
+    sycl::local_accessor<float, 1> state_tile(
+        sycl::range<1>(kStateY * kStateX), handler);
+    sycl::local_accessor<float, 1> gx_tile(
+        sycl::range<1>(kSourceY * kSourceX), handler);
+    sycl::local_accessor<float, 1> gy_tile(
+        sycl::range<1>(kSourceY * kSourceX), handler);
+    sycl::local_accessor<float, 1> source_gradients(
+        sycl::range<1>(kSourceY * kSourceX * feature_blocks), handler);
+    sycl::local_accessor<float, 1> kernel_tile(
+        sycl::range<1>(kKernelValues), handler);
+
+    handler.parallel_for(
+        sycl::nd_range<1>(sycl::range<1>(group_count * kLocalSize),
+                          sycl::range<1>(kLocalSize)),
+        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(16)]] {
+          const std::int64_t local = item.get_local_linear_id();
+          std::int64_t group = item.get_group_linear_id();
+          const std::int64_t tile_x = group % tile_cols;
+          group /= tile_cols;
+          const std::int64_t tile_y = group % tile_rows;
+          group /= tile_rows;
+          const std::int64_t channel = group % shape.channels;
+          const std::int64_t batch = group / shape.channels;
+          const std::int64_t origin_y = tile_y * kOutputY;
+          const std::int64_t origin_x = tile_x * kOutputX;
+
+          for (std::int64_t index = local; index < kKernelValues;
+               index += kLocalSize) {
+            kernel_tile[index] = kernels[index];
+          }
+          for (std::int64_t index = local; index < kStateY * kStateX;
+               index += kLocalSize) {
+            const std::int64_t local_y = index / kStateX;
+            const std::int64_t local_x = index % kStateX;
+            state_tile[index] = nca_sycl::StateAt(
+                state, batch, channel, origin_y + local_y - kStateHalo,
+                origin_x + local_x - kStateHalo, shape);
+          }
+          item.barrier(sycl::access::fence_space::local_space);
+
+          for (std::int64_t source = local;
+               source < kSourceY * kSourceX; source += kLocalSize) {
+            const std::int64_t source_local_y = source / kSourceX;
+            const std::int64_t source_local_x = source % kSourceX;
+            const std::int64_t source_y_unmapped =
+                origin_y + source_local_y - kRadius;
+            const std::int64_t source_x_unmapped =
+                origin_x + source_local_x - kRadius;
+            const std::int64_t source_y = nca_sycl::MapCoordinate(
+                source_y_unmapped, shape.height, shape.padding);
+            const std::int64_t source_x = nca_sycl::MapCoordinate(
+                source_x_unmapped, shape.width, shape.padding);
+
+            float gx = 0.0F;
+            float gy = 0.0F;
+#pragma unroll
+            for (std::int64_t ky = 0; ky < 3; ++ky) {
+#pragma unroll
+              for (std::int64_t kx = 0; kx < 3; ++kx) {
+                const float state_value =
+                    state_tile[(source_local_y + ky) * kStateX +
+                               source_local_x + kx];
+                gx += kernel_tile[ky * 3 + kx] * state_value;
+                gy += kernel_tile[9 + ky * 3 + kx] * state_value;
+              }
+            }
+            gx_tile[source] = gx;
+            gy_tile[source] = gy;
+
+            for (std::int64_t block = 0; block < feature_blocks; ++block) {
+              float gradient = 0.0F;
+              if (source_y >= 0 && source_x >= 0) {
+                const std::int64_t source_cell =
+                    batch * spatial_size + source_y * shape.width + source_x;
+                gradient = perception_gradient[
+                    source_cell * shape.features +
+                    block * shape.channels + channel];
+              }
+              source_gradients[source * feature_blocks + block] = gradient;
+            }
+          }
+          item.barrier(sycl::access::fence_space::local_space);
+
+          const std::int64_t thread_y = local / kOutputX;
+          const std::int64_t thread_x = local % kOutputX;
+          const std::int64_t y = origin_y + thread_y;
+          const std::int64_t x = origin_x + thread_x;
+          if (y >= shape.height || x >= shape.width) return;
+
+          const std::int64_t spatial = y * shape.width + x;
+          const std::int64_t output_index =
+              (batch * shape.channels + channel) * spatial_size + spatial;
+          float value = output_cotangent[output_index];
+          std::int64_t block = 0;
+          const std::int64_t center_source =
+              (thread_y + kRadius) * kSourceX + thread_x + kRadius;
+          if (shape.kernel_flags & nca_sycl::kIdFlag) {
+            value += source_gradients[center_source * feature_blocks + block];
+            ++block;
+          }
+
+#pragma unroll
+          for (std::int64_t ky = 0; ky < 3; ++ky) {
+#pragma unroll
+            for (std::int64_t kx = 0; kx < 3; ++kx) {
+              // The transpose gathers from source output q = p-(k-radius).
+              const std::int64_t source_local_y = thread_y - ky + 2;
+              const std::int64_t source_local_x = thread_x - kx + 2;
+              const std::int64_t source =
+                  source_local_y * kSourceX + source_local_x;
+              std::int64_t source_block = block;
+              if (shape.kernel_flags & nca_sycl::kDiffFlag) {
+                const float gx = gx_tile[source];
+                const float gy = gy_tile[source];
+                const float norm = sycl::sqrt(gx * gx + gy * gy);
+                if (norm > 0.0F) {
+                  value +=
+                      source_gradients[source * feature_blocks + source_block] *
+                      (gx * kernel_tile[ky * 3 + kx] +
+                       gy * kernel_tile[9 + ky * 3 + kx]) /
+                      norm;
+                }
+                ++source_block;
+              }
+              if (shape.kernel_flags & nca_sycl::kGradFlag) {
+                value +=
+                    source_gradients[source * feature_blocks + source_block] *
+                    kernel_tile[ky * 3 + kx];
+                ++source_block;
+                value +=
+                    source_gradients[source * feature_blocks + source_block] *
+                    kernel_tile[9 + ky * 3 + kx];
+                ++source_block;
+              }
+              if (shape.kernel_flags & nca_sycl::kAverageFlag) {
+                value +=
+                    source_gradients[source * feature_blocks + source_block] *
+                    kernel_tile[18 + ky * 3 + kx];
+                ++source_block;
+              }
+              if (shape.kernel_flags & nca_sycl::kLaplacianFlag) {
+                value +=
+                    source_gradients[source * feature_blocks + source_block] *
+                    kernel_tile[27 + ky * 3 + kx];
+              }
+            }
+          }
+          state_gradient[output_index] = value;
+        });
+  });
+}
+
 void SubmitAtomicStateGradientFallback(
     sycl::queue& queue, const float* state, const float* kernels,
     const float* perception_gradient, const float* output_cotangent,
@@ -707,12 +890,17 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
   const bool gather_padding =
       shape.padding == nca_sycl::Padding::kCircular ||
       shape.padding == nca_sycl::Padding::kZeros;
-  // DIFF's nonlinear transpose needs gx and gy at every source cell. The
-  // gather formulation would recompute both 3x3 filters once per tap, so the
-  // single-recompute atomic scatter is faster until those derivatives are
-  // explicitly cached. Linear stencils retain the deterministic gather.
-  if (gather_padding &&
-      (shape.kernel_flags & nca_sycl::kDiffFlag) == 0) {
+  // The common 3x3 DIFF path caches gx/gy for the tile and halo, making its
+  // transpose deterministic and atomic-free. Other nonlinear/padding cases
+  // retain the conservative scatter fallback; linear stencils use the
+  // original deterministic gather.
+  if (gather_padding && shape.kernel_size == 3 &&
+      (shape.kernel_flags & nca_sycl::kDiffFlag) != 0) {
+    SubmitGatheredDiffStateGradient3x3(
+        *queue, state, kernels, perception, output_cotangent, state_gradient,
+        shape);
+  } else if (gather_padding &&
+             (shape.kernel_flags & nca_sycl::kDiffFlag) == 0) {
     SubmitGatheredStateGradient(*queue, state, kernels, perception,
                                 output_cotangent, state_gradient, shape);
   } else {

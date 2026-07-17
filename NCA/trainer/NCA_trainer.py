@@ -515,6 +515,17 @@ class NCA_Trainer(object):
 		x = v_perception(x)
 		x = x.at[:,base_channels:].set(0.1*x[:,base_channels:])
 		return x
+
+	def _make_batched_nca(self, nca):
+		"""Build the established vmap/tree-map NCA application path.
+
+		Accelerator-specific trainers may override this hook without adding
+		backend flags or batching branches to the core training loop.
+		"""
+		v_nca = jax.vmap(nca, in_axes=(0, None, 0), out_axes=0, axis_name="N")
+		return lambda x, callback, key_array: jtu.tree_map(
+			v_nca, x, callback, key_array
+		)
 	
 	def train(self,
 		      t,
@@ -749,8 +760,7 @@ class NCA_Trainer(object):
 			def compute_loss(nca_diff,nca_static,x_latent,y_proc,t,key):
 				# Gradient and values of loss function computed here
 				_nca = eqx.combine(nca_diff,nca_static)
-				v_nca = jax.vmap(_nca,in_axes=(0,None,0),out_axes=0,axis_name="N") # boundary is independant of time N
-				vv_nca = lambda x,callback,key_array: jtu.tree_map(v_nca,x,callback,key_array)  # noqa: E731
+				vv_nca = self._make_batched_nca(_nca)
 				# provide a batched processor that maps model.latent_to_real over the batch/tree
 				v_latent_to_real = jax.vmap(lambda model_x: _nca.latent_to_real(model_x), in_axes=0, out_axes=0)
 				vv_latent_to_real = lambda x: jtu.tree_map(v_latent_to_real, x)

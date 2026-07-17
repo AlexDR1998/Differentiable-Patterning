@@ -40,6 +40,7 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
 def run(cfg):
     import jax
     from NCA.trainer.NCA_trainer import NCA_Trainer
+    from NCA.trainer.NCA_sycl_trainer import NCA_sycl_Trainer
     from NCA.trainer.optimizer import build_optimizer
     from Experiments.config_helpers import build_loss_args, build_pool_admission_config, build_tags
     from Experiments.micropatterns.config_helpers import (
@@ -74,7 +75,10 @@ def run(cfg):
     run_name += f"_{opt_name}"
 
 
-    trainer = NCA_Trainer(
+    trainer_class = (
+        NCA_sycl_Trainer if cfg.model.family == "NCA_sycl" else NCA_Trainer
+    )
+    trainer = trainer_class(
         NCA_model=model,
         data=data,
         model_filename=run_name,
