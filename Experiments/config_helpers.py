@@ -169,10 +169,12 @@ def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
         aliases={
             "boundary": "bd",
             "contiguous_growth": "cg",
+            "channel_correlation": "cc",
             "intermediate_state": "is",
             "latent_channel_match": "lcm",
             "latent_size": "ls",
             "perturbation_conservation": "pc",
+            "radial_profile": "rp",
             "update_sensitivity": "us",
         },
     )

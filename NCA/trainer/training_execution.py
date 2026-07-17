@@ -26,6 +26,12 @@ class TrainingExecution:
     def loss_cache(self):
         return self.trainer.LOSS_CACHE
 
+    def diagnostic_boundary_masks(self):
+        masks = self.trainer.DIAGNOSTIC_BOUNDARY_MASK
+        if masks is None:
+            return None
+        return [mask for mask in masks]
+
     def synchronise_gradients(self, gradients):
         return gradients
 

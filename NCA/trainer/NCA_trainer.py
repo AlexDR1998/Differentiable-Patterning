@@ -749,11 +749,45 @@ class NCA_Trainer(object):
 			"latent_channel_match":regularisers.latent_channel_match_regulariser,
 			"latent_size":regularisers.latent_size_regulariser
 		}
-		
+		TERMINAL_REG_FUNCS = {
+			"channel_correlation": regularisers.channel_correlation_regulariser,
+			"radial_profile": regularisers.radial_profile_regulariser,
+		}
 
-		# Filter REG_FUNCS to the same set (optional but keeps things consistent)
-		REGULARISER_COEFFS = {name:REGULARISER_COEFFS[name] for name in REGULARISER_COEFFS.keys() if REGULARISER_COEFFS[name]!=0.0}
-		REG_FUNCS = {name: REG_FUNCS[name] for name in REGULARISER_COEFFS.keys()}
+		REGULARISER_COEFFS = {
+			name: coefficient
+			for name, coefficient in REGULARISER_COEFFS.items()
+			if coefficient != 0.0
+		}
+		known_regularisers = set(REG_FUNCS) | set(TERMINAL_REG_FUNCS)
+		unknown_regularisers = set(REGULARISER_COEFFS) - known_regularisers
+		if unknown_regularisers:
+			raise ValueError(
+				f"Unknown regularisers: {sorted(unknown_regularisers)}"
+			)
+		grouped_target_regularisers = {"channel_correlation", "radial_profile"}
+		if (
+			grouped_target_regularisers.intersection(REGULARISER_COEFFS)
+			and self.DATA_CHANNELS != 12
+		):
+			raise ValueError(
+				"Grouped target regularisation requires the 12-channel "
+				"grouped micropattern target layout"
+			)
+		INTERMEDIATE_REGULARISER_COEFFS = {
+			name: coefficient
+			for name, coefficient in REGULARISER_COEFFS.items()
+			if name in REG_FUNCS
+		}
+		TERMINAL_REGULARISER_COEFFS = {
+			name: coefficient
+			for name, coefficient in REGULARISER_COEFFS.items()
+			if name in TERMINAL_REG_FUNCS
+		}
+		REG_FUNCS = {
+			name: REG_FUNCS[name]
+			for name in INTERMEDIATE_REGULARISER_COEFFS
+		}
 		training_execution = self._training_execution()
 		#@partial(eqx.filter_jit,donate="all-except-first")
 		def make_step(nca,x_latent,y_proc,t,opt_state,key):
@@ -802,7 +836,7 @@ class NCA_Trainer(object):
 					"OBS_CHANNELS": self.OBS_CHANNELS,
 					"REAL_TO_LATENT": self.NCA_model.real_to_latent,
 					}
-				for name in REGULARISER_COEFFS.keys():
+				for name in INTERMEDIATE_REGULARISER_COEFFS:
 					reg_logs[name]+=REG_FUNCS[name](x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,aux,key)
 				return reg_logs
 			
@@ -817,7 +851,10 @@ class NCA_Trainer(object):
 				v_real_to_latent = jax.vmap(lambda model_x: _nca.real_to_latent(model_x), in_axes=0, out_axes=0)
 				vv_real_to_latent = lambda x: jtu.tree_map(v_real_to_latent, x)
 				# Set up internal logs for regularisers
-				reg_logs_internal = {name: jnp.zeros(len(x_latent),dtype=LOSS_DTYPE) for name in REGULARISER_COEFFS.keys()}
+				reg_logs_internal = {
+					name: jnp.zeros(len(x_latent), dtype=LOSS_DTYPE)
+					for name in INTERMEDIATE_REGULARISER_COEFFS
+				}
 				key,x_latent,x_proc,reg_logs_internal = self._run_nca_steps(
 					_nca,
 					vv_nca,
@@ -844,9 +881,25 @@ class NCA_Trainer(object):
 					training_execution.loss_cache(),
 					loss_key
 					))
-				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
-				mean_loss = jnp.mean(losses) + jnp.sum(jnp.array(list(reg_loss_internal.values())))
-				return mean_loss, (x_latent,x_proc,losses,reg_loss_internal)
+				regulariser_losses = {
+					name: coefficient * jnp.mean(reg_logs_internal[name]) / t
+					for name, coefficient in INTERMEDIATE_REGULARISER_COEFFS.items()
+				}
+				for name, coefficient in TERMINAL_REGULARISER_COEFFS.items():
+					values = TERMINAL_REG_FUNCS[name](
+						x_proc,
+						y_proc,
+						training_execution.loss_time_channel_mask(),
+						training_execution.diagnostic_boundary_masks(),
+					)
+					regulariser_losses[name] = coefficient * jnp.mean(values)
+				regulariser_total = (
+					jnp.sum(jnp.stack(list(regulariser_losses.values())))
+					if regulariser_losses
+					else jnp.array(0.0, dtype=LOSS_DTYPE)
+				)
+				mean_loss = jnp.mean(losses) + regulariser_total
+				return mean_loss, (x_latent,x_proc,losses,regulariser_losses)
 
 			nca_diff,nca_static = nca.partition()
 			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)  # type: ignore
