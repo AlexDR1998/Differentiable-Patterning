@@ -41,3 +41,11 @@ updates behind one XLA custom call. Boundary constraints are applied after
 every native update, and the complete trajectory is returned so existing
 per-step regularisers retain their values and gradients. The reverse call
 accepts cotangents for both the endpoint and every trajectory state.
+
+`NCA_sycl_Trainer` also has an opt-in two-stack replicated-data-parallel path.
+Set `trainer.sharding: 2` to place one of the two outer `B` leaves on each
+visible Max 1550 stack. Model parameters are broadcast, native rollout and VJP
+calls execute independently on both stacks, parameter gradients are averaged
+with `lax.pmean`, and both replicas apply the same optimiser update. The first
+implementation deliberately requires exactly two shape-compatible outer
+leaves and matching boundary modes.

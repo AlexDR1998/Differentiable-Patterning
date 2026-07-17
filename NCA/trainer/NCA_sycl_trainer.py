@@ -16,12 +16,23 @@ from Common.model.boundary import hard_boundary, model_boundary, no_boundary
 from Common.utils import key_pytree_gen
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from NCA.trainer.sycl_batching import apply_flat_batched_nca
+from NCA.trainer.sycl_execution import SyclTwoTileExecution
 
 
 class NCA_sycl_Trainer(NCA_Trainer):
     """Use one native call over N while retaining independent outer B leaves."""
 
     ROLLOUT_STEPS = 2
+
+    def _training_execution(self):
+        if self.SHARDING in (None, 1):
+            return super()._training_execution()
+        if self.SHARDING == 2:
+            return SyclTwoTileExecution(self)
+        raise ValueError(
+            "NCA_sycl_Trainer currently supports trainer.sharding=null, 1, "
+            f"or 2; got {self.SHARDING}"
+        )
 
     def _make_batched_nca(self, nca):
         fallback = super()._make_batched_nca(nca)
@@ -87,9 +98,11 @@ class NCA_sycl_Trainer(NCA_Trainer):
         loop_autodiff,
         apply_intermediate_regs,
         vv_latent_to_real,
+        training_execution,
     ):
         rollout = getattr(nca, "batched_rollout", None)
-        callbacks = jtu.tree_leaves(self.BOUNDARY_CALLBACK)
+        training_callbacks = training_execution.boundary_callbacks()
+        callbacks = jtu.tree_leaves(training_callbacks)
         supported_boundaries = all(
             isinstance(callback, (no_boundary, model_boundary, hard_boundary))
             for callback in callbacks
@@ -111,6 +124,7 @@ class NCA_sycl_Trainer(NCA_Trainer):
                 loop_autodiff,
                 apply_intermediate_regs,
                 vv_latent_to_real,
+                training_execution,
             )
 
         state_shape = x_latent[0].shape[0]
@@ -129,7 +143,7 @@ class NCA_sycl_Trainer(NCA_Trainer):
                 lambda *values: jnp.stack(values, axis=0), *keys_by_step
             )
             final_state, trajectory = self._rollout_tree(
-                nca, state, self.BOUNDARY_CALLBACK, rollout_keys
+                nca, state, training_callbacks, rollout_keys
             )
 
             previous_state = state

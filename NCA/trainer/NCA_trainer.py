@@ -27,6 +27,7 @@ from NCA.model.NCA_multi_scale import mNCA
 from NCA.model.NCA_multihead_attention import aNCA
 from NCA.trainer.data_augmenter_nca import DataAugmenter
 import NCA.trainer.NCA_regulariser as regularisers
+from NCA.trainer.training_execution import TrainingExecution
 from einops import repeat, reduce, rearrange, einsum
 from Common.utils import key_pytree_gen
 from Common.model.boundary import model_boundary, hard_boundary, no_boundary
@@ -527,6 +528,9 @@ class NCA_Trainer(object):
 			v_nca, x, callback, key_array
 		)
 
+	def _training_execution(self):
+		return TrainingExecution(self)
+
 	def _run_nca_steps(
 		self,
 		nca,
@@ -539,6 +543,7 @@ class NCA_Trainer(object):
 		loop_autodiff,
 		apply_intermediate_regs,
 		vv_latent_to_real,
+		training_execution,
 	):
 		"""Reference one-step scan; SYCL trainers may override the rollout."""
 		state_shape = x_latent[0].shape[0]
@@ -550,7 +555,7 @@ class NCA_Trainer(object):
 				step_key, (len(state), state_shape)
 			)
 			new_state = vv_nca(
-				state, self.BOUNDARY_CALLBACK, key_array
+				state, training_execution.boundary_callbacks(), key_array
 			)
 			new_processed = vv_latent_to_real(new_state)
 			reg_logs = apply_intermediate_regs(
@@ -749,8 +754,8 @@ class NCA_Trainer(object):
 		# Filter REG_FUNCS to the same set (optional but keeps things consistent)
 		REGULARISER_COEFFS = {name:REGULARISER_COEFFS[name] for name in REGULARISER_COEFFS.keys() if REGULARISER_COEFFS[name]!=0.0}
 		REG_FUNCS = {name: REG_FUNCS[name] for name in REGULARISER_COEFFS.keys()}
+		training_execution = self._training_execution()
 		#@partial(eqx.filter_jit,donate="all-except-first")
-		@eqx.filter_jit
 		def make_step(nca,x_latent,y_proc,t,opt_state,key):
 			"""
 			
@@ -793,7 +798,7 @@ class NCA_Trainer(object):
 
 			def apply_intermediate_regs(reg_logs,x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,key):
 				aux = {
-					"BOUNDARY_CALLBACK": self.BOUNDARY_CALLBACK, 
+					"BOUNDARY_CALLBACK": training_execution.boundary_callbacks(),
 					"OBS_CHANNELS": self.OBS_CHANNELS,
 					"REAL_TO_LATENT": self.NCA_model.real_to_latent,
 					}
@@ -824,6 +829,7 @@ class NCA_Trainer(object):
 					LOOP_AUTODIFF,
 					apply_intermediate_regs,
 					vv_latent_to_real,
+					training_execution,
 				)
 
 				loss_key = key_pytree_gen(key, (len(x_latent),))
@@ -834,8 +840,8 @@ class NCA_Trainer(object):
 					y_proc,
 					x_latent,
 					y_latent,
-					self.LOSS_TIME_CHANNEL_MASK,
-					self.LOSS_CACHE,
+					training_execution.loss_time_channel_mask(),
+					training_execution.loss_cache(),
 					loss_key
 					))
 				reg_loss_internal = {name: REGULARISER_COEFFS[name]*jnp.mean(reg_logs_internal[name])/t for name in REGULARISER_COEFFS.keys()}
@@ -844,9 +850,13 @@ class NCA_Trainer(object):
 
 			nca_diff,nca_static = nca.partition()
 			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)  # type: ignore
+			grads = training_execution.synchronise_gradients(grads)
+			(mean_loss,(x_latent,x_proc,losses,reg_loss)) = loss_x
+			mean_loss, reg_loss = training_execution.synchronise_loss(
+				mean_loss, reg_loss
+			)
 			updates,opt_state = self.OPTIMISER.update(grads, opt_state, nca_diff)
 			nca = eqx.apply_updates(nca,updates)
-			(mean_loss,(x_latent,x_proc,losses,reg_loss)) = loss_x
 			log_dict = {
 				"loss": mean_loss,
 				"x_latent": x_latent,
@@ -855,6 +865,8 @@ class NCA_Trainer(object):
 				**reg_loss
 			}
 			return nca,x_latent,y_proc,t,opt_state,key,mean_loss,log_dict
+
+		make_step = training_execution.transform_step(make_step)
 
 		nca = self.NCA_model
 		nca_diff,nca_static = nca.partition()
@@ -921,6 +933,9 @@ class NCA_Trainer(object):
 				} for b in range(len(x))]
 			
 		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
+		nca, x, y, opt_state, key = training_execution.prepare_inputs(
+			nca, x, y, opt_state, key
+		)
 		compiled_make_step, initial_compile_seconds = compile_and_time(
 			make_step,
 			nca,
@@ -977,7 +992,7 @@ class NCA_Trainer(object):
 		for i in pbar:
 			iteration_start = time.perf_counter()
 			#prev_loss = mean_loss
-			key = jr.fold_in(key,i)
+			key = training_execution.fold_in_key(key, i)
 			CLEAR_CACHE_STEP = (
 				CLEAR_CACHE_EVERY is not None 
 				and CLEAR_CACHE_EVERY>0
@@ -1004,8 +1019,8 @@ class NCA_Trainer(object):
 				)
 
 				_, dry_x_new, dry_y_new, _, _, _, _, _ = dry_outputs
-				key, dry_callback_key = jr.split(key)
-				dry_callback_outputs = self.DATA_AUGMENTER.data_callback(
+				key, dry_callback_key = training_execution.split_key(key)
+				dry_callback_outputs = training_execution.apply_data_callback(
 					dry_x_new,
 					dry_y_new,
 					i,
@@ -1036,6 +1051,7 @@ class NCA_Trainer(object):
 			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = step_outputs  # type: ignore
 			maybe_save_gpu_profile(i)
 			mean_loss_value = float(jax.device_get(mean_loss))
+			log_dict = training_execution.prepare_log_dict(log_dict)
 			if runtime_tracker["first_execution_seconds"] is None:
 				runtime_tracker["first_execution_seconds"] = step_compute_seconds
 			elif not CLEAR_CACHE_STEP:
@@ -1095,8 +1111,10 @@ class NCA_Trainer(object):
 				error=error,
 			)
 			if pool_decision["admit"]:
-				key, callback_key = jr.split(key)
-				x, y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, callback_key)
+				key, callback_key = training_execution.split_key(key)
+				x, y = training_execution.apply_data_callback(
+					x_new, y_new, i, callback_key
+				)
 			pool_admission.update(pool_decision, mean_loss_value)
 			log_dict.update(pool_admission.log_dict(pool_decision))
 			runtime_tracker["iteration_excluding_logging_seconds"] = (
