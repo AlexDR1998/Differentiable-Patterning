@@ -16,6 +16,11 @@ def shape_probe_rollout(state, rollout_steps):
     return state, trajectory
 
 
+def shape_probe_losses(state):
+    """Return the per-tile, per-timestep loss shape used by filter_pmap."""
+    return jnp.zeros(state.shape[:2], dtype=state.dtype)
+
+
 def apply_flat_batched_nca(nca, x, callbacks, key_array, fallback):
     """Batch each compatible leaf over N while keeping outer B leaves separate."""
     leaves, tree_definition = jtu.tree_flatten(x)
@@ -36,4 +41,8 @@ def apply_flat_batched_nca(nca, x, callbacks, key_array, fallback):
     return jtu.tree_unflatten(tree_definition, updated_leaves)
 
 
-__all__ = ["apply_flat_batched_nca", "shape_probe_rollout"]
+__all__ = [
+    "apply_flat_batched_nca",
+    "shape_probe_losses",
+    "shape_probe_rollout",
+]

@@ -20,6 +20,7 @@ from Common.utils import key_pytree_gen
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from NCA.trainer.sycl_batching import (
     apply_flat_batched_nca,
+    shape_probe_losses,
     shape_probe_rollout,
 )
 from NCA.trainer.sycl_execution import SyclTwoTileExecution
@@ -40,6 +41,36 @@ class NCA_sycl_Trainer(NCA_Trainer):
         if fused_steps < 1:
             raise ValueError("SYCL_FUSED_STEPS must be a positive integer")
         self.ROLLOUT_STEPS = fused_steps
+
+    def loss_func(
+        self,
+        x_proc,
+        y_proc,
+        x_latent,
+        y_latent,
+        channel_time_mask,
+        loss_cache,
+        key,
+    ):
+        # filter_pmap uses a preliminary vmap/eval_shape pass to determine its
+        # output PyTree. Nested scan tracing materialises the mapped tile axis
+        # during that pass, producing [tiles,N,C,H,W]. The established losses
+        # intentionally consume replica-local [N,C,H,W] values and several of
+        # them use axis 1 as the channel axis, so executing them on this
+        # temporary representation gives false shape errors. Only the abstract
+        # [tiles,N] loss shape is needed here; the real pmap compilation and
+        # execution take the rank-four branch below.
+        if x_proc.ndim == 5:
+            return shape_probe_losses(x_proc)
+        return super().loss_func(
+            x_proc,
+            y_proc,
+            x_latent,
+            y_latent,
+            channel_time_mask,
+            loss_cache,
+            key,
+        )
 
     def _training_execution(self):
         if self.SHARDING in (None, 1):

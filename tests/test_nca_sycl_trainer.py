@@ -4,6 +4,7 @@ import jax.tree_util as jtu
 
 from NCA.trainer.sycl_batching import (
     apply_flat_batched_nca,
+    shape_probe_losses,
     shape_probe_rollout,
 )
 
@@ -38,6 +39,7 @@ def test_two_tile_shape_probe_does_not_interpret_unmapped_keys():
 
     assert final.shape == (2, 4, 32, 5, 6)
     assert trajectory.shape == (2, 8, 4, 32, 5, 6)
+    assert shape_probe_losses(final).shape == (2, 4)
 
 
 def test_sycl_trainer_flat_batch_matches_reference_tree_vmap():
