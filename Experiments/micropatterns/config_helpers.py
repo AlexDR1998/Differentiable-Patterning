@@ -70,6 +70,7 @@ def masked_reinject_callback_bit(
     key,
     channel_timestep_mask,
     knockout_times,
+    n_inject=None,
 ):
     propagate_xn = lambda xi: xi.at[1:].set(xi[:-1])
     reset_x0 = lambda xi, xi_true: xi.at[0].set(xi_true[0])
@@ -80,7 +81,7 @@ def masked_reinject_callback_bit(
     B = len(x)
     T = x[0].shape[0]
     N_ELIGIBLE = B * (T - 1)
-    N_INJECT = N_ELIGIBLE // 2
+    N_INJECT = N_ELIGIBLE // 2 if n_inject is None else n_inject
 
     if N_INJECT > 0:
         scores = jax.random.uniform(key, shape=(N_ELIGIBLE,))
@@ -130,6 +131,8 @@ def build_data_augmenter(cfg, channel_timestep_mask=None):
         build_knockout_times(cfg.knockout.mode, cfg.knockout.time, cfg.data.batches)
     
     class DA_subclass(data_augmenter_base):
+        supports_sharded_inject_count = True
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             if channel_timestep_mask is None:
@@ -163,6 +166,7 @@ def build_data_augmenter(cfg, channel_timestep_mask=None):
                 jax.random.fold_in(key, 0),
                 self.channel_timestep_mask,
                 self.knockout_times,
+                getattr(self, "_sharded_n_inject", None),
             )
             x = self.noise(x,cfg.data.noise_strength,key=key)
             self.PREVIOUS_KEY = key

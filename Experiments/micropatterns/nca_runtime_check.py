@@ -19,10 +19,15 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
     pool_enabled = cfg.trainer.get("pool_admission_enabled", True)
     runtime_str = (
         f"runtime_t{cfg.run.t}"
+        f"_ds{cfg.data.downsample}"
         f"_{cfg.system.precision}"
         f"_loop{cfg.trainer.loop_autodiff}"
         f"_gpu{cfg.system.gpu}"
     )
+    if cfg.trainer.get("sharding", None) is not None:
+        runtime_str += f"_shard{cfg.trainer.sharding}"
+    if cfg.model.family == "NCA_sycl":
+        runtime_str += f"_fuse{cfg.trainer.get('sycl_fused_steps', 2)}"
     if pool_enabled:
         pool_rel = cfg.trainer.get("pool_admission_relative_threshold", 1.25)
         pool_prev_rel = cfg.trainer.get("pool_admission_previous_relative_threshold", 1.10)
@@ -78,6 +83,11 @@ def run(cfg):
     trainer_class = (
         NCA_sycl_Trainer if cfg.model.family == "NCA_sycl" else NCA_Trainer
     )
+    trainer_kwargs = {}
+    if cfg.model.family == "NCA_sycl":
+        trainer_kwargs["SYCL_FUSED_STEPS"] = cfg.trainer.get(
+            "sycl_fused_steps", 2
+        )
     trainer = trainer_class(
         NCA_model=model,
         data=data,
@@ -88,7 +98,9 @@ def run(cfg):
         LOSS_TIME_CHANNEL_MASK=loss_time_channel_mask,
         DATA_AUGMENTER=data_augmenter,  # pyright: ignore[reportArgumentType]
         GRAD_LOSS=cfg.trainer.grad_loss,
+        SHARDING=cfg.trainer.get("sharding", None),
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
+        **trainer_kwargs,
     )
 
     trainer.train(

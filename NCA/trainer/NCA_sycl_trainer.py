@@ -7,6 +7,8 @@ regulariser fusion, and other Intel-specific training transformations.
 
 from __future__ import annotations
 
+from numbers import Integral
+
 import equinox as eqx
 import jax.numpy as jnp
 import jax.random as jr
@@ -23,6 +25,17 @@ class NCA_sycl_Trainer(NCA_Trainer):
     """Use one native call over N while retaining independent outer B leaves."""
 
     ROLLOUT_STEPS = 2
+
+    def __init__(self, *args, SYCL_FUSED_STEPS=2, **kwargs):
+        super().__init__(*args, **kwargs)
+        if isinstance(SYCL_FUSED_STEPS, bool) or not isinstance(
+            SYCL_FUSED_STEPS, Integral
+        ):
+            raise TypeError("SYCL_FUSED_STEPS must be a positive integer")
+        fused_steps = int(SYCL_FUSED_STEPS)
+        if fused_steps < 1:
+            raise ValueError("SYCL_FUSED_STEPS must be a positive integer")
+        self.ROLLOUT_STEPS = fused_steps
 
     def _training_execution(self):
         if self.SHARDING in (None, 1):
@@ -110,7 +123,7 @@ class NCA_sycl_Trainer(NCA_Trainer):
         if (
             rollout is None
             or not isinstance(t, int)
-            or t % self.ROLLOUT_STEPS != 0
+            or self.ROLLOUT_STEPS == 1
             or not supported_boundaries
         ):
             return super()._run_nca_steps(
@@ -125,6 +138,11 @@ class NCA_sycl_Trainer(NCA_Trainer):
                 apply_intermediate_regs,
                 vv_latent_to_real,
                 training_execution,
+            )
+        if t % self.ROLLOUT_STEPS != 0:
+            raise ValueError(
+                f"NCA timestep count t={t} must be divisible by "
+                f"trainer.sycl_fused_steps={self.ROLLOUT_STEPS}"
             )
 
         state_shape = x_latent[0].shape[0]

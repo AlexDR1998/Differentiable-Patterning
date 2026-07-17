@@ -49,3 +49,9 @@ calls execute independently on both stacks, parameter gradients are averaged
 with `lax.pmean`, and both replicas apply the same optimiser update. The first
 implementation deliberately requires exactly two shape-compatible outer
 leaves and matching boundary modes.
+
+Set `trainer.sycl_fused_steps` to control how many sequential NCA timesteps
+the SYCL trainer groups into one rollout custom call. `1` selects the original
+one-step path; values greater than one must divide `run.t`. Runtime filenames
+include both `_fuseK` and, when enabled, `_shard2` so sweep results remain
+unambiguous.
