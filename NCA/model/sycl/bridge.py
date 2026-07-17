@@ -17,9 +17,11 @@ from jaxlib.hlo_helpers import custom_call
 
 _FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_forward"
 _BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_backward"
+_ROLLOUT_FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_rollout_forward"
+_ROLLOUT_BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_rollout_backward"
 _METADATA_VERSION = 3
 _LIBRARY: ctypes.CDLL | None = None
-_CAPSULES: tuple[object, object] | None = None
+_CAPSULES: tuple[object, ...] | None = None
 _REGISTERED = False
 
 
@@ -96,6 +98,8 @@ def _register_custom_call() -> None:
 
     forward_capsule = make_capsule("nca_sycl_forward")
     backward_capsule = make_capsule("nca_sycl_backward")
+    rollout_forward_capsule = make_capsule("nca_sycl_rollout_forward")
+    rollout_backward_capsule = make_capsule("nca_sycl_rollout_backward")
 
     from jax._src.lib import xla_client
 
@@ -105,12 +109,35 @@ def _register_custom_call() -> None:
     xla_client.register_custom_call_target(
         _BACKWARD_TARGET_NAME, backward_capsule, platform="SYCL", api_version=0
     )
+    xla_client.register_custom_call_target(
+        _ROLLOUT_FORWARD_TARGET_NAME,
+        rollout_forward_capsule,
+        platform="SYCL",
+        api_version=0,
+    )
+    xla_client.register_custom_call_target(
+        _ROLLOUT_BACKWARD_TARGET_NAME,
+        rollout_backward_capsule,
+        platform="SYCL",
+        api_version=0,
+    )
     mlir.register_lowering(_nca_forward_p, _lowering, platform="sycl")
     mlir.register_lowering(
         _nca_backward_p, _backward_lowering, platform="sycl"
     )
+    mlir.register_lowering(
+        _nca_rollout_forward_p, _rollout_forward_lowering, platform="sycl"
+    )
+    mlir.register_lowering(
+        _nca_rollout_backward_p, _rollout_backward_lowering, platform="sycl"
+    )
     _LIBRARY = library
-    _CAPSULES = (forward_capsule, backward_capsule)
+    _CAPSULES = (
+        forward_capsule,
+        backward_capsule,
+        rollout_forward_capsule,
+        rollout_backward_capsule,
+    )
     _REGISTERED = True
 
 
@@ -586,6 +613,436 @@ def _backward_vjp_rule(kernel_flags, padding, residuals, output_cotangent):
 _differentiable_forward.defvjp(_forward_vjp_rule, _backward_vjp_rule)
 
 
+def _rollout_metadata(
+    state_aval,
+    kernels_aval,
+    weight_hidden_aval,
+    masks_aval,
+    *,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    if state_aval.ndim != 4:
+        raise ValueError("NCA SYCL rollout state must have shape [B,C,H,W]")
+    batch, channels, height, width = state_aval.shape
+    features = weight_hidden_aval.shape[0]
+    kernel_size = kernels_aval.shape[-1]
+    steps = masks_aval.shape[0]
+    workgroup_size = 1
+    while workgroup_size < max(features, channels):
+        workgroup_size *= 2
+    return struct.pack(
+        "=14q",
+        _METADATA_VERSION,
+        batch,
+        channels,
+        height,
+        width,
+        features,
+        kernel_size,
+        int(kernel_flags),
+        int(padding),
+        workgroup_size,
+        _xmx_mode(),
+        steps,
+        int(boundary_code),
+        int(boundary_channels),
+    )
+
+
+_nca_rollout_forward_p = core.Primitive("nca_sycl_rollout_forward")
+_nca_rollout_forward_p.multiple_results = True
+_nca_rollout_forward_p.def_impl(
+    partial(xla.apply_primitive, _nca_rollout_forward_p)
+)
+
+
+def _rollout_forward_abstract_eval(
+    state,
+    kernels,
+    weight_hidden,
+    weight_output,
+    bias_output,
+    masks,
+    boundary_mask,
+    *,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    del padding
+    if state.ndim != 4:
+        raise ValueError("NCA SYCL rollout expects state [B,C,H,W]")
+    if masks.ndim != 5 or masks.shape[1:] != state.shape:
+        raise ValueError(
+            f"Rollout masks must have shape [K,{state.shape}], got {masks.shape}"
+        )
+    if masks.shape[0] < 1:
+        raise ValueError("NCA SYCL rollout requires at least one step")
+    if any(
+        value.dtype != np.dtype(np.float32)
+        for value in (
+            state,
+            kernels,
+            weight_hidden,
+            weight_output,
+            bias_output,
+            masks,
+            boundary_mask,
+        )
+    ):
+        raise TypeError("NCA SYCL rollout currently accepts float32 only")
+    channels = state.shape[1]
+    features = weight_hidden.shape[0]
+    expected_features = channels * (
+        bool(kernel_flags & (1 << 0))
+        + bool(kernel_flags & (1 << 1))
+        + 2 * bool(kernel_flags & (1 << 2))
+        + bool(kernel_flags & (1 << 3))
+        + bool(kernel_flags & (1 << 4))
+    )
+    if features != expected_features:
+        raise ValueError(
+            f"Rollout expected {expected_features} features, got {features}"
+        )
+    if boundary_code == 1:
+        expected_boundary = (boundary_channels, *state.shape[-2:])
+    elif boundary_code == 2:
+        expected_boundary = state.shape[-2:]
+    else:
+        expected_boundary = (1,)
+    if boundary_mask.shape != expected_boundary:
+        raise ValueError(
+            f"Boundary mask has shape {boundary_mask.shape}; expected "
+            f"{expected_boundary} for boundary code {boundary_code}"
+        )
+    scratch_shape = (state.shape[0], features, *state.shape[-2:])
+    return (
+        core.ShapedArray(state.shape, state.dtype),
+        core.ShapedArray(masks.shape, state.dtype),
+        core.ShapedArray(scratch_shape, state.dtype),
+        core.ShapedArray(scratch_shape, state.dtype),
+        core.ShapedArray(state.shape, state.dtype),
+    )
+
+
+_nca_rollout_forward_p.def_abstract_eval(_rollout_forward_abstract_eval)
+
+
+def _rollout_forward_lowering(
+    ctx,
+    *operands,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    metadata = _rollout_metadata(
+        ctx.avals_in[0],
+        ctx.avals_in[1],
+        ctx.avals_in[2],
+        ctx.avals_in[5],
+        kernel_flags=kernel_flags,
+        padding=padding,
+        boundary_code=boundary_code,
+        boundary_channels=boundary_channels,
+    )
+    operation = custom_call(
+        _ROLLOUT_FORWARD_TARGET_NAME,
+        result_types=[mlir.aval_to_ir_type(aval) for aval in ctx.avals_out],
+        operands=operands,
+        backend_config=metadata,
+        api_version=1,
+        operand_layouts=[
+            tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_in
+        ],
+        result_layouts=[
+            tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_out
+        ],
+    )
+    return operation.results
+
+
+_nca_rollout_backward_p = core.Primitive("nca_sycl_rollout_backward")
+_nca_rollout_backward_p.multiple_results = True
+_nca_rollout_backward_p.def_impl(
+    partial(xla.apply_primitive, _nca_rollout_backward_p)
+)
+
+
+def _rollout_backward_abstract_eval(
+    state,
+    kernels,
+    weight_hidden,
+    weight_output,
+    bias_output,
+    masks,
+    boundary_mask,
+    trajectory,
+    output_cotangent,
+    trajectory_cotangent,
+    *,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    del bias_output, kernel_flags, padding, boundary_code, boundary_channels
+    if trajectory.shape != masks.shape:
+        raise ValueError("Rollout trajectory and masks must have equal shapes")
+    if output_cotangent.shape != state.shape:
+        raise ValueError("Rollout output cotangent must match state")
+    if trajectory_cotangent.shape != trajectory.shape:
+        raise ValueError("Rollout trajectory cotangent must match trajectory")
+    if any(
+        value.dtype != np.dtype(np.float32)
+        for value in (
+            state,
+            kernels,
+            weight_hidden,
+            weight_output,
+            masks,
+            boundary_mask,
+            trajectory,
+            output_cotangent,
+            trajectory_cotangent,
+        )
+    ):
+        raise TypeError("NCA SYCL rollout backward accepts float32 only")
+    scratch_shape = (state.shape[0], weight_hidden.shape[0], *state.shape[-2:])
+    return (
+        core.ShapedArray(state.shape, state.dtype),
+        core.ShapedArray(weight_hidden.shape, state.dtype),
+        core.ShapedArray(weight_output.shape, state.dtype),
+        core.ShapedArray((state.shape[1],), state.dtype),
+        core.ShapedArray(state.shape, state.dtype),
+        core.ShapedArray(state.shape, state.dtype),
+        core.ShapedArray(weight_hidden.shape, state.dtype),
+        core.ShapedArray(weight_output.shape, state.dtype),
+        core.ShapedArray((state.shape[1],), state.dtype),
+        core.ShapedArray(scratch_shape, state.dtype),
+        core.ShapedArray(scratch_shape, state.dtype),
+        core.ShapedArray(scratch_shape, state.dtype),
+    )
+
+
+_nca_rollout_backward_p.def_abstract_eval(_rollout_backward_abstract_eval)
+
+
+def _rollout_backward_lowering(
+    ctx,
+    *operands,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    metadata = _rollout_metadata(
+        ctx.avals_in[0],
+        ctx.avals_in[1],
+        ctx.avals_in[2],
+        ctx.avals_in[5],
+        kernel_flags=kernel_flags,
+        padding=padding,
+        boundary_code=boundary_code,
+        boundary_channels=boundary_channels,
+    )
+    operation = custom_call(
+        _ROLLOUT_BACKWARD_TARGET_NAME,
+        result_types=[mlir.aval_to_ir_type(aval) for aval in ctx.avals_out],
+        operands=operands,
+        backend_config=metadata,
+        api_version=1,
+        operand_layouts=[
+            tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_in
+        ],
+        result_layouts=[
+            tuple(range(aval.ndim - 1, -1, -1)) for aval in ctx.avals_out
+        ],
+    )
+    return operation.results
+
+
+def _bind_rollout_forward(
+    state,
+    kernels,
+    weight_hidden,
+    weight_output,
+    bias_output,
+    masks,
+    boundary_mask,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    results = _nca_rollout_forward_p.bind(
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        masks,
+        boundary_mask,
+        kernel_flags=kernel_flags,
+        padding=padding,
+        boundary_code=boundary_code,
+        boundary_channels=boundary_channels,
+    )
+    return results[0], results[1]
+
+
+@partial(jax.custom_vjp, nondiff_argnums=(7, 8, 9, 10))
+def _differentiable_rollout(
+    state,
+    kernels,
+    weight_hidden,
+    weight_output,
+    bias_output,
+    masks,
+    boundary_mask,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    return _bind_rollout_forward(
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        masks,
+        boundary_mask,
+        kernel_flags,
+        padding,
+        boundary_code,
+        boundary_channels,
+    )
+
+
+def _rollout_vjp_fwd(
+    state,
+    kernels,
+    weight_hidden,
+    weight_output,
+    bias_output,
+    masks,
+    boundary_mask,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    output, trajectory = _bind_rollout_forward(
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        masks,
+        boundary_mask,
+        kernel_flags,
+        padding,
+        boundary_code,
+        boundary_channels,
+    )
+    residuals = (
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        masks,
+        boundary_mask,
+        trajectory,
+    )
+    return (output, trajectory), residuals
+
+
+def _rollout_vjp_bwd(
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+    residuals,
+    cotangents,
+):
+    (
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        masks,
+        boundary_mask,
+        trajectory,
+    ) = residuals
+    output_cotangent, trajectory_cotangent = cotangents
+    results = _nca_rollout_backward_p.bind(
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        masks,
+        boundary_mask,
+        trajectory,
+        output_cotangent,
+        trajectory_cotangent,
+        kernel_flags=kernel_flags,
+        padding=padding,
+        boundary_code=boundary_code,
+        boundary_channels=boundary_channels,
+    )
+    return (
+        results[0],
+        jnp.zeros_like(kernels),
+        results[1],
+        results[2],
+        results[3],
+        jnp.zeros_like(masks),
+        jnp.zeros_like(boundary_mask),
+    )
+
+
+_differentiable_rollout.defvjp(_rollout_vjp_fwd, _rollout_vjp_bwd)
+
+
+def sycl_nca_rollout(
+    state,
+    kernels,
+    weight_hidden,
+    weight_output,
+    bias_output,
+    masks,
+    boundary_mask,
+    *,
+    kernel_flags: int,
+    padding: int,
+    boundary_code: int,
+    boundary_channels: int,
+):
+    """Execute several sequential NCA steps in one native custom call."""
+    _register_custom_call()
+    return _differentiable_rollout(
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        masks,
+        boundary_mask,
+        kernel_flags,
+        padding,
+        boundary_code,
+        boundary_channels,
+    )
+
+
 def sycl_nca_forward(
     state,
     kernels,
@@ -611,4 +1068,4 @@ def sycl_nca_forward(
     )
 
 
-__all__ = ["sycl_nca_forward"]
+__all__ = ["sycl_nca_forward", "sycl_nca_rollout"]

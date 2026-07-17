@@ -148,6 +148,62 @@ class NCA(FastNCA):
         )(keys).astype(x.dtype)
         return self._sycl_update(x, update_mask)
 
+    def batched_rollout(
+        self,
+        x: Array,
+        keys: Array,
+        *,
+        boundary_code: int = 0,
+        boundary_mask: Array | None = None,
+        boundary_channels: int = 0,
+    ) -> tuple[Array, Array]:
+        """Run K sequential updates of one N leaf in a native custom call.
+
+        ``keys`` has shape ``[K,B,2]`` for legacy PRNG keys (or ``[K,B]`` for
+        typed keys). The returned trajectory has shape ``[K,B,C,H,W]`` and is
+        differentiable, allowing existing per-timestep regularisers to remain
+        outside the native rollout.
+        """
+        if x.ndim != 4:
+            raise ValueError(f"batched_rollout expects [B,C,H,W], got {x.shape}")
+        if keys.ndim < 2 or keys.shape[1] != x.shape[0]:
+            raise ValueError(
+                f"Rollout keys must have leading shape [K,{x.shape[0]}], "
+                f"got {keys.shape}"
+            )
+        flags, padding = self._validate_sycl_configuration(x)
+        if boundary_mask is None:
+            boundary_mask = jnp.zeros((1,), dtype=x.dtype)
+        else:
+            boundary_mask = jnp.asarray(boundary_mask, dtype=x.dtype)
+
+        masks = jax.vmap(
+            lambda step_keys: jax.vmap(
+                lambda item_key: jax.random.bernoulli(
+                    item_key, p=self.FIRE_RATE, shape=x.shape[1:]
+                )
+            )(step_keys)
+        )(keys).astype(x.dtype)
+
+        from NCA.model.sycl.bridge import sycl_nca_rollout
+
+        kernels, weight_hidden, weight_output, bias_output = (
+            self._sycl_parameters()
+        )
+        return sycl_nca_rollout(
+            x,
+            kernels,
+            weight_hidden,
+            weight_output,
+            bias_output,
+            masks,
+            boundary_mask,
+            kernel_flags=flags,
+            padding=padding,
+            boundary_code=boundary_code,
+            boundary_channels=boundary_channels,
+        )
+
     def __call__(
         self,
         x: Float[Array, "{self.N_CHANNELS} H W"],

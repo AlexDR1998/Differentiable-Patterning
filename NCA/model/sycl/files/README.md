@@ -30,6 +30,14 @@ retain the conservative atomic fallback.
 
 Ordinary `vmap` execution still emits per-example parameter cotangents for JAX
 to reduce correctly. `NCA_sycl.batched_call`, used by `NCA_sycl_Trainer`,
-instead enters the custom VJP with a pre-batched `[B*N,C,H,W]` state and
-accumulates shared-parameter gradients directly over all cells. The fixed
-perception kernels and random update mask are non-trainable.
+instead enters the custom VJP with each leaf's pre-batched `[N,C,H,W]` state
+and accumulates shared-parameter gradients directly over its cells. Outer B
+leaves remain independent calls, which avoids the slower large oneMKL shape
+and leaves them available for later device sharding. The fixed perception
+kernels and random update mask are non-trainable.
+
+`nca_sycl_rollout.cpp` and `nca_sycl_rollout_backward.cpp` group sequential
+updates behind one XLA custom call. Boundary constraints are applied after
+every native update, and the complete trajectory is returned so existing
+per-step regularisers retain their values and gradients. The reverse call
+accepts cotangents for both the endpoint and every trajectory state.

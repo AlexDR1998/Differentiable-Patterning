@@ -526,6 +526,51 @@ class NCA_Trainer(object):
 		return lambda x, callback, key_array: jtu.tree_map(
 			v_nca, x, callback, key_array
 		)
+
+	def _run_nca_steps(
+		self,
+		nca,
+		vv_nca,
+		x_latent,
+		x_proc,
+		reg_logs_internal,
+		t,
+		key,
+		loop_autodiff,
+		apply_intermediate_regs,
+		vv_latent_to_real,
+	):
+		"""Reference one-step scan; SYCL trainers may override the rollout."""
+		state_shape = x_latent[0].shape[0]
+
+		def nca_step(carry, j):
+			step_key, state, processed, reg_logs = carry
+			step_key = jr.fold_in(step_key, j)
+			key_array = key_pytree_gen(
+				step_key, (len(state), state_shape)
+			)
+			new_state = vv_nca(
+				state, self.BOUNDARY_CALLBACK, key_array
+			)
+			new_processed = vv_latent_to_real(new_state)
+			reg_logs = apply_intermediate_regs(
+				reg_logs,
+				state,
+				new_state,
+				processed,
+				new_processed,
+				vv_nca,
+				step_key,
+			)
+			return (step_key, new_state, new_processed, reg_logs), None
+
+		carry, _ = eqx.internal.scan(
+			nca_step,
+			(key, x_latent, x_proc, reg_logs_internal),
+			xs=jnp.arange(t),
+			kind=loop_autodiff,
+		)
+		return carry
 	
 	def train(self,
 		      t,
@@ -768,22 +813,17 @@ class NCA_Trainer(object):
 				vv_real_to_latent = lambda x: jtu.tree_map(v_real_to_latent, x)
 				# Set up internal logs for regularisers
 				reg_logs_internal = {name: jnp.zeros(len(x_latent),dtype=LOSS_DTYPE) for name in REGULARISER_COEFFS.keys()}
-				state_shape = x_latent[0].shape[0] # Assumes the same number of outer timesteps in each batch.
-
-				# Structuring this as function and lax.scan speeds up jit compile a lot
-				def nca_step(carry,j): # function of type a,b -> a
-					key,x_latent,x_proc,reg_logs_internal = carry
-					# Apply NCA update step
-					key = jr.fold_in(key,j)
-					key_array = key_pytree_gen(key,(len(x_latent),state_shape))
-					x_new_latent = vv_nca(x_latent,self.BOUNDARY_CALLBACK,key_array)
-					x_new_proc = vv_latent_to_real(x_new_latent)
-					reg_logs_internal = apply_intermediate_regs(reg_logs_internal,x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,key)
-
-					return (key,x_new_latent,x_new_proc,reg_logs_internal),None
-				(key,x_latent,x_proc,reg_logs_internal),_ = eqx.internal.scan(nca_step,(key,x_latent,vv_latent_to_real(x_latent),reg_logs_internal),
-					xs=jnp.arange(t),
-					kind=LOOP_AUTODIFF  # type: ignore
+				key,x_latent,x_proc,reg_logs_internal = self._run_nca_steps(
+					_nca,
+					vv_nca,
+					x_latent,
+					vv_latent_to_real(x_latent),
+					reg_logs_internal,
+					t,
+					key,
+					LOOP_AUTODIFF,
+					apply_intermediate_regs,
+					vv_latent_to_real,
 				)
 
 				loss_key = key_pytree_gen(key, (len(x_latent),))
