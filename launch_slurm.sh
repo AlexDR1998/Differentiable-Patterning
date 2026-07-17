@@ -93,7 +93,9 @@ export DATA_PATH_BASE="${DATA_PATH_BASE:-$IO_ROOT/Data/}"
 export MODEL_SAVE_PATH="${MODEL_SAVE_PATH:-$IO_ROOT/Models/}"
 
 export RUN_CONFIG_PROFILE="$PROFILE_GPU"
-export RUN_CONFIG_PROFILE_TRACE="$PROFILE_GPU"
+# The trainer captures a short warmed-up window. Do not wrap imports,
+# compilation, and the entire experiment in a second profiler session.
+export RUN_CONFIG_PROFILE_TRACE=0
 export RUN_CONFIG_PROFILE_MEMORY=0
 
 WANDB_TASK_ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-manual}}_${SLURM_ARRAY_TASK_ID}"

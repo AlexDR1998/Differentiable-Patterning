@@ -99,6 +99,46 @@ def maybe_save_gpu_profile(step):
 		print(f"Warning: train-step device memory profile failed: {exc!r}", flush=True)
 
 
+def start_jax_training_trace(profile_dir):
+	"""Start a compact device trace without recording every Python call."""
+	profile_dir = Path(profile_dir)
+	profile_dir.mkdir(parents=True, exist_ok=True)
+	kwargs = {}
+	profile_options_cls = getattr(jax.profiler, "ProfileOptions", None)
+	if profile_options_cls is not None:
+		profile_options = profile_options_cls()
+		profile_options.python_tracer_level = 0
+		profile_options.host_tracer_level = 2
+		kwargs["profiler_options"] = profile_options
+	else:
+		print(
+			"JAX ProfileOptions is unavailable; tracing the short training "
+			"window with default host/Python settings.",
+			flush=True,
+		)
+
+	jax.block_until_ready(jax.device_put(0))
+	try:
+		jax.profiler.start_trace(str(profile_dir), **kwargs)
+	except TypeError:
+		# JAX 0.5 deployments may expose ProfileOptions in jaxlib without
+		# accepting profiler_options in the public start_trace signature.
+		print(
+			"This JAX start_trace API does not accept profiler_options; "
+			"using default settings for the short training window.",
+			flush=True,
+		)
+		jax.profiler.start_trace(str(profile_dir))
+	print(f"Started JAX training trace: {profile_dir}", flush=True)
+
+
+def stop_jax_training_trace(outputs):
+	"""Synchronize the final captured step before flushing its device trace."""
+	jax.block_until_ready(outputs)
+	jax.profiler.stop_trace()
+	print("Finished JAX training trace", flush=True)
+
+
 def compile_and_time(jitted_function, *args):
 	"""Compile a jitted function explicitly and return wall-clock seconds."""
 	start = time.perf_counter()
@@ -517,6 +557,7 @@ class NCA_Trainer(object):
 					  "group":"group_1",
 					  "tags":["training"]},
 			  LEARNING_RATE_SCHEDULE=None,
+			  JAX_TRACE=False,
 			  key=None):
 		"""
 		Perform t steps of NCA on x, compare output to y, compute loss and gradients of loss wrt model parameters, and update parameters.
@@ -878,6 +919,10 @@ class NCA_Trainer(object):
 		# SPARSITY = jnp.concat((jnp.zeros(WARMUP),jnp.linspace(0,TARGET_SPARSITY,iters-WARMUP)))
 		
 		pbar = tqdm(range(iters))
+		trace_start_step = min(5, max(0, iters - 1))
+		trace_stop_step = min(trace_start_step + 4, iters - 1)
+		trace_active = False
+		trace_dir = os.getenv("PROFILE_GPU_DIR", "output/jax-training-trace")
 		#--- Do training run ---
 		for i in pbar:
 			iteration_start = time.perf_counter()
@@ -921,9 +966,23 @@ class NCA_Trainer(object):
 				del dry_outputs
 				del dry_callback_outputs
 
-			step_outputs, step_compute_seconds = call_and_time(
-				compiled_make_step, nca, x, y, t, opt_state, key
-			)
+			if JAX_TRACE and i == trace_start_step:
+				start_jax_training_trace(trace_dir)
+				trace_active = True
+
+			if trace_active:
+				with jax.profiler.StepTraceAnnotation("train", step_num=i):
+					step_outputs, step_compute_seconds = call_and_time(
+						compiled_make_step, nca, x, y, t, opt_state, key
+					)
+			else:
+				step_outputs, step_compute_seconds = call_and_time(
+					compiled_make_step, nca, x, y, t, opt_state, key
+				)
+
+			if trace_active and i == trace_stop_step:
+				stop_jax_training_trace(step_outputs)
+				trace_active = False
 			nca,x_new,y_new,t,opt_state,key,mean_loss,log_dict = step_outputs  # type: ignore
 			maybe_save_gpu_profile(i)
 			mean_loss_value = float(jax.device_get(mean_loss))

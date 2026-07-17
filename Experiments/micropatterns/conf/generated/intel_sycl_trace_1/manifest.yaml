@@ -19,6 +19,7 @@ configs:
     - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
+    trainer.jax_trace: true
     data.downsample: 4
     knockout.mode: null
     knockout.time: null
@@ -86,6 +87,7 @@ configs:
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
+      jax_trace: true
     optimiser:
       type: nadam
       blocknorm: true

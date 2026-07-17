@@ -114,5 +114,6 @@ def run(cfg):
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
         POOL_ADMISSION_CONFIG=build_pool_admission_config(cfg),
         SINGULAR_VALUE_LOGGING_CONFIG=cfg.logging.get("singular_values", None),
+        JAX_TRACE=cfg.trainer.get("jax_trace", False),
         key=train_key,
     )
