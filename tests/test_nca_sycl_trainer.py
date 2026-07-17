@@ -2,7 +2,10 @@ import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
 
-from NCA.trainer.sycl_batching import apply_flat_batched_nca
+from NCA.trainer.sycl_batching import (
+    apply_flat_batched_nca,
+    shape_probe_rollout,
+)
 
 
 class _BatchableReferenceModel:
@@ -27,6 +30,14 @@ class _RecordingBatchableReferenceModel(_BatchableReferenceModel):
     def batched_call(self, states, keys):
         self.batch_sizes.append(states.shape[0])
         return super().batched_call(states, keys)
+
+
+def test_two_tile_shape_probe_does_not_interpret_unmapped_keys():
+    states = jnp.zeros((2, 4, 32, 5, 6), dtype=jnp.float32)
+    final, trajectory = shape_probe_rollout(states, 8)
+
+    assert final.shape == (2, 4, 32, 5, 6)
+    assert trajectory.shape == (2, 8, 4, 32, 5, 6)
 
 
 def test_sycl_trainer_flat_batch_matches_reference_tree_vmap():

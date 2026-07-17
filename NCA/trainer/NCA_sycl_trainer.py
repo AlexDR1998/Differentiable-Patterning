@@ -18,7 +18,10 @@ import jax.tree_util as jtu
 from Common.model.boundary import hard_boundary, model_boundary, no_boundary
 from Common.utils import key_pytree_gen
 from NCA.trainer.NCA_trainer import NCA_Trainer
-from NCA.trainer.sycl_batching import apply_flat_batched_nca
+from NCA.trainer.sycl_batching import (
+    apply_flat_batched_nca,
+    shape_probe_rollout,
+)
 from NCA.trainer.sycl_execution import SyclTwoTileExecution
 
 
@@ -119,53 +122,20 @@ class NCA_sycl_Trainer(NCA_Trainer):
         for leaf, leaf_keys, callback in zip(
             state_leaves, key_leaves, callback_leaves
         ):
-            # ``checkpointed`` scan performs a nested eval_shape while the
-            # complete step is being transformed by pmap. During that shape
-            # probe only, JAX exposes the mapped tile axis explicitly, giving
-            # [tiles,N,C,H,W] instead of the replica-local [N,C,H,W]. Map this
-            # temporary axis back into replica-local rollout calls. Actual
-            # compiled pmap execution takes the ordinary rank-four branch.
+            # Equinox determines the output PyTree of filter_pmap with an
+            # eval_shape call on the *unmapped* inputs. During that probe the
+            # tile axis is therefore still visible: [tiles,N,C,H,W]. Keys in
+            # the same probe are not replica-local either, so trying to vmap a
+            # real rollout here gives ambiguous [K,tiles,...] key layouts.
+            #
+            # Only the result structure is consumed from this branch. The
+            # actual pmap trace receives replica-local rank-four states and
+            # takes the native rollout branch below. Return shape-correct
+            # placeholders and avoid issuing a custom call during eval_shape.
             if leaf.ndim == 5:
-                if isinstance(callback, no_boundary):
-                    final, trajectory = jax.vmap(
-                        lambda tile_state, tile_keys: nca.batched_rollout(
-                            tile_state, tile_keys
-                        )
-                    )(leaf, leaf_keys)
-                elif isinstance(callback, model_boundary):
-                    mask = jnp.asarray(callback.MASK, dtype=leaf.dtype)
-                    mask_in_axes = 0 if mask.ndim == 4 else None
-                    final, trajectory = jax.vmap(
-                        lambda tile_state, tile_keys, tile_mask: (
-                            nca.batched_rollout(
-                                tile_state,
-                                tile_keys,
-                                boundary_code=1,
-                                boundary_mask=tile_mask,
-                                boundary_channels=tile_mask.shape[0],
-                            )
-                        ),
-                        in_axes=(0, 0, mask_in_axes),
-                    )(leaf, leaf_keys, mask)
-                elif isinstance(callback, hard_boundary):
-                    mask = jnp.asarray(callback.MASK, dtype=leaf.dtype)
-                    mask_in_axes = 0 if mask.ndim == 3 else None
-                    final, trajectory = jax.vmap(
-                        lambda tile_state, tile_keys, tile_mask: (
-                            nca.batched_rollout(
-                                tile_state,
-                                tile_keys,
-                                boundary_code=2,
-                                boundary_mask=tile_mask,
-                            )
-                        ),
-                        in_axes=(0, 0, mask_in_axes),
-                    )(leaf, leaf_keys, mask)
-                else:
-                    raise TypeError(
-                        "Unsupported mapped fused-rollout boundary: "
-                        f"{type(callback)}"
-                    )
+                final, trajectory = shape_probe_rollout(
+                    leaf, self.ROLLOUT_STEPS
+                )
                 final_leaves.append(final)
                 trajectory_leaves.append(trajectory)
                 continue
@@ -233,6 +203,9 @@ class NCA_sycl_Trainer(NCA_Trainer):
             )
 
         state_shape = x_latent[0].shape[0]
+        mapped_shape_probe = x_latent[0].ndim == 5
+        if mapped_shape_probe:
+            state_shape = x_latent[0].shape[1]
 
         def rollout_chunk(carry, chunk_start):
             step_key, state, processed, reg_logs = carry
@@ -254,9 +227,14 @@ class NCA_sycl_Trainer(NCA_Trainer):
             previous_state = state
             previous_processed = processed
             for offset in range(self.ROLLOUT_STEPS):
-                new_state = jtu.tree_map(
-                    lambda values: values[offset], trajectory
-                )
+                if mapped_shape_probe:
+                    new_state = jtu.tree_map(
+                        lambda values: values[:, offset], trajectory
+                    )
+                else:
+                    new_state = jtu.tree_map(
+                        lambda values: values[offset], trajectory
+                    )
                 new_processed = vv_latent_to_real(new_state)
                 reg_logs = apply_intermediate_regs(
                     reg_logs,

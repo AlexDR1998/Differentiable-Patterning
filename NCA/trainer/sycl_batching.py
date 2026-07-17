@@ -3,7 +3,17 @@
 from __future__ import annotations
 
 import jax
+import jax.numpy as jnp
 import jax.tree_util as jtu
+
+
+def shape_probe_rollout(state, rollout_steps):
+    """Return pmap-global placeholders without executing an accelerator call."""
+    trajectory = jnp.broadcast_to(
+        state[:, None],
+        (state.shape[0], rollout_steps, *state.shape[1:]),
+    )
+    return state, trajectory
 
 
 def apply_flat_batched_nca(nca, x, callbacks, key_array, fallback):
@@ -26,4 +36,4 @@ def apply_flat_batched_nca(nca, x, callbacks, key_array, fallback):
     return jtu.tree_unflatten(tree_definition, updated_leaves)
 
 
-__all__ = ["apply_flat_batched_nca"]
+__all__ = ["apply_flat_batched_nca", "shape_probe_rollout"]
