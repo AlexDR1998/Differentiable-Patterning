@@ -7,9 +7,12 @@ from Experiments.emoji.config_helpers import (
     build_data_augmenter,
     build_data_config_string,
     build_filename,
+    load_data as load_emoji_data,
 )
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_model import NCA
+from NCA.model.NCA_model_fast import NCA as FastNCA
+from NCA.model.NCA_sycl import NCA as SyclNCA
 from NCA.trainer.data_augmenter_4ch_colony import DataAugmenter as DataAugmenter4Ch
 from NCA.trainer.data_augmenter_9ch_colony import DataAugmenter as DataAugmenterGrouped
 
@@ -54,6 +57,22 @@ def test_build_model_constructs_nca():
 
     assert isinstance(model, NCA)
     assert cfg_str.startswith("NCA")
+
+
+def test_build_model_constructs_fast_nca_and_marks_filename():
+    cfg = _base_cfg("NCA_fast")
+    model, cfg_str = build_model(cfg, key=jax.random.PRNGKey(0))
+
+    assert isinstance(model, FastNCA)
+    assert cfg_str.startswith("NCA_fast_c4")
+
+
+def test_build_model_constructs_sycl_nca_and_marks_filename():
+    cfg = _base_cfg("NCA_sycl")
+    model, cfg_str = build_model(cfg, key=jax.random.PRNGKey(0))
+
+    assert isinstance(model, SyclNCA)
+    assert cfg_str.startswith("NCA_sycl_c4")
 
 
 def test_build_model_constructs_fast_kan_nca_with_defaults():
@@ -240,6 +259,77 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
     assert "noise" not in filename
     assert filename.count("regenTrue") == 1
     assert len(filename) < 180
+
+
+def _multi_attractor_cfg(pairs, target_repeats=2):
+    return _cfg(
+        {
+            "data": {
+                "task": "multi_attractor",
+                "pairs": pairs,
+                "target_repeats": target_repeats,
+                "batches": 2,
+                "downsample": 1,
+                "crop_square": False,
+                "regenerate": False,
+            }
+        }
+    )
+
+
+def test_multi_attractor_data_builds_independent_pair_trajectories(monkeypatch):
+    values = {"crab.png": 1.0, "microbe.png": 2.0}
+
+    def fake_load(sequence, **kwargs):
+        value = values[sequence[0]]
+        return jnp.full((1, 1, 4, 8, 8), value)
+
+    monkeypatch.setattr("Experiments.emoji.config_helpers.load_emoji_sequence", fake_load)
+    cfg = _multi_attractor_cfg(
+        [
+            {"initial": "crab.png", "target": "microbe.png"},
+            {"initial": "microbe.png", "target": "crab.png"},
+        ]
+    )
+
+    data, cfg_str = load_emoji_data(cfg, impath="/tmp/emojis/")
+
+    assert data.shape == (2, 3, 4, 8, 8)
+    assert jnp.all(data[0, 0] == 1.0)
+    assert jnp.all(data[0, 1:] == 2.0)
+    assert jnp.all(data[1, 0] == 2.0)
+    assert jnp.all(data[1, 1:] == 1.0)
+    assert "data_multi_cr2mi-mi2cr" in cfg_str
+
+
+def test_multi_attractor_patch_initial_condition(monkeypatch):
+    image = jnp.ones((1, 1, 4, 8, 8))
+    monkeypatch.setattr(
+        "Experiments.emoji.config_helpers.load_emoji_sequence",
+        lambda sequence, **kwargs: image,
+    )
+    cfg = _multi_attractor_cfg(
+        [
+            {
+                "initial": {"image": "crab.png", "mode": "patch", "size": 2},
+                "target": "crab.png",
+            }
+        ],
+        target_repeats=1,
+    )
+
+    data, _ = load_emoji_data(cfg, impath="/tmp/emojis/")
+
+    assert data.shape == (1, 2, 4, 8, 8)
+    assert data[0, 0].sum() == 4 * 2 * 2
+    assert data[0, 1].sum() == 4 * 8 * 8
+
+
+def test_multi_attractor_requires_pairs():
+    cfg = _multi_attractor_cfg([])
+
+    with pytest.raises(ValueError, match="data.pairs must contain at least one pair"):
+        load_emoji_data(cfg, impath="/tmp/emojis/")
 
 
 def _micropattern_cfg(data_channels=12, knockout_mode=None):
