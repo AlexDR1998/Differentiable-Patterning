@@ -45,7 +45,9 @@ IO_ROOT="${IO_ROOT%/}"
 CODE_ROOT="${SLURM_CODE_ROOT:-$(cd "$(dirname "$PY_SCRIPT")/.." && pwd)}"
 CODE_ROOT="${CODE_ROOT%/}"
 
-JOB_NAME="${SLURM_JOB_NAME:-${USER}-job}"
+# Default the Slurm array name to the manifest/YAML experiment name while
+# retaining an explicit environment override for one-off submissions.
+JOB_NAME="${SLURM_JOB_NAME:-$EXPERIMENT_NAME}"
 TIME="${SLURM_TIME:-08:00:00}"
 
 MEM="${SLURM_MEM:-64G}"

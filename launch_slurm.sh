@@ -16,28 +16,18 @@ set -eo pipefail
 # bash ~/dawn-jax/envs/jax-setup.sh
 source ~/dawn-jax/envs/jaxeqx-setup.sh
 
-ONEAPI_ROOT=/usr/local/dawn/software/external/intel-oneapi/2025.2.1
+: "${PROFILE_GPU:=0}"
+if [[ "$PROFILE_GPU" != "0" && "$PROFILE_GPU" != "1" ]]; then
+    echo "PROFILE_GPU must be 0 or 1, got: $PROFILE_GPU"
+    exit 1
+fi
 
-# UNITRACE="$(command -v unitrace || true)"
-
-# if [[ -z "$UNITRACE" ]]; then
-#     UNITRACE="$(
-#         find "$ONEAPI_ROOT" -type f -name unitrace -executable \
-#             2>/dev/null | head -n 1
-#     )"
-# fi
-
-# if [[ -z "$UNITRACE" ]]; then
-#     echo "unitrace was not found."
-#     echo "Available PTI-related modules:"
-#     module avail 2>&1 | grep -Ei 'pti|profil' || true
-#     echo "VTune location: $(command -v vtune || echo unavailable)"
-#     exit 20
-# fi
-
-# echo "UNITRACE=$UNITRACE"
-# "$UNITRACE" --version
-
+# Intel OpenXLA must see these before the first process imports JAX. They are
+# enabled only for profiling jobs because tracing adds runtime overhead.
+if [[ "$PROFILE_GPU" == "1" ]]; then
+    export ZE_ENABLE_TRACING_LAYER=1
+    export UseCyclesPerSecondTimer=1
+fi
 
 SYCL_BUILD_DIR="${SLURM_TMPDIR:-/tmp}/nca-sycl-${SLURM_JOB_ID}"
 mkdir -p "${SYCL_BUILD_DIR}"
@@ -71,12 +61,6 @@ set -u
 : "${MANIFEST:?MANIFEST is not set}"
 : "${N_JOBS:?N_JOBS is not set}"
 : "${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is not set}"
-: "${PROFILE_GPU:=0}"
-
-if [[ "$PROFILE_GPU" != "0" && "$PROFILE_GPU" != "1" ]]; then
-    echo "PROFILE_GPU must be 0 or 1, got: $PROFILE_GPU"
-    exit 1
-fi
 
 ulimit -c 0
 
@@ -109,8 +93,8 @@ export DATA_PATH_BASE="${DATA_PATH_BASE:-$IO_ROOT/Data/}"
 export MODEL_SAVE_PATH="${MODEL_SAVE_PATH:-$IO_ROOT/Models/}"
 
 export RUN_CONFIG_PROFILE="$PROFILE_GPU"
-export RUN_CONFIG_PROFILE_TRACE=0
-export RUN_CONFIG_PROFILE_MEMORY=1
+export RUN_CONFIG_PROFILE_TRACE="$PROFILE_GPU"
+export RUN_CONFIG_PROFILE_MEMORY=0
 
 WANDB_TASK_ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-manual}}_${SLURM_ARRAY_TASK_ID}"
 WANDB_SCRATCH_ROOT="${WANDB_SCRATCH_ROOT:-$IO_ROOT/wandb-fast}"
@@ -137,26 +121,6 @@ echo "  SLURM_JOB_ID: ${SLURM_JOB_ID:-unset}"
 echo "  SLURM_JOB_GPUS: ${SLURM_JOB_GPUS:-unset}"
 command -v sycl-ls >/dev/null 2>&1 && sycl-ls || echo "  sycl-ls: not found"
 
-# python -X faulthandler "$PY_SCRIPT" --manifest "$MANIFEST" --index "$SLURM_ARRAY_TASK_ID"
-
-VTUNE=/usr/local/dawn/software/external/intel-oneapi/2025.2.1/vtune/2025.4/bin64/vtune
-
-PROFILE_PARENT="$SLURM_ARRAY_LOG_DIR"
-VTUNE_RESULT="$PROFILE_PARENT/${SLURM_ARRAY_TASK_ID}-vtune-offload"
-
-export MKL_VERBOSE=0
-export ZE_ENABLE_TRACING_LAYER=1
-export UseCyclesPerSecondTimer=1
-
-
-"$VTUNE" \
-    -collect gpu-offload \
-    -knob gpu-counters-mode=none \
-    -knob collect-programming-api=true \
-    -result-dir "$VTUNE_RESULT" \
-    -- \
-    python -X faulthandler "$PY_SCRIPT" \
-        --manifest "$MANIFEST" \
-        --index "$SLURM_ARRAY_TASK_ID"
-
-
+python -X faulthandler "$PY_SCRIPT" \
+    --manifest "$MANIFEST" \
+    --index "$SLURM_ARRAY_TASK_ID"
