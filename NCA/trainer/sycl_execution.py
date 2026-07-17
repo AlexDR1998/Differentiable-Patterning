@@ -64,8 +64,18 @@ class SyclTwoTileExecution(TrainingExecution):
         def pack_leaf(left, right):
             if eqx.is_array(left) and eqx.is_array(right):
                 if sharded:
-                    return jax.device_put_sharded([left, right], self.devices)
-                return jnp.stack((left, right), axis=0)
+                    packed = jax.device_put_sharded(
+                        [left, right], self.devices
+                    )
+                else:
+                    packed = jnp.stack((left, right), axis=0)
+                expected_shape = (2, *left.shape)
+                if packed.shape != expected_shape:
+                    raise ValueError(
+                        f"Packed {name} has shape {packed.shape}; expected "
+                        f"one tile axis followed by {left.shape}"
+                    )
+                return packed
             if left == right:
                 return left
             raise ValueError(

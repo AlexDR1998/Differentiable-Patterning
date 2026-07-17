@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-from functools import partial
 import os
 import time
 
@@ -14,6 +13,7 @@ import jax.tree_util as jtu
 import numpy as np
 
 from NCA.model.NCA_sycl import NCA as SyclNCA
+from NCA.trainer.sycl_filter_pmap import filter_pmap_no_probe
 
 
 CHANNELS = 32
@@ -50,13 +50,7 @@ def _mean_array_tree(tree, axis_name):
     )
 
 
-@partial(
-    eqx.filter_pmap,
-    axis_name="tiles",
-    in_axes=(None, 0, 0),
-    out_axes=(None, None, 0, 0),
-)
-def _two_tile_value_and_grad(model, states, keys):
+def _two_tile_value_and_grad_impl(model, states, keys):
     (local_loss, outputs), gradients = eqx.filter_value_and_grad(
         _loss, has_aux=True
     )(model, states, keys)
@@ -68,6 +62,14 @@ def _two_tile_value_and_grad(model, states, keys):
     )
     updated_model = eqx.apply_updates(model, updates)
     return updated_model, mean_loss, outputs, mean_gradients
+
+
+_two_tile_value_and_grad = filter_pmap_no_probe(
+    _two_tile_value_and_grad_impl,
+    axis_name="tiles",
+    in_axes=(None, 0, 0),
+    out_axes=(None, None, 0, 0),
+)
 
 
 def _single_tile_reference(model, states, keys):
@@ -97,7 +99,7 @@ def main():
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=3")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=4")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
     if len(devices) != 2:
@@ -152,8 +154,14 @@ def main():
 
     print("PHASE=TWO_TILE_FORWARD_BACKWARD", flush=True)
     two_tile_start = time.perf_counter()
+    sharded_states = jax.device_put_sharded(
+        [states[tile] for tile in range(2)], devices
+    )
+    sharded_keys = jax.device_put_sharded(
+        [keys[tile] for tile in range(2)], devices
+    )
     updated_model, mean_loss, outputs, gradients = _two_tile_value_and_grad(
-        model, states, keys
+        model, sharded_states, sharded_keys
     )
     jax.block_until_ready((updated_model, mean_loss, outputs, gradients))
     print(

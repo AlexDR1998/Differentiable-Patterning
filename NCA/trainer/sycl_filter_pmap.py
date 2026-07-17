@@ -21,7 +21,7 @@ class _CompiledFilteredPmap:
         self._static_output = static_output
 
     def __call__(self, *args):
-        dynamic, _ = eqx.partition((self._function, args), eqx.is_array)
+        dynamic, _ = eqx.partition(args, eqx.is_array)
         dynamic_output = self._compiled(dynamic)
         return eqx.combine(dynamic_output, self._static_output)
 
@@ -50,14 +50,16 @@ class FilteredPmapNoProbe:
         self._axis_name = axis_name
 
     def _prepare(self, args):
-        dynamic, static = eqx.partition(
-            (self._function, args), eqx.is_array
-        )
+        # Keep the mapped PyTree identical to the function's actual argument
+        # tuple. In particular, do not prepend the function as a synthetic
+        # static leaf: older pmap/PJRT implementations can resolve a prefix
+        # ``in_axes`` against that artificial nesting differently.
+        dynamic, static = eqx.partition(args, eqx.is_array)
         static_output = {}
 
         def array_function(dynamic_arguments):
-            function, full_args = eqx.combine(dynamic_arguments, static)
-            output = function(*full_args)
+            full_args = eqx.combine(dynamic_arguments, static)
+            output = self._function(*full_args)
             dynamic_output, output_static = eqx.partition(
                 output, eqx.is_array
             )
@@ -66,7 +68,7 @@ class FilteredPmapNoProbe:
 
         mapped = jax.pmap(
             array_function,
-            in_axes=((None, self._in_axes),),
+            in_axes=(self._in_axes,),
             out_axes=self._out_axes,
             axis_name=self._axis_name,
         )
