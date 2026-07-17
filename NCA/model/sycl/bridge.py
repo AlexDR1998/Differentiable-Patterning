@@ -12,7 +12,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import core
-from jax.interpreters import batching, mlir
+from jax.interpreters import batching, mlir, xla
 from jaxlib.hlo_helpers import custom_call
 
 _FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_forward"
@@ -116,6 +116,7 @@ def _register_custom_call() -> None:
 
 _nca_forward_p = core.Primitive("nca_sycl_forward")
 _nca_forward_p.multiple_results = True
+_nca_forward_p.def_impl(partial(xla.apply_primitive, _nca_forward_p))
 
 
 def _abstract_eval(
@@ -261,6 +262,7 @@ batching.primitive_batchers[_nca_forward_p] = _batching_rule
 
 _nca_backward_p = core.Primitive("nca_sycl_backward")
 _nca_backward_p.multiple_results = True
+_nca_backward_p.def_impl(partial(xla.apply_primitive, _nca_backward_p))
 
 
 def _backward_abstract_eval(
