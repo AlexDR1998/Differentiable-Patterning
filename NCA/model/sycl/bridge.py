@@ -262,6 +262,26 @@ def _lowering(ctx, *operands, kernel_flags, padding):
     return operation.results
 
 
+def _mapped_operands(args, dimensions):
+    """Move a mapped replica axis to the front for a replica-local lax.map."""
+    axis_sizes = {
+        value.shape[dimension]
+        for value, dimension in zip(args, dimensions)
+        if dimension is not None
+    }
+    if len(axis_sizes) != 1:
+        raise ValueError(
+            f"NCA SYCL mapped operands have inconsistent axis sizes: {axis_sizes}"
+        )
+    axis_size = axis_sizes.pop()
+    return tuple(
+        jnp.broadcast_to(value, (axis_size, *value.shape))
+        if dimension is None
+        else batching.moveaxis(value, dimension, 0)
+        for value, dimension in zip(args, dimensions)
+    )
+
+
 def _batching_rule(args, dimensions, *, kernel_flags, padding):
     state, kernels, weight_hidden, weight_output, bias_output, update_mask = args
     state_dim, kernels_dim, hidden_dim, output_dim, bias_dim, mask_dim = dimensions
@@ -271,6 +291,18 @@ def _batching_rule(args, dimensions, *, kernel_flags, padding):
         raise ValueError("state and update mask must be batched together")
     state = batching.moveaxis(state, state_dim, 0)
     update_mask = batching.moveaxis(update_mask, mask_dim, 0)
+    if state.ndim == 5:
+        mapped_args = _mapped_operands(args, dimensions)
+
+        def apply_one(replica_args):
+            return _nca_forward_p.bind(
+                *replica_args,
+                kernel_flags=kernel_flags,
+                padding=padding,
+            )
+
+        results = jax.lax.map(apply_one, mapped_args)
+        return results, (0,) * len(results)
     results = _nca_forward_p.bind(
         state,
         kernels,
@@ -391,6 +423,20 @@ def _backward_batching_rule(
     state = batching.moveaxis(state, state_dim, 0)
     update_mask = batching.moveaxis(update_mask, mask_dim, 0)
     output_cotangent = batching.moveaxis(output_cotangent, cotangent_dim, 0)
+
+    if state.ndim == 5:
+        mapped_args = _mapped_operands(args, dimensions)
+
+        def apply_one(replica_args):
+            return _nca_backward_p.bind(
+                *replica_args,
+                kernel_flags=kernel_flags,
+                padding=padding,
+                per_example_weights=False,
+            )
+
+        results = jax.lax.map(apply_one, mapped_args)
+        return results, (0,) * len(results)
 
     # Emit one batched custom call, but retain a leading batch dimension on
     # parameter cotangents. JAX's transpose of vmap then performs the reduction
@@ -732,6 +778,35 @@ def _rollout_forward_abstract_eval(
 _nca_rollout_forward_p.def_abstract_eval(_rollout_forward_abstract_eval)
 
 
+def _rollout_forward_batching_rule(
+    args,
+    dimensions,
+    *,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    mapped_args = _mapped_operands(args, dimensions)
+
+    def apply_one(replica_args):
+        return _nca_rollout_forward_p.bind(
+            *replica_args,
+            kernel_flags=kernel_flags,
+            padding=padding,
+            boundary_code=boundary_code,
+            boundary_channels=boundary_channels,
+        )
+
+    results = jax.lax.map(apply_one, mapped_args)
+    return results, (0,) * len(results)
+
+
+batching.primitive_batchers[_nca_rollout_forward_p] = (
+    _rollout_forward_batching_rule
+)
+
+
 def _rollout_forward_lowering(
     ctx,
     *operands,
@@ -830,6 +905,35 @@ def _rollout_backward_abstract_eval(
 
 
 _nca_rollout_backward_p.def_abstract_eval(_rollout_backward_abstract_eval)
+
+
+def _rollout_backward_batching_rule(
+    args,
+    dimensions,
+    *,
+    kernel_flags,
+    padding,
+    boundary_code,
+    boundary_channels,
+):
+    mapped_args = _mapped_operands(args, dimensions)
+
+    def apply_one(replica_args):
+        return _nca_rollout_backward_p.bind(
+            *replica_args,
+            kernel_flags=kernel_flags,
+            padding=padding,
+            boundary_code=boundary_code,
+            boundary_channels=boundary_channels,
+        )
+
+    results = jax.lax.map(apply_one, mapped_args)
+    return results, (0,) * len(results)
+
+
+batching.primitive_batchers[_nca_rollout_backward_p] = (
+    _rollout_backward_batching_rule
+)
 
 
 def _rollout_backward_lowering(
