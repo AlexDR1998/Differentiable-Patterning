@@ -100,7 +100,7 @@ def main():
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=5")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=6")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
     if len(devices) != 2:
