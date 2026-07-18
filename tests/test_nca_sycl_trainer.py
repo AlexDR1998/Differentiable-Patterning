@@ -4,6 +4,7 @@ import jax.tree_util as jtu
 
 from NCA.trainer.sycl_batching import apply_flat_batched_nca
 from NCA.trainer.sycl_filter_pmap import filter_pmap_no_probe
+from NCA.trainer.sycl_scan import scan_carry_only
 
 
 class _BatchableReferenceModel:
@@ -37,8 +38,11 @@ def test_filtered_pmap_traces_scan_with_replica_local_shapes():
                 raise AssertionError(f"scan received non-local shape {state.shape}")
             return state + 1.0, None
 
-        final, _ = jax.lax.scan(
-            scan_step, states[0], xs=None, length=steps
+        final = scan_carry_only(
+            scan_step,
+            states[0],
+            jnp.arange(steps),
+            kind="checkpointed",
         )
         loss = jnp.mean((final[:, :3] - targets[0][:, :3]) ** 2)
         return (
@@ -65,6 +69,26 @@ def test_filtered_pmap_traces_scan_with_replica_local_shapes():
 
     assert output[1][0].shape == (1, 4, 5, 3, 3)
     assert output[7]["x_latent"][0].shape == (1, 4, 5, 3, 3)
+
+
+def test_checkpointed_carry_only_scan_matches_lax_value_and_gradient():
+    xs = jnp.linspace(0.1, 0.4, 4, dtype=jnp.float32)
+
+    def objective(initial, kind):
+        def body(carry, value):
+            return jnp.tanh(carry + value), None
+
+        final = scan_carry_only(body, initial, xs, kind=kind)
+        return jnp.sum(final**2)
+
+    initial = jnp.linspace(-0.3, 0.3, 7, dtype=jnp.float32)
+    lax_value, lax_gradient = jax.value_and_grad(objective)(initial, "lax")
+    checkpointed_value, checkpointed_gradient = jax.value_and_grad(objective)(
+        initial, "checkpointed"
+    )
+
+    assert jnp.allclose(checkpointed_value, lax_value, atol=1e-6)
+    assert jnp.allclose(checkpointed_gradient, lax_gradient, atol=1e-6)
 
 
 def test_sycl_trainer_flat_batch_matches_reference_tree_vmap():

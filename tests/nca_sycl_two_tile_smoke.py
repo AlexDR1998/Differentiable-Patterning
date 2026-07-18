@@ -14,6 +14,7 @@ import numpy as np
 
 from NCA.model.NCA_sycl import NCA as SyclNCA
 from NCA.trainer.sycl_filter_pmap import filter_pmap_no_probe
+from NCA.trainer.sycl_scan import scan_carry_only
 
 
 CHANNELS = 32
@@ -27,16 +28,16 @@ ATOL = 2.0e-3
 
 def _loss(model, states, keys):
     def rollout_chunk(carry, chunk_keys):
-        final, trajectory = model.batched_rollout(carry, chunk_keys)
-        return final, trajectory
+        state, _ = carry
+        final, trajectory = model.batched_rollout(state, chunk_keys)
+        return (final, trajectory), None
 
-    final, trajectories = eqx.internal.scan(
+    final, trajectory = scan_carry_only(
         rollout_chunk,
-        states,
+        (states, jnp.zeros((STEPS, *states.shape), dtype=states.dtype)),
         keys[None],
         kind="checkpointed",
     )
-    trajectory = trajectories[0]
     loss = jnp.mean(final**2) + 0.25 * jnp.mean(trajectory**2)
     return loss, (final, trajectory)
 
@@ -99,7 +100,7 @@ def main():
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=4")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=5")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
     if len(devices) != 2:

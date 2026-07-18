@@ -22,6 +22,7 @@ from NCA.trainer.sycl_batching import (
     apply_flat_batched_nca,
 )
 from NCA.trainer.sycl_execution import SyclTwoTileExecution
+from NCA.trainer.sycl_scan import scan_carry_only
 
 
 class NCA_sycl_Trainer(NCA_Trainer):
@@ -228,10 +229,10 @@ class NCA_sycl_Trainer(NCA_Trainer):
                 reg_logs,
             ), None
 
-        carry, _ = eqx.internal.scan(
+        carry = scan_carry_only(
             rollout_chunk,
             (key, x_latent, x_proc, reg_logs_internal),
-            xs=jnp.arange(0, t, self.ROLLOUT_STEPS),
+            jnp.arange(0, t, self.ROLLOUT_STEPS),
             kind=loop_autodiff,
         )
         return carry
