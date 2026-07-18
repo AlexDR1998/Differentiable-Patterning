@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import jax
+import jax.tree_util as jtu
 
 
 def scan_carry_only(body, init, xs, *, kind):
@@ -25,14 +26,23 @@ def scan_carry_only(body, init, xs, *, kind):
             f"got {kind!r}"
         )
 
-    length = int(xs.shape[0])
+    leaves = jtu.tree_leaves(xs)
+    if not leaves:
+        raise ValueError("scan_carry_only requires at least one scan input")
+    lengths = {int(leaf.shape[0]) for leaf in leaves}
+    if len(lengths) != 1:
+        raise ValueError(f"Inconsistent SYCL scan input lengths: {lengths}")
+    length = lengths.pop()
     if length == 0:
         return init
 
     block_size = max(1, int(length**0.5))
     complete_length = (length // block_size) * block_size
-    complete_blocks = xs[:complete_length].reshape(
-        (-1, block_size, *xs.shape[1:])
+    complete_blocks = jtu.tree_map(
+        lambda value: value[:complete_length].reshape(
+            (-1, block_size, *value.shape[1:])
+        ),
+        xs,
     )
 
     def run_block(carry, block_xs):
@@ -46,8 +56,8 @@ def scan_carry_only(body, init, xs, *, kind):
         jax.checkpoint(run_block), init, complete_blocks
     )
 
-    remainder = xs[complete_length:]
-    if remainder.shape[0] > 0:
+    remainder = jtu.tree_map(lambda value: value[complete_length:], xs)
+    if length > complete_length:
         def run_remainder(value):
             value, _ = jax.lax.scan(body, value, remainder)
             return value

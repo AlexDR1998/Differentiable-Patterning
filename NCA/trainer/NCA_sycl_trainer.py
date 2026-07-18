@@ -122,6 +122,60 @@ class NCA_sycl_Trainer(NCA_Trainer):
         for leaf, leaf_keys, callback in zip(
             state_leaves, key_leaves, callback_leaves
         ):
+            # Intel's JAX 0.5 pmap lowering materialises the mapped tile axis
+            # inside scan bodies. Keys are precomputed before the scan, so the
+            # corresponding physical layouts are [tiles,N,C,H,W] and
+            # [tiles,K,N,2]. Map them together; outside this lowering detail a
+            # replica sees the ordinary [N,C,H,W] and [K,N,2] layouts.
+            if leaf.ndim == 5:
+                if leaf_keys.ndim < 4 or leaf_keys.shape[0] != leaf.shape[0]:
+                    raise ValueError(
+                        "Mapped SYCL rollout requires matching tile axes; "
+                        f"state={leaf.shape}, keys={leaf_keys.shape}"
+                    )
+                if isinstance(callback, no_boundary):
+                    final, trajectory = jax.vmap(
+                        lambda tile_state, tile_keys: nca.batched_rollout(
+                            tile_state, tile_keys
+                        )
+                    )(leaf, leaf_keys)
+                elif isinstance(callback, model_boundary):
+                    mask = jnp.asarray(callback.MASK, dtype=leaf.dtype)
+                    mask_axis = 0 if mask.ndim == 4 else None
+                    final, trajectory = jax.vmap(
+                        lambda tile_state, tile_keys, tile_mask: (
+                            nca.batched_rollout(
+                                tile_state,
+                                tile_keys,
+                                boundary_code=1,
+                                boundary_mask=tile_mask,
+                                boundary_channels=tile_mask.shape[0],
+                            )
+                        ),
+                        in_axes=(0, 0, mask_axis),
+                    )(leaf, leaf_keys, mask)
+                elif isinstance(callback, hard_boundary):
+                    mask = jnp.asarray(callback.MASK, dtype=leaf.dtype)
+                    mask_axis = 0 if mask.ndim == 3 else None
+                    final, trajectory = jax.vmap(
+                        lambda tile_state, tile_keys, tile_mask: (
+                            nca.batched_rollout(
+                                tile_state,
+                                tile_keys,
+                                boundary_code=2,
+                                boundary_mask=tile_mask,
+                            )
+                        ),
+                        in_axes=(0, 0, mask_axis),
+                    )(leaf, leaf_keys, mask)
+                else:
+                    raise TypeError(
+                        "Unsupported mapped fused-rollout boundary: "
+                        f"{type(callback)}"
+                    )
+                final_leaves.append(final)
+                trajectory_leaves.append(trajectory)
+                continue
             boundary_code, boundary_mask, boundary_channels = (
                 self._boundary_spec(callback, leaf.dtype)
             )
@@ -186,30 +240,58 @@ class NCA_sycl_Trainer(NCA_Trainer):
             )
 
         state_shape = x_latent[0].shape[0]
+        chunk_count = t // self.ROLLOUT_STEPS
 
-        def rollout_chunk(carry, chunk_start):
-            step_key, state, processed, reg_logs = carry
-            keys_by_step = []
-            step_keys = []
-            for offset in range(self.ROLLOUT_STEPS):
-                step_key = jr.fold_in(step_key, chunk_start + offset)
-                step_keys.append(step_key)
-                keys_by_step.append(
-                    key_pytree_gen(step_key, (len(state), state_shape))
-                )
-            rollout_keys = jtu.tree_map(
-                lambda *values: jnp.stack(values, axis=0), *keys_by_step
+        # Generate randomness before entering scan. This gives the scan
+        # batching rule explicit, aligned state/key tile axes instead of asking
+        # random generation inside the body to infer a layout from a batched
+        # PRNG key.
+        final_key = key
+        keys_by_step = []
+        regulariser_keys = []
+        for step_index in range(t):
+            final_key = jr.fold_in(final_key, step_index)
+            regulariser_keys.append(final_key)
+            keys_by_step.append(
+                key_pytree_gen(final_key, (len(x_latent), state_shape))
             )
+        rollout_keys = jtu.tree_map(
+            lambda *values: jnp.stack(values, axis=0), *keys_by_step
+        )
+        rollout_keys = jtu.tree_map(
+            lambda values: values.reshape(
+                chunk_count,
+                self.ROLLOUT_STEPS,
+                *values.shape[1:],
+            ),
+            rollout_keys,
+        )
+        regulariser_keys = jnp.stack(regulariser_keys, axis=0).reshape(
+            chunk_count, self.ROLLOUT_STEPS, *key.shape
+        )
+
+        def rollout_chunk(carry, chunk_inputs):
+            state, processed, reg_logs = carry
+            chunk_rollout_keys, chunk_regulariser_keys = chunk_inputs
             final_state, trajectory = self._rollout_tree(
-                nca, state, training_callbacks, rollout_keys
+                nca, state, training_callbacks, chunk_rollout_keys
             )
+
+            mapped_tiles = jtu.tree_leaves(state)[0].ndim == 5
 
             previous_state = state
             previous_processed = processed
             for offset in range(self.ROLLOUT_STEPS):
-                new_state = jtu.tree_map(
-                    lambda values: values[offset], trajectory
-                )
+                if mapped_tiles:
+                    new_state = jtu.tree_map(
+                        lambda values: values[:, offset], trajectory
+                    )
+                    regulariser_key = chunk_regulariser_keys[:, offset]
+                else:
+                    new_state = jtu.tree_map(
+                        lambda values: values[offset], trajectory
+                    )
+                    regulariser_key = chunk_regulariser_keys[offset]
                 new_processed = vv_latent_to_real(new_state)
                 reg_logs = apply_intermediate_regs(
                     reg_logs,
@@ -218,12 +300,11 @@ class NCA_sycl_Trainer(NCA_Trainer):
                     previous_processed,
                     new_processed,
                     vv_nca,
-                    step_keys[offset],
+                    regulariser_key,
                 )
                 previous_state = new_state
                 previous_processed = new_processed
             return (
-                step_key,
                 final_state,
                 previous_processed,
                 reg_logs,
@@ -231,11 +312,11 @@ class NCA_sycl_Trainer(NCA_Trainer):
 
         carry = scan_carry_only(
             rollout_chunk,
-            (key, x_latent, x_proc, reg_logs_internal),
-            jnp.arange(0, t, self.ROLLOUT_STEPS),
+            (x_latent, x_proc, reg_logs_internal),
+            (rollout_keys, regulariser_keys),
             kind=loop_autodiff,
         )
-        return carry
+        return (final_key, *carry)
 
 
 SyclNCA_Trainer = NCA_sycl_Trainer

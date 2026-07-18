@@ -29,7 +29,12 @@ ATOL = 2.0e-3
 def _loss(model, states, keys):
     def rollout_chunk(carry, chunk_keys):
         state, _ = carry
-        final, trajectory = model.batched_rollout(state, chunk_keys)
+        if state.ndim == 5:
+            final, trajectory = jax.vmap(model.batched_rollout)(
+                state, chunk_keys
+            )
+        else:
+            final, trajectory = model.batched_rollout(state, chunk_keys)
         return (final, trajectory), None
 
     final, trajectory = scan_carry_only(
@@ -100,7 +105,7 @@ def main():
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=6")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=7")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
     if len(devices) != 2:
