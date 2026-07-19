@@ -5,6 +5,7 @@ import numpy as np
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from NCA.trainer.sycl_batching import apply_flat_batched_nca
+from NCA.trainer.sycl_execution import SyclTwoTileExecution
 from NCA.trainer.sycl_scan import scan_carry_only
 from NCA.trainer.sycl_shard_map import filter_shard_map
 
@@ -31,6 +32,35 @@ class _RecordingBatchableReferenceModel(_BatchableReferenceModel):
     def batched_call(self, states, keys):
         self.batch_sizes.append(states.shape[0])
         return super().batched_call(states, keys)
+
+
+def test_tile_axis_contract_is_explicit_and_preserves_inner_batch_axis():
+    states = [
+        jnp.zeros((1, 4, 32, 7, 9), dtype=jnp.float32),
+    ]
+    keys = jnp.zeros((1, 2), dtype=jnp.uint32)
+
+    local_states = SyclTwoTileExecution._remove_local_tile_axis(
+        states, "state"
+    )
+    local_key = SyclTwoTileExecution._remove_local_tile_axis(keys, "PRNG key")
+
+    assert local_states[0].shape == (4, 32, 7, 9)
+    assert local_key.shape == (2,)
+    restored = SyclTwoTileExecution._add_local_tile_axis(
+        local_states, "state"
+    )
+    assert restored[0].shape == (1, 4, 32, 7, 9)
+
+
+def test_tile_axis_contract_rejects_unsharded_two_tile_input():
+    states = [jnp.zeros((2, 4, 32, 7, 9), dtype=jnp.float32)]
+    try:
+        SyclTwoTileExecution._remove_local_tile_axis(states, "state")
+    except ValueError as error:
+        assert "exactly one outer-B state leaf" in str(error)
+    else:
+        raise AssertionError("A global two-tile input was accepted as local data")
 
 
 def test_filtered_shard_map_traces_scan_with_tile_local_shapes():

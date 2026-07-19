@@ -52,28 +52,57 @@ class SyclTwoTileExecution(TrainingExecution):
     def _array_pmean(tree, axis_name):
         return jtu.tree_map(
             lambda value: jax.lax.pmean(value, axis_name)
-            if eqx.is_array(value)
+            if hasattr(value, "shape") and hasattr(value, "dtype")
             else value,
             tree,
         )
+
+    @staticmethod
+    def _remove_local_tile_axis(tree, name):
+        """Remove shard_map's size-one physical tile dimension.
+
+        This code runs while ``tree`` contains JAX tracers.  In particular, it
+        must not use a host-side array type predicate: older Intel JAX and
+        Equinox combinations do not consistently classify every shard_map
+        tracer as an array.  The state/target/key boundary is deliberately an
+        array-only contract, so checking its abstract ``shape`` is both simpler
+        and stricter.
+        """
+
+        def remove(value):
+            if not hasattr(value, "shape"):
+                raise TypeError(
+                    f"Tile-local {name} must contain only array leaves; got "
+                    f"{type(value).__name__}"
+                )
+            if value.ndim == 0 or value.shape[0] != 1:
+                raise ValueError(
+                    "Each shard_map tile must receive exactly one outer-B "
+                    f"{name} leaf; got shape {value.shape}"
+                )
+            return value[0]
+
+        return jtu.tree_map(remove, tree)
+
+    @staticmethod
+    def _add_local_tile_axis(tree, name):
+        def add(value):
+            if not hasattr(value, "shape"):
+                raise TypeError(
+                    f"Tile-local {name} must contain only array leaves; got "
+                    f"{type(value).__name__}"
+                )
+            return value[None]
+
+        return jtu.tree_map(add, tree)
 
     def transform_step(self, make_step):
         self._ensure_devices()
 
         def tile_local_step(nca, x, y, t, opt_state, key):
-            def remove_tile_shard(value):
-                if not eqx.is_array(value):
-                    return value
-                if value.shape[0] != 1:
-                    raise ValueError(
-                        "Each shard_map tile must receive exactly one outer-B "
-                        f"leaf; got shape {value.shape}"
-                    )
-                return value[0]
-
-            local_x = jtu.tree_map(remove_tile_shard, x)
-            local_y = jtu.tree_map(remove_tile_shard, y)
-            local_key = remove_tile_shard(key)
+            local_x = self._remove_local_tile_axis(x, "state")
+            local_y = self._remove_local_tile_axis(y, "target")
+            local_key = self._remove_local_tile_axis(key, "PRNG key")
             outputs = make_step(
                 nca, local_x, local_y, t, opt_state, local_key
             )
@@ -88,18 +117,15 @@ class SyclTwoTileExecution(TrainingExecution):
                 log_dict,
             ) = outputs
 
-            add_tile_shard = lambda value: (
-                value[None] if eqx.is_array(value) else value
-            )
             return (
                 updated_nca,
-                jtu.tree_map(add_tile_shard, updated_x),
-                jtu.tree_map(add_tile_shard, updated_y),
+                self._add_local_tile_axis(updated_x, "state"),
+                self._add_local_tile_axis(updated_y, "target"),
                 output_t,
                 updated_opt_state,
-                add_tile_shard(updated_key),
+                self._add_local_tile_axis(updated_key, "PRNG key"),
                 mean_loss,
-                jtu.tree_map(add_tile_shard, log_dict),
+                self._add_local_tile_axis(log_dict, "log dictionary"),
             )
 
         return filter_shard_map(
@@ -135,7 +161,7 @@ class SyclTwoTileExecution(TrainingExecution):
             self._array_pmean(regulariser_losses, self.AXIS_NAME),
         )
 
-    def _pack_items(self, items, name, *, sharded=True):
+    def _pack_items(self, items, name, *, sharded=True, expected_ndim=None):
         if len(items) != 2:
             raise ValueError(
                 f"Two-tile training currently requires exactly two {name}; "
@@ -144,6 +170,14 @@ class SyclTwoTileExecution(TrainingExecution):
 
         def pack_leaf(left, right):
             if eqx.is_array(left) and eqx.is_array(right):
+                if expected_ndim is not None and (
+                    left.ndim != expected_ndim or right.ndim != expected_ndim
+                ):
+                    raise ValueError(
+                        f"Each {name} leaf must have rank {expected_ndim} "
+                        f"before adding the tile axis; got {left.shape} and "
+                        f"{right.shape}"
+                    )
                 if sharded:
                     packed = self._make_tile_array(left, right)
                 else:
@@ -305,8 +339,12 @@ class SyclTwoTileExecution(TrainingExecution):
             self._slice_data_augmenter(self.trainer.DATA_AUGMENTER, tile)
             for tile in range(2)
         ]
-        packed_x = self._pack_items(x, "outer-B state leaves")
-        packed_y = self._pack_items(y, "outer-B target leaves")
+        packed_x = self._pack_items(
+            x, "outer-B state leaves", expected_ndim=4
+        )
+        packed_y = self._pack_items(
+            y, "outer-B target leaves", expected_ndim=4
+        )
         left_key, right_key = jr.split(key, 2)
         tile_keys = self._make_tile_array(left_key, right_key)
         print(
