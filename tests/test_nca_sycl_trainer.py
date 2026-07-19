@@ -104,6 +104,34 @@ def test_filtered_shard_map_traces_scan_with_tile_local_shapes():
     assert final.shape == (1, 4, 5, 3, 3)
 
 
+def test_compiled_filtered_shard_map_reuses_the_direct_mapped_callable():
+    devices = np.asarray(jax.devices()[:1])
+    mesh = Mesh(devices, ("tile",))
+    traces = []
+
+    def step(states):
+        traces.append(states.shape)
+        assert states.shape[0] == 1
+        return states + 1.0
+
+    mapped = filter_shard_map(
+        step,
+        mesh=mesh,
+        in_specs=(P("tile"),),
+        out_specs=P("tile"),
+        check_rep=False,
+    )
+    sharding = NamedSharding(mesh, P("tile"))
+    states = jax.device_put(jnp.zeros((1, 2, 3)), sharding)
+    compiled = mapped.lower(states).compile()
+
+    first = compiled(states)
+    second = compiled(states)
+    assert jnp.array_equal(first, jnp.ones_like(states))
+    assert jnp.array_equal(second, jnp.ones_like(states))
+    assert traces == [(1, 2, 3)]
+
+
 def test_checkpointed_carry_only_scan_matches_lax_value_and_gradient():
     xs = jnp.linspace(0.1, 0.4, 4, dtype=jnp.float32)
 
