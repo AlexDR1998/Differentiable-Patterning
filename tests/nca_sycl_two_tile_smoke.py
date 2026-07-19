@@ -11,10 +11,11 @@ import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
 import numpy as np
+from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from NCA.model.NCA_sycl import NCA as SyclNCA
-from NCA.trainer.sycl_filter_pmap import filter_pmap_no_probe
 from NCA.trainer.sycl_scan import scan_carry_only
+from NCA.trainer.sycl_shard_map import filter_shard_map
 
 
 CHANNELS = 32
@@ -29,12 +30,7 @@ ATOL = 2.0e-3
 def _loss(model, states, keys):
     def rollout_chunk(carry, chunk_keys):
         state, _ = carry
-        if state.ndim == 5:
-            final, trajectory = jax.vmap(model.batched_rollout)(
-                state, chunk_keys
-            )
-        else:
-            final, trajectory = model.batched_rollout(state, chunk_keys)
+        final, trajectory = model.batched_rollout(state, chunk_keys)
         return (final, trajectory), None
 
     final, trajectory = scan_carry_only(
@@ -56,7 +52,11 @@ def _mean_array_tree(tree, axis_name):
     )
 
 
-def _two_tile_value_and_grad_impl(model, states, keys):
+def _two_tile_value_and_grad_impl(model, state_shard, key_shard):
+    if state_shard.shape[0] != 1 or key_shard.shape[0] != 1:
+        raise ValueError("Expected one state/key leaf per tile")
+    states = state_shard[0]
+    keys = key_shard[0]
     (local_loss, outputs), gradients = eqx.filter_value_and_grad(
         _loss, has_aux=True
     )(model, states, keys)
@@ -67,15 +67,12 @@ def _two_tile_value_and_grad_impl(model, states, keys):
         mean_gradients,
     )
     updated_model = eqx.apply_updates(model, updates)
-    return updated_model, mean_loss, outputs, mean_gradients
-
-
-_two_tile_value_and_grad = filter_pmap_no_probe(
-    _two_tile_value_and_grad_impl,
-    axis_name="tiles",
-    in_axes=(None, 0, 0),
-    out_axes=(None, None, 0, 0),
-)
+    return (
+        updated_model,
+        mean_loss,
+        jtu.tree_map(lambda value: value[None], outputs),
+        mean_gradients,
+    )
 
 
 def _single_tile_reference(model, states, keys):
@@ -105,7 +102,7 @@ def main():
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=7")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=8")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
     if len(devices) != 2:
@@ -160,13 +157,18 @@ def main():
 
     print("PHASE=TWO_TILE_FORWARD_BACKWARD", flush=True)
     two_tile_start = time.perf_counter()
-    sharded_states = jax.device_put_sharded(
-        [states[tile] for tile in range(2)], devices
+    mesh = Mesh(np.asarray(devices), ("tiles",))
+    tile_sharding = NamedSharding(mesh, P("tiles"))
+    sharded_states = jax.device_put(states, tile_sharding)
+    sharded_keys = jax.device_put(keys, tile_sharding)
+    two_tile_value_and_grad = filter_shard_map(
+        _two_tile_value_and_grad_impl,
+        mesh=mesh,
+        in_specs=(P(), P("tiles"), P("tiles")),
+        out_specs=(P(), P(), (P("tiles"), P("tiles")), P()),
+        check_rep=False,
     )
-    sharded_keys = jax.device_put_sharded(
-        [keys[tile] for tile in range(2)], devices
-    )
-    updated_model, mean_loss, outputs, gradients = _two_tile_value_and_grad(
+    updated_model, mean_loss, outputs, gradients = two_tile_value_and_grad(
         model, sharded_states, sharded_keys
     )
     jax.block_until_ready((updated_model, mean_loss, outputs, gradients))
@@ -185,17 +187,17 @@ def main():
     _assert_close(
         "HIDDEN_WEIGHT_GRADIENT",
         gradients.layers[0].weight,
-        jnp.repeat(reference_gradients.layers[0].weight[None], 2, axis=0),
+        reference_gradients.layers[0].weight,
     )
     _assert_close(
         "OUTPUT_WEIGHT_GRADIENT",
         gradients.layers[2].weight,
-        jnp.repeat(reference_gradients.layers[2].weight[None], 2, axis=0),
+        reference_gradients.layers[2].weight,
     )
     _assert_close(
         "OUTPUT_BIAS_GRADIENT",
         gradients.layers[2].bias,
-        jnp.repeat(reference_gradients.layers[2].bias[None], 2, axis=0),
+        reference_gradients.layers[2].bias,
     )
     reference_updates = jtu.tree_map(
         lambda value: -0.01 * value if eqx.is_array(value) else value,

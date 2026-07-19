@@ -1,10 +1,12 @@
 import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
+import numpy as np
+from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from NCA.trainer.sycl_batching import apply_flat_batched_nca
-from NCA.trainer.sycl_filter_pmap import filter_pmap_no_probe
 from NCA.trainer.sycl_scan import scan_carry_only
+from NCA.trainer.sycl_shard_map import filter_shard_map
 
 
 class _BatchableReferenceModel:
@@ -31,8 +33,15 @@ class _RecordingBatchableReferenceModel(_BatchableReferenceModel):
         return super().batched_call(states, keys)
 
 
-def test_filtered_pmap_traces_scan_with_replica_local_shapes():
-    def step(model, states, targets, steps, opt_state, keys):
+def test_filtered_shard_map_traces_scan_with_tile_local_shapes():
+    devices = np.asarray(jax.devices()[:1])
+    mesh = Mesh(devices, ("tile",))
+
+    def step(states, targets, steps):
+        assert states.shape[0] == 1
+        local_states = states[0]
+        local_targets = targets[0]
+
         def scan_step(state, _):
             if state.ndim != 4:
                 raise AssertionError(f"scan received non-local shape {state.shape}")
@@ -40,35 +49,29 @@ def test_filtered_pmap_traces_scan_with_replica_local_shapes():
 
         final = scan_carry_only(
             scan_step,
-            states[0],
+            local_states,
             jnp.arange(steps),
             kind="checkpointed",
         )
-        loss = jnp.mean((final[:, :3] - targets[0][:, :3]) ** 2)
-        return (
-            model,
-            [final],
-            targets,
-            steps,
-            opt_state,
-            keys,
-            loss,
-            {"loss": loss, "x_latent": [final]},
-        )
+        loss = jnp.mean((final[:, :3] - local_targets[:, :3]) ** 2)
+        return loss, final[None]
 
-    mapped = filter_pmap_no_probe(
+    mapped = filter_shard_map(
         step,
-        axis_name="tiles",
-        in_axes=(None, 0, 0, None, None, 0),
-        out_axes=(None, 0, 0, None, None, 0, None, 0),
+        mesh=mesh,
+        in_specs=(P("tile"), P("tile"), P()),
+        out_specs=(P(), P("tile")),
+        check_rep=False,
     )
-    states = [jnp.zeros((1, 4, 5, 3, 3), dtype=jnp.float32)]
-    keys = jnp.zeros((1, 2), dtype=jnp.uint32)
-    compiled = mapped.lower(None, states, states, 2, None, keys).compile()
-    output = compiled(None, states, states, 2, None, keys)
+    sharding = NamedSharding(mesh, P("tile"))
+    states = jax.device_put(
+        jnp.zeros((1, 4, 5, 3, 3), dtype=jnp.float32), sharding
+    )
+    compiled = mapped.lower(states, states, 2).compile()
+    loss, final = compiled(states, states, 2)
 
-    assert output[1][0].shape == (1, 4, 5, 3, 3)
-    assert output[7]["x_latent"][0].shape == (1, 4, 5, 3, 3)
+    assert loss.shape == ()
+    assert final.shape == (1, 4, 5, 3, 3)
 
 
 def test_checkpointed_carry_only_scan_matches_lax_value_and_gradient():

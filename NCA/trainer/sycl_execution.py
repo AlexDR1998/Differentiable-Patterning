@@ -9,9 +9,11 @@ import jax
 import jax.numpy as jnp
 import jax.random as jr
 import jax.tree_util as jtu
+import numpy as np
+from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from Common.model.boundary import hard_boundary, model_boundary, no_boundary
-from NCA.trainer.sycl_filter_pmap import filter_pmap_no_probe
+from NCA.trainer.sycl_shard_map import filter_shard_map
 from NCA.trainer.training_execution import TrainingExecution
 
 
@@ -27,6 +29,24 @@ class SyclTwoTileExecution(TrainingExecution):
         self.loss_masks = None
         self.cached_losses = None
         self.data_augmenters = None
+        self.mesh = None
+        self.replicated_sharding = None
+        self.tile_sharding = None
+
+    def _ensure_devices(self):
+        if self.devices is not None:
+            return
+        self.devices = [
+            device for device in jax.local_devices() if device.platform == "sycl"
+        ]
+        if len(self.devices) != 2:
+            raise RuntimeError(
+                "trainer.sharding=2 requires exactly two visible SYCL tiles; "
+                f"JAX reports {self.devices}"
+            )
+        self.mesh = Mesh(np.asarray(self.devices), (self.AXIS_NAME,))
+        self.replicated_sharding = NamedSharding(self.mesh, P())
+        self.tile_sharding = NamedSharding(self.mesh, P(self.AXIS_NAME))
 
     @staticmethod
     def _array_pmean(tree, axis_name):
@@ -38,11 +58,72 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def transform_step(self, make_step):
-        return filter_pmap_no_probe(
-            make_step,
-            axis_name=self.AXIS_NAME,
-            in_axes=(None, 0, 0, None, None, 0),
-            out_axes=(None, 0, 0, None, None, 0, None, 0),
+        self._ensure_devices()
+
+        def tile_local_step(nca, x, y, t, opt_state, key):
+            def remove_tile_shard(value):
+                if not eqx.is_array(value):
+                    return value
+                if value.shape[0] != 1:
+                    raise ValueError(
+                        "Each shard_map tile must receive exactly one outer-B "
+                        f"leaf; got shape {value.shape}"
+                    )
+                return value[0]
+
+            local_x = jtu.tree_map(remove_tile_shard, x)
+            local_y = jtu.tree_map(remove_tile_shard, y)
+            local_key = remove_tile_shard(key)
+            outputs = make_step(
+                nca, local_x, local_y, t, opt_state, local_key
+            )
+            (
+                updated_nca,
+                updated_x,
+                updated_y,
+                output_t,
+                updated_opt_state,
+                updated_key,
+                mean_loss,
+                log_dict,
+            ) = outputs
+
+            add_tile_shard = lambda value: (
+                value[None] if eqx.is_array(value) else value
+            )
+            return (
+                updated_nca,
+                jtu.tree_map(add_tile_shard, updated_x),
+                jtu.tree_map(add_tile_shard, updated_y),
+                output_t,
+                updated_opt_state,
+                add_tile_shard(updated_key),
+                mean_loss,
+                jtu.tree_map(add_tile_shard, log_dict),
+            )
+
+        return filter_shard_map(
+            tile_local_step,
+            mesh=self.mesh,
+            in_specs=(
+                P(),
+                P(self.AXIS_NAME),
+                P(self.AXIS_NAME),
+                P(),
+                P(),
+                P(self.AXIS_NAME),
+            ),
+            out_specs=(
+                P(),
+                P(self.AXIS_NAME),
+                P(self.AXIS_NAME),
+                P(),
+                P(),
+                P(self.AXIS_NAME),
+                P(),
+                P(self.AXIS_NAME),
+            ),
+            check_rep=False,
         )
 
     def synchronise_gradients(self, gradients):
@@ -64,9 +145,7 @@ class SyclTwoTileExecution(TrainingExecution):
         def pack_leaf(left, right):
             if eqx.is_array(left) and eqx.is_array(right):
                 if sharded:
-                    packed = jax.device_put_sharded(
-                        [left, right], self.devices
-                    )
+                    packed = self._make_tile_array(left, right)
                 else:
                     packed = jnp.stack((left, right), axis=0)
                 expected_shape = (2, *left.shape)
@@ -91,6 +170,26 @@ class SyclTwoTileExecution(TrainingExecution):
                 "array shapes"
             ) from exc
         return [packed]
+
+    def _make_tile_array(self, left, right):
+        self._ensure_devices()
+        shape = (2, *left.shape)
+        local_arrays = [
+            jax.device_put(value[None], device)
+            for value, device in zip((left, right), self.devices)
+        ]
+        return jax.make_array_from_single_device_arrays(
+            shape, self.tile_sharding, local_arrays
+        )
+
+    def _replicate(self, tree):
+        self._ensure_devices()
+        return jtu.tree_map(
+            lambda value: jax.device_put(value, self.replicated_sharding)
+            if eqx.is_array(value)
+            else value,
+            tree,
+        )
 
     @staticmethod
     def _select_slots(packed_slots, tile_index):
@@ -189,14 +288,7 @@ class SyclTwoTileExecution(TrainingExecution):
         return local
 
     def prepare_inputs(self, nca, x, y, opt_state, key):
-        self.devices = [
-            device for device in jax.local_devices() if device.platform == "sycl"
-        ]
-        if len(self.devices) != 2:
-            raise RuntimeError(
-                "trainer.sharding=2 requires exactly two visible SYCL tiles; "
-                f"JAX reports {self.devices}"
-            )
+        self._ensure_devices()
         if not isinstance(x, (list, tuple)) or not isinstance(y, (list, tuple)):
             raise TypeError(
                 "Two-tile NCA training currently requires outer-B list/tuple data"
@@ -215,28 +307,31 @@ class SyclTwoTileExecution(TrainingExecution):
         ]
         packed_x = self._pack_items(x, "outer-B state leaves")
         packed_y = self._pack_items(y, "outer-B target leaves")
-        tile_keys = jax.device_put_sharded(list(jr.split(key, 2)), self.devices)
+        left_key, right_key = jr.split(key, 2)
+        tile_keys = self._make_tile_array(left_key, right_key)
         print(
-            "NCA SYCL two-tile data parallelism enabled: one outer-B leaf "
-            "per tile, replicated parameters, gradient pmean.",
+            "NCA SYCL shard_map data parallelism enabled: one outer-B leaf "
+            "per tile, replicated parameters, one gradient pmean.",
             flush=True,
         )
-        return nca, packed_x, packed_y, opt_state, tile_keys
+        return (
+            self._replicate(nca),
+            packed_x,
+            packed_y,
+            self._replicate(opt_state),
+            tile_keys,
+        )
 
     def fold_in_key(self, key, iteration):
-        return jax.device_put_sharded(
-            [jr.fold_in(key[tile], iteration) for tile in range(2)],
-            self.devices,
+        return self._make_tile_array(
+            jr.fold_in(key[0], iteration),
+            jr.fold_in(key[1], iteration),
         )
 
     def split_key(self, key):
         pairs = [jr.split(key[tile]) for tile in range(2)]
-        next_key = jax.device_put_sharded(
-            [pair[0] for pair in pairs], self.devices
-        )
-        callback_key = jax.device_put_sharded(
-            [pair[1] for pair in pairs], self.devices
-        )
+        next_key = self._make_tile_array(pairs[0][0], pairs[1][0])
+        callback_key = self._make_tile_array(pairs[0][1], pairs[1][1])
         return next_key, callback_key
 
     def _pack_local_slots(self, local_trees, name):
@@ -246,9 +341,7 @@ class SyclTwoTileExecution(TrainingExecution):
             )
         return [
             jtu.tree_map(
-                lambda left, right: jax.device_put_sharded(
-                    [left, right], self.devices
-                ),
+                self._make_tile_array,
                 local_trees[0][0],
                 local_trees[1][0],
             )

@@ -19,7 +19,9 @@ configs:
     - decoded
     loss.vgg_internal: l2
     trainer.loop_autodiff: checkpointed
-    trainer.jax_trace: true
+    trainer.sharding: 2
+    trainer.sycl_fused_steps: 2
+    trainer.jax_trace: false
     data.downsample: 4
     knockout.mode: null
     knockout.time: null
@@ -74,7 +76,8 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: false
-      sharding: null
+      sharding: 2
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -87,7 +90,7 @@ configs:
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
-      jax_trace: true
+      jax_trace: false
     optimiser:
       type: nadam
       blocknorm: true
@@ -111,6 +114,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 0.0
         boundary: 0.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
