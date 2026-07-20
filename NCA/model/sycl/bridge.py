@@ -773,14 +773,16 @@ def _rollout_forward_abstract_eval(
             f"{expected_boundary} for boundary code {boundary_code}"
         )
     scratch_shape = (state.shape[0], features, *state.shape[-2:])
-    return (
+    outputs = [
         core.ShapedArray(state.shape, state.dtype),
         core.ShapedArray(masks.shape, state.dtype),
-        core.ShapedArray((2,), state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
         core.ShapedArray(state.shape, state.dtype),
-    )
+    ]
+    if regulariser_flags:
+        outputs.insert(2, core.ShapedArray((2,), state.dtype))
+    return tuple(outputs)
 
 
 _nca_rollout_forward_p.def_abstract_eval(_rollout_forward_abstract_eval)
@@ -871,7 +873,7 @@ def _rollout_backward_abstract_eval(
     trajectory,
     output_cotangent,
     trajectory_cotangent,
-    regulariser_cotangent,
+    regulariser_cotangent=None,
     *,
     kernel_flags,
     padding,
@@ -885,7 +887,6 @@ def _rollout_backward_abstract_eval(
         padding,
         boundary_code,
         boundary_channels,
-        regulariser_flags,
     )
     if trajectory.shape != masks.shape:
         raise ValueError("Rollout trajectory and masks must have equal shapes")
@@ -893,22 +894,30 @@ def _rollout_backward_abstract_eval(
         raise ValueError("Rollout output cotangent must match state")
     if trajectory_cotangent.shape != trajectory.shape:
         raise ValueError("Rollout trajectory cotangent must match trajectory")
-    if regulariser_cotangent.shape != (2,):
-        raise ValueError("Rollout regulariser cotangent must have shape [2]")
+    if regulariser_flags:
+        if regulariser_cotangent is None or regulariser_cotangent.shape != (2,):
+            raise ValueError("Rollout regulariser cotangent must have shape [2]")
+    elif regulariser_cotangent is not None:
+        raise ValueError(
+            "A regulariser cotangent was supplied while fused regularisers "
+            "are disabled"
+        )
+    checked_values = [
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        masks,
+        boundary_mask,
+        trajectory,
+        output_cotangent,
+        trajectory_cotangent,
+    ]
+    if regulariser_cotangent is not None:
+        checked_values.append(regulariser_cotangent)
     if any(
         value.dtype != np.dtype(np.float32)
-        for value in (
-            state,
-            kernels,
-            weight_hidden,
-            weight_output,
-            masks,
-            boundary_mask,
-            trajectory,
-            output_cotangent,
-            trajectory_cotangent,
-            regulariser_cotangent,
-        )
+        for value in checked_values
     ):
         raise TypeError("NCA SYCL rollout backward accepts float32 only")
     scratch_shape = (state.shape[0], weight_hidden.shape[0], *state.shape[-2:])
@@ -1026,7 +1035,12 @@ def _bind_rollout_forward(
         boundary_channels=boundary_channels,
         regulariser_flags=regulariser_flags,
     )
-    return results[0], results[1], results[2]
+    regularisers = (
+        results[2]
+        if regulariser_flags
+        else jnp.zeros((2,), dtype=state.dtype)
+    )
+    return results[0], results[1], regularisers
 
 
 @partial(jax.custom_vjp, nondiff_argnums=(7, 8, 9, 10, 11))
@@ -1121,7 +1135,7 @@ def _rollout_vjp_bwd(
         trajectory,
     ) = residuals
     output_cotangent, trajectory_cotangent, regulariser_cotangent = cotangents
-    results = _nca_rollout_backward_p.bind(
+    operands = (
         state,
         kernels,
         weight_hidden,
@@ -1132,7 +1146,11 @@ def _rollout_vjp_bwd(
         trajectory,
         output_cotangent,
         trajectory_cotangent,
-        regulariser_cotangent,
+    )
+    if regulariser_flags:
+        operands = (*operands, regulariser_cotangent)
+    results = _nca_rollout_backward_p.bind(
+        *operands,
         kernel_flags=kernel_flags,
         padding=padding,
         boundary_code=boundary_code,

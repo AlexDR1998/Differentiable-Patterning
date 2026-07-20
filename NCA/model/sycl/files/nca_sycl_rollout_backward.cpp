@@ -111,19 +111,30 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
   auto* trajectory = static_cast<float*>(buffers[7]);
   auto* output_cotangent = static_cast<float*>(buffers[8]);
   auto* trajectory_cotangent = static_cast<float*>(buffers[9]);
-  auto* regulariser_cotangent = static_cast<float*>(buffers[10]);
-  auto* state_gradient = static_cast<float*>(buffers[11]);
-  auto* hidden_weight_gradient = static_cast<float*>(buffers[12]);
-  auto* output_weight_gradient = static_cast<float*>(buffers[13]);
-  auto* bias_gradient = static_cast<float*>(buffers[14]);
-  auto* boundary_cotangent = static_cast<float*>(buffers[15]);
-  auto* rolling_state_gradient = static_cast<float*>(buffers[16]);
-  auto* step_hidden_weight_gradient = static_cast<float*>(buffers[17]);
-  auto* step_output_weight_gradient = static_cast<float*>(buffers[18]);
-  auto* step_bias_gradient = static_cast<float*>(buffers[19]);
-  auto* perception = static_cast<float*>(buffers[20]);
-  auto* hidden = static_cast<float*>(buffers[21]);
-  auto* hidden_gradient = static_cast<float*>(buffers[22]);
+  const bool compute_regularisers = m.regulariser_flags != 0;
+  auto* regulariser_cotangent = compute_regularisers
+                                    ? static_cast<float*>(buffers[10])
+                                    : nullptr;
+  const std::int64_t result_offset = compute_regularisers ? 1 : 0;
+  auto* state_gradient = static_cast<float*>(buffers[10 + result_offset]);
+  auto* hidden_weight_gradient =
+      static_cast<float*>(buffers[11 + result_offset]);
+  auto* output_weight_gradient =
+      static_cast<float*>(buffers[12 + result_offset]);
+  auto* bias_gradient = static_cast<float*>(buffers[13 + result_offset]);
+  auto* boundary_cotangent =
+      static_cast<float*>(buffers[14 + result_offset]);
+  auto* rolling_state_gradient =
+      static_cast<float*>(buffers[15 + result_offset]);
+  auto* step_hidden_weight_gradient =
+      static_cast<float*>(buffers[16 + result_offset]);
+  auto* step_output_weight_gradient =
+      static_cast<float*>(buffers[17 + result_offset]);
+  auto* step_bias_gradient =
+      static_cast<float*>(buffers[18 + result_offset]);
+  auto* perception = static_cast<float*>(buffers[19 + result_offset]);
+  auto* hidden = static_cast<float*>(buffers[20 + result_offset]);
+  auto* hidden_gradient = static_cast<float*>(buffers[21 + result_offset]);
 
   const std::int64_t spatial_size = m.height * m.width;
   const std::int64_t state_elements = m.batch * m.channels * spatial_size;

@@ -3,8 +3,10 @@
 #include <sycl/sycl.hpp>
 
 #include <cstddef>
+#include <cstdlib>
 #include <cstdint>
 #include <cstring>
+#include <iostream>
 
 extern "C" void nca_sycl_forward(sycl::queue*, void**, const char*,
                                   std::size_t);
@@ -32,6 +34,16 @@ bool ValidMetadata(const RolloutMetadata& m) {
          m.boundary_code >= 0 && m.boundary_code <= 2 &&
          m.boundary_channels >= 0 && m.boundary_channels <= m.channels &&
          m.regulariser_flags >= 0 && m.regulariser_flags <= 3;
+}
+
+void ReportQueueOrderingOnce(const sycl::queue& queue) {
+  if (std::getenv("NCA_SYCL_REPORT_QUEUE_ORDERING") == nullptr) return;
+  static const bool reported = [&queue]() {
+    std::cout << "NCA_SYCL_CUSTOM_CALL_QUEUE_IN_ORDER="
+              << (queue.is_in_order() ? 1 : 0) << std::endl;
+    return true;
+  }();
+  (void)reported;
 }
 
 void ApplyBoundary(sycl::queue& queue, float* state, const float* mask,
@@ -178,6 +190,7 @@ extern "C" void nca_sycl_rollout_forward(sycl::queue* queue, void** buffers,
   RolloutMetadata m{};
   std::memcpy(&m, opaque, sizeof(m));
   if (!ValidMetadata(m)) return;
+  ReportQueueOrderingOnce(*queue);
 
   auto* initial_state = static_cast<float*>(buffers[0]);
   auto* kernels = static_cast<float*>(buffers[1]);
@@ -188,17 +201,21 @@ extern "C" void nca_sycl_rollout_forward(sycl::queue* queue, void** buffers,
   auto* boundary_mask = static_cast<float*>(buffers[6]);
   auto* output = static_cast<float*>(buffers[7]);
   auto* trajectory = static_cast<float*>(buffers[8]);
-  auto* regularisers = static_cast<float*>(buffers[9]);
-  auto* perception = static_cast<float*>(buffers[10]);
-  auto* hidden = static_cast<float*>(buffers[11]);
-  auto* delta = static_cast<float*>(buffers[12]);
+  const bool compute_regularisers = m.regulariser_flags != 0;
+  auto* regularisers = compute_regularisers
+                           ? static_cast<float*>(buffers[9])
+                           : nullptr;
+  const std::int64_t scratch_offset = compute_regularisers ? 1 : 0;
+  auto* perception = static_cast<float*>(buffers[9 + scratch_offset]);
+  auto* hidden = static_cast<float*>(buffers[10 + scratch_offset]);
+  auto* delta = static_cast<float*>(buffers[11 + scratch_offset]);
 
   const std::int64_t state_elements =
       m.batch * m.channels * m.height * m.width;
   const ForwardMetadata forward_metadata{
       m.version, m.batch, m.channels, m.height, m.width, m.features,
       m.kernel_size, m.kernel_flags, m.padding, m.workgroup_size, m.xmx_mode};
-  queue->fill(regularisers, 0.0F, 2);
+  if (compute_regularisers) queue->fill(regularisers, 0.0F, 2);
   for (std::int64_t step = 0; step < m.steps; ++step) {
     float* step_input =
         step == 0 ? initial_state : trajectory + (step - 1) * state_elements;

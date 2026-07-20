@@ -13,7 +13,7 @@ import jax.tree_util as jtu
 import numpy as np
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
-from NCA.model.NCA_sycl import NCA as SyclNCA
+from NCA.model.NCA_sycl import FUSED_REGULARISER_FLAGS, NCA as SyclNCA
 from NCA.trainer.sycl_scan import scan_carry_only
 from NCA.trainer.sycl_shard_map import filter_shard_map
 
@@ -21,30 +21,62 @@ from NCA.trainer.sycl_shard_map import filter_shard_map
 CHANNELS = 32
 HEIGHT = int(os.environ.get("NCA_SYCL_SMOKE_HEIGHT", "17"))
 WIDTH = int(os.environ.get("NCA_SYCL_SMOKE_WIDTH", "19"))
-INNER_BATCH = 2
+INNER_BATCH = int(os.environ.get("NCA_SYCL_SMOKE_INNER_BATCH", "2"))
 OUTER_BATCHES_PER_TILE = int(
     os.environ.get("NCA_SYCL_SMOKE_BATCHES_PER_TILE", "2")
 )
-STEPS = 2
+STEPS = int(os.environ.get("NCA_SYCL_SMOKE_STEPS", "2"))
 RTOL = 2.0e-2
 ATOL = 2.0e-3
+REGULARISER_FLAGS = sum(FUSED_REGULARISER_FLAGS.values())
+
+
+def _boundary_mask(dtype):
+    """Return one fixed model-boundary channel shaped ``[1,H,W]``."""
+    y = jnp.arange(HEIGHT)[:, None]
+    x = jnp.arange(WIDTH)[None, :]
+    inside = (
+        (y >= HEIGHT // 4)
+        & (y < HEIGHT - HEIGHT // 4)
+        & (x >= WIDTH // 4)
+        & (x < WIDTH - WIDTH // 4)
+    )
+    return inside[None].astype(dtype)
 
 
 def _loss(model, states, keys):
     """Return loss and rollout outputs for ``[N,C,H,W]`` tile-local states."""
-    def rollout_chunk(carry, chunk_keys):
-        state, _ = carry
-        final, trajectory = model.batched_rollout(state, chunk_keys)
-        return (final, trajectory), None
+    boundary_mask = _boundary_mask(states.dtype)
 
-    final, trajectory = scan_carry_only(
+    def rollout_chunk(carry, chunk_keys):
+        state, _, _ = carry
+        final, trajectory, regularisers = model.batched_rollout(
+            state,
+            chunk_keys,
+            boundary_code=1,
+            boundary_mask=boundary_mask,
+            boundary_channels=1,
+            regulariser_flags=REGULARISER_FLAGS,
+        )
+        return (final, trajectory, regularisers), None
+
+    final, trajectory, regularisers = scan_carry_only(
         rollout_chunk,
-        (states, jnp.zeros((STEPS, *states.shape), dtype=states.dtype)),
+        (
+            states,
+            jnp.zeros((STEPS, *states.shape), dtype=states.dtype),
+            jnp.zeros((2,), dtype=states.dtype),
+        ),
         keys[None],
         kind="checkpointed",
     )
-    loss = jnp.mean(final**2) + 0.25 * jnp.mean(trajectory**2)
-    return loss, (final, trajectory)
+    loss = (
+        jnp.mean(final**2)
+        + 0.25 * jnp.mean(trajectory**2)
+        + 0.13 * regularisers[0]
+        + 0.19 * regularisers[1]
+    )
+    return loss, (final, trajectory, regularisers)
 
 
 def _two_tile_loss_impl(model, state_shards, key_shards):
@@ -52,17 +84,19 @@ def _two_tile_loss_impl(model, state_shards, key_shards):
     local_losses = []
     final_states = []
     trajectories = []
+    regularisers = []
     for state_shard, key_shard in zip(state_shards, key_shards):
         if state_shard.shape[0] != 1 or key_shard.shape[0] != 1:
             raise ValueError("Expected one physical tile axis per outer-B slot")
-        local_loss, (final, trajectory) = _loss(
+        local_loss, (final, trajectory, regulariser) = _loss(
             model, state_shard[0], key_shard[0]
         )
         local_losses.append(local_loss)
         final_states.append(final[None])
         trajectories.append(trajectory[None])
+        regularisers.append(regulariser[None])
     mean_loss = jax.lax.pmean(jnp.mean(jnp.stack(local_losses)), "tiles")
-    return mean_loss, (final_states, trajectories)
+    return mean_loss, (final_states, trajectories, regularisers)
 
 
 def _single_tile_reference(model, states, keys):
@@ -71,21 +105,26 @@ def _single_tile_reference(model, states, keys):
         losses = []
         final_states = []
         trajectories = []
+        regularisers = []
         for tile in range(states.shape[0]):
             tile_finals = []
             tile_trajectories = []
+            tile_regularisers = []
             for batch in range(states.shape[1]):
-                loss, (final, trajectory) = _loss(
+                loss, (final, trajectory, regulariser) = _loss(
                     candidate, states[tile, batch], keys[tile, batch]
                 )
                 losses.append(loss)
                 tile_finals.append(final)
                 tile_trajectories.append(trajectory)
+                tile_regularisers.append(regulariser)
             final_states.append(jnp.stack(tile_finals))
             trajectories.append(jnp.stack(tile_trajectories))
+            regularisers.append(jnp.stack(tile_regularisers))
         return jnp.mean(jnp.stack(losses)), (
             jnp.stack(final_states),
             jnp.stack(trajectories),
+            jnp.stack(regularisers),
         )
 
     return eqx.filter_value_and_grad(global_loss, has_aux=True)(model)
@@ -105,10 +144,12 @@ def main():
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=11")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=13")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
     print(f"OUTER_BATCHES_PER_TILE={OUTER_BATCHES_PER_TILE}")
+    print(f"TEST_SHAPE={INNER_BATCH}X{CHANNELS}X{HEIGHT}X{WIDTH}")
+    print(f"FUSED_STEPS={STEPS}")
     if len(devices) != 2:
         raise RuntimeError(f"Expected exactly two SYCL tiles, found {devices}")
 
@@ -173,7 +214,7 @@ def main():
         _two_tile_loss_impl,
         mesh=mesh,
         in_specs=(P(), P("tiles"), P("tiles")),
-        out_specs=(P(), (P("tiles"), P("tiles"))),
+        out_specs=(P(), (P("tiles"), P("tiles"), P("tiles"))),
         check_rep=False,
     )
     (mean_loss, outputs), gradients = eqx.filter_jit(
@@ -195,11 +236,15 @@ def main():
     _assert_close("LOSS", mean_loss, reference_loss)
     final_states = jnp.stack(outputs[0], axis=1)
     trajectories = jnp.stack(outputs[1], axis=1)
+    regularisers = jnp.stack(outputs[2], axis=1)
     _assert_close(
         "FINAL_STATE", final_states, reference_outputs[0]
     )
     _assert_close(
         "TRAJECTORY", trajectories, reference_outputs[1]
+    )
+    _assert_close(
+        "FUSED_REGULARISERS", regularisers, reference_outputs[2]
     )
     _assert_close(
         "HIDDEN_WEIGHT_GRADIENT",

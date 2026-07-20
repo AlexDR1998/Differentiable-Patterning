@@ -232,7 +232,7 @@ def _make_models(key):
 
 def main() -> None:
     os.environ.setdefault("NCA_SYCL_XMX_MODE", "bf16")
-    print("NCA_SYCL_SMOKE_VERSION=5")
+    print("NCA_SYCL_SMOKE_VERSION=6")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEFAULT_BACKEND={jax.default_backend()}")
     print(f"JAX_DEVICES={jax.devices()}")

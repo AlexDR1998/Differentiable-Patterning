@@ -1225,7 +1225,7 @@ class NCA_Trainer(object):
 			print( "|-|-|-|-|-|-  Loss exceded "+str(loss_thresh)+" at step "+str(error_at)+", optimisation probably diverging  -|-|-|-|-|-|")
 		if error!=0 and model_saved==False:
 			print("|-|-|-|-|-|-  Training did not converge, model was not saved  -|-|-|-|-|-|")
-		elif self.IS_LOGGING and model_saved:
+		elif self.IS_LOGGING and model_saved and WRITE_IMAGES:
 			
 			self.LOGGER.tb_training_end_log(
 				self.NCA_model,
