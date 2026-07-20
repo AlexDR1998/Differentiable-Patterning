@@ -24,7 +24,7 @@ configs:
     data.data_channels: 14
     data.batches: 3
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.duplicate_final_timestep: false
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -68,7 +68,7 @@ configs:
       data_channels: 14
       downsample: 4
       noise_strength: 0.005
-      duplicate_final_timestep: true
+      duplicate_final_timestep: false
     model:
       family: NCA
       channels: 64
@@ -183,7 +183,7 @@ configs:
     data.data_channels: 14
     data.batches: 3
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.duplicate_final_timestep: false
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -227,7 +227,7 @@ configs:
       data_channels: 14
       downsample: 4
       noise_strength: 0.005
-      duplicate_final_timestep: true
+      duplicate_final_timestep: false
     model:
       family: NCA
       channels: 64
@@ -342,7 +342,7 @@ configs:
     data.data_channels: 14
     data.batches: 3
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.duplicate_final_timestep: false
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -386,7 +386,7 @@ configs:
       data_channels: 14
       downsample: 4
       noise_strength: 0.005
-      duplicate_final_timestep: true
+      duplicate_final_timestep: false
     model:
       family: NCA
       channels: 64
@@ -501,7 +501,7 @@ configs:
     data.data_channels: 14
     data.batches: 3
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.duplicate_final_timestep: false
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -545,7 +545,7 @@ configs:
       data_channels: 14
       downsample: 4
       noise_strength: 0.005
-      duplicate_final_timestep: true
+      duplicate_final_timestep: false
     model:
       family: NCA
       channels: 64
@@ -660,7 +660,7 @@ configs:
     data.data_channels: 14
     data.batches: 3
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.duplicate_final_timestep: false
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -704,7 +704,7 @@ configs:
       data_channels: 14
       downsample: 4
       noise_strength: 0.005
-      duplicate_final_timestep: true
+      duplicate_final_timestep: false
     model:
       family: NCA
       channels: 64
@@ -819,7 +819,7 @@ configs:
     data.data_channels: 14
     data.batches: 3
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.duplicate_final_timestep: false
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -863,7 +863,7 @@ configs:
       data_channels: 14
       downsample: 4
       noise_strength: 0.005
-      duplicate_final_timestep: true
+      duplicate_final_timestep: false
     model:
       family: NCA
       channels: 64
@@ -978,7 +978,7 @@ configs:
     data.data_channels: 14
     data.batches: 3
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.duplicate_final_timestep: false
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -1022,7 +1022,7 @@ configs:
       data_channels: 14
       downsample: 4
       noise_strength: 0.005
-      duplicate_final_timestep: true
+      duplicate_final_timestep: false
     model:
       family: NCA
       channels: 64
@@ -1137,7 +1137,7 @@ configs:
     data.data_channels: 14
     data.batches: 3
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.duplicate_final_timestep: false
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -1181,7 +1181,7 @@ configs:
       data_channels: 14
       downsample: 4
       noise_strength: 0.005
-      duplicate_final_timestep: true
+      duplicate_final_timestep: false
     model:
       family: NCA
       channels: 64

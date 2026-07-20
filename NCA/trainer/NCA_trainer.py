@@ -314,6 +314,7 @@ class NCA_Trainer(object):
 
 		"""
 		self.NCA_model = NCA_model
+		CHANNEL_SCHEMA = CHANNEL_SCHEMA or getattr(DATA_AUGMENTER, "schema", None)
 		self.CHANNEL_SCHEMA = CHANNEL_SCHEMA
 		self.CHANNEL_NAMES = CHANNEL_NAMES
 		self.TIMEPOINT_NAMES = TIMEPOINT_NAMES
@@ -672,8 +673,10 @@ class NCA_Trainer(object):
 		if key is None:
 			key = jr.PRNGKey(int(time.time()))
 		is_multi_target = LOSS_FUNC_STR == "multi_target"
-		if is_multi_target and (self.CHANNEL_SCHEMA is None or self.GRAD_LOSS):
-			raise ValueError("multi_target requires CHANNEL_SCHEMA and GRAD_LOSS=False")
+		if is_multi_target and self.CHANNEL_SCHEMA is None:
+			raise ValueError("multi_target requires a channel schema")
+		if is_multi_target and self.GRAD_LOSS:
+			raise ValueError("multi_target requires GRAD_LOSS=False")
 		if is_multi_target and self.SHARDING is not None:
 			raise ValueError("multi_target currently requires all batches on one device")
 		multi_target_params = None

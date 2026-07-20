@@ -10,9 +10,9 @@ from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 
 class DataAugmenter(BasicAugmenter):
     noise_strength = 0.005
+    schema = MICROPATTERN_260726_SCHEMA
 
     def __init__(self, *args, **kwargs):
-        self.schema = MICROPATTERN_260726_SCHEMA
         model = kwargs.get("nca_model")
         self.channels = (
             model.N_CHANNELS if model is not None
