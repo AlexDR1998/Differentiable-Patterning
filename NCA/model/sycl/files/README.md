@@ -42,14 +42,21 @@ every native update, and the complete trajectory is returned so existing
 per-step regularisers retain their values and gradients. The reverse call
 accepts cotangents for both the endpoint and every trajectory state.
 
+The rollout can also accumulate the intermediate-state and spatial-boundary
+regularisers while applying each post-update boundary. Static metadata flags
+remove this work when the corresponding training coefficient is zero. Their
+two FP32 sums remain ordinary differentiable outputs; the rollout VJP adds the
+analytic regulariser derivatives before propagating each timestep cotangent.
+
 `NCA_sycl_Trainer` also has an opt-in two-tile replicated-data-parallel path.
-Set `trainer.sharding: 2` to place one of the two outer `B` leaves on each
-visible Max 1550 tile. Model parameters are replicated and each tile evaluates
-its local loss independently. Reverse-mode autodiff wraps the sharded loss, so
-the transpose of its `lax.pmean` reduces parameter gradients once before the
-shared optimiser update. Host-side callbacks access physical
-`addressable_shards` rather than globally indexing sharded arrays. This path
-requires exactly two shape-compatible outer leaves and matching boundary modes.
+Set `trainer.sharding: 2` to split an even number of outer `B` leaves equally
+between the two visible Max 1550 tiles. Model parameters are replicated and
+each tile evaluates its local half independently. Reverse-mode autodiff wraps
+the sharded loss, so the transpose of its `lax.pmean` reduces parameter
+gradients once before the shared optimiser update. Host-side callbacks access
+physical `addressable_shards` rather than globally indexing sharded arrays.
+Corresponding batches in the two contiguous halves must have compatible shapes
+and boundary modes.
 
 Set `trainer.sycl_fused_steps` to control how many sequential NCA timesteps
 the SYCL trainer groups into one rollout custom call. `1` selects the original

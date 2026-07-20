@@ -10,6 +10,7 @@ import jax.tree_util as jtu
 
 from Common.model.boundary import hard_boundary, model_boundary, no_boundary
 from Common.utils import key_pytree_gen
+from NCA.model.NCA_sycl import FUSED_REGULARISER_FLAGS
 from NCA.trainer.NCA_trainer import NCA_Trainer
 from NCA.trainer.sycl_batching import apply_flat_batched_nca
 from NCA.trainer.sycl_execution import SyclTwoTileExecution
@@ -20,7 +21,9 @@ class NCA_sycl_Trainer(NCA_Trainer):
     """Train the native SYCL NCA while retaining independent outer-B leaves.
 
     Each state leaf has shape ``[N, C, H, W]``. A fused native rollout advances
-    all ``N`` states for ``sycl_fused_steps`` sequential NCA timesteps.
+    all ``N`` states for ``sycl_fused_steps`` sequential NCA timesteps. With
+    ``SHARDING=2``, an even number of outer-B leaves is divided equally between
+    the two tiles while model and optimiser arrays remain replicated.
     """
 
     def __init__(self, *args, SYCL_FUSED_STEPS=2, **kwargs):
@@ -70,36 +73,46 @@ class NCA_sycl_Trainer(NCA_Trainer):
             return 2, jnp.asarray(callback.MASK, dtype=dtype), 0
         raise TypeError(f"Unsupported fused-rollout boundary: {type(callback)}")
 
-    def _rollout_tree(self, nca, state, callbacks, keys):
+    def _rollout_tree(self, nca, state, callbacks, keys, regulariser_flags=0):
         """Apply one native fused rollout independently to each outer-B leaf.
 
         State leaves are ``[N,C,H,W]`` and key leaves are ``[K,N,2]``, where
         ``K`` is ``self.fused_steps``. Returned trajectory leaves are
-        ``[K,N,C,H,W]`` and final-state leaves are ``[N,C,H,W]``.
+        ``[K,N,C,H,W]``, final-state leaves are ``[N,C,H,W]``, and native
+        regulariser leaves contain two FP32 sums shaped ``[2]``.
         """
         state_leaves, tree_definition = jtu.tree_flatten(state)
         key_leaves = tree_definition.flatten_up_to(keys)
         callback_leaves = tree_definition.flatten_up_to(callbacks)
         final_leaves = []
         trajectory_leaves = []
+        regulariser_leaves = []
         for leaf, leaf_keys, callback in zip(
             state_leaves, key_leaves, callback_leaves
         ):
             boundary_code, boundary_mask, boundary_channels = (
                 self._boundary_spec(callback, leaf.dtype)
             )
-            final, trajectory = nca.batched_rollout(
+            rollout_result = nca.batched_rollout(
                 leaf,
                 leaf_keys,
                 boundary_code=boundary_code,
                 boundary_mask=boundary_mask,
                 boundary_channels=boundary_channels,
+                regulariser_flags=regulariser_flags,
             )
+            if regulariser_flags:
+                final, trajectory, regularisers = rollout_result
+            else:
+                final, trajectory = rollout_result
+                regularisers = jnp.zeros((2,), dtype=leaf.dtype)
             final_leaves.append(final)
             trajectory_leaves.append(trajectory)
+            regulariser_leaves.append(regularisers)
         return (
             jtu.tree_unflatten(tree_definition, final_leaves),
             jtu.tree_unflatten(tree_definition, trajectory_leaves),
+            jtu.tree_unflatten(tree_definition, regulariser_leaves),
         )
 
     def _run_nca_steps(
@@ -153,6 +166,13 @@ class NCA_sycl_Trainer(NCA_Trainer):
                 f"trainer.sycl_fused_steps={self.fused_steps}"
             )
 
+        fused_regularisers = tuple(
+            name for name in FUSED_REGULARISER_FLAGS if name in reg_logs_internal
+        )
+        regulariser_flags = sum(
+            FUSED_REGULARISER_FLAGS[name] for name in fused_regularisers
+        )
+
         inner_batch_size = x_latent[0].shape[0]
 
         def rollout_chunk(carry, chunk_start):
@@ -168,9 +188,20 @@ class NCA_sycl_Trainer(NCA_Trainer):
             rollout_keys = jtu.tree_map(
                 lambda *values: jnp.stack(values, axis=0), *keys_by_step
             )
-            final_state, trajectory = self._rollout_tree(
-                nca, state, training_callbacks, rollout_keys
+            final_state, trajectory, native_regularisers = self._rollout_tree(
+                nca,
+                state,
+                training_callbacks,
+                rollout_keys,
+                regulariser_flags,
             )
+            if fused_regularisers:
+                native_regularisers = jnp.stack(
+                    jtu.tree_leaves(native_regularisers), axis=0
+                )
+                for index, name in enumerate(FUSED_REGULARISER_FLAGS):
+                    if name in fused_regularisers:
+                        reg_logs[name] += native_regularisers[:, index]
 
             previous_state = state
             previous_processed = processed
@@ -187,6 +218,7 @@ class NCA_sycl_Trainer(NCA_Trainer):
                     new_processed,
                     vv_nca,
                     step_keys[offset],
+                    skip=fused_regularisers,
                 )
                 previous_state = new_state
                 previous_processed = new_processed

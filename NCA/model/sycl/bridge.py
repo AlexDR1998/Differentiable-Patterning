@@ -19,7 +19,7 @@ _FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_forward"
 _BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_backward"
 _ROLLOUT_FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_rollout_forward"
 _ROLLOUT_BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_rollout_backward"
-_METADATA_VERSION = 3
+_METADATA_VERSION = 4
 _LIBRARY: ctypes.CDLL | None = None
 _CAPSULES: tuple[object, ...] | None = None
 _REGISTERED = False
@@ -669,6 +669,7 @@ def _rollout_metadata(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
     if state_aval.ndim != 4:
         raise ValueError("NCA SYCL rollout state must have shape [B,C,H,W]")
@@ -680,7 +681,7 @@ def _rollout_metadata(
     while workgroup_size < max(features, channels):
         workgroup_size *= 2
     return struct.pack(
-        "=14q",
+        "=15q",
         _METADATA_VERSION,
         batch,
         channels,
@@ -695,6 +696,7 @@ def _rollout_metadata(
         steps,
         int(boundary_code),
         int(boundary_channels),
+        int(regulariser_flags),
     )
 
 
@@ -718,8 +720,13 @@ def _rollout_forward_abstract_eval(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
     del padding
+    if regulariser_flags not in (0, 1, 2, 3):
+        raise ValueError(
+            f"Unsupported fused regulariser flags: {regulariser_flags}"
+        )
     if state.ndim != 4:
         raise ValueError("NCA SYCL rollout expects state [B,C,H,W]")
     if masks.ndim != 5 or masks.shape[1:] != state.shape:
@@ -769,6 +776,7 @@ def _rollout_forward_abstract_eval(
     return (
         core.ShapedArray(state.shape, state.dtype),
         core.ShapedArray(masks.shape, state.dtype),
+        core.ShapedArray((2,), state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
         core.ShapedArray(state.shape, state.dtype),
@@ -786,6 +794,7 @@ def _rollout_forward_batching_rule(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
     mapped_args = _mapped_operands(args, dimensions)
 
@@ -796,6 +805,7 @@ def _rollout_forward_batching_rule(
             padding=padding,
             boundary_code=boundary_code,
             boundary_channels=boundary_channels,
+            regulariser_flags=regulariser_flags,
         )
 
     results = jax.lax.map(apply_one, mapped_args)
@@ -814,6 +824,7 @@ def _rollout_forward_lowering(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
     metadata = _rollout_metadata(
         ctx.avals_in[0],
@@ -824,6 +835,7 @@ def _rollout_forward_lowering(
         padding=padding,
         boundary_code=boundary_code,
         boundary_channels=boundary_channels,
+        regulariser_flags=regulariser_flags,
     )
     operation = custom_call(
         _ROLLOUT_FORWARD_TARGET_NAME,
@@ -859,19 +871,30 @@ def _rollout_backward_abstract_eval(
     trajectory,
     output_cotangent,
     trajectory_cotangent,
+    regulariser_cotangent,
     *,
     kernel_flags,
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
-    del bias_output, kernel_flags, padding, boundary_code, boundary_channels
+    del (
+        bias_output,
+        kernel_flags,
+        padding,
+        boundary_code,
+        boundary_channels,
+        regulariser_flags,
+    )
     if trajectory.shape != masks.shape:
         raise ValueError("Rollout trajectory and masks must have equal shapes")
     if output_cotangent.shape != state.shape:
         raise ValueError("Rollout output cotangent must match state")
     if trajectory_cotangent.shape != trajectory.shape:
         raise ValueError("Rollout trajectory cotangent must match trajectory")
+    if regulariser_cotangent.shape != (2,):
+        raise ValueError("Rollout regulariser cotangent must have shape [2]")
     if any(
         value.dtype != np.dtype(np.float32)
         for value in (
@@ -884,6 +907,7 @@ def _rollout_backward_abstract_eval(
             trajectory,
             output_cotangent,
             trajectory_cotangent,
+            regulariser_cotangent,
         )
     ):
         raise TypeError("NCA SYCL rollout backward accepts float32 only")
@@ -915,6 +939,7 @@ def _rollout_backward_batching_rule(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
     mapped_args = _mapped_operands(args, dimensions)
 
@@ -925,6 +950,7 @@ def _rollout_backward_batching_rule(
             padding=padding,
             boundary_code=boundary_code,
             boundary_channels=boundary_channels,
+            regulariser_flags=regulariser_flags,
         )
 
     results = jax.lax.map(apply_one, mapped_args)
@@ -943,6 +969,7 @@ def _rollout_backward_lowering(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
     metadata = _rollout_metadata(
         ctx.avals_in[0],
@@ -953,6 +980,7 @@ def _rollout_backward_lowering(
         padding=padding,
         boundary_code=boundary_code,
         boundary_channels=boundary_channels,
+        regulariser_flags=regulariser_flags,
     )
     operation = custom_call(
         _ROLLOUT_BACKWARD_TARGET_NAME,
@@ -982,6 +1010,7 @@ def _bind_rollout_forward(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
     results = _nca_rollout_forward_p.bind(
         state,
@@ -995,11 +1024,12 @@ def _bind_rollout_forward(
         padding=padding,
         boundary_code=boundary_code,
         boundary_channels=boundary_channels,
+        regulariser_flags=regulariser_flags,
     )
-    return results[0], results[1]
+    return results[0], results[1], results[2]
 
 
-@partial(jax.custom_vjp, nondiff_argnums=(7, 8, 9, 10))
+@partial(jax.custom_vjp, nondiff_argnums=(7, 8, 9, 10, 11))
 def _differentiable_rollout(
     state,
     kernels,
@@ -1012,6 +1042,7 @@ def _differentiable_rollout(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
     return _bind_rollout_forward(
         state,
@@ -1025,6 +1056,7 @@ def _differentiable_rollout(
         padding,
         boundary_code,
         boundary_channels,
+        regulariser_flags,
     )
 
 
@@ -1040,8 +1072,9 @@ def _rollout_vjp_fwd(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
 ):
-    output, trajectory = _bind_rollout_forward(
+    output, trajectory, regularisers = _bind_rollout_forward(
         state,
         kernels,
         weight_hidden,
@@ -1053,6 +1086,7 @@ def _rollout_vjp_fwd(
         padding,
         boundary_code,
         boundary_channels,
+        regulariser_flags,
     )
     residuals = (
         state,
@@ -1064,7 +1098,7 @@ def _rollout_vjp_fwd(
         boundary_mask,
         trajectory,
     )
-    return (output, trajectory), residuals
+    return (output, trajectory, regularisers), residuals
 
 
 def _rollout_vjp_bwd(
@@ -1072,6 +1106,7 @@ def _rollout_vjp_bwd(
     padding,
     boundary_code,
     boundary_channels,
+    regulariser_flags,
     residuals,
     cotangents,
 ):
@@ -1085,7 +1120,7 @@ def _rollout_vjp_bwd(
         boundary_mask,
         trajectory,
     ) = residuals
-    output_cotangent, trajectory_cotangent = cotangents
+    output_cotangent, trajectory_cotangent, regulariser_cotangent = cotangents
     results = _nca_rollout_backward_p.bind(
         state,
         kernels,
@@ -1097,10 +1132,12 @@ def _rollout_vjp_bwd(
         trajectory,
         output_cotangent,
         trajectory_cotangent,
+        regulariser_cotangent,
         kernel_flags=kernel_flags,
         padding=padding,
         boundary_code=boundary_code,
         boundary_channels=boundary_channels,
+        regulariser_flags=regulariser_flags,
     )
     return (
         results[0],
@@ -1129,6 +1166,7 @@ def sycl_nca_rollout(
     padding: int,
     boundary_code: int,
     boundary_channels: int,
+    regulariser_flags: int = 0,
 ):
     """Execute several sequential NCA steps in one native custom call."""
     _register_custom_call()
@@ -1144,6 +1182,7 @@ def sycl_nca_rollout(
         padding,
         boundary_code,
         boundary_channels,
+        regulariser_flags,
     )
 
 

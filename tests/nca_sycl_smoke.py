@@ -12,7 +12,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from NCA.model.NCA_model_fast import NCA as FastNCA
-from NCA.model.NCA_sycl import NCA as SyclNCA
+from NCA.model.NCA_sycl import FUSED_REGULARISER_FLAGS, NCA as SyclNCA
 
 
 CHANNELS = 32
@@ -150,6 +150,56 @@ def _sycl_fixed_boundary_rollout_loss(model_and_states, keys, boundary_mask):
     )
 
 
+def _rollout_regularisers(trajectory, boundary_mask):
+    """Reference sums matching the native two-value regulariser output."""
+    intermediate = jnp.sum(
+        jnp.mean(
+            jnp.abs(trajectory) + jnp.abs(trajectory - 1.0) - 1.0,
+            axis=(1, 2, 3, 4),
+        )
+    )
+    boundary_channels = boundary_mask.shape[0]
+    outside = 1.0 - jnp.max(boundary_mask, axis=0)
+    boundary = jnp.sum(
+        jnp.mean(
+            jnp.abs(trajectory[:, :, :-boundary_channels]) * outside,
+            axis=(1, 2, 3, 4),
+        )
+    )
+    return jnp.stack((intermediate, boundary))
+
+
+def _reference_regularised_rollout_loss(
+    model_and_states, keys, boundary_mask
+):
+    model, states = model_and_states
+    trajectory = []
+    boundary_channels = boundary_mask.shape[0]
+    for step in range(keys.shape[0]):
+        states = _batched_outputs(model, states, keys[step])
+        states = states.at[:, -boundary_channels:].set(boundary_mask)
+        trajectory.append(states)
+    trajectory = jnp.stack(trajectory)
+    regularisers = _rollout_regularisers(trajectory, boundary_mask)
+    loss = jnp.mean(states**2) + 0.13 * regularisers[0] + 0.19 * regularisers[1]
+    return loss, (states, trajectory, regularisers)
+
+
+def _sycl_regularised_rollout_loss(model_and_states, keys, boundary_mask):
+    model, states = model_and_states
+    regulariser_flags = sum(FUSED_REGULARISER_FLAGS.values())
+    final, trajectory, regularisers = model.batched_rollout(
+        states,
+        keys,
+        boundary_code=1,
+        boundary_mask=boundary_mask,
+        boundary_channels=boundary_mask.shape[0],
+        regulariser_flags=regulariser_flags,
+    )
+    loss = jnp.mean(final**2) + 0.13 * regularisers[0] + 0.19 * regularisers[1]
+    return loss, (final, trajectory, regularisers)
+
+
 def _make_models(key):
     fast_model = FastNCA(
         CHANNELS,
@@ -182,7 +232,7 @@ def _make_models(key):
 
 def main() -> None:
     os.environ.setdefault("NCA_SYCL_XMX_MODE", "bf16")
-    print("NCA_SYCL_SMOKE_VERSION=4")
+    print("NCA_SYCL_SMOKE_VERSION=5")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEFAULT_BACKEND={jax.default_backend()}")
     print(f"JAX_DEVICES={jax.devices()}")
@@ -475,6 +525,79 @@ def main() -> None:
         "BOUNDARY_ROLLOUT_STATE_GRADIENT",
         actual_boundary_state_gradient,
         expected_boundary_state_gradient,
+    )
+
+    # Exercise native accumulation and analytic VJP contributions for both
+    # config-selectable fused regularisers.
+    regulariser_mask = (
+        jax.random.uniform(
+            jax.random.fold_in(rollout_key, 101),
+            (1, HEIGHT, WIDTH),
+        )
+        > 0.35
+    ).astype(jnp.float32)
+    reference_regularised_vg = eqx.filter_jit(
+        eqx.filter_value_and_grad(
+            _reference_regularised_rollout_loss, has_aux=True
+        )
+    )
+    sycl_regularised_vg = eqx.filter_jit(
+        eqx.filter_value_and_grad(
+            _sycl_regularised_rollout_loss, has_aux=True
+        )
+    )
+    print("PHASE=SYCL_FUSED_REGULARISERS", flush=True)
+    (expected_regularised_loss, expected_regularised_rollout), (
+        expected_regularised_gradients,
+        expected_regularised_state_gradient,
+    ) = reference_regularised_vg(
+        (fast_model, states), rollout_keys, regulariser_mask
+    )
+    (actual_regularised_loss, actual_regularised_rollout), (
+        actual_regularised_gradients,
+        actual_regularised_state_gradient,
+    ) = sycl_regularised_vg(
+        (sycl_model, states), rollout_keys, regulariser_mask
+    )
+    jax.block_until_ready(
+        (
+            actual_regularised_loss,
+            actual_regularised_rollout,
+            actual_regularised_gradients.layers[0].weight,
+            actual_regularised_gradients.layers[2].weight,
+            actual_regularised_gradients.layers[2].bias,
+            actual_regularised_state_gradient,
+        )
+    )
+    _assert_close(
+        "FUSED_REGULARISER_VALUES",
+        actual_regularised_rollout[2],
+        expected_regularised_rollout[2],
+    )
+    _assert_close(
+        "FUSED_REGULARISER_LOSS",
+        actual_regularised_loss,
+        expected_regularised_loss,
+    )
+    _assert_close(
+        "FUSED_REGULARISER_HIDDEN_WEIGHT_GRADIENT",
+        actual_regularised_gradients.layers[0].weight,
+        expected_regularised_gradients.layers[0].weight,
+    )
+    _assert_close(
+        "FUSED_REGULARISER_OUTPUT_WEIGHT_GRADIENT",
+        actual_regularised_gradients.layers[2].weight,
+        expected_regularised_gradients.layers[2].weight,
+    )
+    _assert_close(
+        "FUSED_REGULARISER_OUTPUT_BIAS_GRADIENT",
+        actual_regularised_gradients.layers[2].bias,
+        expected_regularised_gradients.layers[2].bias,
+    )
+    _assert_state_gradient_close(
+        "FUSED_REGULARISER_STATE_GRADIENT",
+        actual_regularised_state_gradient,
+        expected_regularised_state_gradient,
     )
 
     print("NCA_SYCL_SMOKE_RESULT=PASS")

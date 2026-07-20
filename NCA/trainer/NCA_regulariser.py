@@ -5,7 +5,7 @@ import jax.random as jr
 import equinox as eqx
 import time
 from jaxtyping import Float, Array, Key, Int, Scalar, PyTree
-from Common.utils import key_pytree_gen
+from Common.model.boundary import hard_boundary, model_boundary, no_boundary
 from einops import repeat, reduce, rearrange, einsum
 
 
@@ -304,25 +304,42 @@ def latent_size_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
 
 
 def boundary_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
+    """Penalise state channels that are nonzero outside the spatial mask.
+
+    ``x_new`` is a PyTree of outer-B leaves shaped ``[N,C,H,W]``. For a
+    ``model_boundary``, its final fixed mask channel(s) are excluded from the
+    penalty; every other channel is weighted by ``1 - spatial_mask``. A
+    ``hard_boundary`` has no dedicated mask channel, so all channels are
+    included. The returned array has shape ``[B]``.
     """
-    Penalise the model for any nonzero components outside the boundary mask
-    Parameters
-    ----------
-    x: PyTree [Batch] of Arrays [N C H W]
-    x_new: PyTree [Batch] of Arrays [N C H W]
-    x_proc: PyTree [Batch] of Arrays [N L h w]
-    x_new_proc: PyTree [Batch] of Arrays [N L h w]
-    vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
-    key: Jax PRNGkey
-    Returns
-    -------
-    reg : float32 Array [BATCH]
-        float tracking how much of x_new is outwith the boundary mask
-    """
-    # x_new = jtu.tree_map(_state, x_new, is_leaf=_is_dict_leaf)
-    x_in_bound = jax.tree_util.tree_map(lambda f,x:f(x),aux["BOUNDARY_CALLBACK"],x_new)
-    x_out_bound = jax.tree_util.tree_map(lambda x,y: x-y,x_new,x_in_bound)
-    return jnp.array(jax.tree_util.tree_map(lambda x: jnp.mean(jnp.abs(x)),x_out_bound))
+    del x, x_proc, x_new_proc, vv_nca, key
+
+    def _reg(callback, state):
+        if isinstance(callback, no_boundary):
+            return jnp.zeros((), dtype=state.dtype)
+        if isinstance(callback, model_boundary):
+            mask = jnp.asarray(callback.MASK, dtype=state.dtype)
+            boundary_channels = mask.shape[0]
+            if boundary_channels >= state.shape[-3]:
+                raise ValueError(
+                    "Boundary regularisation requires at least one non-mask "
+                    "state channel"
+                )
+            values = state[:, :-boundary_channels]
+            spatial_mask = jnp.max(mask, axis=0)
+        elif isinstance(callback, hard_boundary):
+            values = state
+            spatial_mask = jnp.asarray(callback.MASK, dtype=state.dtype)
+        else:
+            raise TypeError(
+                "Unsupported boundary callback for regularisation: "
+                f"{type(callback).__name__}"
+            )
+        outside_weight = 1.0 - spatial_mask
+        return jnp.mean(jnp.abs(values) * outside_weight)
+
+    losses = jtu.tree_map(_reg, aux["BOUNDARY_CALLBACK"], x_new)
+    return jnp.asarray(losses)
 @eqx.filter_jit
 def contiguous_growth_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
     """
@@ -383,6 +400,8 @@ def update_sensitivity_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
         Sensitivity: Array [Batch] of floats
     """
 
+    from Common.utils import key_pytree_gen
+
     noise_amount = 0.1
     key_array_noise = key_pytree_gen(key,[len(x)])
     
@@ -414,6 +433,8 @@ def perturbation_conservation_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,k
     Returns:
         Loss: Array[Batch] of floats
     """
+    from Common.utils import key_pytree_gen
+
     noise_amount = 0.1
     key_array_noise = key_pytree_gen(key,[len(x)])
 

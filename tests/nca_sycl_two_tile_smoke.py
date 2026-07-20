@@ -22,6 +22,9 @@ CHANNELS = 32
 HEIGHT = int(os.environ.get("NCA_SYCL_SMOKE_HEIGHT", "17"))
 WIDTH = int(os.environ.get("NCA_SYCL_SMOKE_WIDTH", "19"))
 INNER_BATCH = 2
+OUTER_BATCHES_PER_TILE = int(
+    os.environ.get("NCA_SYCL_SMOKE_BATCHES_PER_TILE", "2")
+)
 STEPS = 2
 RTOL = 2.0e-2
 ATOL = 2.0e-3
@@ -44,27 +47,46 @@ def _loss(model, states, keys):
     return loss, (final, trajectory)
 
 
-def _two_tile_loss_impl(model, state_shard, key_shard):
-    """Map ``[1,N,C,H,W]`` physical shards to a replicated scalar loss."""
-    if state_shard.shape[0] != 1 or key_shard.shape[0] != 1:
-        raise ValueError("Expected one state/key leaf per tile")
-    states = state_shard[0]
-    keys = key_shard[0]
-    local_loss, outputs = _loss(model, states, keys)
-    mean_loss = jax.lax.pmean(local_loss, "tiles")
-    return mean_loss, jtu.tree_map(lambda value: value[None], outputs)
+def _two_tile_loss_impl(model, state_shards, key_shards):
+    """Evaluate separate ``[N,C,H,W]`` outer-B leaves on each tile."""
+    local_losses = []
+    final_states = []
+    trajectories = []
+    for state_shard, key_shard in zip(state_shards, key_shards):
+        if state_shard.shape[0] != 1 or key_shard.shape[0] != 1:
+            raise ValueError("Expected one physical tile axis per outer-B slot")
+        local_loss, (final, trajectory) = _loss(
+            model, state_shard[0], key_shard[0]
+        )
+        local_losses.append(local_loss)
+        final_states.append(final[None])
+        trajectories.append(trajectory[None])
+    mean_loss = jax.lax.pmean(jnp.mean(jnp.stack(local_losses)), "tiles")
+    return mean_loss, (final_states, trajectories)
 
 
 def _single_tile_reference(model, states, keys):
-    """Evaluate the mean of both tile losses without a device map."""
+    """Evaluate all ``[tile,outer-B,...]`` inputs without a device map."""
     def global_loss(candidate):
         losses = []
-        outputs = []
+        final_states = []
+        trajectories = []
         for tile in range(states.shape[0]):
-            loss, output = _loss(candidate, states[tile], keys[tile])
-            losses.append(loss)
-            outputs.append(output)
-        return jnp.mean(jnp.stack(losses)), outputs
+            tile_finals = []
+            tile_trajectories = []
+            for batch in range(states.shape[1]):
+                loss, (final, trajectory) = _loss(
+                    candidate, states[tile, batch], keys[tile, batch]
+                )
+                losses.append(loss)
+                tile_finals.append(final)
+                tile_trajectories.append(trajectory)
+            final_states.append(jnp.stack(tile_finals))
+            trajectories.append(jnp.stack(tile_trajectories))
+        return jnp.mean(jnp.stack(losses)), (
+            jnp.stack(final_states),
+            jnp.stack(trajectories),
+        )
 
     return eqx.filter_value_and_grad(global_loss, has_aux=True)(model)
 
@@ -83,9 +105,10 @@ def main():
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=10")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=11")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
+    print(f"OUTER_BATCHES_PER_TILE={OUTER_BATCHES_PER_TILE}")
     if len(devices) != 2:
         raise RuntimeError(f"Expected exactly two SYCL tiles, found {devices}")
 
@@ -108,12 +131,20 @@ def main():
     )
     states = jax.random.normal(
         state_key,
-        (2, INNER_BATCH, CHANNELS, HEIGHT, WIDTH),
+        (
+            2,
+            OUTER_BATCHES_PER_TILE,
+            INNER_BATCH,
+            CHANNELS,
+            HEIGHT,
+            WIDTH,
+        ),
         dtype=jnp.float32,
     )
-    keys = jax.random.split(rollout_key, 2 * STEPS * INNER_BATCH).reshape(
-        2, STEPS, INNER_BATCH, 2
-    )
+    keys = jax.random.split(
+        rollout_key,
+        2 * OUTER_BATCHES_PER_TILE * STEPS * INNER_BATCH,
+    ).reshape(2, OUTER_BATCHES_PER_TILE, STEPS, INNER_BATCH, 2)
 
     print("PHASE=SINGLE_TILE_REFERENCE", flush=True)
     reference_start = time.perf_counter()
@@ -130,8 +161,14 @@ def main():
     two_tile_start = time.perf_counter()
     mesh = Mesh(np.asarray(devices), ("tiles",))
     tile_sharding = NamedSharding(mesh, P("tiles"))
-    sharded_states = jax.device_put(states, tile_sharding)
-    sharded_keys = jax.device_put(keys, tile_sharding)
+    sharded_states = [
+        jax.device_put(states[:, batch], tile_sharding)
+        for batch in range(OUTER_BATCHES_PER_TILE)
+    ]
+    sharded_keys = [
+        jax.device_put(keys[:, batch], tile_sharding)
+        for batch in range(OUTER_BATCHES_PER_TILE)
+    ]
     two_tile_loss = filter_shard_map(
         _two_tile_loss_impl,
         mesh=mesh,
@@ -156,11 +193,13 @@ def main():
     )
 
     _assert_close("LOSS", mean_loss, reference_loss)
+    final_states = jnp.stack(outputs[0], axis=1)
+    trajectories = jnp.stack(outputs[1], axis=1)
     _assert_close(
-        "FINAL_STATE", outputs[0], jnp.stack([value[0] for value in reference_outputs])
+        "FINAL_STATE", final_states, reference_outputs[0]
     )
     _assert_close(
-        "TRAJECTORY", outputs[1], jnp.stack([value[1] for value in reference_outputs])
+        "TRAJECTORY", trajectories, reference_outputs[1]
     )
     _assert_close(
         "HIDDEN_WEIGHT_GRADIENT",
@@ -194,7 +233,7 @@ def main():
     )
 
     shard_devices = sorted(
-        str(shard.device) for shard in outputs[0].addressable_shards
+        str(shard.device) for shard in outputs[0][0].addressable_shards
     )
     print(f"OUTPUT_SHARD_DEVICES={shard_devices}")
     if len(shard_devices) != 2:

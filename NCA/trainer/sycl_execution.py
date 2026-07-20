@@ -18,11 +18,12 @@ from NCA.trainer.training_execution import TrainingExecution
 
 
 class SyclTwoTileExecution(TrainingExecution):
-    """Run one outer-batch leaf per PVC tile with replicated parameters.
+    """Evenly split outer-batch leaves over two PVC tiles.
 
-    Global state arrays have shape ``[2, N, C, H, W]`` and are sharded on
-    their leading tile axis. Inside :func:`jax.shard_map`, each tile receives
-    ``[1, N, C, H, W]`` and the NCA operates on ``[N, C, H, W]``.
+    With ``B = 2M`` outer batches, global state is represented as a length-``M``
+    list of arrays shaped ``[2,N,C,H,W]``. Inside :func:`jax.shard_map`, each
+    tile receives a length-``M`` list of ``[1,N,C,H,W]`` shards; removing the
+    physical tile axis gives the NCA its usual ``[N,C,H,W]`` inputs.
     """
 
     AXIS_NAME = "nca_sycl_tiles"
@@ -38,6 +39,26 @@ class SyclTwoTileExecution(TrainingExecution):
         self.mesh = None
         self.replicated_sharding = None
         self.tile_sharding = None
+
+    @classmethod
+    def _split_between_tiles(cls, items, name):
+        """Return two equal contiguous outer-B partitions.
+
+        A sequence of length ``B = 2M`` becomes ``(items[:M], items[M:])``.
+        Contiguous splitting makes unpacking restore the original batch order.
+        """
+        if not isinstance(items, (list, tuple)):
+            raise TypeError(f"Two-tile {name} must be a list or tuple")
+        if len(items) < cls.TILE_COUNT or len(items) % cls.TILE_COUNT != 0:
+            raise ValueError(
+                f"Two-tile {name} count must be a positive multiple of "
+                f"{cls.TILE_COUNT}; got {len(items)}"
+            )
+        per_tile = len(items) // cls.TILE_COUNT
+        return tuple(
+            items[tile * per_tile : (tile + 1) * per_tile]
+            for tile in range(cls.TILE_COUNT)
+        )
 
     def _ensure_devices(self):
         if self.devices is not None:
@@ -80,8 +101,8 @@ class SyclTwoTileExecution(TrainingExecution):
                 )
             if value.ndim == 0 or value.shape[0] != 1:
                 raise ValueError(
-                    "Each shard_map tile must receive exactly one outer-B "
-                    f"{name} leaf; got shape {value.shape}"
+                    f"Each packed outer-B {name} slot must have one physical "
+                    f"value per shard_map tile; got shape {value.shape}"
                 )
             return value[0]
 
@@ -163,13 +184,13 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def _pack_items(self, items, name, *, sharded=True, expected_ndim=None):
-        """Stack two equal PyTrees as one ``[tile, ...]`` outer-B slot.
+        """Pair equal tile partitions into global ``[tile,...]`` slots.
 
         Parameters
         ----------
         items:
-            Length-two outer-B sequence. Corresponding array leaves must have
-            identical shapes.
+            Length-``B`` outer-B sequence, where ``B`` is positive and even.
+            Corresponding leaves in the two contiguous halves must match.
         sharded:
             Place each size-one leading slice directly on its owning tile.
             Static metadata uses an ordinary stack when ``False``.
@@ -179,13 +200,9 @@ class SyclTwoTileExecution(TrainingExecution):
         Returns
         -------
         list
-            One outer-B slot whose array leaves have shape ``[2, ...]``.
+            ``B/2`` slots whose array leaves have shape ``[2,...]``.
         """
-        if len(items) != self.TILE_COUNT:
-            raise ValueError(
-                f"Two-tile training currently requires exactly two {name}; "
-                f"got {len(items)}"
-            )
+        tile_items = self._split_between_tiles(items, name)
 
         def pack_leaf(left, right):
             if eqx.is_array(left) and eqx.is_array(right):
@@ -215,14 +232,16 @@ class SyclTwoTileExecution(TrainingExecution):
                 f"{left!r} and {right!r}"
             )
 
-        try:
-            packed = jtu.tree_map(pack_leaf, items[0], items[1])
-        except (TypeError, ValueError) as exc:
-            raise ValueError(
-                f"The two {name} must have identical PyTree structures and "
-                "array shapes"
-            ) from exc
-        return [packed]
+        packed_slots = []
+        for slot, (left, right) in enumerate(zip(*tile_items)):
+            try:
+                packed_slots.append(jtu.tree_map(pack_leaf, left, right))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Tile-local {name} slot {slot} must have identical "
+                    "PyTree structures and array shapes"
+                ) from exc
+        return packed_slots
 
     def _make_tile_array(self, left, right):
         """Create a global ``[2, ...]`` array from two single-tile values."""
@@ -301,26 +320,32 @@ class SyclTwoTileExecution(TrainingExecution):
         ]
 
     def _prepare_boundary_specs(self):
-        """Encode two matching boundary callbacks as tile-indexed arrays."""
-        left, right = self.trainer.BOUNDARY_CALLBACK
-        if type(left) is not type(right):
-            raise ValueError(
-                "Two-tile training requires matching boundary modes for both "
-                f"B leaves, got {type(left).__name__} and {type(right).__name__}"
-            )
-        if isinstance(left, no_boundary):
-            return [(0, None)]
-        if isinstance(left, model_boundary):
-            return [(1, jnp.stack((left.MASK, right.MASK), axis=0))]
-        if isinstance(left, hard_boundary):
-            return [(2, jnp.stack((left.MASK, right.MASK), axis=0))]
-        raise NotImplementedError(
-            "Two-tile SYCL training currently supports no_boundary, "
-            "model_boundary, and hard_boundary"
+        """Encode paired boundary callbacks as tile-indexed slot metadata."""
+        tile_callbacks = self._split_between_tiles(
+            self.trainer.BOUNDARY_CALLBACK, "boundary callbacks"
         )
+        specs = []
+        for slot, (left, right) in enumerate(zip(*tile_callbacks)):
+            if type(left) is not type(right):
+                raise ValueError(
+                    f"Boundary slot {slot} has different modes across tiles: "
+                    f"{type(left).__name__} and {type(right).__name__}"
+                )
+            if isinstance(left, no_boundary):
+                specs.append((0, None))
+            elif isinstance(left, model_boundary):
+                specs.append((1, jnp.stack((left.MASK, right.MASK), axis=0)))
+            elif isinstance(left, hard_boundary):
+                specs.append((2, jnp.stack((left.MASK, right.MASK), axis=0)))
+            else:
+                raise NotImplementedError(
+                    "Two-tile SYCL training supports no_boundary, "
+                    "model_boundary, and hard_boundary"
+                )
+        return specs
 
     def boundary_callbacks(self):
-        """Return the current tile's singleton outer-B boundary callback list."""
+        """Return the current tile's outer-B boundary callback list."""
         if self.boundary_specs is None:
             return super().boundary_callbacks()
         tile_index = jax.lax.axis_index(self.AXIS_NAME)
@@ -340,7 +365,7 @@ class SyclTwoTileExecution(TrainingExecution):
         return callbacks
 
     def loss_time_channel_mask(self):
-        """Return one tile-local loss-mask slot."""
+        """Return all tile-local outer-B loss-mask slots."""
         if self.loss_masks is None:
             return super().loss_time_channel_mask()
         return self._select_slots(
@@ -348,17 +373,17 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def loss_cache(self):
-        """Return one tile-local loss-cache slot."""
+        """Return all tile-local outer-B loss-cache slots."""
         if self.cached_losses is None:
             return super().loss_cache()
         return self._select_slots(
             self.cached_losses, jax.lax.axis_index(self.AXIS_NAME)
         )
 
-    def _slice_data_augmenter(self, augmenter, batch_index):
-        """Copy one outer-B leaf of augmenter state onto its owning tile."""
+    def _slice_data_augmenter(self, augmenter, batch_indices, tile_index):
+        """Copy one tile's outer-B subset of augmenter state to that device."""
         local = copy.copy(augmenter)
-        device = self.devices[batch_index]
+        device = self.devices[tile_index]
 
         def place(value):
             return jax.device_put(value, device) if eqx.is_array(value) else value
@@ -373,30 +398,50 @@ class SyclTwoTileExecution(TrainingExecution):
                 continue
             value = getattr(local, attribute)
             if isinstance(value, list):
-                local_value = [jtu.tree_map(place, value[batch_index])]
+                local_value = [jtu.tree_map(place, value[i]) for i in batch_indices]
             elif isinstance(value, tuple):
-                local_value = (jtu.tree_map(place, value[batch_index]),)
-            elif hasattr(value, "shape") and value.ndim > 0:
-                local_value = jax.device_put(
-                    value[batch_index : batch_index + 1], device
+                local_value = tuple(
+                    jtu.tree_map(place, value[i]) for i in batch_indices
                 )
+            elif hasattr(value, "shape") and value.ndim > 0:
+                indices = jnp.asarray(batch_indices)
+                local_value = jax.device_put(value[indices], device)
             else:
                 continue
             setattr(local, attribute, local_value)
         return local
 
     def prepare_inputs(self, nca, x, y, opt_state, key):
-        """Pack two outer-B leaves and replicate model and optimiser arrays.
+        """Evenly pack outer-B leaves and replicate model/optimiser arrays.
 
-        ``x`` and ``y`` are length-two sequences with leaves ``[N,C,H,W]``.
-        Packed state and target leaves are global ``[2,N,C,H,W]`` arrays.
-        The returned PRNG key has global shape ``[2,2]`` for legacy keys.
+        ``x`` and ``y`` contain ``B = 2M`` leaves shaped ``[N,C,H,W]``.
+        Packed values are length-``M`` lists of global ``[2,N,C,H,W]`` arrays.
+        The returned legacy PRNG key has global shape ``[2,2]``.
         """
         self._ensure_devices()
         if not isinstance(x, (list, tuple)) or not isinstance(y, (list, tuple)):
             raise TypeError(
                 "Two-tile NCA training currently requires outer-B list/tuple data"
             )
+        if len(x) != len(y):
+            raise ValueError(
+                f"State and target outer-B counts differ: {len(x)} and {len(y)}"
+            )
+
+        for name, values in (
+            ("boundary callbacks", self.trainer.BOUNDARY_CALLBACK),
+            ("loss masks", self.trainer.LOSS_TIME_CHANNEL_MASK),
+            ("loss-cache entries", self.trainer.LOSS_CACHE),
+        ):
+            if len(values) != len(x):
+                raise ValueError(
+                    f"Expected {len(x)} {name} for the outer-B leaves; "
+                    f"got {len(values)}"
+                )
+
+        batch_indices = self._split_between_tiles(
+            tuple(range(len(x))), "outer-B batches"
+        )
 
         self.boundary_specs = self._prepare_boundary_specs()
         self.loss_masks = self._pack_items(
@@ -406,7 +451,9 @@ class SyclTwoTileExecution(TrainingExecution):
             self.trainer.LOSS_CACHE, "loss-cache entries", sharded=False
         )
         self.data_augmenters = [
-            self._slice_data_augmenter(self.trainer.DATA_AUGMENTER, tile)
+            self._slice_data_augmenter(
+                self.trainer.DATA_AUGMENTER, batch_indices[tile], tile
+            )
             for tile in range(self.TILE_COUNT)
         ]
         packed_x = self._pack_items(
@@ -418,8 +465,9 @@ class SyclTwoTileExecution(TrainingExecution):
         left_key, right_key = jr.split(key, self.TILE_COUNT)
         tile_keys = self._make_tile_array(left_key, right_key)
         print(
-            "NCA SYCL shard_map data parallelism enabled: one outer-B leaf "
-            "per tile with replicated parameters and loss reduction.",
+            f"NCA SYCL shard_map data parallelism enabled: {len(x)} outer-B "
+            f"leaves split evenly across {self.TILE_COUNT} tiles with "
+            "replicated parameters and loss reduction.",
             flush=True,
         )
         return (
@@ -447,31 +495,60 @@ class SyclTwoTileExecution(TrainingExecution):
         return next_key, callback_key
 
     def _pack_local_slots(self, local_trees, name):
-        """Reassemble two tile-local singleton outer-B callback results."""
-        if len(local_trees) != self.TILE_COUNT or any(
-            len(tree) != 1 for tree in local_trees
-        ):
+        """Pair equal tile-local callback lists into global sharded slots."""
+        if len(local_trees) != self.TILE_COUNT:
             raise ValueError(
-                f"Two-tile {name} callback must return one outer-B leaf per tile"
+                f"Two-tile {name} callback returned {len(local_trees)} tile trees"
+            )
+        slot_counts = {len(tree) for tree in local_trees}
+        invalid_counts = (
+            len(slot_counts) != 1
+            or not slot_counts
+            or next(iter(slot_counts)) < 1
+        )
+        if invalid_counts:
+            raise ValueError(
+                f"Two-tile {name} callbacks must return equal nonempty outer-B lists; "
+                f"got {[len(tree) for tree in local_trees]}"
             )
         return [
-            jtu.tree_map(
-                self._make_tile_array,
-                local_trees[0][0],
-                local_trees[1][0],
-            )
+            jtu.tree_map(self._make_tile_array, left, right)
+            for left, right in zip(*local_trees)
         ]
 
+    @staticmethod
+    def _allocate_injections(eligible_counts, iteration):
+        """Split half of all eligible pool entries proportionally over tiles."""
+        total_eligible = sum(eligible_counts)
+        total_injections = total_eligible // 2
+        if total_eligible == 0:
+            return [0] * len(eligible_counts)
+
+        numerators = [total_injections * count for count in eligible_counts]
+        allocations = [value // total_eligible for value in numerators]
+        remainder = total_injections - sum(allocations)
+        priorities = sorted(
+            range(len(eligible_counts)),
+            key=lambda tile: (
+                numerators[tile] % total_eligible,
+                -((tile - iteration) % len(eligible_counts)),
+            ),
+            reverse=True,
+        )
+        for tile in priorities[:remainder]:
+            allocations[tile] += 1
+        return allocations
+
     def apply_data_callback(self, x, y, iteration, key):
-        """Run each augmenter on single-device ``[N,C,H,W]`` state leaves."""
+        """Run augmenters on each tile's list of ``[N,C,H,W]`` leaves."""
         local_x = self._local_tile_trees(x, "state")
         local_y = self._local_tile_trees(y, "target")
         local_keys = self._local_tile_trees(key, "PRNG key")
-        eligible = max(0, local_x[0][0].shape[0] - 1)
-        global_injections = (self.TILE_COUNT * eligible) // 2
-        injections = [global_injections // self.TILE_COUNT] * self.TILE_COUNT
-        for offset in range(global_injections % self.TILE_COUNT):
-            injections[(iteration + offset) % self.TILE_COUNT] += 1
+        eligible_counts = [
+            sum(max(0, slot.shape[0] - 1) for slot in tile_tree)
+            for tile_tree in local_x
+        ]
+        injections = self._allocate_injections(eligible_counts, iteration)
 
         outputs = []
         for tile in range(self.TILE_COUNT):
@@ -489,7 +566,7 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def _unpack_slots(self, packed_slots):
-        """Convert global ``[2,...]`` logging arrays back to outer-B leaves."""
+        """Restore tile-major global slots to the original outer-B order."""
         tile_trees = self._local_tile_trees(packed_slots, "logged state")
         return [slot for tile_tree in tile_trees for slot in tile_tree]
 

@@ -14,7 +14,7 @@ namespace {
 struct RolloutMetadata {
   std::int64_t version, batch, channels, height, width, features;
   std::int64_t kernel_size, kernel_flags, padding, workgroup_size, xmx_mode;
-  std::int64_t steps, boundary_code, boundary_channels;
+  std::int64_t steps, boundary_code, boundary_channels, regulariser_flags;
 };
 
 struct BackwardMetadata {
@@ -23,20 +23,51 @@ struct BackwardMetadata {
   std::int64_t per_example_weights, xmx_mode;
 };
 
-static_assert(sizeof(RolloutMetadata) == 14 * sizeof(std::int64_t));
+static_assert(sizeof(RolloutMetadata) == 15 * sizeof(std::int64_t));
 static_assert(sizeof(BackwardMetadata) == 12 * sizeof(std::int64_t));
 
 void ApplyBoundaryCotangent(sycl::queue& queue, const float* input,
                             const float* direct, float* output,
-                            const float* mask,
+                            const float* state, const float* mask,
+                            const float* regulariser_cotangent,
                             const RolloutMetadata& m) {
   const std::int64_t spatial_size = m.height * m.width;
   const std::int64_t elements = m.batch * m.channels * spatial_size;
+  const std::int64_t boundary_channel_count =
+      m.boundary_code == 1 ? m.channels - m.boundary_channels : m.channels;
+  const float intermediate_scale = 1.0F / static_cast<float>(elements);
+  const float boundary_scale =
+      boundary_channel_count > 0
+          ? 1.0F / static_cast<float>(
+                         m.batch * boundary_channel_count * spatial_size)
+          : 0.0F;
   queue.parallel_for(sycl::range<1>(elements), [=](sycl::id<1> id) {
     const std::int64_t linear = id[0];
     const std::int64_t spatial = linear % spatial_size;
     const std::int64_t channel = (linear / spatial_size) % m.channels;
     float value = input[linear] + direct[linear];
+    const float state_value = state[linear];
+    if (m.regulariser_flags & nca_sycl::kIntermediateRegulariserFlag) {
+      const float derivative =
+          state_value < 0.0F ? -2.0F : (state_value >= 1.0F ? 2.0F : 0.0F);
+      value += regulariser_cotangent[0] * derivative * intermediate_scale;
+    }
+    if ((m.regulariser_flags & nca_sycl::kBoundaryRegulariserFlag) &&
+        m.boundary_code != 0 && channel < boundary_channel_count) {
+      float spatial_mask = mask[spatial];
+      if (m.boundary_code == 1) {
+        spatial_mask = 0.0F;
+        for (std::int64_t mask_channel = 0;
+             mask_channel < m.boundary_channels; ++mask_channel) {
+          spatial_mask = sycl::fmax(
+              spatial_mask,
+              mask[mask_channel * spatial_size + spatial]);
+        }
+      }
+      const float absolute_derivative = state_value < 0.0F ? -1.0F : 1.0F;
+      value += regulariser_cotangent[1] * absolute_derivative *
+               (1.0F - spatial_mask) * boundary_scale;
+    }
     if (m.boundary_code == 1 &&
         channel >= m.channels - m.boundary_channels) {
       value = 0.0F;
@@ -57,10 +88,10 @@ void AddInPlace(sycl::queue& queue, float* destination, const float* source,
 }  // namespace
 
 // Operands: initial state, kernels, W0, W1, bias, masks, boundary mask,
-// trajectory, final cotangent, trajectory cotangents. Results: dState,
-// accumulated parameter
-// gradients, boundary/dState scratch, per-step parameter scratch, and three
-// reusable backward activation buffers.
+// trajectory, final cotangent, trajectory cotangents, and two regulariser
+// cotangents. Results: dState, accumulated parameter gradients,
+// boundary/dState scratch, per-step parameter scratch, and three reusable
+// backward activation buffers.
 extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
                                            const char* opaque,
                                            std::size_t opaque_len) {
@@ -80,18 +111,19 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
   auto* trajectory = static_cast<float*>(buffers[7]);
   auto* output_cotangent = static_cast<float*>(buffers[8]);
   auto* trajectory_cotangent = static_cast<float*>(buffers[9]);
-  auto* state_gradient = static_cast<float*>(buffers[10]);
-  auto* hidden_weight_gradient = static_cast<float*>(buffers[11]);
-  auto* output_weight_gradient = static_cast<float*>(buffers[12]);
-  auto* bias_gradient = static_cast<float*>(buffers[13]);
-  auto* boundary_cotangent = static_cast<float*>(buffers[14]);
-  auto* rolling_state_gradient = static_cast<float*>(buffers[15]);
-  auto* step_hidden_weight_gradient = static_cast<float*>(buffers[16]);
-  auto* step_output_weight_gradient = static_cast<float*>(buffers[17]);
-  auto* step_bias_gradient = static_cast<float*>(buffers[18]);
-  auto* perception = static_cast<float*>(buffers[19]);
-  auto* hidden = static_cast<float*>(buffers[20]);
-  auto* hidden_gradient = static_cast<float*>(buffers[21]);
+  auto* regulariser_cotangent = static_cast<float*>(buffers[10]);
+  auto* state_gradient = static_cast<float*>(buffers[11]);
+  auto* hidden_weight_gradient = static_cast<float*>(buffers[12]);
+  auto* output_weight_gradient = static_cast<float*>(buffers[13]);
+  auto* bias_gradient = static_cast<float*>(buffers[14]);
+  auto* boundary_cotangent = static_cast<float*>(buffers[15]);
+  auto* rolling_state_gradient = static_cast<float*>(buffers[16]);
+  auto* step_hidden_weight_gradient = static_cast<float*>(buffers[17]);
+  auto* step_output_weight_gradient = static_cast<float*>(buffers[18]);
+  auto* step_bias_gradient = static_cast<float*>(buffers[19]);
+  auto* perception = static_cast<float*>(buffers[20]);
+  auto* hidden = static_cast<float*>(buffers[21]);
+  auto* hidden_gradient = static_cast<float*>(buffers[22]);
 
   const std::int64_t spatial_size = m.height * m.width;
   const std::int64_t state_elements = m.batch * m.channels * spatial_size;
@@ -118,7 +150,8 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
     ApplyBoundaryCotangent(
         *queue, current_cotangent,
         trajectory_cotangent + step * state_elements, boundary_cotangent,
-        boundary_mask, m);
+        trajectory + step * state_elements, boundary_mask,
+        regulariser_cotangent, m);
     void* step_buffers[] = {
         const_cast<float*>(step_state), kernels, weight_hidden, weight_output,
         bias_output, masks + step * state_elements, boundary_cotangent,

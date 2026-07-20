@@ -830,14 +830,15 @@ class NCA_Trainer(object):
 
 			"""
 
-			def apply_intermediate_regs(reg_logs,x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,key):
+			def apply_intermediate_regs(reg_logs,x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,key,skip=()):
 				aux = {
 					"BOUNDARY_CALLBACK": training_execution.boundary_callbacks(),
 					"OBS_CHANNELS": self.OBS_CHANNELS,
 					"REAL_TO_LATENT": self.NCA_model.real_to_latent,
 					}
 				for name in INTERMEDIATE_REGULARISER_COEFFS:
-					reg_logs[name]+=REG_FUNCS[name](x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,aux,key)
+					if name not in skip:
+						reg_logs[name]+=REG_FUNCS[name](x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,aux,key)
 				return reg_logs
 			
 			def compute_loss(nca_diff,nca_static,x_latent,y_proc,t,key):

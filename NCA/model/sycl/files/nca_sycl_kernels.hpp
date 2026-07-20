@@ -6,12 +6,14 @@
 
 namespace nca_sycl {
 
-constexpr std::int64_t kMetadataVersion = 3;
+constexpr std::int64_t kMetadataVersion = 4;
 constexpr std::int64_t kIdFlag = 1 << 0;
 constexpr std::int64_t kDiffFlag = 1 << 1;
 constexpr std::int64_t kGradFlag = 1 << 2;
 constexpr std::int64_t kAverageFlag = 1 << 3;
 constexpr std::int64_t kLaplacianFlag = 1 << 4;
+constexpr std::int64_t kIntermediateRegulariserFlag = 1 << 0;
+constexpr std::int64_t kBoundaryRegulariserFlag = 1 << 1;
 constexpr std::int64_t kDenseTile = 16;
 constexpr std::int64_t kSpatialTileY = 8;
 constexpr std::int64_t kSpatialTileX = 16;

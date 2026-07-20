@@ -35,6 +35,11 @@ _PADDING_CODES = {
     "CIRCULAR": 3,
 }
 
+FUSED_REGULARISER_FLAGS = {
+    "intermediate_state": 1 << 0,
+    "boundary": 1 << 1,
+}
+
 
 class NCA(FastNCA):
     """Standard NCA whose forward update is executed by a SYCL kernel.
@@ -156,13 +161,15 @@ class NCA(FastNCA):
         boundary_code: int = 0,
         boundary_mask: Array | None = None,
         boundary_channels: int = 0,
-    ) -> tuple[Array, Array]:
+        regulariser_flags: int = 0,
+    ) -> tuple[Array, Array] | tuple[Array, Array, Array]:
         """Run K sequential updates of one N leaf in a native custom call.
 
         ``keys`` has shape ``[K,B,2]`` for legacy PRNG keys (or ``[K,B]`` for
         typed keys). The returned trajectory has shape ``[K,B,C,H,W]`` and is
-        differentiable, allowing existing per-timestep regularisers to remain
-        outside the native rollout.
+        differentiable. When ``regulariser_flags`` is nonzero, a third
+        ``[intermediate_state, boundary]`` FP32 sum is returned for the K
+        timesteps and its gradients are injected by the native VJP.
         """
         if x.ndim != 4:
             raise ValueError(f"batched_rollout expects [B,C,H,W], got {x.shape}")
@@ -190,7 +197,7 @@ class NCA(FastNCA):
         kernels, weight_hidden, weight_output, bias_output = (
             self._sycl_parameters()
         )
-        return sycl_nca_rollout(
+        output, trajectory, regularisers = sycl_nca_rollout(
             x,
             kernels,
             weight_hidden,
@@ -202,7 +209,11 @@ class NCA(FastNCA):
             padding=padding,
             boundary_code=boundary_code,
             boundary_channels=boundary_channels,
+            regulariser_flags=regulariser_flags,
         )
+        if regulariser_flags:
+            return output, trajectory, regularisers
+        return output, trajectory
 
     def __call__(
         self,
@@ -221,4 +232,4 @@ class NCA(FastNCA):
 
 SyclNCA = NCA
 
-__all__ = ["NCA", "SyclNCA"]
+__all__ = ["FUSED_REGULARISER_FLAGS", "NCA", "SyclNCA"]

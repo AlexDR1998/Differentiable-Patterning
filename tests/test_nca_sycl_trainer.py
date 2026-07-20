@@ -36,6 +36,22 @@ class _RecordingBatchableReferenceModel(_BatchableReferenceModel):
         return super().batched_call(states, keys)
 
 
+def _two_device_execution():
+    """Build an execution policy over the first two test devices."""
+    if len(jax.devices()) < 2:
+        pytest.skip("requires two devices")
+    devices = list(jax.devices()[:2])
+    mesh = Mesh(np.asarray(devices), (SyclTwoTileExecution.AXIS_NAME,))
+    execution = object.__new__(SyclTwoTileExecution)
+    execution.devices = devices
+    execution.mesh = mesh
+    execution.replicated_sharding = NamedSharding(mesh, P())
+    execution.tile_sharding = NamedSharding(
+        mesh, P(SyclTwoTileExecution.AXIS_NAME)
+    )
+    return execution
+
+
 def test_tile_axis_contract_is_explicit_and_preserves_inner_batch_axis():
     states = [
         jnp.zeros((1, 4, 32, 7, 9), dtype=jnp.float32),
@@ -57,8 +73,62 @@ def test_tile_axis_contract_is_explicit_and_preserves_inner_batch_axis():
 
 def test_tile_axis_contract_rejects_unsharded_two_tile_input():
     states = [jnp.zeros((2, 4, 32, 7, 9), dtype=jnp.float32)]
-    with pytest.raises(ValueError, match="exactly one outer-B state leaf"):
+    with pytest.raises(ValueError, match="one physical value"):
         SyclTwoTileExecution._remove_local_tile_axis(states, "state")
+
+
+def test_outer_batches_must_split_evenly_between_tiles():
+    with pytest.raises(ValueError, match="positive multiple of 2"):
+        SyclTwoTileExecution._split_between_tiles([0, 1, 2], "batches")
+
+
+def test_four_outer_batches_pack_as_two_slots_and_restore_original_order():
+    execution = _two_device_execution()
+    batches = [
+        jnp.full((3, 5), batch, dtype=jnp.float32) for batch in range(4)
+    ]
+
+    packed = execution._pack_items(
+        batches, "test batches", expected_ndim=2
+    )
+    restored = execution._unpack_slots(packed)
+
+    assert len(packed) == 2
+    assert all(slot.shape == (2, 3, 5) for slot in packed)
+    assert len(restored) == 4
+    for batch, expected in zip(restored, batches):
+        assert np.array_equal(np.asarray(batch), np.asarray(expected))
+
+
+def test_data_augmenter_state_is_partitioned_by_contiguous_batch_halves():
+    execution = _two_device_execution()
+
+    class Augmenter:
+        pass
+
+    augmenter = Augmenter()
+    augmenter.data_true = [jnp.asarray([batch]) for batch in range(4)]
+    augmenter.data_saved = [jnp.asarray([10 + batch]) for batch in range(4)]
+    augmenter.channel_timestep_mask = jnp.arange(8).reshape(4, 2)
+    augmenter.knockout_times = jnp.arange(4)
+
+    left = execution._slice_data_augmenter(augmenter, (0, 1), 0)
+    right = execution._slice_data_augmenter(augmenter, (2, 3), 1)
+
+    assert [int(value[0]) for value in left.data_true] == [0, 1]
+    assert [int(value[0]) for value in right.data_true] == [2, 3]
+    assert np.array_equal(
+        np.asarray(left.channel_timestep_mask), [[0, 1], [2, 3]]
+    )
+    assert np.array_equal(np.asarray(right.knockout_times), [2, 3])
+    assert all(value.device == execution.devices[0] for value in left.data_saved)
+    assert all(value.device == execution.devices[1] for value in right.data_saved)
+
+
+def test_pool_injections_preserve_global_half_rate_across_tiles():
+    assert SyclTwoTileExecution._allocate_injections([6, 6], 0) == [3, 3]
+    assert sum(SyclTwoTileExecution._allocate_injections([3, 4], 0)) == 3
+    assert SyclTwoTileExecution._allocate_injections([0, 0], 0) == [0, 0]
 
 
 def test_filtered_shard_map_traces_scan_with_tile_local_shapes():
@@ -157,19 +227,70 @@ def test_gradient_wraps_shard_map_for_data_parallel_loss():
     assert jnp.allclose(actual_gradient, expected_gradient, atol=1e-6)
 
 
+def test_sharded_loss_evenly_processes_four_outer_batches():
+    execution = _two_device_execution()
+    batches = [
+        jnp.arange(12, dtype=jnp.float32).reshape(3, 4) + 10.0 * batch
+        for batch in range(4)
+    ]
+    targets = [0.25 * batch for batch in batches]
+    packed_batches = execution._pack_items(batches, "states", expected_ndim=2)
+    packed_targets = execution._pack_items(targets, "targets", expected_ndim=2)
+    tile_keys = execution._make_tile_array(
+        jax.random.PRNGKey(1), jax.random.PRNGKey(2)
+    )
+
+    def local_loss(weight, static_scale, states, local_targets, steps, key):
+        del steps, key
+        losses = jnp.stack(
+            [
+                jnp.mean((weight * state - target) ** 2)
+                for state, target in zip(states, local_targets)
+            ]
+        )
+        mean_loss, regularisers = execution.synchronise_loss(
+            static_scale * jnp.mean(losses), {}
+        )
+        return mean_loss, (states, states, losses, regularisers)
+
+    distributed_loss = execution.transform_loss(local_loss)
+    weight = jnp.asarray(0.7, dtype=jnp.float32)
+    static_scale = jnp.asarray(1.0, dtype=jnp.float32)
+    (actual_loss, auxiliary), actual_gradient = eqx.filter_jit(
+        eqx.filter_value_and_grad(distributed_loss, has_aux=True)
+    )(
+        weight,
+        static_scale,
+        packed_batches,
+        packed_targets,
+        1,
+        tile_keys,
+    )
+
+    def reference(candidate):
+        losses = jnp.stack(
+            [
+                jnp.mean((candidate * state - target) ** 2)
+                for state, target in zip(batches, targets)
+            ]
+        )
+        return jnp.mean(losses)
+
+    expected_loss, expected_gradient = jax.value_and_grad(reference)(weight)
+    assert jnp.allclose(actual_loss, expected_loss, atol=1e-6)
+    assert jnp.allclose(actual_gradient, expected_gradient, atol=1e-6)
+    assert auxiliary[2].shape == (2, 2)
+
+
 def test_host_callback_extracts_physical_single_device_shards():
-    if len(jax.devices()) < 2:
-        pytest.skip("requires two devices")
-    devices = list(jax.devices()[:2])
+    execution = _two_device_execution()
+    devices = execution.devices
     mesh = Mesh(np.asarray(devices), ("tile",))
     sharding = NamedSharding(mesh, P("tile"))
     global_states = jax.device_put(
         jnp.arange(2 * 3 * 5, dtype=jnp.float32).reshape(2, 3, 5),
         sharding,
     )
-    execution = object.__new__(SyclTwoTileExecution)
-    execution.devices = devices
-
     local_states = execution._local_tile_trees(
         [global_states], "test state"
     )
