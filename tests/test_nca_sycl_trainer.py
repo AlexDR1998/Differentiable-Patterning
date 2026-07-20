@@ -2,6 +2,7 @@ import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
 import numpy as np
+import pytest
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from NCA.trainer.sycl_batching import apply_flat_batched_nca
@@ -104,7 +105,7 @@ def test_filtered_shard_map_traces_scan_with_tile_local_shapes():
     assert final.shape == (1, 4, 5, 3, 3)
 
 
-def test_compiled_filtered_shard_map_reuses_the_direct_mapped_callable():
+def test_compiled_filtered_shard_map_reuses_its_compiled_executable():
     devices = np.asarray(jax.devices()[:1])
     mesh = Mesh(devices, ("tile",))
     traces = []
@@ -130,6 +131,62 @@ def test_compiled_filtered_shard_map_reuses_the_direct_mapped_callable():
     assert jnp.array_equal(first, jnp.ones_like(states))
     assert jnp.array_equal(second, jnp.ones_like(states))
     assert traces == [(1, 2, 3)]
+
+
+def test_gradient_wraps_shard_map_for_data_parallel_loss():
+    if len(jax.devices()) < 2:
+        pytest.skip("requires two devices")
+    devices = np.asarray(jax.devices()[:2])
+    mesh = Mesh(devices, ("tile",))
+    sharding = NamedSharding(mesh, P("tile"))
+    states = jax.device_put(
+        jnp.arange(2 * 3 * 5, dtype=jnp.float32).reshape(2, 3, 5),
+        sharding,
+    )
+
+    def local_loss(weight, state_shard):
+        assert state_shard.shape == (1, 3, 5)
+        state = state_shard[0]
+
+        def body(carry, _):
+            return jnp.tanh(carry * weight), None
+
+        final = scan_carry_only(
+            body, state, jnp.arange(4), kind="checkpointed"
+        )
+        loss = jax.lax.pmean(jnp.mean(final**2), "tile")
+        return loss, final[None]
+
+    distributed_loss = filter_shard_map(
+        local_loss,
+        mesh=mesh,
+        in_specs=(P(), P("tile")),
+        out_specs=(P(), P("tile")),
+        check_rep=False,
+    )
+    (actual_loss, actual_final), actual_gradient = jax.jit(
+        jax.value_and_grad(distributed_loss, has_aux=True)
+    )(jnp.asarray(0.9), states)
+
+    def reference(weight):
+        def one(state):
+            def body(carry, _):
+                return jnp.tanh(carry * weight), None
+
+            final = scan_carry_only(
+                body, state, jnp.arange(4), kind="checkpointed"
+            )
+            return jnp.mean(final**2), final
+
+        losses, finals = jax.vmap(one)(states)
+        return jnp.mean(losses), finals
+
+    (expected_loss, expected_final), expected_gradient = jax.value_and_grad(
+        reference, has_aux=True
+    )(jnp.asarray(0.9))
+    assert jnp.allclose(actual_loss, expected_loss, atol=1e-6)
+    assert jnp.allclose(actual_final, expected_final, atol=1e-6)
+    assert jnp.allclose(actual_gradient, expected_gradient, atol=1e-6)
 
 
 def test_checkpointed_carry_only_scan_matches_lax_value_and_gradient():

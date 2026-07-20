@@ -26,13 +26,13 @@ class _CompiledFilteredShardMap:
 
 
 class _LoweredFilteredShardMap:
-    def __init__(self, mapped, static_output):
-        self._mapped = mapped
+    def __init__(self, lowered, static_output):
+        self._lowered = lowered
         self._static_output = static_output
 
     def compile(self):
         return _CompiledFilteredShardMap(
-            self._mapped, self._static_output
+            self._lowered.compile(), self._static_output
         )
 
 
@@ -68,11 +68,8 @@ class FilteredShardMap:
             return dynamic_output
 
         check_kwargs = {_CHECK_ARGUMENT: self._check_rep}
-        # Cache the expensive tile-local trace without placing JIT outside the
-        # SPMD transform. Thus JIT only ever sees physical tile-local shapes.
-        local_jitted = jax.jit(array_function)
         mapped = shard_map(
-            local_jitted,
+            array_function,
             mesh=self._mesh,
             in_specs=self._in_specs,
             out_specs=self._out_specs,
@@ -82,20 +79,10 @@ class FilteredShardMap:
 
     def lower(self, *args):
         dynamic, mapped, static_output = self._prepare(args)
-        # Do not wrap the complete shard_map in another jax.jit. Intel JAX
-        # 0.5 materialises the mesh axis inside nested remat/scan transforms
-        # for jit(shard_map(...)), turning a tile-local [N,C,H,W] state back
-        # into global [tiles,N,C,H,W]. Direct shard_map execution does not;
-        # this is also the path exercised by the Intel shard-map smoke test.
-        #
-        # Calling once here populates both the tile-local JIT cache and the
-        # shard_map executable cache. The returned callable reuses those exact
-        # function objects during training.
-        traced_output = mapped(*dynamic)
-        jax.block_until_ready(traced_output)
+        lowered = jax.jit(mapped).lower(*dynamic)
         if "value" not in static_output:
             raise RuntimeError("shard_map tracing did not produce an output tree")
-        return _LoweredFilteredShardMap(mapped, static_output["value"])
+        return _LoweredFilteredShardMap(lowered, static_output["value"])
 
     def __call__(self, *args):
         dynamic, mapped, static_output = self._prepare(args)

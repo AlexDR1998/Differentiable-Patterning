@@ -99,61 +99,62 @@ class SyclTwoTileExecution(TrainingExecution):
     def transform_step(self, make_step):
         self._ensure_devices()
 
-        def tile_local_step(nca, x, y, t, opt_state, key):
+        # The loss itself is mapped in ``transform_loss`` and differentiated
+        # outside shard_map. The surrounding optimiser/update step is ordinary
+        # global JIT code over correctly sharded arrays.
+        return eqx.filter_jit(make_step)
+
+    def transform_loss(self, compute_loss):
+        self._ensure_devices()
+
+        def tile_local_loss(nca_diff, nca_static, x, y, t, key):
             local_x = self._remove_local_tile_axis(x, "state")
             local_y = self._remove_local_tile_axis(y, "target")
             local_key = self._remove_local_tile_axis(key, "PRNG key")
-            outputs = make_step(
-                nca, local_x, local_y, t, opt_state, local_key
+            mean_loss, auxiliary = compute_loss(
+                nca_diff, nca_static, local_x, local_y, t, local_key
             )
             (
-                updated_nca,
-                updated_x,
-                updated_y,
-                output_t,
-                updated_opt_state,
-                updated_key,
-                mean_loss,
-                log_dict,
-            ) = outputs
-
-            return (
-                updated_nca,
-                self._add_local_tile_axis(updated_x, "state"),
-                self._add_local_tile_axis(updated_y, "target"),
-                output_t,
-                updated_opt_state,
-                self._add_local_tile_axis(updated_key, "PRNG key"),
-                mean_loss,
-                self._add_local_tile_axis(log_dict, "log dictionary"),
+                x_latent,
+                x_processed,
+                losses,
+                regulariser_losses,
+            ) = auxiliary
+            return mean_loss, (
+                self._add_local_tile_axis(x_latent, "state"),
+                self._add_local_tile_axis(x_processed, "processed state"),
+                self._add_local_tile_axis(losses, "loss array"),
+                regulariser_losses,
             )
 
         return filter_shard_map(
-            tile_local_step,
+            tile_local_loss,
             mesh=self.mesh,
             in_specs=(
                 P(),
-                P(self.AXIS_NAME),
-                P(self.AXIS_NAME),
                 P(),
+                P(self.AXIS_NAME),
+                P(self.AXIS_NAME),
                 P(),
                 P(self.AXIS_NAME),
             ),
             out_specs=(
                 P(),
-                P(self.AXIS_NAME),
-                P(self.AXIS_NAME),
-                P(),
-                P(),
-                P(self.AXIS_NAME),
-                P(),
-                P(self.AXIS_NAME),
+                (
+                    P(self.AXIS_NAME),
+                    P(self.AXIS_NAME),
+                    P(self.AXIS_NAME),
+                    P(),
+                ),
             ),
             check_rep=False,
         )
 
     def synchronise_gradients(self, gradients):
-        return self._array_pmean(gradients, self.AXIS_NAME)
+        # Reverse-mode autodiff is outside shard_map, so the transpose of the
+        # pmean in ``synchronise_loss`` performs the parameter-gradient
+        # reduction exactly once.
+        return gradients
 
     def synchronise_loss(self, mean_loss, regulariser_losses):
         return (

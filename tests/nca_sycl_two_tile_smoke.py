@@ -43,36 +43,14 @@ def _loss(model, states, keys):
     return loss, (final, trajectory)
 
 
-def _mean_array_tree(tree, axis_name):
-    return jtu.tree_map(
-        lambda value: jax.lax.pmean(value, axis_name)
-        if eqx.is_array(value)
-        else value,
-        tree,
-    )
-
-
-def _two_tile_value_and_grad_impl(model, state_shard, key_shard):
+def _two_tile_loss_impl(model, state_shard, key_shard):
     if state_shard.shape[0] != 1 or key_shard.shape[0] != 1:
         raise ValueError("Expected one state/key leaf per tile")
     states = state_shard[0]
     keys = key_shard[0]
-    (local_loss, outputs), gradients = eqx.filter_value_and_grad(
-        _loss, has_aux=True
-    )(model, states, keys)
+    local_loss, outputs = _loss(model, states, keys)
     mean_loss = jax.lax.pmean(local_loss, "tiles")
-    mean_gradients = _mean_array_tree(gradients, "tiles")
-    updates = jtu.tree_map(
-        lambda value: -0.01 * value if eqx.is_array(value) else value,
-        mean_gradients,
-    )
-    updated_model = eqx.apply_updates(model, updates)
-    return (
-        updated_model,
-        mean_loss,
-        jtu.tree_map(lambda value: value[None], outputs),
-        mean_gradients,
-    )
+    return mean_loss, jtu.tree_map(lambda value: value[None], outputs)
 
 
 def _single_tile_reference(model, states, keys):
@@ -102,7 +80,7 @@ def main():
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=8")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=9")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
     if len(devices) != 2:
@@ -161,16 +139,23 @@ def main():
     tile_sharding = NamedSharding(mesh, P("tiles"))
     sharded_states = jax.device_put(states, tile_sharding)
     sharded_keys = jax.device_put(keys, tile_sharding)
-    two_tile_value_and_grad = filter_shard_map(
-        _two_tile_value_and_grad_impl,
+    two_tile_loss = filter_shard_map(
+        _two_tile_loss_impl,
         mesh=mesh,
         in_specs=(P(), P("tiles"), P("tiles")),
-        out_specs=(P(), P(), (P("tiles"), P("tiles")), P()),
+        out_specs=(P(), (P("tiles"), P("tiles"))),
         check_rep=False,
     )
-    updated_model, mean_loss, outputs, gradients = two_tile_value_and_grad(
+    (mean_loss, outputs), gradients = eqx.filter_jit(
+        eqx.filter_value_and_grad(two_tile_loss, has_aux=True)
+    )(
         model, sharded_states, sharded_keys
     )
+    updates = jtu.tree_map(
+        lambda value: -0.01 * value if eqx.is_array(value) else value,
+        gradients,
+    )
+    updated_model = eqx.apply_updates(model, updates)
     jax.block_until_ready((updated_model, mean_loss, outputs, gradients))
     print(
         "TWO_TILE_COMPILE_EXECUTE_SECONDS="

@@ -840,7 +840,6 @@ class NCA_Trainer(object):
 					reg_logs[name]+=REG_FUNCS[name](x_latent,x_new_latent,x_proc,x_new_proc,vv_nca,aux,key)
 				return reg_logs
 			
-			@eqx.filter_value_and_grad(has_aux=True)
 			def compute_loss(nca_diff,nca_static,x_latent,y_proc,t,key):
 				# Gradient and values of loss function computed here
 				_nca = eqx.combine(nca_diff,nca_static)
@@ -899,15 +898,18 @@ class NCA_Trainer(object):
 					else jnp.array(0.0, dtype=LOSS_DTYPE)
 				)
 				mean_loss = jnp.mean(losses) + regulariser_total
+				mean_loss, regulariser_losses = training_execution.synchronise_loss(
+					mean_loss, regulariser_losses
+				)
 				return mean_loss, (x_latent,x_proc,losses,regulariser_losses)
 
 			nca_diff,nca_static = nca.partition()
-			loss_x,grads = compute_loss(nca_diff,nca_static,x,y,t,key)  # type: ignore
+			transformed_loss = training_execution.transform_loss(compute_loss)
+			loss_x,grads = eqx.filter_value_and_grad(
+				transformed_loss, has_aux=True
+			)(nca_diff,nca_static,x,y,t,key)  # type: ignore
 			grads = training_execution.synchronise_gradients(grads)
 			(mean_loss,(x_latent,x_proc,losses,reg_loss)) = loss_x
-			mean_loss, reg_loss = training_execution.synchronise_loss(
-				mean_loss, reg_loss
-			)
 			updates,opt_state = self.OPTIMISER.update(grads, opt_state, nca_diff)
 			nca = eqx.apply_updates(nca,updates)
 			log_dict = {

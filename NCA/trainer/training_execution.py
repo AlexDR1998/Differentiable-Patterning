@@ -41,6 +41,10 @@ class TrainingExecution:
     def transform_step(self, make_step):
         return eqx.filter_jit(make_step)
 
+    def transform_loss(self, compute_loss):
+        """Transform the differentiable loss before applying autodiff."""
+        return compute_loss
+
     def prepare_inputs(self, nca, x, y, opt_state, key):
         return nca, x, y, opt_state, key
 
