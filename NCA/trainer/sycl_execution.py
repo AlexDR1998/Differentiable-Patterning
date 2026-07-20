@@ -1,4 +1,4 @@
-"""Two-stack execution policy for SYCL NCA training."""
+"""Two-tile data-parallel execution for SYCL NCA training."""
 
 from __future__ import annotations
 
@@ -18,9 +18,15 @@ from NCA.trainer.training_execution import TrainingExecution
 
 
 class SyclTwoTileExecution(TrainingExecution):
-    """Replicate parameters and split two outer-B leaves over two PVC stacks."""
+    """Run one outer-batch leaf per PVC tile with replicated parameters.
+
+    Global state arrays have shape ``[2, N, C, H, W]`` and are sharded on
+    their leading tile axis. Inside :func:`jax.shard_map`, each tile receives
+    ``[1, N, C, H, W]`` and the NCA operates on ``[N, C, H, W]``.
+    """
 
     AXIS_NAME = "nca_sycl_tiles"
+    TILE_COUNT = 2
 
     def __init__(self, trainer):
         super().__init__(trainer)
@@ -39,7 +45,7 @@ class SyclTwoTileExecution(TrainingExecution):
         self.devices = [
             device for device in jax.local_devices() if device.platform == "sycl"
         ]
-        if len(self.devices) != 2:
+        if len(self.devices) != self.TILE_COUNT:
             raise RuntimeError(
                 "trainer.sharding=2 requires exactly two visible SYCL tiles; "
                 f"JAX reports {self.devices}"
@@ -50,6 +56,7 @@ class SyclTwoTileExecution(TrainingExecution):
 
     @staticmethod
     def _array_pmean(tree, axis_name):
+        """Average every array leaf over ``axis_name``; preserve static leaves."""
         return jtu.tree_map(
             lambda value: jax.lax.pmean(value, axis_name)
             if hasattr(value, "shape") and hasattr(value, "dtype")
@@ -61,12 +68,8 @@ class SyclTwoTileExecution(TrainingExecution):
     def _remove_local_tile_axis(tree, name):
         """Remove shard_map's size-one physical tile dimension.
 
-        This code runs while ``tree`` contains JAX tracers.  In particular, it
-        must not use a host-side array type predicate: older Intel JAX and
-        Equinox combinations do not consistently classify every shard_map
-        tracer as an array.  The state/target/key boundary is deliberately an
-        array-only contract, so checking its abstract ``shape`` is both simpler
-        and stricter.
+        The state/target/key boundary contains only array leaves. Each mapped
+        leaf retains its rank and has local leading shape ``[1, ...]``.
         """
 
         def remove(value):
@@ -86,6 +89,7 @@ class SyclTwoTileExecution(TrainingExecution):
 
     @staticmethod
     def _add_local_tile_axis(tree, name):
+        """Map array leaves ``[...]`` to ``[1, ...]`` for shard-map output."""
         def add(value):
             if not hasattr(value, "shape"):
                 raise TypeError(
@@ -96,15 +100,14 @@ class SyclTwoTileExecution(TrainingExecution):
 
         return jtu.tree_map(add, tree)
 
-    def transform_step(self, make_step):
-        self._ensure_devices()
-
-        # The loss itself is mapped in ``transform_loss`` and differentiated
-        # outside shard_map. The surrounding optimiser/update step is ordinary
-        # global JIT code over correctly sharded arrays.
-        return eqx.filter_jit(make_step)
-
     def transform_loss(self, compute_loss):
+        """Shard a local loss before the caller applies reverse-mode AD.
+
+        ``compute_loss`` consumes one tile-local outer-B PyTree whose state
+        leaves have shape ``[N, C, H, W]``. The returned loss is scalar and
+        replicated; auxiliary state and per-example losses regain a leading
+        tile axis for the global trainer.
+        """
         self._ensure_devices()
 
         def tile_local_loss(nca_diff, nca_static, x, y, t, key):
@@ -147,23 +150,38 @@ class SyclTwoTileExecution(TrainingExecution):
                     P(),
                 ),
             ),
+            # Native custom-call primitives do not provide shard-map
+            # replication-analysis rules in JAX 0.5.
             check_rep=False,
         )
 
-    def synchronise_gradients(self, gradients):
-        # Reverse-mode autodiff is outside shard_map, so the transpose of the
-        # pmean in ``synchronise_loss`` performs the parameter-gradient
-        # reduction exactly once.
-        return gradients
-
     def synchronise_loss(self, mean_loss, regulariser_losses):
+        """Average scalar losses across tiles inside the sharded loss."""
         return (
             jax.lax.pmean(mean_loss, self.AXIS_NAME),
             self._array_pmean(regulariser_losses, self.AXIS_NAME),
         )
 
     def _pack_items(self, items, name, *, sharded=True, expected_ndim=None):
-        if len(items) != 2:
+        """Stack two equal PyTrees as one ``[tile, ...]`` outer-B slot.
+
+        Parameters
+        ----------
+        items:
+            Length-two outer-B sequence. Corresponding array leaves must have
+            identical shapes.
+        sharded:
+            Place each size-one leading slice directly on its owning tile.
+            Static metadata uses an ordinary stack when ``False``.
+        expected_ndim:
+            Optional rank required before adding the tile axis.
+
+        Returns
+        -------
+        list
+            One outer-B slot whose array leaves have shape ``[2, ...]``.
+        """
+        if len(items) != self.TILE_COUNT:
             raise ValueError(
                 f"Two-tile training currently requires exactly two {name}; "
                 f"got {len(items)}"
@@ -183,7 +201,7 @@ class SyclTwoTileExecution(TrainingExecution):
                     packed = self._make_tile_array(left, right)
                 else:
                     packed = jnp.stack((left, right), axis=0)
-                expected_shape = (2, *left.shape)
+                expected_shape = (self.TILE_COUNT, *left.shape)
                 if packed.shape != expected_shape:
                     raise ValueError(
                         f"Packed {name} has shape {packed.shape}; expected "
@@ -207,8 +225,9 @@ class SyclTwoTileExecution(TrainingExecution):
         return [packed]
 
     def _make_tile_array(self, left, right):
+        """Create a global ``[2, ...]`` array from two single-tile values."""
         self._ensure_devices()
-        shape = (2, *left.shape)
+        shape = (self.TILE_COUNT, *left.shape)
         local_arrays = [
             jax.device_put(value[None], device)
             for value, device in zip((left, right), self.devices)
@@ -228,7 +247,7 @@ class SyclTwoTileExecution(TrainingExecution):
         """
         self._ensure_devices()
         leaves, tree_definition = jtu.tree_flatten(tree)
-        local_leaves = [[], []]
+        local_leaves = [[] for _ in range(self.TILE_COUNT)]
         for leaf in leaves:
             if not hasattr(leaf, "addressable_shards"):
                 raise TypeError(
@@ -257,6 +276,7 @@ class SyclTwoTileExecution(TrainingExecution):
         ]
 
     def _replicate(self, tree):
+        """Replicate every array leaf across both tiles."""
         self._ensure_devices()
         return jtu.tree_map(
             lambda value: jax.device_put(value, self.replicated_sharding)
@@ -267,6 +287,7 @@ class SyclTwoTileExecution(TrainingExecution):
 
     @staticmethod
     def _select_slots(packed_slots, tile_index):
+        """Select one tile from metadata shaped ``[tile, ...]`` inside SPMD."""
         return [
             jtu.tree_map(
                 lambda value: jax.lax.dynamic_index_in_dim(
@@ -280,6 +301,7 @@ class SyclTwoTileExecution(TrainingExecution):
         ]
 
     def _prepare_boundary_specs(self):
+        """Encode two matching boundary callbacks as tile-indexed arrays."""
         left, right = self.trainer.BOUNDARY_CALLBACK
         if type(left) is not type(right):
             raise ValueError(
@@ -298,6 +320,7 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def boundary_callbacks(self):
+        """Return the current tile's singleton outer-B boundary callback list."""
         if self.boundary_specs is None:
             return super().boundary_callbacks()
         tile_index = jax.lax.axis_index(self.AXIS_NAME)
@@ -317,6 +340,7 @@ class SyclTwoTileExecution(TrainingExecution):
         return callbacks
 
     def loss_time_channel_mask(self):
+        """Return one tile-local loss-mask slot."""
         if self.loss_masks is None:
             return super().loss_time_channel_mask()
         return self._select_slots(
@@ -324,6 +348,7 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def loss_cache(self):
+        """Return one tile-local loss-cache slot."""
         if self.cached_losses is None:
             return super().loss_cache()
         return self._select_slots(
@@ -331,8 +356,7 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def _slice_data_augmenter(self, augmenter, batch_index):
-        if hasattr(augmenter, "for_batch_indices"):
-            return augmenter.for_batch_indices([batch_index])
+        """Copy one outer-B leaf of augmenter state onto its owning tile."""
         local = copy.copy(augmenter)
         device = self.devices[batch_index]
 
@@ -362,6 +386,12 @@ class SyclTwoTileExecution(TrainingExecution):
         return local
 
     def prepare_inputs(self, nca, x, y, opt_state, key):
+        """Pack two outer-B leaves and replicate model and optimiser arrays.
+
+        ``x`` and ``y`` are length-two sequences with leaves ``[N,C,H,W]``.
+        Packed state and target leaves are global ``[2,N,C,H,W]`` arrays.
+        The returned PRNG key has global shape ``[2,2]`` for legacy keys.
+        """
         self._ensure_devices()
         if not isinstance(x, (list, tuple)) or not isinstance(y, (list, tuple)):
             raise TypeError(
@@ -377,7 +407,7 @@ class SyclTwoTileExecution(TrainingExecution):
         )
         self.data_augmenters = [
             self._slice_data_augmenter(self.trainer.DATA_AUGMENTER, tile)
-            for tile in range(2)
+            for tile in range(self.TILE_COUNT)
         ]
         packed_x = self._pack_items(
             x, "outer-B state leaves", expected_ndim=4
@@ -385,11 +415,11 @@ class SyclTwoTileExecution(TrainingExecution):
         packed_y = self._pack_items(
             y, "outer-B target leaves", expected_ndim=4
         )
-        left_key, right_key = jr.split(key, 2)
+        left_key, right_key = jr.split(key, self.TILE_COUNT)
         tile_keys = self._make_tile_array(left_key, right_key)
         print(
             "NCA SYCL shard_map data parallelism enabled: one outer-B leaf "
-            "per tile, replicated parameters, one gradient pmean.",
+            "per tile with replicated parameters and loss reduction.",
             flush=True,
         )
         return (
@@ -401,6 +431,7 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def fold_in_key(self, key, iteration):
+        """Fold ``iteration`` into each physical tile's legacy ``[2]`` key."""
         local_keys = self._local_tile_trees(key, "PRNG key")
         return self._make_tile_array(
             jr.fold_in(local_keys[0], iteration),
@@ -408,6 +439,7 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def split_key(self, key):
+        """Split each tile key and return global next/callback key arrays."""
         local_keys = self._local_tile_trees(key, "PRNG key")
         pairs = [jr.split(tile_key) for tile_key in local_keys]
         next_key = self._make_tile_array(pairs[0][0], pairs[1][0])
@@ -415,7 +447,10 @@ class SyclTwoTileExecution(TrainingExecution):
         return next_key, callback_key
 
     def _pack_local_slots(self, local_trees, name):
-        if len(local_trees) != 2 or any(len(tree) != 1 for tree in local_trees):
+        """Reassemble two tile-local singleton outer-B callback results."""
+        if len(local_trees) != self.TILE_COUNT or any(
+            len(tree) != 1 for tree in local_trees
+        ):
             raise ValueError(
                 f"Two-tile {name} callback must return one outer-B leaf per tile"
             )
@@ -428,17 +463,18 @@ class SyclTwoTileExecution(TrainingExecution):
         ]
 
     def apply_data_callback(self, x, y, iteration, key):
+        """Run each augmenter on single-device ``[N,C,H,W]`` state leaves."""
         local_x = self._local_tile_trees(x, "state")
         local_y = self._local_tile_trees(y, "target")
         local_keys = self._local_tile_trees(key, "PRNG key")
         eligible = max(0, local_x[0][0].shape[0] - 1)
-        global_injections = (2 * eligible) // 2
-        injections = [global_injections // 2] * 2
-        for offset in range(global_injections % 2):
-            injections[(iteration + offset) % 2] += 1
+        global_injections = (self.TILE_COUNT * eligible) // 2
+        injections = [global_injections // self.TILE_COUNT] * self.TILE_COUNT
+        for offset in range(global_injections % self.TILE_COUNT):
+            injections[(iteration + offset) % self.TILE_COUNT] += 1
 
         outputs = []
-        for tile in range(2):
+        for tile in range(self.TILE_COUNT):
             augmenter = self.data_augmenters[tile]
             if getattr(augmenter, "supports_sharded_inject_count", False):
                 augmenter._sharded_n_inject = injections[tile]
@@ -453,23 +489,19 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def _unpack_slots(self, packed_slots):
+        """Convert global ``[2,...]`` logging arrays back to outer-B leaves."""
         tile_trees = self._local_tile_trees(packed_slots, "logged state")
         return [slot for tile_tree in tile_trees for slot in tile_tree]
 
     def prepare_log_dict(self, log_dict):
+        """Restore the reference trainer's outer-B logging structures."""
         result = dict(log_dict)
-        if eqx.is_array(result["loss"]) and result["loss"].ndim > 0:
-            result["loss"] = result["loss"][0]
         for name in ("x_latent", "x_processed"):
             result[name] = self._unpack_slots(result[name])
         losses = result["losses"]
         result["losses"] = losses.reshape(
             (losses.shape[0] * losses.shape[1], *losses.shape[2:])
         )
-        for name, value in tuple(result.items()):
-            if name not in ("x_latent", "x_processed", "losses", "loss"):
-                if eqx.is_array(value) and value.ndim > 0 and value.shape[0] == 2:
-                    result[name] = value[0]
         return result
 
 

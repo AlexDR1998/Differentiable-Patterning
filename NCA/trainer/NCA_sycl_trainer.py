@@ -1,9 +1,4 @@
-"""SYCL-specialized NCA trainer paths.
-
-The base trainer remains the reference implementation. This subclass owns
-batch flattening and is the intended home for future multi-step custom calls,
-regulariser fusion, and other Intel-specific training transformations.
-"""
+"""SYCL-specific batching, fused rollout, and two-tile execution hooks."""
 
 from __future__ import annotations
 
@@ -22,9 +17,11 @@ from NCA.trainer.sycl_scan import scan_carry_only
 
 
 class NCA_sycl_Trainer(NCA_Trainer):
-    """Use one native call over N while retaining independent outer B leaves."""
+    """Train the native SYCL NCA while retaining independent outer-B leaves.
 
-    ROLLOUT_STEPS = 2
+    Each state leaf has shape ``[N, C, H, W]``. A fused native rollout advances
+    all ``N`` states for ``sycl_fused_steps`` sequential NCA timesteps.
+    """
 
     def __init__(self, *args, SYCL_FUSED_STEPS=2, **kwargs):
         super().__init__(*args, **kwargs)
@@ -35,7 +32,7 @@ class NCA_sycl_Trainer(NCA_Trainer):
         fused_steps = int(SYCL_FUSED_STEPS)
         if fused_steps < 1:
             raise ValueError("SYCL_FUSED_STEPS must be a positive integer")
-        self.ROLLOUT_STEPS = fused_steps
+        self.fused_steps = fused_steps
 
     def _training_execution(self):
         if self.SHARDING in (None, 1):
@@ -48,6 +45,7 @@ class NCA_sycl_Trainer(NCA_Trainer):
         )
 
     def _make_batched_nca(self, nca):
+        """Return a PyTree call over state leaves shaped ``[N,C,H,W]``."""
         fallback = super()._make_batched_nca(nca)
         batched_call = getattr(nca, "batched_call", None)
         if batched_call is None:
@@ -62,6 +60,7 @@ class NCA_sycl_Trainer(NCA_Trainer):
 
     @staticmethod
     def _boundary_spec(callback, dtype):
+        """Encode a boundary callback for the native rollout ABI."""
         if isinstance(callback, no_boundary):
             return 0, jnp.zeros((1,), dtype=dtype), 0
         if isinstance(callback, model_boundary):
@@ -72,6 +71,12 @@ class NCA_sycl_Trainer(NCA_Trainer):
         raise TypeError(f"Unsupported fused-rollout boundary: {type(callback)}")
 
     def _rollout_tree(self, nca, state, callbacks, keys):
+        """Apply one native fused rollout independently to each outer-B leaf.
+
+        State leaves are ``[N,C,H,W]`` and key leaves are ``[K,N,2]``, where
+        ``K`` is ``self.fused_steps``. Returned trajectory leaves are
+        ``[K,N,C,H,W]`` and final-state leaves are ``[N,C,H,W]``.
+        """
         state_leaves, tree_definition = jtu.tree_flatten(state)
         key_leaves = tree_definition.flatten_up_to(keys)
         callback_leaves = tree_definition.flatten_up_to(callbacks)
@@ -111,6 +116,12 @@ class NCA_sycl_Trainer(NCA_Trainer):
         vv_latent_to_real,
         training_execution,
     ):
+        """Advance all state leaves for ``t`` timesteps in fused chunks.
+
+        The carry is ``(key, latent_state, processed_state, regulariser_logs)``.
+        Intermediate states remain visible so existing per-step regularisers
+        retain the reference trainer's semantics.
+        """
         rollout = getattr(nca, "batched_rollout", None)
         training_callbacks = training_execution.boundary_callbacks()
         callbacks = jtu.tree_leaves(training_callbacks)
@@ -136,23 +147,23 @@ class NCA_sycl_Trainer(NCA_Trainer):
                 vv_latent_to_real,
                 training_execution,
             )
-        if t % self.ROLLOUT_STEPS != 0:
+        if t % self.fused_steps != 0:
             raise ValueError(
                 f"NCA timestep count t={t} must be divisible by "
-                f"trainer.sycl_fused_steps={self.ROLLOUT_STEPS}"
+                f"trainer.sycl_fused_steps={self.fused_steps}"
             )
 
-        state_shape = x_latent[0].shape[0]
+        inner_batch_size = x_latent[0].shape[0]
 
         def rollout_chunk(carry, chunk_start):
             step_key, state, processed, reg_logs = carry
             keys_by_step = []
             step_keys = []
-            for offset in range(self.ROLLOUT_STEPS):
+            for offset in range(self.fused_steps):
                 step_key = jr.fold_in(step_key, chunk_start + offset)
                 step_keys.append(step_key)
                 keys_by_step.append(
-                    key_pytree_gen(step_key, (len(state), state_shape))
+                    key_pytree_gen(step_key, (len(state), inner_batch_size))
                 )
             rollout_keys = jtu.tree_map(
                 lambda *values: jnp.stack(values, axis=0), *keys_by_step
@@ -163,7 +174,7 @@ class NCA_sycl_Trainer(NCA_Trainer):
 
             previous_state = state
             previous_processed = processed
-            for offset in range(self.ROLLOUT_STEPS):
+            for offset in range(self.fused_steps):
                 new_state = jtu.tree_map(
                     lambda values: values[offset], trajectory
                 )
@@ -189,7 +200,7 @@ class NCA_sycl_Trainer(NCA_Trainer):
         carry = scan_carry_only(
             rollout_chunk,
             (key, x_latent, x_proc, reg_logs_internal),
-            jnp.arange(0, t, self.ROLLOUT_STEPS),
+            jnp.arange(0, t, self.fused_steps),
             kind=loop_autodiff,
         )
         return carry

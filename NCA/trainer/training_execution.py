@@ -32,9 +32,6 @@ class TrainingExecution:
             return None
         return [mask for mask in masks]
 
-    def synchronise_gradients(self, gradients):
-        return gradients
-
     def synchronise_loss(self, mean_loss, regulariser_losses):
         return mean_loss, regulariser_losses
 
@@ -42,7 +39,7 @@ class TrainingExecution:
         return eqx.filter_jit(make_step)
 
     def transform_loss(self, compute_loss):
-        """Transform the differentiable loss before applying autodiff."""
+        """Return a loss callable with the same input and output PyTrees."""
         return compute_loss
 
     def prepare_inputs(self, nca, x, y, opt_state, key):

@@ -7,7 +7,12 @@ import jax.tree_util as jtu
 
 
 def apply_flat_batched_nca(nca, x, callbacks, key_array, fallback):
-    """Batch each compatible leaf over N while keeping outer B leaves separate."""
+    """Update each compatible outer-B leaf with one native batched call.
+
+    State leaves have shape ``[N,C,H,W]`` and key leaves ``[N,2]``. Leaves of
+    another rank use ``fallback`` so nonstandard model variants retain the
+    reference trainer's behaviour. The returned PyTree matches ``x``.
+    """
     leaves, tree_definition = jtu.tree_flatten(x)
     if not leaves:
         return x

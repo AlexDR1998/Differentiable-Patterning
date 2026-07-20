@@ -908,7 +908,6 @@ class NCA_Trainer(object):
 			loss_x,grads = eqx.filter_value_and_grad(
 				transformed_loss, has_aux=True
 			)(nca_diff,nca_static,x,y,t,key)  # type: ignore
-			grads = training_execution.synchronise_gradients(grads)
 			(mean_loss,(x_latent,x_proc,losses,reg_loss)) = loss_x
 			updates,opt_state = self.OPTIMISER.update(grads, opt_state, nca_diff)
 			nca = eqx.apply_updates(nca,updates)

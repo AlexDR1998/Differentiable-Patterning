@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify two-tile NCA execution and replicated gradient reduction."""
+"""Verify tile-local rollout and gradients through the production shard map."""
 
 from __future__ import annotations
 
@@ -28,6 +28,7 @@ ATOL = 2.0e-3
 
 
 def _loss(model, states, keys):
+    """Return loss and rollout outputs for ``[N,C,H,W]`` tile-local states."""
     def rollout_chunk(carry, chunk_keys):
         state, _ = carry
         final, trajectory = model.batched_rollout(state, chunk_keys)
@@ -44,6 +45,7 @@ def _loss(model, states, keys):
 
 
 def _two_tile_loss_impl(model, state_shard, key_shard):
+    """Map ``[1,N,C,H,W]`` physical shards to a replicated scalar loss."""
     if state_shard.shape[0] != 1 or key_shard.shape[0] != 1:
         raise ValueError("Expected one state/key leaf per tile")
     states = state_shard[0]
@@ -54,6 +56,7 @@ def _two_tile_loss_impl(model, state_shard, key_shard):
 
 
 def _single_tile_reference(model, states, keys):
+    """Evaluate the mean of both tile losses without a device map."""
     def global_loss(candidate):
         losses = []
         outputs = []
@@ -80,7 +83,7 @@ def main():
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=9")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=10")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
     if len(devices) != 2:
@@ -111,16 +114,6 @@ def main():
     keys = jax.random.split(rollout_key, 2 * STEPS * INNER_BATCH).reshape(
         2, STEPS, INNER_BATCH, 2
     )
-
-    # A collective-only check gives a much clearer error if oneCCL support is
-    # unavailable than encountering it after compiling the complete NCA VJP.
-    collective = jax.pmap(
-        lambda value: jax.lax.pmean(value, "tiles"), axis_name="tiles"
-    )
-    collective_result = collective(jnp.asarray([1.0, 3.0], jnp.float32))
-    collective_result.block_until_ready()
-    _assert_close("COLLECTIVE_PMEAN", collective_result, jnp.asarray([2.0, 2.0]))
-    print("TWO_TILE_COLLECTIVE_RESULT=PASS")
 
     print("PHASE=SINGLE_TILE_REFERENCE", flush=True)
     reference_start = time.perf_counter()

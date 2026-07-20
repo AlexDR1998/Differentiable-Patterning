@@ -1,3 +1,4 @@
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
@@ -56,12 +57,8 @@ def test_tile_axis_contract_is_explicit_and_preserves_inner_batch_axis():
 
 def test_tile_axis_contract_rejects_unsharded_two_tile_input():
     states = [jnp.zeros((2, 4, 32, 7, 9), dtype=jnp.float32)]
-    try:
+    with pytest.raises(ValueError, match="exactly one outer-B state leaf"):
         SyclTwoTileExecution._remove_local_tile_axis(states, "state")
-    except ValueError as error:
-        assert "exactly one outer-B state leaf" in str(error)
-    else:
-        raise AssertionError("A global two-tile input was accepted as local data")
 
 
 def test_filtered_shard_map_traces_scan_with_tile_local_shapes():
@@ -98,39 +95,10 @@ def test_filtered_shard_map_traces_scan_with_tile_local_shapes():
     states = jax.device_put(
         jnp.zeros((1, 4, 5, 3, 3), dtype=jnp.float32), sharding
     )
-    compiled = mapped.lower(states, states, 2).compile()
-    loss, final = compiled(states, states, 2)
+    loss, final = eqx.filter_jit(mapped)(states, states, 2)
 
     assert loss.shape == ()
     assert final.shape == (1, 4, 5, 3, 3)
-
-
-def test_compiled_filtered_shard_map_reuses_its_compiled_executable():
-    devices = np.asarray(jax.devices()[:1])
-    mesh = Mesh(devices, ("tile",))
-    traces = []
-
-    def step(states):
-        traces.append(states.shape)
-        assert states.shape[0] == 1
-        return states + 1.0
-
-    mapped = filter_shard_map(
-        step,
-        mesh=mesh,
-        in_specs=(P("tile"),),
-        out_specs=P("tile"),
-        check_rep=False,
-    )
-    sharding = NamedSharding(mesh, P("tile"))
-    states = jax.device_put(jnp.zeros((1, 2, 3)), sharding)
-    compiled = mapped.lower(states).compile()
-
-    first = compiled(states)
-    second = compiled(states)
-    assert jnp.array_equal(first, jnp.ones_like(states))
-    assert jnp.array_equal(second, jnp.ones_like(states))
-    assert traces == [(1, 2, 3)]
 
 
 def test_gradient_wraps_shard_map_for_data_parallel_loss():

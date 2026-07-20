@@ -1,4 +1,4 @@
-"""Filtered ``shard_map`` support for the two-tile SYCL trainer."""
+"""Equinox-style filtering for a loss transformed by :func:`jax.shard_map`."""
 
 from __future__ import annotations
 
@@ -14,30 +14,13 @@ except AttributeError:
     _CHECK_ARGUMENT = "check_rep"
 
 
-class _CompiledFilteredShardMap:
-    def __init__(self, compiled, static_output):
-        self._compiled = compiled
-        self._static_output = static_output
-
-    def __call__(self, *args):
-        dynamic, _ = eqx.partition(args, eqx.is_array)
-        dynamic_output = self._compiled(*dynamic)
-        return eqx.combine(dynamic_output, self._static_output)
-
-
-class _LoweredFilteredShardMap:
-    def __init__(self, lowered, static_output):
-        self._lowered = lowered
-        self._static_output = static_output
-
-    def compile(self):
-        return _CompiledFilteredShardMap(
-            self._lowered.compile(), self._static_output
-        )
-
-
 class FilteredShardMap:
-    """Filter non-array leaves and expose the usual JIT lower/compile API."""
+    """Apply ``shard_map`` to array leaves while closing over static leaves.
+
+    The callable preserves the input/output PyTree structures of ``function``.
+    For data-parallel training, transform the scalar loss with this class and
+    apply reverse-mode autodiff outside the resulting mapped loss.
+    """
 
     def __init__(
         self,
@@ -55,6 +38,7 @@ class FilteredShardMap:
         self._check_rep = check_rep
 
     def _prepare(self, args):
+        """Partition arguments and construct the array-only mapped function."""
         dynamic, static = eqx.partition(args, eqx.is_array)
         static_output = {}
 
@@ -77,13 +61,6 @@ class FilteredShardMap:
         )
         return dynamic, mapped, static_output
 
-    def lower(self, *args):
-        dynamic, mapped, static_output = self._prepare(args)
-        lowered = jax.jit(mapped).lower(*dynamic)
-        if "value" not in static_output:
-            raise RuntimeError("shard_map tracing did not produce an output tree")
-        return _LoweredFilteredShardMap(lowered, static_output["value"])
-
     def __call__(self, *args):
         dynamic, mapped, static_output = self._prepare(args)
         dynamic_output = mapped(*dynamic)
@@ -100,6 +77,7 @@ def filter_shard_map(
     out_specs,
     check_rep=False,
 ):
+    """Construct a filtered shard-map callable with matching PyTree specs."""
     return FilteredShardMap(
         function,
         mesh=mesh,

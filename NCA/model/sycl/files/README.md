@@ -42,13 +42,14 @@ every native update, and the complete trajectory is returned so existing
 per-step regularisers retain their values and gradients. The reverse call
 accepts cotangents for both the endpoint and every trajectory state.
 
-`NCA_sycl_Trainer` also has an opt-in two-stack replicated-data-parallel path.
+`NCA_sycl_Trainer` also has an opt-in two-tile replicated-data-parallel path.
 Set `trainer.sharding: 2` to place one of the two outer `B` leaves on each
-visible Max 1550 stack. Model parameters are broadcast, native rollout and VJP
-calls execute independently on both stacks, parameter gradients are averaged
-with `lax.pmean`, and both replicas apply the same optimiser update. The first
-implementation deliberately requires exactly two shape-compatible outer
-leaves and matching boundary modes.
+visible Max 1550 tile. Model parameters are replicated and each tile evaluates
+its local loss independently. Reverse-mode autodiff wraps the sharded loss, so
+the transpose of its `lax.pmean` reduces parameter gradients once before the
+shared optimiser update. Host-side callbacks access physical
+`addressable_shards` rather than globally indexing sharded arrays. This path
+requires exactly two shape-compatible outer leaves and matching boundary modes.
 
 Set `trainer.sycl_fused_steps` to control how many sequential NCA timesteps
 the SYCL trainer groups into one rollout custom call. `1` selects the original

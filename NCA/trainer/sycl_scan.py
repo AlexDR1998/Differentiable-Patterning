@@ -7,15 +7,12 @@ import jax.tree_util as jtu
 
 
 def scan_carry_only(body, init, xs, *, kind):
-    """Run a scan whose per-step output is intentionally unused.
+    """Run a carry-only ``lax`` or checkpointed scan.
 
-    Equinox's checkpointed scan and while loop both retrace their body through
-    auxiliary transformations. On the Intel JAX 0.5 pmap path those transforms
-    materialise the mapped tile axis inside the body. Instead, checkpointed
-    mode uses a two-level JAX scan: complete blocks are rematerialised during
-    the backward pass, whilst an individual recomputed block uses an ordinary
-    scan. Choosing square-root-sized blocks keeps only O(sqrt(T)) recurrent
-    states live without placing another transform around the custom call.
+    ``xs`` is a PyTree whose leaves share leading length ``T``; the returned
+    PyTree has the same structure and shapes as ``init``. Checkpointed mode
+    rematerialises square-root-sized blocks, retaining approximately
+    ``O(sqrt(T))`` recurrent states while preserving the ordinary scan body.
     """
     if kind == "lax":
         carry, _ = jax.lax.scan(body, init, xs)
