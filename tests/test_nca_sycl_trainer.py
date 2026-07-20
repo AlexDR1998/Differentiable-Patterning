@@ -189,6 +189,33 @@ def test_gradient_wraps_shard_map_for_data_parallel_loss():
     assert jnp.allclose(actual_gradient, expected_gradient, atol=1e-6)
 
 
+def test_host_callback_extracts_physical_single_device_shards():
+    if len(jax.devices()) < 2:
+        pytest.skip("requires two devices")
+    devices = list(jax.devices()[:2])
+    mesh = Mesh(np.asarray(devices), ("tile",))
+    sharding = NamedSharding(mesh, P("tile"))
+    global_states = jax.device_put(
+        jnp.arange(2 * 3 * 5, dtype=jnp.float32).reshape(2, 3, 5),
+        sharding,
+    )
+    execution = object.__new__(SyclTwoTileExecution)
+    execution.devices = devices
+
+    local_states = execution._local_tile_trees(
+        [global_states], "test state"
+    )
+
+    assert len(local_states) == 2
+    assert local_states[0][0].shape == (3, 5)
+    assert local_states[1][0].shape == (3, 5)
+    assert local_states[0][0].device == devices[0]
+    assert local_states[1][0].device == devices[1]
+    expected = np.arange(2 * 3 * 5, dtype=np.float32).reshape(2, 3, 5)
+    assert np.array_equal(np.asarray(local_states[0][0]), expected[0])
+    assert np.array_equal(np.asarray(local_states[1][0]), expected[1])
+
+
 def test_checkpointed_carry_only_scan_matches_lax_value_and_gradient():
     xs = jnp.linspace(0.1, 0.4, 4, dtype=jnp.float32)
 

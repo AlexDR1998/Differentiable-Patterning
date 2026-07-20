@@ -217,6 +217,45 @@ class SyclTwoTileExecution(TrainingExecution):
             shape, self.tile_sharding, local_arrays
         )
 
+    def _local_tile_trees(self, tree, name):
+        """Return one single-device PyTree per tile without global indexing.
+
+        A ``NamedSharding`` array has global indexing semantics. In particular,
+        ``value[tile]`` may gather or reshard the global value rather than
+        returning the physical buffer owned by that tile. Host-side callbacks
+        and logging need the physical buffers, exposed by
+        ``addressable_shards``.
+        """
+        self._ensure_devices()
+        leaves, tree_definition = jtu.tree_flatten(tree)
+        local_leaves = [[], []]
+        for leaf in leaves:
+            if not hasattr(leaf, "addressable_shards"):
+                raise TypeError(
+                    f"Two-tile {name} must contain sharded JAX arrays; got "
+                    f"{type(leaf).__name__}"
+                )
+            shards_by_device = {
+                shard.device: shard.data for shard in leaf.addressable_shards
+            }
+            for tile, device in enumerate(self.devices):
+                if device not in shards_by_device:
+                    raise ValueError(
+                        f"Two-tile {name} has no addressable shard on {device}; "
+                        f"available devices are {list(shards_by_device)}"
+                    )
+                local = shards_by_device[device]
+                if local.ndim == 0 or local.shape[0] != 1:
+                    raise ValueError(
+                        f"Expected one physical {name} item on {device}, got "
+                        f"local shape {local.shape}"
+                    )
+                local_leaves[tile].append(local[0])
+        return [
+            jtu.tree_unflatten(tree_definition, tile_leaves)
+            for tile_leaves in local_leaves
+        ]
+
     def _replicate(self, tree):
         self._ensure_devices()
         return jtu.tree_map(
@@ -362,13 +401,15 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def fold_in_key(self, key, iteration):
+        local_keys = self._local_tile_trees(key, "PRNG key")
         return self._make_tile_array(
-            jr.fold_in(key[0], iteration),
-            jr.fold_in(key[1], iteration),
+            jr.fold_in(local_keys[0], iteration),
+            jr.fold_in(local_keys[1], iteration),
         )
 
     def split_key(self, key):
-        pairs = [jr.split(key[tile]) for tile in range(2)]
+        local_keys = self._local_tile_trees(key, "PRNG key")
+        pairs = [jr.split(tile_key) for tile_key in local_keys]
         next_key = self._make_tile_array(pairs[0][0], pairs[1][0])
         callback_key = self._make_tile_array(pairs[0][1], pairs[1][1])
         return next_key, callback_key
@@ -387,8 +428,9 @@ class SyclTwoTileExecution(TrainingExecution):
         ]
 
     def apply_data_callback(self, x, y, iteration, key):
-        local_x = [[x[0][tile]] for tile in range(2)]
-        local_y = [[y[0][tile]] for tile in range(2)]
+        local_x = self._local_tile_trees(x, "state")
+        local_y = self._local_tile_trees(y, "target")
+        local_keys = self._local_tile_trees(key, "PRNG key")
         eligible = max(0, local_x[0][0].shape[0] - 1)
         global_injections = (2 * eligible) // 2
         injections = [global_injections // 2] * 2
@@ -402,7 +444,7 @@ class SyclTwoTileExecution(TrainingExecution):
                 augmenter._sharded_n_inject = injections[tile]
             outputs.append(
                 augmenter.data_callback(
-                    local_x[tile], local_y[tile], iteration, key[tile]
+                    local_x[tile], local_y[tile], iteration, local_keys[tile]
                 )
             )
         return (
@@ -410,13 +452,9 @@ class SyclTwoTileExecution(TrainingExecution):
             self._pack_local_slots([output[1] for output in outputs], "target"),
         )
 
-    @staticmethod
-    def _unpack_slots(packed_slots):
-        return [
-            jtu.tree_map(lambda value: value[tile], slot)
-            for slot in packed_slots
-            for tile in range(2)
-        ]
+    def _unpack_slots(self, packed_slots):
+        tile_trees = self._local_tile_trees(packed_slots, "logged state")
+        return [slot for tile_tree in tile_trees for slot in tile_tree]
 
     def prepare_log_dict(self, log_dict):
         result = dict(log_dict)
