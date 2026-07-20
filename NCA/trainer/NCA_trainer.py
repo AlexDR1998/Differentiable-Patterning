@@ -12,6 +12,7 @@ import datetime
 # import Common.trainer.loss as loss
 # import Common.trainer.loss_ott as loss_ott
 from Common.trainer.loss import build_loss_functions,build_loss_initialiser
+from Common.trainer.loss_multi_target import init_texture_params, multi_target_loss
 from NCA.trainer.tensorboard_log import (
 	NCA_Train_log,
 	mNCA_Train_log,
@@ -264,6 +265,7 @@ class NCA_Trainer(object):
 				 GRAD_LOSS = True,
 				 OBS_CHANNELS = None,
 				 DATA_CHANNELS = None,
+				 CHANNEL_SCHEMA = None,
 				 CHANNEL_NAMES = None,
 				 TIMEPOINT_NAMES = None,
 				 LOSS_TIME_CHANNEL_MASK = None, # If none, is overwritten to ones mask that does nothing
@@ -297,6 +299,8 @@ class NCA_Trainer(object):
 		DATA_CHANNELS : int, optional
 			Number of channels in y to include in loss function. If None, set to OBS_CHANNELS. The default is None.
 			Can be different to OBS_CHANNELS, i.e. if training to duplicate data from multiple experiments
+		CHANNEL_SCHEMA : ChannelSchema, optional
+			Maps unique model channels onto duplicated experimental measurements.
 		LOSS_TIME_CHANNEL_MASK: float32 array [BATCHES, N, OBS_CHANNELS], optional
 			Mask for which channels and timesteps to include in loss function. 1 for include, 0 for exclude. If None, set to ones mask that includes everything. The default is None.
 		MODEL_DIRECTORY : str, optional
@@ -310,18 +314,23 @@ class NCA_Trainer(object):
 
 		"""
 		self.NCA_model = NCA_model
+		self.CHANNEL_SCHEMA = CHANNEL_SCHEMA
 		self.CHANNEL_NAMES = CHANNEL_NAMES
 		self.TIMEPOINT_NAMES = TIMEPOINT_NAMES
 		self.DIAGNOSTIC_BOUNDARY_MASK = BOUNDARY_MASK
 		
 		# Set up variables 
 		self.CHANNELS = self.NCA_model.N_CHANNELS
-		if OBS_CHANNELS is None:
+		if OBS_CHANNELS is None and CHANNEL_SCHEMA is not None:
+			self.OBS_CHANNELS = CHANNEL_SCHEMA.n_state_channels
+		elif OBS_CHANNELS is None:
 			self.OBS_CHANNELS = data[0].shape[1]
 		else:
 			self.OBS_CHANNELS = OBS_CHANNELS
 		# For some loss functions, the NCA observable channels don't necessarily match the data channels. Handle this here.
-		if DATA_CHANNELS is None:
+		if DATA_CHANNELS is None and CHANNEL_SCHEMA is not None:
+			self.DATA_CHANNELS = CHANNEL_SCHEMA.n_measurement_channels
+		elif DATA_CHANNELS is None:
 			self.DATA_CHANNELS = self.OBS_CHANNELS
 		else:
 			self.DATA_CHANNELS = DATA_CHANNELS
@@ -334,7 +343,7 @@ class NCA_Trainer(object):
 		self._data_raw = data
 		self.DATA_AUGMENTER = DATA_AUGMENTER(
 			data_true=data,
-			hidden_channels=self.CHANNELS-self.DATA_CHANNELS,
+			hidden_channels=0 if CHANNEL_SCHEMA is not None else self.CHANNELS-self.DATA_CHANNELS,
 			nca_model=self.NCA_model
 			)
 		self.DATA_AUGMENTER.data_init(self.SHARDING)
@@ -344,7 +353,7 @@ class NCA_Trainer(object):
 		
 		# Set up partial mask of channels / timesteps
 		if self.LOSS_TIME_CHANNEL_MASK is None:
-			self.LOSS_TIME_CHANNEL_MASK = jnp.ones((self.BATCHES,data.shape[1]-1,self.OBS_CHANNELS),dtype=jnp.float32)
+			self.LOSS_TIME_CHANNEL_MASK = jnp.ones((self.BATCHES,data.shape[1]-1,self.DATA_CHANNELS),dtype=jnp.float32)
 
 		_model_kernel_length = len(self.NCA_model.KERNEL_STR)
 		if "GRAD" in self.NCA_model.KERNEL_STR:
@@ -420,6 +429,7 @@ class NCA_Trainer(object):
 						wandb_config=wandb_args,
 						boundary_mask=self.DIAGNOSTIC_BOUNDARY_MASK,
 						channel_names=self.CHANNEL_NAMES,
+						channel_schema=self.CHANNEL_SCHEMA,
 						timepoint_names=self.TIMEPOINT_NAMES,
 						data_augmenter=self.DATA_AUGMENTER,
 						knockout_time=KNOCKOUT_ARGS["time"],
@@ -432,6 +442,7 @@ class NCA_Trainer(object):
 						wandb_config=wandb_args,
 						boundary_mask=self.DIAGNOSTIC_BOUNDARY_MASK,
 						channel_names=self.CHANNEL_NAMES,
+						channel_schema=self.CHANNEL_SCHEMA,
 						timepoint_names=self.TIMEPOINT_NAMES,
 						data_augmenter=self.DATA_AUGMENTER,
 						singular_value_config=SINGULAR_VALUE_LOGGING_CONFIG,
@@ -660,6 +671,12 @@ class NCA_Trainer(object):
 
 		if key is None:
 			key = jr.PRNGKey(int(time.time()))
+		is_multi_target = LOSS_FUNC_STR == "multi_target"
+		if is_multi_target and (self.CHANNEL_SCHEMA is None or self.GRAD_LOSS):
+			raise ValueError("multi_target requires CHANNEL_SCHEMA and GRAD_LOSS=False")
+		if is_multi_target and self.SHARDING is not None:
+			raise ValueError("multi_target currently requires all batches on one device")
+		multi_target_params = None
 		pool_admission_config = {
 			"enabled": True,
 			"relative_threshold": 1.25,
@@ -709,6 +726,20 @@ class NCA_Trainer(object):
 			"SPARSE_PRUNING":SPARSE_PRUNING,
 			"TARGET_SPARSITY":TARGET_SPARSITY,
 		}
+		if is_multi_target:
+			self.TRAIN_CONFIG["MULTI_TARGET"] = {
+				"weights": {
+					"texture": 1.0,
+					"channel_mean": 1.0,
+					"radial": 1.0,
+					"correlation": 1.0,
+					**dict(LOSS_ARGS.get("multi_target_weights", {})),
+				},
+				"assignment": LOSS_ARGS.get("assignment", "hard"),
+				"assignment_tau": LOSS_ARGS.get("assignment_tau", 0.05),
+				"radial_bins": LOSS_ARGS.get("radial_bins", 16),
+				"texture_size": LOSS_ARGS.get("texture_size", 128),
+			}
 		
 		self.setup_logging(
 			"wandb",
@@ -749,40 +780,21 @@ class NCA_Trainer(object):
 			"latent_channel_match":regularisers.latent_channel_match_regulariser,
 			"latent_size":regularisers.latent_size_regulariser
 		}
-		TERMINAL_REG_FUNCS = {
-			"channel_correlation": regularisers.channel_correlation_regulariser,
-			"radial_profile": regularisers.radial_profile_regulariser,
-		}
-
 		REGULARISER_COEFFS = {
 			name: coefficient
 			for name, coefficient in REGULARISER_COEFFS.items()
 			if coefficient != 0.0
 		}
-		known_regularisers = set(REG_FUNCS) | set(TERMINAL_REG_FUNCS)
+		known_regularisers = set(REG_FUNCS)
 		unknown_regularisers = set(REGULARISER_COEFFS) - known_regularisers
 		if unknown_regularisers:
 			raise ValueError(
 				f"Unknown regularisers: {sorted(unknown_regularisers)}"
 			)
-		grouped_target_regularisers = {"channel_correlation", "radial_profile"}
-		if (
-			grouped_target_regularisers.intersection(REGULARISER_COEFFS)
-			and self.DATA_CHANNELS != 12
-		):
-			raise ValueError(
-				"Grouped target regularisation requires the 12-channel "
-				"grouped micropattern target layout"
-			)
 		INTERMEDIATE_REGULARISER_COEFFS = {
 			name: coefficient
 			for name, coefficient in REGULARISER_COEFFS.items()
 			if name in REG_FUNCS
-		}
-		TERMINAL_REGULARISER_COEFFS = {
-			name: coefficient
-			for name, coefficient in REGULARISER_COEFFS.items()
-			if name in TERMINAL_REG_FUNCS
 		}
 		REG_FUNCS = {
 			name: REG_FUNCS[name]
@@ -869,30 +881,39 @@ class NCA_Trainer(object):
 					training_execution,
 				)
 
-				loss_key = key_pytree_gen(key, (len(x_latent),))
-				y_latent = vv_real_to_latent(y_proc)
-				losses = jnp.array(jtu.tree_map(
-					self.loss_func,
-					x_proc,
-					y_proc,
-					x_latent,
-					y_latent,
-					training_execution.loss_time_channel_mask(),
-					training_execution.loss_cache(),
-					loss_key
-					))
+				loss_diagnostics = {}
+				if is_multi_target:
+					boundary = jnp.asarray(self.DIAGNOSTIC_BOUNDARY_MASK)[0, 0]
+					losses, components = multi_target_loss(
+						jnp.stack(x_proc)[:, :, :self.OBS_CHANNELS],
+						jnp.stack(y_proc)[:, :, :self.DATA_CHANNELS],
+						boundary,
+						self.CHANNEL_SCHEMA,
+						multi_target_params,
+						key,
+						LOSS_ARGS,
+					)
+					loss_diagnostics = {
+						f"loss_component/{name}": jnp.mean(value)
+						for name, value in components.items()
+					}
+				else:
+					loss_key = key_pytree_gen(key, (len(x_latent),))
+					y_latent = vv_real_to_latent(y_proc)
+					losses = jnp.array(jtu.tree_map(
+						self.loss_func,
+						x_proc,
+						y_proc,
+						x_latent,
+						y_latent,
+						training_execution.loss_time_channel_mask(),
+						training_execution.loss_cache(),
+						loss_key
+						))
 				regulariser_losses = {
 					name: coefficient * jnp.mean(reg_logs_internal[name]) / t
 					for name, coefficient in INTERMEDIATE_REGULARISER_COEFFS.items()
 				}
-				for name, coefficient in TERMINAL_REGULARISER_COEFFS.items():
-					values = TERMINAL_REG_FUNCS[name](
-						x_proc,
-						y_proc,
-						training_execution.loss_time_channel_mask(),
-						training_execution.diagnostic_boundary_masks(),
-					)
-					regulariser_losses[name] = coefficient * jnp.mean(values)
 				regulariser_total = (
 					jnp.sum(jnp.stack(list(regulariser_losses.values())))
 					if regulariser_losses
@@ -902,14 +923,14 @@ class NCA_Trainer(object):
 				mean_loss, regulariser_losses = training_execution.synchronise_loss(
 					mean_loss, regulariser_losses
 				)
-				return mean_loss, (x_latent,x_proc,losses,regulariser_losses)
+				return mean_loss, (x_latent,x_proc,losses,regulariser_losses,loss_diagnostics)
 
 			nca_diff,nca_static = nca.partition()
 			transformed_loss = training_execution.transform_loss(compute_loss)
 			loss_x,grads = eqx.filter_value_and_grad(
 				transformed_loss, has_aux=True
 			)(nca_diff,nca_static,x,y,t,key)  # type: ignore
-			(mean_loss,(x_latent,x_proc,losses,reg_loss)) = loss_x
+			(mean_loss,(x_latent,x_proc,losses,reg_loss,loss_diagnostics)) = loss_x
 			updates,opt_state = self.OPTIMISER.update(grads, opt_state, nca_diff)
 			nca = eqx.apply_updates(nca,updates)
 			log_dict = {
@@ -917,7 +938,8 @@ class NCA_Trainer(object):
 				"x_latent": x_latent,
 				"x_processed": x_proc,
 				"losses": losses,
-				**reg_loss
+				**reg_loss,
+				**loss_diagnostics,
 			}
 			return nca,x_latent,y_proc,t,opt_state,key,mean_loss,log_dict
 
@@ -942,7 +964,14 @@ class NCA_Trainer(object):
 		print(f"Initial x shape: {jnp.array(x).shape}, y shape: {jnp.array(y).shape}",flush=True)
 		
 		# If we are using a loss function that needs to initialise some cache based on the data, do that here and add to LOSS_ARGS
-		loss_initialiser = build_loss_initialiser(LOSS_FUNC_STR,LOSS_ARGS)
+		if is_multi_target and LOSS_ARGS.get("multi_target_weights", {}).get("texture", 1.0):
+			multi_target_params = init_texture_params(
+				key,
+				(min(LOSS_ARGS.get("texture_size", 128), y[0].shape[-2]),) * 2,
+				LOSS_ARGS.get("metric", "l2"),
+				LOSS_ARGS.get("samples", 128),
+			)
+		loss_initialiser = None if is_multi_target else build_loss_initialiser(LOSS_FUNC_STR,LOSS_ARGS)
 		if loss_initialiser is not None:
 			y_decoded_obs = jtu.tree_map(lambda yi: yi[:, :self.DATA_CHANNELS], y)
 			vgg_target_cache_decoded = loss_initialiser(y_decoded_obs,key,self.LOSS_TIME_CHANNEL_MASK) # dict of {"vgg_params": ..., "target_feats": List[Batches] of arrays [N, ...]}
@@ -987,7 +1016,7 @@ class NCA_Trainer(object):
 				"latent": None
 				} for b in range(len(x))]
 			
-		self._loss_func = build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)	
+		self._loss_func = [] if is_multi_target else build_loss_functions(LOSS_FUNC_STR,LOSS_ARGS)
 		nca, x, y, opt_state, key = training_execution.prepare_inputs(
 			nca, x, y, opt_state, key
 		)

@@ -1,6 +1,51 @@
 import jax.numpy as np
 import jax
 
+from Common.dataloader.channel_schema import ChannelSchema
+from Common.dataloader.micropattern_schemas import (
+    MICROPATTERN_GROUPED_11CH_SCHEMA,
+    MICROPATTERN_GROUPED_12CH_SCHEMA,
+)
+
+
+def project_state_to_measurements(x, schema: ChannelSchema):
+    """Project unique biological state channels into a target measurement layout.
+
+    ``schema.target_to_state`` may select a state channel more than once when a
+    marker was measured in multiple experiments.  The channel axis is fixed at
+    one to match the ``[N, C, H, W]`` tensors used by the loss functions.
+    """
+
+    return np.take(x, np.asarray(schema.target_to_state), axis=1)
+
+
+def split_and_pad_by_experiment_groups(
+    x,
+    schema: ChannelSchema,
+    channel_multiple=3,
+):
+    """Keep co-measured channels together and pad each group independently."""
+
+    if channel_multiple <= 0:
+        raise ValueError("channel_multiple must be positive")
+    schema.validate_measurement_channel_count(x.shape[1])
+
+    padded_groups = []
+    start = 0
+    for group_size in schema.group_sizes:
+        end = start + group_size
+        group = x[:, start:end]
+        padding = (channel_multiple - group_size % channel_multiple) % channel_multiple
+        padded_groups.append(
+            np.pad(
+                group,
+                ((0, 0), (0, padding), (0, 0), (0, 0)),
+                mode="constant",
+            )
+        )
+        start = end
+    return np.concatenate(padded_groups, axis=1)
+
 
 def duplicate_x_channels_8ch(x):
     """
@@ -11,8 +56,7 @@ def duplicate_x_channels_8ch(x):
 
 
     """
-    x_dup = [x[:,0:4],x[:,0:3],x[:,4:8]]
-    return np.concatenate(x_dup,axis=1)
+    return project_state_to_measurements(x, MICROPATTERN_GROUPED_11CH_SCHEMA)
 
 def split_and_pad_by_experiment_groups_11ch(x): 
     """
@@ -29,12 +73,10 @@ def split_and_pad_by_experiment_groups_11ch(x):
             
     """
 
-    x_split = [x[:,0:4],x[:,4:8],x[:,8:11]]  # Hardcoded for jitting
-    x_split = [np.pad(x,((0,0),(0,(3-x.shape[1]%3)%3),(0,0),(0,0)),mode="constant") for x in x_split]
-
-    # Recombine
-    x = np.concatenate(x_split,axis=1)
-    return x
+    return split_and_pad_by_experiment_groups(
+        x[:, :MICROPATTERN_GROUPED_11CH_SCHEMA.n_measurement_channels],
+        MICROPATTERN_GROUPED_11CH_SCHEMA,
+    )
 
 
 def duplicate_x_channels_9ch(x):
@@ -46,8 +88,7 @@ def duplicate_x_channels_9ch(x):
 
 
     """
-    x_dup = [x[:,0:4],x[:,0:3],x[:,4:8],x[:,8:9]]
-    return np.concatenate(x_dup,axis=1)
+    return project_state_to_measurements(x, MICROPATTERN_GROUPED_12CH_SCHEMA)
 
 
 def split_and_pad_by_experiment_groups_12ch(x):
@@ -65,12 +106,10 @@ def split_and_pad_by_experiment_groups_12ch(x):
             
     """
 
-    x_split = [x[:,0:4],x[:,4:8],x[:,8:11],x[:,11:12]]  # Hardcoded for jitting
-    x_split = [np.pad(x,((0,0),(0,(3-x.shape[1]%3)%3),(0,0),(0,0)),mode="constant") for x in x_split]
-
-    # Recombine
-    x = np.concatenate(x_split,axis=1)
-    return x
+    return split_and_pad_by_experiment_groups(
+        x[:, :MICROPATTERN_GROUPED_12CH_SCHEMA.n_measurement_channels],
+        MICROPATTERN_GROUPED_12CH_SCHEMA,
+    )
 
 def split_and_pad_by_experiment_groups_nodal_knockout(x):
     """

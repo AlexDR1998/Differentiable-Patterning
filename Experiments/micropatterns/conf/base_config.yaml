@@ -11,6 +11,7 @@ data:
   data_channels: 12
   downsample: 1
   noise_strength: 0.005
+  duplicate_final_timestep: false
 
 model:
   family: NCA
@@ -23,6 +24,9 @@ trainer:
   boundary_mode: soft
   grad_loss: false
   sharding: null
+  # Sequential NCA timesteps grouped inside each SYCL custom call. A value of
+  # 1 uses the unfused one-step path. Ignored by non-SYCL model families.
+  sycl_fused_steps: 2
   model_directory: models/
   log_directory: logs/
   loss_time_channel_mask: null
@@ -46,9 +50,20 @@ optimiser:
   learn_rate: 0.001
   warmup_steps: 64
   decay_rate: 0.99
+  schedule:
+    type: exponential
+    warmup_init_lr: 1e-6
+    # Cosine ends at learn_rate * final_factor. Late-step switches to
+    # learn_rate * final_factor at transition_fraction of post-warmup training.
+    final_factor: 0.1
+    transition_fraction: 0.75
 
 loss:
   primary: l2
+  # Optional weights aligned with target-data channels and loss.primary.
+  # Null preserves uniform channel importance and equal loss-component weighting.
+  channel_importance: null
+  component_weights: null
   regulariser_coeffs:
     intermediate_state: 1.0
     boundary: 5.0
@@ -80,6 +95,10 @@ run:
 
 logging:
   backend: wandb
+  singular_values:
+    enabled: false
+    plot_spectra: true
+    epsilon: 1e-8
   wandb:
     project: NCA-micropattern
     group: base-config

@@ -8,11 +8,13 @@ import numpy as np
 
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_model import NCA
+from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from NCA.trainer.NCA_trainer import select_wandb_train_logger_class
 from NCA.trainer.tensorboard_log import (
     NCA_Train_log,
     NCA_knockout_Train_log,
     _target_aligned_diagnostic_channels,
+    _trajectory_snapshot_channels,
     compute_channel_correlation_diagnostics,
     compute_channel_time_diagnostics,
     plot_channel_correlation_diagnostics,
@@ -254,6 +256,21 @@ def test_grouped_diagnostic_outputs_are_aligned_to_12_target_channels():
     ]
 
 
+def test_schema_diagnostic_outputs_are_aligned_to_measurement_channels():
+    schema = MICROPATTERN_260726_SCHEMA
+    outputs = np.arange(10, dtype=np.float32).reshape(1, 1, 10, 1, 1)
+
+    aligned = _target_aligned_diagnostic_channels(outputs, channel_schema=schema)
+
+    assert aligned.shape == (1, 1, 14, 1, 1)
+    assert aligned[0, 0, :, 0, 0].tolist() == list(schema.target_to_state)
+
+    snapshots = _trajectory_snapshot_channels(
+        outputs[0], type("Augmenter", (), {"OBS_CHANNELS": 10})(), 1, schema
+    )
+    assert snapshots[:, :, 0, 0].tolist() == [list(schema.target_to_state)]
+
+
 def test_channel_correlation_diagnostics_capture_correlation_and_anticorrelation():
     increasing = np.arange(4, dtype=np.float32).reshape(2, 2)
     decreasing = increasing[::-1, ::-1]
@@ -271,6 +288,18 @@ def test_channel_correlation_diagnostics_capture_correlation_and_anticorrelation
         diagnostics["channel_correlation_difference"][0, 0, 1],
         2.0,
     )
+
+
+def test_channel_correlation_diagnostics_mask_separate_experiment_groups():
+    values = np.arange(12, dtype=np.float32).reshape(1, 1, 3, 2, 2)
+
+    diagnostics = compute_channel_correlation_diagnostics(
+        values, values, experiment_group_sizes=(2, 1)
+    )
+
+    correlations = diagnostics["prediction_channel_correlation"][0]
+    assert np.isfinite(correlations[0, 1])
+    assert np.isnan(correlations[0, 2])
 
 
 def test_channel_correlation_plot_returns_timestep_grid():

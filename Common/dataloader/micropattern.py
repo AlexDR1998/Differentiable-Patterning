@@ -14,6 +14,22 @@ from Common.dataloader.adhesion_mask import (
     adhesion_mask_convex_hull_circle,
     adhesion_mask_convex_hull_ellipse,
 )
+from Common.dataloader.micropattern_schemas import (
+    MICROPATTERN_260726_SCHEMA,
+    MICROPATTERN_4CH_SCHEMA,
+    MICROPATTERN_AVERAGED_8CH_SCHEMA,
+    MICROPATTERN_GROUPED_11CH_SCHEMA,
+    MICROPATTERN_GROUPED_12CH_SCHEMA,
+    MICROPATTERN_INDIVIDUAL_8CH_SCHEMA,
+    MICROPATTERN_NODAL_LEFTY_CER_SCHEMA,
+    MICROPATTERN_SMAD23_LEF1_SCHEMA,
+    MICROPATTERN_SOX17_FOXA2_TBXT_LMBR_SCHEMA,
+    attach_channel_schema,
+)
+from Common.dataloader.micropattern_260726 import (
+    build_micropattern_260726_manifest,
+    load_micropattern_260726,
+)
 import scipy.ndimage as ndi
 from math import floor, ceil
 import matplotlib.pyplot as plt
@@ -143,7 +159,11 @@ def load_micropattern_nodal_lefty_cer(
     )
     if SHOW_HISTOGRAMS:
         show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return ims, aux, CHANNEL_NAMES
+    return (
+        ims,
+        attach_channel_schema(aux, MICROPATTERN_NODAL_LEFTY_CER_SCHEMA),
+        CHANNEL_NAMES,
+    )
 
 
 def load_micropattern_sox17_foxa2_tbxt_lmbr(
@@ -212,7 +232,11 @@ def load_micropattern_sox17_foxa2_tbxt_lmbr(
     )
     if SHOW_HISTOGRAMS:
         show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return ims, aux, CHANNEL_NAMES
+    return (
+        ims,
+        attach_channel_schema(aux, MICROPATTERN_SOX17_FOXA2_TBXT_LMBR_SCHEMA),
+        CHANNEL_NAMES,
+    )
 
 
 def load_micropattern_smad23_lef1(
@@ -277,7 +301,11 @@ def load_micropattern_smad23_lef1(
 
     if SHOW_HISTOGRAMS:
         show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return ims, aux, CHANNEL_NAMES
+    return (
+        ims,
+        attach_channel_schema(aux, MICROPATTERN_SMAD23_LEF1_SCHEMA),
+        CHANNEL_NAMES,
+    )
 
 
 def show_histograms(data, channel_names, title="Pre processing histograms"):
@@ -610,6 +638,7 @@ def load_micropattern_circle_8ch(
         "sftl": aux_sftl,
         "dcln": aux_nlc,
         "lls": aux_lls,
+        "channel_schema": MICROPATTERN_AVERAGED_8CH_SCHEMA,
     }
     data_sftl = np.array(data_sftl)
     data_dcln = np.array(data_dcln)  # select only condition 1 from data
@@ -749,7 +778,12 @@ def load_micropattern_circle_8ch_individual(
     print("Boundary mask shape: ", boundary_mask.shape)
     ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
     # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
-    return ims, aux, CHANNEL_NAMES_DESIRED, boundary_mask
+    return (
+        ims,
+        attach_channel_schema(aux, MICROPATTERN_INDIVIDUAL_8CH_SCHEMA),
+        CHANNEL_NAMES_DESIRED,
+        boundary_mask,
+    )
 
 
 
@@ -836,7 +870,13 @@ def load_micropattern_circle_4ch_individual(
     ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
     # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
     CHANNEL_TIMESTEP_MASK = np.ones((len(TIMESTEPS)-1,4))
-    return ims, aux, CHANNEL_NAMES_DESIRED, boundary_mask, CHANNEL_TIMESTEP_MASK
+    return (
+        ims,
+        attach_channel_schema(aux, MICROPATTERN_4CH_SCHEMA),
+        CHANNEL_NAMES_DESIRED,
+        boundary_mask,
+        CHANNEL_TIMESTEP_MASK,
+    )
 
 
 
@@ -1093,7 +1133,13 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
 
     ims = repeat(ims, "T () X Y C -> B T C X Y", B=BATCHES)
     ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
-    return ims, aux, CHANNEL_NAMES_COLONIES, boundary_mask, CHANNEL_TIMESTEP_MASK
+    return (
+        ims,
+        attach_channel_schema(aux, MICROPATTERN_GROUPED_12CH_SCHEMA),
+        CHANNEL_NAMES_COLONIES,
+        boundary_mask,
+        CHANNEL_TIMESTEP_MASK,
+    )
 
 
 
@@ -1216,7 +1262,12 @@ def load_micropattern_circle_8ch_individual_explicit_colony(
     print("Boundary mask shape: ", boundary_mask.shape)
     ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
     # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
-    return ims, aux, CHANNEL_NAMES_COLONIES, boundary_mask
+    return (
+        ims,
+        attach_channel_schema(aux, MICROPATTERN_GROUPED_11CH_SCHEMA),
+        CHANNEL_NAMES_COLONIES,
+        boundary_mask,
+    )
     
 
 def load_micropattern_radii(impath):

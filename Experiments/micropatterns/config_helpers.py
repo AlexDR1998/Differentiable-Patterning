@@ -7,6 +7,7 @@ import jax.numpy as jnp
 from einops import repeat
 
 from Common.dataloader.micropattern import (
+    load_micropattern_260726,
     load_micropattern_circle_4ch_individual,
     load_micropattern_circle_nodal_knockout_9ch_explicit_colony,
 )
@@ -17,6 +18,7 @@ from Experiments.config_helpers import (
 )
 from NCA.trainer.data_augmenter_4ch_colony import DataAugmenter as DataAugmenter4Ch
 from NCA.trainer.data_augmenter_9ch_colony import DataAugmenter as DataAugmenterGrouped
+from NCA.trainer.data_augmenter_260726 import DataAugmenter as DataAugmenter260726
 
 
 NODAL_CHANNEL = 7
@@ -118,6 +120,10 @@ def masked_reinject_callback_bit(
 
 def build_data_augmenter(cfg, channel_timestep_mask=None):
     data_channels = cfg.data.data_channels
+    if cfg.data.dataset == "micropatterns_260726":
+        class DA_subclass(DataAugmenter260726):
+            noise_strength = cfg.data.noise_strength
+        return DA_subclass, f"da_snapshot_noise{cfg.data.noise_strength}"
     if data_channels == 4 and cfg.knockout.mode is not None:
         raise ValueError("data.data_channels=4 is only supported for no-knockout group-A data.")
     if data_channels == 4:
@@ -182,6 +188,24 @@ def build_data_augmenter(cfg, channel_timestep_mask=None):
 def load_data(cfg, impath=None):
     custom_impath = impath is not None
     data_channels = cfg.data.data_channels
+    if cfg.data.dataset == "micropatterns_260726":
+        if cfg.knockout.mode is not None or data_channels != 14 or cfg.data.batches != 3:
+            raise ValueError("micropatterns_260726 currently requires baseline, data_channels=14, batches=3")
+        if impath is None:
+            data_path_base = os.getenv("DATA_PATH_BASE")
+            if data_path_base is None:
+                raise ValueError("DATA_PATH_BASE must be set when load_data is called without impath.")
+            impath = os.path.join(data_path_base, "260726_nca_dataset")
+        data, aux, names, boundary, mask = load_micropattern_260726(
+            impath,
+            conditions=("ctrl",),
+            timesteps=tuple(cfg.data.timesteps),
+            downsample=cfg.data.downsample,
+        )
+        cfg_str = f"data_b3_c14_ds{cfg.data.downsample}_ts{_compact_value(list(cfg.data.timesteps))}"
+        if custom_impath:
+            cfg_str += "_custompath"
+        return data, aux, names, boundary, mask[:, 1:], cfg_str
     if data_channels not in {4, 12}:
         raise ValueError(f"Unsupported data.data_channels={data_channels}. Expected 4 or 12.")
     if data_channels == 4 and cfg.knockout.mode is not None:

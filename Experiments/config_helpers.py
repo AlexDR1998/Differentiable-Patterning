@@ -169,12 +169,10 @@ def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
         aliases={
             "boundary": "bd",
             "contiguous_growth": "cg",
-            "channel_correlation": "cc",
             "intermediate_state": "is",
             "latent_channel_match": "lcm",
             "latent_size": "ls",
             "perturbation_conservation": "pc",
-            "radial_profile": "rp",
             "update_sensitivity": "us",
         },
     )
@@ -205,7 +203,16 @@ def build_loss_args(cfg, overrides=None):
     vgg_internal = _cfg_get(cfg.loss, "vgg_internal", None)
     if vgg_internal is not None:
         loss_args["metric"] = vgg_internal
-    for optional_key in ("normalize", "tau", "amplitude_penalty"):
+    for optional_key in (
+        "normalize",
+        "tau",
+        "amplitude_penalty",
+        "multi_target_weights",
+        "radial_bins",
+        "assignment",
+        "assignment_tau",
+        "texture_size",
+    ):
         value = _cfg_get(loss_args_cfg, optional_key, None)
         if value is not None:
             loss_args[optional_key] = value

@@ -14,7 +14,8 @@ from jax.scipy.ndimage import map_coordinates
 from einops import rearrange,reduce,einsum,repeat
 import jax.random as jr
 # from optax import l2_loss
-from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
+from Common.dataloader.micropattern_schemas import MICROPATTERN_GROUPED_12CH_SCHEMA
+from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,project_state_to_measurements,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
 import Common.trainer.loss_ott as loss_ott
 import Common.trainer.loss_vgg as loss_vgg
 # import Common.trainer.loss_clip as loss_clip
@@ -409,6 +410,106 @@ def average_amplitude_distance(x,y,key=None,where=None,aux=None,cache=None):
 	return jnp.nan_to_num(jnp.mean((x_amp - y_amp)**2,axis=[-1,-2,-3],where=where))
 
 
+def masked_channel_correlations(values, spatial_mask=None, epsilon=1e-8):
+	"""Return masked Pearson correlations and channel squared norms."""
+	if spatial_mask is None:
+		spatial_mask = jnp.ones(values.shape[-2:], dtype=values.dtype)
+	spatial_mask = jnp.asarray(spatial_mask).reshape(values.shape[-2:]).astype(values.dtype)
+	pixels = values.reshape(*values.shape[:-2], -1)
+	mask = spatial_mask.reshape(-1)
+	means = jnp.sum(pixels * mask, axis=-1) / jnp.maximum(mask.sum(), 1.0)
+	centred = (pixels - means[..., None]) * mask
+	covariance = jnp.einsum("...cp,...dp->...cd", centred, centred)
+	squared_norms = jnp.sum(centred**2, axis=-1)
+	denominator = jnp.sqrt(
+		squared_norms[..., :, None] * squared_norms[..., None, :] + epsilon
+	)
+	return covariance / denominator, squared_norms
+
+
+def channel_correlation_loss(x,y,key=None,where=None,aux=None,cache=None):
+	"""L2 loss between masked within-image channel correlations."""
+	aux = {} if aux is None else aux
+	correlation_x, _ = masked_channel_correlations(
+		x, aux.get("spatial_mask"), aux.get("epsilon", 1e-8)
+	)
+	correlation_y, target_norms = masked_channel_correlations(
+		y, aux.get("spatial_mask"), aux.get("epsilon", 1e-8)
+	)
+	pairs = aux.get("pairs", tuple(zip(*jnp.triu_indices(x.shape[-3], 1))))
+	pair_i = jnp.asarray([pair[0] for pair in pairs])
+	pair_j = jnp.asarray([pair[1] for pair in pairs])
+	weights = jnp.asarray(aux.get("pair_weights", jnp.ones(len(pairs))), dtype=x.dtype)
+	active = jnp.ones(x.shape[:-3] + (x.shape[-3],), dtype=bool) if where is None else jnp.any(where, axis=(-1, -2))
+	valid = active[..., pair_i] & active[..., pair_j]
+	valid &= (target_norms[..., pair_i] > aux.get("epsilon", 1e-8)) & (target_norms[..., pair_j] > aux.get("epsilon", 1e-8))
+	weights = weights * valid
+	error = (correlation_x[..., pair_i, pair_j] - correlation_y[..., pair_i, pair_j]) ** 2
+	return jnp.sum(weights * error, axis=-1) / jnp.maximum(jnp.sum(weights, axis=-1), 1.0)
+
+
+def radial_profiles(values, spatial_mask=None, radial_bins=16, epsilon=1e-8):
+	"""Return masked annular channel means and non-empty radial bins."""
+	if radial_bins <= 0:
+		raise ValueError("radial_bins must be positive")
+	if spatial_mask is None:
+		spatial_mask = jnp.ones(values.shape[-2:], dtype=bool)
+	spatial_mask = jnp.asarray(spatial_mask).reshape(values.shape[-2:]).astype(bool)
+	width, height = values.shape[-2:]
+	grid_x, grid_y = jnp.meshgrid(jnp.arange(width), jnp.arange(height), indexing="ij")
+	mask = spatial_mask.astype(values.dtype)
+	centre_x = jnp.sum(grid_x * mask) / jnp.maximum(mask.sum(), 1.0)
+	centre_y = jnp.sum(grid_y * mask) / jnp.maximum(mask.sum(), 1.0)
+	radius = jnp.sqrt((grid_x - centre_x) ** 2 + (grid_y - centre_y) ** 2)
+	radius /= jnp.maximum(jnp.max(jnp.where(spatial_mask, radius, 0.0)), epsilon)
+	indices = jnp.minimum((radius * radial_bins).astype(jnp.int32), radial_bins - 1)
+	annuli = (indices[None] == jnp.arange(radial_bins)[:, None, None]) & spatial_mask
+	counts = jnp.sum(annuli, axis=(-1, -2))
+	profiles = jnp.einsum("...chw,rhw->...cr", values, annuli.astype(values.dtype))
+	return profiles / jnp.maximum(counts, 1.0), counts > 0
+
+
+def radial_profile_loss(x,y,key=None,where=None,aux=None,cache=None):
+	"""L2 loss between masked per-channel radial intensity profiles."""
+	aux = {} if aux is None else aux
+	profiles_x, nonempty = radial_profiles(
+		x, aux.get("spatial_mask"), aux.get("radial_bins", 16), aux.get("epsilon", 1e-8)
+	)
+	profiles_y, _ = radial_profiles(
+		y, aux.get("spatial_mask"), aux.get("radial_bins", 16), aux.get("epsilon", 1e-8)
+	)
+	active = jnp.ones(x.shape[:-2], dtype=bool) if where is None else jnp.any(where, axis=(-1, -2))
+	weights = jnp.asarray(aux.get("channel_weights", jnp.ones(x.shape[-3])), dtype=x.dtype)
+	weights = active[..., :, None] * weights[..., None] * nonempty
+	error = (profiles_x - profiles_y) ** 2
+	return jnp.sum(weights * error, axis=(-1, -2)) / jnp.maximum(jnp.sum(weights, axis=(-1, -2)), 1.0)
+
+
+def _grouped_summary_loss(loss_func, x, y, where, aux):
+	"""Project the legacy grouped state into its schema-defined target layout."""
+	schema = MICROPATTERN_GROUPED_12CH_SCHEMA
+	x = project_state_to_measurements(x[:, :schema.n_state_channels], schema)
+	y = y[:, :schema.n_measurement_channels]
+	if where is not None and where.shape[1] != schema.n_measurement_channels:
+		where = project_state_to_measurements(where[:, :schema.n_state_channels], schema)
+	return loss_func(x, y, where=where, aux=aux)
+
+
+def radial_profile_grouped_loss(x,y,key=None,where=None,aux=None,cache=None):
+	"""Radial-profile loss for the legacy grouped micropattern layout."""
+	aux = {} if aux is None else dict(aux)
+	aux.setdefault("channel_weights", MICROPATTERN_GROUPED_12CH_SCHEMA.measurement_weights)
+	return _grouped_summary_loss(radial_profile_loss, x, y, where, aux)
+
+
+def channel_correlation_grouped_loss(x,y,key=None,where=None,aux=None,cache=None):
+	"""Correlation loss for co-measured legacy micropattern channels."""
+	aux = {} if aux is None else dict(aux)
+	aux.setdefault("pairs", MICROPATTERN_GROUPED_12CH_SCHEMA.co_measurement_pairs)
+	aux.setdefault("pair_weights", MICROPATTERN_GROUPED_12CH_SCHEMA.correlation_pair_weights)
+	return _grouped_summary_loss(channel_correlation_loss, x, y, where, aux)
+
+
 @jax.jit
 def random_sampled_euclidean(x,y,key,where=None,aux=16,cache=None):
 	SAMPLES = aux
@@ -617,6 +718,21 @@ def build_loss_functions(loss_strings,loss_args):
 	_grouped_aux = {
 		"channel_importance":loss_args["channel_importance"] if "channel_importance" in loss_args else None,
 	}
+	grouped_schema = MICROPATTERN_GROUPED_12CH_SCHEMA
+	importance = loss_args.get("channel_importance", None)
+	importance = jnp.ones(grouped_schema.n_measurement_channels) if importance is None else jnp.asarray(importance)
+	_summary_aux = {"radial_bins": loss_args.get("radial_bins", 16), "epsilon": 1e-8}
+	_grouped_radial_aux = {
+		**_summary_aux,
+		"channel_weights": jnp.asarray(grouped_schema.measurement_weights) * importance,
+	}
+	_grouped_correlation_aux = {
+		**_summary_aux,
+		"pairs": grouped_schema.co_measurement_pairs,
+		"pair_weights": jnp.asarray(grouped_schema.correlation_pair_weights)
+		* jnp.sqrt(importance[jnp.asarray(grouped_schema.co_measurement_pairs)[:, 0]]
+		* importance[jnp.asarray(grouped_schema.co_measurement_pairs)[:, 1]]),
+	}
 	# _vision_extractor = None
 	# for lstr in loss_strings:
 	# 	if "clip" in lstr:
@@ -655,6 +771,10 @@ def build_loss_functions(loss_strings,loss_args):
 		"kl_divergence":kl_divergence,
 		"hellinger":hellinger_distance,
 		"average_amplitude":average_amplitude_distance,
+		"radial_profile":lambda x,y,key,where,cache:radial_profile_loss(x,y,key,where,aux=_summary_aux,cache=cache),
+		"radial_profile_grouped":lambda x,y,key,where,cache:radial_profile_grouped_loss(x,y,key,where,aux=_grouped_radial_aux,cache=cache),
+		"channel_correlation":lambda x,y,key,where,cache:channel_correlation_loss(x,y,key,where,aux=_summary_aux,cache=cache),
+		"channel_correlation_grouped":lambda x,y,key,where,cache:channel_correlation_grouped_loss(x,y,key,where,aux=_grouped_correlation_aux,cache=cache),
 		"ott":lambda x,y,key,where,cache:loss_ott.ott_loss(x,y,key,where,aux=_ott_aux),
 		"ott_chstack":lambda x,y,key,where,cache:loss_ott.ott_channel_stack_loss(x,y,key,where,aux=_ott_aux),
 		"ott_grouped":lambda x,y,key,where,cache:loss_ott.ott_grouped_loss(x,y,key,where,aux=_ott_aux),
@@ -680,7 +800,10 @@ def build_loss_functions(loss_strings,loss_args):
 			raise ValueError("loss.channel_importance cannot contain negative weights")
 		if not any(float(weight) > 0 for weight in channel_importance):
 			raise ValueError("loss.channel_importance must contain at least one positive weight")
-		grouped_losses = {"l2_grouped", "vgg_grouped", "vgg_grouped_and_l2"}
+		grouped_losses = {
+			"l2_grouped", "vgg_grouped", "vgg_grouped_and_l2",
+			"radial_profile_grouped", "channel_correlation_grouped",
+		}
 		unsupported = [name for name in configured_loss_names if name not in grouped_losses]
 		if unsupported:
 			raise ValueError(

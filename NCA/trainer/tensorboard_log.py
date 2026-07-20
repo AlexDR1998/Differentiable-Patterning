@@ -36,16 +36,23 @@ def _is_grouped_9ch_colony_augmenter(data_augmenter):
 	)
 
 
-def _trajectory_snapshot_channels(T, data_augmenter, t):
+def _trajectory_snapshot_channels(T, data_augmenter, t, channel_schema=None):
 	T_snapshot = T[::t]
+	schema = channel_schema or getattr(data_augmenter, "schema", None)
+	if schema is not None:
+		return T_snapshot[:, np.asarray(schema.target_to_state)]
 	if _is_grouped_9ch_colony_augmenter(data_augmenter):
 		return duplicate_x_channels_9ch(T_snapshot[:,:9])
 	return T_snapshot[:,:data_augmenter.OBS_CHANNELS]
 
 
-def _target_aligned_diagnostic_channels(outputs, grouped_channels=False):
+def _target_aligned_diagnostic_channels(outputs, grouped_channels=False, channel_schema=None):
 	"""Convert model outputs to the target channel layout used by diagnostics."""
 	outputs = np.array(outputs)
+	if channel_schema is not None:
+		if outputs.shape[2] < channel_schema.n_state_channels:
+			raise ValueError("Diagnostic outputs have fewer channels than the channel schema")
+		return outputs[:, :, np.asarray(channel_schema.target_to_state)]
 	if not grouped_channels:
 		return outputs
 	if outputs.shape[2] < 9:
@@ -163,6 +170,7 @@ def compute_channel_correlation_diagnostics(
 	targets,
 	boundary_masks=None,
 	epsilon=1e-8,
+	experiment_group_sizes=None,
 ):
 	"""Compute masked pixelwise Pearson channel correlations per timestep.
 
@@ -229,6 +237,16 @@ def compute_channel_correlation_diagnostics(
 
 	prediction_mean = np.mean(prediction_correlations, axis=0)
 	target_mean = np.mean(target_correlations, axis=0)
+	if experiment_group_sizes is not None:
+		if sum(experiment_group_sizes) != channel_count:
+			raise ValueError("Experiment group sizes must cover all diagnostic channels")
+		co_measured = np.zeros((channel_count, channel_count), dtype=bool)
+		start = 0
+		for size in experiment_group_sizes:
+			co_measured[start:start + size, start:start + size] = True
+			start += size
+		prediction_mean = np.where(co_measured, prediction_mean, np.nan)
+		target_mean = np.where(co_measured, target_mean, np.nan)
 	return {
 		"prediction_channel_correlation": prediction_mean,
 		"target_channel_correlation": target_mean,
@@ -341,7 +359,7 @@ def plot_channel_correlation_diagnostics(
 	if experiment_group_sizes is not None and sum(experiment_group_sizes) == channel_count:
 		group_boundaries = np.cumsum(experiment_group_sizes)[:-1] - 0.5
 
-	difference_limit = max(float(np.max(np.abs(difference))), 0.05)
+	difference_limit = max(float(np.nanmax(np.abs(difference))), 0.05)
 	figure, axes = plt.subplots(
 		time_count,
 		2,
@@ -479,6 +497,7 @@ class NCA_Train_log(Train_log):
 		singular_value_config=None,
 		boundary_mask=None,
 		channel_names=None,
+		channel_schema=None,
 		timepoint_names=None,
 		data_augmenter=None,
 		radial_bins=16,
@@ -489,6 +508,12 @@ class NCA_Train_log(Train_log):
 		self.diagnostic_boundary_mask = None if boundary_mask is None else np.array(boundary_mask)
 		self.diagnostic_grouped_channels = (
 			False if data_augmenter is None else _is_grouped_9ch_colony_augmenter(data_augmenter)
+		)
+		self.diagnostic_channel_schema = channel_schema or getattr(data_augmenter, "schema", None)
+		self.diagnostic_group_sizes = (
+			self.diagnostic_channel_schema.group_sizes
+			if self.diagnostic_channel_schema is not None
+			else (4, 4, 3, 1) if self.diagnostic_grouped_channels else None
 		)
 		self.radial_bins = int(radial_bins)
 		if self.diagnostic_targets is None:
@@ -516,6 +541,7 @@ class NCA_Train_log(Train_log):
 			predictions = _target_aligned_diagnostic_channels(
 				predictions,
 				grouped_channels=self.diagnostic_grouped_channels,
+				channel_schema=getattr(self, "diagnostic_channel_schema", None),
 			)
 			targets = self.diagnostic_targets
 			predictions = predictions[:, :targets.shape[1], :targets.shape[2]]
@@ -533,6 +559,7 @@ class NCA_Train_log(Train_log):
 				predictions,
 				targets,
 				boundary_masks=self.diagnostic_boundary_mask,
+				experiment_group_sizes=getattr(self, "diagnostic_group_sizes", None),
 			)
 			prediction_totals = diagnostics["prediction_total_intensity"]
 			target_totals = diagnostics["target_total_intensity"]
@@ -565,9 +592,7 @@ class NCA_Train_log(Train_log):
 					correlation_diagnostics,
 					self.channel_names,
 					self.timepoint_names,
-					experiment_group_sizes=(4, 4, 3, 1)
-					if self.diagnostic_grouped_channels
-					else None,
+					experiment_group_sizes=getattr(self, "diagnostic_group_sizes", None),
 				),
 				step=i,
 			)
@@ -694,7 +719,8 @@ class NCA_Train_log(Train_log):
 		NUMBER_OF_IMAGES=x[0].shape[0]
 		# Log true data for side by side comparison
 		true_data = DATA_AUGMENTER.return_true_data()[0]
-		true_data = true_data[:,:DATA_AUGMENTER.OBS_CHANNELS]
+		schema = self.diagnostic_channel_schema or getattr(DATA_AUGMENTER, "schema", None)
+		true_data = true_data[:, :schema.n_measurement_channels if schema else DATA_AUGMENTER.OBS_CHANNELS]
 		true_data = rearrange(true_data,"T C x y -> (C x) (T y)")
 		true_data = repeat(true_data,"x y -> x y 3")
 		self.log_image(
@@ -711,7 +737,9 @@ class NCA_Train_log(Train_log):
 		for b in tqdm(range(BATCHES)):
 			T, latents = nca.run(t*NUMBER_OF_IMAGES, x[b][0], boundary_callback[b], SAVE_LATENTS=True)  # Shape T C x y
 			self.log_video("Evaluation/trajectory",T[:,:3],step=None)
-			T_snapshot = _trajectory_snapshot_channels(T, DATA_AUGMENTER, t)
+			T_snapshot = _trajectory_snapshot_channels(
+				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema
+			)
 			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
 			T_snapshot = repeat(T_snapshot,"x y -> x y 3")
 			SNAPSHOTS.append(T_snapshot)
@@ -744,6 +772,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 		singular_value_config=None,
 		boundary_mask=None,
 		channel_names=None,
+		channel_schema=None,
 		timepoint_names=None,
 		data_augmenter=None,
 		radial_bins=16,
@@ -754,6 +783,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 			singular_value_config=singular_value_config,
 			boundary_mask=boundary_mask,
 			channel_names=channel_names,
+			channel_schema=channel_schema,
 			timepoint_names=timepoint_names,
 			data_augmenter=data_augmenter,
 			radial_bins=radial_bins,
@@ -785,7 +815,8 @@ class NCA_knockout_Train_log(NCA_Train_log):
 		NUMBER_OF_IMAGES=x[0].shape[0]
 		# Log true data for side by side comparison
 		true_data = DATA_AUGMENTER.return_true_data()[0]
-		true_data = true_data[:,:DATA_AUGMENTER.OBS_CHANNELS]
+		schema = self.diagnostic_channel_schema or getattr(DATA_AUGMENTER, "schema", None)
+		true_data = true_data[:, :schema.n_measurement_channels if schema else DATA_AUGMENTER.OBS_CHANNELS]
 		true_data = rearrange(true_data,"T C x y -> (C x) (T y)")
 		true_data = repeat(true_data,"x y -> x y 3")
 		self.log_image(
@@ -817,7 +848,9 @@ class NCA_knockout_Train_log(NCA_Train_log):
 			_T_mono = rearrange(T[:,:9],"T (cx cy) X Y -> T () (cx X) (cy Y)",cx=3,cy=3)
 			_T_mono = repeat(_T_mono,"T () x y -> T 3 x y")
 			self.log_video("Evaluation/trajectory_monochrome",_T_mono,step=None) # type: ignore
-			T_snapshot = _trajectory_snapshot_channels(T, DATA_AUGMENTER, t)
+			T_snapshot = _trajectory_snapshot_channels(
+				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema
+			)
 			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
 			T_snapshot = repeat(T_snapshot,"x y -> x y 3")
 			SNAPSHOTS.append(T_snapshot)
