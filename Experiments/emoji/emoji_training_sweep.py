@@ -54,6 +54,7 @@ def run(cfg):
         DATA_AUGMENTER=data_augmenter,
         BOUNDARY_MODE=cfg.trainer.boundary_mode,
         SHARDING=cfg.trainer.sharding,
+        BATCH_MODE=cfg.trainer.get("batch_mode", "tree"),
         GRAD_LOSS=cfg.trainer.grad_loss,
         OBS_CHANNELS=cfg.data.observed_channels,
         DATA_CHANNELS=cfg.data.data_channels,

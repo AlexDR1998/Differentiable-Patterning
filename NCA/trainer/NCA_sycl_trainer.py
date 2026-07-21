@@ -28,6 +28,11 @@ class NCA_sycl_Trainer(NCA_Trainer):
 
     def __init__(self, *args, SYCL_FUSED_STEPS=2, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.BATCH_BACKEND.is_array:
+            raise NotImplementedError(
+                "Dense array batching is currently implemented for the ordinary "
+                "JAX trainer only; use BATCH_MODE='tree' with NCA_sycl_Trainer"
+            )
         if isinstance(SYCL_FUSED_STEPS, bool) or not isinstance(
             SYCL_FUSED_STEPS, Integral
         ):

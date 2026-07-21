@@ -13,6 +13,7 @@ import datetime
 # import Common.trainer.loss_ott as loss_ott
 from Common.trainer.loss import build_loss_functions,build_loss_initialiser
 from Common.trainer.loss_multi_target import init_texture_params, multi_target_loss
+from Common.trainer.batch_backend import make_batch_backend
 from NCA.trainer.tensorboard_log import (
 	NCA_Train_log,
 	mNCA_Train_log,
@@ -30,7 +31,6 @@ from NCA.trainer.data_augmenter_nca import DataAugmenter
 import NCA.trainer.NCA_regulariser as regularisers
 from NCA.trainer.training_execution import TrainingExecution
 from einops import repeat, reduce, rearrange, einsum
-from Common.utils import key_pytree_gen
 from Common.model.boundary import model_boundary, hard_boundary, no_boundary
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key
@@ -39,6 +39,12 @@ import time
 
 INTERNAL_LOOP_DTYPE = jnp.bfloat16 # dtype to use for values inside the loop over timesteps. Should be low precision to save memory, but not so low that it causes instability. Can experiment with bfloat16 or float16.
 LOSS_DTYPE = jnp.float32 # dtype to use for loss values. Higher precision as it accumulates over many timesteps and batches.
+
+
+def describe_batch_shapes(value):
+	if hasattr(value, "shape"):
+		return str(value.shape)
+	return str([leaf.shape for leaf in jtu.tree_leaves(value)])
 
 
 def resolve_loss_component_weights(weights, loss_count):
@@ -269,6 +275,7 @@ class NCA_Trainer(object):
 				 CHANNEL_NAMES = None,
 				 TIMEPOINT_NAMES = None,
 				 LOSS_TIME_CHANNEL_MASK = None, # If none, is overwritten to ones mask that does nothing
+				 BATCH_MODE = "tree",
 				 MODEL_DIRECTORY="models/",
 				 LOG_DIRECTORY="logs/"):
 		"""
@@ -340,21 +347,31 @@ class NCA_Trainer(object):
 		self.SHARDING = SHARDING
 		self.GRAD_LOSS = GRAD_LOSS
 		self.LOSS_TIME_CHANNEL_MASK = LOSS_TIME_CHANNEL_MASK
+		resolved_batch_mode = BATCH_MODE
+		if resolved_batch_mode == "auto":
+			resolved_batch_mode = (
+				"array" if hasattr(data, "ndim") and data.ndim == 5 else "tree"
+			)
 		# Set up data and data augmenter class
 		self._data_raw = data
-		self.DATA_AUGMENTER = DATA_AUGMENTER(
+		augmenter_kwargs = dict(
 			data_true=data,
 			hidden_channels=0 if CHANNEL_SCHEMA is not None else self.CHANNELS-self.DATA_CHANNELS,
 			nca_model=self.NCA_model
 			)
+		if resolved_batch_mode != "tree":
+			augmenter_kwargs["batch_mode"] = resolved_batch_mode
+		self.DATA_AUGMENTER = DATA_AUGMENTER(**augmenter_kwargs)
 		self.DATA_AUGMENTER.data_init(self.SHARDING)
 		self.data = self.DATA_AUGMENTER.return_saved_data()
+		self.BATCH_BACKEND = make_batch_backend(self.data, resolved_batch_mode)
 		self.BATCHES = len(self.data)
 		print("Batches = "+str(self.BATCHES))
 		
 		# Set up partial mask of channels / timesteps
 		if self.LOSS_TIME_CHANNEL_MASK is None:
-			self.LOSS_TIME_CHANNEL_MASK = jnp.ones((self.BATCHES,data.shape[1]-1,self.DATA_CHANNELS),dtype=jnp.float32)
+			timepoints = data.shape[1] if hasattr(data, "shape") else data[0].shape[0]
+			self.LOSS_TIME_CHANNEL_MASK = jnp.ones((self.BATCHES,timepoints-1,self.DATA_CHANNELS),dtype=jnp.float32)
 
 		_model_kernel_length = len(self.NCA_model.KERNEL_STR)
 		if "GRAD" in self.NCA_model.KERNEL_STR:
@@ -368,13 +385,16 @@ class NCA_Trainer(object):
 			print("Timestep / Channel mask: ")
 			print(self.LOSS_TIME_CHANNEL_MASK[:,:,:,0,0])
 
-		self.LOSS_TIME_CHANNEL_MASK = list(self.LOSS_TIME_CHANNEL_MASK)
+		if not self.BATCH_BACKEND.is_array:
+			self.LOSS_TIME_CHANNEL_MASK = list(self.LOSS_TIME_CHANNEL_MASK)
 		# Set up boundary augmenter class
 		# length of BOUNDARY_MASK PyTree should be same as number of batches
 		
 
 		# For NCA with latent state, boundary mask should be in the latent space
 		if BOUNDARY_MASK is not None:
+			BOUNDARY_MASK = self.DATA_AUGMENTER.pad_and_stack_spatial(BOUNDARY_MASK)
+			self.DIAGNOSTIC_BOUNDARY_MASK = BOUNDARY_MASK
 			BOUNDARY_MASK = self.NCA_model.real_to_latent(BOUNDARY_MASK)
 
 		self.BOUNDARY_CALLBACK = []
@@ -394,7 +414,8 @@ class NCA_Trainer(object):
 		
 	def setup_logging(self,BACKEND,wandb_args,KNOCKOUT_ARGS,SINGULAR_VALUE_LOGGING_CONFIG=None):
 		# Set logging behvaiour based on provided filename
-		print(f"Raw data shape: {jnp.array(self._data_raw).shape}")
+		print(f"Raw data shape(s): {describe_batch_shapes(self._data_raw)}")
+		logging_data = self.DATA_AUGMENTER.return_observed_data()
 		if self.model_filename is None:
 			self.model_filename = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 			self.IS_LOGGING = False
@@ -403,17 +424,17 @@ class NCA_Trainer(object):
 				self.IS_LOGGING = True
 				self.LOG_DIR = self._LOG_DIRECTORY+self.model_filename+"/train"
 				if isinstance(self.NCA_model ,kaNCA) or uses_fast_kan_diagnostics(self.NCA_model):
-					self.LOGGER = kaNCA_Train_log(self.LOG_DIR,self._data_raw)
+					self.LOGGER = kaNCA_Train_log(self.LOG_DIR,logging_data)
 				elif isinstance(self.NCA_model , mNCA):
-					self.LOGGER = mNCA_Train_log(self.LOG_DIR,self._data_raw)
+					self.LOGGER = mNCA_Train_log(self.LOG_DIR,logging_data)
 				elif isinstance(self.NCA_model , aNCA):
-					self.LOGGER = aNCA_Train_log(self.LOG_DIR,self._data_raw)
+					self.LOGGER = aNCA_Train_log(self.LOG_DIR,logging_data)
 				# elif isinstance(self.NCA_model, uNCA):
 					# self.LOGGER = uNCA_Train_log(self.LOG_DIR, self._data_raw)
 				else:
 					self.LOGGER = NCA_Train_log(
 						self.LOG_DIR,
-						self._data_raw,
+						logging_data,
 						singular_value_config=SINGULAR_VALUE_LOGGING_CONFIG,
 					)
 				print("Logging training to: "+self.LOG_DIR)
@@ -426,7 +447,7 @@ class NCA_Trainer(object):
 				
 				if KNOCKOUT_ARGS["time"] is not None: # Nodal KO has differet logging behaviour
 					self.LOGGER = NCA_knockout_Train_log(
-						data=self._data_raw,
+						data=logging_data,
 						wandb_config=wandb_args,
 						boundary_mask=self.DIAGNOSTIC_BOUNDARY_MASK,
 						channel_names=self.CHANNEL_NAMES,
@@ -439,7 +460,7 @@ class NCA_Trainer(object):
 				else:
 					logger_class = select_wandb_train_logger_class(self.NCA_model)
 					self.LOGGER = logger_class(
-						data=self._data_raw,
+						data=logging_data,
 						wandb_config=wandb_args,
 						boundary_mask=self.DIAGNOSTIC_BOUNDARY_MASK,
 						channel_names=self.CHANNEL_NAMES,
@@ -535,9 +556,8 @@ class NCA_Trainer(object):
 		Accelerator-specific trainers may override this hook without adding
 		backend flags or batching branches to the core training loop.
 		"""
-		v_nca = jax.vmap(nca, in_axes=(0, None, 0), out_axes=0, axis_name="N")
-		return lambda x, callback, key_array: jtu.tree_map(
-			v_nca, x, callback, key_array
+		return lambda x, callback, key_array: self.BATCH_BACKEND.apply_model(
+			nca, x, callback, key_array
 		)
 
 	def _training_execution(self):
@@ -558,13 +578,13 @@ class NCA_Trainer(object):
 		training_execution,
 	):
 		"""Reference one-step scan; SYCL trainers may override the rollout."""
-		state_shape = x_latent[0].shape[0]
+		state_shape = self.BATCH_BACKEND.time_size(x_latent)
 
 		def nca_step(carry, j):
 			step_key, state, processed, reg_logs = carry
 			step_key = jr.fold_in(step_key, j)
-			key_array = key_pytree_gen(
-				step_key, (len(state), state_shape)
+			key_array = self.BATCH_BACKEND.keys(
+				step_key, self.BATCHES, state_shape
 			)
 			new_state = vv_nca(
 				state, training_execution.boundary_callbacks(), key_array
@@ -728,6 +748,7 @@ class NCA_Trainer(object):
 			"LOOP_AUTODIFF":LOOP_AUTODIFF,
 			"SPARSE_PRUNING":SPARSE_PRUNING,
 			"TARGET_SPARSITY":TARGET_SPARSITY,
+			"BATCH_MODE":self.BATCH_BACKEND.mode,
 		}
 		if is_multi_target:
 			self.TRAIN_CONFIG["MULTI_TARGET"] = {
@@ -862,9 +883,9 @@ class NCA_Trainer(object):
 				vv_nca = self._make_batched_nca(_nca)
 				# provide a batched processor that maps model.latent_to_real over the batch/tree
 				v_latent_to_real = jax.vmap(lambda model_x: _nca.latent_to_real(model_x), in_axes=0, out_axes=0)
-				vv_latent_to_real = lambda x: jtu.tree_map(v_latent_to_real, x)
+				vv_latent_to_real = lambda x: self.BATCH_BACKEND.map(v_latent_to_real, x)
 				v_real_to_latent = jax.vmap(lambda model_x: _nca.real_to_latent(model_x), in_axes=0, out_axes=0)
-				vv_real_to_latent = lambda x: jtu.tree_map(v_real_to_latent, x)
+				vv_real_to_latent = lambda x: self.BATCH_BACKEND.map(v_real_to_latent, x)
 				# Set up internal logs for regularisers
 				reg_logs_internal = {
 					name: jnp.zeros(len(x_latent), dtype=LOSS_DTYPE)
@@ -888,8 +909,8 @@ class NCA_Trainer(object):
 				if is_multi_target:
 					boundary = jnp.asarray(self.DIAGNOSTIC_BOUNDARY_MASK)[0, 0]
 					losses, components = multi_target_loss(
-						jnp.stack(x_proc)[:, :, :self.OBS_CHANNELS],
-						jnp.stack(y_proc)[:, :, :self.DATA_CHANNELS],
+						(x_proc if self.BATCH_BACKEND.is_array else jnp.stack(x_proc))[:, :, :self.OBS_CHANNELS],
+						(y_proc if self.BATCH_BACKEND.is_array else jnp.stack(y_proc))[:, :, :self.DATA_CHANNELS],
 						boundary,
 						self.CHANNEL_SCHEMA,
 						multi_target_params,
@@ -907,9 +928,9 @@ class NCA_Trainer(object):
 						if name.startswith("group/")
 					})
 				else:
-					loss_key = key_pytree_gen(key, (len(x_latent),))
+					loss_key = self.BATCH_BACKEND.keys(key, self.BATCHES)
 					y_latent = vv_real_to_latent(y_proc)
-					losses = jnp.array(jtu.tree_map(
+					losses = self.BATCH_BACKEND.loss_map(
 						self.loss_func,
 						x_proc,
 						y_proc,
@@ -917,8 +938,8 @@ class NCA_Trainer(object):
 						y_latent,
 						training_execution.loss_time_channel_mask(),
 						training_execution.loss_cache(),
-						loss_key
-						))
+						loss_key,
+					)
 				regulariser_losses = {
 					name: coefficient * jnp.mean(reg_logs_internal[name]) / t
 					for name, coefficient in INTERMEDIATE_REGULARISER_COEFFS.items()
@@ -970,7 +991,11 @@ class NCA_Trainer(object):
 		# # Split data into x and y
 		x,y = self.DATA_AUGMENTER.data_load(key)
 		# x = jtu.tree_map(self.NCA_model.real_to_latent, x)
-		print(f"Initial x shape: {jnp.array(x).shape}, y shape: {jnp.array(y).shape}",flush=True)
+		print(
+			f"Initial x shape(s): {describe_batch_shapes(x)}, "
+			f"y shape(s): {describe_batch_shapes(y)}",
+			flush=True,
+		)
 		
 		# If we are using a loss function that needs to initialise some cache based on the data, do that here and add to LOSS_ARGS
 		if is_multi_target and LOSS_ARGS.get("multi_target_weights", {}).get("texture", 1.0):
@@ -982,12 +1007,18 @@ class NCA_Trainer(object):
 			)
 		loss_initialiser = None if is_multi_target else build_loss_initialiser(LOSS_FUNC_STR,LOSS_ARGS)
 		if loss_initialiser is not None:
-			y_decoded_obs = jtu.tree_map(lambda yi: yi[:, :self.DATA_CHANNELS], y)
-			vgg_target_cache_decoded = loss_initialiser(y_decoded_obs,key,self.LOSS_TIME_CHANNEL_MASK) # dict of {"vgg_params": ..., "target_feats": List[Batches] of arrays [N, ...]}
+			y_decoded_obs = self.BATCH_BACKEND.map(lambda yi: yi[:, :self.DATA_CHANNELS], y)
+			# VGG initialisers retain their established per-batch PyTree API; this
+			# happens once outside the compiled step and is converted back below.
+			y_decoded_list = self.BATCH_BACKEND.to_list(y_decoded_obs)
+			mask_list = self.BATCH_BACKEND.to_list(self.LOSS_TIME_CHANNEL_MASK)
+			vgg_target_cache_decoded = loss_initialiser(y_decoded_list,key,mask_list)
 			v_real_to_latent = jax.vmap(lambda model_x: self.NCA_model.real_to_latent(model_x), in_axes=0, out_axes=0)
-			vv_real_to_latent = lambda x: jtu.tree_map(v_real_to_latent, x)
+			vv_real_to_latent = lambda x: self.BATCH_BACKEND.map(v_real_to_latent, x)
 			_y_latent = vv_real_to_latent(y_decoded_obs)
-			vgg_target_cache_latent = loss_initialiser(_y_latent,key,self.LOSS_TIME_CHANNEL_MASK)
+			vgg_target_cache_latent = loss_initialiser(
+				self.BATCH_BACKEND.to_list(_y_latent), key, mask_list
+			)
 
 			LOSS_ARGS = {**LOSS_ARGS, "vgg_params": vgg_target_cache_decoded["vgg_params"]} # Pre-trained VGG parameters for perceptual loss, if needed. Does not need batched.
 			use_cached_vgg_targets = (
@@ -1001,16 +1032,17 @@ class NCA_Trainer(object):
 				# 	"decoded": vgg_target_cache_decoded["target_feats"],
 				# 	"latent": vgg_target_cache_latent["target_feats"]
 				# }
-				self.LOSS_CACHE = [{
+				cache_list = [{
 					"decoded": vgg_target_cache_decoded["target_feats"][b],
 					"latent": vgg_target_cache_latent["target_feats"][b]
 					} for b in range(len(x))]
+				self.LOSS_CACHE = self.BATCH_BACKEND.stack_batch_pytree(cache_list)
 			else:
 				# self.LOSS_CACHE = {
 				# 	"decoded":[None]*len(x), # If using random cropping, can't use precomputed cache of target features as different crops each time
 				# 	"latent":[None]*len(x)
 				# }
-				self.LOSS_CACHE = [{
+				self.LOSS_CACHE = None if self.BATCH_BACKEND.is_array else [{
 					"decoded": None,
 					"latent": None
 					} for b in range(len(x))]
@@ -1020,7 +1052,7 @@ class NCA_Trainer(object):
 			# 		"decoded":[None]*len(x), # If using random cropping, can't use precomputed cache of target features as different crops each time
 			# 		"latent":[None]*len(x)
 			# 	}
-			self.LOSS_CACHE = [{
+			self.LOSS_CACHE = None if self.BATCH_BACKEND.is_array else [{
 				"decoded": None,
 				"latent": None
 				} for b in range(len(x))]

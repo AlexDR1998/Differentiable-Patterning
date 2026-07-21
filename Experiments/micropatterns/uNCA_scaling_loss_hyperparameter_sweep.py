@@ -44,6 +44,7 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         f"_t{cfg.run.t}"
         f"_lr{cfg.optimiser.learn_rate}"
         f"_dr{cfg.optimiser.decay_rate}"
+        f"_batch{cfg.trainer.get('batch_mode', 'tree')}"
     )
     repeat = _cfg_get(cfg.run, "repeat", None)
     if repeat is not None:
@@ -65,7 +66,7 @@ def run(cfg):
         cfg,
         return_schedule=True,
     )
-    data,_,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK,_data_cfg_str = load_data(cfg)
+    data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK,_data_cfg_str = load_data(cfg)
     data_augmenter,_data_augmenter_cfg_str = build_data_augmenter(cfg, CHANNEL_TIMESTEP_MASK)
     loss_time_channel_mask = expand_channel_timestep_mask_for_loss(cfg, CHANNEL_TIMESTEP_MASK)
     target_timepoints = [f"t{time}h" for time in list(cfg.data.timesteps)[1:]]
@@ -87,10 +88,12 @@ def run(cfg):
         model_filename=run_name,
         BOUNDARY_MASK=boundary_mask,
         CHANNEL_NAMES=CHANNEL_NAMES,
+        CHANNEL_SCHEMA=aux.get("channel_schema"),
         TIMEPOINT_NAMES=target_timepoints,
         LOSS_TIME_CHANNEL_MASK=loss_time_channel_mask,
         DATA_AUGMENTER=data_augmenter,  # pyright: ignore[reportArgumentType]
         GRAD_LOSS=cfg.trainer.grad_loss,
+        BATCH_MODE=cfg.trainer.get("batch_mode", "tree"),
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
     )
     trainer.train(

@@ -22,16 +22,18 @@ class DataAugmenter(DataAugmenter4Ch):
             Final states
 
         """
-        x = jtu.tree_map(lambda data:data[:-N_steps],self.data_saved)
-        y = jtu.tree_map(lambda data:data[N_steps:],self.data_saved)
+        if self.batch_mode == "array":
+            x = self.data_saved[:, :-N_steps]
+            y = self.data_saved[:, N_steps:]
+        else:
+            x = jtu.tree_map(lambda data:data[:-N_steps],self.data_saved)
+            y = jtu.tree_map(lambda data:data[N_steps:],self.data_saved)
         # Need to have x be 9 channels and y be 12 channels for handling duplicate channels from different colonies
         def _reduce_to_9(data):
             x_obs = [data[:,:4],data[:,7:11],data[:,11:12]]
             x_obs = np.concatenate(x_obs,axis=1)
             return np.pad(x_obs,((0,0),(0,data.shape[1] - 9),(0,0),(0,0)))
-        x = jtu.tree_map(_reduce_to_9,x)
-        
-        x = jtu.tree_map(lambda x:self.real_to_latent(x),x)
+        x = self.map_batches(_reduce_to_9, x)
+        x = self.map_batches(self.real_to_latent, x)
         
         return x,y
-

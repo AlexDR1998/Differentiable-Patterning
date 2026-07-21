@@ -1,11 +1,7 @@
 import jax.numpy as jnp
 import jax
-import time
 import equinox as eqx
-from jax.experimental import mesh_utils
-from Common.utils import key_pytree_gen
 from Common.trainer.abstract_data_augmenter_tree import DataAugmenterAbstract
-import itertools
 
 class DataAugmenter(DataAugmenterAbstract):
 	
@@ -92,6 +88,25 @@ class DataAugmenter(DataAugmenterAbstract):
 
 @eqx.filter_jit
 def jittable_callback_bit(x,x_true,OBS_CHANNELS,key):
+	if hasattr(x, "ndim"):
+		B, T = x.shape[:2]
+		x = x.at[:, 1:].set(x[:, :-1])
+		x = x.at[:, 0].set(x_true[:, 0])
+		N_ELIGIBLE = B * (T - 1)
+		N_INJECT = N_ELIGIBLE // 2
+		if N_INJECT > 0:
+			scores = jax.random.uniform(key, shape=(N_ELIGIBLE,))
+			inject_inds = jnp.argsort(scores)[:N_INJECT]
+			inject_mask = jnp.zeros((N_ELIGIBLE,), dtype=bool).at[inject_inds].set(True)
+			inject_mask = inject_mask.reshape((B, T - 1, 1, 1, 1))
+			x_obs = jnp.where(
+				inject_mask,
+				x_true[:, 1:, :OBS_CHANNELS],
+				x[:, 1:, :OBS_CHANNELS],
+			)
+			x = x.at[:, 1:, :OBS_CHANNELS].set(x_obs)
+		return x
+
 	propagate_xn = lambda x:x.at[1:].set(x[:-1])
 	reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
 	

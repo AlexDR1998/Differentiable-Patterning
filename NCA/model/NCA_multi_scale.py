@@ -13,6 +13,9 @@ from NCA.model.NCA_subchannels import sub_NCA, Ops
 
 
 class mNCA(AbstractModel):
+    # Boundary callbacks are evaluated inside every sub-NCA as well as on the
+    # combined update, so they cannot be moved to a single batched epilogue.
+    BATCHED_BOUNDARY_MODE = "internal"
     subNCAs: list
     N_CHANNELS: int
     GATED: bool

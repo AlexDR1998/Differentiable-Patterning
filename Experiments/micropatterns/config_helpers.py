@@ -74,6 +74,39 @@ def masked_reinject_callback_bit(
     knockout_times,
     n_inject=None,
 ):
+    if hasattr(x, "ndim"):
+        B, T = x.shape[:2]
+        x = x.at[:, 1:].set(x[:, :-1])
+        x = x.at[:, 0].set(x_true[:, 0])
+        eligible = B * (T - 1)
+        inject_count = eligible // 2 if n_inject is None else n_inject
+        if inject_count > 0:
+            scores = jax.random.uniform(key, shape=(eligible,))
+            inject_inds = jnp.argsort(scores)[:inject_count]
+            inject = jnp.zeros((eligible,), dtype=bool).at[inject_inds].set(True)
+            inject = inject.reshape((B, T - 1, 1))
+            measured = channel_timestep_mask[:, : T - 1]
+            if measured.shape[2] < obs_channels:
+                measured = jnp.pad(
+                    measured,
+                    ((0, 0), (0, 0), (0, obs_channels - measured.shape[2])),
+                )
+            mask = (inject & measured[:, :, :obs_channels].astype(bool))[..., None, None]
+            observed = jnp.where(
+                mask,
+                x_true[:, 1:, :obs_channels],
+                x[:, 1:, :obs_channels],
+            )
+            x = x.at[:, 1:, :obs_channels].set(observed)
+
+        knockout_index = knockout_times // 12
+        zero_mask = (
+            (knockout_times[:, None] >= 0)
+            & (jnp.arange(T)[None] >= knockout_index[:, None])
+        )
+        nodal = jnp.where(zero_mask[..., None, None], 0.0, x[:, :, NODAL_CHANNEL])
+        return x.at[:, :, NODAL_CHANNEL].set(nodal)
+
     propagate_xn = lambda xi: xi.at[1:].set(xi[:-1])
     reset_x0 = lambda xi, xi_true: xi.at[0].set(xi_true[0])
 
@@ -166,8 +199,8 @@ def build_data_augmenter(cfg, channel_timestep_mask=None):
         def data_callback(self,x,y,i,key):
             x_true,_ =self.split_x_y(1)	
             x = masked_reinject_callback_bit(
-                _as_tree(x),
-                _as_tree(x_true),
+                x,
+                x_true,
                 self.OBS_CHANNELS,
                 jax.random.fold_in(key, 0),
                 self.channel_timestep_mask,
@@ -396,10 +429,33 @@ def load_data(cfg, impath=None):
                 f"when duplicate_final_timestep is enabled. Got {CHANNEL_TIMESTEP_MASK.shape}."
             )
 
-    #Data and boundary_mask is of size [B,T,C,W,H].
-    # W and H are 500, we want to pad them to 512.
-    data = jnp.pad(data,((0,0),(0,0),(0,0),(6,6),(6,6)))
-    boundary_mask = jnp.pad(boundary_mask,((0,0),(0,0),(6,6),(6,6)))
+    # Data and boundary_mask are [B,T,C,H,W] and [B,1,H,W]. Keep the
+    # historical six-pixel border unless a benchmark/experiment explicitly
+    # requests aligned spatial dimensions.
+    pad_multiple = cfg.data.get("pad_multiple", None)
+    if pad_multiple is None:
+        height_padding = (6, 6)
+        width_padding = (6, 6)
+    else:
+        pad_multiple = int(pad_multiple)
+        if pad_multiple <= 0:
+            raise ValueError("data.pad_multiple must be a positive integer or null")
+
+        def aligned_padding(size):
+            extra = (-size) % pad_multiple
+            return extra // 2, extra - extra // 2
+
+        height_padding = aligned_padding(data.shape[-2])
+        width_padding = aligned_padding(data.shape[-1])
+
+    data = jnp.pad(
+        data,
+        ((0, 0), (0, 0), (0, 0), height_padding, width_padding),
+    )
+    boundary_mask = jnp.pad(
+        boundary_mask,
+        ((0, 0), (0, 0), height_padding, width_padding),
+    )
     
 
     cfg_str = (

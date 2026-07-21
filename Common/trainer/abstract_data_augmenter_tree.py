@@ -5,8 +5,6 @@ import jax
 import time
 import equinox as eqx
 import optax
-from jax.experimental import mesh_utils
-from Common.utils import key_pytree_gen
 from jaxtyping import Array, Float, PyTree, Scalar, Int, Key
 import itertools
 from einops import rearrange
@@ -16,7 +14,8 @@ class DataAugmenterAbstract(object):
 	def __init__(self,
 			  	 data_true:PyTree[Float[Array, "N C W H"]],
 				 hidden_channels=0,
-				 nca_model=None):
+				 nca_model=None,
+				 batch_mode=None):
 		"""
 		Class for handling data augmentation for NCA training. 
 		data_init is called before training,
@@ -35,22 +34,100 @@ class DataAugmenterAbstract(object):
 		hidden_channels : int optional
 			number of hidden channels to zero-pad to data. Defaults to zero
 		"""
+		self.batch_mode = batch_mode or getattr(self, "BATCH_MODE", "tree")
+		if self.batch_mode not in {"tree", "array"}:
+			raise ValueError("batch_mode must be 'tree' or 'array'")
 		if nca_model is None:
 			self.real_to_latent = lambda x:x
 		else:
 			self.real_to_latent = nca_model.real_to_latent
 		self.OBS_CHANNELS = data_true[0].shape[1]
-		data_tree = []
-		try:
-			for i in range(data_true.shape[0]): # if data is provided as big array, convert to list of arrays. If data is list of arrays, this will leave it unchanged
-				data_tree.append(data_true[i])
-		except:
-			data_tree = data_true
-		data_true = jtu.tree_map(lambda x: jnp.pad(x,((0,0),(0,hidden_channels),(0,0),(0,0))),data_tree) # Pad zeros onto hidden channels
+		self.spatial_padding = None
+		if self._batch_mode() == "array":
+			if not hasattr(data_true, "shape"):
+				trajectories = [jnp.asarray(value) for value in data_true]
+				prefix_shapes = {value.shape[:-2] for value in trajectories}
+				if len(prefix_shapes) != 1:
+					raise ValueError(
+						"Dense batching requires equal [N,C] dimensions; received "
+						f"{sorted(prefix_shapes)}"
+					)
+				max_height = max(value.shape[-2] for value in trajectories)
+				max_width = max(value.shape[-1] for value in trajectories)
+				self.spatial_padding = []
+				padded = []
+				for value in trajectories:
+					height_extra = max_height - value.shape[-2]
+					width_extra = max_width - value.shape[-1]
+					padding = (
+						height_extra // 2,
+						height_extra - height_extra // 2,
+						width_extra // 2,
+						width_extra - width_extra // 2,
+					)
+					self.spatial_padding.append(padding)
+					padded.append(
+						jnp.pad(
+							value,
+							((0, 0), (0, 0), padding[:2], padding[2:]),
+						)
+					)
+				data_true = jnp.stack(padded)
+			else:
+				data_true = jnp.asarray(data_true)
+				self.spatial_padding = [(0, 0, 0, 0)] * data_true.shape[0]
+			if data_true.ndim != 5:
+				raise ValueError(
+					"Array batching requires data shaped [B,N,C,H,W], "
+					f"got {data_true.shape}"
+				)
+			data_true = jnp.pad(
+				data_true, ((0, 0), (0, 0), (0, hidden_channels), (0, 0), (0, 0))
+			)
+		else:
+			data_tree = []
+			try:
+				for i in range(data_true.shape[0]):
+					data_tree.append(data_true[i])
+			except AttributeError:
+				data_tree = data_true
+			data_true = jtu.tree_map(
+				lambda x: jnp.pad(x, ((0, 0), (0, hidden_channels), (0, 0), (0, 0))),
+				data_tree,
+			)
 		self.hidden_channels = hidden_channels
 
 		self.data_true = data_true
 		self.data_saved = data_true
+
+	def _batch_mode(self):
+		"""Resolve the mode for legacy subclasses which do not call ``super``."""
+		return getattr(self, "batch_mode", getattr(self, "BATCH_MODE", "tree"))
+
+	def map_batches(self, function, *values):
+		"""Apply ``function`` to each logical outer-batch trajectory."""
+		if self._batch_mode() == "array":
+			return jax.vmap(function)(*values)
+		return jtu.tree_map(function, *values)
+
+	def as_array(self, value):
+		return value if self._batch_mode() == "array" else jnp.stack(value)
+
+	def restore_batch_mode(self, value):
+		return value if self._batch_mode() == "array" else list(value)
+
+	def pad_and_stack_spatial(self, values):
+		"""Apply the data padding plan to per-batch spatial auxiliary arrays."""
+		if self._batch_mode() != "array":
+			return values
+		if hasattr(values, "shape"):
+			return values
+		if len(values) != len(self.spatial_padding):
+			raise ValueError("Spatial auxiliary batch does not match data batch")
+		return jnp.stack([
+			jnp.pad(value, ((0, 0), padding[:2], padding[2:]))
+			for value, padding in zip(values, self.spatial_padding)
+		])
 		
 	def data_init(self,SHARDING = None):
 		"""
@@ -125,9 +202,14 @@ class DataAugmenterAbstract(object):
 		if key is None:
 			key = jr.PRNGKey(int(time.time()))
 		#print(x)
-		ns = jr.choice(key,jnp.arange(x[0].shape[0]),shape=(n,),replace=False)
-		x_sampled = jtu.tree_map(lambda data:data[ns],x)
-		y_sampled = jtu.tree_map(lambda data:data[ns],y)
+		time_size = x.shape[1] if self._batch_mode() == "array" else x[0].shape[0]
+		ns = jr.choice(key,jnp.arange(time_size),shape=(n,),replace=False)
+		if self._batch_mode() == "array":
+			x_sampled = x[:, ns]
+			y_sampled = y[:, ns]
+		else:
+			x_sampled = jtu.tree_map(lambda data:data[ns],x)
+			y_sampled = jtu.tree_map(lambda data:data[ns],y)
 		return x_sampled,y_sampled
 
 	def split_x_y(self,N_steps=1):
@@ -148,9 +230,13 @@ class DataAugmenterAbstract(object):
 			Final states
 
 		"""
-		x = jtu.tree_map(lambda data:data[:-N_steps],self.data_saved)
-		x = jtu.tree_map(lambda x:self.real_to_latent(x),x)
-		y = jtu.tree_map(lambda data:data[N_steps:],self.data_saved)
+		if self._batch_mode() == "array":
+			x = self.map_batches(self.real_to_latent, self.data_saved[:, :-N_steps])
+			y = self.data_saved[:, N_steps:]
+		else:
+			x = jtu.tree_map(lambda data:data[:-N_steps],self.data_saved)
+			x = jtu.tree_map(lambda x:self.real_to_latent(x),x)
+			y = jtu.tree_map(lambda data:data[N_steps:],self.data_saved)
 		return x,y
 	
 	@eqx.filter_jit
@@ -172,8 +258,12 @@ class DataAugmenterAbstract(object):
 			data padded with zeros
 
 		"""
-		#return jtu.tree_map(lambda x,am:jnp.pad(x,((0,0),(0,0),(am[0],am[1]),(am[2],am[3]))),data,[am]*len(data))
-		data = [jnp.pad(x,((0,0),(0,0),(am[0],am[1]),(am[2],am[3]))) for x in data]
+		if isinstance(am, int):
+			am = (am, am, am, am)
+		pad_width = ((0,0),(0,0),(am[0],am[1]),(am[2],am[3]))
+		if self._batch_mode() == "array":
+			return jnp.pad(data, ((0, 0), *pad_width))
+		data = [jnp.pad(x, pad_width) for x in data]
 		return data
 	
 	@eqx.filter_jit
@@ -202,6 +292,10 @@ class DataAugmenterAbstract(object):
 		if key is None:
 			key = jr.PRNGKey(int(time.time()))
 		shifts = jr.randint(key,minval=-am,maxval=am,shape=(len(data),2))
+		if self._batch_mode() == "array":
+			for b in range(data.shape[0]):
+				data = data.at[b].set(jnp.roll(data[b], shifts[b], axis=(-1, -2)))
+			return data
 		for b in range(len(data)):
 			data[b] = jnp.roll(data[b],shifts[b],axis=(-1,-2))
 		return data
@@ -231,6 +325,10 @@ class DataAugmenterAbstract(object):
 		"""
 
 		shifts = jr.randint(key,minval=-am,maxval=am,shape=(len(data),2))
+		if self._batch_mode() == "array":
+			for b in range(data.shape[0]):
+				data = data.at[b].set(jnp.roll(data[b], -shifts[b], axis=(-1, -2)))
+			return data
 		for b in range(len(data)):
 			data[b] = jnp.roll(data[b],-shifts[b],axis=(-1,-2))
 		return data
@@ -262,14 +360,34 @@ class DataAugmenterAbstract(object):
 		"""
 		if key is None:
 			key = jr.PRNGKey(int(time.time()))
-		key_array = key_pytree_gen(key, [len(data)])
-		
-		noisy = jtu.tree_map(lambda x,key:am*jr.normal(key,shape=x.shape) + (1-am)*x,data,key_array)
+		keys = jr.randint(
+			key,
+			shape=(len(data), 2),
+			minval=0,
+			maxval=2_147_483_647,
+			dtype=jnp.uint32,
+		)
+		if self._batch_mode() == "array":
+			noisy = jax.vmap(
+				lambda x, item_key: am * jr.normal(item_key, shape=x.shape) + (1-am)*x
+			)(data, keys)
+		else:
+			noisy = jtu.tree_map(
+				lambda x,item_key:am*jr.normal(item_key,shape=x.shape) + (1-am)*x,
+				data,
+				list(keys),
+			)
 		
 		if mode=="observable": # Overwrite correct data onto hidden channels
-			noisy = jtu.tree_map(lambda x,y:x.at[...,self.OBS_CHANNELS:,:,:].set(y[...,self.OBS_CHANNELS:,:,:]),noisy,data)
+			if self._batch_mode() == "array":
+				noisy = noisy.at[:, :, self.OBS_CHANNELS:].set(data[:, :, self.OBS_CHANNELS:])
+			else:
+				noisy = jtu.tree_map(lambda x,y:x.at[...,self.OBS_CHANNELS:,:,:].set(y[...,self.OBS_CHANNELS:,:,:]),noisy,data)
 		elif mode=="hidden": # Overwrite correct data onto observable channels
-			noisy = jtu.tree_map(lambda x,y:x.at[...,:self.OBS_CHANNELS,:,:].set(y[...,:self.OBS_CHANNELS,:,:]),noisy,data)
+			if self._batch_mode() == "array":
+				noisy = noisy.at[:, :, :self.OBS_CHANNELS].set(data[:, :, :self.OBS_CHANNELS])
+			else:
+				noisy = jtu.tree_map(lambda x,y:x.at[...,:self.OBS_CHANNELS,:,:].set(y[...,:self.OBS_CHANNELS,:,:]),noisy,data)
 		return noisy
 	
 
@@ -324,7 +442,11 @@ class DataAugmenterAbstract(object):
 		# 	return image
 
 
-		# Get the leaves (individual images) and the structure of the PyTree
+		if self._batch_mode() == "array":
+			keys = jr.split(key, data.shape[0])
+			return jax.vmap(_zero_random_circle)(data, keys)
+
+		# Get the leaves (individual trajectories) and the structure of the PyTree
 		leaves, treedef = jtu.tree_flatten(data)
 		
 		keys = jr.split(key, len(leaves))
@@ -358,6 +480,9 @@ class DataAugmenterAbstract(object):
 
 		"""
 
+		if self._batch_mode() == "array":
+			return jnp.concatenate([data] * B, axis=0)
+
 		list_repeated = list(itertools.repeat(data,B))
 		array_repeated = jax.tree_util.tree_map(lambda x:jnp.array(x),list_repeated)
 
@@ -373,6 +498,22 @@ class DataAugmenterAbstract(object):
 	def return_true_data(self):
 		# This data is never overwritten, it is only written to at initialisation.
 		return self.data_true
+
+	def return_observed_data(self):
+		"""Current padded/duplicated targets without latent-only channels."""
+		data = self.return_saved_data()
+		schema = getattr(self, "schema", None)
+		channel_count = (
+			schema.n_measurement_channels if schema is not None else self.OBS_CHANNELS
+		)
+		mode = getattr(
+			self,
+			"batch_mode",
+			"array" if hasattr(data, "ndim") and data.ndim == 5 else "tree",
+		)
+		if mode == "array":
+			return data[:, :, :channel_count]
+		return jtu.tree_map(lambda value: value[:, :channel_count], data)
 		
 		
 	def update_initial_condition_hidden_channels(self,model,i,args):
@@ -386,11 +527,15 @@ class DataAugmenterAbstract(object):
 		"""
 
 		def split_x0(data):
+			if self._batch_mode() == "array":
+				return data[:, :self.OBS_CHANNELS], data[:, self.OBS_CHANNELS:]
 			x0 = [x[:self.OBS_CHANNELS] for x in data]
 			x0_hidden = [x[self.OBS_CHANNELS:] for x in data]
 			return x0,x0_hidden
 
 		def build_x0(obs,hidden):
+			if self._batch_mode() == "array":
+				return jnp.concatenate([obs, hidden], axis=1)
 			return [jnp.concatenate([obs[j],hidden[j]],axis=0) for j in range(len(hidden))]
 		
 		@eqx.filter_jit
@@ -413,7 +558,8 @@ class DataAugmenterAbstract(object):
 		learn_rate = args["learn_rate"]
 		optimiser = args["optimiser"]
 		#x0,_ = self.split_x_y(1)
-		x0 = [x[0] for x in self.return_saved_data()]
+		data_saved = self.return_saved_data()
+		x0 = data_saved[:, 0] if self._batch_mode() == "array" else [x[0] for x in data_saved]
 		_,x0_hidden = split_x0(x0)
 		schedule = optax.exponential_decay(learn_rate,transition_steps=iters,decay_rate=0.99)
 		opt = optimiser(schedule)
@@ -428,7 +574,14 @@ class DataAugmenterAbstract(object):
 			print(f"Change to initial condition hidden channels: {v_loss_func(x0_hidden,new_hidden_x0)}")
 
 		data = self.return_saved_data()
-		data = jtu.tree_map(lambda x0,x:x.at[0,self.OBS_CHANNELS:].set(x0),x0_hidden,data)
+		if self._batch_mode() == "array":
+			data = data.at[:, 0, self.OBS_CHANNELS:].set(x0_hidden)
+		else:
+			data = jtu.tree_map(
+				lambda hidden, value: value.at[0, self.OBS_CHANNELS:].set(hidden),
+				x0_hidden,
+				data,
+			)
 		self.save_data(data)
 
 

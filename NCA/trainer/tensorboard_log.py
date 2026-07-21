@@ -544,7 +544,13 @@ class NCA_Train_log(Train_log):
 		**kwargs,
 	):
 		data = kwargs.get("data", args[0] if args else None)
-		self.diagnostic_targets = None if data is None else np.array(data)[:, 1:]
+		data_values = [] if data is None else list(data)
+		uniform_data = bool(data_values) and len(
+			{tuple(value.shape) for value in data_values}
+		) == 1
+		self.diagnostic_targets = (
+			np.stack(data_values)[:, 1:] if uniform_data else None
+		)
 		self.diagnostic_boundary_mask = None if boundary_mask is None else np.array(boundary_mask)
 		self.diagnostic_grouped_channels = (
 			False if data_augmenter is None else _is_grouped_9ch_colony_augmenter(data_augmenter)
@@ -557,14 +563,20 @@ class NCA_Train_log(Train_log):
 		)
 		self.radial_bins = int(radial_bins)
 		if self.diagnostic_targets is None:
-			self.channel_names = []
+			channel_count = 0 if not data_values else data_values[0].shape[1]
+			if channel_names is None or len(channel_names) != channel_count:
+				self.channel_names = [f"channel_{index + 1}" for index in range(channel_count)]
+			else:
+				self.channel_names = [str(name) for name in channel_names]
 		else:
 			channel_count = self.diagnostic_targets.shape[2]
 			if channel_names is None or len(channel_names) != channel_count:
 				self.channel_names = [f"channel_{index + 1}" for index in range(channel_count)]
 			else:
 				self.channel_names = [str(name) for name in channel_names]
-		time_count = 0 if self.diagnostic_targets is None else self.diagnostic_targets.shape[1]
+		time_count = (
+			0 if not data_values else data_values[0].shape[0] - 1
+		)
 		if timepoint_names is None or len(timepoint_names) != time_count:
 			self.timepoint_names = [f"t{index + 1}" for index in range(time_count)]
 		else:
@@ -581,7 +593,7 @@ class NCA_Train_log(Train_log):
 				_timepoint_labels(self.timepoint_names, batch.shape[0]),
 				f"True measurements · batch {batch_index + 1}",
 			)
-			for batch_index, batch in enumerate(np.asarray(data))
+			for batch_index, batch in enumerate(data)
 		]
 		self.log_image("True sequence labelled", np.concatenate(images, axis=0), step=None)
 
@@ -801,7 +813,7 @@ class NCA_Train_log(Train_log):
 				_timepoint_labels(self.timepoint_names, batch.shape[0]),
 				f"True measurements · batch {batch_index + 1}",
 			)
-			for batch_index, batch in enumerate(DATA_AUGMENTER.return_true_data())
+			for batch_index, batch in enumerate(DATA_AUGMENTER.return_observed_data())
 		]
 		self.log_image(
 			'Evaluation/true_data',
@@ -905,7 +917,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 				_timepoint_labels(self.timepoint_names, batch.shape[0]),
 				f"True measurements · batch {batch_index + 1}",
 			)
-			for batch_index, batch in enumerate(DATA_AUGMENTER.return_true_data())
+			for batch_index, batch in enumerate(DATA_AUGMENTER.return_observed_data())
 		]
 		self.log_image(
 			'Evaluation/true_data',

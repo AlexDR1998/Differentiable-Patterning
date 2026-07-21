@@ -13,9 +13,13 @@ class DataAugmenter(DataAugmenterBasic):
         This keeps the simple 4-channel task direct, without the 12-to-9
         duplicate-colony reduction used by the full micropattern dataset.
         """
-        x = jtu.tree_map(lambda data: data[:-N_steps], self.data_saved)
-        y = jtu.tree_map(lambda data: data[N_steps:], self.data_saved)
-        x = jtu.tree_map(lambda x: self.real_to_latent(x), x)
+        if self.batch_mode == "array":
+            x = self.map_batches(self.real_to_latent, self.data_saved[:, :-N_steps])
+            y = self.data_saved[:, N_steps:]
+        else:
+            x = jtu.tree_map(lambda data: data[:-N_steps], self.data_saved)
+            y = jtu.tree_map(lambda data: data[N_steps:], self.data_saved)
+            x = jtu.tree_map(lambda x: self.real_to_latent(x), x)
         return x, y
     
     def data_callback(self,x,y,i,key):

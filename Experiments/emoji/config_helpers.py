@@ -249,10 +249,15 @@ def build_data_augmenter(cfg):
                 damage_mask = jax.random.bernoulli(
                     jax.random.fold_in(key, 2), probability, (len(x),)
                 )
-                for batch_index in range(len(x)):
-                    x[batch_index] = jnp.where(
-                        damage_mask[batch_index], damaged[batch_index], x[batch_index]
+                if hasattr(x, "ndim"):
+                    x = jnp.where(
+                        damage_mask[:, None, None, None, None], damaged, x
                     )
+                else:
+                    for batch_index in range(len(x)):
+                        x[batch_index] = jnp.where(
+                            damage_mask[batch_index], damaged[batch_index], x[batch_index]
+                        )
             if noise_strength:
                 x = self.noise(x, noise_strength, mode=noise_mode, key=key)
 
@@ -285,6 +290,7 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         # f"_iters{cfg.run.iterations}"
         f"_lr{cfg.optimiser.learn_rate}"
         f"_dr{cfg.optimiser.decay_rate}"
+        f"_batch{_cfg_get(cfg.trainer, 'batch_mode', 'tree')}"
     )
     return "_".join([model_cfg_str, data_cfg_str, loss_str, train_str])
 

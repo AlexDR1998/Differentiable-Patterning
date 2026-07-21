@@ -10,6 +10,9 @@ data:
   # data_channels: 4 loads group-A fate channels only; 12 loads the full colony dataset.
   data_channels: 12
   downsample: 1
+  # Null retains the historical six-pixel border on each side. Set an integer
+  # to pad each spatial dimension symmetrically to that multiple.
+  pad_multiple: null
   noise_strength: 0.005
   duplicate_final_timestep: false
 
@@ -21,6 +24,9 @@ model:
   padding: CIRCULAR
 
 trainer:
+  # Dense arrays are faster for uniform/padded batches; tree mode retains
+  # heterogeneous-resolution support and is the reference comparison path.
+  batch_mode: tree
   boundary_mode: soft
   grad_loss: false
   sharding: null
@@ -70,7 +76,7 @@ loss:
     contiguous_growth: 0.0
     update_sensitivity: 0.0
     perturbation_conservation: 0.0
-    latent_channel_match: 1.0
+    latent_channel_match: 0.0
     latent_size: 0.0
   random_crop: true
   random_channel_shuffle: false
