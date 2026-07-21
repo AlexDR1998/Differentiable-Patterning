@@ -404,6 +404,46 @@ def plot_channel_correlation_diagnostics(
 	return plot_to_image(figure)
 
 
+def plot_channel_time_grid(values, channel_names=None, timepoint_names=None, title=None):
+	"""Render ``[time, channel, x, y]`` images with channel and time labels."""
+	import matplotlib.pyplot as plt
+
+	values = np.asarray(values)
+	time_count, channel_count, width, height = values.shape
+	if channel_names is None or len(channel_names) != channel_count:
+		channel_names = [f"channel_{index + 1}" for index in range(channel_count)]
+	if timepoint_names is None or len(timepoint_names) != time_count:
+		timepoint_names = [f"t{index}" for index in range(time_count)]
+	grid = rearrange(values, "t c x y -> (c x) (t y)")
+	value_min, value_max = np.nanmin(grid), np.nanmax(grid)
+	figure, axis = plt.subplots(
+		figsize=(max(7.0, 1.8 * time_count), max(5.0, 0.38 * channel_count))
+	)
+	axis.imshow(grid, cmap="gray", vmin=value_min, vmax=max(value_max, value_min + 1e-8))
+	axis.set_xticks((np.arange(time_count) + 0.5) * height, labels=timepoint_names)
+	axis.set_yticks(
+		(np.arange(channel_count) + 0.5) * width,
+		labels=channel_names,
+		fontsize=6,
+	)
+	for boundary in np.arange(1, time_count) * height:
+		axis.axvline(boundary - 0.5, color="white", linewidth=0.4, alpha=0.5)
+	for boundary in np.arange(1, channel_count) * width:
+		axis.axhline(boundary - 0.5, color="white", linewidth=0.4, alpha=0.5)
+	if title:
+		axis.set_title(title)
+	figure.tight_layout()
+	return plot_to_image(figure)
+
+
+def _timepoint_labels(names, count):
+	if len(names) == count:
+		return names
+	if len(names) + 1 == count:
+		return ["t0h", *names]
+	return [f"t{index}" for index in range(count)]
+
+
 def _singular_value_logging_config(config=None):
 	defaults = {
 		"enabled": False,
@@ -531,6 +571,19 @@ class NCA_Train_log(Train_log):
 			self.timepoint_names = [str(name) for name in timepoint_names]
 		super().__init__(*args, **kwargs)
 		self.singular_value_config = _singular_value_logging_config(singular_value_config)
+
+	def log_data_at_init(self, data):
+		"""Log every true batch as a labelled channel-by-time grid."""
+		images = [
+			plot_channel_time_grid(
+				batch,
+				self.channel_names,
+				_timepoint_labels(self.timepoint_names, batch.shape[0]),
+				f"True measurements · batch {batch_index + 1}",
+			)
+			for batch_index, batch in enumerate(np.asarray(data))
+		]
+		self.log_image("True sequence labelled", np.concatenate(images, axis=0), step=None)
 
 	def log_channel_time_diagnostics(self, log_dict, i):
 		"""Log per-channel/timestep totals and radial profiles to W&B."""
@@ -739,17 +792,23 @@ class NCA_Train_log(Train_log):
 		x,y = DATA_AUGMENTER.data_callback(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]
 		# Log true data for side by side comparison
-		true_data = DATA_AUGMENTER.return_true_data()[0]
 		schema = self.diagnostic_channel_schema or getattr(DATA_AUGMENTER, "schema", None)
-		true_data = true_data[:, :schema.n_measurement_channels if schema else DATA_AUGMENTER.OBS_CHANNELS]
-		true_data = rearrange(true_data,"T C x y -> (C x) (T y)")
-		true_data = repeat(true_data,"x y -> x y 3")
+		channel_count = schema.n_measurement_channels if schema else DATA_AUGMENTER.OBS_CHANNELS
+		true_images = [
+			plot_channel_time_grid(
+				batch[:, :channel_count],
+				self.channel_names,
+				_timepoint_labels(self.timepoint_names, batch.shape[0]),
+				f"True measurements · batch {batch_index + 1}",
+			)
+			for batch_index, batch in enumerate(DATA_AUGMENTER.return_true_data())
+		]
 		self.log_image(
 			'Evaluation/true_data',
-			true_data,
+			np.concatenate(true_images, axis=0),
 			step=None
 		)
-		BATCHES = 1#len(x)
+		BATCHES = len(x)
 		CHANNELS = x[0].shape[1]
 
 		print("Running final trained model for "+str(t)+" steps")
@@ -757,13 +816,16 @@ class NCA_Train_log(Train_log):
 		SNAPSHOTS = []
 		for b in tqdm(range(BATCHES)):
 			T, latents = nca.run(t*NUMBER_OF_IMAGES, x[b][0], boundary_callback[b], SAVE_LATENTS=True)  # Shape T C x y
-			self.log_video("Evaluation/trajectory",T[:,:3],step=None)
+			self.log_video(f"Evaluation/trajectory_batch_{b + 1}",T[:,:3],step=None)
 			T_snapshot = _trajectory_snapshot_channels(
 				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema
 			)
-			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
-			T_snapshot = repeat(T_snapshot,"x y -> x y 3")
-			SNAPSHOTS.append(T_snapshot)
+			SNAPSHOTS.append(plot_channel_time_grid(
+				T_snapshot,
+				self.channel_names,
+				_timepoint_labels(self.timepoint_names, T_snapshot.shape[0]),
+				f"NCA predictions · batch {b + 1}",
+			))
 			
 			if SAVE_TRAJECTORY:
 				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])  # type: ignore
@@ -773,12 +835,11 @@ class NCA_Train_log(Train_log):
 			_cy,_cx = squarish(latents.shape[1]//3)
 			latents = rearrange(latents,"Time (cx cy C) x y  -> Time C (cx x) (cy y)",C=3,cy=_cy,cx=_cx)
 			latents = (np.tanh(latents)+1.0)/2.0
-			self.log_video("Evaluation/latent_trajectory",latents,step=None)
+			self.log_video(f"Evaluation/latent_trajectory_batch_{b + 1}",latents,step=None)
 
-		SNAPSHOTS = np.array(SNAPSHOTS)
 		self.log_image(
 			'Evaluation/trajectory_snapshot',
-			SNAPSHOTS,
+			np.concatenate(SNAPSHOTS, axis=0),
 			step=None
 		)
 
@@ -835,17 +896,23 @@ class NCA_knockout_Train_log(NCA_Train_log):
 		x,y = DATA_AUGMENTER.data_callback(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]
 		# Log true data for side by side comparison
-		true_data = DATA_AUGMENTER.return_true_data()[0]
 		schema = self.diagnostic_channel_schema or getattr(DATA_AUGMENTER, "schema", None)
-		true_data = true_data[:, :schema.n_measurement_channels if schema else DATA_AUGMENTER.OBS_CHANNELS]
-		true_data = rearrange(true_data,"T C x y -> (C x) (T y)")
-		true_data = repeat(true_data,"x y -> x y 3")
+		channel_count = schema.n_measurement_channels if schema else DATA_AUGMENTER.OBS_CHANNELS
+		true_images = [
+			plot_channel_time_grid(
+				batch[:, :channel_count],
+				self.channel_names,
+				_timepoint_labels(self.timepoint_names, batch.shape[0]),
+				f"True measurements · batch {batch_index + 1}",
+			)
+			for batch_index, batch in enumerate(DATA_AUGMENTER.return_true_data())
+		]
 		self.log_image(
 			'Evaluation/true_data',
-			true_data,
+			np.concatenate(true_images, axis=0),
 			step=None
 		)
-		BATCHES = 1#len(x)
+		BATCHES = len(x)
 		CHANNELS = x[0].shape[1]
 
 		print("Running final trained model for "+str(t)+" steps")
@@ -865,24 +932,26 @@ class NCA_knockout_Train_log(NCA_Train_log):
 				T.append(xb)
 			T = np.array(T) # Shape T C x y
 			
-			self.log_video("Evaluation/trajectory_comp",rearrange(T[:,:9],"T (cx cy) X Y -> T cx X (cy Y)",cx=3,cy=3),step=None) # type: ignore
+			self.log_video(f"Evaluation/trajectory_comp_batch_{b + 1}",rearrange(T[:,:9],"T (cx cy) X Y -> T cx X (cy Y)",cx=3,cy=3),step=None) # type: ignore
 			_T_mono = rearrange(T[:,:9],"T (cx cy) X Y -> T () (cx X) (cy Y)",cx=3,cy=3)
 			_T_mono = repeat(_T_mono,"T () x y -> T 3 x y")
-			self.log_video("Evaluation/trajectory_monochrome",_T_mono,step=None) # type: ignore
+			self.log_video(f"Evaluation/trajectory_monochrome_batch_{b + 1}",_T_mono,step=None) # type: ignore
 			T_snapshot = _trajectory_snapshot_channels(
 				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema
 			)
-			T_snapshot = rearrange(T_snapshot,"Time C x y -> (C x) (Time y)")
-			T_snapshot = repeat(T_snapshot,"x y -> x y 3")
-			SNAPSHOTS.append(T_snapshot)
+			SNAPSHOTS.append(plot_channel_time_grid(
+				T_snapshot,
+				self.channel_names,
+				_timepoint_labels(self.timepoint_names, T_snapshot.shape[0]),
+				f"NCA predictions · batch {b + 1}",
+			))
 			
 			if SAVE_TRAJECTORY:
 				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3]) # type: ignore
 
-		SNAPSHOTS = np.array(SNAPSHOTS)
 		self.log_image(
 			'Evaluation/trajectory_snapshot',
-			SNAPSHOTS,
+			np.concatenate(SNAPSHOTS, axis=0),
 			step=None
 		)
 

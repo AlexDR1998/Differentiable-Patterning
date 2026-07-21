@@ -30,6 +30,9 @@ def test_multi_target_loss_is_invariant_to_groupwise_batch_order():
     assert jnp.allclose(loss, 0.0, atol=1e-5)
     component_total = sum(components[name] for name in COMPONENT_NAMES)
     assert jnp.allclose(loss, component_total + components["assignment_regularisation"])
+    for group in schema.group_names:
+        group_total = sum(components[f"group/{group}/{name}"] for name in COMPONENT_NAMES)
+        assert jnp.allclose(components[f"group/{group}/total"], group_total)
 
 
 def test_soft_assignment_components_reconstruct_loss():
@@ -55,6 +58,7 @@ def test_soft_assignment_components_reconstruct_loss():
     component_total = sum(components[name] for name in COMPONENT_NAMES)
     assert jnp.allclose(loss, component_total + components["assignment_regularisation"])
     assert jnp.all(components["assignment_entropy"] >= 0)
+    assert components["group/rna_expression/texture"].shape == loss.shape
 
 
 def test_snapshot_augmenter_outputs_unique_state_and_measurement_targets():
@@ -76,3 +80,37 @@ def test_snapshot_augmenter_outputs_unique_state_and_measurement_targets():
     assert y[0].shape == (4, 16, 8, 8)
     assert augmenter.OBS_CHANNELS == 10
     assert DataAugmenter.schema is MICROPATTERN_260726_SCHEMA
+
+
+def test_reinjection_preserves_group_specific_duplicate_measurements():
+    schema = MICROPATTERN_260726_SCHEMA
+    batch, time, channel = jnp.meshgrid(
+        jnp.arange(3), jnp.arange(5), jnp.arange(14), indexing="ij"
+    )
+    data = (1000 * batch + 100 * time + channel)[..., None, None].astype(jnp.float32)
+    data = jnp.broadcast_to(data, (3, 5, 14, 2, 2))
+    augmenter = DataAugmenter(data)
+    augmenter.noise_strength = 0.0
+    zeros = [jnp.zeros((4, 10, 2, 2)) for _ in range(3)]
+    targets = [value[1:] for value in data]
+    observed = {"cell_fate_s2": False, "protein_response": False}
+
+    for seed in range(20):
+        result, _ = augmenter.data_callback(zeros, targets, 0, jax.random.PRNGKey(seed))
+        result = jnp.stack(result)
+        for batch_index in range(3):
+            for time_index in range(1, 4):
+                values = result[batch_index, time_index, :, 0, 0]
+                if values[4] != 0:
+                    donor = jnp.rint((values[4] - 100 * time_index - 5) / 1000).astype(int)
+                    assert values[2] == 1000 * donor + 100 * time_index + 4
+                    assert values[1] == 1000 * donor + 100 * time_index + 6
+                    assert values[0] == 1000 * donor + 100 * time_index + 7
+                    observed["cell_fate_s2"] = True
+                if values[8] != 0:
+                    donor = jnp.rint((values[8] - 100 * time_index - 11) / 1000).astype(int)
+                    assert values[0] == 1000 * donor + 100 * time_index + 12
+                    assert values[9] == 1000 * donor + 100 * time_index + 13
+                    observed["protein_response"] = True
+
+    assert all(observed.values())

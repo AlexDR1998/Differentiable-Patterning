@@ -39,6 +39,7 @@ class DataAugmenter(BasicAugmenter):
     def data_callback(self, x, y, i, key):
         """Propagate the pool and reinject randomly permuted experiment groups."""
         x = jnp.stack(x)
+        measurements = jnp.stack(self.data_saved)[:, :, :self.schema.n_measurement_channels]
         truth = jnp.stack([
             self.real_to_latent(self._to_state(data)) for data in self.data_saved
         ])
@@ -54,10 +55,12 @@ class DataAugmenter(BasicAugmenter):
             inject = jax.random.bernoulli(mask_key, 0.5, (batch_count, time_count - 1))
             choices = jax.random.randint(group_key, inject.shape, 0, len(self.schema.experiment_groups))
             for t in range(1, time_count):
-                for g, states in enumerate(self.state_groups):
+                for g, (targets, states) in enumerate(
+                    zip(self.schema.group_measurement_indices, self.state_groups)
+                ):
                     key, donor_key = jax.random.split(key)
                     donors = jax.random.permutation(donor_key, batch_count)
-                    values = truth[donors, t][:, states]
+                    values = self.real_to_latent(measurements[donors, t][:, targets])
                     keep = (inject[:, t - 1] & (choices[:, t - 1] == g))[:, None, None, None]
                     x = x.at[:, t, states].set(jnp.where(keep, values, x[:, t, states]))
 

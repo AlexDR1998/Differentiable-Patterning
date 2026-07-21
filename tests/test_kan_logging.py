@@ -19,6 +19,7 @@ from NCA.trainer.tensorboard_log import (
     compute_channel_correlation_diagnostics,
     compute_channel_time_diagnostics,
     plot_channel_correlation_diagnostics,
+    plot_channel_time_grid,
     plot_radial_intensity_diagnostics,
     plot_total_intensity_diagnostics,
 )
@@ -351,6 +352,20 @@ def test_total_intensity_plot_coalesces_channel_timestep_values():
     assert image.shape[-1] in {3, 4}
 
 
+def test_channel_time_grid_and_true_logging_retain_batch_labels():
+    values = np.ones((2, 3, 4, 4), dtype=np.float32)
+    image = plot_channel_time_grid(values, ["a", "b", "c"], ["t0", "t1"])
+    assert image.ndim == 4
+
+    logger = object.__new__(NCA_Train_log)
+    logger.channel_names = ["a", "b", "c"]
+    logger.timepoint_names = ["t1"]
+    logged = {}
+    logger.log_image = lambda tag, images, step=None: logged.update({tag: images})
+    logger.log_data_at_init(np.stack((values, values)))
+    assert logged["True sequence labelled"].shape[0] == 2
+
+
 def test_training_logger_emits_channel_time_diagnostics_without_wandb():
     logger = object.__new__(NCA_Train_log)
     logger.diagnostic_targets = np.ones((1, 2, 12, 5, 5), dtype=np.float32)
@@ -391,3 +406,24 @@ def test_training_snapshots_include_every_batch_in_one_composite():
 
     assert logged["Train/processed_batches"].shape == (9, 10, 3)
     assert np.all(logged["Train/processed_batches"][6:] == 2)
+
+
+def test_group_timestep_losses_only_log_at_diagnostic_interval():
+    logger = object.__new__(NCA_Train_log)
+    logger.timepoint_names = ["t12h", "t24h"]
+    logger.log_model_parameters = lambda *args: None
+    logger.log_channel_time_diagnostics = lambda *args: None
+    logged = []
+    logger.log_scalar = lambda tag, value, step=None: logged.append((tag, value, step))
+    logger.log_scalars = lambda values, step=None: logged.extend(
+        (tag, value, step) for tag, value in values.items()
+    )
+    details = {"loss_detail/rna_expression/radial": np.array([1.0, 2.0])}
+
+    logger.tb_training_loop_log_sequence(details, 9, None, False, 10)
+    assert logged == []
+    logger.tb_training_loop_log_sequence(details, 10, None, False, 10)
+    assert logged == [
+        ("Train/loss_detail/rna_expression/radial/t12h", 1.0, 10),
+        ("Train/loss_detail/rna_expression/radial/t24h", 2.0, 10),
+    ]
