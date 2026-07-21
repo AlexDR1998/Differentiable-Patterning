@@ -10,7 +10,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_3
+    logging.wandb.group: nca_multibatch_micropattern_test_4
     run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
@@ -158,7 +158,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_3
+        group: nca_multibatch_micropattern_test_4
         tags: null
     knockout:
       time: null
@@ -169,7 +169,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_3
+    logging.wandb.group: nca_multibatch_micropattern_test_4
     run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
@@ -317,7 +317,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_3
+        group: nca_multibatch_micropattern_test_4
         tags: null
     knockout:
       time: null
@@ -328,7 +328,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_3
+    logging.wandb.group: nca_multibatch_micropattern_test_4
     run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
@@ -476,7 +476,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_3
+        group: nca_multibatch_micropattern_test_4
         tags: null
     knockout:
       time: null
@@ -487,7 +487,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_3
+    logging.wandb.group: nca_multibatch_micropattern_test_4
     run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
@@ -635,7 +635,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_3
+        group: nca_multibatch_micropattern_test_4
         tags: null
     knockout:
       time: null
@@ -646,7 +646,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_3
+    logging.wandb.group: nca_multibatch_micropattern_test_4
     run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
@@ -794,7 +794,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_3
+        group: nca_multibatch_micropattern_test_4
         tags: null
     knockout:
       time: null
@@ -805,7 +805,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_3
+    logging.wandb.group: nca_multibatch_micropattern_test_4
     run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
@@ -953,7 +953,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_3
+        group: nca_multibatch_micropattern_test_4
         tags: null
     knockout:
       time: null
@@ -964,7 +964,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_3
+    logging.wandb.group: nca_multibatch_micropattern_test_4
     run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
@@ -1112,7 +1112,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_3
+        group: nca_multibatch_micropattern_test_4
         tags: null
     knockout:
       time: null
@@ -1123,7 +1123,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_3
+    logging.wandb.group: nca_multibatch_micropattern_test_4
     run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
@@ -1271,7 +1271,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_3
+        group: nca_multibatch_micropattern_test_4
         tags: null
     knockout:
       time: null
@@ -1282,7 +1282,7 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_3
+    logging.wandb.group: nca_multibatch_micropattern_test_4
     run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
@@ -1430,7 +1430,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_3
+        group: nca_multibatch_micropattern_test_4
         tags: null
     knockout:
       time: null
