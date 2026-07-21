@@ -10,8 +10,8 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_2
-    run.iterations: 8000
+    logging.wandb.group: nca_multibatch_micropattern_test_3
+    run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 1.0
@@ -19,7 +19,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.01
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -31,8 +31,8 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.regulariser_coeffs.boundary: 5.0
     model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
@@ -87,7 +87,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -116,8 +116,8 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -143,7 +143,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -158,7 +158,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_2
+        group: nca_multibatch_micropattern_test_3
         tags: null
     knockout:
       time: null
@@ -169,8 +169,8 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_2
-    run.iterations: 8000
+    logging.wandb.group: nca_multibatch_micropattern_test_3
+    run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 1.0
@@ -178,7 +178,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.1
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -190,8 +190,8 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.regulariser_coeffs.boundary: 5.0
     model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
@@ -246,7 +246,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -275,8 +275,8 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -302,7 +302,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -317,7 +317,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_2
+        group: nca_multibatch_micropattern_test_3
         tags: null
     knockout:
       time: null
@@ -328,8 +328,8 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_2
-    run.iterations: 8000
+    logging.wandb.group: nca_multibatch_micropattern_test_3
+    run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 1.0
@@ -337,7 +337,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.3
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -349,8 +349,8 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.regulariser_coeffs.boundary: 5.0
     model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
@@ -405,7 +405,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -434,8 +434,8 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -461,7 +461,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -476,7 +476,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_2
+        group: nca_multibatch_micropattern_test_3
         tags: null
     knockout:
       time: null
@@ -487,8 +487,8 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_2
-    run.iterations: 8000
+    logging.wandb.group: nca_multibatch_micropattern_test_3
+    run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 1.0
@@ -496,7 +496,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.01
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -508,8 +508,8 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.regulariser_coeffs.boundary: 5.0
     model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
@@ -564,7 +564,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -593,8 +593,8 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -620,7 +620,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -635,7 +635,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_2
+        group: nca_multibatch_micropattern_test_3
         tags: null
     knockout:
       time: null
@@ -646,8 +646,8 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_2
-    run.iterations: 8000
+    logging.wandb.group: nca_multibatch_micropattern_test_3
+    run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 1.0
@@ -655,7 +655,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.1
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -667,8 +667,8 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.regulariser_coeffs.boundary: 5.0
     model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
@@ -723,7 +723,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -752,8 +752,8 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -779,7 +779,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -794,7 +794,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_2
+        group: nca_multibatch_micropattern_test_3
         tags: null
     knockout:
       time: null
@@ -805,8 +805,8 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_2
-    run.iterations: 8000
+    logging.wandb.group: nca_multibatch_micropattern_test_3
+    run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 1.0
@@ -814,7 +814,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.3
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -826,8 +826,8 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.regulariser_coeffs.boundary: 5.0
     model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
@@ -882,7 +882,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -911,8 +911,8 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -938,7 +938,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -953,7 +953,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_2
+        group: nca_multibatch_micropattern_test_3
         tags: null
     knockout:
       time: null
@@ -964,8 +964,8 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_2
-    run.iterations: 8000
+    logging.wandb.group: nca_multibatch_micropattern_test_3
+    run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 1.0
@@ -973,7 +973,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.01
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -985,8 +985,8 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.regulariser_coeffs.boundary: 5.0
     model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
@@ -1041,7 +1041,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -1070,8 +1070,8 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -1097,7 +1097,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1112,7 +1112,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_2
+        group: nca_multibatch_micropattern_test_3
         tags: null
     knockout:
       time: null
@@ -1123,8 +1123,8 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_2
-    run.iterations: 8000
+    logging.wandb.group: nca_multibatch_micropattern_test_3
+    run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 1.0
@@ -1132,7 +1132,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.1
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -1144,8 +1144,8 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.regulariser_coeffs.boundary: 5.0
     model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
@@ -1200,7 +1200,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -1229,8 +1229,8 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -1256,7 +1256,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1271,7 +1271,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_2
+        group: nca_multibatch_micropattern_test_3
         tags: null
     knockout:
       time: null
@@ -1282,8 +1282,8 @@ configs:
     model.family: NCA
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_multibatch_micropattern_test_2
-    run.iterations: 8000
+    logging.wandb.group: nca_multibatch_micropattern_test_3
+    run.iterations: 2000
     run.repeat: 0
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 1.0
@@ -1291,7 +1291,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.3
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -1303,8 +1303,8 @@ configs:
     loss.regulariser_coeffs.latent_channel_match: 0.0
     loss.regulariser_coeffs.contiguous_growth: 0.0
     loss.regulariser_coeffs.latent_size: 0.0
-    loss.regulariser_coeffs.intermediate_state: 0.0
-    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.intermediate_state: 1.0
+    loss.regulariser_coeffs.boundary: 5.0
     model.fire_rate: 0.5
     loss.random_crop: false
     loss.random_channel_shuffle: false
@@ -1359,7 +1359,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -1388,8 +1388,8 @@ configs:
       channel_importance: null
       component_weights: null
       regulariser_coeffs:
-        intermediate_state: 0.0
-        boundary: 0.0
+        intermediate_state: 1.0
+        boundary: 5.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -1415,7 +1415,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 2000
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -1430,7 +1430,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_multibatch_micropattern_test_2
+        group: nca_multibatch_micropattern_test_3
         tags: null
     knockout:
       time: null
