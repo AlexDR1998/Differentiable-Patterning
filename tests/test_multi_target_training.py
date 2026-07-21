@@ -5,6 +5,8 @@ from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from Common.trainer.loss_multi_target import multi_target_loss
 from NCA.trainer.data_augmenter_260726 import DataAugmenter
 
+COMPONENT_NAMES = ("texture", "channel_mean", "radial", "correlation")
+
 
 def test_multi_target_loss_is_invariant_to_groupwise_batch_order():
     schema = MICROPATTERN_260726_SCHEMA
@@ -26,10 +28,8 @@ def test_multi_target_loss_is_invariant_to_groupwise_batch_order():
     )
 
     assert jnp.allclose(loss, 0.0, atol=1e-5)
-    weighted = sum(
-        value for name, value in components.items() if name.startswith("weighted/")
-    )
-    assert jnp.allclose(loss, weighted + components["assignment/regularisation"])
+    component_total = sum(components[name] for name in COMPONENT_NAMES)
+    assert jnp.allclose(loss, component_total + components["assignment_regularisation"])
 
 
 def test_soft_assignment_components_reconstruct_loss():
@@ -52,11 +52,9 @@ def test_soft_assignment_components_reconstruct_loss():
         },
     )
 
-    weighted = sum(
-        value for name, value in components.items() if name.startswith("weighted/")
-    )
-    assert jnp.allclose(loss, weighted + components["assignment/regularisation"])
-    assert jnp.all(components["assignment/entropy"] >= 0)
+    component_total = sum(components[name] for name in COMPONENT_NAMES)
+    assert jnp.allclose(loss, component_total + components["assignment_regularisation"])
+    assert jnp.all(components["assignment_entropy"] >= 0)
 
 
 def test_snapshot_augmenter_outputs_unique_state_and_measurement_targets():
@@ -77,3 +75,4 @@ def test_snapshot_augmenter_outputs_unique_state_and_measurement_targets():
     assert x[0].shape == (4, 16, 4, 4)
     assert y[0].shape == (4, 16, 8, 8)
     assert augmenter.OBS_CHANNELS == 10
+    assert DataAugmenter.schema is MICROPATTERN_260726_SCHEMA

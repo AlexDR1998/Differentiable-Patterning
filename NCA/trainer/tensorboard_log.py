@@ -656,16 +656,27 @@ class NCA_Train_log(Train_log):
 		x_latent = x["x_latent"]
 		x_processed = x["x_processed"]
 		BATCHES = len(x_latent)
-		for b in range(BATCHES):
+		if len({tuple(value.shape) for value in x_processed}) == 1:
+			processed = np.stack(x_processed)[:, :, :3]
 			self.log_image(
-				'Train/processed_batch_'+str(b),
-				self.normalise_images(rearrange(x_processed[b][:,:3,...],"Batch Channel x y -> Batch x y Channel")),
+				'Train/processed_batches',
+				self.normalise_images(rearrange(processed,"b t c x y -> (b x) (t y) c")),
 				step=i)
-
+			latent = np.stack(x_latent)[:, :, :3]
 			self.log_image(
-				'Train/latent_batch_'+str(b),
-				self.normalise_images(rearrange(x_latent[b][:,:3,...],"Batch Channel x y -> Batch x y Channel")),
+				'Train/latent_batches',
+				self.normalise_images(rearrange(latent,"b t c x y -> (b x) (t y) c")),
 				step=i)
+		else:
+			for b in range(BATCHES):
+				self.log_image(
+					'Train/processed_batch_'+str(b),
+					self.normalise_images(rearrange(x_processed[b][:,:3,...],"Batch Channel x y -> Batch x y Channel")),
+					step=i)
+				self.log_image(
+					'Train/latent_batch_'+str(b),
+					self.normalise_images(rearrange(x_latent[b][:,:3,...],"Batch Channel x y -> Batch x y Channel")),
+					step=i)
 			
 		if x_latent[0].shape[1] > 3:
 			b=0

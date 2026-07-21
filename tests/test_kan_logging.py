@@ -5,6 +5,7 @@ matplotlib.use("Agg")
 import jax
 import jax.numpy as jnp
 import numpy as np
+from unittest.mock import patch
 
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_model import NCA
@@ -375,3 +376,18 @@ def test_training_logger_emits_channel_time_diagnostics_without_wandb():
         "Diagnostics/radial_intensity_profiles",
         "Diagnostics/channel_correlation",
     ]
+
+
+def test_training_snapshots_include_every_batch_in_one_composite():
+    logger = object.__new__(NCA_Train_log)
+    logger.normalise_images = lambda values: values
+    logged = {}
+    logger.log_image = lambda tag, image, step=None: logged.update({tag: image})
+    logger.log_scalar = lambda *args, **kwargs: None
+    values = [np.ones((2, 4, 3, 5), dtype=np.float32) * batch for batch in range(3)]
+
+    with patch("NCA.trainer.tensorboard_log.get_jax_memory_stats", return_value={}):
+        logger.log_model_outputs({"x_latent": values, "x_processed": values}, 1)
+
+    assert logged["Train/processed_batches"].shape == (9, 10, 3)
+    assert np.all(logged["Train/processed_batches"][6:] == 2)
