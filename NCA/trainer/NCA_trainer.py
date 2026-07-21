@@ -899,7 +899,13 @@ class NCA_Trainer(object):
 					loss_diagnostics = {
 						f"loss_component/{name}": jnp.mean(value)
 						for name, value in components.items()
+						if not name.startswith("group/")
 					}
+					loss_diagnostics.update({
+						f"loss_detail/{name.removeprefix('group/')}": value
+						for name, value in components.items()
+						if name.startswith("group/")
+					})
 				else:
 					loss_key = key_pytree_gen(key, (len(x_latent),))
 					y_latent = vv_real_to_latent(y_proc)
@@ -1230,7 +1236,7 @@ class NCA_Trainer(object):
 			print_dict = {
 				k:v for k,v in log_dict.items()
 				if k not in ['x_latent','x_processed']
-				and not k.startswith(("pool/", "runtime/"))
+				and not k.startswith(("pool/", "runtime/", "loss_detail/"))
 			}
 			pbar.set_postfix(print_dict)
 			

@@ -145,4 +145,10 @@ def multi_target_loss(prediction, target, boundary, schema, params, key, args):
     diagnostics = {name: weights[name] * value for name, value in components.items()}
     diagnostics["assignment_regularisation"] = jnp.stack(assignment_regularisation).mean(0)
     diagnostics["assignment_entropy"] = jnp.stack(assignment_entropy).mean(0)
+    for group_index, group_name in enumerate(schema.group_names):
+        diagnostics[f"group/{group_name}/total"] = group_losses[group_index]
+        for name in weights:
+            diagnostics[f"group/{group_name}/{name}"] = (
+                weights[name] * group_components[group_index][name]
+            )
     return jnp.stack(group_losses).mean(0), jax.lax.stop_gradient(diagnostics)

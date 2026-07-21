@@ -692,10 +692,18 @@ class NCA_Train_log(Train_log):
 				step=i)
 	
 	def tb_training_loop_log_sequence(self,log_dict,i,model,write_images=True,LOG_EVERY=10):
-		
+		detail_scalars = {}
 		for name in log_dict.keys():
 			if name not in ["x_latent", "x_processed"]:
-				if name.startswith("pool/"):
+				if name.startswith("loss_detail/"):
+					if i % LOG_EVERY == 0:
+						values = np.asarray(log_dict[name]).reshape(-1)
+						timepoints = self.timepoint_names
+						if len(timepoints) != len(values):
+							timepoints = [f"t{index + 1}" for index in range(len(values))]
+						for timepoint, value in zip(timepoints, values):
+							detail_scalars[f"Train/{name}/{timepoint}"] = float(value)
+				elif name.startswith("pool/"):
 					self.log_scalar(f"StatePool/{name.removeprefix('pool/')}",log_dict[name],step=i)
 				elif name.startswith("runtime/"):
 					self.log_scalar(f"Runtime/{name.removeprefix('runtime/')}",log_dict[name],step=i)
@@ -703,6 +711,8 @@ class NCA_Train_log(Train_log):
 					# self.log_scalar("Train/learning_rate", log_dict[name], step=i)
 				else:
 					self.log_scalar(f"Train/{name}",log_dict[name],step=i)
+		if detail_scalars:
+			self.log_scalars(detail_scalars, step=i)
 		if i%LOG_EVERY==0 and i>0:
 			self.log_model_parameters(model,i)
 			self.log_channel_time_diagnostics(log_dict,i)
