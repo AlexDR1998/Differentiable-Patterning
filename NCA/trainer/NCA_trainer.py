@@ -522,7 +522,32 @@ class NCA_Trainer(object):
 			# Get mask for channels that should be included in this loss function
 			# Include channels where LOSS_FUNC_CHANNELS == idx or == -1
 			channel_loss_mask = (self.LOSS_FUNC_CHANNELS == idx) | (self.LOSS_FUNC_CHANNELS == -1)
-			channel_loss_mask = repeat(channel_loss_mask,"c -> (gc c) () ()",gc=channel_time_mask.shape[1]//self.OBS_CHANNELS).astype(jnp.float32)
+			mask_channels = channel_time_mask.shape[1]
+			if mask_channels == channel_loss_mask.shape[0]:
+				pass
+			elif (
+				self.CHANNEL_SCHEMA is not None
+				and mask_channels == self.CHANNEL_SCHEMA.n_measurement_channels
+				and channel_loss_mask.shape[0] == self.CHANNEL_SCHEMA.n_state_channels
+			):
+				channel_loss_mask = channel_loss_mask[
+					jnp.asarray(self.CHANNEL_SCHEMA.target_to_state)
+				]
+			elif mask_channels % channel_loss_mask.shape[0] == 0:
+				channel_loss_mask = repeat(
+					channel_loss_mask,
+					"c -> (gc c)",
+					gc=mask_channels // channel_loss_mask.shape[0],
+				)
+			else:
+				raise ValueError(
+					"Loss-time mask has an incompatible channel layout: "
+					f"{mask_channels} mask channels for "
+					f"{channel_loss_mask.shape[0]} state channels"
+				)
+			channel_loss_mask = rearrange(
+				channel_loss_mask.astype(jnp.float32), "c -> c () ()"
+			)
 			# Select only the relevant channels
 			loss_mask = einsum(channel_time_mask,channel_loss_mask,"n c w h, c w h-> n c w h").astype(jnp.bool_)
 			
@@ -1303,4 +1328,5 @@ class NCA_Trainer(object):
 				t=t,
 				boundary_callback=self.BOUNDARY_CALLBACK,
 				SAVE_TRAJECTORY=False)
-		self.LOGGER.finish()
+		if self.IS_LOGGING:
+			self.LOGGER.finish()
