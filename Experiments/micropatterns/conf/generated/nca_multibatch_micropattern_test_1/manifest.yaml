@@ -19,7 +19,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.01
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -51,7 +51,6 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     run.t: 128
-    system.precision: bfloat16
     seed: 577090037
   config:
     seed: 577090037
@@ -88,7 +87,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -165,8 +164,6 @@ configs:
       time: null
       channel: Nodal
       mode: null
-    system:
-      precision: bfloat16
 - index: 8
   overrides:
     model.family: NCA
@@ -181,7 +178,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.1
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -213,7 +210,6 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     run.t: 128
-    system.precision: bfloat16
     seed: 271041745
   config:
     seed: 271041745
@@ -250,7 +246,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -327,8 +323,6 @@ configs:
       time: null
       channel: Nodal
       mode: null
-    system:
-      precision: bfloat16
 - index: 2
   overrides:
     model.family: NCA
@@ -343,7 +337,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.3
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -375,7 +369,6 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     run.t: 128
-    system.precision: bfloat16
     seed: 1095513148
   config:
     seed: 1095513148
@@ -412,7 +405,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -489,8 +482,6 @@ configs:
       time: null
       channel: Nodal
       mode: null
-    system:
-      precision: bfloat16
 - index: 6
   overrides:
     model.family: NCA
@@ -505,7 +496,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.01
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -537,7 +528,6 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     run.t: 128
-    system.precision: bfloat16
     seed: 506456969
   config:
     seed: 506456969
@@ -574,7 +564,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -651,8 +641,6 @@ configs:
       time: null
       channel: Nodal
       mode: null
-    system:
-      precision: bfloat16
 - index: 5
   overrides:
     model.family: NCA
@@ -667,7 +655,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.1
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -699,7 +687,6 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     run.t: 128
-    system.precision: bfloat16
     seed: 2127877499
   config:
     seed: 2127877499
@@ -736,7 +723,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -813,8 +800,6 @@ configs:
       time: null
       channel: Nodal
       mode: null
-    system:
-      precision: bfloat16
 - index: 3
   overrides:
     model.family: NCA
@@ -829,7 +814,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.3
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -861,7 +846,6 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     run.t: 128
-    system.precision: bfloat16
     seed: 1930549411
   config:
     seed: 1930549411
@@ -898,7 +882,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -975,8 +959,6 @@ configs:
       time: null
       channel: Nodal
       mode: null
-    system:
-      precision: bfloat16
 - index: 0
   overrides:
     model.family: NCA
@@ -991,7 +973,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.01
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -1023,7 +1005,6 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     run.t: 128
-    system.precision: bfloat16
     seed: 2028277857
   config:
     seed: 2028277857
@@ -1060,7 +1041,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -1137,8 +1118,6 @@ configs:
       time: null
       channel: Nodal
       mode: null
-    system:
-      precision: bfloat16
 - index: 7
   overrides:
     model.family: NCA
@@ -1153,7 +1132,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.1
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -1185,7 +1164,6 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     run.t: 128
-    system.precision: bfloat16
     seed: 1630434966
   config:
     seed: 1630434966
@@ -1222,7 +1200,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -1299,8 +1277,6 @@ configs:
       time: null
       channel: Nodal
       mode: null
-    system:
-      precision: bfloat16
 - index: 1
   overrides:
     model.family: NCA
@@ -1315,7 +1291,7 @@ configs:
     loss.args.multi_target_weights.correlation: 0.3
     loss.args.multi_target_weights.radial: 1.0
     loss.args.assignment: hard
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
     data.batches: 3
@@ -1347,7 +1323,6 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     run.t: 128
-    system.precision: bfloat16
     seed: 901749037
   config:
     seed: 901749037
@@ -1384,7 +1359,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       clear_cache_every: null
       log_every: 200
       pool_admission_enabled: true
@@ -1461,6 +1436,4 @@ configs:
       time: null
       channel: Nodal
       mode: null
-    system:
-      precision: bfloat16
 emit_files: false
