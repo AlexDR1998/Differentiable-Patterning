@@ -12,7 +12,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -50,7 +50,7 @@ configs:
     system.precision: tensorfloat32
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 577090037
   config:
     seed: 577090037
@@ -76,7 +76,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -156,7 +156,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -173,7 +173,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -211,7 +211,7 @@ configs:
     system.precision: bfloat16
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 271041745
   config:
     seed: 271041745
@@ -237,7 +237,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -317,7 +317,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -334,7 +334,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -372,7 +372,7 @@ configs:
     system.precision: highest
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 1095513148
   config:
     seed: 1095513148
@@ -398,7 +398,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -478,7 +478,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -495,7 +495,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -533,7 +533,7 @@ configs:
     system.precision: tensorfloat32
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 506456969
   config:
     seed: 506456969
@@ -559,7 +559,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -639,7 +639,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -656,7 +656,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -694,7 +694,7 @@ configs:
     system.precision: bfloat16
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 2127877499
   config:
     seed: 2127877499
@@ -720,7 +720,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -800,7 +800,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -817,7 +817,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -855,7 +855,7 @@ configs:
     system.precision: highest
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 1930549411
   config:
     seed: 1930549411
@@ -881,7 +881,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -961,7 +961,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -978,7 +978,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -1016,7 +1016,7 @@ configs:
     system.precision: tensorfloat32
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 2028277857
   config:
     seed: 2028277857
@@ -1042,7 +1042,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -1122,7 +1122,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -1139,7 +1139,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -1177,7 +1177,7 @@ configs:
     system.precision: bfloat16
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 1630434966
   config:
     seed: 1630434966
@@ -1203,7 +1203,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -1283,7 +1283,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -1300,7 +1300,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -1338,7 +1338,7 @@ configs:
     system.precision: highest
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 901749037
   config:
     seed: 901749037
@@ -1364,7 +1364,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -1444,7 +1444,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -1461,7 +1461,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -1499,7 +1499,7 @@ configs:
     system.precision: tensorfloat32
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 403123852
   config:
     seed: 403123852
@@ -1525,7 +1525,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -1605,7 +1605,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -1622,7 +1622,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -1660,7 +1660,7 @@ configs:
     system.precision: bfloat16
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 2095328386
   config:
     seed: 2095328386
@@ -1686,7 +1686,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -1766,7 +1766,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
@@ -1783,7 +1783,7 @@ configs:
     model.kernel_str:
     - ID
     - LAP
-    - GRAD
+    - DIFF
     model.fire_rate: 0.5
     model.padding: CIRCULAR
     model.upscale_factor: 1
@@ -1821,7 +1821,7 @@ configs:
     system.precision: highest
     system.xla_flags: null
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: nca_nvidia_batch_stability_debug
+    logging.wandb.group: nca_nvidia_batch_stability_debug_fixed
     seed: 121751464
   config:
     seed: 121751464
@@ -1847,7 +1847,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - GRAD
+      - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
       upscale_factor: 1
@@ -1927,7 +1927,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: nca_nvidia_batch_stability_debug
+        group: nca_nvidia_batch_stability_debug_fixed
         tags: null
     knockout:
       time: null
