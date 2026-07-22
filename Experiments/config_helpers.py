@@ -287,7 +287,7 @@ def build_model_config_string(cfg):
     cfg_str = (
         f"{cfg.model.family}"
         f"_c{cfg.model.channels}"
-        # f"_k{_compact_value(list(cfg.model.kernel_str))}"
+        f"_k{_compact_value(list(cfg.model.kernel_str))}"
         # f"_fr{cfg.model.fire_rate}"
     )
     activation = _cfg_get(cfg.model, "activation", None)

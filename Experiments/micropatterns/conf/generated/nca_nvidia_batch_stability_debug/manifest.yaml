@@ -1,0 +1,3848 @@
+experiment_name: nca_nvidia_batch_runtime
+entrypoint: Experiments.micropatterns.nca_runtime_check:run
+base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
+sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_nvidia_batch_runtime_sweep.yaml
+output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/nca_nvidia_batch_stability_debug
+count: 24
+configs:
+- index: 2
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: tensorfloat32
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 577090037
+  config:
+    seed: 577090037
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: tensorfloat32
+      xla_flags: null
+- index: 1
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: bfloat16
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 271041745
+  config:
+    seed: 271041745
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: bfloat16
+      xla_flags: null
+- index: 23
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: highest
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 1095513148
+  config:
+    seed: 1095513148
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: highest
+      xla_flags: null
+- index: 22
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: tensorfloat32
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 506456969
+  config:
+    seed: 506456969
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: tensorfloat32
+      xla_flags: null
+- index: 18
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: bfloat16
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 2127877499
+  config:
+    seed: 2127877499
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: bfloat16
+      xla_flags: null
+- index: 9
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: highest
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 1930549411
+  config:
+    seed: 1930549411
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: highest
+      xla_flags: null
+- index: 19
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: tensorfloat32
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 2028277857
+  config:
+    seed: 2028277857
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: tensorfloat32
+      xla_flags: null
+- index: 4
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: bfloat16
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 1630434966
+  config:
+    seed: 1630434966
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: bfloat16
+      xla_flags: null
+- index: 17
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: highest
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 901749037
+  config:
+    seed: 901749037
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: highest
+      xla_flags: null
+- index: 11
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: tensorfloat32
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 403123852
+  config:
+    seed: 403123852
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: tensorfloat32
+      xla_flags: null
+- index: 10
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: bfloat16
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 2095328386
+  config:
+    seed: 2095328386
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: bfloat16
+      xla_flags: null
+- index: 20
+  overrides:
+    model.family: NCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: highest
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 121751464
+  config:
+    seed: 121751464
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: highest
+      xla_flags: null
+- index: 5
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: tensorfloat32
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 1674216077
+  config:
+    seed: 1674216077
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: tensorfloat32
+      xla_flags: null
+- index: 3
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: bfloat16
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 1858720390
+  config:
+    seed: 1858720390
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: bfloat16
+      xla_flags: null
+- index: 8
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: highest
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 9045414
+  config:
+    seed: 9045414
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: highest
+      xla_flags: null
+- index: 15
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: tensorfloat32
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 1912923437
+  config:
+    seed: 1912923437
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: tensorfloat32
+      xla_flags: null
+- index: 14
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: bfloat16
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 1143881027
+  config:
+    seed: 1143881027
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: bfloat16
+      xla_flags: null
+- index: 7
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: highest
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 982526257
+  config:
+    seed: 982526257
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: highest
+      xla_flags: null
+- index: 16
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: tensorfloat32
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 439062303
+  config:
+    seed: 439062303
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: tensorfloat32
+      xla_flags: null
+- index: 0
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: bfloat16
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 1363349907
+  config:
+    seed: 1363349907
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: bfloat16
+      xla_flags: null
+- index: 13
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: tree
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: highest
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 131383004
+  config:
+    seed: 131383004
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: tree
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: highest
+      xla_flags: null
+- index: 6
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: tensorfloat32
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 95872739
+  config:
+    seed: 95872739
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: tensorfloat32
+      xla_flags: null
+- index: 21
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: bfloat16
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 109289145
+  config:
+    seed: 109289145
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: bfloat16
+      xla_flags: null
+- index: 12
+  overrides:
+    model.family: NCA_fast
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.upscale_factor: 1
+    run.scaling: convective
+    run.t: 128
+    run.iterations: 100
+    run.write_images: false
+    data.batches: 4
+    data.downsample: 4
+    data.pad_multiple: 16
+    data.data_channels: 12
+    knockout.mode: null
+    knockout.time: null
+    knockout.channel: Nodal
+    trainer.batch_mode: array
+    trainer.loop_autodiff: checkpointed
+    trainer.sharding: null
+    trainer.clear_cache_every: null
+    trainer.log_every: 100
+    trainer.pool_admission_enabled: false
+    loss.primary:
+    - l2_grouped
+    loss.layers:
+    - decoded
+    loss.random_crop: false
+    loss.regulariser_coeffs.intermediate_state: 0.0
+    loss.regulariser_coeffs.boundary: 0.0
+    loss.regulariser_coeffs.contiguous_growth: 0.0
+    loss.regulariser_coeffs.update_sensitivity: 0.0
+    loss.regulariser_coeffs.perturbation_conservation: 0.0
+    loss.regulariser_coeffs.latent_channel_match: 0.0
+    loss.regulariser_coeffs.latent_size: 0.0
+    optimiser.type: nadam
+    system.gpu: H100
+    system.precision: highest
+    system.xla_flags: null
+    logging.wandb.project: nca_micropattern_upscale
+    logging.wandb.group: nca_nvidia_batch_stability_debug
+    seed: 39534911
+  config:
+    seed: 39534911
+    experiment:
+      name: nca_micropattern_template
+    data:
+      dataset: micropatterns
+      batches: 4
+      timesteps:
+      - 0
+      - 12
+      - 24
+      - 36
+      - 48
+      data_channels: 12
+      downsample: 4
+      pad_multiple: 16
+      noise_strength: 0.005
+      duplicate_final_timestep: false
+    model:
+      family: NCA_fast
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      upscale_factor: 1
+    trainer:
+      batch_mode: array
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      sycl_fused_steps: 2
+      model_directory: models/
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      clear_cache_every: null
+      log_every: 100
+      pool_admission_enabled: false
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      primary:
+      - l2_grouped
+      channel_importance: null
+      component_weights: null
+      regulariser_coeffs:
+        intermediate_state: 0.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        latent_channel_match: 0.0
+        latent_size: 0.0
+      random_crop: false
+      random_channel_shuffle: false
+      args:
+        channels: null
+        experiment_groups: null
+        S: 1024
+        K: 5
+        D: 4
+        sharpen: true
+        epsilon: 0.1
+        internal_loss_func: l2
+        samples: 128
+      layers:
+      - decoded
+    run:
+      t: 128
+      iterations: 100
+      warmup: 64
+      write_images: false
+      sparse_pruning: false
+      target_sparsity: 0.5
+      scaling: convective
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_micropattern_upscale
+        group: nca_nvidia_batch_stability_debug
+        tags: null
+    knockout:
+      time: null
+      channel: Nodal
+      mode: null
+    system:
+      gpu: H100
+      precision: highest
+      xla_flags: null
+emit_files: false
