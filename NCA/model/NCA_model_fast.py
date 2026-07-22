@@ -26,6 +26,7 @@ import jax.numpy as jnp
 from jax import lax
 from jaxtyping import Array, Float
 
+from Common.model.spatial_operators import safe_grad_norm
 from NCA.model.NCA_model import NCA as ReferenceNCA
 
 
@@ -208,7 +209,7 @@ class NCA(ReferenceNCA):
         if "DIFF" in self.KERNEL_STR:
             gx = filtered["grad_x"]
             gy = filtered["grad_y"]
-            features.append(jnp.sqrt(gx**2 + gy**2))
+            features.append(safe_grad_norm(gx, gy))
         if "GRAD" in self.KERNEL_STR:
             features.extend((filtered["grad_x"], filtered["grad_y"]))
         if "AV" in self.KERNEL_STR:
@@ -259,7 +260,7 @@ class NCA(ReferenceNCA):
         if "DIFF" in self.KERNEL_STR:
             gx = filtered["grad_x"]
             gy = filtered["grad_y"]
-            features.append(jnp.sqrt(gx**2 + gy**2))
+            features.append(safe_grad_norm(gx, gy))
         if "GRAD" in self.KERNEL_STR:
             features.extend((filtered["grad_x"], filtered["grad_y"]))
         if "AV" in self.KERNEL_STR:

@@ -5,6 +5,15 @@ from einops import rearrange,reduce,einsum
 from jaxtyping import Array, Float
 
 
+GRAD_NORM_EPSILON = 1e-12
+
+
+def safe_grad_norm(gx, gy):
+    """Return a gradient magnitude with a finite derivative at the origin."""
+    epsilon = jnp.asarray(GRAD_NORM_EPSILON, dtype=gx.dtype)
+    return jnp.sqrt(gx**2 + gy**2 + epsilon) - jnp.sqrt(epsilon)
+
+
 class Ops(eqx.Module):
     
     
@@ -278,7 +287,7 @@ class Ops(eqx.Module):
         X = rearrange(X,"C x y -> C () x y")
         gx = v_grad_x(X)[:,0]
         gy = v_grad_y(X)[:,0]
-        return jnp.sqrt(gx**2+gy**2)
+        return safe_grad_norm(gx, gy)
     
     @eqx.filter_jit
     def Div(self,X: Float[Array,"dim C x y"])->Float[Array, "C x y"]:

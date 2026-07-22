@@ -3,6 +3,7 @@ import jax.numpy as jnp
 import equinox as eqx
 
 from Common.model.boundary import hard_boundary, model_boundary, no_boundary
+from Common.model.spatial_operators import safe_grad_norm
 from Common.trainer.abstract_data_augmenter_array import (
     DataAugmenterAbstract as LegacyArrayAugmenter,
 )
@@ -27,6 +28,22 @@ from NCA.trainer.NCA_regulariser import (
     latent_size_regulariser,
 )
 from NCA.model.NCA_model_fast import NCA as FastNCA
+
+
+def test_safe_grad_norm_is_zero_with_finite_gradient_at_origin():
+    gx = jnp.zeros((2, 3, 4), dtype=jnp.float32)
+    gy = jnp.zeros_like(gx)
+
+    value = safe_grad_norm(gx, gy)
+    grad_gx, grad_gy = jax.grad(
+        lambda x, y: jnp.sum(safe_grad_norm(x, y)), argnums=(0, 1)
+    )(gx, gy)
+
+    assert jnp.array_equal(value, jnp.zeros_like(value))
+    assert jnp.all(jnp.isfinite(grad_gx))
+    assert jnp.all(jnp.isfinite(grad_gy))
+    assert jnp.array_equal(grad_gx, jnp.zeros_like(grad_gx))
+    assert jnp.array_equal(grad_gy, jnp.zeros_like(grad_gy))
 
 
 def _data():
