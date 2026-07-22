@@ -722,8 +722,6 @@ class NCA_Trainer(object):
 			raise ValueError("multi_target requires a channel schema")
 		if is_multi_target and self.GRAD_LOSS:
 			raise ValueError("multi_target requires GRAD_LOSS=False")
-		if is_multi_target and self.SHARDING is not None:
-			raise ValueError("multi_target currently requires all batches on one device")
 		multi_target_params = None
 		pool_admission_config = {
 			"enabled": True,
