@@ -6,6 +6,8 @@ import numpy as np
 import pytest
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
+from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
+from Common.trainer.loss_multi_target import multi_target_loss
 from NCA.trainer.sycl_batching import apply_flat_batched_nca
 from NCA.trainer.sycl_execution import SyclTwoTileExecution
 from NCA.trainer.sycl_scan import scan_carry_only
@@ -125,6 +127,25 @@ def test_data_augmenter_state_is_partitioned_by_contiguous_batch_halves():
     assert all(value.device == execution.devices[1] for value in right.data_saved)
 
 
+def test_global_donor_augmenter_keeps_full_truth_pool_on_each_tile():
+    execution = _two_device_execution()
+
+    class Augmenter:
+        supports_global_donor_pool = True
+
+    augmenter = Augmenter()
+    augmenter.data_true = [jnp.asarray([batch]) for batch in range(4)]
+    augmenter.data_saved = [jnp.asarray([10 + batch]) for batch in range(4)]
+
+    left = execution._slice_data_augmenter(augmenter, (0, 1), 0)
+    right = execution._slice_data_augmenter(augmenter, (2, 3), 1)
+
+    assert [int(value[0]) for value in left.data_saved] == [10, 11, 12, 13]
+    assert [int(value[0]) for value in right.data_saved] == [10, 11, 12, 13]
+    assert np.array_equal(np.asarray(left._global_batch_indices), [0, 1])
+    assert np.array_equal(np.asarray(right._global_batch_indices), [2, 3])
+
+
 def test_pool_injections_preserve_global_half_rate_across_tiles():
     assert SyclTwoTileExecution._allocate_injections([6, 6], 0) == [3, 3]
     assert sum(SyclTwoTileExecution._allocate_injections([3, 4], 0)) == 3
@@ -227,6 +248,75 @@ def test_gradient_wraps_shard_map_for_data_parallel_loss():
     assert jnp.allclose(actual_gradient, expected_gradient, atol=1e-6)
 
 
+def test_multi_target_assignment_gathers_batches_across_tiles():
+    execution = _two_device_execution()
+    schema = MICROPATTERN_260726_SCHEMA
+
+    def local_loss(local_prediction, local_target):
+        gathered = execution.prepare_multi_target_inputs(
+            local_prediction, local_target
+        )
+        losses, _ = multi_target_loss(
+            *gathered,
+            jnp.ones((4, 4), dtype=bool),
+            schema,
+            None,
+            jax.random.PRNGKey(11),
+            {"multi_target_weights": {"texture": 0.0}},
+        )
+        return jax.lax.pmean(jnp.mean(losses), execution.AXIS_NAME)
+
+    distributed_loss = filter_shard_map(
+        local_loss,
+        mesh=execution.mesh,
+        in_specs=(P(execution.AXIS_NAME), P(execution.AXIS_NAME)),
+        out_specs=P(),
+        check_rep=False,
+    )
+
+    for batch_count in (2, 4):
+        prediction = jax.random.uniform(
+            jax.random.fold_in(jax.random.PRNGKey(10), batch_count),
+            (batch_count, 2, schema.n_state_channels, 4, 4),
+        )
+        target = jnp.take(
+            prediction[::-1], jnp.asarray(schema.target_to_state), axis=2
+        )
+        prediction = jax.device_put(prediction, execution.tile_sharding)
+        target = jax.device_put(target, execution.tile_sharding)
+        assert jnp.allclose(
+            eqx.filter_jit(distributed_loss)(prediction, target), 0.0
+        )
+
+
+def test_gathered_multi_target_inputs_preserve_gradient_scale():
+    execution = _two_device_execution()
+    values = jax.device_put(
+        jnp.arange(12, dtype=jnp.float32).reshape(2, 2, 3),
+        execution.tile_sharding,
+    )
+
+    def local_loss(local_values):
+        gathered, _ = execution.prepare_multi_target_inputs(
+            local_values, local_values
+        )
+        return jax.lax.pmean(jnp.mean(gathered**2), execution.AXIS_NAME)
+
+    distributed_loss = filter_shard_map(
+        local_loss,
+        mesh=execution.mesh,
+        in_specs=(P(execution.AXIS_NAME),),
+        out_specs=P(),
+        check_rep=False,
+    )
+    actual_loss, actual_gradient = jax.jit(jax.value_and_grad(distributed_loss))(
+        values
+    )
+
+    assert jnp.allclose(actual_loss, jnp.mean(values**2))
+    assert jnp.allclose(actual_gradient, 2.0 * values / values.size)
+
+
 def test_sharded_loss_evenly_processes_four_outer_batches():
     execution = _two_device_execution()
     batches = [
@@ -251,7 +341,7 @@ def test_sharded_loss_evenly_processes_four_outer_batches():
         mean_loss, regularisers = execution.synchronise_loss(
             static_scale * jnp.mean(losses), {}
         )
-        return mean_loss, (states, states, losses, regularisers)
+        return mean_loss, (states, states, losses, regularisers, {})
 
     distributed_loss = execution.transform_loss(local_loss)
     weight = jnp.asarray(0.7, dtype=jnp.float32)

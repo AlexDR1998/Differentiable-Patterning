@@ -14,6 +14,7 @@ from NCA.trainer.NCA_trainer import select_wandb_train_logger_class
 from NCA.trainer.tensorboard_log import (
     NCA_Train_log,
     NCA_knockout_Train_log,
+    _biomarker_name,
     _target_aligned_diagnostic_channels,
     _trajectory_snapshot_channels,
     compute_channel_correlation_diagnostics,
@@ -364,6 +365,7 @@ def test_channel_time_grid_and_true_logging_retain_batch_labels():
     logger.log_image = lambda tag, images, step=None: logged.update({tag: images})
     logger.log_data_at_init(np.stack((values, values)))
     assert logged["True sequence labelled"].shape[0] == 2
+    assert _biomarker_name("cell_fate_s1/SOX2") == "SOX2"
 
 
 def test_training_logger_emits_channel_time_diagnostics_without_wandb():
@@ -408,22 +410,26 @@ def test_training_snapshots_include_every_batch_in_one_composite():
     assert np.all(logged["Train/processed_batches"][6:] == 2)
 
 
-def test_group_timestep_losses_only_log_at_diagnostic_interval():
+def test_group_timestep_losses_log_one_histogram_at_diagnostic_interval():
     logger = object.__new__(NCA_Train_log)
     logger.timepoint_names = ["t12h", "t24h"]
     logger.log_model_parameters = lambda *args: None
     logger.log_channel_time_diagnostics = lambda *args: None
     logged = []
     logger.log_scalar = lambda tag, value, step=None: logged.append((tag, value, step))
-    logger.log_scalars = lambda values, step=None: logged.extend(
-        (tag, value, step) for tag, value in values.items()
+    logger.log_histogram = lambda tag, values, step=None: logged.append(
+        (tag, np.asarray(values), step)
     )
-    details = {"loss_detail/rna_expression/radial": np.array([1.0, 2.0])}
+    details = {
+        "loss_detail/rna_expression/total": np.array([1.0, 2.0]),
+        "loss_detail/cell_fate_s1/total": np.array([3.0, 4.0]),
+        "loss_detail/rna_expression/radial": np.array([10.0, 20.0]),
+    }
 
     logger.tb_training_loop_log_sequence(details, 9, None, False, 10)
     assert logged == []
     logger.tb_training_loop_log_sequence(details, 10, None, False, 10)
-    assert logged == [
-        ("Train/loss_detail/rna_expression/radial/t12h", 1.0, 10),
-        ("Train/loss_detail/rna_expression/radial/t24h", 2.0, 10),
-    ]
+    assert len(logged) == 1
+    assert logged[0][0] == "Train/loss_detail/group_timestep"
+    np.testing.assert_array_equal(logged[0][1], [1.0, 2.0, 3.0, 4.0])
+    assert logged[0][2] == 10

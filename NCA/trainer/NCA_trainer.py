@@ -933,9 +933,18 @@ class NCA_Trainer(object):
 				loss_diagnostics = {}
 				if is_multi_target:
 					boundary = jnp.asarray(self.DIAGNOSTIC_BOUNDARY_MASK)[0, 0]
+					prediction = (
+						x_proc if self.BATCH_BACKEND.is_array else jnp.stack(x_proc)
+					)[:, :, :self.OBS_CHANNELS]
+					target = (
+						y_proc if self.BATCH_BACKEND.is_array else jnp.stack(y_proc)
+					)[:, :, :self.DATA_CHANNELS]
+					prediction, target = training_execution.prepare_multi_target_inputs(
+						prediction, target
+					)
 					losses, components = multi_target_loss(
-						(x_proc if self.BATCH_BACKEND.is_array else jnp.stack(x_proc))[:, :, :self.OBS_CHANNELS],
-						(y_proc if self.BATCH_BACKEND.is_array else jnp.stack(y_proc))[:, :, :self.DATA_CHANNELS],
+						prediction,
+						target,
 						boundary,
 						self.CHANNEL_SCHEMA,
 						multi_target_params,

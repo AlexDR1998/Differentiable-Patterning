@@ -143,12 +143,14 @@ class SyclTwoTileExecution(TrainingExecution):
                 x_processed,
                 losses,
                 regulariser_losses,
+                loss_diagnostics,
             ) = auxiliary
             return mean_loss, (
                 self._add_local_tile_axis(x_latent, "state"),
                 self._add_local_tile_axis(x_processed, "processed state"),
                 self._add_local_tile_axis(losses, "loss array"),
                 regulariser_losses,
+                loss_diagnostics,
             )
 
         return filter_shard_map(
@@ -169,6 +171,7 @@ class SyclTwoTileExecution(TrainingExecution):
                     P(self.AXIS_NAME),
                     P(self.AXIS_NAME),
                     P(),
+                    P(),
                 ),
             ),
             # Native custom-call primitives do not provide shard-map
@@ -182,6 +185,13 @@ class SyclTwoTileExecution(TrainingExecution):
             jax.lax.pmean(mean_loss, self.AXIS_NAME),
             self._array_pmean(regulariser_losses, self.AXIS_NAME),
         )
+
+    def prepare_multi_target_inputs(self, prediction, target):
+        """Expose the complete outer batch to permutation assignment."""
+        gather = lambda value: jax.lax.all_gather(
+            value, self.AXIS_NAME, axis=0, tiled=False
+        ).reshape((-1, *value.shape[1:]))
+        return gather(prediction), gather(target)
 
     def _pack_items(self, items, name, *, sharded=True, expected_ndim=None):
         """Pair equal tile partitions into global ``[tile,...]`` slots.
@@ -388,6 +398,7 @@ class SyclTwoTileExecution(TrainingExecution):
         def place(value):
             return jax.device_put(value, device) if eqx.is_array(value) else value
 
+        global_donors = getattr(augmenter, "supports_global_donor_pool", False)
         for attribute in (
             "data_true",
             "data_saved",
@@ -397,18 +408,24 @@ class SyclTwoTileExecution(TrainingExecution):
             if not hasattr(local, attribute):
                 continue
             value = getattr(local, attribute)
+            indices_to_copy = range(len(value)) if global_donors and attribute in {
+                "data_true", "data_saved"
+            } else batch_indices
             if isinstance(value, list):
-                local_value = [jtu.tree_map(place, value[i]) for i in batch_indices]
+                local_value = [jtu.tree_map(place, value[i]) for i in indices_to_copy]
             elif isinstance(value, tuple):
                 local_value = tuple(
-                    jtu.tree_map(place, value[i]) for i in batch_indices
+                    jtu.tree_map(place, value[i]) for i in indices_to_copy
                 )
             elif hasattr(value, "shape") and value.ndim > 0:
-                indices = jnp.asarray(batch_indices)
+                indices = jnp.asarray(tuple(indices_to_copy))
                 local_value = jax.device_put(value[indices], device)
             else:
                 continue
             setattr(local, attribute, local_value)
+        local._global_batch_indices = jax.device_put(
+            jnp.asarray(batch_indices), device
+        )
         return local
 
     def prepare_inputs(self, nca, x, y, opt_state, key):
@@ -553,6 +570,10 @@ class SyclTwoTileExecution(TrainingExecution):
         outputs = []
         for tile in range(self.TILE_COUNT):
             augmenter = self.data_augmenters[tile]
+            if getattr(augmenter, "supports_global_donor_pool", False):
+                augmenter._sharded_global_key = jax.device_put(
+                    local_keys[0], self.devices[tile]
+                )
             if getattr(augmenter, "supports_sharded_inject_count", False):
                 augmenter._sharded_n_inject = injections[tile]
             outputs.append(

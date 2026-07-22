@@ -82,6 +82,11 @@ def run(cfg):
     trainer_class = (
         NCA_sycl_Trainer if cfg.model.family == "NCA_sycl" else NCA_Trainer
     )
+    trainer_kwargs = {}
+    if cfg.model.family == "NCA_sycl":
+        trainer_kwargs["SYCL_FUSED_STEPS"] = cfg.trainer.get(
+            "sycl_fused_steps", 2
+        )
     trainer = trainer_class(
         NCA_model=model,
         data=data,
@@ -93,8 +98,10 @@ def run(cfg):
         LOSS_TIME_CHANNEL_MASK=loss_time_channel_mask,
         DATA_AUGMENTER=data_augmenter,  # pyright: ignore[reportArgumentType]
         GRAD_LOSS=cfg.trainer.grad_loss,
+        SHARDING=cfg.trainer.get("sharding", None),
         BATCH_MODE=cfg.trainer.get("batch_mode", "tree"),
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
+        **trainer_kwargs,
     )
     trainer.train(
         t=cfg.run.t,

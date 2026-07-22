@@ -11,6 +11,7 @@ from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 class DataAugmenter(BasicAugmenter):
     noise_strength = 0.005
     schema = MICROPATTERN_260726_SCHEMA
+    supports_global_donor_pool = True
 
     def __init__(self, *args, **kwargs):
         model = kwargs.get("nca_model")
@@ -50,27 +51,39 @@ class DataAugmenter(BasicAugmenter):
         measurements = saved[:, :, :self.schema.n_measurement_channels]
         truth = jax.vmap(lambda data: self.real_to_latent(self._to_state(data)))(saved)
         batch_count, time_count = x.shape[:2]
+        donor_count = saved.shape[0]
+        global_indices = jnp.asarray(
+            getattr(self, "_global_batch_indices", jnp.arange(batch_count))
+        )
+        global_key = getattr(self, "_sharded_global_key", key)
         x = x.at[:, 1:].set(x[:, :-1])
 
-        key, reset_key = jax.random.split(key)
-        reset = truth[jax.random.permutation(reset_key, batch_count), 0]
+        global_key, reset_key = jax.random.split(global_key)
+        reset_donors = jax.random.permutation(reset_key, donor_count)[global_indices]
+        reset = truth[reset_donors, 0]
         x = x.at[:, 0].set(reset)
 
         if time_count > 1:
-            key, mask_key, group_key = jax.random.split(key, 3)
-            inject = jax.random.bernoulli(mask_key, 0.5, (batch_count, time_count - 1))
-            choices = jax.random.randint(group_key, inject.shape, 0, len(self.schema.experiment_groups))
+            global_key, mask_key, group_key = jax.random.split(global_key, 3)
+            global_shape = (donor_count, time_count - 1)
+            inject = jax.random.bernoulli(mask_key, 0.5, global_shape)[global_indices]
+            choices = jax.random.randint(
+                group_key, global_shape, 0, len(self.schema.experiment_groups)
+            )[global_indices]
             for t in range(1, time_count):
                 for g, (targets, states) in enumerate(
                     zip(self.schema.group_measurement_indices, self.state_groups)
                 ):
-                    key, donor_key = jax.random.split(key)
-                    donors = jax.random.permutation(donor_key, batch_count)
+                    global_key, donor_key = jax.random.split(global_key)
+                    donors = jax.random.permutation(
+                        donor_key, donor_count
+                    )[global_indices]
                     values = self.real_to_latent(measurements[donors, t][:, targets])
                     keep = (inject[:, t - 1] & (choices[:, t - 1] == g))[:, None, None, None]
                     x = x.at[:, t, states].set(jnp.where(keep, values, x[:, t, states]))
 
         x = self.restore_batch_mode(x)
-        x = self.noise(x, self.noise_strength, key=key)
-        self.PREVIOUS_KEY = key
+        noise_key = key if hasattr(self, "_sharded_global_key") else global_key
+        x = self.noise(x, self.noise_strength, key=noise_key)
+        self.PREVIOUS_KEY = noise_key
         return x, y

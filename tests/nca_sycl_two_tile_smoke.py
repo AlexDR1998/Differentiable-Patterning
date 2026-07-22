@@ -139,12 +139,18 @@ def _assert_close(name, actual, expected):
         raise AssertionError(f"{name} mismatch: maximum error {error}")
 
 
+def _gathered_loss(values):
+    gathered = jax.lax.all_gather(values, "tiles", axis=0, tiled=False)
+    gathered = gathered.reshape((-1, *values.shape[1:]))
+    return jax.lax.pmean(jnp.mean(gathered**2), "tiles")
+
+
 def main():
     os.environ.setdefault("NCA_SYCL_XMX_MODE", "bf16")
     devices = [
         device for device in jax.local_devices() if device.platform == "sycl"
     ]
-    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=13")
+    print("NCA_SYCL_TWO_TILE_SMOKE_VERSION=14")
     print(f"JAX_VERSION={jax.__version__}")
     print(f"JAX_DEVICES={devices}")
     print(f"OUTER_BATCHES_PER_TILE={OUTER_BATCHES_PER_TILE}")
@@ -202,6 +208,25 @@ def main():
     two_tile_start = time.perf_counter()
     mesh = Mesh(np.asarray(devices), ("tiles",))
     tile_sharding = NamedSharding(mesh, P("tiles"))
+    gathered_loss = filter_shard_map(
+        _gathered_loss,
+        mesh=mesh,
+        in_specs=(P("tiles"),),
+        out_specs=P(),
+        check_rep=False,
+    )
+    gather_values = jax.device_put(
+        jnp.arange(12, dtype=jnp.float32).reshape(2, 2, 3), tile_sharding
+    )
+    gather_loss, gather_gradient = jax.jit(jax.value_and_grad(gathered_loss))(
+        gather_values
+    )
+    _assert_close("ALL_GATHER_LOSS", gather_loss, jnp.mean(gather_values**2))
+    _assert_close(
+        "ALL_GATHER_GRADIENT",
+        gather_gradient,
+        2.0 * gather_values / gather_values.size,
+    )
     sharded_states = [
         jax.device_put(states[:, batch], tile_sharding)
         for batch in range(OUTER_BATCHES_PER_TILE)

@@ -424,7 +424,9 @@ def plot_channel_time_grid(values, channel_names=None, timepoint_names=None, tit
 	axis.set_yticks(
 		(np.arange(channel_count) + 0.5) * width,
 		labels=channel_names,
-		fontsize=6,
+		rotation=90,
+		fontsize=5,
+		va="center",
 	)
 	for boundary in np.arange(1, time_count) * height:
 		axis.axvline(boundary - 0.5, color="white", linewidth=0.4, alpha=0.5)
@@ -442,6 +444,11 @@ def _timepoint_labels(names, count):
 	if len(names) + 1 == count:
 		return ["t0h", *names]
 	return [f"t{index}" for index in range(count)]
+
+
+def _biomarker_name(name):
+	"""Return the biomarker suffix from a schema channel name."""
+	return str(name).rsplit("/", 1)[-1]
 
 
 def _singular_value_logging_config(config=None):
@@ -562,18 +569,23 @@ class NCA_Train_log(Train_log):
 			else (4, 4, 3, 1) if self.diagnostic_grouped_channels else None
 		)
 		self.radial_bins = int(radial_bins)
-		if self.diagnostic_targets is None:
-			channel_count = 0 if not data_values else data_values[0].shape[1]
-			if channel_names is None or len(channel_names) != channel_count:
-				self.channel_names = [f"channel_{index + 1}" for index in range(channel_count)]
-			else:
-				self.channel_names = [str(name) for name in channel_names]
+		channel_count = (
+			self.diagnostic_targets.shape[2]
+			if self.diagnostic_targets is not None
+			else 0 if not data_values else data_values[0].shape[1]
+		)
+		if (
+			self.diagnostic_channel_schema is not None
+			and self.diagnostic_channel_schema.n_measurement_channels == channel_count
+		):
+			self.channel_names = [
+				channel.marker
+				for channel in self.diagnostic_channel_schema.measurement_channels
+			]
+		elif channel_names is not None and len(channel_names) == channel_count:
+			self.channel_names = [_biomarker_name(name) for name in channel_names]
 		else:
-			channel_count = self.diagnostic_targets.shape[2]
-			if channel_names is None or len(channel_names) != channel_count:
-				self.channel_names = [f"channel_{index + 1}" for index in range(channel_count)]
-			else:
-				self.channel_names = [str(name) for name in channel_names]
+			self.channel_names = [f"channel_{index + 1}" for index in range(channel_count)]
 		time_count = (
 			0 if not data_values else data_values[0].shape[0] - 1
 		)
@@ -757,17 +769,12 @@ class NCA_Train_log(Train_log):
 				step=i)
 	
 	def tb_training_loop_log_sequence(self,log_dict,i,model,write_images=True,LOG_EVERY=10):
-		detail_scalars = {}
+		detail_losses = []
 		for name in log_dict.keys():
 			if name not in ["x_latent", "x_processed"]:
 				if name.startswith("loss_detail/"):
-					if i % LOG_EVERY == 0:
-						values = np.asarray(log_dict[name]).reshape(-1)
-						timepoints = self.timepoint_names
-						if len(timepoints) != len(values):
-							timepoints = [f"t{index + 1}" for index in range(len(values))]
-						for timepoint, value in zip(timepoints, values):
-							detail_scalars[f"Train/{name}/{timepoint}"] = float(value)
+					if i % LOG_EVERY == 0 and name.endswith("/total"):
+						detail_losses.append(np.asarray(log_dict[name]).reshape(-1))
 				elif name.startswith("pool/"):
 					self.log_scalar(f"StatePool/{name.removeprefix('pool/')}",log_dict[name],step=i)
 				elif name.startswith("runtime/"):
@@ -776,8 +783,12 @@ class NCA_Train_log(Train_log):
 					# self.log_scalar("Train/learning_rate", log_dict[name], step=i)
 				else:
 					self.log_scalar(f"Train/{name}",log_dict[name],step=i)
-		if detail_scalars:
-			self.log_scalars(detail_scalars, step=i)
+		if detail_losses:
+			self.log_histogram(
+				"Train/loss_detail/group_timestep",
+				np.concatenate(detail_losses),
+				step=i,
+			)
 		if i%LOG_EVERY==0 and i>0:
 			self.log_model_parameters(model,i)
 			self.log_channel_time_diagnostics(log_dict,i)

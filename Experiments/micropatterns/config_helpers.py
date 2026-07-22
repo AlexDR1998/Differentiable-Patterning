@@ -153,7 +153,7 @@ def masked_reinject_callback_bit(
 
 def build_data_augmenter(cfg, channel_timestep_mask=None):
     data_channels = cfg.data.data_channels
-    if cfg.data.dataset == "micropatterns_260726":
+    if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
         class DA_subclass(DataAugmenter260726):
             noise_strength = cfg.data.noise_strength
         return DA_subclass, f"da_snapshot_noise{cfg.data.noise_strength}"
@@ -221,9 +221,11 @@ def build_data_augmenter(cfg, channel_timestep_mask=None):
 def load_data(cfg, impath=None):
     custom_impath = impath is not None
     data_channels = cfg.data.data_channels
-    if cfg.data.dataset == "micropatterns_260726":
-        if cfg.knockout.mode is not None or data_channels != 14 or cfg.data.batches != 3:
-            raise ValueError("micropatterns_260726 currently requires baseline, data_channels=14, batches=3")
+    if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
+        if cfg.knockout.mode is not None or data_channels != 14:
+            raise ValueError("micropatterns_260726 requires baseline data with 14 channels")
+        if cfg.data.batches not in {2, 4}:
+            raise ValueError("micropatterns_260726 currently supports 2 or 4 batches")
         if impath is None:
             data_path_base = os.getenv("DATA_PATH_BASE")
             if data_path_base is None:
@@ -234,8 +236,9 @@ def load_data(cfg, impath=None):
             conditions=("ctrl",),
             timesteps=tuple(cfg.data.timesteps),
             downsample=cfg.data.downsample,
+            replicate_count=cfg.data.batches,
         )
-        cfg_str = f"data_b3_c14_ds{cfg.data.downsample}_ts{_compact_value(list(cfg.data.timesteps))}"
+        cfg_str = f"data_b{cfg.data.batches}_c14_ds{cfg.data.downsample}_ts{_compact_value(list(cfg.data.timesteps))}"
         if custom_impath:
             cfg_str += "_custompath"
         return data, aux, names, boundary, mask[:, 1:], cfg_str

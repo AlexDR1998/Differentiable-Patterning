@@ -461,6 +461,34 @@ def test_micropattern_load_data_uses_4_channel_group_a_loader(monkeypatch):
     assert calls["12ch"] == []
 
 
+@pytest.mark.parametrize("batch_count", [2, 4])
+def test_260726_loader_uses_configured_even_replicate_count(monkeypatch, batch_count):
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+
+    calls = []
+
+    def fake_loader(path, **kwargs):
+        calls.append((path, kwargs))
+        data = jnp.zeros((batch_count, 5, 14, 2, 3))
+        boundary = jnp.ones((batch_count, 1, 2, 3), dtype=bool)
+        mask = jnp.ones((batch_count, 5, 14), dtype=bool)
+        return data, {"channel_schema": object()}, ["marker"] * 14, boundary, mask
+
+    monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
+    cfg = _micropattern_cfg(data_channels=14)
+    cfg.data.dataset = "micropatterns_260726"
+    cfg.data.batches = batch_count
+
+    data, _, _, _, mask, cfg_str = micropattern_helpers.load_data(
+        cfg, impath="/tmp/micropatterns/"
+    )
+
+    assert data.shape[0] == batch_count
+    assert mask.shape == (batch_count, 4, 14)
+    assert calls[0][1]["replicate_count"] == batch_count
+    assert f"data_b{batch_count}_c14" in cfg_str
+
+
 def test_micropattern_build_data_augmenter_selects_channel_specific_class():
     import Experiments.micropatterns.config_helpers as micropattern_helpers
 

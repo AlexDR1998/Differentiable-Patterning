@@ -114,3 +114,34 @@ def test_reinjection_preserves_group_specific_duplicate_measurements():
                     observed["protein_response"] = True
 
     assert all(observed.values())
+
+
+def test_sharded_reinjection_matches_global_two_and_four_batch_permutations():
+    for batch_count in (2, 4):
+        data = jax.random.uniform(
+            jax.random.fold_in(jax.random.PRNGKey(20), batch_count),
+            (batch_count, 5, 14, 2, 2),
+        )
+        key = jax.random.fold_in(jax.random.PRNGKey(21), batch_count)
+        global_augmenter = DataAugmenter(data)
+        global_augmenter.noise_strength = 0.0
+        zeros = [jnp.zeros((4, 10, 2, 2)) for _ in range(batch_count)]
+        targets = [value[1:] for value in data]
+        expected, _ = global_augmenter.data_callback(zeros, targets, 0, key)
+
+        split = batch_count // 2
+        actual = []
+        for indices in (jnp.arange(split), jnp.arange(split, batch_count)):
+            local = DataAugmenter(data)
+            local.noise_strength = 0.0
+            local._global_batch_indices = indices
+            local._sharded_global_key = key
+            result, _ = local.data_callback(
+                [zeros[int(index)] for index in indices],
+                [targets[int(index)] for index in indices],
+                0,
+                jax.random.fold_in(key, int(indices[0]) + 1),
+            )
+            actual.extend(result)
+
+        assert jnp.allclose(jnp.stack(actual), jnp.stack(expected))
