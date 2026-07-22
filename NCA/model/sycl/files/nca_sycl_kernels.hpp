@@ -17,6 +17,15 @@ constexpr std::int64_t kBoundaryRegulariserFlag = 1 << 1;
 constexpr std::int64_t kDenseTile = 16;
 constexpr std::int64_t kSpatialTileY = 8;
 constexpr std::int64_t kSpatialTileX = 16;
+constexpr float kGradNormEpsilon = 1.0e-12F;
+
+inline float StableGradNormDenominator(float gx, float gy) {
+  return sycl::sqrt(gx * gx + gy * gy + kGradNormEpsilon);
+}
+
+inline float StableGradNorm(float gx, float gy) {
+  return StableGradNormDenominator(gx, gy) - sycl::sqrt(kGradNormEpsilon);
+}
 
 enum class Padding : std::int64_t {
   kZeros = 0,
@@ -206,7 +215,7 @@ inline void SubmitPerceptionImpl(sycl::queue& queue, const float* state,
           if (shape.kernel_flags & kDiffFlag) {
             const float gx = local_filter(0);
             const float gy = local_filter(1);
-            store(sycl::sqrt(gx * gx + gy * gy));
+            store(StableGradNorm(gx, gy));
           }
           if (shape.kernel_flags & kGradFlag) {
             store(local_filter(0));

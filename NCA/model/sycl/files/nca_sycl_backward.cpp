@@ -409,19 +409,18 @@ void SubmitGatheredStateGradient(
               state, kernels, batch, channel, source_y, source_x, 0, shape);
           const float gy = nca_sycl::FilterAt(
               state, kernels, batch, channel, source_y, source_x, 1, shape);
-          const float norm = sycl::sqrt(gx * gx + gy * gy);
-          if (norm > 0.0F) {
-            const float norm_gradient =
-                gradient_at(block + channel, source_y, source_x);
-            value += norm_gradient *
-                     (gx * kernels[(0 * shape.kernel_size + ky) *
-                                       shape.kernel_size +
-                                   kx] +
-                      gy * kernels[(1 * shape.kernel_size + ky) *
-                                       shape.kernel_size +
-                                   kx]) /
-                     norm;
-          }
+          const float denominator =
+              nca_sycl::StableGradNormDenominator(gx, gy);
+          const float norm_gradient =
+              gradient_at(block + channel, source_y, source_x);
+          value += norm_gradient *
+                   (gx * kernels[(0 * shape.kernel_size + ky) *
+                                     shape.kernel_size +
+                                 kx] +
+                    gy * kernels[(1 * shape.kernel_size + ky) *
+                                     shape.kernel_size +
+                                 kx]) /
+                   denominator;
           block += shape.channels;
         }
         if (shape.kernel_flags & nca_sycl::kGradFlag) {
@@ -596,14 +595,13 @@ void SubmitGatheredDiffStateGradient3x3(
               if (shape.kernel_flags & nca_sycl::kDiffFlag) {
                 const float gx = gx_tile[source];
                 const float gy = gy_tile[source];
-                const float norm = sycl::sqrt(gx * gx + gy * gy);
-                if (norm > 0.0F) {
-                  value +=
-                      source_gradients[source * feature_blocks + source_block] *
-                      (gx * kernel_tile[ky * 3 + kx] +
-                       gy * kernel_tile[9 + ky * 3 + kx]) /
-                      norm;
-                }
+                const float denominator =
+                    nca_sycl::StableGradNormDenominator(gx, gy);
+                value +=
+                    source_gradients[source * feature_blocks + source_block] *
+                    (gx * kernel_tile[ky * 3 + kx] +
+                     gy * kernel_tile[9 + ky * 3 + kx]) /
+                    denominator;
                 ++source_block;
               }
               if (shape.kernel_flags & nca_sycl::kGradFlag) {
@@ -665,14 +663,13 @@ void SubmitAtomicStateGradientFallback(
                                           0, shape);
       const float gy = nca_sycl::FilterAt(state, kernels, batch, channel, y, x,
                                           1, shape);
-      const float norm = sycl::sqrt(gx * gx + gy * gy);
-      if (norm > 0.0F) {
-        const float g = gradient(feature + channel) / norm;
-        ScatterFilterGradient(state_gradient, kernels, batch, channel, y, x, 0,
-                              g * gx, shape);
-        ScatterFilterGradient(state_gradient, kernels, batch, channel, y, x, 1,
-                              g * gy, shape);
-      }
+      const float denominator =
+          nca_sycl::StableGradNormDenominator(gx, gy);
+      const float g = gradient(feature + channel) / denominator;
+      ScatterFilterGradient(state_gradient, kernels, batch, channel, y, x, 0,
+                            g * gx, shape);
+      ScatterFilterGradient(state_gradient, kernels, batch, channel, y, x, 1,
+                            g * gy, shape);
       feature += shape.channels;
     }
     if (shape.kernel_flags & nca_sycl::kGradFlag) {

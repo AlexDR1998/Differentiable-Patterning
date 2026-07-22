@@ -63,7 +63,7 @@ def test_sycl_backward_reference_matches_fast_nca(padding):
 
 
 def test_sycl_backward_reference_has_finite_parameter_and_state_gradients():
-    kernel_str = ["ID", "GRAD", "AV", "LAP"]
+    kernel_str = ["ID", "DIFF", "LAP"]
     model = FastNCA(
         2,
         KERNEL_STR=kernel_str,
@@ -71,7 +71,25 @@ def test_sycl_backward_reference_has_finite_parameter_and_state_gradients():
         FIRE_RATE=1.0,
         key=jax.random.PRNGKey(1),
     )
-    state = jax.random.normal(jax.random.PRNGKey(2), (2, 5, 6))
+    model.set_weights(
+        [
+            0.1
+            * jax.random.normal(
+                jax.random.PRNGKey(4), model.layers[0].weight.shape
+            ),
+            0.1
+            * jax.random.normal(
+                jax.random.PRNGKey(5), model.layers[2].weight.shape
+            ),
+            0.1
+            * jax.random.normal(
+                jax.random.PRNGKey(6), model.layers[2].bias.shape
+            ),
+        ]
+    )
+    # Circular padding makes both spatial gradients exactly zero while the ID
+    # feature still sends a nonzero cotangent through the perception MLP.
+    state = jnp.ones((2, 5, 6), dtype=jnp.float32)
     operands = _model_operands(model, state, jax.random.PRNGKey(3))
 
     def loss(state_value, hidden_weight, output_weight, output_bias):

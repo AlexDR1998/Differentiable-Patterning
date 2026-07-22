@@ -5,6 +5,8 @@ from __future__ import annotations
 import jax.numpy as jnp
 from jax import lax
 
+from Common.model.spatial_operators import safe_grad_norm
+
 
 _PAD_MODES = {
     0: "constant",
@@ -64,7 +66,7 @@ def jax_nca_forward(
     if kernel_flags & (1 << 0):
         features.append(state)
     if kernel_flags & (1 << 1):
-        features.append(jnp.sqrt(filtered[:, :, 0] ** 2 + filtered[:, :, 1] ** 2))
+        features.append(safe_grad_norm(filtered[:, :, 0], filtered[:, :, 1]))
     if kernel_flags & (1 << 2):
         features.extend((filtered[:, :, 0], filtered[:, :, 1]))
     if kernel_flags & (1 << 3):
