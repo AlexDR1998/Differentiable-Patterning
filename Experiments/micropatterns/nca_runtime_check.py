@@ -20,6 +20,7 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
     runtime_str = (
         f"runtime_t{cfg.run.t}"
         f"_ds{cfg.data.downsample}"
+        f"_batches{cfg.data.batches}"
         f"_{cfg.system.precision}"
         f"_loop{cfg.trainer.loop_autodiff}"
         f"_batch{cfg.trainer.get('batch_mode', 'tree')}"
