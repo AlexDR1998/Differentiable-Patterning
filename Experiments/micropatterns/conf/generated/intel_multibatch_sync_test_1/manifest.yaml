@@ -27,7 +27,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     trainer.sharding: 2
     trainer.sycl_fused_steps: 4
-    trainer.sycl_synchronize_custom_calls: false
+    trainer.sycl_synchronize_custom_calls: true
     trainer.jax_trace: false
     data.downsample: 8
     data.data_channels: 14
@@ -90,7 +90,7 @@ configs:
       grad_loss: false
       sharding: 2
       sycl_fused_steps: 4
-      sycl_synchronize_custom_calls: false
+      sycl_synchronize_custom_calls: true
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -201,7 +201,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     trainer.sharding: 2
     trainer.sycl_fused_steps: 4
-    trainer.sycl_synchronize_custom_calls: false
+    trainer.sycl_synchronize_custom_calls: true
     trainer.jax_trace: false
     data.downsample: 8
     data.data_channels: 14
@@ -264,7 +264,7 @@ configs:
       grad_loss: false
       sharding: 2
       sycl_fused_steps: 4
-      sycl_synchronize_custom_calls: false
+      sycl_synchronize_custom_calls: true
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -375,7 +375,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     trainer.sharding: 2
     trainer.sycl_fused_steps: 4
-    trainer.sycl_synchronize_custom_calls: false
+    trainer.sycl_synchronize_custom_calls: true
     trainer.jax_trace: false
     data.downsample: 8
     data.data_channels: 14
@@ -438,7 +438,7 @@ configs:
       grad_loss: false
       sharding: 2
       sycl_fused_steps: 4
-      sycl_synchronize_custom_calls: false
+      sycl_synchronize_custom_calls: true
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -549,7 +549,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     trainer.sharding: 2
     trainer.sycl_fused_steps: 4
-    trainer.sycl_synchronize_custom_calls: false
+    trainer.sycl_synchronize_custom_calls: true
     trainer.jax_trace: false
     data.downsample: 8
     data.data_channels: 14
@@ -612,7 +612,7 @@ configs:
       grad_loss: false
       sharding: 2
       sycl_fused_steps: 4
-      sycl_synchronize_custom_calls: false
+      sycl_synchronize_custom_calls: true
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -723,7 +723,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     trainer.sharding: 2
     trainer.sycl_fused_steps: 4
-    trainer.sycl_synchronize_custom_calls: false
+    trainer.sycl_synchronize_custom_calls: true
     trainer.jax_trace: false
     data.downsample: 8
     data.data_channels: 14
@@ -786,7 +786,7 @@ configs:
       grad_loss: false
       sharding: 2
       sycl_fused_steps: 4
-      sycl_synchronize_custom_calls: false
+      sycl_synchronize_custom_calls: true
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
