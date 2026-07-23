@@ -80,24 +80,29 @@ def _assignment(cost, components, mode, tau):
     return loss, expected, tau * (jnp.log(values.shape[0]) - entropy), entropy
 
 
-def multi_target_loss(prediction, target, boundary, schema, params, key, args):
-    """Match unordered batches independently for each time and experiment group."""
-    weights = {
+def _weights(args):
+    """Return multi-target component weights with defaults."""
+    return {
         "texture": 1.0,
         "channel_mean": 1.0,
         "radial": 1.0,
         "correlation": 1.0,
         **args.get("multi_target_weights", {}),
     }
+
+
+def multi_target_pairwise_costs(
+    prediction, target, boundary, schema, params, key, args
+):
+    """Build prediction-row by target-column costs for each experiment group."""
+    weights = _weights(args)
     metric = args.get("metric", "l2")
     samples = args.get("samples", 128)
     texture_size = args.get("texture_size", 128)
     radial_bins = args.get("radial_bins", 16)
     pair_weights = dict(zip(schema.co_measurement_pairs, schema.correlation_pair_weights))
-    group_losses = []
+    group_costs = []
     group_components = []
-    assignment_regularisation = []
-    assignment_entropy = []
 
     for group_index, targets in enumerate(schema.group_measurement_indices):
         states = tuple(schema.target_to_state[channel] for channel in targets)
@@ -129,9 +134,32 @@ def multi_target_loss(prediction, target, boundary, schema, params, key, args):
             )
         else:
             components["texture"] = jnp.zeros_like(components["channel_mean"])
-        cost = sum(weights[name] * value for name, value in components.items())
+        group_costs.append(
+            sum(weights[name] * value for name, value in components.items())
+        )
+        group_components.append(components)
+
+    return jnp.stack(group_costs), {
+        name: jnp.stack([group[name] for group in group_components])
+        for name in weights
+    }
+
+
+def multi_target_assignment(costs, components, schema, args):
+    """Assign complete square pairwise matrices and return loss diagnostics."""
+    weights = _weights(args)
+    group_losses = []
+    group_components = []
+    assignment_regularisation = []
+    assignment_entropy = []
+    groups = zip(*(components[name] for name in weights))
+    for cost, group in zip(costs, groups):
+        group = dict(zip(weights, group))
         loss, assigned, regularisation, entropy = _assignment(
-            cost, components, args.get("assignment", "hard"), args.get("assignment_tau", 0.05)
+            cost,
+            group,
+            args.get("assignment", "hard"),
+            args.get("assignment_tau", 0.05),
         )
         group_losses.append(loss)
         group_components.append(assigned)
@@ -152,3 +180,11 @@ def multi_target_loss(prediction, target, boundary, schema, params, key, args):
                 weights[name] * group_components[group_index][name]
             )
     return jnp.stack(group_losses).mean(0), jax.lax.stop_gradient(diagnostics)
+
+
+def multi_target_loss(prediction, target, boundary, schema, params, key, args):
+    """Match unordered batches independently for each time and experiment group."""
+    costs, components = multi_target_pairwise_costs(
+        prediction, target, boundary, schema, params, key, args
+    )
+    return multi_target_assignment(costs, components, schema, args)

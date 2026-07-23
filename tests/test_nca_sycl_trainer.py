@@ -261,21 +261,22 @@ def test_gradient_wraps_shard_map_for_data_parallel_loss():
     assert jnp.allclose(actual_gradient, expected_gradient, atol=1e-6)
 
 
-def test_multi_target_assignment_gathers_batches_across_tiles():
+def test_multi_target_cost_gather_matches_global_loss_and_gradient():
     execution = _two_device_execution()
     schema = MICROPATTERN_260726_SCHEMA
+    args = {"multi_target_weights": {"texture": 0.0}}
+    boundary = jnp.ones((4, 4), dtype=bool)
+    key = jax.random.PRNGKey(11)
 
     def local_loss(local_prediction, local_target):
-        gathered = execution.prepare_multi_target_inputs(
-            local_prediction, local_target
-        )
-        losses, _ = multi_target_loss(
-            *gathered,
-            jnp.ones((4, 4), dtype=bool),
+        losses, _ = execution.multi_target_loss(
+            local_prediction,
+            local_target,
+            boundary,
             schema,
             None,
-            jax.random.PRNGKey(11),
-            {"multi_target_weights": {"texture": 0.0}},
+            key,
+            args,
         )
         return jax.lax.pmean(jnp.mean(losses), execution.AXIS_NAME)
 
@@ -292,42 +293,22 @@ def test_multi_target_assignment_gathers_batches_across_tiles():
             jax.random.fold_in(jax.random.PRNGKey(10), batch_count),
             (batch_count, 2, schema.n_state_channels, 4, 4),
         )
-        target = jnp.take(
-            prediction[::-1], jnp.asarray(schema.target_to_state), axis=2
+        target = jax.random.uniform(
+            jax.random.fold_in(jax.random.PRNGKey(12), batch_count),
+            (batch_count, 2, schema.n_measurement_channels, 4, 4),
         )
-        prediction = jax.device_put(prediction, execution.tile_sharding)
-        target = jax.device_put(target, execution.tile_sharding)
-        assert jnp.allclose(
-            eqx.filter_jit(distributed_loss)(prediction, target), 0.0
+        expected = lambda value: jnp.mean(
+            multi_target_loss(
+                value, target, boundary, schema, None, key, args
+            )[0]
         )
-
-
-def test_gathered_multi_target_inputs_preserve_gradient_scale():
-    execution = _two_device_execution()
-    values = jax.device_put(
-        jnp.arange(12, dtype=jnp.float32).reshape(2, 2, 3),
-        execution.tile_sharding,
-    )
-
-    def local_loss(local_values):
-        gathered, _ = execution.prepare_multi_target_inputs(
-            local_values, local_values
+        expected_loss, expected_gradient = jax.value_and_grad(expected)(prediction)
+        actual_loss, actual_gradient = jax.jit(jax.value_and_grad(distributed_loss))(
+            jax.device_put(prediction, execution.tile_sharding),
+            jax.device_put(target, execution.tile_sharding),
         )
-        return jax.lax.pmean(jnp.mean(gathered**2), execution.AXIS_NAME)
-
-    distributed_loss = filter_shard_map(
-        local_loss,
-        mesh=execution.mesh,
-        in_specs=(P(execution.AXIS_NAME),),
-        out_specs=P(),
-        check_rep=False,
-    )
-    actual_loss, actual_gradient = jax.jit(jax.value_and_grad(distributed_loss))(
-        values
-    )
-
-    assert jnp.allclose(actual_loss, jnp.mean(values**2))
-    assert jnp.allclose(actual_gradient, 2.0 * values / values.size)
+        assert jnp.allclose(actual_loss, expected_loss, atol=1e-6)
+        assert jnp.allclose(actual_gradient, expected_gradient, atol=1e-5)
 
 
 def test_sharded_loss_evenly_processes_four_outer_batches():

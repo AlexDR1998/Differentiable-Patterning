@@ -10,6 +10,8 @@ from __future__ import annotations
 import equinox as eqx
 import jax.random as jr
 
+from Common.trainer.loss_multi_target import multi_target_loss
+
 
 class TrainingExecution:
     """Single-device reference behaviour for :class:`NCA_Trainer`."""
@@ -35,9 +37,13 @@ class TrainingExecution:
     def synchronise_loss(self, mean_loss, regulariser_losses):
         return mean_loss, regulariser_losses
 
-    def prepare_multi_target_inputs(self, prediction, target):
-        """Return the batch ensemble visible to multi-target assignment."""
-        return prediction, target
+    def multi_target_loss(
+        self, prediction, target, boundary, schema, params, key, args
+    ):
+        """Evaluate the reference full-batch multi-target loss."""
+        return multi_target_loss(
+            prediction, target, boundary, schema, params, key, args
+        )
 
     def transform_step(self, make_step):
         return eqx.filter_jit(make_step)

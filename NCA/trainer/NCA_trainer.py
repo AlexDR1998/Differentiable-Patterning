@@ -12,7 +12,7 @@ import datetime
 # import Common.trainer.loss as loss
 # import Common.trainer.loss_ott as loss_ott
 from Common.trainer.loss import build_loss_functions,build_loss_initialiser
-from Common.trainer.loss_multi_target import init_texture_params, multi_target_loss
+from Common.trainer.loss_multi_target import init_texture_params
 from Common.trainer.batch_backend import make_batch_backend
 from NCA.trainer.tensorboard_log import (
 	NCA_Train_log,
@@ -937,10 +937,7 @@ class NCA_Trainer(object):
 					target = (
 						y_proc if self.BATCH_BACKEND.is_array else jnp.stack(y_proc)
 					)[:, :, :self.DATA_CHANNELS]
-					prediction, target = training_execution.prepare_multi_target_inputs(
-						prediction, target
-					)
-					losses, components = multi_target_loss(
+					losses, components = training_execution.multi_target_loss(
 						prediction,
 						target,
 						boundary,

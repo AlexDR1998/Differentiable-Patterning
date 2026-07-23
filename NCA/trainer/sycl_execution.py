@@ -13,6 +13,10 @@ import numpy as np
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from Common.model.boundary import hard_boundary, model_boundary, no_boundary
+from Common.trainer.loss_multi_target import (
+    multi_target_assignment,
+    multi_target_pairwise_costs,
+)
 from NCA.trainer.sycl_shard_map import filter_shard_map
 from NCA.trainer.training_execution import TrainingExecution
 
@@ -186,12 +190,26 @@ class SyclTwoTileExecution(TrainingExecution):
             self._array_pmean(regulariser_losses, self.AXIS_NAME),
         )
 
-    def prepare_multi_target_inputs(self, prediction, target):
-        """Expose the complete outer batch to permutation assignment."""
-        gather = lambda value: jax.lax.all_gather(
-            value, self.AXIS_NAME, axis=0, tiled=False
-        ).reshape((-1, *value.shape[1:]))
-        return gather(prediction), gather(target)
+    def multi_target_loss(
+        self, prediction, target, boundary, schema, params, key, args
+    ):
+        """Gather scalar cost rows instead of complete prediction images."""
+        target = jax.lax.all_gather(
+            target, self.AXIS_NAME, axis=0, tiled=False
+        ).reshape((-1, *target.shape[1:]))
+        key = jax.lax.all_gather(key, self.AXIS_NAME)[0]
+        costs, components = multi_target_pairwise_costs(
+            prediction, target, boundary, schema, params, key, args
+        )
+        gather_rows = lambda value: jax.lax.all_gather(
+            value, self.AXIS_NAME, axis=1, tiled=True
+        )
+        return multi_target_assignment(
+            gather_rows(costs),
+            jtu.tree_map(gather_rows, components),
+            schema,
+            args,
+        )
 
     def _pack_items(self, items, name, *, sharded=True, expected_ndim=None):
         """Pair equal tile partitions into global ``[tile,...]`` slots.
