@@ -11,10 +11,10 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: intel_multibatch_sync_test_1
+    logging.wandb.group: intel_multibatch_sync_test_2
     run.iterations: 100
     loss.primary: multi_target
-    loss.args.multi_target_weights.texture: 1.0
+    loss.args.multi_target_weights.texture: 1.0e-08
     loss.args.multi_target_weights.channel_mean: 0.0
     loss.args.multi_target_weights.correlation: 0.0
     loss.args.multi_target_weights.radial: 1.0
@@ -143,7 +143,7 @@ configs:
         internal_loss_func: l2
         samples: 128
         multi_target_weights:
-          texture: 1.0
+          texture: 1.0e-08
           channel_mean: 0.0
           correlation: 0.0
           radial: 1.0
@@ -167,7 +167,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: intel_multibatch_sync_test_1
+        group: intel_multibatch_sync_test_2
         tags: null
     knockout:
       time: null
@@ -183,10 +183,10 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: intel_multibatch_sync_test_1
+    logging.wandb.group: intel_multibatch_sync_test_2
     run.iterations: 100
     loss.primary: multi_target
-    loss.args.multi_target_weights.texture: 1.0
+    loss.args.multi_target_weights.texture: 1.0e-08
     loss.args.multi_target_weights.channel_mean: 0.0
     loss.args.multi_target_weights.correlation: 0.0
     loss.args.multi_target_weights.radial: 1.0
@@ -315,7 +315,7 @@ configs:
         internal_loss_func: l2
         samples: 128
         multi_target_weights:
-          texture: 1.0
+          texture: 1.0e-08
           channel_mean: 0.0
           correlation: 0.0
           radial: 1.0
@@ -339,7 +339,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: intel_multibatch_sync_test_1
+        group: intel_multibatch_sync_test_2
         tags: null
     knockout:
       time: null
@@ -355,7 +355,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: intel_multibatch_sync_test_1
+    logging.wandb.group: intel_multibatch_sync_test_2
     run.iterations: 100
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 0.0
@@ -511,7 +511,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: intel_multibatch_sync_test_1
+        group: intel_multibatch_sync_test_2
         tags: null
     knockout:
       time: null
@@ -527,7 +527,7 @@ configs:
     model.channels: 32
     run.scaling: convective
     logging.wandb.project: nca_micropattern_upscale
-    logging.wandb.group: intel_multibatch_sync_test_1
+    logging.wandb.group: intel_multibatch_sync_test_2
     run.iterations: 100
     loss.primary: multi_target
     loss.args.multi_target_weights.texture: 0.0
@@ -683,7 +683,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_upscale
-        group: intel_multibatch_sync_test_1
+        group: intel_multibatch_sync_test_2
         tags: null
     knockout:
       time: null
