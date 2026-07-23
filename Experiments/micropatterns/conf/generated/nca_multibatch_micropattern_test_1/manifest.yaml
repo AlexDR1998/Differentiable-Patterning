@@ -23,7 +23,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 2
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -59,7 +59,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -186,7 +186,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -222,7 +222,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -349,7 +349,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -385,7 +385,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -512,7 +512,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 16
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -548,7 +548,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -675,7 +675,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 2
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -711,7 +711,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -838,7 +838,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -874,7 +874,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1001,7 +1001,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -1037,7 +1037,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1164,7 +1164,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 16
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -1200,7 +1200,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1327,7 +1327,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 2
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -1363,7 +1363,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1490,7 +1490,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -1526,7 +1526,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1653,7 +1653,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -1689,7 +1689,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1816,7 +1816,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 16
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -1852,7 +1852,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -1979,7 +1979,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 2
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -2015,7 +2015,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2142,7 +2142,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 4
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -2178,7 +2178,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2305,7 +2305,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 8
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -2341,7 +2341,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
@@ -2468,7 +2468,7 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.downsample: 16
     data.data_channels: 14
-    data.batches: 3
+    data.batches: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -2504,7 +2504,7 @@ configs:
       name: nca_micropattern_template
     data:
       dataset: micropatterns_260726
-      batches: 3
+      batches: 2
       timesteps:
       - 0
       - 12
