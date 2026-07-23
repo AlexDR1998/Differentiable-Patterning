@@ -179,4 +179,5 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
     AddInPlace(*queue, bias_gradient, step_bias_gradient, m.channels);
     current_cotangent = next_state_gradient;
   }
+  nca_sycl::SynchronizeCustomCall(*queue);
 }

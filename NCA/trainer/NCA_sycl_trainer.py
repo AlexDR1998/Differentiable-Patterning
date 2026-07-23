@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from numbers import Integral
 
 import jax.numpy as jnp
@@ -17,6 +18,20 @@ from NCA.trainer.sycl_execution import SyclTwoTileExecution
 from NCA.trainer.sycl_scan import scan_carry_only
 
 
+def configure_custom_call_synchronization(enabled):
+    """Configure optional native synchronization and return its active state."""
+    name = "NCA_SYCL_SYNCHRONIZE_CUSTOM_CALLS"
+    if enabled is not None:
+        if not isinstance(enabled, bool):
+            raise TypeError("SYCL_SYNCHRONIZE_CUSTOM_CALLS must be boolean or None")
+        if enabled:
+            os.environ[name] = "1"
+        else:
+            os.environ.pop(name, None)
+    value = os.getenv(name, "")
+    return value not in {"", "0", "false", "False"}
+
+
 class NCA_sycl_Trainer(NCA_Trainer):
     """Train the native SYCL NCA while retaining independent outer-B leaves.
 
@@ -26,7 +41,16 @@ class NCA_sycl_Trainer(NCA_Trainer):
     the two tiles while model and optimiser arrays remain replicated.
     """
 
-    def __init__(self, *args, SYCL_FUSED_STEPS=2, **kwargs):
+    def __init__(
+        self,
+        *args,
+        SYCL_FUSED_STEPS=2,
+        SYCL_SYNCHRONIZE_CUSTOM_CALLS=None,
+        **kwargs,
+    ):
+        self.synchronize_custom_calls = configure_custom_call_synchronization(
+            SYCL_SYNCHRONIZE_CUSTOM_CALLS
+        )
         super().__init__(*args, **kwargs)
         if self.BATCH_BACKEND.is_array:
             raise NotImplementedError(
@@ -41,6 +65,17 @@ class NCA_sycl_Trainer(NCA_Trainer):
         if fused_steps < 1:
             raise ValueError("SYCL_FUSED_STEPS must be a positive integer")
         self.fused_steps = fused_steps
+        print(
+            "NCA SYCL custom-call synchronization: "
+            f"{self.synchronize_custom_calls}",
+            flush=True,
+        )
+
+    def setup_logging(self, *args, **kwargs):
+        self.TRAIN_CONFIG["SYCL_SYNCHRONIZE_CUSTOM_CALLS"] = (
+            self.synchronize_custom_calls
+        )
+        return super().setup_logging(*args, **kwargs)
 
     def _training_execution(self):
         if self.SHARDING in (None, 1):

@@ -231,4 +231,5 @@ extern "C" void nca_sycl_rollout_forward(sycl::queue* queue, void** buffers,
   }
   queue->memcpy(output, trajectory + (m.steps - 1) * state_elements,
                 static_cast<std::size_t>(state_elements) * sizeof(float));
+  nca_sycl::SynchronizeCustomCall(*queue);
 }

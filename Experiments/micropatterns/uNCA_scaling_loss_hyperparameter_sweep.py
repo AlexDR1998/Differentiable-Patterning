@@ -49,6 +49,11 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
     repeat = _cfg_get(cfg.run, "repeat", None)
     if repeat is not None:
         train_str += f"_rep{repeat}"
+    if cfg.model.family == "NCA_sycl":
+        train_str += f"_fuse{cfg.trainer.get('sycl_fused_steps', 2)}"
+        train_str += (
+            f"_sync{int(cfg.trainer.get('sycl_synchronize_custom_calls', False))}"
+        )
     return "_".join([
         model_cfg_str,
         # data_cfg_str,
@@ -86,6 +91,9 @@ def run(cfg):
     if cfg.model.family == "NCA_sycl":
         trainer_kwargs["SYCL_FUSED_STEPS"] = cfg.trainer.get(
             "sycl_fused_steps", 2
+        )
+        trainer_kwargs["SYCL_SYNCHRONIZE_CUSTOM_CALLS"] = cfg.trainer.get(
+            "sycl_synchronize_custom_calls", False
         )
     trainer = trainer_class(
         NCA_model=model,

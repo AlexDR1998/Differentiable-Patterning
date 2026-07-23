@@ -2,6 +2,8 @@
 
 #include <sycl/sycl.hpp>
 
+#include <cstdlib>
+#include <cstring>
 #include <cstdint>
 
 namespace nca_sycl {
@@ -18,6 +20,17 @@ constexpr std::int64_t kDenseTile = 16;
 constexpr std::int64_t kSpatialTileY = 8;
 constexpr std::int64_t kSpatialTileX = 16;
 constexpr float kGradNormEpsilon = 1.0e-12F;
+
+inline bool SynchronizeCustomCallsEnabled() {
+  const char* value = std::getenv("NCA_SYCL_SYNCHRONIZE_CUSTOM_CALLS");
+  return value != nullptr && value[0] != '\0' &&
+         std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0 &&
+         std::strcmp(value, "False") != 0;
+}
+
+inline void SynchronizeCustomCall(sycl::queue& queue) {
+  if (SynchronizeCustomCallsEnabled()) queue.wait_and_throw();
+}
 
 inline float StableGradNormDenominator(float gx, float gy) {
   return sycl::sqrt(gx * gx + gy * gy + kGradNormEpsilon);

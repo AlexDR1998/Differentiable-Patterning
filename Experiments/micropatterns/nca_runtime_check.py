@@ -30,6 +30,9 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         runtime_str += f"_shard{cfg.trainer.sharding}"
     if cfg.model.family == "NCA_sycl":
         runtime_str += f"_fuse{cfg.trainer.get('sycl_fused_steps', 2)}"
+        runtime_str += (
+            f"_sync{int(cfg.trainer.get('sycl_synchronize_custom_calls', False))}"
+        )
     if pool_enabled:
         pool_rel = cfg.trainer.get("pool_admission_relative_threshold", 1.25)
         pool_prev_rel = cfg.trainer.get("pool_admission_previous_relative_threshold", 1.10)
@@ -89,6 +92,9 @@ def run(cfg):
     if cfg.model.family == "NCA_sycl":
         trainer_kwargs["SYCL_FUSED_STEPS"] = cfg.trainer.get(
             "sycl_fused_steps", 2
+        )
+        trainer_kwargs["SYCL_SYNCHRONIZE_CUSTOM_CALLS"] = cfg.trainer.get(
+            "sycl_synchronize_custom_calls", False
         )
     trainer = trainer_class(
         NCA_model=model,
