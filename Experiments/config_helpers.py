@@ -125,6 +125,15 @@ def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
         loss_str += "_cw" + "-".join(_compact_value(weight) for weight in component_weights)
 
     loss_args = _cfg_get(cfg.loss, "args", None)
+    if "multi_target" in _as_list(cfg.loss.primary):
+        multi_target_weights = _cfg_get(loss_args, "multi_target_weights", None)
+        if multi_target_weights is not None:
+            loss_str += (
+                f"_mtw_tex{_cfg_get(multi_target_weights, 'texture', 1.0):g}"
+                f"_cm{_cfg_get(multi_target_weights, 'channel_mean', 0.0):g}"
+                f"_corr{_cfg_get(multi_target_weights, 'correlation', 0.0):g}"
+                f"_rad{_cfg_get(multi_target_weights, 'radial', 0.0):g}"
+            )
     if include_loss_args and loss_args is not None:
         uses_ott = any("ott" in loss_name for loss_name in _as_list(cfg.loss.primary))
         if uses_ott:
@@ -287,7 +296,7 @@ def build_model_config_string(cfg):
     cfg_str = (
         f"{cfg.model.family}"
         f"_c{cfg.model.channels}"
-        f"_k{_compact_value(list(cfg.model.kernel_str))}"
+        # f"_k{_compact_value(list(cfg.model.kernel_str))}"
         # f"_fr{cfg.model.fire_rate}"
     )
     activation = _cfg_get(cfg.model, "activation", None)
