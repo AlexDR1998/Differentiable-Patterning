@@ -29,7 +29,7 @@ inline bool SynchronizeCustomCallsEnabled() {
 }
 
 inline void SynchronizeCustomCall(sycl::queue& queue) {
-  if (SynchronizeCustomCallsEnabled()) queue.wait_and_throw();
+  if (SynchronizeCustomCallsEnabled()) queue.wait();
 }
 
 inline float StableGradNormDenominator(float gx, float gy) {
