@@ -12,6 +12,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -114,7 +115,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -188,6 +189,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -290,7 +292,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -364,6 +366,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -466,7 +469,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -540,6 +543,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -642,7 +646,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -716,6 +720,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -818,7 +823,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -892,6 +897,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -994,7 +1000,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -1068,6 +1074,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -1170,7 +1177,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -1244,6 +1251,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -1346,7 +1354,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -1420,6 +1428,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -1522,7 +1531,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -1596,6 +1605,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -1698,7 +1708,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -1772,6 +1782,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -1874,7 +1885,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -1948,6 +1959,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -2050,7 +2062,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -2124,6 +2136,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -2226,7 +2239,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -2300,6 +2313,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -2402,7 +2416,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -2476,6 +2490,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -2578,7 +2593,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -2652,6 +2667,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -2754,7 +2770,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -2828,6 +2844,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -2930,7 +2947,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -3004,6 +3021,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -3106,7 +3124,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -3180,6 +3198,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -3282,7 +3301,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -3356,6 +3375,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -3458,7 +3478,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -3532,6 +3552,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -3634,7 +3655,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -3708,6 +3729,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -3810,7 +3832,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -3884,6 +3906,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -3986,7 +4009,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -4060,6 +4083,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -4162,7 +4186,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -4236,6 +4260,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -4338,7 +4363,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -4412,6 +4437,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -4514,7 +4540,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -4588,6 +4614,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -4690,7 +4717,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -4764,6 +4791,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -4866,7 +4894,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -4940,6 +4968,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -5042,7 +5071,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -5116,6 +5145,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -5218,7 +5248,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -5292,6 +5322,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -5394,7 +5425,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -5468,6 +5499,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -5570,7 +5602,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -5644,6 +5676,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -5746,7 +5779,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -5820,6 +5853,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -5922,7 +5956,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -5996,6 +6030,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -6098,7 +6133,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -6172,6 +6207,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -6274,7 +6310,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -6348,6 +6384,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -6450,7 +6487,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -6524,6 +6561,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -6626,7 +6664,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -6700,6 +6738,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -6802,7 +6841,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -6876,6 +6915,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -6978,7 +7018,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -7052,6 +7092,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -7154,7 +7195,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -7228,6 +7269,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -7330,7 +7372,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -7404,6 +7446,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -7506,7 +7549,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -7580,6 +7623,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -7682,7 +7726,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -7756,6 +7800,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -7858,7 +7903,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -7932,6 +7977,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -8034,7 +8080,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -8108,6 +8154,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -8210,7 +8257,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -8284,6 +8331,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -8386,7 +8434,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -8460,6 +8508,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -8562,7 +8611,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -8636,6 +8685,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -8738,7 +8788,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -8812,6 +8862,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -8914,7 +8965,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -8988,6 +9039,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -9090,7 +9142,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -9164,6 +9216,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -9266,7 +9319,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -9340,6 +9393,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -9442,7 +9496,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -9516,6 +9570,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -9618,7 +9673,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -9692,6 +9747,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -9794,7 +9850,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -9868,6 +9924,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -9970,7 +10027,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -10044,6 +10101,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -10146,7 +10204,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -10220,6 +10278,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -10322,7 +10381,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -10396,6 +10455,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -10498,7 +10558,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -10572,6 +10632,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -10674,7 +10735,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -10748,6 +10809,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -10850,7 +10912,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -10924,6 +10986,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -11026,7 +11089,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -11100,6 +11163,7 @@ configs:
     run.scaling: convective
     run.iterations: 50
     run.warmup: 10
+    optimiser.warmup_steps: 10
     run.write_images: false
     run.t: 64
     run.repeat: 0
@@ -11202,7 +11266,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 64
+      warmup_steps: 10
       decay_rate: 0.99
       schedule:
         type: exponential
