@@ -5,6 +5,7 @@ experiment:
 data:
   dataset: micropatterns
   batches: 2
+  batch_multiplier: 1
   # Null loads all experiment groups for the selected dataset.
   experiment_groups: null
   timesteps: [0, 12, 24, 36, 48]

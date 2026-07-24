@@ -108,6 +108,91 @@ def test_manifest_records_extra_images_without_silently_using_them(tmp_path):
     )
 
 
+def test_loader_group_selection_is_independent_of_replicate_count(tmp_path):
+    _make_control_dataset(tmp_path)
+    histogram_bins = np.tile(
+        np.array([[0.0, 1000.0]], dtype=np.float32), (4, 1)
+    )
+
+    data, aux, names, boundary, measurement_mask = load_micropattern_260726(
+        tmp_path,
+        conditions=("ctrl",),
+        timesteps=(0,),
+        downsample=1,
+        replicate_count=1,
+        experiment_groups=("cell_fate_s1",),
+        histogram_bins=histogram_bins,
+        align=False,
+    )
+
+    assert np.asarray(data).shape == (1, 1, 4, 8, 8)
+    assert np.asarray(boundary).shape == (1, 1, 8, 8)
+    assert np.asarray(measurement_mask).shape == (1, 1, 4)
+    assert aux["selected_experiment_groups"] == ("cell_fate_s1",)
+    assert aux["batch_replicates"] == (1,)
+    assert names == [
+        "cell_fate_s1/SOX17",
+        "cell_fate_s1/SOX2",
+        "cell_fate_s1/TBXT",
+        "cell_fate_s1/LMBR",
+    ]
+    assert set(record.group for record in aux["manifest"]) == {"cell_fate_s1"}
+
+
+def test_loader_can_select_a_group_without_cell_fate_s1(tmp_path):
+    _make_control_dataset(tmp_path)
+    histogram_bins = np.tile(
+        np.array([[0.0, 1000.0]], dtype=np.float32), (4, 1)
+    )
+
+    data, aux, names, boundary, measurement_mask = load_micropattern_260726(
+        tmp_path,
+        conditions=("ctrl",),
+        timesteps=(0,),
+        downsample=1,
+        replicate_count=1,
+        experiment_groups=("cell_fate_s2",),
+        histogram_bins=histogram_bins,
+        align=False,
+    )
+
+    assert np.asarray(data).shape == (1, 1, 4, 8, 8)
+    assert np.asarray(boundary).shape == (1, 1, 8, 8)
+    assert np.asarray(measurement_mask).shape == (1, 1, 4)
+    assert aux["selected_experiment_groups"] == ("cell_fate_s2",)
+    assert names == [
+        "cell_fate_s2/SOX17",
+        "cell_fate_s2/FOXA2",
+        "cell_fate_s2/TBXT",
+        "cell_fate_s2/LMBR",
+    ]
+
+
+def test_loader_batch_multiplier_repeats_selected_batches(tmp_path):
+    _make_control_dataset(tmp_path)
+    histogram_bins = np.tile(
+        np.array([[0.0, 1000.0]], dtype=np.float32), (4, 1)
+    )
+
+    data, aux, _, boundary, measurement_mask = load_micropattern_260726(
+        tmp_path,
+        conditions=("ctrl",),
+        timesteps=(0,),
+        downsample=1,
+        replicate_count=1,
+        batch_multiplier=2,
+        experiment_groups=("cell_fate_s1",),
+        histogram_bins=histogram_bins,
+        align=False,
+    )
+
+    assert np.asarray(data).shape[0] == 2
+    assert np.asarray(boundary).shape[0] == 2
+    assert np.asarray(measurement_mask).shape[0] == 2
+    assert aux["batch_multiplier"] == 2
+    assert aux["batch_replicates"] == (1, 1)
+
+
 def test_sl0_initial_state_uses_corresponding_control_replicates(tmp_path):
     _make_control_dataset(tmp_path)
     _make_empty_condition_directories(tmp_path, "sl0")

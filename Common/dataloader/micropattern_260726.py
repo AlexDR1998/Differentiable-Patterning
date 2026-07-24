@@ -143,7 +143,6 @@ def build_micropattern_260726_manifest(
         raise ValueError("timesteps cannot contain duplicates")
     if replicate_count <= 0:
         raise ValueError("replicate_count must be positive")
-
     required_conditions = set(conditions)
     if substitute_preperturbation and any(
         condition in {"sl0", "sl24"} for condition in conditions
@@ -440,25 +439,29 @@ def load_micropattern_260726(
     strict_replicates=False,
     boundary_radius_quantile=0.98,
     boundary_radius_scale=1.0,
+    batch_multiplier=1,
 ):
     """Load physical replicates of the multichannel 260726 NCA dataset.
 
     ``boundary_radius_quantile`` robustly trims foreground pixels far from the
     inferred colony centre before constructing a circle.  Lower values or a
     ``boundary_radius_scale`` below one produce a stricter common boundary.
+    ``batch_multiplier`` repeats each selected physical batch in the returned
+    training batch while retaining the original replicate provenance.
 
     Returns
     -------
     targets:
         Float32 array ``[B, T, M, X, Y]`` where ``M`` is the number of
         channels in the selected experiment groups and
-        ``B = replicate_count * len(conditions)``.
+        ``B = replicate_count * len(conditions) * batch_multiplier``.
     aux:
         Selected schema, provenance, group masks, histogram bins, and inventory.
     measurement_names:
         Names aligned with the target channel axis.
     boundary_mask:
-        Boolean array ``[B, 1, X, Y]`` derived from the cell-fate S1 group.
+        Boolean array ``[B, 1, X, Y]`` derived from cell-fate S1 when selected,
+        otherwise from the first selected group.
     measurement_mask:
         Boolean availability array ``[B, T, M]``.  Downstream one-step losses
         can use ``measurement_mask[:, 1:]``.
@@ -472,6 +475,9 @@ def load_micropattern_260726(
         raise ValueError("boundary_radius_quantile must be in (0.5, 1.0]")
     if boundary_radius_scale <= 0:
         raise ValueError("boundary_radius_scale must be positive")
+    if batch_multiplier <= 0 or int(batch_multiplier) != batch_multiplier:
+        raise ValueError("batch_multiplier must be a positive integer")
+    batch_multiplier = int(batch_multiplier)
     conditions = tuple(conditions)
     timesteps = tuple(int(timestep) for timestep in timesteps)
     schema = MICROPATTERN_260726_SCHEMA.select_groups(experiment_groups)
@@ -600,7 +606,7 @@ def load_micropattern_260726(
                 source_condition = _source_condition(
                     condition, timestep, substitute_preperturbation
                 )
-                for group in _GROUP_DIRECTORIES:
+                for group in schema.group_names:
                     record = record_lookup.get(
                         (source_condition, group, timestep, replicate)
                     )
@@ -667,9 +673,26 @@ def load_micropattern_260726(
     targets *= boundary_mask[:, None].astype(targets.dtype)
     group_masks = boundary_mask[:, None] & group_mask[..., None, None]
 
+    if batch_multiplier > 1:
+        targets = np.concatenate([targets] * batch_multiplier, axis=0)
+        measurement_mask = np.concatenate(
+            [measurement_mask] * batch_multiplier, axis=0
+        )
+        boundary_mask = np.concatenate([boundary_mask] * batch_multiplier, axis=0)
+        group_masks = np.concatenate([group_masks] * batch_multiplier, axis=0)
+        group_mask = np.concatenate([group_mask] * batch_multiplier, axis=0)
+        source_conditions = np.concatenate(
+            [source_conditions] * batch_multiplier, axis=0
+        )
+        substituted = np.concatenate([substituted] * batch_multiplier, axis=0)
+        source_files = np.concatenate([source_files] * batch_multiplier, axis=0)
+        batch_conditions = batch_conditions * batch_multiplier
+        batch_replicates = batch_replicates * batch_multiplier
+
     aux = {
         "channel_schema": schema,
         "selected_experiment_groups": schema.group_names,
+        "batch_multiplier": batch_multiplier,
         "manifest": records,
         "unselected_files": inventory["unselected_files"],
         "histogram_bins": histogram_bins,

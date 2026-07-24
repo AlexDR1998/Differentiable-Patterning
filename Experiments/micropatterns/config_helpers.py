@@ -157,7 +157,9 @@ def masked_reinject_callback_bit(
     return x
 
 
-def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
+def build_data_augmenter(
+    cfg, channel_timestep_mask=None, channel_schema=None, batch_multiplier=1
+):
     data_channels = cfg.data.data_channels
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
         class DA_subclass(DataAugmenter260726):
@@ -165,9 +167,13 @@ def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
 
             def __init__(self, *args, **kwargs):
                 kwargs["schema"] = channel_schema
+                kwargs["batch_multiplier"] = batch_multiplier
                 super().__init__(*args, **kwargs)
 
-        return DA_subclass, f"da_snapshot_noise{cfg.data.noise_strength}"
+        return DA_subclass, (
+            f"da_snapshot_noise{cfg.data.noise_strength}"
+            f"_bm{batch_multiplier}"
+        )
     if data_channels == 4 and cfg.knockout.mode is not None:
         raise ValueError("data.data_channels=4 is only supported for no-knockout group-A data.")
     if data_channels == 4:
@@ -246,6 +252,7 @@ def load_data(cfg, impath=None):
             timesteps=tuple(cfg.data.timesteps),
             downsample=cfg.data.downsample,
             replicate_count=cfg.data.batches,
+            batch_multiplier=cfg.data.get("batch_multiplier", 1),
             experiment_groups=cfg.data.get("experiment_groups", None),
         )
         selected_schema = aux["channel_schema"]
@@ -263,6 +270,7 @@ def load_data(cfg, impath=None):
         )
         cfg_str = (
             f"data_b{cfg.data.batches}"
+            f"_bm{cfg.data.get('batch_multiplier', 1)}"
             f"_c{selected_channel_count}"
             f"_g{group_str}"
             f"_ds{cfg.data.downsample}"

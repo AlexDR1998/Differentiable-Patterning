@@ -9,12 +9,15 @@ from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 
 
 class DataAugmenter(BasicAugmenter):
+    """Augmenter for the selected, possibly multiplied 260726 batch pool."""
+
     noise_strength = 0.005
     schema = MICROPATTERN_260726_SCHEMA
     supports_global_donor_pool = True
 
     def __init__(self, *args, **kwargs):
         self.schema = kwargs.pop("schema", None) or type(self).schema
+        self.batch_multiplier = kwargs.pop("batch_multiplier", 1)
         model = kwargs.get("nca_model")
         self.channels = (
             model.N_CHANNELS if model is not None
