@@ -69,22 +69,26 @@ extern "C" void nca_sycl_forward(sycl::queue* queue, void** buffers,
   const std::int64_t cells =
       metadata.batch * metadata.height * metadata.width;
   nca_sycl::SubmitPerception(*queue, state, kernels, perception, shape);
+  nca_sycl::SynchronizeStage(*queue, "forward/perception");
   nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
                  oneapi::mkl::transpose::trans, cells, metadata.features,
                  metadata.features, perception, metadata.features,
                  weight_hidden, metadata.features, hidden, metadata.features,
                  metadata.xmx_mode);
+  nca_sycl::SynchronizeStage(*queue, "forward/hidden_gemm");
   queue->parallel_for(sycl::range<1>(cells * metadata.features),
                       [=](sycl::id<1> id) {
                         const std::int64_t index = id[0];
                         hidden[index] =
                             hidden[index] > 0.0F ? hidden[index] : 0.0F;
                       });
+  nca_sycl::SynchronizeStage(*queue, "forward/relu");
   nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
                  oneapi::mkl::transpose::trans, cells, metadata.channels,
                  metadata.features, hidden, metadata.features, weight_output,
                  metadata.features, delta, metadata.channels,
                  metadata.xmx_mode);
+  nca_sycl::SynchronizeStage(*queue, "forward/output_gemm");
   // Fuse bias, fire mask, residual update, and the cell-major to NCHW layout
   // conversion into one epilogue.
   queue->parallel_for(
@@ -102,4 +106,5 @@ extern "C" void nca_sycl_forward(sycl::queue* queue, void** buffers,
             update_mask[state_index] *
                 (delta[linear] + bias_output[channel]);
       });
+  nca_sycl::SynchronizeStage(*queue, "forward/epilogue");
 }

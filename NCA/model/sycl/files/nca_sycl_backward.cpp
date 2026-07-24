@@ -808,25 +808,30 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
   const std::int64_t cells = metadata.batch * spatial_size;
 
   nca_sycl::SubmitPerception(*queue, state, kernels, perception, shape);
+  nca_sycl::SynchronizeStage(*queue, "backward/perception");
   nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
                  oneapi::mkl::transpose::trans, cells, metadata.features,
                  metadata.features, perception, metadata.features,
                  weight_hidden, metadata.features, hidden, metadata.features,
                  metadata.xmx_mode);
+  nca_sycl::SynchronizeStage(*queue, "backward/hidden_gemm");
   queue->parallel_for(sycl::range<1>(cells * metadata.features),
                       [=](sycl::id<1> id) {
                         const std::int64_t index = id[0];
                         hidden[index] =
                             hidden[index] > 0.0F ? hidden[index] : 0.0F;
                       });
+  nca_sycl::SynchronizeStage(*queue, "backward/relu");
 
   // dDelta is packed directly into cell-major form in dState's result buffer.
   // That buffer is overwritten with the final state gradient after every GEMM
   // consuming dDelta has completed.
   SubmitDeltaGradient(*queue, update_mask, output_cotangent, state_gradient,
                       shape);
+  nca_sycl::SynchronizeStage(*queue, "backward/delta_gradient");
   SubmitBiasGradient(*queue, state_gradient, bias_gradient, shape,
                      per_example_weights, reduction_local_size);
+  nca_sycl::SynchronizeStage(*queue, "backward/bias_gradient");
 
   auto output_weight_gemm = [&](std::int64_t batch, std::int64_t count) {
     const std::int64_t cell_offset = batch * spatial_size;
@@ -848,14 +853,17 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
   } else {
     output_weight_gemm(0, cells);
   }
+  nca_sycl::SynchronizeStage(*queue, "backward/output_weight_gradient");
 
   nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
                  oneapi::mkl::transpose::nontrans, cells, metadata.features,
                  metadata.channels, state_gradient, metadata.channels,
                  weight_output, metadata.features, hidden_gradient,
                  metadata.features, metadata.xmx_mode);
+  nca_sycl::SynchronizeStage(*queue, "backward/hidden_gradient");
   ApplyReluGradient(*queue, hidden, hidden_gradient,
                     cells * metadata.features);
+  nca_sycl::SynchronizeStage(*queue, "backward/relu_gradient");
 
   auto hidden_weight_gemm = [&](std::int64_t batch, std::int64_t count) {
     const std::int64_t cell_offset = batch * spatial_size;
@@ -877,12 +885,14 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
   } else {
     hidden_weight_gemm(0, cells);
   }
+  nca_sycl::SynchronizeStage(*queue, "backward/hidden_weight_gradient");
 
   nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
                  oneapi::mkl::transpose::nontrans, cells, metadata.features,
                  metadata.features, hidden_gradient, metadata.features,
                  weight_hidden, metadata.features, perception,
                  metadata.features, metadata.xmx_mode);
+  nca_sycl::SynchronizeStage(*queue, "backward/perception_gradient");
 
   const bool gather_padding =
       shape.padding == nca_sycl::Padding::kCircular ||
@@ -904,4 +914,5 @@ extern "C" void nca_sycl_backward(sycl::queue* queue, void** buffers,
     SubmitAtomicStateGradientFallback(*queue, state, kernels, perception,
                                       output_cotangent, state_gradient, shape);
   }
+  nca_sycl::SynchronizeStage(*queue, "backward/state_gradient");
 }

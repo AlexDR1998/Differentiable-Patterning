@@ -33,6 +33,12 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         runtime_str += (
             f"_sync{int(cfg.trainer.get('sycl_synchronize_custom_calls', False))}"
         )
+        runtime_str += (
+            f"_stagesync{int(cfg.trainer.get('sycl_strict_stage_synchronization', False))}"
+        )
+        runtime_str += (
+            f"_regreduce{cfg.trainer.get('sycl_regulariser_reduction', 'atomic')}"
+        )
     if pool_enabled:
         pool_rel = cfg.trainer.get("pool_admission_relative_threshold", 1.25)
         pool_prev_rel = cfg.trainer.get("pool_admission_previous_relative_threshold", 1.10)
@@ -99,6 +105,12 @@ def run(cfg):
         )
         trainer_kwargs["SYCL_SYNCHRONIZE_CUSTOM_CALLS"] = cfg.trainer.get(
             "sycl_synchronize_custom_calls", False
+        )
+        trainer_kwargs["SYCL_STRICT_STAGE_SYNCHRONIZATION"] = cfg.trainer.get(
+            "sycl_strict_stage_synchronization", False
+        )
+        trainer_kwargs["SYCL_REGULARISER_REDUCTION"] = cfg.trainer.get(
+            "sycl_regulariser_reduction", "atomic"
         )
     trainer = trainer_class(
         NCA_model=model,

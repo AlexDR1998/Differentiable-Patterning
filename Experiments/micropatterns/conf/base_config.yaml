@@ -5,9 +5,11 @@ experiment:
 data:
   dataset: micropatterns
   batches: 2
+  # Null loads all experiment groups for the selected dataset.
+  experiment_groups: null
   timesteps: [0, 12, 24, 36, 48]
-  # observed_channels: 9
-  # data_channels: 4 loads group-A fate channels only; 12 loads the full colony dataset.
+  # For legacy micropatterns this is 4 or 12. For 260726 it must match the
+  # selected experiment groups' measurement-channel count.
   data_channels: 12
   downsample: 1
   # Null retains the historical six-pixel border on each side. Set an integer
@@ -33,6 +35,15 @@ trainer:
   # Sequential NCA timesteps grouped inside each SYCL custom call. A value of
   # 1 uses the unfused one-step path. Ignored by non-SYCL model families.
   sycl_fused_steps: 2
+  # Wait for fused native rollout calls before returning to XLA. Useful for
+  # diagnosing custom-call/collective ordering on Intel GPUs.
+  sycl_synchronize_custom_calls: false
+  # Diagnostic mode: wait and report asynchronous SYCL errors after each
+  # native forward/backward stage. This is intentionally expensive.
+  sycl_strict_stage_synchronization: false
+  # Fused regulariser accumulation: historical global atomics or deterministic
+  # workgroup partials followed by a second reduction kernel.
+  sycl_regulariser_reduction: atomic
   model_directory: models/
   log_directory: logs/
   loss_time_channel_mask: null

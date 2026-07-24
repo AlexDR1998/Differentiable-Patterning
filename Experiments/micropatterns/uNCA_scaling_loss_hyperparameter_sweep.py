@@ -54,6 +54,12 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         train_str += (
             f"_sync{int(cfg.trainer.get('sycl_synchronize_custom_calls', False))}"
         )
+        train_str += (
+            f"_stagesync{int(cfg.trainer.get('sycl_strict_stage_synchronization', False))}"
+        )
+        train_str += (
+            f"_regreduce{cfg.trainer.get('sycl_regulariser_reduction', 'atomic')}"
+        )
     return "_".join([
         model_cfg_str,
         # data_cfg_str,
@@ -98,6 +104,12 @@ def run(cfg):
         )
         trainer_kwargs["SYCL_SYNCHRONIZE_CUSTOM_CALLS"] = cfg.trainer.get(
             "sycl_synchronize_custom_calls", False
+        )
+        trainer_kwargs["SYCL_STRICT_STAGE_SYNCHRONIZATION"] = cfg.trainer.get(
+            "sycl_strict_stage_synchronization", False
+        )
+        trainer_kwargs["SYCL_REGULARISER_REDUCTION"] = cfg.trainer.get(
+            "sycl_regulariser_reduction", "atomic"
         )
     trainer = trainer_class(
         NCA_model=model,

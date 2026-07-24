@@ -163,6 +163,7 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
         trajectory_cotangent + step * state_elements, boundary_cotangent,
         trajectory + step * state_elements, boundary_mask,
         regulariser_cotangent, m);
+    nca_sycl::SynchronizeStage(*queue, "rollout_backward/boundary_cotangent");
     void* step_buffers[] = {
         const_cast<float*>(step_state), kernels, weight_hidden, weight_output,
         bias_output, masks + step * state_elements, boundary_cotangent,
@@ -177,7 +178,8 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
     AddInPlace(*queue, output_weight_gradient, step_output_weight_gradient,
                output_weight_elements);
     AddInPlace(*queue, bias_gradient, step_bias_gradient, m.channels);
+    nca_sycl::SynchronizeStage(*queue, "rollout_backward/accumulate_parameters");
     current_cotangent = next_state_gradient;
   }
-  nca_sycl::SynchronizeCustomCall(*queue);
+  nca_sycl::SynchronizeCustomCall(*queue, "rollout/backward_complete");
 }

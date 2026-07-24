@@ -79,9 +79,10 @@ float SpatialMask(const float* mask, std::int64_t spatial,
 }
 
 template <bool ComputeIntermediate, bool ComputeBoundary>
-void SubmitBoundaryAndRegularisers(sycl::queue& queue, float* state,
-                                   const float* mask, float* regularisers,
-                                   const RolloutMetadata& m) {
+void SubmitBoundaryAndRegularisersAtomic(sycl::queue& queue, float* state,
+                                         const float* mask,
+                                         float* regularisers,
+                                         const RolloutMetadata& m) {
   const std::int64_t spatial_size = m.height * m.width;
   const std::int64_t elements = m.batch * m.channels * spatial_size;
   const std::int64_t boundary_channel_count =
@@ -155,22 +156,165 @@ void SubmitBoundaryAndRegularisers(sycl::queue& queue, float* state,
       });
 }
 
+template <bool ComputeIntermediate, bool ComputeBoundary>
+void SubmitBoundaryAndRegularisersTwoStage(
+    sycl::queue& queue, float* state, const float* mask, float* regularisers,
+    float* partials, const RolloutMetadata& m) {
+  const std::int64_t spatial_size = m.height * m.width;
+  const std::int64_t elements = m.batch * m.channels * spatial_size;
+  const std::int64_t boundary_channel_count =
+      m.boundary_code == 1 ? m.channels - m.boundary_channels : m.channels;
+  const float intermediate_scale = 1.0F / static_cast<float>(elements);
+  const float boundary_scale =
+      boundary_channel_count > 0
+          ? 1.0F / static_cast<float>(
+                         m.batch * boundary_channel_count * spatial_size)
+          : 0.0F;
+  constexpr std::int64_t local_size = 256;
+  const std::int64_t global_size =
+      nca_sycl::RoundUp(elements, local_size);
+  const std::int64_t group_count = global_size / local_size;
+
+  queue.submit([&](sycl::handler& handler) {
+    sycl::local_accessor<float, 1> intermediate_values(
+        sycl::range<1>(local_size), handler);
+    sycl::local_accessor<float, 1> boundary_values(
+        sycl::range<1>(local_size), handler);
+    handler.parallel_for(
+        sycl::nd_range<1>(sycl::range<1>(global_size),
+                          sycl::range<1>(local_size)),
+        [=](sycl::nd_item<1> item) {
+          const std::int64_t linear = item.get_global_linear_id();
+          const std::int64_t local = item.get_local_linear_id();
+          float intermediate_value = 0.0F;
+          float boundary_value = 0.0F;
+          if (linear < elements) {
+            const std::int64_t spatial = linear % spatial_size;
+            const std::int64_t channel =
+                (linear / spatial_size) % m.channels;
+            float value = state[linear];
+            if (m.boundary_code == 1 &&
+                channel >= m.channels - m.boundary_channels) {
+              value = mask[(channel -
+                            (m.channels - m.boundary_channels)) *
+                               spatial_size +
+                           spatial];
+              state[linear] = value;
+            } else if (m.boundary_code == 2) {
+              value *= mask[spatial];
+              state[linear] = value;
+            }
+            if constexpr (ComputeIntermediate) {
+              intermediate_value =
+                  (sycl::fabs(value) + sycl::fabs(value - 1.0F) - 1.0F) *
+                  intermediate_scale;
+            }
+            if constexpr (ComputeBoundary) {
+              if (m.boundary_code != 0 && channel < boundary_channel_count) {
+                const float outside = 1.0F - SpatialMask(mask, spatial, m);
+                boundary_value =
+                    sycl::fabs(value) * outside * boundary_scale;
+              }
+            }
+          }
+          intermediate_values[local] = intermediate_value;
+          boundary_values[local] = boundary_value;
+          item.barrier(sycl::access::fence_space::local_space);
+          for (std::int64_t stride = local_size / 2; stride > 0;
+               stride /= 2) {
+            if (local < stride) {
+              intermediate_values[local] +=
+                  intermediate_values[local + stride];
+              boundary_values[local] += boundary_values[local + stride];
+            }
+            item.barrier(sycl::access::fence_space::local_space);
+          }
+          if (local == 0) {
+            const std::int64_t group = item.get_group_linear_id();
+            partials[2 * group] = intermediate_values[0];
+            partials[2 * group + 1] = boundary_values[0];
+          }
+        });
+  });
+
+  queue.submit([&](sycl::handler& handler) {
+    sycl::local_accessor<float, 1> intermediate_values(
+        sycl::range<1>(local_size), handler);
+    sycl::local_accessor<float, 1> boundary_values(
+        sycl::range<1>(local_size), handler);
+    handler.parallel_for(
+        sycl::nd_range<1>(sycl::range<1>(local_size),
+                          sycl::range<1>(local_size)),
+        [=](sycl::nd_item<1> item) {
+          const std::int64_t local = item.get_local_linear_id();
+          float intermediate_value = 0.0F;
+          float boundary_value = 0.0F;
+          for (std::int64_t group = local; group < group_count;
+               group += local_size) {
+            intermediate_value += partials[2 * group];
+            boundary_value += partials[2 * group + 1];
+          }
+          intermediate_values[local] = intermediate_value;
+          boundary_values[local] = boundary_value;
+          item.barrier(sycl::access::fence_space::local_space);
+          for (std::int64_t stride = local_size / 2; stride > 0;
+               stride /= 2) {
+            if (local < stride) {
+              intermediate_values[local] +=
+                  intermediate_values[local + stride];
+              boundary_values[local] += boundary_values[local + stride];
+            }
+            item.barrier(sycl::access::fence_space::local_space);
+          }
+          if (local == 0) {
+            if constexpr (ComputeIntermediate) {
+              regularisers[0] += intermediate_values[0];
+            }
+            if constexpr (ComputeBoundary) {
+              regularisers[1] += boundary_values[0];
+            }
+          }
+        });
+  });
+}
+
+template <bool ComputeIntermediate, bool ComputeBoundary>
+void SubmitBoundaryAndRegularisers(sycl::queue& queue, float* state,
+                                   const float* mask, float* regularisers,
+                                   float* partials,
+                                   const RolloutMetadata& m) {
+  constexpr std::int64_t local_size = 256;
+  const std::int64_t elements =
+      m.batch * m.channels * m.height * m.width;
+  const std::int64_t group_count =
+      nca_sycl::RoundUp(elements, local_size) / local_size;
+  if (nca_sycl::TwoStageRegulariserReductionEnabled() &&
+      2 * group_count <= elements) {
+    SubmitBoundaryAndRegularisersTwoStage<ComputeIntermediate,
+                                          ComputeBoundary>(
+        queue, state, mask, regularisers, partials, m);
+  } else {
+    SubmitBoundaryAndRegularisersAtomic<ComputeIntermediate, ComputeBoundary>(
+        queue, state, mask, regularisers, m);
+  }
+}
+
 void ApplyBoundaryAndRegularisers(sycl::queue& queue, float* state,
                                   const float* mask, float* regularisers,
-                                  const RolloutMetadata& m) {
+                                  float* partials, const RolloutMetadata& m) {
   switch (m.regulariser_flags) {
     case nca_sycl::kIntermediateRegulariserFlag:
       SubmitBoundaryAndRegularisers<true, false>(
-          queue, state, mask, regularisers, m);
+          queue, state, mask, regularisers, partials, m);
       break;
     case nca_sycl::kBoundaryRegulariserFlag:
       SubmitBoundaryAndRegularisers<false, true>(
-          queue, state, mask, regularisers, m);
+          queue, state, mask, regularisers, partials, m);
       break;
     case nca_sycl::kIntermediateRegulariserFlag |
          nca_sycl::kBoundaryRegulariserFlag:
       SubmitBoundaryAndRegularisers<true, true>(
-          queue, state, mask, regularisers, m);
+          queue, state, mask, regularisers, partials, m);
       break;
     default:
       ApplyBoundary(queue, state, mask, m);
@@ -227,9 +371,10 @@ extern "C" void nca_sycl_rollout_forward(sycl::queue* queue, void** buffers,
                      reinterpret_cast<const char*>(&forward_metadata),
                      sizeof(forward_metadata));
     ApplyBoundaryAndRegularisers(*queue, step_output, boundary_mask,
-                                 regularisers, m);
+                                 regularisers, delta, m);
+    nca_sycl::SynchronizeStage(*queue, "rollout/boundary_regularisers");
   }
   queue->memcpy(output, trajectory + (m.steps - 1) * state_elements,
                 static_cast<std::size_t>(state_elements) * sizeof(float));
-  nca_sycl::SynchronizeCustomCall(*queue);
+  nca_sycl::SynchronizeCustomCall(*queue, "rollout/forward_complete");
 }

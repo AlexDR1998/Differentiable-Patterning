@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdint>
+#include <exception>
+#include <iostream>
 
 namespace nca_sycl {
 
@@ -28,8 +30,41 @@ inline bool SynchronizeCustomCallsEnabled() {
          std::strcmp(value, "False") != 0;
 }
 
-inline void SynchronizeCustomCall(sycl::queue& queue) {
-  if (SynchronizeCustomCallsEnabled()) queue.wait();
+inline bool StrictStageSynchronizationEnabled() {
+  const char* value = std::getenv("NCA_SYCL_STRICT_STAGE_SYNCHRONIZATION");
+  return value != nullptr && value[0] != '\0' &&
+         std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0 &&
+         std::strcmp(value, "False") != 0;
+}
+
+inline bool TwoStageRegulariserReductionEnabled() {
+  const char* value = std::getenv("NCA_SYCL_REGULARISER_REDUCTION");
+  return value != nullptr && std::strcmp(value, "two_stage") == 0;
+}
+
+[[noreturn]] inline void ReportSyclFailure(const char* stage,
+                                           const std::exception& error) {
+  std::cerr << "NCA_SYCL_ASYNC_FAILURE stage=" << stage
+            << " error=" << error.what() << std::endl;
+  std::abort();
+}
+
+inline void WaitAndReport(sycl::queue& queue, const char* stage) {
+  try {
+    queue.wait_and_throw();
+  } catch (const sycl::exception& error) {
+    ReportSyclFailure(stage, error);
+  } catch (const std::exception& error) {
+    ReportSyclFailure(stage, error);
+  }
+}
+
+inline void SynchronizeStage(sycl::queue& queue, const char* stage) {
+  if (StrictStageSynchronizationEnabled()) WaitAndReport(queue, stage);
+}
+
+inline void SynchronizeCustomCall(sycl::queue& queue, const char* stage) {
+  if (SynchronizeCustomCallsEnabled()) WaitAndReport(queue, stage);
 }
 
 inline float StableGradNormDenominator(float gx, float gy) {

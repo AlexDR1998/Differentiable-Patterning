@@ -11,7 +11,11 @@ from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from Common.trainer.loss_multi_target import multi_target_loss
 from NCA.trainer.sycl_batching import apply_flat_batched_nca
-from NCA.trainer.NCA_sycl_trainer import configure_custom_call_synchronization
+from NCA.trainer.NCA_sycl_trainer import (
+    configure_custom_call_synchronization,
+    configure_regulariser_reduction,
+    configure_stage_synchronization,
+)
 from NCA.trainer.sycl_execution import SyclTwoTileExecution
 from NCA.trainer.sycl_scan import scan_carry_only
 from NCA.trainer.sycl_shard_map import filter_shard_map
@@ -65,6 +69,27 @@ def test_custom_call_synchronization_configuration(monkeypatch):
     assert os.environ[name] == "1"
     assert not configure_custom_call_synchronization(False)
     assert name not in os.environ
+
+
+def test_stage_synchronization_configuration(monkeypatch):
+    name = "NCA_SYCL_STRICT_STAGE_SYNCHRONIZATION"
+    monkeypatch.delenv(name, raising=False)
+    assert not configure_stage_synchronization(None)
+    assert configure_stage_synchronization(True)
+    assert os.environ[name] == "1"
+    assert not configure_stage_synchronization(False)
+    assert name not in os.environ
+
+
+def test_regulariser_reduction_configuration(monkeypatch):
+    name = "NCA_SYCL_REGULARISER_REDUCTION"
+    monkeypatch.delenv(name, raising=False)
+    assert configure_regulariser_reduction(None) == "atomic"
+    assert configure_regulariser_reduction("two_stage") == "two_stage"
+    assert os.environ[name] == "two_stage"
+    assert configure_regulariser_reduction("atomic") == "atomic"
+    with pytest.raises(ValueError, match="must be 'atomic', 'two_stage'"):
+        configure_regulariser_reduction("invalid")
 
 
 def test_tile_axis_contract_is_explicit_and_preserves_inner_batch_axis():

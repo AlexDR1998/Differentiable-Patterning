@@ -18,18 +18,49 @@ from NCA.trainer.sycl_execution import SyclTwoTileExecution
 from NCA.trainer.sycl_scan import scan_carry_only
 
 
-def configure_custom_call_synchronization(enabled):
-    """Configure optional native synchronization and return its active state."""
-    name = "NCA_SYCL_SYNCHRONIZE_CUSTOM_CALLS"
+def _configure_boolean_environment(name, enabled):
     if enabled is not None:
         if not isinstance(enabled, bool):
-            raise TypeError("SYCL_SYNCHRONIZE_CUSTOM_CALLS must be boolean or None")
+            raise TypeError(f"{name} must be boolean or None")
         if enabled:
             os.environ[name] = "1"
         else:
             os.environ.pop(name, None)
     value = os.getenv(name, "")
     return value not in {"", "0", "false", "False"}
+
+
+def configure_custom_call_synchronization(enabled):
+    """Configure end-of-custom-call synchronization."""
+    return _configure_boolean_environment(
+        "NCA_SYCL_SYNCHRONIZE_CUSTOM_CALLS", enabled
+    )
+
+
+def configure_stage_synchronization(enabled):
+    """Configure diagnostic waits after individual native stages."""
+    return _configure_boolean_environment(
+        "NCA_SYCL_STRICT_STAGE_SYNCHRONIZATION", enabled
+    )
+
+
+def configure_regulariser_reduction(mode):
+    """Select atomic or deterministic two-stage fused reduction."""
+    name = "NCA_SYCL_REGULARISER_REDUCTION"
+    if mode is not None:
+        if mode not in {"atomic", "two_stage"}:
+            raise ValueError(
+                "SYCL_REGULARISER_REDUCTION must be 'atomic', 'two_stage', "
+                "or None"
+            )
+        os.environ[name] = mode
+    active = os.getenv(name, "atomic")
+    if active not in {"atomic", "two_stage"}:
+        raise ValueError(
+            f"Unsupported {name} value {active!r}; expected 'atomic' or "
+            "'two_stage'"
+        )
+    return active
 
 
 class NCA_sycl_Trainer(NCA_Trainer):
@@ -46,10 +77,18 @@ class NCA_sycl_Trainer(NCA_Trainer):
         *args,
         SYCL_FUSED_STEPS=2,
         SYCL_SYNCHRONIZE_CUSTOM_CALLS=None,
+        SYCL_STRICT_STAGE_SYNCHRONIZATION=None,
+        SYCL_REGULARISER_REDUCTION=None,
         **kwargs,
     ):
         self.synchronize_custom_calls = configure_custom_call_synchronization(
             SYCL_SYNCHRONIZE_CUSTOM_CALLS
+        )
+        self.strict_stage_synchronization = configure_stage_synchronization(
+            SYCL_STRICT_STAGE_SYNCHRONIZATION
+        )
+        self.regulariser_reduction = configure_regulariser_reduction(
+            SYCL_REGULARISER_REDUCTION
         )
         super().__init__(*args, **kwargs)
         if self.BATCH_BACKEND.is_array:
@@ -70,10 +109,25 @@ class NCA_sycl_Trainer(NCA_Trainer):
             f"{self.synchronize_custom_calls}",
             flush=True,
         )
+        print(
+            "NCA SYCL strict stage synchronization: "
+            f"{self.strict_stage_synchronization}",
+            flush=True,
+        )
+        print(
+            f"NCA SYCL regulariser reduction: {self.regulariser_reduction}",
+            flush=True,
+        )
 
     def setup_logging(self, *args, **kwargs):
         self.TRAIN_CONFIG["SYCL_SYNCHRONIZE_CUSTOM_CALLS"] = (
             self.synchronize_custom_calls
+        )
+        self.TRAIN_CONFIG["SYCL_STRICT_STAGE_SYNCHRONIZATION"] = (
+            self.strict_stage_synchronization
+        )
+        self.TRAIN_CONFIG["SYCL_REGULARISER_REDUCTION"] = (
+            self.regulariser_reduction
         )
         return super().setup_logging(*args, **kwargs)
 

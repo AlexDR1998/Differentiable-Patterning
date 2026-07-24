@@ -63,3 +63,11 @@ the SYCL trainer groups into one rollout custom call. `1` selects the original
 one-step path; values greater than one must divide `run.t`. Runtime filenames
 include both `_fuseK` and, when enabled, `_shard2` so sweep results remain
 unambiguous.
+
+For Intel runtime diagnosis, `trainer.sycl_strict_stage_synchronization: true`
+uses `queue.wait_and_throw()` after each native forward and backward stage and
+reports the stage name before aborting on a caught SYCL exception. This is much
+slower than normal execution. `trainer.sycl_regulariser_reduction` selects
+either the historical `atomic` accumulation or a deterministic `two_stage`
+reduction that writes workgroup partials into existing rollout scratch space
+before a second kernel produces the two scalar regulariser sums.
