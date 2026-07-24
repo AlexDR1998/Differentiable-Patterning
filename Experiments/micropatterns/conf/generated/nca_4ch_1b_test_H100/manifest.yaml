@@ -14,7 +14,7 @@ configs:
     model.upscale_factor: null
     model.channels: 64
     run.scaling: convective
-    run.iterations: 8000
+    run.iterations: 100
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
@@ -156,7 +156,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 100
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -189,7 +189,7 @@ configs:
     model.upscale_factor: null
     model.channels: 64
     run.scaling: convective
-    run.iterations: 8000
+    run.iterations: 100
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
@@ -331,7 +331,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 100
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -364,7 +364,7 @@ configs:
     model.upscale_factor: null
     model.channels: 64
     run.scaling: convective
-    run.iterations: 8000
+    run.iterations: 100
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
@@ -506,7 +506,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 100
       warmup: 64
       write_images: true
       sparse_pruning: false
@@ -539,7 +539,7 @@ configs:
     model.upscale_factor: null
     model.channels: 64
     run.scaling: convective
-    run.iterations: 8000
+    run.iterations: 100
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
@@ -681,7 +681,7 @@ configs:
         assignment: hard
     run:
       t: 128
-      iterations: 8000
+      iterations: 100
       warmup: 64
       write_images: true
       sparse_pruning: false
