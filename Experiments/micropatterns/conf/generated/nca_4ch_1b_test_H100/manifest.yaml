@@ -38,7 +38,7 @@ configs:
     trainer.batch_mode: tree
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.1
-    trainer.log_every: 200
+    trainer.log_every: 20
     trainer.clear_cache_every: null
     data.downsample: 8
     data.experiment_groups:
@@ -102,7 +102,7 @@ configs:
       loss_time_channel_mask: null
       loop_autodiff: lax
       clear_cache_every: null
-      log_every: 200
+      log_every: 20
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
       pool_admission_previous_relative_threshold: 1.1
@@ -213,7 +213,7 @@ configs:
     trainer.batch_mode: tree
     trainer.loop_autodiff: checkpointed
     trainer.pool_admission_previous_relative_threshold: 1.1
-    trainer.log_every: 200
+    trainer.log_every: 20
     trainer.clear_cache_every: null
     data.downsample: 8
     data.experiment_groups:
@@ -277,7 +277,7 @@ configs:
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
       clear_cache_every: null
-      log_every: 200
+      log_every: 20
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
       pool_admission_previous_relative_threshold: 1.1
@@ -388,7 +388,7 @@ configs:
     trainer.batch_mode: tree
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.1
-    trainer.log_every: 200
+    trainer.log_every: 20
     trainer.clear_cache_every: null
     data.downsample: 8
     data.experiment_groups:
@@ -452,7 +452,7 @@ configs:
       loss_time_channel_mask: null
       loop_autodiff: lax
       clear_cache_every: null
-      log_every: 200
+      log_every: 20
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
       pool_admission_previous_relative_threshold: 1.1
@@ -563,7 +563,7 @@ configs:
     trainer.batch_mode: tree
     trainer.loop_autodiff: checkpointed
     trainer.pool_admission_previous_relative_threshold: 1.1
-    trainer.log_every: 200
+    trainer.log_every: 20
     trainer.clear_cache_every: null
     data.downsample: 8
     data.experiment_groups:
@@ -627,7 +627,7 @@ configs:
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
       clear_cache_every: null
-      log_every: 200
+      log_every: 20
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
       pool_admission_previous_relative_threshold: 1.1
