@@ -73,12 +73,15 @@ def compute_channel_time_diagnostics(
 	targets,
 	boundary_masks=None,
 	radial_bins=16,
+	radial_extent=1.5,
 ):
 	"""Compute total intensity and mean radial intensity per channel/timestep.
 
 	Inputs use [batch, time, channel, x, y]. Radial distance is measured from
 	the centroid of each boundary mask and normalized by its maximum in-mask
 	radius. Profiles are averaged over batches and over pixels in each annulus.
+	The radial profile includes all pixels out to ``radial_extent`` times the
+	boundary radius, allowing the diagnostic to show the immediate exterior.
 	"""
 	predictions = np.asarray(predictions, dtype=np.float32)
 	targets = np.asarray(targets, dtype=np.float32)
@@ -90,6 +93,8 @@ def compute_channel_time_diagnostics(
 		raise ValueError("Diagnostics expect [batch, time, channel, x, y] arrays")
 	if radial_bins <= 0:
 		raise ValueError("radial_bins must be positive")
+	if radial_extent <= 1.0:
+		raise ValueError("radial_extent must be greater than 1.0")
 
 	batch_count, time_count, channel_count, width, height = predictions.shape
 	if boundary_masks is None:
@@ -111,7 +116,7 @@ def compute_channel_time_diagnostics(
 		(batch_count, time_count, channel_count, radial_bins), dtype=np.float64
 	)
 	target_profiles = np.zeros_like(prediction_profiles)
-	bin_edges = np.linspace(0.0, 1.0, radial_bins + 1)
+	bin_edges = np.linspace(0.0, radial_extent, radial_bins + 1)
 
 	grid_x, grid_y = np.meshgrid(
 		np.arange(width, dtype=np.float32),
@@ -143,9 +148,9 @@ def compute_channel_time_diagnostics(
 
 		for bin_index in range(radial_bins):
 			if bin_index == radial_bins - 1:
-				annulus = mask & (normalized_radius >= bin_edges[bin_index]) & (normalized_radius <= bin_edges[bin_index + 1])
+				annulus = (normalized_radius >= bin_edges[bin_index]) & (normalized_radius <= bin_edges[bin_index + 1])
 			else:
-				annulus = mask & (normalized_radius >= bin_edges[bin_index]) & (normalized_radius < bin_edges[bin_index + 1])
+				annulus = (normalized_radius >= bin_edges[bin_index]) & (normalized_radius < bin_edges[bin_index + 1])
 			if not np.any(annulus):
 				continue
 			annulus_flat = annulus.reshape(-1)
@@ -269,7 +274,7 @@ def plot_total_intensity_diagnostics(diagnostics, channel_names, timepoint_names
 
 	shared_min = min(float(np.min(target)), float(np.min(prediction)), 0.0)
 	shared_max = max(float(np.max(target)), float(np.max(prediction)), 1e-8)
-	figure, axes = plt.subplots(1, 3, figsize=(14, max(5.0, 0.35 * channel_count)))
+	figure, axes = plt.subplots(1, 3, figsize=(14, max(5.0, 0.35 * channel_count)),dpi=150)
 	for axis, values, title, cmap, vmin, vmax in (
 		(axes[0], target, "Target total intensity", "viridis", shared_min, shared_max),
 		(axes[1], prediction, "Prediction total intensity", "viridis", shared_min, shared_max),
@@ -328,13 +333,61 @@ def plot_radial_intensity_diagnostics(diagnostics, channel_names, timepoint_name
 	):
 		image = axis.imshow(values, aspect="auto", origin="upper", vmin=0.0, vmax=vmax)
 		axis.set_title(title)
-		axis.set_xlabel("Normalized radius (centre → boundary)")
+		axis.set_xlabel("Normalized radius (centre → boundary → exterior)")
 		axis.set_xticks(
-			np.linspace(0, values.shape[1] - 1, 5),
-			labels=["0.0", "0.25", "0.5", "0.75", "1.0"],
+			np.linspace(0, values.shape[1] - 1, 4),
+			labels=["0.0", "0.5", "1.0", "1.5"],
 		)
 		figure.colorbar(image, ax=axis, fraction=0.025, pad=0.02)
 	axes[0].set_yticks(np.arange(len(row_labels)), labels=row_labels, fontsize=6)
+	figure.tight_layout()
+	return plot_to_image(figure)
+
+
+def plot_radial_intensity_line_diagnostics(
+	diagnostics, channel_names, timepoint_names=None
+):
+	"""Plot one sequentially-coloured radial profile line per timestep/channel."""
+	import matplotlib.pyplot as plt
+
+	target = np.asarray(diagnostics["target_radial_profile"])
+	prediction = np.asarray(diagnostics["prediction_radial_profile"])
+	radius = np.asarray(diagnostics.get("radius"))
+	time_count, channel_count, radial_count = target.shape
+	if timepoint_names is None or len(timepoint_names) != time_count:
+		timepoint_names = [f"t{index + 1}" for index in range(time_count)]
+	if radius.shape != (radial_count,):
+		radius = np.linspace(0.0, 1.5, radial_count)
+
+	figure, axes = plt.subplots(
+		channel_count,
+		2,
+		figsize=(12, max(3.0, 2.5 * channel_count)),
+		sharex=True,
+		squeeze=False,
+	)
+	colours = plt.get_cmap("viridis")(np.linspace(0.15, 0.95, max(time_count, 1)))
+	for channel_index, channel_name in enumerate(channel_names[:channel_count]):
+		for axis, values, label in (
+			(axes[channel_index, 0], target[:, channel_index], "Target"),
+			(axes[channel_index, 1], prediction[:, channel_index], "Prediction"),
+		):
+			for time_index, (profile, colour) in enumerate(zip(values, colours)):
+				axis.plot(
+					radius,
+					profile,
+					color=colour,
+					linewidth=1.5,
+					label=timepoint_names[time_index],
+				)
+			axis.axvline(1.0, color="black", linestyle="--", linewidth=0.8, alpha=0.6)
+			axis.set_title(f"{channel_name} · {label}")
+			axis.grid(True, alpha=0.2)
+			if channel_index == channel_count - 1:
+				axis.set_xlabel("Normalized radius")
+			if channel_index == 0 and label == "Target":
+				axis.legend(fontsize=7, ncol=min(time_count, 4), title="Timestep")
+	figure.suptitle("Radial intensity profiles over time (dashed line = boundary)")
 	figure.tight_layout()
 	return plot_to_image(figure)
 
@@ -417,7 +470,7 @@ def plot_channel_time_grid(values, channel_names=None, timepoint_names=None, tit
 	grid = rearrange(values, "t c x y -> (c x) (t y)")
 	value_min, value_max = np.nanmin(grid), np.nanmax(grid)
 	figure, axis = plt.subplots(
-		figsize=(max(7.0, 1.8 * time_count), max(5.0, 0.38 * channel_count))
+		figsize=(max(7.0, 1.8 * time_count), max(5.0, 0.38 * channel_count)), dpi=150
 	)
 	axis.imshow(grid, cmap="gray", vmin=value_min, vmax=max(value_max, value_min + 1e-8))
 	axis.set_xticks((np.arange(time_count) + 0.5) * height, labels=timepoint_names)
@@ -521,7 +574,7 @@ def plot_singular_value_spectrum(singular_values, title):
 	import matplotlib.pyplot as plt
 
 	plot_values = np.maximum(np.array(singular_values), 1e-12)
-	figure = plt.figure(figsize=(6,4))
+	figure = plt.figure(figsize=(6,4), dpi=150)
 	ax = figure.add_subplot(111)
 	ax.plot(np.arange(len(plot_values)), plot_values, marker="o", linewidth=1)
 	ax.set_yscale("log")
@@ -548,6 +601,7 @@ class NCA_Train_log(Train_log):
 		timepoint_names=None,
 		data_augmenter=None,
 		radial_bins=16,
+		radial_extent=1.5,
 		**kwargs,
 	):
 		data = kwargs.get("data", args[0] if args else None)
@@ -569,6 +623,7 @@ class NCA_Train_log(Train_log):
 			else (4, 4, 3, 1) if self.diagnostic_grouped_channels else None
 		)
 		self.radial_bins = int(radial_bins)
+		self.radial_extent = float(radial_extent)
 		channel_count = (
 			self.diagnostic_targets.shape[2]
 			if self.diagnostic_targets is not None
@@ -631,6 +686,7 @@ class NCA_Train_log(Train_log):
 				targets,
 				boundary_masks=self.diagnostic_boundary_mask,
 				radial_bins=self.radial_bins,
+				radial_extent=getattr(self, "radial_extent", 1.5),
 			)
 			correlation_diagnostics = compute_channel_correlation_diagnostics(
 				predictions,
@@ -657,6 +713,15 @@ class NCA_Train_log(Train_log):
 			self.log_image(
 				"Diagnostics/radial_intensity_profiles",
 				plot_radial_intensity_diagnostics(
+					diagnostics,
+					self.channel_names,
+					self.timepoint_names,
+				),
+				step=i,
+			)
+			self.log_image(
+				"Diagnostics/radial_intensity_lines",
+				plot_radial_intensity_line_diagnostics(
 					diagnostics,
 					self.channel_names,
 					self.timepoint_names,
