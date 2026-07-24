@@ -49,9 +49,15 @@ def _as_tree(data):
         return list(data)
 
 
-def expand_channel_timestep_mask_for_loss(cfg, channel_timestep_mask):
+def expand_channel_timestep_mask_for_loss(
+    cfg, channel_timestep_mask, channel_schema=None
+):
     mask = jnp.asarray(channel_timestep_mask)
-    if cfg.data.data_channels == 12 and mask.shape[-1] == 9:
+    if (
+        cfg.data.get("dataset", "micropatterns") != "micropatterns_260726"
+        and cfg.data.data_channels == 12
+        and mask.shape[-1] == 9
+    ):
         mask = jnp.concatenate(
             [
                 mask[..., 0:4],
@@ -151,11 +157,16 @@ def masked_reinject_callback_bit(
     return x
 
 
-def build_data_augmenter(cfg, channel_timestep_mask=None):
+def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
     data_channels = cfg.data.data_channels
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
         class DA_subclass(DataAugmenter260726):
             noise_strength = cfg.data.noise_strength
+
+            def __init__(self, *args, **kwargs):
+                kwargs["schema"] = channel_schema
+                super().__init__(*args, **kwargs)
+
         return DA_subclass, f"da_snapshot_noise{cfg.data.noise_strength}"
     if data_channels == 4 and cfg.knockout.mode is not None:
         raise ValueError("data.data_channels=4 is only supported for no-knockout group-A data.")
@@ -222,10 +233,8 @@ def load_data(cfg, impath=None):
     custom_impath = impath is not None
     data_channels = cfg.data.data_channels
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
-        if cfg.knockout.mode is not None or data_channels != 14:
-            raise ValueError("micropatterns_260726 requires baseline data with 14 channels")
-        if cfg.data.batches not in {2, 4}:
-            raise ValueError("micropatterns_260726 currently supports 2 or 4 batches")
+        if cfg.knockout.mode is not None:
+            raise ValueError("micropatterns_260726 requires baseline data")
         if impath is None:
             data_path_base = os.getenv("DATA_PATH_BASE")
             if data_path_base is None:
@@ -237,8 +246,28 @@ def load_data(cfg, impath=None):
             timesteps=tuple(cfg.data.timesteps),
             downsample=cfg.data.downsample,
             replicate_count=cfg.data.batches,
+            experiment_groups=cfg.data.get("experiment_groups", None),
         )
-        cfg_str = f"data_b{cfg.data.batches}_c14_ds{cfg.data.downsample}_ts{_compact_value(list(cfg.data.timesteps))}"
+        selected_schema = aux["channel_schema"]
+        selected_channel_count = getattr(
+            selected_schema, "n_measurement_channels", data.shape[2]
+        )
+        if data_channels is not None and data_channels != selected_channel_count:
+            raise ValueError(
+                "data.data_channels does not match the selected 260726 "
+                f"experiment groups ({data_channels} != "
+                f"{selected_channel_count})"
+            )
+        group_str = _compact_value(
+            list(getattr(selected_schema, "group_names", ()))
+        )
+        cfg_str = (
+            f"data_b{cfg.data.batches}"
+            f"_c{selected_channel_count}"
+            f"_g{group_str}"
+            f"_ds{cfg.data.downsample}"
+            f"_ts{_compact_value(list(cfg.data.timesteps))}"
+        )
         if custom_impath:
             cfg_str += "_custompath"
         return data, aux, names, boundary, mask[:, 1:], cfg_str

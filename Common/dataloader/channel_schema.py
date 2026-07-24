@@ -9,7 +9,7 @@ can therefore support within-image correlation losses.
 
 from dataclasses import dataclass
 from itertools import combinations
-from typing import Optional, Tuple
+from typing import Optional, Sequence, Tuple
 
 
 @dataclass(frozen=True)
@@ -125,6 +125,45 @@ class ChannelSchema:
     @property
     def group_names(self) -> Tuple[str, ...]:
         return tuple(group.name for group in self.experiment_groups)
+
+    def select_groups(self, group_names: Optional[Sequence[str]] = None):
+        """Return a schema containing only the requested experiment groups.
+
+        State channels are restricted to markers measured by the selected
+        groups, while retaining their order in the parent schema.
+        """
+
+        if group_names is None:
+            return self
+        if isinstance(group_names, str):
+            group_names = (group_names,)
+        else:
+            group_names = tuple(group_names)
+        if not group_names:
+            raise ValueError("At least one experiment group must be selected")
+        if len(set(group_names)) != len(group_names):
+            raise ValueError("Experiment group selections cannot contain duplicates")
+        groups_by_name = {group.name: group for group in self.experiment_groups}
+        unknown = [name for name in group_names if name not in groups_by_name]
+        if unknown:
+            raise ValueError(
+                "Unknown experiment groups for schema "
+                f"{self.name!r}: {', '.join(unknown)}"
+            )
+        selected_groups = tuple(groups_by_name[name] for name in group_names)
+        selected_markers = {
+            channel.marker
+            for group in selected_groups
+            for channel in group.channels
+        }
+        state_channels = tuple(
+            marker for marker in self.state_channels if marker in selected_markers
+        )
+        return ChannelSchema(
+            name=f"{self.name}[{','.join(group_names)}]",
+            state_channels=state_channels,
+            experiment_groups=selected_groups,
+        )
 
     @property
     def group_sizes(self) -> Tuple[int, ...]:

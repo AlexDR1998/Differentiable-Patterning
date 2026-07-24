@@ -14,6 +14,7 @@ class DataAugmenter(BasicAugmenter):
     supports_global_donor_pool = True
 
     def __init__(self, *args, **kwargs):
+        self.schema = kwargs.pop("schema", None) or type(self).schema
         model = kwargs.get("nca_model")
         self.channels = (
             model.N_CHANNELS if model is not None

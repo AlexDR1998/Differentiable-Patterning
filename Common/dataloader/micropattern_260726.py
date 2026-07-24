@@ -115,6 +115,7 @@ def build_micropattern_260726_manifest(
     timesteps=(0, 12, 24, 36, 48),
     replicate_count=3,
     replicate_manifest=None,
+    experiment_groups=None,
     substitute_preperturbation=True,
 ):
     """Index selected files without reading image pixels.
@@ -122,8 +123,13 @@ def build_micropattern_260726_manifest(
     ``replicate_manifest`` may override automatic selection for any
     ``(condition, group, timestep)`` key with an ordered sequence of up to
     ``replicate_count`` relative or absolute filenames.
+
+    ``experiment_groups`` restricts indexing to the named staining groups;
+    ``None`` selects all groups.
     """
 
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(experiment_groups)
+    selected_group_names = schema.group_names
     root = Path(root).expanduser().resolve()
     if not root.is_dir():
         raise FileNotFoundError(f"Micropattern dataset root does not exist: {root}")
@@ -149,7 +155,8 @@ def build_micropattern_260726_manifest(
     unselected_files = []
     replicate_manifest = {} if replicate_manifest is None else replicate_manifest
     for condition in sorted(required_conditions):
-        for group, relative_directory in _GROUP_DIRECTORIES.items():
+        for group in selected_group_names:
+            relative_directory = _GROUP_DIRECTORIES[group]
             directory = root / relative_directory(condition)
             if not directory.is_dir():
                 raise FileNotFoundError(
@@ -258,8 +265,7 @@ def _percentile_from_histogram(histogram, percentile):
     return float(np.searchsorted(np.cumsum(histogram), threshold, side="left"))
 
 
-def _compute_histogram_bins(records, hist_eqs):
-    schema = MICROPATTERN_260726_SCHEMA
+def _compute_histogram_bins(records, hist_eqs, schema):
     histograms = np.zeros((schema.n_measurement_channels, 65536), dtype=np.uint64)
     group_target_indices = {
         group.name: target_indices
@@ -297,8 +303,7 @@ def _compute_histogram_bins(records, hist_eqs):
     return bins
 
 
-def _coerce_histogram_bins(histogram_bins):
-    schema = MICROPATTERN_260726_SCHEMA
+def _coerce_histogram_bins(histogram_bins, schema):
     if isinstance(histogram_bins, Mapping):
         missing = [
             name for name in schema.measurement_names if name not in histogram_bins
@@ -427,6 +432,7 @@ def load_micropattern_260726(
     downsample=4,
     replicate_count=3,
     replicate_manifest=None,
+    experiment_groups=None,
     substitute_preperturbation=True,
     histogram_bins=None,
     hist_eqs=(0.5, 99.95),
@@ -444,10 +450,11 @@ def load_micropattern_260726(
     Returns
     -------
     targets:
-        Float32 array ``[B, T, M, X, Y]`` where ``M=14`` measurement channels
-        and ``B = replicate_count * len(conditions)``.
+        Float32 array ``[B, T, M, X, Y]`` where ``M`` is the number of
+        channels in the selected experiment groups and
+        ``B = replicate_count * len(conditions)``.
     aux:
-        Schema, provenance, full group masks, histogram bins, and inventory.
+        Selected schema, provenance, group masks, histogram bins, and inventory.
     measurement_names:
         Names aligned with the target channel axis.
     boundary_mask:
@@ -467,12 +474,14 @@ def load_micropattern_260726(
         raise ValueError("boundary_radius_scale must be positive")
     conditions = tuple(conditions)
     timesteps = tuple(int(timestep) for timestep in timesteps)
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(experiment_groups)
     inventory = build_micropattern_260726_manifest(
         root=root,
         conditions=conditions,
         timesteps=timesteps,
         replicate_count=replicate_count,
         replicate_manifest=replicate_manifest,
+        experiment_groups=schema.group_names,
         substitute_preperturbation=substitute_preperturbation,
     )
     selected = inventory["selected"]
@@ -483,7 +492,7 @@ def load_micropattern_260726(
                 source_condition = _source_condition(
                     condition, timestep, substitute_preperturbation
                 )
-                for group in _GROUP_DIRECTORIES:
+                for group in schema.group_names:
                     slots = selected[(source_condition, group, timestep)]
                     for replicate, path in enumerate(slots):
                         if path is None:
@@ -495,11 +504,9 @@ def load_micropattern_260726(
 
     records = inventory["records"]
     if histogram_bins is None:
-        histogram_bins = _compute_histogram_bins(records, hist_eqs)
+        histogram_bins = _compute_histogram_bins(records, hist_eqs, schema)
     else:
-        histogram_bins = _coerce_histogram_bins(histogram_bins)
-
-    schema = MICROPATTERN_260726_SCHEMA
+        histogram_bins = _coerce_histogram_bins(histogram_bins, schema)
     group_target_indices = {
         group.name: target_indices
         for group, target_indices in zip(
@@ -627,7 +634,7 @@ def load_micropattern_260726(
 
     boundary_candidates = np.zeros((batch_count, *spatial_shape), dtype=bool)
     boundary_candidate_mask = np.zeros((batch_count,), dtype=bool)
-    primary_group = group_index["cell_fate_s1"]
+    primary_group = group_index.get("cell_fate_s1", 0)
     for batch in range(batch_count):
         available_times = np.flatnonzero(group_mask[batch, :, primary_group])
         if available_times.size:
@@ -662,6 +669,7 @@ def load_micropattern_260726(
 
     aux = {
         "channel_schema": schema,
+        "selected_experiment_groups": schema.group_names,
         "manifest": records,
         "unselected_files": inventory["unselected_files"],
         "histogram_bins": histogram_bins,

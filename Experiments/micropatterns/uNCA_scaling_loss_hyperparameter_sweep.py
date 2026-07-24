@@ -72,8 +72,12 @@ def run(cfg):
         return_schedule=True,
     )
     data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK,_data_cfg_str = load_data(cfg)
-    data_augmenter,_data_augmenter_cfg_str = build_data_augmenter(cfg, CHANNEL_TIMESTEP_MASK)
-    loss_time_channel_mask = expand_channel_timestep_mask_for_loss(cfg, CHANNEL_TIMESTEP_MASK)
+    data_augmenter,_data_augmenter_cfg_str = build_data_augmenter(
+        cfg, CHANNEL_TIMESTEP_MASK, aux.get("channel_schema")
+    )
+    loss_time_channel_mask = expand_channel_timestep_mask_for_loss(
+        cfg, CHANNEL_TIMESTEP_MASK, aux.get("channel_schema")
+    )
     target_timepoints = [f"t{time}h" for time in list(cfg.data.timesteps)[1:]]
     if cfg.data.get("duplicate_final_timestep", False):
         target_timepoints.append(f"{target_timepoints[-1]}_steady")

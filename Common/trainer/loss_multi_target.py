@@ -95,6 +95,12 @@ def multi_target_pairwise_costs(
     prediction, target, boundary, schema, params, key, args
 ):
     """Build prediction-row by target-column costs for each experiment group."""
+    if prediction.shape[2] != schema.n_state_channels:
+        raise ValueError(
+            f"Schema {schema.name!r} expects {schema.n_state_channels} state "
+            f"channels, got {prediction.shape[2]}"
+        )
+    schema.validate_measurement_channel_count(target.shape[2])
     weights = _weights(args)
     metric = args.get("metric", "l2")
     samples = args.get("samples", 128)
