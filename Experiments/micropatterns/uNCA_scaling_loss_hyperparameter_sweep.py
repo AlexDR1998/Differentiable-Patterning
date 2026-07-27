@@ -45,6 +45,7 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         f"_lr{cfg.optimiser.learn_rate}"
         f"_dr{cfg.optimiser.decay_rate}"
         f"_batch{cfg.trainer.get('batch_mode', 'tree')}"
+        f"_dup{int(cfg.data.get('duplicate_final_timestep', False))}"
     )
     repeat = _cfg_get(cfg.run, "repeat", None)
     if repeat is not None:

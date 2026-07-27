@@ -168,11 +168,15 @@ def build_data_augmenter(
             def __init__(self, *args, **kwargs):
                 kwargs["schema"] = channel_schema
                 kwargs["batch_multiplier"] = batch_multiplier
+                kwargs["intermediate_reinjection_probability"] = cfg.data.get(
+                    "intermediate_reinjection_probability", 0.5
+                )
                 super().__init__(*args, **kwargs)
 
         return DA_subclass, (
             f"da_snapshot_noise{cfg.data.noise_strength}"
             f"_bm{batch_multiplier}"
+            f"_irp{cfg.data.get('intermediate_reinjection_probability', 0.5)}"
         )
     if data_channels == 4 and cfg.knockout.mode is not None:
         raise ValueError("data.data_channels=4 is only supported for no-knockout group-A data.")

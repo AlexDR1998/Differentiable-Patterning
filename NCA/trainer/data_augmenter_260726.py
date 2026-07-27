@@ -18,6 +18,13 @@ class DataAugmenter(BasicAugmenter):
     def __init__(self, *args, **kwargs):
         self.schema = kwargs.pop("schema", None) or type(self).schema
         self.batch_multiplier = kwargs.pop("batch_multiplier", 1)
+        self.intermediate_reinjection_probability = kwargs.pop(
+            "intermediate_reinjection_probability", 0.5
+        )
+        if not 0.0 <= self.intermediate_reinjection_probability <= 1.0:
+            raise ValueError(
+                "intermediate_reinjection_probability must be between 0 and 1"
+            )
         model = kwargs.get("nca_model")
         self.channels = (
             model.N_CHANNELS if model is not None
@@ -70,7 +77,11 @@ class DataAugmenter(BasicAugmenter):
         if time_count > 1:
             global_key, mask_key, group_key = jax.random.split(global_key, 3)
             global_shape = (donor_count, time_count - 1)
-            inject = jax.random.bernoulli(mask_key, 0.5, global_shape)[global_indices]
+            inject = jax.random.bernoulli(
+                mask_key,
+                self.intermediate_reinjection_probability,
+                global_shape,
+            )[global_indices]
             choices = jax.random.randint(
                 group_key, global_shape, 0, len(self.schema.experiment_groups)
             )[global_indices]
