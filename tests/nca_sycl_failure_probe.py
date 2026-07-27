@@ -8,6 +8,7 @@ import os
 import socket
 import time
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -77,7 +78,7 @@ def main():
         check_rep=False,
     )
     start = time.perf_counter()
-    result = jax.jit(mapped)(model, values)
+    result = eqx.filter_jit(mapped)(model, values)
     result.block_until_ready()
     print(f"RESULT={float(result)}", flush=True)
     print(f"ELAPSED_SECONDS={time.perf_counter() - start}", flush=True)

@@ -7,8 +7,9 @@ tests/submit_nca_sycl_failure_probes.sh
 ```
 
 This submits `shard_map + pmean`, `custom call + shard_map`, and the combined
-case. Each task records its allocated hostname; scheduling is deliberately not
-pinned. After completion, summarize crash rates and recurring nodes with:
+case. Probe types are interleaved across Slurm array indices, and each task
+records its allocated hostname; scheduling is deliberately not pinned. After
+completion, summarize crash rates and recurring nodes with:
 
 ```bash
 python tests/summarize_nca_sycl_failure_probes.py nca-sycl-probe-logs
