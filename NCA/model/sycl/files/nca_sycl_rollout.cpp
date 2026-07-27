@@ -334,6 +334,7 @@ extern "C" void nca_sycl_rollout_forward(sycl::queue* queue, void** buffers,
   RolloutMetadata m{};
   std::memcpy(&m, opaque, sizeof(m));
   if (!ValidMetadata(m)) return;
+  nca_sycl::SerializedCustomCall serialized(*queue, "rollout/forward_serialized");
   ReportQueueOrderingOnce(*queue);
 
   auto* initial_state = static_cast<float*>(buffers[0]);

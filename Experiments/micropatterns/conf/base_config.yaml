@@ -45,6 +45,13 @@ trainer:
   # Fused regulariser accumulation: historical global atomics or deterministic
   # workgroup partials followed by a second reduction kernel.
   sycl_regulariser_reduction: atomic
+  # Diagnostic switches. Disabling loss pmean also removes the corresponding
+  # reverse-mode gradient collective and is not numerically equivalent.
+  sycl_pmean_loss: true
+  sycl_pmean_regularisers: true
+  # Serialize native calls from both tiles with a process-wide mutex. This is
+  # intentionally slow and distinguishes custom-call concurrency from sharding.
+  sycl_serialize_custom_calls: false
   model_directory: models/
   log_directory: logs/
   loss_time_channel_mask: null

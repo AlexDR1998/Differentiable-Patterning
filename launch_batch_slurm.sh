@@ -54,10 +54,14 @@ MEM="${SLURM_MEM:-64G}"
 ARRAY_PARALLELISM="${SLURM_ARRAY_PARALLELISM:-4}"
 LOG_DIR="${SLURM_LOG_DIR:-$IO_ROOT/slurm_logs/$EXPERIMENT_NAME}"
 PROFILE_GPU="${PROFILE_GPU:-0}"
+NCA_SYCL_DIAGNOSTICS="${NCA_SYCL_DIAGNOSTICS:-0}"
+NCA_SYCL_TRACE="${NCA_SYCL_TRACE:-0}"
 
 [[ "$ARRAY_PARALLELISM" =~ ^[0-9]+$ ]] || { echo "SLURM_ARRAY_PARALLELISM must be an integer: $ARRAY_PARALLELISM"; exit 1; }
 [[ "$ARRAY_PARALLELISM" -gt 0 ]] || { echo "SLURM_ARRAY_PARALLELISM must be greater than zero"; exit 1; }
 [[ "$PROFILE_GPU" == "0" || "$PROFILE_GPU" == "1" ]] || { echo "PROFILE_GPU must be 0 or 1: $PROFILE_GPU"; exit 1; }
+[[ "$NCA_SYCL_DIAGNOSTICS" == "0" || "$NCA_SYCL_DIAGNOSTICS" == "1" ]] || { echo "NCA_SYCL_DIAGNOSTICS must be 0 or 1: $NCA_SYCL_DIAGNOSTICS"; exit 1; }
+[[ "$NCA_SYCL_TRACE" == "0" || "$NCA_SYCL_TRACE" == "1" ]] || { echo "NCA_SYCL_TRACE must be 0 or 1: $NCA_SYCL_TRACE"; exit 1; }
 
 mkdir -p "$LOG_DIR"
 
@@ -71,6 +75,8 @@ echo "Experiment: $EXPERIMENT_NAME"
 echo "Array: 0-$((N_JOBS - 1))%$ARRAY_PARALLELISM"
 echo "Logs: $LOG_DIR"
 echo "GPU profiling: $PROFILE_GPU"
+echo "SYCL diagnostics: $NCA_SYCL_DIAGNOSTICS"
+echo "SYCL runtime tracing: $NCA_SYCL_TRACE"
 
 sbatch \
     --job-name="$JOB_NAME" \
@@ -84,5 +90,5 @@ sbatch \
     --gres="gpu:1" \
     --output="$LOG_DIR/%A/%a.out" \
     --error="$LOG_DIR/%A/%a.err" \
-    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT",SLURM_CODE_ROOT="$CODE_ROOT",SLURM_LOG_DIR="$LOG_DIR",PROFILE_GPU="$PROFILE_GPU" \
+    --export=ALL,PY_SCRIPT="$PY_SCRIPT",MANIFEST="$MANIFEST",N_JOBS="$N_JOBS",SLURM_IO_ROOT="$IO_ROOT",SLURM_CODE_ROOT="$CODE_ROOT",SLURM_LOG_DIR="$LOG_DIR",PROFILE_GPU="$PROFILE_GPU",NCA_SYCL_DIAGNOSTICS="$NCA_SYCL_DIAGNOSTICS",NCA_SYCL_TRACE="$NCA_SYCL_TRACE" \
     "$ARRAY_SCRIPT"

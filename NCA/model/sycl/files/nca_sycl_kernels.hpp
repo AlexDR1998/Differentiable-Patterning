@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <exception>
 #include <iostream>
+#include <mutex>
 
 namespace nca_sycl {
 
@@ -42,6 +43,13 @@ inline bool TwoStageRegulariserReductionEnabled() {
   return value != nullptr && std::strcmp(value, "two_stage") == 0;
 }
 
+inline bool SerializeCustomCallsEnabled() {
+  const char* value = std::getenv("NCA_SYCL_SERIALIZE_CUSTOM_CALLS");
+  return value != nullptr && value[0] != '\0' &&
+         std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0 &&
+         std::strcmp(value, "False") != 0;
+}
+
 [[noreturn]] inline void ReportSyclFailure(const char* stage,
                                            const std::exception& error) {
   std::cerr << "NCA_SYCL_ASYNC_FAILURE stage=" << stage
@@ -58,6 +66,28 @@ inline void WaitAndReport(sycl::queue& queue, const char* stage) {
     ReportSyclFailure(stage, error);
   }
 }
+
+class SerializedCustomCall {
+ public:
+  SerializedCustomCall(sycl::queue& queue, const char* stage)
+      : queue_(queue), stage_(stage), lock_(Mutex(), std::defer_lock) {
+    if (SerializeCustomCallsEnabled()) lock_.lock();
+  }
+
+  ~SerializedCustomCall() {
+    if (lock_.owns_lock()) WaitAndReport(queue_, stage_);
+  }
+
+ private:
+  static std::recursive_mutex& Mutex() {
+    static std::recursive_mutex mutex;
+    return mutex;
+  }
+
+  sycl::queue& queue_;
+  const char* stage_;
+  std::unique_lock<std::recursive_mutex> lock_;
+};
 
 inline void SynchronizeStage(sycl::queue& queue, const char* stage) {
   if (StrictStageSynchronizationEnabled()) WaitAndReport(queue, stage);

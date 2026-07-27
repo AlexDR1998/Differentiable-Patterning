@@ -47,8 +47,18 @@ unset PYTHONPATH
 source ~/dawn-jax/envs/jaxeqx-setup.sh
 
 : "${PROFILE_GPU:=0}"
+: "${NCA_SYCL_DIAGNOSTICS:=0}"
+: "${NCA_SYCL_TRACE:=0}"
 if [[ "$PROFILE_GPU" != "0" && "$PROFILE_GPU" != "1" ]]; then
     echo "PROFILE_GPU must be 0 or 1, got: $PROFILE_GPU"
+    exit 1
+fi
+if [[ "$NCA_SYCL_DIAGNOSTICS" != "0" && "$NCA_SYCL_DIAGNOSTICS" != "1" ]]; then
+    echo "NCA_SYCL_DIAGNOSTICS must be 0 or 1, got: $NCA_SYCL_DIAGNOSTICS"
+    exit 1
+fi
+if [[ "$NCA_SYCL_TRACE" != "0" && "$NCA_SYCL_TRACE" != "1" ]]; then
+    echo "NCA_SYCL_TRACE must be 0 or 1, got: $NCA_SYCL_TRACE"
     exit 1
 fi
 
@@ -58,6 +68,12 @@ if [[ "$PROFILE_GPU" == "1" ]]; then
     export ZE_ENABLE_TRACING_LAYER=1
     export UseCyclesPerSecondTimer=1
 fi
+if [[ "$NCA_SYCL_TRACE" == "1" ]]; then
+    export OCL_ICD_ENABLE_TRACE=1
+    export ZE_LOADER_DEBUG_TRACE=1
+    export NEOReadDebugKeys=1
+    export PrintDebugMessages=1
+fi
 
 SYCL_BUILD_DIR="${SLURM_TMPDIR:-/tmp}/nca-sycl-${SLURM_JOB_ID}"
 mkdir -p "${SYCL_BUILD_DIR}"
@@ -66,6 +82,50 @@ NCA/model/sycl/files/build_nca_sycl.sh \
     "${SYCL_BUILD_DIR}/libnca_sycl.so"
 
 export NCA_SYCL_LIBRARY="${SYCL_BUILD_DIR}/libnca_sycl.so"
+
+echo "SYCL_JOB_HOSTNAME=$(hostname)"
+echo "SLURMD_NODENAME=${SLURMD_NODENAME:-<unset>}"
+echo "SLURM_JOB_NODELIST=${SLURM_JOB_NODELIST:-<unset>}"
+echo "SLURM_JOB_ID=${SLURM_JOB_ID:-<unset>}"
+echo "SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID:-<unset>}"
+if [[ "$NCA_SYCL_DIAGNOSTICS" == "1" ]]; then
+    echo "NCA_SYCL_DIAGNOSTICS_BEGIN"
+    uname -a || true
+    python -m pip show jax jaxlib intel-extension-for-openxla || true
+    icpx --version 2>&1 | sed -n '1,3p' || true
+    sycl-ls --verbose 2>&1 || true
+    ldd "$NCA_SYCL_LIBRARY" 2>&1 || true
+    if command -v dpkg-query >/dev/null 2>&1; then
+        dpkg-query -W 2>/dev/null | grep -Ei 'level-zero|igc|intel.*(mkl|compute|opencl)|oneapi' || true
+    fi
+    if command -v rpm >/dev/null 2>&1; then
+        rpm -qa 2>/dev/null | grep -Ei 'level-zero|igc|intel.*(mkl|compute|opencl)|oneapi' || true
+    fi
+    for module in i915 xe; do
+        modinfo "$module" 2>/dev/null | sed -n '1,12p' || true
+    done
+    python - <<'PY'
+from importlib import metadata
+import importlib.util
+import pathlib
+import subprocess
+
+for name in ("jax", "jaxlib", "intel-extension-for-openxla"):
+    try:
+        print(f"PACKAGE_VERSION {name}={metadata.version(name)}")
+    except metadata.PackageNotFoundError:
+        print(f"PACKAGE_VERSION {name}=not_found")
+
+spec = importlib.util.find_spec("jax_plugins.intel_extension_for_openxla")
+if spec is not None and spec.origin:
+    root = pathlib.Path(spec.origin).parent
+    for library in sorted(root.rglob("*.so")):
+        print(f"PLUGIN_LDD_BEGIN={library}")
+        subprocess.run(["ldd", str(library)], check=False)
+        print(f"PLUGIN_LDD_END={library}")
+PY
+    echo "NCA_SYCL_DIAGNOSTICS_END"
+fi
 
 # module purge
 # module load rhel9/default-dawn

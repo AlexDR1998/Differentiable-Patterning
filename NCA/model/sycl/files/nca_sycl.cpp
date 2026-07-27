@@ -48,6 +48,7 @@ extern "C" void nca_sycl_forward(sycl::queue* queue, void** buffers,
   Metadata metadata{};
   std::memcpy(&metadata, opaque, sizeof(metadata));
   if (!ValidMetadata(metadata)) return;
+  nca_sycl::SerializedCustomCall serialized(*queue, "forward/serialized");
 
   const auto* state = static_cast<const float*>(buffers[0]);
   const auto* kernels = static_cast<const float*>(buffers[1]);

@@ -185,9 +185,18 @@ class SyclTwoTileExecution(TrainingExecution):
 
     def synchronise_loss(self, mean_loss, regulariser_losses):
         """Average scalar losses across tiles inside the sharded loss."""
+        # With pmean disabled, P() deliberately treats the tile-local scalar as
+        # replicated (check_rep=False). This is a diagnostic mode, not a
+        # numerically equivalent training configuration.
         return (
-            jax.lax.pmean(mean_loss, self.AXIS_NAME),
-            self._array_pmean(regulariser_losses, self.AXIS_NAME),
+            jax.lax.pmean(mean_loss, self.AXIS_NAME)
+            if getattr(getattr(self, "trainer", None), "pmean_loss", True)
+            else mean_loss,
+            self._array_pmean(regulariser_losses, self.AXIS_NAME)
+            if getattr(
+                getattr(self, "trainer", None), "pmean_regularisers", True
+            )
+            else regulariser_losses,
         )
 
     def multi_target_loss(

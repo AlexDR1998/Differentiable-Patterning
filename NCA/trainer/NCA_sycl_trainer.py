@@ -79,6 +79,9 @@ class NCA_sycl_Trainer(NCA_Trainer):
         SYCL_SYNCHRONIZE_CUSTOM_CALLS=None,
         SYCL_STRICT_STAGE_SYNCHRONIZATION=None,
         SYCL_REGULARISER_REDUCTION=None,
+        SYCL_PMEAN_LOSS=True,
+        SYCL_PMEAN_REGULARISERS=True,
+        SYCL_SERIALIZE_CUSTOM_CALLS=None,
         **kwargs,
     ):
         self.synchronize_custom_calls = configure_custom_call_synchronization(
@@ -89,6 +92,15 @@ class NCA_sycl_Trainer(NCA_Trainer):
         )
         self.regulariser_reduction = configure_regulariser_reduction(
             SYCL_REGULARISER_REDUCTION
+        )
+        if not isinstance(SYCL_PMEAN_LOSS, bool):
+            raise TypeError("SYCL_PMEAN_LOSS must be boolean")
+        if not isinstance(SYCL_PMEAN_REGULARISERS, bool):
+            raise TypeError("SYCL_PMEAN_REGULARISERS must be boolean")
+        self.pmean_loss = SYCL_PMEAN_LOSS
+        self.pmean_regularisers = SYCL_PMEAN_REGULARISERS
+        self.serialize_custom_calls = _configure_boolean_environment(
+            "NCA_SYCL_SERIALIZE_CUSTOM_CALLS", SYCL_SERIALIZE_CUSTOM_CALLS
         )
         super().__init__(*args, **kwargs)
         if self.BATCH_BACKEND.is_array:
@@ -118,6 +130,15 @@ class NCA_sycl_Trainer(NCA_Trainer):
             f"NCA SYCL regulariser reduction: {self.regulariser_reduction}",
             flush=True,
         )
+        print(f"NCA SYCL loss pmean: {self.pmean_loss}", flush=True)
+        print(
+            f"NCA SYCL regulariser pmean: {self.pmean_regularisers}",
+            flush=True,
+        )
+        print(
+            f"NCA SYCL serialized custom calls: {self.serialize_custom_calls}",
+            flush=True,
+        )
 
     def setup_logging(self, *args, **kwargs):
         self.TRAIN_CONFIG["SYCL_SYNCHRONIZE_CUSTOM_CALLS"] = (
@@ -128,6 +149,13 @@ class NCA_sycl_Trainer(NCA_Trainer):
         )
         self.TRAIN_CONFIG["SYCL_REGULARISER_REDUCTION"] = (
             self.regulariser_reduction
+        )
+        self.TRAIN_CONFIG["SYCL_PMEAN_LOSS"] = self.pmean_loss
+        self.TRAIN_CONFIG["SYCL_PMEAN_REGULARISERS"] = (
+            self.pmean_regularisers
+        )
+        self.TRAIN_CONFIG["SYCL_SERIALIZE_CUSTOM_CALLS"] = (
+            self.serialize_custom_calls
         )
         return super().setup_logging(*args, **kwargs)
 

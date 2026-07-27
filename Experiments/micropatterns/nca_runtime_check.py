@@ -115,6 +115,15 @@ def run(cfg):
         trainer_kwargs["SYCL_REGULARISER_REDUCTION"] = cfg.trainer.get(
             "sycl_regulariser_reduction", "atomic"
         )
+        trainer_kwargs["SYCL_PMEAN_LOSS"] = cfg.trainer.get(
+            "sycl_pmean_loss", True
+        )
+        trainer_kwargs["SYCL_PMEAN_REGULARISERS"] = cfg.trainer.get(
+            "sycl_pmean_regularisers", True
+        )
+        trainer_kwargs["SYCL_SERIALIZE_CUSTOM_CALLS"] = cfg.trainer.get(
+            "sycl_serialize_custom_calls", False
+        )
     trainer = trainer_class(
         NCA_model=model,
         data=data,
