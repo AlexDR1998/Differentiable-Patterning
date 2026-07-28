@@ -171,6 +171,14 @@ def build_data_augmenter(
                 kwargs["intermediate_reinjection_probability"] = cfg.data.get(
                     "intermediate_reinjection_probability", 0.5
                 )
+                kwargs["intermediate_reinjection_probability_end"] = cfg.data.get(
+                    "intermediate_reinjection_probability_end",
+                    kwargs["intermediate_reinjection_probability"],
+                )
+                kwargs["intermediate_reinjection_decay_start_fraction"] = cfg.data.get(
+                    "intermediate_reinjection_decay_start_fraction", 0.25
+                )
+                kwargs["intermediate_reinjection_total_iterations"] = cfg.run.iterations
                 super().__init__(*args, **kwargs)
 
         return DA_subclass, (

@@ -46,6 +46,9 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         f"_dr{cfg.optimiser.decay_rate}"
         f"_batch{cfg.trainer.get('batch_mode', 'tree')}"
         f"_dup{int(cfg.data.get('duplicate_final_timestep', False))}"
+        f"_irp{cfg.data.get('intermediate_reinjection_probability', 0.5)}"
+        f"_irpend{cfg.data.get('intermediate_reinjection_probability_end', cfg.data.get('intermediate_reinjection_probability', 0.5))}"
+        f"_irpstart{cfg.data.get('intermediate_reinjection_decay_start_fraction', 0.25)}"
     )
     repeat = _cfg_get(cfg.run, "repeat", None)
     if repeat is not None:

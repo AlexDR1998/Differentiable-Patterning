@@ -21,9 +21,29 @@ class DataAugmenter(BasicAugmenter):
         self.intermediate_reinjection_probability = kwargs.pop(
             "intermediate_reinjection_probability", 0.5
         )
-        if not 0.0 <= self.intermediate_reinjection_probability <= 1.0:
+        self.intermediate_reinjection_probability_end = kwargs.pop(
+            "intermediate_reinjection_probability_end",
+            self.intermediate_reinjection_probability,
+        )
+        self.intermediate_reinjection_decay_start_fraction = kwargs.pop(
+            "intermediate_reinjection_decay_start_fraction", 0.25
+        )
+        self.intermediate_reinjection_total_iterations = kwargs.pop(
+            "intermediate_reinjection_total_iterations", None
+        )
+        if not all(
+            0.0 <= probability <= 1.0
+            for probability in (
+                self.intermediate_reinjection_probability,
+                self.intermediate_reinjection_probability_end,
+            )
+        ):
             raise ValueError(
-                "intermediate_reinjection_probability must be between 0 and 1"
+                "intermediate reinjection probabilities must be between 0 and 1"
+            )
+        if not 0.0 <= self.intermediate_reinjection_decay_start_fraction < 1.0:
+            raise ValueError(
+                "intermediate_reinjection_decay_start_fraction must be in [0, 1)"
             )
         model = kwargs.get("nca_model")
         self.channels = (
@@ -77,9 +97,30 @@ class DataAugmenter(BasicAugmenter):
         if time_count > 1:
             global_key, mask_key, group_key = jax.random.split(global_key, 3)
             global_shape = (donor_count, time_count - 1)
+            if self.intermediate_reinjection_total_iterations is None:
+                reinjection_probability = self.intermediate_reinjection_probability
+            else:
+                decay_start = (
+                    self.intermediate_reinjection_decay_start_fraction
+                    * self.intermediate_reinjection_total_iterations
+                )
+                decay_progress = jnp.clip(
+                    (i - decay_start)
+                    / (self.intermediate_reinjection_total_iterations - decay_start),
+                    0.0,
+                    1.0,
+                )
+                reinjection_probability = (
+                    self.intermediate_reinjection_probability
+                    + decay_progress
+                    * (
+                        self.intermediate_reinjection_probability_end
+                        - self.intermediate_reinjection_probability
+                    )
+                )
             inject = jax.random.bernoulli(
                 mask_key,
-                self.intermediate_reinjection_probability,
+                reinjection_probability,
                 global_shape,
             )[global_indices]
             choices = jax.random.randint(
