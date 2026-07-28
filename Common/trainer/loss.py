@@ -448,7 +448,7 @@ def channel_correlation_loss(x,y,key=None,where=None,aux=None,cache=None):
 	return jnp.sum(weights * error, axis=-1) / jnp.maximum(jnp.sum(weights, axis=-1), 1.0)
 
 
-def radial_profiles(values, spatial_mask=None, radial_bins=16, epsilon=1e-8):
+def radial_profiles(values, spatial_mask=None, radial_bins=32, epsilon=1e-8):
 	"""Return masked annular channel means and non-empty radial bins."""
 	if radial_bins <= 0:
 		raise ValueError("radial_bins must be positive")
