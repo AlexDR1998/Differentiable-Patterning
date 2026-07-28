@@ -24,7 +24,7 @@ def _arguments():
     parser.add_argument(
         "--probe",
         required=True,
-        choices=("collective", "custom_call", "custom_call_collective"),
+        choices=("collective", "fused_rollout", "fused_rollout_collective"),
     )
     return parser.parse_args()
 
@@ -32,8 +32,10 @@ def _arguments():
 def main():
     args = _arguments()
     devices = [d for d in jax.local_devices() if d.platform == "sycl"]
-    print("NCA_SYCL_FAILURE_PROBE_VERSION=2", flush=True)
+    print("NCA_SYCL_FAILURE_PROBE_VERSION=3", flush=True)
     print("AUTODIFF=value_and_grad", flush=True)
+    print("CUSTOM_CALL_COMPLEXITY=fused_rollout_without_regularisers", flush=True)
+    print("FUSED_STEPS=2", flush=True)
     print(f"PROBE={args.probe}", flush=True)
     print(f"HOSTNAME={socket.gethostname()}", flush=True)
     print(f"SLURM_JOB_ID={os.getenv('SLURM_JOB_ID', '<unset>')}", flush=True)
@@ -65,10 +67,14 @@ def main():
     def probe(candidate, local_values):
         local_values = local_values[0]
         if candidate is not None:
-            keys = jax.random.split(jax.random.PRNGKey(23), local_values.shape[0])
-            local_values = candidate.batched_call(local_values, keys)
-        result = jnp.mean(local_values**2)
-        if args.probe != "custom_call":
+            keys = jax.random.split(
+                jax.random.PRNGKey(23), 2 * local_values.shape[0]
+            ).reshape(2, local_values.shape[0], 2)
+            final, trajectory = candidate.batched_rollout(local_values, keys)
+            result = jnp.mean(final**2) + 0.25 * jnp.mean(trajectory**2)
+        else:
+            result = jnp.mean(local_values**2)
+        if args.probe != "fused_rollout":
             result = jax.lax.pmean(result, "tiles")
         return result
 

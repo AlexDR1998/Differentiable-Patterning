@@ -14,7 +14,7 @@ set -eo pipefail
 
 REPO_ROOT="${NCA_SYCL_PROBE_REPO_ROOT:?NCA_SYCL_PROBE_REPO_ROOT is required}"
 PROBE_REPEATS="${NCA_SYCL_PROBE_REPEATS:-20}"
-PROBES=(collective custom_call custom_call_collective)
+PROBES=(collective fused_rollout fused_rollout_collective)
 # Interleave probe types so scheduler timing and node allocation are not
 # correlated with one contiguous block of probe variants.
 PROBE_INDEX=$((SLURM_ARRAY_TASK_ID % ${#PROBES[@]}))
