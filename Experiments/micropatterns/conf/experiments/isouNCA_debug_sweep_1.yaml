@@ -1,5 +1,5 @@
 experiment_name: isouNCA_9ch_micropattern_debug_sweep_4
-entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/isouNCA_9ch_micropattern_debug_sweep_4
 seed_mode: index
 grid:

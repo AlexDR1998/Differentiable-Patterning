@@ -7,7 +7,7 @@ count: 24
 configs:
 - index: 2
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -71,7 +71,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -168,7 +168,7 @@ configs:
       xla_flags: null
 - index: 1
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -232,7 +232,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -329,7 +329,7 @@ configs:
       xla_flags: null
 - index: 23
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -393,7 +393,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -490,7 +490,7 @@ configs:
       xla_flags: null
 - index: 22
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -554,7 +554,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -651,7 +651,7 @@ configs:
       xla_flags: null
 - index: 18
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -715,7 +715,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -812,7 +812,7 @@ configs:
       xla_flags: null
 - index: 9
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -876,7 +876,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -973,7 +973,7 @@ configs:
       xla_flags: null
 - index: 19
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -1037,7 +1037,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -1134,7 +1134,7 @@ configs:
       xla_flags: null
 - index: 4
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -1198,7 +1198,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -1295,7 +1295,7 @@ configs:
       xla_flags: null
 - index: 17
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -1359,7 +1359,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -1456,7 +1456,7 @@ configs:
       xla_flags: null
 - index: 11
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -1520,7 +1520,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -1617,7 +1617,7 @@ configs:
       xla_flags: null
 - index: 10
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -1681,7 +1681,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -1778,7 +1778,7 @@ configs:
       xla_flags: null
 - index: 20
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -1842,7 +1842,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -1939,7 +1939,7 @@ configs:
       xla_flags: null
 - index: 5
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -2003,7 +2003,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -2100,7 +2100,7 @@ configs:
       xla_flags: null
 - index: 3
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -2164,7 +2164,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -2261,7 +2261,7 @@ configs:
       xla_flags: null
 - index: 8
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -2325,7 +2325,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -2422,7 +2422,7 @@ configs:
       xla_flags: null
 - index: 15
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -2486,7 +2486,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -2583,7 +2583,7 @@ configs:
       xla_flags: null
 - index: 14
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -2647,7 +2647,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -2744,7 +2744,7 @@ configs:
       xla_flags: null
 - index: 7
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -2808,7 +2808,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -2905,7 +2905,7 @@ configs:
       xla_flags: null
 - index: 16
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -2969,7 +2969,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -3066,7 +3066,7 @@ configs:
       xla_flags: null
 - index: 0
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -3130,7 +3130,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -3227,7 +3227,7 @@ configs:
       xla_flags: null
 - index: 13
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -3291,7 +3291,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -3388,7 +3388,7 @@ configs:
       xla_flags: null
 - index: 6
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -3452,7 +3452,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -3549,7 +3549,7 @@ configs:
       xla_flags: null
 - index: 21
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -3613,7 +3613,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID
@@ -3710,7 +3710,7 @@ configs:
       xla_flags: null
 - index: 12
   overrides:
-    model.family: NCA_fast
+    model.family: NCA
     model.channels: 32
     model.kernel_str:
     - ID
@@ -3774,7 +3774,7 @@ configs:
       noise_strength: 0.005
       duplicate_final_timestep: false
     model:
-      family: NCA_fast
+      family: NCA
       channels: 32
       kernel_str:
       - ID

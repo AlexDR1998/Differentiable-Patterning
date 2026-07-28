@@ -88,6 +88,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -124,6 +125,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -250,6 +253,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -286,6 +290,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -412,6 +418,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -448,6 +455,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -574,6 +583,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -610,6 +620,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -736,6 +748,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -772,6 +785,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -898,6 +913,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -934,6 +950,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -1060,6 +1078,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -1096,6 +1115,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -1222,6 +1243,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -1258,6 +1280,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -1384,6 +1408,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -1420,6 +1445,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -1546,6 +1573,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -1582,6 +1610,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -1708,6 +1738,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -1744,6 +1775,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -1870,6 +1903,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -1906,6 +1940,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -2032,6 +2068,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -2068,6 +2105,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -2194,6 +2233,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -2230,6 +2270,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -2356,6 +2398,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -2392,6 +2435,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -2518,6 +2563,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -2554,6 +2600,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -2680,6 +2728,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -2716,6 +2765,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -2842,6 +2893,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -2878,6 +2930,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -3004,6 +3058,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -3040,6 +3095,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -3166,6 +3223,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -3202,6 +3260,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -3328,6 +3388,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -3364,6 +3425,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -3490,6 +3553,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -3526,6 +3590,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -3652,6 +3718,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -3688,6 +3755,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -3814,6 +3883,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -3850,6 +3920,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -3976,6 +4048,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -4012,6 +4085,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -4138,6 +4213,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -4174,6 +4250,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -4300,6 +4378,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -4336,6 +4415,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -4462,6 +4543,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -4498,6 +4580,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -4624,6 +4708,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -4660,6 +4745,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -4786,6 +4873,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -4822,6 +4910,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -4948,6 +5038,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -4984,6 +5075,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -5110,6 +5203,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -5146,6 +5240,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -5272,6 +5368,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -5308,6 +5405,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -5434,6 +5533,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -5470,6 +5570,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -5596,6 +5698,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -5632,6 +5735,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
@@ -5758,6 +5863,7 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
+      sycl_fused_steps: 2
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
@@ -5794,6 +5900,8 @@ configs:
       regulariser_coeffs:
         intermediate_state: 1.0
         boundary: 5.0
+        channel_correlation: 0.0
+        radial_profile: 0.0
         contiguous_growth: 0.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0

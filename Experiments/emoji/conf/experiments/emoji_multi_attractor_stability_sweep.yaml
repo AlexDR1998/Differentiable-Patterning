@@ -1,0 +1,42 @@
+experiment_name: emoji_multi_attractor_stability_sweep
+entrypoint: Experiments.emoji.train:run
+output_subdir: generated/emoji_multi_attractor_stability_sweep
+seed_mode: index
+
+grid:
+  logging.wandb.project: [NCA-emoji-multi-attractor]
+  logging.wandb.group: [stability-and-regeneration-2]
+  model.family: [NCA, gNCA]
+  model.channels: [32]
+  model.fire_rate: [0.5]
+  data.task: [multi_attractor]
+  data.pairs:
+    - - initial: {image: crab.png, mode: patch, size: 3}
+        target: crab.png
+      - initial: {image: microbe.png, mode: patch, size: 3}
+        target: microbe.png
+  data.target_repeats: [2]
+  data.batches: [4]
+  data.regenerate: [false]
+  data.terminal_carry.start_iteration: [1000]
+  data.terminal_carry.schedule_iterations: [4000]
+  data.terminal_carry.initial_probability: [0.5]
+  data.terminal_carry.final_probability: [0.9]
+  data.regeneration.start_iteration: [2000]
+  data.regeneration.schedule_iterations: [3000]
+  data.regeneration.initial_probability: [0.05]
+  data.regeneration.final_probability: [0.25]
+  run.t: [128]
+  run.iterations: [12000]
+  loss.primary: [[l2]]
+  loss.regulariser_coeffs.intermediate_state: [1.0]
+  loss.regulariser_coeffs.contiguous_growth: [1.0]
+  optimiser.type: [nadam]
+  optimiser.learn_rate: [0.001]
+  optimiser.gradient_clip_norm: [1.0]
+  trainer.loop_autodiff: [checkpointed]
+
+groups:
+  - experiment.stability_mode: [clean, terminal_carry, regeneration, terminal_carry_and_regeneration]
+    data.terminal_carry.enabled: [false, true, false, true]
+    data.regeneration.enabled: [false, false, true, true]

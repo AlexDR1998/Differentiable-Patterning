@@ -1,0 +1,17 @@
+experiment_name: emoji_attractor_switch_example
+entrypoint: Experiments.impulse.optimise:run
+output_subdir: generated/emoji_attractor_switch_example
+seed_mode: index
+grid:
+  checkpoint.path: [models/multi_species_model.eqx]
+  model.family: [NCA]
+  model.channels: [32]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.pair_source.source_index: [0]
+  impulse.pair_source.target_index: [1]
+  impulse.objective.type: [targeted]
+  impulse.intervention.channels: [hidden]
+  impulse.intervention.spatial: [local]
+  impulse.intervention.width: [0.1, 0.2]
+  impulse.regulariser_coefficients.l2: [0.1, 1.0]
+

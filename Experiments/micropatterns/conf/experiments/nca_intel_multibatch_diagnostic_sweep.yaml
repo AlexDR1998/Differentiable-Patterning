@@ -1,5 +1,5 @@
 experiment_name: intel_multibatch_diagnostic_sweep_boundary_1
-entrypoint: Experiments.micropatterns.nca_runtime_check:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/intel_multibatch_diagnostic_boundary_1
 seed_mode: fixed
 
@@ -7,6 +7,7 @@ seed_mode: fixed
 # intentionally factorial: each run changes one of the native execution
 # dimensions while retaining the same model, data, seed, and loss.
 grid:
+  run.mode: [benchmark]
   model.family: [NCA_sycl]
   model.channels: [32]
   run.scaling: [convective]

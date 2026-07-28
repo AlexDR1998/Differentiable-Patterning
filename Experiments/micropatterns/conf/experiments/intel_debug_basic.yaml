@@ -1,8 +1,9 @@
 experiment_name: intel_debug_basic
-entrypoint: Experiments.micropatterns.nca_runtime_check:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/intel_debug_basic
 seed_mode: index
 grid:
+  run.mode: [benchmark]
   model.family: [NCA]
   model.channels: [32]
   run.scaling: [convective]

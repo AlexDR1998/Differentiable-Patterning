@@ -1,8 +1,9 @@
 experiment_name: nca_loss_cache_spike_debug
-entrypoint: Experiments.micropatterns.nca_runtime_check:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_loss_cache_spike_debug
 seed_mode: index
 grid:
+  run.mode: [benchmark]
   model.family: [NCA]
   model.channels: [32]
   run.scaling: [convective]

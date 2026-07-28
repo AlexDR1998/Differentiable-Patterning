@@ -1,0 +1,118 @@
+seed: 0
+
+experiment:
+  name: nca_impulse_template
+
+system:
+  precision: highest
+  gpu: null
+  xla_flags: null
+
+checkpoint:
+  # The model section below must match the saved checkpoint architecture.
+  path: models/example.eqx
+  base_directory: null
+  base_env: MODEL_SAVE_PATH
+
+data:
+  dataset: emojis
+  task: multi_attractor
+  sequence: []
+  pairs:
+    - initial: {image: crab.png, mode: patch, size: 12}
+      target: crab.png
+    - initial: {image: microbe.png, mode: patch, size: 12}
+      target: microbe.png
+  target_repeats: 2
+  batches: 1
+  observed_channels: 4
+  data_channels: 4
+  downsample: 1
+  crop_square: false
+  pad: [10, 10, 10, 10]
+  regenerate: false
+
+model:
+  family: NCA
+  channels: 32
+  kernel_str: [ID, LAP, GRAD]
+  activation: relu
+  fire_rate: 0.5
+  padding: REPLICATE
+  kernel_scale: 1
+  parameter_noise_level: 0.01
+  upscale_factor: 1
+  upsampler:
+    depth: null
+    width_factor: null
+    fourier_modes: null
+    radius: null
+  kan:
+    hidden_features: null
+    num_basis: 8
+    grid_min: -2.0
+    grid_max: 2.0
+    rbf_width: null
+    trainable_width: true
+    use_base_branch: true
+    base_activation: identity
+    use_layernorm: true
+    spline_init_scale: 0.1
+    base_init_scale: 0.1
+    final_zero_init: true
+
+impulse:
+  iterations: 1000
+  batch_size: 8
+  resample_every: 100
+  log_every: 100
+
+  pair_source:
+    # external_target, model_future, trajectory_state, or stable_attractor
+    type: stable_attractor
+    source_index: 0
+    target_index: 1
+    stabilisation_steps: [128, 256]
+    target_steps: 192
+    initial_index: 0
+
+  rollout:
+    steps: 64
+    evaluation_steps: 256
+    scan_kind: lax
+
+  intervention:
+    channels: hidden
+    spatial: local
+    width: 0.2
+
+  objective:
+    type: targeted
+    target_weight: 1.0
+    tolerance: 0.01
+    constraint_weight: 100.0
+    magnitude: l2
+    reward_weight: 1.0
+
+  loss:
+    primary: [l2]
+    component_weights: [1.0]
+    channels: observed
+    args: {}
+
+  regulariser_coefficients:
+    l1: 0.0
+    l2: 1.0
+    linf: 0.0
+    smoothness: 0.0
+    state_range: 0.0
+
+  optimiser:
+    type: adam
+    learn_rate: 0.001
+    gradient_clip_norm: 1.0
+
+  output:
+    directory: impulse_runs
+    base_env: IMPULSE_OUTPUT_PATH
+

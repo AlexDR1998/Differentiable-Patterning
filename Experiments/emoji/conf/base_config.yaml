@@ -10,7 +10,21 @@ system:
 
 data:
   dataset: emojis
+  # sequence: one temporal image sequence; multi_attractor: independent
+  # initial-condition/target trajectories declared in pairs below.
+  task: sequence
   sequence: [alien_monster.png, microbe.png, rooster.png, rooster.png]
+  # Multi-attractor pair form:
+  # pairs:
+  #   - initial: {image: crab.png, mode: patch, size: 12}
+  #     target: crab.png
+  # `initial` may also be a filename (full image), or use mode: pixel with
+  # channel/value. All pairs must resolve to the same C x H x W shape.
+  pairs: []
+  # For multi_attractor, construct [initial, target, ...target] with this many
+  # target states. Repeated targets train persistence as well as formation.
+  target_repeats: 2
+  # For multi_attractor this is the number of copies made of every pair.
   batches: 4
   timesteps: null
   observed_channels: 4
@@ -22,6 +36,22 @@ data:
   noise_strength: 0.005
   noise_mode: full
   regenerate: true
+  # Recycle terminal predictions into the terminal target->target pair. This
+  # exposes the model to a geometric distribution of increasingly old states.
+  terminal_carry:
+    enabled: false
+    start_iteration: 1000
+    schedule_iterations: 4000
+    initial_probability: 0.5
+    final_probability: 0.9
+  # Scheduled per-batch spatial damage. The default preserves the previous
+  # regenerate=true behavior (all batches damaged from the start).
+  regeneration:
+    enabled: ${data.regenerate}
+    start_iteration: 0
+    schedule_iterations: 0
+    initial_probability: 1.0
+    final_probability: 1.0
 
 model:
   family: NCA
@@ -60,7 +90,7 @@ trainer:
   log_directory: logs/
   loss_time_channel_mask: null
   loop_autodiff: checkpointed
-  clear_cache_every: 500
+  clear_cache_every: null
   log_every: 100
   pool_admission_enabled: true
   pool_admission_relative_threshold: 1.25
@@ -79,6 +109,11 @@ optimiser:
   learn_rate: 0.001
   warmup_steps: 64
   decay_rate: 0.99
+  schedule:
+    type: exponential
+    warmup_init_lr: 1e-6
+    final_factor: 0.1
+    transition_fraction: 0.75
 
 loss:
   primary: [l2]

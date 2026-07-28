@@ -605,7 +605,7 @@ def _():
         # "steps_between_images":[16,32,64,128],#,128,256],
         # "regenerate":[True],
         "contiguous_growth_coeff":[10.0],
-        "steps_between_images":[128],
+        "steps_between_images":[64],
         "contiguous_growth_coeff":[0.0],
         "regenerate":[True,False],
         "iters":[8000],
@@ -620,6 +620,17 @@ def _():
     HYPERPARAMETERS_CONTIG = generate_hyperparameter_combinations_indexed(HYPERPARAMETERS_CONTIG)
     pprint(HYPERPARAMETERS_CONTIG)
     return (HYPERPARAMETERS_CONTIG,)
+
+
+@app.cell
+def _(data, models_contig):
+    x0_web = make_emoji_web_initial_state(data, channels=32, frame=0, pad=10)
+    export_nca_web_assets(
+        nca=models_contig[0][0],
+        model_id="contiguous_regrowth",
+        x0=x0_web,
+    )
+    return
 
 
 @app.cell
@@ -1172,6 +1183,13 @@ def export_nca_web_assets(
     def _as_float32(value):
         return onp.asarray(jax.device_get(value), dtype=onp.float32)
 
+    def _refresh_model_index(models_dir):
+        models = []
+        for model_dir in sorted(models_dir.iterdir()):
+            if model_dir.is_dir() and (model_dir / "manifest.json").exists():
+                models.append({"id": model_dir.name, "label": model_dir.name})
+        (models_dir / "index.json").write_text(json.dumps({"models": models}, indent=2) + "\n")
+
     source_kernels = list(nca.KERNEL_STR)
     supported_kernel_set = {"ID", "GRAD", "LAP"}
     if set(source_kernels) != supported_kernel_set:
@@ -1308,6 +1326,7 @@ def export_nca_web_assets(
         },
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    _refresh_model_index(Path(output_dir))
     print(f"Exported WebGL assets to {out_dir}")
     return out_dir
 

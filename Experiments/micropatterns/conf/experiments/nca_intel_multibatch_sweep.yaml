@@ -1,8 +1,9 @@
 experiment_name: intel_multibatch_sweep_1
-entrypoint: Experiments.micropatterns.nca_runtime_check:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/intel_multibatch_sweep_1
 seed_mode: fixed
 grid:
+  run.mode: [benchmark]
   # model.family: [NCA, NCA_sycl]
   model.family: [NCA_sycl]
   model.channels: [32]

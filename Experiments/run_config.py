@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 os.chdir(REPO_ROOT)
 sys.path.insert(0, str(REPO_ROOT))
 
-workflow = importlib.import_module("Experiments.hydra_template.workflow")
+workflow = importlib.import_module("Experiments.config_workflow")
 import_callable = workflow.import_callable
 load_config_from_entry = workflow.load_config_from_entry
 resolve_manifest_index = workflow.resolve_manifest_index

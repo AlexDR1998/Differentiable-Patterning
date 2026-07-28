@@ -1,0 +1,17 @@
+experiment_name: emoji_multi_attractor_example
+entrypoint: Experiments.emoji.train:run
+output_subdir: generated/emoji_multi_attractor_example
+seed_mode: index
+grid:
+  data.task: [multi_attractor]
+  data.pairs:
+    - - initial: {image: crab.png, mode: patch, size: 12}
+        target: crab.png
+      - initial: {image: microbe.png, mode: patch, size: 12}
+        target: microbe.png
+  data.target_repeats: [2]
+  data.batches: [2]
+  logging.wandb.project: [NCA-emoji]
+  logging.wandb.group: [emoji-multi-attractor-example]
+  model.family: [NCA, gNCA]
+  run.iterations: [8000]

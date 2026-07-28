@@ -1,5 +1,5 @@
 experiment_name: uNCA_9ch_micropattern_loss_target_sweep_1
-entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/uNCA_9ch_micropattern_loss_target_sweep_2
 seed_mode: index
 grid:

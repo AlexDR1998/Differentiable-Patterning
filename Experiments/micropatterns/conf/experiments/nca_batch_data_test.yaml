@@ -1,5 +1,5 @@
 experiment_name: nca_multibatch_micropattern_sweep_wide_1b
-entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_multibatch_micropattern_sweep_wide_1b
 seed_mode: index
 grid:

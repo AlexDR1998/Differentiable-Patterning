@@ -1,5 +1,5 @@
 experiment_name: isouNCA_micropattern_schedule_sweep_1
-entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/isouNCA_micropattern_schedule_sweep_1
 seed_mode: index
 grid:

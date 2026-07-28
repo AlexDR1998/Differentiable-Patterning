@@ -1,11 +1,12 @@
 experiment_name: intel_native_fix_diagnostic_sweep_1
-entrypoint: Experiments.micropatterns.nca_runtime_check:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/intel_native_fix_diagnostic_sweep_1
 seed_mode: fixed
 
 # Compare the historical native path against stage-level synchronization and
 # an atomic-free regulariser reduction. With 20 repeats this creates 160 jobs.
 grid:
+  run.mode: [benchmark]
   model.family: [NCA_sycl]
   model.channels: [32]
   run.scaling: [convective]

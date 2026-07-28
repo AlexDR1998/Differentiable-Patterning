@@ -1,5 +1,5 @@
 experiment_name: emoji_upscale_loss_sweep
-entrypoint: Experiments.emoji.emoji_upscale_sweep:run
+entrypoint: Experiments.emoji.train:run
 output_subdir: generated/emoji_upscale_loss_sweep
 seed_mode: index
 grid:

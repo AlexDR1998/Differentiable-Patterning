@@ -1,5 +1,5 @@
 experiment_name: nca_emoji_upscale_loss_sweep_1
-entrypoint: Experiments.emoji.emoji_upscale_sweep:run
+entrypoint: Experiments.emoji.train:run
 output_subdir: generated/nca_upscale_loss_sweep_1
 seed_mode: index
 grid:

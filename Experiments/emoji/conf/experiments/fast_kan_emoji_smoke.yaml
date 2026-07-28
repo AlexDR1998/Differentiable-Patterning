@@ -1,5 +1,5 @@
 experiment_name: fast_kan_emoji_smoke
-entrypoint: Experiments.emoji.emoji_training_sweep:run
+entrypoint: Experiments.emoji.train:run
 output_subdir: generated/fast_kan_emoji_smoke
 seed_mode: fixed
 grid:

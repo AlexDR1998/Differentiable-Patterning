@@ -1,5 +1,5 @@
 experiment_name: nca_micropattern_nodal_ko_sweep
-entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_micropattern_nodal_ko_sweep
 seed_mode: index
 grid:

@@ -1,8 +1,9 @@
 experiment_name: intel_nvidia_baseline_nca_runtime
-entrypoint: Experiments.micropatterns.nca_runtime_check:run
+entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/intel_nvidia_baseline_nca_runtime_intel
 seed_mode: fixed
 grid:
+  run.mode: [benchmark]
   # model.family: [NCA]
   model.family: [NCA_sycl]
   model.channels: [32]

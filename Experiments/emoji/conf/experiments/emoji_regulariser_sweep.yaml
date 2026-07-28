@@ -1,5 +1,5 @@
 experiment_name: emoji_regulariser_sweep
-entrypoint: Experiments.emoji.emoji_training_sweep:run
+entrypoint: Experiments.emoji.train:run
 output_subdir: generated/emoji_regulariser_sweep
 seed_mode: index
 grid:

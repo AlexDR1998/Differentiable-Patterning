@@ -27,9 +27,6 @@ model:
   padding: CIRCULAR
 
 trainer:
-  # Dense arrays are faster for uniform/padded batches; tree mode retains
-  # heterogeneous-resolution support and is the reference comparison path.
-  batch_mode: tree
   boundary_mode: soft
   grad_loss: false
   sharding: null
@@ -111,6 +108,7 @@ loss:
     samples: 128
 
 run:
+  mode: train
   t: 32
   iterations: 2000
   warmup: 64

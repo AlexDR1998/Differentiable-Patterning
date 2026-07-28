@@ -1,5 +1,5 @@
 experiment_name: emoji_fire_rate_sweep
-entrypoint: Experiments.emoji.emoji_training_sweep:run
+entrypoint: Experiments.emoji.train:run
 output_subdir: generated/emoji_fire_rate_sweep
 seed_mode: index
 grid:
