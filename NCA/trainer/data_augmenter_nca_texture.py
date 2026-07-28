@@ -35,15 +35,15 @@ class DataAugmenter(DataAugmenterAbstract):
         
         map_to_m1p1 = lambda x:2*(x - jnp.min(x)) / (jnp.max(x) - jnp.min(x)) -1
         data = self.return_saved_data()
-        data = self.map_batches(map_to_m1p1, data)
+        data = jax.tree_util.tree_map(map_to_m1p1, data)
         data = self.duplicate_batches(data, 4)
-        keys = self.restore_batch_mode(jr.split(key, len(data)))
+        keys = list(jr.split(key, len(data)))
         reset_initial = lambda value, item_key: value.at[0].set(
             multi_channel_perlin_noise(
                 value.shape[2], value.shape[1], self.NOISE_CUTOFF, item_key
             )
         )
-        data = self.map_batches(reset_initial, data, keys)
+        data = jax.tree_util.tree_map(reset_initial, data, keys)
         self.save_data(data)
         return None
 
@@ -63,10 +63,6 @@ def jittable_callback_helper(x,NOISE_CUTOFF,key):
     reset_x0 = lambda x,key:x.at[0].set(multi_channel_perlin_noise(x.shape[2],x.shape[1],NOISE_CUTOFF,key))
 
     keys = jr.split(key, len(x))
-
-    if hasattr(x, "ndim"):
-        x = jax.vmap(propagate_xn)(x)
-        return jax.vmap(reset_x0)(x, keys)
 
     x = jax.tree_util.tree_map(propagate_xn,x) # Set initial condition at each X[n] at next iteration to be final state from X[n-1] of this iteration
     x = jax.tree_util.tree_map(reset_x0,x,list(keys)) # Reset initial conditions to noise

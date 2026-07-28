@@ -23,7 +23,6 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         f"_batches{cfg.data.batches}"
         f"_{cfg.system.precision}"
         f"_loop{cfg.trainer.loop_autodiff}"
-        f"_batch{cfg.trainer.get('batch_mode', 'tree')}"
         f"_gpu{cfg.system.gpu}"
     )
     if cfg.trainer.get("sharding", None) is not None:
@@ -136,7 +135,6 @@ def run(cfg):
         DATA_AUGMENTER=data_augmenter,  # pyright: ignore[reportArgumentType]
         GRAD_LOSS=cfg.trainer.grad_loss,
         SHARDING=cfg.trainer.get("sharding", None),
-        BATCH_MODE=cfg.trainer.get("batch_mode", "tree"),
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
         **trainer_kwargs,
     )

@@ -65,13 +65,7 @@ class TrainingExecution:
         return self.trainer.DATA_AUGMENTER.data_callback(x, y, iteration, key)
 
     def prepare_log_dict(self, log_dict):
-        if not self.trainer.BATCH_BACKEND.is_array:
-            return log_dict
-        result = dict(log_dict)
-        for name in ("x_latent", "x_processed"):
-            if name in result:
-                result[name] = self.trainer.BATCH_BACKEND.to_list(result[name])
-        return result
+        return log_dict
 
 
 __all__ = ["TrainingExecution"]

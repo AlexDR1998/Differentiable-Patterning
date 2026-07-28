@@ -1,0 +1,88 @@
+experiment_name: nca_4ch_1b4_sweep_4
+entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
+output_subdir: generated/nca_4ch_1b4_sweep_4
+seed_mode: index
+grid:
+  system.gpu: [H200]
+  system.precision: [highest]
+
+  model.family: [NCA,gNCA]
+  model.fire_rate: [0.5]
+  model.upscale_factor: [null]
+  model.channels: [48]    
+  
+  run.scaling: [convective]
+  run.iterations: [8000]
+  run.repeat: [0,]
+  run.t: [128]
+  
+  logging.wandb.project: [nca_micropattern_groups]
+  # logging.wandb.group: [nca_4ch_1b4_test]
+  logging.wandb.group: [nca_4ch_1b4_sweep_4]
+  logging.singular_values.enabled: [true]
+  logging.singular_values.plot_spectra: [true]
+  logging.singular_values.epsilon: [1e-8]
+  
+  loss.primary: [multi_target]
+  loss.args.multi_target_weights.texture: [1.0]
+  loss.args.multi_target_weights.channel_mean: [0.0]
+  loss.args.multi_target_weights.correlation: [0.0]
+  loss.args.multi_target_weights.radial: [0.0,0.1,1.0]
+  loss.args.assignment: [hard]
+  # loss.primary: [l2]
+  # loss.primary: [multi_target]
+  loss.regulariser_coeffs.latent_channel_match: [0.0]
+  loss.regulariser_coeffs.contiguous_growth: [0.0]
+  loss.regulariser_coeffs.latent_size: [0.0]
+  loss.regulariser_coeffs.intermediate_state: [10.0]
+  loss.regulariser_coeffs.boundary: [10.0]
+  loss.random_crop: [False]
+  loss.random_channel_shuffle: [False]
+  
+  trainer.loop_autodiff: [lax]
+  trainer.pool_admission_previous_relative_threshold: [1.0]
+  trainer.log_every: [200]
+  trainer.clear_cache_every: [null]
+  
+  data.downsample: [8]
+  data.experiment_groups: [["cell_fate_s1"]]
+  data.data_channels: [4] 
+  data.batches: [1]
+  data.batch_multiplier: [4]
+  data.intermediate_reinjection_probability: [0.5,1.0]
+  data.intermediate_reinjection_probability_end: [0.0]
+  data.intermediate_reinjection_decay_start_fraction: [0.25]
+  data.dataset: [micropatterns_260726]
+  data.duplicate_final_timestep: [false,true]
+  # data.batches: [4]
+  knockout.mode: [null]
+  knockout.time: [null]
+  knockout.channel: [Nodal]
+  # loss.regulariser_coeffs.radial_profile: [0.0]
+  # loss.regulariser_coeffs.channel_correlation: [1.0]
+
+  optimiser.learn_rate: [1e-3]
+  optimiser.decay_rate: [0.1]
+  optimiser.schedule.type: [cosine]
+  optimiser.schedule.final_factor: [0.5]
+  optimiser.schedule.transition_fraction: [0.75]
+  optimiser.type: [nadam]
+  optimiser.gradient_clip_norm: [1.0]
+  optimiser.apply_if_finite: [true]
+  optimiser.max_consecutive_errors: [16]
+  # system.xla_flags: [[command_buffer]]
+# groups:
+  
+# groups:
+  # - run.t: [64,128,256]
+    # data.batch_multiplier: [4,4,2] # I think 256 and 4 batches will OOM on lax autodiff
+
+# branches:
+#   - when:
+#       loss.primary: [multi_target]
+    # grid:
+      # loss.args.multi_target_weights.texture: [1.0]
+      # loss.args.multi_target_weights.channel_mean: [0.0]
+      # loss.args.multi_target_weights.correlation: [0.0,0.1,1.0]
+      # loss.args.multi_target_weights.radial: [0.0,0.1,1.0]
+      # loss.args.assignment: [hard]

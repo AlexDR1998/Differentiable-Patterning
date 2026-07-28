@@ -44,7 +44,6 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         f"_t{cfg.run.t}"
         f"_lr{cfg.optimiser.learn_rate}"
         f"_dr{cfg.optimiser.decay_rate}"
-        f"_batch{cfg.trainer.get('batch_mode', 'tree')}"
         f"_dup{int(cfg.data.get('duplicate_final_timestep', False))}"
         f"_irp{cfg.data.get('intermediate_reinjection_probability', 0.5)}"
         f"_irpend{cfg.data.get('intermediate_reinjection_probability_end', cfg.data.get('intermediate_reinjection_probability', 0.5))}"
@@ -139,7 +138,6 @@ def run(cfg):
         DATA_AUGMENTER=data_augmenter,  # pyright: ignore[reportArgumentType]
         GRAD_LOSS=cfg.trainer.grad_loss,
         SHARDING=cfg.trainer.get("sharding", None),
-        BATCH_MODE=cfg.trainer.get("batch_mode", "tree"),
         MODEL_DIRECTORY=MODEL_SAVE_PATH + cfg.logging.wandb.group + "/", # type: ignore
         **trainer_kwargs,
     )

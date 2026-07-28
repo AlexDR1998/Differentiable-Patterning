@@ -1,21 +1,22 @@
-experiment_name: isouNCA_micropattern_vgg_swap_1
+experiment_name: isouNCA_micropattern_schedule_sweep_1
 entrypoint: Experiments.micropatterns.uNCA_scaling_loss_hyperparameter_sweep:run
-output_subdir: generated/isouNCA_micropattern_vgg_swap_1
+output_subdir: generated/isouNCA_micropattern_schedule_sweep_1
 seed_mode: index
 grid:
   model.family: [isouNCA]
   run.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
-  logging.wandb.group: [isouNCA_4ch_micropattern_vgg_swap_1]
-  run.iterations: [4000]
+  logging.wandb.group: [isouNCA_4ch_micropattern_schedule_sweep_1]
+  run.iterations: [8000]
   # loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
   # loss.layers: [[decoded,latent],[decoded,decoded],[decoded,both]]
   # loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
-  data.data_channels: [4] 
+  
+  data.duplicate_final_timestep: [true]
   # data_channels: 12
   # loss.primary: [[vgg_grouped,l2_grouped]]
-  loss.primary: [[vgg,l2],[ott,l2]]
-  loss.layers: [[decoded,latent], [decoded,decoded],[decoded,both],[both,latent], [both,decoded],[both,both]]
+  # loss.primary: [[vgg,l2]]
+  loss.layers: [[decoded,latent], [decoded,decoded],[decoded,both]] #,[both,latent], [both,decoded],[both,both]] # Main hyperparameter of interest for this sweep
   # loss.layers: [[both,latent], [both,decoded],[both,both]]
   trainer.loop_autodiff: [checkpointed]
   data.downsample: [1]
@@ -25,33 +26,41 @@ grid:
   knockout.channel: [Nodal]
   loss.regulariser_coeffs.latent_channel_match: [0.0]
   loss.regulariser_coeffs.contiguous_growth: [0.0]
-  loss.regulariser_coeffs.latent_size: [0.0]
+  loss.regulariser_coeffs.latent_size: [1.0]
   loss.regulariser_coeffs.intermediate_state: [1.0]
   loss.random_crop: [True]
-  loss.random_channel_shuffle: [True, False]
-  model.upscale_factor: [8]
-  run.t: [64]
-  model.upsampler.radius: [2]
+  loss.random_channel_shuffle: [True]
+  
+  loss.primary: [[vgg,l2]]
+  data.data_channels: [4] 
+  model.upsampler.radius: [1]
   model.upsampler.fourier_modes: [4]
   model.upsampler.depth: [4]
   model.upsampler.width_factor: [2]
-  optimiser.learn_rate: [1e-3]
-  optimiser.decay_rate: [0.98]
-  optimiser.type: [nadam,muon]
+  optimiser.learn_rate: [5e-4]
+  optimiser.decay_rate: [0.1]
+  optimiser.schedule.type: [exponential, constant, cosine, late_step]
+  optimiser.schedule.final_factor: [0.1]
+  optimiser.schedule.transition_fraction: [0.75]
+  optimiser.type: [nadam]
   optimiser.gradient_clip_norm: [1.0]
   optimiser.apply_if_finite: [true]
   optimiser.max_consecutive_errors: [16]
-  trainer.log_every: [100]
+  trainer.log_every: [200]
   trainer.clear_cache_every: [null]
+  trainer.pool_admission_previous_relative_threshold: [1.10] # Check from baseline NCA case
+  data.batches: [4]
 groups:
-  - data.batches: [2]
-    model.channels: [64]    
+  - model.upscale_factor: [4,8,16]
+    run.t: [128,64,32]
+  # - data.batches: [2]
+    # model.channels: [64]    
 branches:
   - when:
       loss.primary: [vgg,l2]
       # model.family: uNCA
     grid:
-      loss.vgg_internal: [l2,otsp]
+      loss.vgg_internal: [l2]
       # loss.random_crop: [True,False]
   - when:
       loss.primary: [ott,l2]
@@ -62,7 +71,7 @@ branches:
       loss.primary: [vgg_grouped,l2_grouped]
       # model.family: uNCA
     grid:
-      loss.vgg_internal: [l2,otsp]
+      loss.vgg_internal: [l2]
       # loss.random_crop: [True,False]
   - when:
       loss.primary: [ott_grouped,l2_grouped]

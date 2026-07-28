@@ -30,18 +30,11 @@ class DataAugmenter(DataAugmenter4Ch):
         )
 
     def split_x_y(self, N_steps=1):
-        if self.batch_mode == "array":
-            x = self.map_batches(
-                lambda data: self.real_to_latent(self._to_state(data[:-N_steps])),
-                self.data_saved,
-            )
-            y = self.data_saved[:, N_steps:]
-        else:
-            x = jtu.tree_map(
-                lambda data: self.real_to_latent(self._to_state(data[:-N_steps])),
-                self.data_saved,
-            )
-            y = jtu.tree_map(lambda data: data[N_steps:], self.data_saved)
+        x = jtu.tree_map(
+            lambda data: self.real_to_latent(self._to_state(data[:-N_steps])),
+            self.data_saved,
+        )
+        y = jtu.tree_map(lambda data: data[N_steps:], self.data_saved)
         return x, y
 
 

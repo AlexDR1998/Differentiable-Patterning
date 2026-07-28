@@ -103,11 +103,6 @@ class NCA_sycl_Trainer(NCA_Trainer):
             "NCA_SYCL_SERIALIZE_CUSTOM_CALLS", SYCL_SERIALIZE_CUSTOM_CALLS
         )
         super().__init__(*args, **kwargs)
-        if self.BATCH_BACKEND.is_array:
-            raise NotImplementedError(
-                "Dense array batching is currently implemented for the ordinary "
-                "JAX trainer only; use BATCH_MODE='tree' with NCA_sycl_Trainer"
-            )
         if isinstance(SYCL_FUSED_STEPS, bool) or not isinstance(
             SYCL_FUSED_STEPS, Integral
         ):

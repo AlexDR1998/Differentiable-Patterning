@@ -38,19 +38,13 @@ class TerminalCarryDataAugmenter(BasicDataAugmenter):
     def propagate_with_terminal_carry(self, x, x_true, i, key):
         """Propagate the training pool and optionally retain each terminal state."""
 
-        is_array = hasattr(x, "ndim")
-        terminal_states = x[:, -1] if is_array else [trajectory[-1] for trajectory in x]
+        terminal_states = [trajectory[-1] for trajectory in x]
         x = jittable_callback_bit(x, x_true, self.OBS_CHANNELS, key)
         carry = jax.random.bernoulli(
             jax.random.fold_in(key, 1),
             self.terminal_carry_probability(i),
             (len(x),),
         )
-        if is_array:
-            terminal = jnp.where(
-                carry[:, None, None, None], terminal_states, x[:, -1]
-            )
-            return x.at[:, -1].set(terminal)
         for batch_index in range(len(x)):
             x[batch_index] = x[batch_index].at[-1].set(
                 jnp.where(carry[batch_index], terminal_states[batch_index], x[batch_index][-1])

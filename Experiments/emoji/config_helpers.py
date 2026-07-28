@@ -290,7 +290,6 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
         # f"_iters{cfg.run.iterations}"
         f"_lr{cfg.optimiser.learn_rate}"
         f"_dr{cfg.optimiser.decay_rate}"
-        f"_batch{_cfg_get(cfg.trainer, 'batch_mode', 'tree')}"
     )
     return "_".join([model_cfg_str, data_cfg_str, loss_str, train_str])
 

@@ -9,24 +9,8 @@ from Common.model.boundary import hard_boundary, model_boundary, no_boundary
 from einops import repeat, reduce, rearrange, einsum
 
 
-def _is_array_batch(value):
-    return hasattr(value, "ndim") and value.ndim >= 5
-
-
 def _batch_map(function, *values):
-    if _is_array_batch(values[0]):
-        return jax.vmap(function)(*values)
     return jnp.asarray(jtu.tree_map(function, *values))
-
-
-def _key_array(key, *shape):
-    return jr.randint(
-        key,
-        shape=(*shape, 2),
-        minval=0,
-        maxval=2_147_483_647,
-        dtype=jnp.uint32,
-    )
 
 
 # def _is_dict_leaf(value):
@@ -41,7 +25,7 @@ def _key_array(key, *shape):
 def intermediate_reg(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
     """
     Intermediate state regulariser - tracks how much of x is outwith [0,1]
-    
+
 
     Parameters
     ----------
@@ -68,7 +52,7 @@ def intermediate_reg(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
         return jnp.mean(jnp.abs(x_new_proc)+jnp.abs(x_new_proc-1)-1)
     return _batch_map(_reg, x_new_proc)
         # v_intermediate_reg = lambda x:jnp.array(jax.tree_util.tree_map(self.intermediate_reg,x))  # noqa: E731
-		
+
 
 def latent_size_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
     """
@@ -129,8 +113,6 @@ def boundary_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
         return jnp.mean(jnp.abs(values) * outside_weight)
 
     callbacks = aux["BOUNDARY_CALLBACK"]
-    if _is_array_batch(x_new):
-        return jnp.stack([_reg(callback, x_new[index]) for index, callback in enumerate(callbacks)])
     return jnp.asarray(jtu.tree_map(_reg, callbacks, x_new))
 @eqx.filter_jit
 def contiguous_growth_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
@@ -151,12 +133,12 @@ def contiguous_growth_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
     Returns
     -------
         Growth : Array [Batch] float
-            float array tracking how much of growth of x_proc_new in observable channels occurs outwith the bounding region of high observable cells in x_proc 
+            float array tracking how much of growth of x_proc_new in observable channels occurs outwith the bounding region of high observable cells in x_proc
 
     """
     def _reg(x_new,x,x_proc,x_new_proc):
-        
-        
+
+
         x_new_proc = x_new_proc[:,:aux["OBS_CHANNELS"]]
         x_proc = x_proc[:,:aux["OBS_CHANNELS"]]
         dx = jax.nn.relu(x_new_proc - x_proc) # How much obs growth
@@ -195,16 +177,9 @@ def update_sensitivity_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
     from Common.utils import key_pytree_gen
 
     noise_amount = 0.1
-    if _is_array_batch(x):
-        key_array_noise = _key_array(key, len(x))
-        x_noise = jax.vmap(
-            lambda value, item_key: value + noise_amount * jr.normal(item_key, value.shape)
-        )(x, key_array_noise)
-        key_array_nca = _key_array(key, len(x), x.shape[1])
-    else:
-        key_array_noise = key_pytree_gen(key,[len(x)])
-        x_noise = jtu.tree_map(lambda x,key: x+noise_amount*jr.normal(key,shape=x.shape),x,key_array_noise)
-        key_array_nca = key_pytree_gen(key,(len(x),x[0].shape[0]))
+    key_array_noise = key_pytree_gen(key,[len(x)])
+    x_noise = jtu.tree_map(lambda x,key: x+noise_amount*jr.normal(key,shape=x.shape),x,key_array_noise)
+    key_array_nca = key_pytree_gen(key,(len(x),x[0].shape[0]))
     x_new_noise = vv_nca(x_noise,aux["BOUNDARY_CALLBACK"],key_array_nca)
     diffs = _batch_map(
         lambda x,x_noise,x_new,x_new_noise: jnp.mean(jnp.abs(x_new-x_new_noise)),
@@ -234,16 +209,9 @@ def perturbation_conservation_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,k
     from Common.utils import key_pytree_gen
 
     noise_amount = 0.1
-    if _is_array_batch(x):
-        key_array_noise = _key_array(key, len(x))
-        x_noise = jax.vmap(
-            lambda value, item_key: value + noise_amount * jr.normal(item_key, value.shape)
-        )(x, key_array_noise)
-        key_array_nca = _key_array(key, len(x), x.shape[1])
-    else:
-        key_array_noise = key_pytree_gen(key,[len(x)])
-        x_noise = jtu.tree_map(lambda x,key: x+noise_amount*jr.normal(key,shape=x.shape),x,key_array_noise)
-        key_array_nca = key_pytree_gen(key,(len(x),x[0].shape[0]))
+    key_array_noise = key_pytree_gen(key,[len(x)])
+    x_noise = jtu.tree_map(lambda x,key: x+noise_amount*jr.normal(key,shape=x.shape),x,key_array_noise)
+    key_array_nca = key_pytree_gen(key,(len(x),x[0].shape[0]))
     x_new_noise = vv_nca(x_noise,aux["BOUNDARY_CALLBACK"],key_array_nca)
 
     diffs = _batch_map(
@@ -252,7 +220,7 @@ def perturbation_conservation_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,k
         x_noise,
         x_new,
         x_new_noise,
-        
+
     )
     return jnp.asarray(diffs)
 

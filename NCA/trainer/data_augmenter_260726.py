@@ -64,21 +64,14 @@ class DataAugmenter(BasicAugmenter):
         return jnp.pad(state, ((0, 0), (0, self.channels - state.shape[1]), (0, 0), (0, 0)))
 
     def split_x_y(self, N_steps=1):
-        if self.batch_mode == "array":
-            x = self.map_batches(
-                lambda data: self.real_to_latent(self._to_state(data[:-N_steps])),
-                self.data_saved,
-            )
-            y = self.data_saved[:, N_steps:]
-        else:
-            x = jtu.tree_map(lambda data: self.real_to_latent(self._to_state(data[:-N_steps])), self.data_saved)
-            y = jtu.tree_map(lambda data: data[N_steps:], self.data_saved)
+        x = jtu.tree_map(lambda data: self.real_to_latent(self._to_state(data[:-N_steps])), self.data_saved)
+        y = jtu.tree_map(lambda data: data[N_steps:], self.data_saved)
         return x, y
 
     def data_callback(self, x, y, i, key):
         """Propagate the pool and reinject randomly permuted experiment groups."""
-        x = self.as_array(x)
-        saved = self.as_array(self.data_saved)
+        x = jnp.stack(x)
+        saved = jnp.stack(self.data_saved)
         measurements = saved[:, :, :self.schema.n_measurement_channels]
         truth = jax.vmap(lambda data: self.real_to_latent(self._to_state(data)))(saved)
         batch_count, time_count = x.shape[:2]
@@ -138,7 +131,7 @@ class DataAugmenter(BasicAugmenter):
                     keep = (inject[:, t - 1] & (choices[:, t - 1] == g))[:, None, None, None]
                     x = x.at[:, t, states].set(jnp.where(keep, values, x[:, t, states]))
 
-        x = self.restore_batch_mode(x)
+        x = list(x)
         noise_key = key if hasattr(self, "_sharded_global_key") else global_key
         x = self.noise(x, self.noise_strength, key=noise_key)
         self.PREVIOUS_KEY = noise_key
