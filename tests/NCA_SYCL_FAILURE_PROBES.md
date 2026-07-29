@@ -6,10 +6,15 @@ Submit 20 independently scheduled repetitions of each minimal probe:
 tests/submit_nca_sycl_failure_probes.sh
 ```
 
-This submits `shard_map + pmean`, `custom call + shard_map`, and the combined
-case. Probe types are interleaved across Slurm array indices, and each task
-records its allocated hostname; scheduling is deliberately not pinned. After
-completion, summarize crash rates and recurring nodes with:
+The active isolation matrix submits four probes: the `shard_map + pmean`
+reverse-mode control, fused-rollout forward only, fused-rollout reverse mode,
+and fused-rollout reverse mode with process-wide custom-call serialization.
+The rollout loss uses its final state and trajectory without regularisers or
+collectives. Differentiated probes cover every array leaf in the model/input
+pair, and each task blocks on both the result and gradient tree. Probe types
+are interleaved across Slurm array indices, and each task records its allocated
+hostname; scheduling is deliberately not pinned. After completion, summarize
+crash rates and recurring nodes with:
 
 ```bash
 python tests/summarize_nca_sycl_failure_probes.py nca-sycl-probe-logs

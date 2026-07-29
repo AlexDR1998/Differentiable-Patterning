@@ -5,7 +5,8 @@ REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 REPEATS="${NCA_SYCL_PROBE_REPEATS:-20}"
 PARALLELISM="${NCA_SYCL_PROBE_PARALLELISM:-4}"
 LOG_ROOT="${NCA_SYCL_PROBE_LOG_DIR:-${PWD}/nca-sycl-probe-logs}"
-TASKS=$((3 * REPEATS))
+PROBE_COUNT=4
+TASKS=$((PROBE_COUNT * REPEATS))
 
 mkdir -p "${LOG_ROOT}"
 JOB_ID="$(sbatch --parsable \
