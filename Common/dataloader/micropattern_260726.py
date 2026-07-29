@@ -13,6 +13,7 @@ import skimage.io
 from skimage import morphology
 
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
+from Common.dataloader.results import MicropatternDataset
 
 
 _CONDITIONS = ("ctrl", "sl0", "sl24")
@@ -706,10 +707,10 @@ def load_micropattern_260726(
         "timesteps": timesteps,
         "loss_measurement_mask": measurement_mask[:, 1:],
     }
-    return (
-        jnp.asarray(targets),
-        aux,
-        list(schema.measurement_names),
-        jnp.asarray(boundary_mask),
-        jnp.asarray(measurement_mask),
+    return MicropatternDataset(
+        data=jnp.asarray(targets),
+        aux=aux,
+        channel_names=tuple(schema.measurement_names),
+        boundary_mask=jnp.asarray(boundary_mask),
+        measurement_mask=jnp.asarray(measurement_mask),
     )

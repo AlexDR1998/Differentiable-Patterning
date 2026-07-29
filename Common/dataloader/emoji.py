@@ -1,38 +1,35 @@
+"""Load RGB or RGBA emoji images as image sequences."""
+
+from pathlib import Path
+
 import numpy as np
 import skimage.io as sio
 
+from Common.dataloader.results import ImageSequenceDataset
 
 
+def load_emoji_sequence(
+    filename_sequence,
+    impath_emojis="../Data/Emojis/",
+    downsample=2,
+    crop_square=False,
+):
+    """Load images into a ``[batch, time, channel, x, y]`` sequence."""
 
-
-
-
-
-def load_emoji_sequence(filename_sequence,impath_emojis="../Data/Emojis/",downsample=2,crop_square=False):
-	"""
-		Loads a sequence of images in impath_emojis
-		Parameters
-		----------
-		filename_sequence : list of strings
-			List of names of files to load
-		downsample : int
-			How much to downsample the resolution - highres takes ages
-	
-		Returns
-		-------
-		images : float32 array [1,File,C,size,size]
-			Timesteps of T RGB/RGBA images. Dummy index of 1 for number of batches
-	"""
-	images = []
-	for filename in filename_sequence:
-		im = sio.imread(impath_emojis+filename)[::downsample,::downsample]
-		if crop_square:
-			s= min(im.shape[0],im.shape[1])
-			im = im[:s,:s]
-		#im = im[np.newaxis] / 255.0
-		im = im/255.0
-		images.append(im)
-	data = np.array(images)
-	data = data[np.newaxis]
-	data = np.einsum("btxyc->btcxy",data)
-	return data
+    if downsample <= 0:
+        raise ValueError("downsample must be positive")
+    root = Path(impath_emojis)
+    filenames = tuple(str(filename) for filename in filename_sequence)
+    images = []
+    for filename in filenames:
+        image = sio.imread(root / filename)[::downsample, ::downsample]
+        if crop_square:
+            size = min(image.shape[:2])
+            image = image[:size, :size]
+        images.append(image.astype(np.float32) / 255.0)
+    data = np.moveaxis(np.asarray(images)[None], -1, 2)
+    return ImageSequenceDataset(
+        data=data,
+        filenames=filenames,
+        metadata={"downsample": downsample, "crop_square": crop_square},
+    )

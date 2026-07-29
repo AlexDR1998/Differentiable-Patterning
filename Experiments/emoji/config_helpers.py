@@ -89,12 +89,14 @@ def build_data_config_string(cfg):
 def _load_single_emoji(filename, cfg, impath):
     if not filename:
         raise ValueError("Every multi-attractor initial condition and target needs an image filename")
-    return load_emoji_sequence(
+    loaded = load_emoji_sequence(
         [filename],
         impath_emojis=impath,
         downsample=cfg.data.downsample,
         crop_square=_cfg_get(cfg.data, "crop_square", False),
-    )[0, 0]
+    )
+    data = loaded.data if hasattr(loaded, "data") else loaded
+    return data[0, 0]
 
 
 def _build_initial_condition(initial_cfg, cfg, impath):
@@ -173,12 +175,13 @@ def load_data(cfg, impath=None):
         impath = os.path.join(data_path_base, "Emojis", "")
     task = _cfg_get(cfg.data, "task", "sequence")
     if task == "sequence":
-        data = load_emoji_sequence(
+        dataset = load_emoji_sequence(
             _as_list(cfg.data.sequence),
             impath_emojis=impath,
             downsample=cfg.data.downsample,
             crop_square=_cfg_get(cfg.data, "crop_square", False),
         )
+        data = dataset.data
     elif task == "multi_attractor":
         data = _load_multi_attractor_data(cfg, impath)
     else:

@@ -30,6 +30,8 @@ from Common.dataloader.micropattern_260726 import (
     build_micropattern_260726_manifest,
     load_micropattern_260726,
 )
+from Common.dataloader.results import MicropatternDataset, MicropatternShapeDataset
+from Common.dataloader.preprocessing import PreprocessingConfig
 import scipy.ndimage as ndi
 from math import floor, ceil
 import matplotlib.pyplot as plt
@@ -48,19 +50,18 @@ def load_micropattern_nodal_lefty_cer(
     downsample=4,
     BATCH_AVERAGE=False,
     BACKGROUND_RADIUS=50,
-    TIMESTEPS=[0, 6, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
+    TIMESTEPS=(0, 6, 12, 24, 36, 48),
     VERBOSE=False,
     HIST_EQS=(5, 95),
     SHOW_HISTOGRAMS=False,
-    PROCESSING_MODES=[
+    PROCESSING_MODES=(
         "mean_0_std_1",
-        "saturate",
         "map_to_0_1",
         "align",
         "pad_to_full_width",
         "downsample",
-    ],
-    EXP_MODES=[1],
+    ),
+    EXP_MODES=(1,),
 ):
     """
     Experiment layout was as follows:
@@ -159,10 +160,10 @@ def load_micropattern_nodal_lefty_cer(
     )
     if SHOW_HISTOGRAMS:
         show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return (
-        ims,
-        attach_channel_schema(aux, MICROPATTERN_NODAL_LEFTY_CER_SCHEMA),
-        CHANNEL_NAMES,
+    return MicropatternDataset(
+        data=ims,
+        aux=attach_channel_schema(aux, MICROPATTERN_NODAL_LEFTY_CER_SCHEMA),
+        channel_names=tuple(CHANNEL_NAMES),
     )
 
 
@@ -171,11 +172,11 @@ def load_micropattern_sox17_foxa2_tbxt_lmbr(
     downsample=4,
     BATCH_AVERAGE=False,
     VERBOSE=False,
-    TIMESTEPS=[0, 12, 24, 36, 48, 60],  # 0h, 12h, 24h, 36h, 48h, 60h
+    TIMESTEPS=(0, 12, 24, 36, 48, 60),
     BACKGROUND_RADIUS=50,
     SHOW_HISTOGRAMS=False,
     HIST_EQS=(5, 95),
-    PROCESSING_MODES=["mean_0_std_1", "saturate", "map_to_0_1", "mult_by_lmbr"],
+    PROCESSING_MODES=("mean_0_std_1", "map_to_0_1"),
 ):
     """
     Data is ordered as follows:
@@ -232,10 +233,10 @@ def load_micropattern_sox17_foxa2_tbxt_lmbr(
     )
     if SHOW_HISTOGRAMS:
         show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return (
-        ims,
-        attach_channel_schema(aux, MICROPATTERN_SOX17_FOXA2_TBXT_LMBR_SCHEMA),
-        CHANNEL_NAMES,
+    return MicropatternDataset(
+        data=ims,
+        aux=attach_channel_schema(aux, MICROPATTERN_SOX17_FOXA2_TBXT_LMBR_SCHEMA),
+        channel_names=tuple(CHANNEL_NAMES),
     )
 
 
@@ -244,11 +245,11 @@ def load_micropattern_smad23_lef1(
     downsample=4,
     VERBOSE=False,
     BATCH_AVERAGE=False,
-    TIMESTEPS=[0, 6, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
+    TIMESTEPS=(0, 6, 12, 24, 36, 48),
     BACKGROUND_RADIUS=50,
     SHOW_HISTOGRAMS=False,
     HIST_EQS=(5, 95),
-    PROCESSING_MODES=["mean_0_std_1", "saturate", "map_to_0_1", "mult_by_lmbr"],
+    PROCESSING_MODES=("mean_0_std_1", "map_to_0_1"),
 ):
     CHANNEL_NAMES = ["Lef1", "Lmbr", "Smad23"]
     filenames = glob.glob(impath)
@@ -301,10 +302,10 @@ def load_micropattern_smad23_lef1(
 
     if SHOW_HISTOGRAMS:
         show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return (
-        ims,
-        attach_channel_schema(aux, MICROPATTERN_SMAD23_LEF1_SCHEMA),
-        CHANNEL_NAMES,
+    return MicropatternDataset(
+        data=ims,
+        aux=attach_channel_schema(aux, MICROPATTERN_SMAD23_LEF1_SCHEMA),
+        channel_names=tuple(CHANNEL_NAMES),
     )
 
 
@@ -344,14 +345,22 @@ def process_data(
     HIST_BINS=None,  # Useful to normalise data from histogram bins of other datasets
     HIST_EQS=(5, 95),
     VERBOSE=False,
-    mode=["clip", "mean_0_std_1", "saturate", "map_to_0_1", "downsample"],
+    mode=("mean_0_std_1", "map_to_0_1", "downsample"),
 ):
     """
     Expects data as a list of [T] arrays of shape [BATCH, X, Y, CHANNELS], where for each entry in the list, BATCH can be different
     Some transformations need to be applied consistently across T,
 
     """
-    # print(f"Data structure: {len(data)} {data[0].shape}")
+    config = PreprocessingConfig.from_legacy(
+        mode,
+        downsample=DOWNSAMPLE,
+        histogram_percentiles=tuple(HIST_EQS),
+        histogram_bins=HIST_BINS,
+        background_radius=BACKGROUND_RADIUS,
+        batch_average=BATCH_AVERAGE,
+    )
+    mode = tuple(step.value for step in config.steps)
 
     # mean_0_std_1 = lambda arr: (arr - jnp.mean(arr, axis=(1, 2), keepdims=True)) / (jnp.std(arr, axis=(1, 2), keepdims=True) + 1e-8)
     # map_to_0_1 = lambda arr: (arr - jnp.min(arr, axis=(1, 2), keepdims=True)) / (jnp.max(arr, axis=(1, 2), keepdims=True) - jnp.min(arr, axis=(1, 2), keepdims=True) + 1e-8)
@@ -577,6 +586,7 @@ def process_data(
         "backgrounds": backgrounds,
         "foregrounds": foregrounds,
         "HIST_BINS": HIST_BINS,
+        "preprocessing_config": config,
     }
 
 
@@ -585,10 +595,10 @@ def load_micropattern_circle_8ch(
     BATCHES,
     PVC_PATH="/mnt/ceph/ar-dp/",
     BACKGROUND_RADIUS=50,
-    TIMESTEPS=[0, 12, 24, 36, 48, 60],  # 0h, 6h, 12h, 24h, 36h, 48h
+    TIMESTEPS=(0, 12, 24, 36, 48, 60),
     HIST_EQS={"sftl": (0.5, 99.95), "dcln": (0.5, 99.95), "lls": (0.5, 99.95)},
     SHOW_HISTOGRAMS=False,
-    PROCESSING_MODES=["hist_eq", "batch_average", "map_to_0_1"],
+    PROCESSING_MODES=("hist_eq", "batch_average", "map_to_0_1"),
 ):
     """
     Loads circular micropatterns for channels: Sox17, Foxa2, TbxT, Lmbr, Cer, Lefty, Nodal, Lef1
@@ -600,49 +610,52 @@ def load_micropattern_circle_8ch(
     impath_lls = (
         PVC_PATH + "Data/Timecourse 60h June/Smad23_LEF 48h/Max Projections/*"
     )  # Lef1, Lmbr, Smad23
-    data_sftl, aux_sftl, sftl_names = load_micropattern_sox17_foxa2_tbxt_lmbr(
+    sftl = load_micropattern_sox17_foxa2_tbxt_lmbr(
         impath_sftl,
         downsample=DOWNSAMPLE,
         VERBOSE=False,
         BATCH_AVERAGE=True,
         TIMESTEPS=TIMESTEPS,
-        PROCESSING_MODES=["downsample"] + PROCESSING_MODES,
+        PROCESSING_MODES=("downsample",) + tuple(PROCESSING_MODES),
         HIST_EQS=HIST_EQS["sftl"],
         SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
         BACKGROUND_RADIUS=BACKGROUND_RADIUS,
     )  # 0h, 12h, 24h, 36h, 48h, 60h
-    data_dcln, aux_nlc, dcln_names = load_micropattern_nodal_lefty_cer(
+    dcln = load_micropattern_nodal_lefty_cer(
         impath_dcln,
         downsample=DOWNSAMPLE,
         VERBOSE=False,
         BATCH_AVERAGE=True,
         TIMESTEPS=TIMESTEPS,
-        PROCESSING_MODES=["pad_to_full_width", "downsample"] + PROCESSING_MODES,
+        PROCESSING_MODES=("pad_to_full_width", "downsample") + tuple(PROCESSING_MODES),
         HIST_EQS=HIST_EQS["dcln"],
         SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
         BACKGROUND_RADIUS=BACKGROUND_RADIUS,
     )  # 0h, 6h, 12h, 24h, 36h, 48h
-    data_lls, aux_lls, lls_names = load_micropattern_smad23_lef1(
+    lls = load_micropattern_smad23_lef1(
         impath_lls,
         downsample=DOWNSAMPLE,
         VERBOSE=False,
         BATCH_AVERAGE=True,
         TIMESTEPS=TIMESTEPS,
-        PROCESSING_MODES=["downsample"] + PROCESSING_MODES,
+        PROCESSING_MODES=("downsample",) + tuple(PROCESSING_MODES),
         HIST_EQS=HIST_EQS["lls"],
         SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
         BACKGROUND_RADIUS=BACKGROUND_RADIUS,
     )  # 0h, 6h, 12h, 24h, 36h, 48h
 
     aux = {
-        "sftl": aux_sftl,
-        "dcln": aux_nlc,
-        "lls": aux_lls,
+        "sftl": sftl.aux,
+        "dcln": dcln.aux,
+        "lls": lls.aux,
         "channel_schema": MICROPATTERN_AVERAGED_8CH_SCHEMA,
     }
-    data_sftl = np.array(data_sftl)
-    data_dcln = np.array(data_dcln)  # select only condition 1 from data
-    data_lls = np.array(data_lls)
+    data_sftl = np.array(sftl.data)
+    data_dcln = np.array(dcln.data)  # select only condition 1 from data
+    data_lls = np.array(lls.data)
+    sftl_names = list(sftl.channel_names)
+    dcln_names = list(dcln.channel_names)
+    lls_names = list(lls.channel_names)
 
     print("---- Before removing duplicate LMBR/Dappi ----")
     print("--- (Time , batch, width, height, channels) ---")
@@ -691,7 +704,12 @@ def load_micropattern_circle_8ch(
 
     print("Channel order: " + " ".join(channel_names))
     print(f"Total data shape: {data.shape}")
-    return data, boundary_mask, channel_names, aux
+    return MicropatternDataset(
+        data=data,
+        boundary_mask=boundary_mask,
+        channel_names=tuple(channel_names),
+        aux=aux,
+    )
 
 
 def load_micropattern_circle_8ch_individual(
@@ -699,10 +717,10 @@ def load_micropattern_circle_8ch_individual(
     DOWNSAMPLE=1,
     BATCHES=1,
     BACKGROUND_RADIUS=20,
-    TIMESTEPS=[0, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
+    TIMESTEPS=(0, 12, 24, 36, 48),
     HIST_EQS=(1.0, 95.0),
     SHOW_HISTOGRAMS=False,
-    PROCESSING_MODES=["map_to_0_1"],
+    PROCESSING_MODES=("map_to_0_1",),
 ):
     filenames = glob.glob(impath)
     ims = []
@@ -778,11 +796,11 @@ def load_micropattern_circle_8ch_individual(
     print("Boundary mask shape: ", boundary_mask.shape)
     ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
     # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
-    return (
-        ims,
-        attach_channel_schema(aux, MICROPATTERN_INDIVIDUAL_8CH_SCHEMA),
-        CHANNEL_NAMES_DESIRED,
-        boundary_mask,
+    return MicropatternDataset(
+        data=ims,
+        aux=attach_channel_schema(aux, MICROPATTERN_INDIVIDUAL_8CH_SCHEMA),
+        channel_names=tuple(CHANNEL_NAMES_DESIRED),
+        boundary_mask=boundary_mask,
     )
 
 
@@ -793,10 +811,10 @@ def load_micropattern_circle_4ch_individual(
     DOWNSAMPLE=1,
     BATCHES=1,
     BACKGROUND_RADIUS=20,
-    TIMESTEPS=[0, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
+    TIMESTEPS=(0, 12, 24, 36, 48),
     HIST_EQS=(1.0, 95.0),
     SHOW_HISTOGRAMS=False,
-    PROCESSING_MODES=["map_to_0_1","downsample"],
+    PROCESSING_MODES=("map_to_0_1", "downsample"),
 ):
     filenames = glob.glob(impath)
     ims = []
@@ -870,12 +888,12 @@ def load_micropattern_circle_4ch_individual(
     ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
     # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
     CHANNEL_TIMESTEP_MASK = np.ones((len(TIMESTEPS)-1,4))
-    return (
-        ims,
-        attach_channel_schema(aux, MICROPATTERN_4CH_SCHEMA),
-        CHANNEL_NAMES_DESIRED,
-        boundary_mask,
-        CHANNEL_TIMESTEP_MASK,
+    return MicropatternDataset(
+        data=ims,
+        aux=attach_channel_schema(aux, MICROPATTERN_4CH_SCHEMA),
+        channel_names=tuple(CHANNEL_NAMES_DESIRED),
+        boundary_mask=boundary_mask,
+        measurement_mask=CHANNEL_TIMESTEP_MASK,
     )
 
 
@@ -886,10 +904,10 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
     DOWNSAMPLE=1,
     BATCHES=1,
     BACKGROUND_RADIUS=20,
-    TIMESTEPS=[0, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
+    TIMESTEPS=(0, 12, 24, 36, 48),
     HIST_EQS=(1.0, 95.0),
     FILTER_KN_TIME=0,
-    PROCESSING_MODES=["map_to_0_1"],
+    PROCESSING_MODES=("map_to_0_1",),
 ):
     """
         Loads circular micropatterns for 9 channels: LMBR, TBXT, SOX17, SOX2, FOXA2, Cer1, Lefty2, Nodal, Dappi
@@ -1133,12 +1151,12 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
 
     ims = repeat(ims, "T () X Y C -> B T C X Y", B=BATCHES)
     ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
-    return (
-        ims,
-        attach_channel_schema(aux, MICROPATTERN_GROUPED_12CH_SCHEMA),
-        CHANNEL_NAMES_COLONIES,
-        boundary_mask,
-        CHANNEL_TIMESTEP_MASK,
+    return MicropatternDataset(
+        data=ims,
+        aux=attach_channel_schema(aux, MICROPATTERN_GROUPED_12CH_SCHEMA),
+        channel_names=tuple(CHANNEL_NAMES_COLONIES),
+        boundary_mask=boundary_mask,
+        measurement_mask=CHANNEL_TIMESTEP_MASK,
     )
 
 
@@ -1148,9 +1166,9 @@ def load_micropattern_circle_8ch_individual_explicit_colony(
     DOWNSAMPLE=1,
     BATCHES=1,
     BACKGROUND_RADIUS=20,
-    TIMESTEPS=[0, 12, 24, 36, 48],  # 0h, 6h, 12h, 24h, 36h, 48h
+    TIMESTEPS=(0, 12, 24, 36, 48),
     HIST_EQS=(1.0, 95.0),
-    PROCESSING_MODES=["map_to_0_1"],
+    PROCESSING_MODES=("map_to_0_1",),
 ):
     """
         Loads circular micropatterns for 8 channels: LMBR, TBXT, SOX17, SOX2, FOXA2, Cer1, Lefty2, Nodal
@@ -1262,11 +1280,11 @@ def load_micropattern_circle_8ch_individual_explicit_colony(
     print("Boundary mask shape: ", boundary_mask.shape)
     ims = ims * rearrange(boundary_mask, "B () X Y -> B () () X Y")
     # ims = jnp.pad(ims,((0,0),(0,0),(0,0),()))
-    return (
-        ims,
-        attach_channel_schema(aux, MICROPATTERN_GROUPED_11CH_SCHEMA),
-        CHANNEL_NAMES_COLONIES,
-        boundary_mask,
+    return MicropatternDataset(
+        data=ims,
+        aux=attach_channel_schema(aux, MICROPATTERN_GROUPED_11CH_SCHEMA),
+        channel_names=tuple(CHANNEL_NAMES_COLONIES),
+        boundary_mask=boundary_mask,
     )
     
 
@@ -1314,7 +1332,7 @@ def load_micropattern_radii(impath):
 
     # ims = jax.tree_util.treedef_tuple(ims)
     # print(jnp.mean(ims))
-    return ims, masks, shapes
+    return MicropatternShapeDataset(data=ims, masks=masks, spatial_shapes=shapes)
 
 
 def downsample_padder(arr, downsample):
@@ -1456,7 +1474,7 @@ def load_micropattern_ellipse(impath, DOWNSAMPLE, BATCH_AVERAGE=False):
     masks = list(map(just_mask, masks))
     shapes = list(map(shapes, ims))
 
-    return ims, masks, shapes
+    return MicropatternShapeDataset(data=ims, masks=masks, spatial_shapes=shapes)
 
 
 def load_micropattern_shape_array(
@@ -1467,7 +1485,7 @@ def load_micropattern_shape_array(
     BACKGROUND_RADIUS=50,
     HIST_EQS=(0.5, 99.95),
     HIST_BINS=None,
-    PROCESSING_MODES=["align", "hist_eq", "map_to_0_1"],
+    PROCESSING_MODES=("align", "hist_eq", "map_to_0_1"),
 ):
     """_summary_
 
@@ -1529,7 +1547,12 @@ def load_micropattern_shape_array(
     )
     if SHOW_HISTOGRAMS:
         show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return ims, aux, CHANNEL_NAMES
+    return MicropatternShapeDataset(
+        data=ims,
+        masks=None,
+        channel_names=tuple(CHANNEL_NAMES),
+        aux=aux,
+    )
 
 
 def load_micropattern_shape_sequence(
@@ -1556,19 +1579,21 @@ def load_micropattern_shape_sequence(
     # ]
     # CIRCLE_DATA is (B,T,CHANNELS, X, Y)
     if SHAPED_MASK is None:
-        true_data, aux, CHANNEL_NAMES = load_micropattern_shape_array(
+        shape_data = load_micropattern_shape_array(
             impath,
             DOWNSAMPLE,
             BATCH_AVERAGE,
             HIST_BINS=CIRCLE_HIST_BINS,
             PROCESSING_MODES=PROCESSING_MODES,
         )
+        true_data = shape_data.data
+        channel_names = shape_data.channel_names
         masks = adhesion_mask_convex_hull(rearrange(true_data[0], "B X Y C -> X Y B C"))
         print(f"True data shape: {true_data[0].shape}")
     else:
         masks = SHAPED_MASK
         true_data = None
-        CHANNEL_NAMES = None
+        channel_names = ()
     print(f"Masks shape internal {masks.shape}")
     key = jr.PRNGKey(int(time.time()))
     n_channels = len(CHANNELS)
@@ -1589,7 +1614,12 @@ def load_micropattern_shape_sequence(
     unmasked_ic = jnp.array(unmasked_ic)
     synthetic_initial_conditions = jnp.where(mask_expanded, unmasked_ic, 0.0)
 
-    return true_data, masks, synthetic_initial_conditions, CHANNEL_NAMES
+    return MicropatternShapeDataset(
+        data=true_data,
+        masks=masks,
+        channel_names=tuple(channel_names),
+        synthetic_initial_conditions=synthetic_initial_conditions,
+    )
 
 
 def load_micropattern_triangle(impath):
@@ -1636,7 +1666,7 @@ def load_micropattern_triangle(impath):
 
     # ims = jax.tree_util.treedef_tuple(ims)
     # print(jnp.mean(ims))
-    return ims, masks, shapes
+    return MicropatternShapeDataset(data=ims, masks=masks, spatial_shapes=shapes)
 
 
 def normalise_micropattern_radii(training_data, impath, percentile_thresh):

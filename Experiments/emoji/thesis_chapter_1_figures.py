@@ -163,7 +163,7 @@ def _():
     data = load_emoji_sequence(
             ["alien_monster.png","microbe.png","rooster.png","rooster.png"],
             downsample=1
-        )
+        ).data
     print(data.shape) # Batch T C x y
     data = data[0] # discard batch dimenension
     plt.imshow(rearrange(data[:,:3],"T C x y -> x (T y) C"))

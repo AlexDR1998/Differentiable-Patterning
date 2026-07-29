@@ -1,24 +1,24 @@
-experiment_name: nca_4ch_1b4_sweep_4
+experiment_name: nca_4ch_1b4_sweep_5
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_4ch_1b4_sweep_4
+output_subdir: generated/nca_4ch_1b4_sweep_5
 seed_mode: index
 grid:
   system.gpu: [H200]
   system.precision: [highest]
 
-  model.family: [NCA,gNCA]
+  model.family: [gNCA]
   model.fire_rate: [0.5]
   model.upscale_factor: [null]
   model.channels: [48]    
   
   run.scaling: [convective]
   run.iterations: [8000]
-  run.repeat: [0,]
+  run.repeat: [0,1,2,3,4,5,6,7]
   run.t: [128]
   
   logging.wandb.project: [nca_micropattern_groups]
   # logging.wandb.group: [nca_4ch_1b4_test]
-  logging.wandb.group: [nca_4ch_1b4_sweep_4]
+  logging.wandb.group: [nca_4ch_1b4_sweep_5]
   logging.singular_values.enabled: [true]
   logging.singular_values.plot_spectra: [true]
   logging.singular_values.epsilon: [1e-8]
@@ -49,11 +49,11 @@ grid:
   data.data_channels: [4] 
   data.batches: [1]
   data.batch_multiplier: [4]
-  data.intermediate_reinjection_probability: [0.5,1.0]
+  data.intermediate_reinjection_probability: [1.0]
   data.intermediate_reinjection_probability_end: [0.0]
   data.intermediate_reinjection_decay_start_fraction: [0.25]
   data.dataset: [micropatterns_260726]
-  data.duplicate_final_timestep: [false,true]
+  data.duplicate_final_timestep: [true]
   # data.batches: [4]
   knockout.mode: [null]
   knockout.time: [null]

@@ -42,7 +42,7 @@ def _(data_14ch, plt, rearrange):
 
 @app.cell
 def _(data_14ch):
-    print(data_14ch[2])
+    print(data_14ch.channel_names)
     return
 
 
@@ -59,8 +59,8 @@ def _(load_micropattern_260726):
 
 @app.cell
 def _(data_14ch, plt):
-    print(data_14ch[3].shape)
-    plt.imshow(data_14ch[3][2,0])
+    print(data_14ch.boundary_mask.shape)
+    plt.imshow(data_14ch.boundary_mask[2, 0])
     return
 
 
@@ -81,13 +81,13 @@ def _(load_micropattern_circle_nodal_knockout_9ch_explicit_colony):
 
 @app.cell
 def _(data, data_4ch, plt, rearrange):
-    print(data[0].shape)
-    print(data_4ch[0].shape)
+    print(data.data.shape)
+    print(data_4ch.data.shape)
 
-    plt.imshow(rearrange(data[0][0,:,0],"T X Y -> X (T Y)"))
+    plt.imshow(rearrange(data.data[0,:,0],"T X Y -> X (T Y)"))
     plt.show()
     # plt.imshow(data_4ch[0][0,-1,0])
-    plt.imshow(rearrange(data_4ch[0][0,:,0],"T X Y -> X (T Y)"))
+    plt.imshow(rearrange(data_4ch.data[0,:,0],"T X Y -> X (T Y)"))
     plt.show()
     return
 
@@ -111,18 +111,23 @@ def _(load_micropattern_circle_nodal_knockout_9ch_explicit_colony):
                 Channel names for data
 
         """
-        data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath="../Data/Timecourse Seperate Colonies/",
             FILTER_KN_TIME=24,
             DOWNSAMPLE = DOWNSAMPLE,
             BATCHES=1,
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
                 # "downsample",
-            }
+            )
         )
-        return data,boundary_mask,CHANNEL_NAMES,CHANNEL_TIMESTEP_MASK
+        return (
+            dataset.data,
+            dataset.boundary_mask,
+            list(dataset.channel_names),
+            dataset.measurement_mask,
+        )
 
     return (get_data_colony_knockout,)
 

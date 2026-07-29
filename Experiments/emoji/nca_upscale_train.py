@@ -133,11 +133,12 @@ def _(model):
 @app.cell(column=1)
 def _(DATA_DOWNSAMPLE, DATA_PATH, H):
 
-    data = load_emoji_sequence(
+    emoji_dataset = load_emoji_sequence(
         ["alien_monster.png","microbe.png","rooster.png","rooster.png"],
         impath_emojis=DATA_PATH,
         downsample=DATA_DOWNSAMPLE,
     )
+    data = emoji_dataset.data
 
     schedule = optax.exponential_decay(1e-3, transition_steps=H["iters"], decay_rate=0.99)
     optimiser = optax.chain(optax.scale_by_param_block_norm(),

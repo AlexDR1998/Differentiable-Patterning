@@ -165,23 +165,20 @@ def _():
     DATA_12CH_CIRCULAR_KO = {}
 
     for _d in [1,2,4,8]:
-        (
-            _data,
-            _,
-            CHANNEL_NAMES_12CH_CIRCULAR,
-            BOUNDARY_MASK_9CH_CIRCULAR[_d],
-            _
-        ) = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        _dataset = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=DATA_PATH_GROUPED,
             FILTER_KN_TIME=None,
             BATCHES=1,
             DOWNSAMPLE=_d,
             TIMESTEPS=[0,12,24,36,48],
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
+            )
         )
+        _data = _dataset.data
+        CHANNEL_NAMES_12CH_CIRCULAR = list(_dataset.channel_names)
+        BOUNDARY_MASK_9CH_CIRCULAR[_d] = _dataset.boundary_mask
         DATA_12CH_CIRCULAR[_d] = _data
         _data_split = [_data[:,:,:4],_data[:,:,7:]]
         DATA_9CH_CIRCULAR[_d] = np.concatenate(_data_split,axis=2)
@@ -189,23 +186,18 @@ def _():
         _ko_9ch = {}
         _ko_12ch = {}
         for _kn in [0,24]:
-            (
-                _ko,
-                _,
-                _,
-                _,
-                _
-            ) = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+            _ko_dataset = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
                 impath=DATA_PATH_GROUPED,
                 FILTER_KN_TIME=_kn,
                 BATCHES=1,
                 DOWNSAMPLE=_d,
                 TIMESTEPS=[0,12,24,36,48],
-                PROCESSING_MODES={
+                PROCESSING_MODES=(
                     "map_to_0_1",
                     "downsample"
-                }
+                )
             )
+            _ko = _ko_dataset.data
             _ko_12ch[_kn] = _ko
             _ko_9ch_split = [_ko[:,:,:4],_ko[:,:,7:]]
             _ko_9ch[_kn] = np.concatenate(_ko_9ch_split,axis=2)
@@ -2091,23 +2083,21 @@ def get_shaped_data_synthetic(DOWNSAMPLE,shape="triangle",radius=0.28):
     #     }
     # )
 
-    (
-        data_circle_12ch,
-        aux,
-        CHANNEL_NAMES_12CH_CIRCULAR,
-        boundary_mask_circle,
-        _
-    ) = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+    circle_dataset = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
         impath=DATA_PATH_GROUPED,
         FILTER_KN_TIME=None,
         BATCHES=1,
         DOWNSAMPLE=DOWNSAMPLE,
         TIMESTEPS=[0,12,24,36,48],
-        PROCESSING_MODES={
+        PROCESSING_MODES=(
             "map_to_0_1",
             "downsample"
-        }
+        )
     )
+    data_circle_12ch = circle_dataset.data
+    aux = circle_dataset.aux
+    CHANNEL_NAMES_12CH_CIRCULAR = list(circle_dataset.channel_names)
+    boundary_mask_circle = circle_dataset.boundary_mask
     CHANNEL_NAMES_9CH_CIRCULAR = CHANNEL_NAMES_12CH_CIRCULAR[:4] + CHANNEL_NAMES_12CH_CIRCULAR[7:]
     # data_circle = data_circle_12ch
     _data_split = [data_circle_12ch[:,:,:4],data_circle_12ch[:,:,7:]]
@@ -2135,16 +2125,19 @@ def get_shaped_data_synthetic(DOWNSAMPLE,shape="triangle",radius=0.28):
         CIRCLE_DATA=data_circle,
         CIRCLE_HIST_BINS=None,
         CIRCLE_MASK=boundary_mask_circle,
-        PROCESSING_MODES={
+        PROCESSING_MODES=(
             "map_to_0_1",
             "downsample"
-        },
+        ),
         CHANNELS=CHANNEL_NAMES_9CH_CIRCULAR,
         SHAPED_MASK=SHAPED_MASK
 
     )
     # print(I)
-    (data,mask,X0,SHAPE_CHANNEL_NAMES) = I
+    data = I.data
+    mask = I.masks
+    X0 = I.synthetic_initial_conditions
+    SHAPE_CHANNEL_NAMES = list(I.channel_names)
     if shape=="donut":
         # hole = onp.ones_like(mask)
         hole = rmask(radius,mask)

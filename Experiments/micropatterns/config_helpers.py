@@ -11,6 +11,7 @@ from Common.dataloader.micropattern import (
     load_micropattern_circle_4ch_individual,
     load_micropattern_circle_nodal_knockout_9ch_explicit_colony,
 )
+from Common.dataloader.results import MicropatternDataset
 from Experiments.config_helpers import (
     _compact_value,
     build_loss_filename,
@@ -22,6 +23,21 @@ from NCA.trainer.data_augmenter_260726 import DataAugmenter as DataAugmenter2607
 
 
 NODAL_CHANNEL = 7
+
+
+def _coerce_dataset_result(result):
+    """Accept old tuple-returning test doubles while loaders migrate."""
+
+    if isinstance(result, MicropatternDataset):
+        return result
+    data, aux, names, boundary, measurement_mask = result
+    return MicropatternDataset(
+        data=data,
+        aux=aux,
+        channel_names=tuple(names),
+        boundary_mask=boundary,
+        measurement_mask=measurement_mask,
+    )
 
 
 def build_knockout_times(mode, knockout_time, batches):
@@ -258,7 +274,7 @@ def load_data(cfg, impath=None):
             if data_path_base is None:
                 raise ValueError("DATA_PATH_BASE must be set when load_data is called without impath.")
             impath = os.path.join(data_path_base, "260726_nca_dataset")
-        data, aux, names, boundary, mask = load_micropattern_260726(
+        dataset = _coerce_dataset_result(load_micropattern_260726(
             impath,
             conditions=("ctrl",),
             timesteps=tuple(cfg.data.timesteps),
@@ -266,8 +282,13 @@ def load_data(cfg, impath=None):
             replicate_count=cfg.data.batches,
             batch_multiplier=cfg.data.get("batch_multiplier", 1),
             experiment_groups=cfg.data.get("experiment_groups", None),
-        )
-        selected_schema = aux["channel_schema"]
+        ))
+        data = dataset.data
+        aux = dataset.aux
+        names = dataset.channel_names
+        boundary = dataset.boundary_mask
+        mask = dataset.measurement_mask
+        selected_schema = dataset.schema
         selected_channel_count = getattr(
             selected_schema, "n_measurement_channels", data.shape[2]
         )
@@ -282,8 +303,8 @@ def load_data(cfg, impath=None):
         )
         cfg_str = (
             f"data_b{cfg.data.batches}"
-            f"_bm{cfg.data.get('batch_multiplier', 1)}"
             f"_c{selected_channel_count}"
+            f"_bm{cfg.data.get('batch_multiplier', 1)}"
             f"_g{group_str}"
             f"_ds{cfg.data.downsample}"
             f"_ts{_compact_value(list(cfg.data.timesteps))}"
@@ -303,16 +324,21 @@ def load_data(cfg, impath=None):
         impath = data_path_base + "Timecourse_seperate_colonies/"
 
     if cfg.knockout.mode is None and data_channels == 4:
-        data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_micropattern_circle_4ch_individual(
+        dataset = _coerce_dataset_result(load_micropattern_circle_4ch_individual(
             impath=os.path.join(impath, "A/*"),
             BATCHES=cfg.data.batches,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
-        )
+            )
+        ))
+        data = dataset.data
+        aux = dataset.aux
+        CHANNEL_NAMES = list(dataset.channel_names)
+        boundary_mask = dataset.boundary_mask
+        CHANNEL_TIMESTEP_MASK = dataset.measurement_mask
         CHANNEL_NAMES = [
             channel_name if channel_name.startswith("A-") else f"A-{channel_name}"
             for channel_name in CHANNEL_NAMES
@@ -324,54 +350,74 @@ def load_data(cfg, impath=None):
                 b=cfg.data.batches,
             )
     elif cfg.knockout.mode is None:
-        data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset = _coerce_dataset_result(load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=cfg.knockout.time,
             BATCHES=cfg.data.batches,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
-        )
+            )
+        ))
+        data = dataset.data
+        aux = dataset.aux
+        CHANNEL_NAMES = list(dataset.channel_names)
+        boundary_mask = dataset.boundary_mask
+        CHANNEL_TIMESTEP_MASK = dataset.measurement_mask
     elif cfg.knockout.mode=="only_one_ko":
-        data,aux,CHANNEL_NAMES,boundary_mask,CHANNEL_TIMESTEP_MASK = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset = _coerce_dataset_result(load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=cfg.knockout.time,
             BATCHES=cfg.data.batches,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
-        )
+            )
+        ))
+        data = dataset.data
+        aux = dataset.aux
+        CHANNEL_NAMES = list(dataset.channel_names)
+        boundary_mask = dataset.boundary_mask
+        CHANNEL_TIMESTEP_MASK = dataset.measurement_mask
     
     elif cfg.knockout.mode=="one_ko_and_baseline":
         
-        data_ko,aux,CHANNEL_NAMES,boundary_mask_ko,CHANNEL_TIMESTEP_MASK_KO = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset_ko = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=cfg.knockout.time,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
+            )
         )
-        data_base,aux,CHANNEL_NAMES,boundary_mask_base,CHANNEL_TIMESTEP_MASK_BASE = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset_base = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=None, # type: ignore
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
+            )
         )
+        dataset_ko = _coerce_dataset_result(dataset_ko)
+        dataset_base = _coerce_dataset_result(dataset_base)
+        data_ko = dataset_ko.data
+        boundary_mask_ko = dataset_ko.boundary_mask
+        CHANNEL_TIMESTEP_MASK_KO = dataset_ko.measurement_mask
+        data_base = dataset_base.data
+        aux = dataset_base.aux
+        CHANNEL_NAMES = list(dataset_base.channel_names)
+        boundary_mask_base = dataset_base.boundary_mask
+        CHANNEL_TIMESTEP_MASK_BASE = dataset_base.measurement_mask
         data = jnp.concatenate([data_ko,data_base],axis=0)
         boundary_mask = jnp.concatenate([boundary_mask_ko,boundary_mask_base],axis=0)
         CHANNEL_TIMESTEP_MASK = jnp.concatenate([CHANNEL_TIMESTEP_MASK_KO,CHANNEL_TIMESTEP_MASK_BASE],axis=0)
@@ -381,40 +427,55 @@ def load_data(cfg, impath=None):
             CHANNEL_TIMESTEP_MASK = repeat(CHANNEL_TIMESTEP_MASK,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/2))[:cfg.data.batches]
 
     elif cfg.knockout.mode=="both_ko_and_baseline":
-        data_ko_0,aux,CHANNEL_NAMES,boundary_mask_ko_0,CHANNEL_TIMESTEP_MASK_KO_0 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset_ko_0 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=0,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
+            )
         )
 
-        data_ko_24,aux,CHANNEL_NAMES,boundary_mask_ko_24,CHANNEL_TIMESTEP_MASK_KO_24 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset_ko_24 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=24,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
+            )
         )
-        data_base,aux,CHANNEL_NAMES,boundary_mask_base,CHANNEL_TIMESTEP_MASK_BASE = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset_base = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=None, # pyright: ignore[reportArgumentType]
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
+            )
         )
+
+        dataset_ko_0 = _coerce_dataset_result(dataset_ko_0)
+        dataset_ko_24 = _coerce_dataset_result(dataset_ko_24)
+        dataset_base = _coerce_dataset_result(dataset_base)
+        data_ko_0 = dataset_ko_0.data
+        boundary_mask_ko_0 = dataset_ko_0.boundary_mask
+        CHANNEL_TIMESTEP_MASK_KO_0 = dataset_ko_0.measurement_mask
+        data_ko_24 = dataset_ko_24.data
+        boundary_mask_ko_24 = dataset_ko_24.boundary_mask
+        CHANNEL_TIMESTEP_MASK_KO_24 = dataset_ko_24.measurement_mask
+        data_base = dataset_base.data
+        aux = dataset_base.aux
+        CHANNEL_NAMES = list(dataset_base.channel_names)
+        boundary_mask_base = dataset_base.boundary_mask
+        CHANNEL_TIMESTEP_MASK_BASE = dataset_base.measurement_mask
 
 
         data = jnp.concatenate([data_ko_0,data_ko_24,data_base],axis=0)
@@ -426,29 +487,40 @@ def load_data(cfg, impath=None):
             CHANNEL_TIMESTEP_MASK = repeat(CHANNEL_TIMESTEP_MASK,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/3))[:cfg.data.batches]
 
     elif cfg.knockout.mode=="only_both_ko":
-        data_ko_0,aux,CHANNEL_NAMES,boundary_mask_ko_0,CHANNEL_TIMESTEP_MASK_KO_0 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset_ko_0 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=0,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
+            )
         )
 
-        data_ko_24,aux,CHANNEL_NAMES,boundary_mask_ko_24,CHANNEL_TIMESTEP_MASK_KO_24 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
+        dataset_ko_24 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=24,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
             TIMESTEPS=list(cfg.data.timesteps),
-            PROCESSING_MODES={
+            PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
-            }
+            )
         )
+
+        dataset_ko_0 = _coerce_dataset_result(dataset_ko_0)
+        dataset_ko_24 = _coerce_dataset_result(dataset_ko_24)
+        data_ko_0 = dataset_ko_0.data
+        boundary_mask_ko_0 = dataset_ko_0.boundary_mask
+        CHANNEL_TIMESTEP_MASK_KO_0 = dataset_ko_0.measurement_mask
+        data_ko_24 = dataset_ko_24.data
+        aux = dataset_ko_24.aux
+        CHANNEL_NAMES = list(dataset_ko_24.channel_names)
+        boundary_mask_ko_24 = dataset_ko_24.boundary_mask
+        CHANNEL_TIMESTEP_MASK_KO_24 = dataset_ko_24.measurement_mask
 
         data = jnp.concatenate([data_ko_0,data_ko_24],axis=0)
         boundary_mask = jnp.concatenate([boundary_mask_ko_0,boundary_mask_ko_24],axis=0)
