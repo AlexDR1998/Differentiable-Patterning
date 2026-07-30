@@ -50,6 +50,20 @@ inline bool SerializeCustomCallsEnabled() {
          std::strcmp(value, "False") != 0;
 }
 
+inline bool SerializeBackwardCustomCallsEnabled() {
+  const char* value = std::getenv("NCA_SYCL_SERIALIZE_BACKWARD_CUSTOM_CALLS");
+  return value != nullptr && value[0] != '\0' &&
+         std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0 &&
+         std::strcmp(value, "False") != 0;
+}
+
+inline bool SerializeOneMklEnabled() {
+  const char* value = std::getenv("NCA_SYCL_SERIALIZE_ONEMKL");
+  return value != nullptr && value[0] != '\0' &&
+         std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0 &&
+         std::strcmp(value, "False") != 0;
+}
+
 [[noreturn]] inline void ReportSyclFailure(const char* stage,
                                            const std::exception& error) {
   std::cerr << "NCA_SYCL_ASYNC_FAILURE stage=" << stage
@@ -69,9 +83,10 @@ inline void WaitAndReport(sycl::queue& queue, const char* stage) {
 
 class SerializedCustomCall {
  public:
-  SerializedCustomCall(sycl::queue& queue, const char* stage)
+  SerializedCustomCall(sycl::queue& queue, const char* stage,
+                       bool enabled = SerializeCustomCallsEnabled())
       : queue_(queue), stage_(stage), lock_(Mutex(), std::defer_lock) {
-    if (SerializeCustomCallsEnabled()) lock_.lock();
+    if (enabled) lock_.lock();
   }
 
   ~SerializedCustomCall() {

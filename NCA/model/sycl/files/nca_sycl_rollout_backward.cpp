@@ -100,7 +100,10 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
   RolloutMetadata m{};
   std::memcpy(&m, opaque, sizeof(m));
   if (m.version != nca_sycl::kMetadataVersion || m.steps <= 0) return;
-  nca_sycl::SerializedCustomCall serialized(*queue, "rollout/backward_serialized");
+  nca_sycl::SerializedCustomCall serialized(
+      *queue, "rollout/backward_serialized",
+      nca_sycl::SerializeCustomCallsEnabled() ||
+          nca_sycl::SerializeBackwardCustomCallsEnabled());
 
   auto* initial_state = static_cast<float*>(buffers[0]);
   auto* kernels = static_cast<float*>(buffers[1]);
