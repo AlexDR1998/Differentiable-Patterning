@@ -8,6 +8,7 @@ from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_gated_model import gNCA
 from NCA.model.NCA_gated_noise_model import gnNCA
 from NCA.model.NCA_model import NCA
+from NCA.model.NCA_normalized_model import NormalizedNCA
 from NCA.model.NCA_model_fast import NCA as NCAFast
 from NCA.model.NCA_sycl import NCA as NCASycl
 from NCA.model.NCA_noise_model import nNCA
@@ -29,6 +30,25 @@ def _cfg_get(cfg, key, default=None):
     if hasattr(cfg, "get"):
         return cfg.get(key, default)
     return getattr(cfg, key, default)
+
+
+def compute_channel_statistics(data, channel_axis=2, epsilon=1e-6):
+    """Compute fixed per-channel mean/std from a loaded trajectory array.
+
+    The training data convention is ``[batch, time, channel, height, width]``
+    (and this also supports extra leading dimensions). Statistics are computed
+    over every axis except the channel axis.
+    """
+    import jax.numpy as jnp
+
+    values = jnp.asarray(data)
+    if values.ndim < 3:
+        raise ValueError(f"Expected trajectory data with at least 3 dimensions, got {values.shape}")
+    channel_axis %= values.ndim
+    reduce_axes = tuple(axis for axis in range(values.ndim) if axis != channel_axis)
+    mean = jnp.mean(values, axis=reduce_axes)
+    std = jnp.maximum(jnp.std(values, axis=reduce_axes), epsilon)
+    return mean, std
 
 
 def _compact_value(value):
@@ -307,6 +327,10 @@ def build_model_config_string(cfg):
         cfg_str += f"_ks{kernel_scale}"
     if cfg.model.family in {"nNCA", "gnNCA"}:
         cfg_str += f"_pn{_cfg_get(cfg.model, 'parameter_noise_level', 0.01)}"
+    if cfg.model.family == "NormalizedNCA":
+        normalization = _cfg_get(cfg.model, "normalization", "none")
+        if normalization != "none":
+            cfg_str += f"_norm{normalization}"
     if cfg.model.family == "FastKaNCA":
         kan_cfg = _cfg_get(cfg.model, "kan", None)
         cfg_str += f"_kb{_cfg_get(kan_cfg, 'num_basis', 8)}"
@@ -353,6 +377,20 @@ def build_model(cfg, key=None):
             FIRE_RATE=cfg.model.fire_rate,
             PADDING=cfg.model.padding,
             KERNEL_SCALE=kernel_scale,
+            key=key,
+        )
+    elif cfg.model.family == "NormalizedNCA":
+        model = NormalizedNCA(
+            N_CHANNELS=cfg.model.channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            NORMALIZATION=_cfg_get(cfg.model, "normalization", "none"),
+            NORMALIZATION_MEAN=_cfg_get(cfg.model, "normalization_mean", None),
+            NORMALIZATION_STD=_cfg_get(cfg.model, "normalization_std", None),
+            NORMALIZATION_EPS=_cfg_get(cfg.model, "normalization_eps", 1e-6),
             key=key,
         )
     elif cfg.model.family == "NCA_fast":

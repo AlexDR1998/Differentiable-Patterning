@@ -7,7 +7,11 @@ def run(cfg):
     import jax
     from dotenv import load_dotenv
 
-    from Experiments.config_helpers import build_loss_args, build_model
+    from Experiments.config_helpers import (
+        build_loss_args,
+        build_model,
+        compute_channel_statistics,
+    )
     from Experiments.emoji.config_helpers import (
         build_data_augmenter,
         build_filename,
@@ -24,9 +28,20 @@ def run(cfg):
 
     key = jax.random.PRNGKey(cfg.seed)
     model_key, train_key = jax.random.split(key)
+    data, data_name = load_data(cfg)
+    if (
+        cfg.model.family == "NormalizedNCA"
+        and cfg.model.get("normalization", "none") == "fixed"
+        and (
+            cfg.model.get("normalization_mean", None) is None
+            or cfg.model.get("normalization_std", None) is None
+        )
+    ):
+        mean, std = compute_channel_statistics(data)
+        cfg.model.normalization_mean = mean.tolist()
+        cfg.model.normalization_std = std.tolist()
     model, model_name = build_model(cfg, key=model_key)
     optimiser, optimiser_name, schedule = build_optimizer(cfg, return_schedule=True)
-    data, data_name = load_data(cfg)
     augmenter, augmenter_name = build_data_augmenter(cfg)
     run_name = f"{build_filename(cfg, model_name, data_name, augmenter_name)}_{optimiser_name}"
 
