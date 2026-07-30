@@ -35,6 +35,9 @@ def build_run_name(cfg, model_name, optimiser_name):
             )
         if cfg.system.xla_flags:
             details += "_xla_flags_" + "".join(list(cfg.system.xla_flags))
+        repeat = _cfg_get(cfg.run, "repeat", None)
+        if repeat is not None:
+            details += f"_rep{repeat}"
     elif mode == "train":
         loss_name = build_loss_filename(
             cfg,
@@ -64,6 +67,8 @@ def build_run_name(cfg, model_name, optimiser_name):
         details += f"_sync{int(cfg.trainer.get('sycl_synchronize_custom_calls', False))}"
         details += f"_stagesync{int(cfg.trainer.get('sycl_strict_stage_synchronization', False))}"
         details += f"_regreduce{cfg.trainer.get('sycl_regulariser_reduction', 'atomic')}"
+        details += f"_mklserial{int(cfg.trainer.get('sycl_serialize_onemkl', False))}"
+        details += f"_bwdserial{int(cfg.trainer.get('sycl_serialize_backward_custom_calls', False))}"
 
     return f"{model_name}_{loss_name}_{details}_{optimiser_name}"
 

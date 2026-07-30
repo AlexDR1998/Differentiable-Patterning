@@ -71,3 +71,9 @@ slower than normal execution. `trainer.sycl_regulariser_reduction` selects
 either the historical `atomic` accumulation or a deterministic `two_stage`
 reduction that writes workgroup partials into existing rollout scratch space
 before a second kernel produces the two scalar regulariser sums.
+
+For two-tile backward reliability, prefer
+`trainer.sycl_serialize_onemkl: true`. It serializes and waits for native
+oneMKL GEMMs while allowing the remaining SYCL kernels on both tiles to overlap.
+`trainer.sycl_serialize_backward_custom_calls: true` serializes the complete
+backward custom call and is retained as a slower reference/fallback.

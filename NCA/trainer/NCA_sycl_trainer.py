@@ -82,6 +82,8 @@ class NCA_sycl_Trainer(NCA_Trainer):
         SYCL_PMEAN_LOSS=True,
         SYCL_PMEAN_REGULARISERS=True,
         SYCL_SERIALIZE_CUSTOM_CALLS=None,
+        SYCL_SERIALIZE_ONEMKL=None,
+        SYCL_SERIALIZE_BACKWARD_CUSTOM_CALLS=None,
         **kwargs,
     ):
         self.synchronize_custom_calls = configure_custom_call_synchronization(
@@ -101,6 +103,13 @@ class NCA_sycl_Trainer(NCA_Trainer):
         self.pmean_regularisers = SYCL_PMEAN_REGULARISERS
         self.serialize_custom_calls = _configure_boolean_environment(
             "NCA_SYCL_SERIALIZE_CUSTOM_CALLS", SYCL_SERIALIZE_CUSTOM_CALLS
+        )
+        self.serialize_onemkl = _configure_boolean_environment(
+            "NCA_SYCL_SERIALIZE_ONEMKL", SYCL_SERIALIZE_ONEMKL
+        )
+        self.serialize_backward_custom_calls = _configure_boolean_environment(
+            "NCA_SYCL_SERIALIZE_BACKWARD_CUSTOM_CALLS",
+            SYCL_SERIALIZE_BACKWARD_CUSTOM_CALLS,
         )
         super().__init__(*args, **kwargs)
         if isinstance(SYCL_FUSED_STEPS, bool) or not isinstance(
@@ -134,6 +143,12 @@ class NCA_sycl_Trainer(NCA_Trainer):
             f"NCA SYCL serialized custom calls: {self.serialize_custom_calls}",
             flush=True,
         )
+        print(f"NCA SYCL serialized oneMKL: {self.serialize_onemkl}", flush=True)
+        print(
+            "NCA SYCL serialized backward custom calls: "
+            f"{self.serialize_backward_custom_calls}",
+            flush=True,
+        )
 
     def setup_logging(self, *args, **kwargs):
         self.TRAIN_CONFIG["SYCL_SYNCHRONIZE_CUSTOM_CALLS"] = (
@@ -151,6 +166,10 @@ class NCA_sycl_Trainer(NCA_Trainer):
         )
         self.TRAIN_CONFIG["SYCL_SERIALIZE_CUSTOM_CALLS"] = (
             self.serialize_custom_calls
+        )
+        self.TRAIN_CONFIG["SYCL_SERIALIZE_ONEMKL"] = self.serialize_onemkl
+        self.TRAIN_CONFIG["SYCL_SERIALIZE_BACKWARD_CUSTOM_CALLS"] = (
+            self.serialize_backward_custom_calls
         )
         return super().setup_logging(*args, **kwargs)
 

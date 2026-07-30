@@ -36,3 +36,24 @@ Training diagnostics can independently disable `trainer.sycl_pmean_loss` and
 its reverse-mode gradient collective, so the result is intentionally not a
 numerically equivalent training run. `trainer.sycl_serialize_custom_calls`
 keeps two-tile sharding but serializes native calls across tile threads.
+
+## Reliability and speed validation
+
+Run 100 repetitions each of the failing baseline and the narrow oneMKL
+mitigation with:
+
+```bash
+tests/tools/submit_nca_sycl_onemkl_benchmark.sh
+```
+
+The summarizer reports median/minimum/maximum successful probe time as well as
+crash counts. For end-to-end measurements, generate manifests from:
+
+- `Experiments/micropatterns/conf/experiments/nca_intel_onemkl_runtime_benchmark.yaml`
+- `Experiments/micropatterns/conf/experiments/nca_intel_onemkl_training_stability.yaml`
+
+The runtime sweep contains 18 jobs: three repeats of three execution policies
+at standard and BF16 precision. The training sweep contains 15 BF16 jobs: five
+repeats of the same policies for 1,000 real optimiser iterations. The policies
+are single-tile baseline, two-tile oneMKL-only serialization, and two-tile
+backward-wide serialization.

@@ -7,6 +7,7 @@ import argparse
 import collections
 import pathlib
 import re
+import statistics
 
 
 def field(text, name, default="unknown"):
@@ -34,16 +35,19 @@ def main():
                 "PASS" if passed else "CRASH_OR_FAIL",
                 stdout.name,
                 field(text + "\n" + error_text, "JAX_VERSION"),
+                field(text, "ELAPSED_SECONDS", default=""),
             )
         )
 
     if not records:
         raise SystemExit(f"No .out files found in {args.log_directory}")
 
-    counts = collections.Counter((probe, outcome) for probe, _, outcome, _, _ in records)
-    hosts = collections.Counter(host for _, host, _, _, _ in records)
+    counts = collections.Counter(
+        (probe, outcome) for probe, _, outcome, _, _, _ in records
+    )
+    hosts = collections.Counter(host for _, host, _, _, _, _ in records)
     host_failures = collections.Counter(
-        host for _, host, outcome, _, _ in records if outcome != "PASS"
+        host for _, host, outcome, _, _, _ in records if outcome != "PASS"
     )
     print("PROBE OUTCOME COUNT")
     for key, count in sorted(counts.items()):
@@ -51,8 +55,25 @@ def main():
     print("\nHOST TOTAL FAILURES")
     for host, total in sorted(hosts.items()):
         print(host, total, host_failures[host], sep="\t")
+    print("\nPROBE PASS ELAPSED_MEDIAN_SECONDS ELAPSED_MIN_SECONDS ELAPSED_MAX_SECONDS")
+    probes = sorted({probe for probe, _, _, _, _, _ in records})
+    for probe in probes:
+        elapsed = [
+            float(value)
+            for item_probe, _, outcome, _, _, value in records
+            if item_probe == probe and outcome == "PASS" and value
+        ]
+        if elapsed:
+            print(
+                probe,
+                len(elapsed),
+                statistics.median(elapsed),
+                min(elapsed),
+                max(elapsed),
+                sep="\t",
+            )
     print("\nFAILED LOGS")
-    for probe, host, outcome, filename, version in records:
+    for probe, host, outcome, filename, version, _ in records:
         if outcome != "PASS":
             print(probe, host, version, filename, sep="\t")
 

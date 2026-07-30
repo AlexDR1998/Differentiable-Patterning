@@ -37,6 +37,12 @@ def build_trainer(cfg, *, model, data, run_name, data_augmenter, model_directory
             "SYCL_SERIALIZE_CUSTOM_CALLS": cfg.trainer.get(
                 "sycl_serialize_custom_calls", False
             ),
+            "SYCL_SERIALIZE_ONEMKL": cfg.trainer.get(
+                "sycl_serialize_onemkl", False
+            ),
+            "SYCL_SERIALIZE_BACKWARD_CUSTOM_CALLS": cfg.trainer.get(
+                "sycl_serialize_backward_custom_calls", False
+            ),
         }
 
     return trainer_class(

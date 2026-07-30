@@ -14,13 +14,12 @@ set -eo pipefail
 
 REPO_ROOT="${NCA_SYCL_PROBE_REPO_ROOT:?NCA_SYCL_PROBE_REPO_ROOT is required}"
 PROBE_REPEATS="${NCA_SYCL_PROBE_REPEATS:-20}"
-PROBES=(
-    baseline
-    strict_stages
-    serialize_onemkl
-    serialize_backward
-    bf16_compute
-)
+DEFAULT_PROBES="baseline strict_stages serialize_onemkl serialize_backward bf16_compute"
+read -r -a PROBES <<< "${NCA_SYCL_PROBES:-${DEFAULT_PROBES}}"
+if [[ "${#PROBES[@]}" -eq 0 ]]; then
+    echo "NCA_SYCL_PROBES must select at least one probe" >&2
+    exit 2
+fi
 # Interleave probe types so scheduler timing and node allocation are not
 # correlated with one contiguous block of probe variants.
 PROBE_INDEX=$((SLURM_ARRAY_TASK_ID % ${#PROBES[@]}))
