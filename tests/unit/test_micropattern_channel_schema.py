@@ -118,3 +118,31 @@ def test_schema_validates_target_tensor_channel_count():
     schema.validate_measurement_channel_count(14)
     with pytest.raises(ValueError, match="expects 14 measurement channels"):
         schema.validate_measurement_channel_count(11)
+
+
+def test_schema_can_select_experiment_groups_and_recompute_state_layout():
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(
+        ["cell_fate_s1", "rna_expression"]
+    )
+
+    assert schema.group_names == ("cell_fate_s1", "rna_expression")
+    assert schema.state_channels == (
+        "LMBR",
+        "TBXT",
+        "SOX17",
+        "SOX2",
+        "CER1",
+        "LEFTY",
+        "NODAL",
+    )
+    assert schema.n_measurement_channels == 7
+    assert schema.target_to_state == (2, 3, 1, 0, 4, 5, 6)
+    assert schema.primary_measurements == (3, 2, 0, 1, 4, 5, 6)
+
+
+def test_schema_rejects_invalid_group_selection():
+    with pytest.raises(ValueError, match="Unknown experiment groups"):
+        MICROPATTERN_260726_SCHEMA.select_groups(["not_a_group"])
+
+    with pytest.raises(ValueError, match="cannot contain duplicates"):
+        MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1", "cell_fate_s1"])

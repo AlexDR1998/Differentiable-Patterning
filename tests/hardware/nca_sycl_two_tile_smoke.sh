@@ -12,7 +12,7 @@
 
 set -eo pipefail
 
-ORIGINAL_REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+ORIGINAL_REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 if [[ -z "${SLURM_JOB_ID:-}" ]]; then
     JOB_ID="$(sbatch --parsable \
         --export=ALL,NCA_SYCL_SMOKE_REPO_ROOT="${ORIGINAL_REPO_ROOT}" \
@@ -39,4 +39,4 @@ echo "NCA_SYCL_COMPILE_RESULT=PASS"
 
 cd "${REPO_ROOT}"
 PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}" \
-    python -u tests/nca_sycl_two_tile_smoke.py
+    python -u tests/hardware/nca_sycl_two_tile_smoke.py

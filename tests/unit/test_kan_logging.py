@@ -22,6 +22,7 @@ from NCA.trainer.tensorboard_log import (
     plot_channel_correlation_diagnostics,
     plot_channel_time_grid,
     plot_radial_intensity_diagnostics,
+    plot_radial_intensity_line_diagnostics,
     plot_total_intensity_diagnostics,
 )
 from NCA.trainer.kan_tensorboard_log import (
@@ -235,6 +236,23 @@ def test_channel_time_diagnostics_compute_masked_totals_and_radial_means():
     ]
     assert np.allclose(nonempty_prediction_values, 1.0)
     assert np.allclose(nonempty_target_values, 2.0)
+    assert diagnostics["radius"][-1] > 1.0
+
+
+def test_radial_profile_line_plot_contains_one_line_per_timestep_and_channel():
+    diagnostics = {
+        "target_radial_profile": np.ones((3, 2, 4), dtype=np.float32),
+        "prediction_radial_profile": np.zeros((3, 2, 4), dtype=np.float32),
+        "radius": np.linspace(0.0, 1.5, 4),
+    }
+
+    image = plot_radial_intensity_line_diagnostics(
+        diagnostics, ["a", "b"], ["t1", "t2", "t3"]
+    )
+
+    assert image.ndim == 4
+    assert image.shape[0] == 1
+    assert image.shape[-1] in {3, 4}
 
 
 def test_grouped_diagnostic_outputs_are_aligned_to_12_target_channels():
@@ -374,6 +392,7 @@ def test_training_logger_emits_channel_time_diagnostics_without_wandb():
     logger.diagnostic_boundary_mask = np.ones((1, 1, 5, 5), dtype=np.float32)
     logger.diagnostic_grouped_channels = True
     logger.radial_bins = 4
+    logger.radial_extent = 1.5
     logger.channel_names = [f"channel_{index + 1}" for index in range(12)]
     logger.timepoint_names = ["t12h", "t24h"]
     logged = {"scalars": {}, "images": []}
@@ -391,6 +410,7 @@ def test_training_logger_emits_channel_time_diagnostics_without_wandb():
     assert logged["images"] == [
         "Diagnostics/total_intensity",
         "Diagnostics/radial_intensity_profiles",
+        "Diagnostics/radial_intensity_lines",
         "Diagnostics/channel_correlation",
     ]
 

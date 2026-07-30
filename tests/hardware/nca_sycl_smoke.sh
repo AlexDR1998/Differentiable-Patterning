@@ -12,7 +12,7 @@
 
 set -eo pipefail
 
-ORIGINAL_REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+ORIGINAL_REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 if [[ -z "${SLURM_JOB_ID:-}" ]]; then
     if ! command -v sbatch >/dev/null 2>&1; then
@@ -30,7 +30,7 @@ if [[ -z "${SLURM_JOB_ID:-}" ]]; then
 fi
 
 REPO_ROOT="${NCA_SYCL_SMOKE_REPO_ROOT:-${ORIGINAL_REPO_ROOT}}"
-PYTHON_TEST="${REPO_ROOT}/tests/nca_sycl_smoke.py"
+PYTHON_TEST="${REPO_ROOT}/tests/hardware/nca_sycl_smoke.py"
 BUILD_SCRIPT="${REPO_ROOT}/NCA/model/sycl/files/build_nca_sycl.sh"
 if [[ ! -f "${PYTHON_TEST}" || ! -f "${BUILD_SCRIPT}" ]]; then
     echo "NCA_SYCL_SMOKE_RESULT=FAIL_SOURCE_NOT_FOUND" >&2

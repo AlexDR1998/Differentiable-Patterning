@@ -31,7 +31,7 @@ fi
 
 if [[ -n "${SYCL_SMOKE_SOURCE_DIR:-}" ]]; then
     SOURCE_DIR="${SYCL_SMOKE_SOURCE_DIR}"
-elif [[ -f "${SLURM_SUBMIT_DIR:-}/tests/intel_sycl_smoke.cpp" ]]; then
+elif [[ -f "${SLURM_SUBMIT_DIR:-}/tests/hardware/intel_sycl_smoke.cpp" ]]; then
     SOURCE_DIR="${SLURM_SUBMIT_DIR}/tests"
 else
     SOURCE_DIR="${ORIGINAL_SCRIPT_DIR}"

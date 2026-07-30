@@ -1,6 +1,6 @@
-experiment_name: nca_4ch_1b4_sweep_5
+experiment_name: nca_4ch_1b4_sweep_6
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_4ch_1b4_sweep_5
+output_subdir: generated/nca_4ch_1b4_sweep_6
 seed_mode: index
 grid:
   system.gpu: [H200]
@@ -13,12 +13,12 @@ grid:
   
   run.scaling: [convective]
   run.iterations: [8000]
-  run.repeat: [0,1,2,3,4,5,6,7]
+  run.repeat: [0,1,2,3]
   run.t: [128]
   
   logging.wandb.project: [nca_micropattern_groups]
   # logging.wandb.group: [nca_4ch_1b4_test]
-  logging.wandb.group: [nca_4ch_1b4_sweep_5]
+  logging.wandb.group: [nca_4ch_1b4_sweep_6]
   logging.singular_values.enabled: [true]
   logging.singular_values.plot_spectra: [true]
   logging.singular_values.epsilon: [1e-8]
@@ -27,7 +27,7 @@ grid:
   loss.args.multi_target_weights.texture: [1.0]
   loss.args.multi_target_weights.channel_mean: [0.0]
   loss.args.multi_target_weights.correlation: [0.0]
-  loss.args.multi_target_weights.radial: [0.0,0.1,1.0]
+  loss.args.multi_target_weights.radial: [0.0,0.001,0.01,0.1]
   loss.args.assignment: [hard]
   # loss.primary: [l2]
   # loss.primary: [multi_target]
@@ -66,7 +66,7 @@ grid:
   optimiser.schedule.type: [cosine]
   optimiser.schedule.final_factor: [0.5]
   optimiser.schedule.transition_fraction: [0.75]
-  optimiser.type: [nadam]
+  optimiser.type: [nadam,muon]
   optimiser.gradient_clip_norm: [1.0]
   optimiser.apply_if_finite: [true]
   optimiser.max_consecutive_errors: [16]

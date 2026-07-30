@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from Common.trainer.loss import build_loss_functions, l2_colony_grouped
 from Common.trainer.loss_vgg import grouped_vgg_triplet_weights
 from Experiments.config_helpers import build_loss_args, build_loss_filename
-from Experiments.hydra_template.workflow import generate_manifest
+from Experiments.config_workflow import generate_manifest
 from NCA.trainer.NCA_trainer import (
     combine_loss_components,
     resolve_loss_component_weights,

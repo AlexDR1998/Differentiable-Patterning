@@ -35,6 +35,28 @@ def test_multi_target_loss_is_invariant_to_groupwise_batch_order():
         assert jnp.allclose(components[f"group/{group}/total"], group_total)
 
 
+def test_multi_target_loss_accepts_a_selected_schema():
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
+    prediction = jax.random.uniform(
+        jax.random.PRNGKey(10), (3, 2, schema.n_state_channels, 8, 8)
+    )
+    target = jnp.take(prediction, jnp.asarray(schema.target_to_state), axis=2)
+
+    loss, components = multi_target_loss(
+        prediction,
+        target,
+        jnp.ones((8, 8), dtype=bool),
+        schema,
+        None,
+        jax.random.PRNGKey(11),
+        {"multi_target_weights": {"texture": 0.0}},
+    )
+
+    assert jnp.allclose(loss, 0.0, atol=1e-5)
+    assert "group/cell_fate_s1/total" in components
+    assert not any(name.startswith("group/rna_expression/") for name in components)
+
+
 def test_soft_assignment_components_reconstruct_loss():
     schema = MICROPATTERN_260726_SCHEMA
     key = jax.random.PRNGKey(4)
