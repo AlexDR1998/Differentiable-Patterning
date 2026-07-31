@@ -27,6 +27,16 @@ def _pairwise_l2(x, y, weights):
     return error.sum(axis=tuple(range(3, error.ndim))) / normalizer
 
 
+def _pairwise_group_l2(x, y, weights, mask):
+    """Weighted pixelwise L2 costs within one co-measured channel group."""
+    weights = jnp.asarray(weights, x.dtype)
+    channel_weights = weights.reshape((1, 1, 1, -1, 1, 1))
+    spatial_mask = mask.astype(x.dtype).reshape((1, 1, 1, 1, *mask.shape))
+    error = (x[:, None] - y[None]) ** 2 * channel_weights * spatial_mask
+    normalizer = jnp.maximum(weights.sum() * spatial_mask.sum(), 1.0)
+    return error.sum(axis=(-3, -2, -1)) / normalizer
+
+
 def _channel_means(x, mask):
     pixels = x.reshape(*x.shape[:3], -1)
     spatial_mask = mask.reshape(-1).astype(x.dtype)
@@ -83,6 +93,7 @@ def _assignment(cost, components, mode, tau):
 def _weights(args):
     """Return multi-target component weights with defaults."""
     return {
+        "l2": 0.0,
         "texture": 1.0,
         "channel_mean": 1.0,
         "radial": 1.0,
@@ -129,6 +140,7 @@ def multi_target_pairwise_costs(
             for left, right in local_pairs
         ])
         components = {
+            "l2": _pairwise_group_l2(x, y, channel_weights, boundary),
             "channel_mean": _pairwise_l2(x_mean, y_mean, channel_weights),
             "radial": _pairwise_l2(x_radial, y_radial, channel_weights[:, None]),
             "correlation": _pairwise_l2(x_corr, y_corr, correlation_weights),

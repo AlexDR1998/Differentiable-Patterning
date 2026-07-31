@@ -6,7 +6,7 @@ from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from Common.trainer.loss_multi_target import multi_target_loss
 from NCA.trainer.data_augmenter_260726 import DataAugmenter
 
-COMPONENT_NAMES = ("texture", "channel_mean", "radial", "correlation")
+COMPONENT_NAMES = ("l2", "texture", "channel_mean", "radial", "correlation")
 
 
 def test_multi_target_loss_is_invariant_to_groupwise_batch_order():
@@ -58,6 +58,35 @@ def test_multi_target_loss_accepts_a_selected_schema():
     assert not any(name.startswith("group/rna_expression/") for name in components)
 
 
+def test_multi_target_l2_is_computed_within_channel_groups():
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
+    prediction = jnp.zeros((1, 1, schema.n_state_channels, 2, 2))
+    target = jnp.ones((1, 1, schema.n_measurement_channels, 2, 2))
+    boundary = jnp.asarray([[True, False], [False, False]])
+
+    loss, components = multi_target_loss(
+        prediction,
+        target,
+        boundary,
+        schema,
+        None,
+        jax.random.PRNGKey(12),
+        {
+            "multi_target_weights": {
+                "l2": 1.0,
+                "texture": 0.0,
+                "channel_mean": 0.0,
+                "radial": 0.0,
+                "correlation": 0.0,
+            }
+        },
+    )
+
+    assert jnp.allclose(loss, 1.0)
+    assert jnp.allclose(components["l2"], 1.0)
+    assert jnp.allclose(components["group/cell_fate_s1/l2"], 1.0)
+
+
 def test_soft_assignment_components_reconstruct_loss():
     schema = MICROPATTERN_260726_SCHEMA
     key = jax.random.PRNGKey(4)
@@ -96,7 +125,7 @@ def test_snapshot_augmenter_outputs_unique_state_and_measurement_targets():
     augmenter = DataAugmenter(data, hidden_channels=2, nca_model=DownsamplingModel())
     augmenter.noise_strength = 0.0
 
-    x, y = augmenter.data_load(jax.random.PRNGKey(3))
+    x, y = augmenter.initialize_pool(jax.random.PRNGKey(3))
 
     assert len(x) == len(y) == 3
     assert x[0].shape == (4, 16, 4, 4)
@@ -119,7 +148,7 @@ def test_reinjection_preserves_group_specific_duplicate_measurements():
     observed = {"cell_fate_s2": False, "protein_response": False}
 
     for seed in range(20):
-        result, _ = augmenter.data_callback(zeros, targets, 0, jax.random.PRNGKey(seed))
+        result, _ = augmenter.advance_pool(zeros, targets, 0, jax.random.PRNGKey(seed))
         result = jnp.stack(result)
         for batch_index in range(3):
             for time_index in range(1, 4):
@@ -150,7 +179,7 @@ def test_sharded_reinjection_matches_global_two_and_four_batch_permutations():
         global_augmenter.noise_strength = 0.0
         zeros = [jnp.zeros((4, 10, 2, 2)) for _ in range(batch_count)]
         targets = [value[1:] for value in data]
-        expected, _ = global_augmenter.data_callback(zeros, targets, 0, key)
+        expected, _ = global_augmenter.advance_pool(zeros, targets, 0, key)
 
         split = batch_count // 2
         actual = []
@@ -159,7 +188,7 @@ def test_sharded_reinjection_matches_global_two_and_four_batch_permutations():
             local.noise_strength = 0.0
             local._global_batch_indices = indices
             local._sharded_global_key = key
-            result, _ = local.data_callback(
+            result, _ = local.advance_pool(
                 [zeros[int(index)] for index in indices],
                 [targets[int(index)] for index in indices],
                 0,
@@ -189,14 +218,14 @@ def test_snapshot_reinjection_resets_initial_state_and_honours_decay_start():
     stale = [jnp.zeros((4, 10, 2, 2)) for _ in range(3)]
     targets = [value[1:] for value in data]
 
-    before_decay, _ = augmenter.data_callback(
+    before_decay, _ = augmenter.advance_pool(
         stale, targets, 25, jax.random.PRNGKey(30)
     )
     before_decay = jnp.stack(before_decay)
     assert jnp.all(before_decay[:, 0] != 0.0)
     assert jnp.all(before_decay[:, 1:] == 0.0)
 
-    after_decay, _ = augmenter.data_callback(
+    after_decay, _ = augmenter.advance_pool(
         stale, targets, 100, jax.random.PRNGKey(30)
     )
     after_decay = jnp.stack(after_decay)

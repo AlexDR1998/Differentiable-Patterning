@@ -210,6 +210,9 @@ def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
                 f"_corr{_cfg_get(multi_target_weights, 'correlation', 0.0):g}"
                 f"_rad{_cfg_get(multi_target_weights, 'radial', 0.0):g}"
             )
+            l2_weight = _cfg_get(multi_target_weights, "l2", 0.0)
+            if float(l2_weight) != 0.0:
+                loss_str += f"_l2{l2_weight:g}"
     if include_loss_args and loss_args is not None:
         uses_ott = any("ott" in loss_name for loss_name in _as_list(cfg.loss.primary))
         if uses_ott:
