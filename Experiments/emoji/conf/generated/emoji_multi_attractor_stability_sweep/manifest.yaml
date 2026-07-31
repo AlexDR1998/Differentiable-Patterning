@@ -1,5 +1,5 @@
-experiment_name: emoji_multi_attractor_stability_sweep
-entrypoint: Experiments.emoji.emoji_training_sweep:run
+experiment_name: stability-and-regeneration-3
+entrypoint: Experiments.emoji.train:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/experiments/emoji_multi_attractor_stability_sweep.yaml
 output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/generated/emoji_multi_attractor_stability_sweep
@@ -8,7 +8,6 @@ configs:
 - index: 2
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration-2
     model.family: NCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -36,23 +35,32 @@ configs:
     data.regeneration.initial_probability: 0.05
     data.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 12000
+    run.iterations: 8000
     loss.primary:
     - l2
     loss.regulariser_coeffs.intermediate_state: 1.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
-    optimiser.type: nadam
+    loss.regulariser_coeffs.localised_hidden: 1.0
     optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
-    trainer.loop_autodiff: checkpointed
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.loop_autodiff: lax
     experiment.stability_mode: clean
     data.terminal_carry.enabled: false
     data.regeneration.enabled: false
+    experiment.name: stability-and-regeneration-3
+    logging.wandb.group: stability-and-regeneration-3
     seed: 577090037
   config:
     seed: 577090037
     experiment:
-      name: nca_emoji_template
+      name: stability-and-regeneration-3
       stability_mode: clean
     system:
       precision: tensorfloat32
@@ -107,6 +115,11 @@ configs:
         final_probability: 0.25
     model:
       family: NCA
+      normalization: none
+      normalization_mean: null
+      normalization_std: null
+      normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 32
       kernel_str:
       - ID
@@ -143,7 +156,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -157,11 +170,16 @@ configs:
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
-      apply_if_finite: false
-      max_consecutive_errors: 8
+      apply_if_finite: true
+      max_consecutive_errors: 16
       learn_rate: 0.001
       warmup_steps: 64
-      decay_rate: 0.99
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
     loss:
       primary:
       - l2
@@ -174,6 +192,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 0.0
@@ -195,7 +214,7 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 12000
+      iterations: 8000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -205,15 +224,19 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-2
+        group: stability-and-regeneration-3
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: null
 - index: 4
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration-2
     model.family: NCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -241,23 +264,32 @@ configs:
     data.regeneration.initial_probability: 0.05
     data.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 12000
+    run.iterations: 8000
     loss.primary:
     - l2
     loss.regulariser_coeffs.intermediate_state: 1.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
-    optimiser.type: nadam
+    loss.regulariser_coeffs.localised_hidden: 1.0
     optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
-    trainer.loop_autodiff: checkpointed
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.loop_autodiff: lax
     experiment.stability_mode: terminal_carry
     data.terminal_carry.enabled: true
     data.regeneration.enabled: false
+    experiment.name: stability-and-regeneration-3
+    logging.wandb.group: stability-and-regeneration-3
     seed: 271041745
   config:
     seed: 271041745
     experiment:
-      name: nca_emoji_template
+      name: stability-and-regeneration-3
       stability_mode: terminal_carry
     system:
       precision: tensorfloat32
@@ -312,6 +344,11 @@ configs:
         final_probability: 0.25
     model:
       family: NCA
+      normalization: none
+      normalization_mean: null
+      normalization_std: null
+      normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 32
       kernel_str:
       - ID
@@ -348,7 +385,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -362,11 +399,16 @@ configs:
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
-      apply_if_finite: false
-      max_consecutive_errors: 8
+      apply_if_finite: true
+      max_consecutive_errors: 16
       learn_rate: 0.001
       warmup_steps: 64
-      decay_rate: 0.99
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
     loss:
       primary:
       - l2
@@ -379,6 +421,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 0.0
@@ -400,7 +443,7 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 12000
+      iterations: 8000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -410,15 +453,19 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-2
+        group: stability-and-regeneration-3
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: null
 - index: 1
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration-2
     model.family: NCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -446,23 +493,32 @@ configs:
     data.regeneration.initial_probability: 0.05
     data.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 12000
+    run.iterations: 8000
     loss.primary:
     - l2
     loss.regulariser_coeffs.intermediate_state: 1.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
-    optimiser.type: nadam
+    loss.regulariser_coeffs.localised_hidden: 1.0
     optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
-    trainer.loop_autodiff: checkpointed
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.loop_autodiff: lax
     experiment.stability_mode: regeneration
     data.terminal_carry.enabled: false
     data.regeneration.enabled: true
+    experiment.name: stability-and-regeneration-3
+    logging.wandb.group: stability-and-regeneration-3
     seed: 1095513148
   config:
     seed: 1095513148
     experiment:
-      name: nca_emoji_template
+      name: stability-and-regeneration-3
       stability_mode: regeneration
     system:
       precision: tensorfloat32
@@ -517,6 +573,11 @@ configs:
         final_probability: 0.25
     model:
       family: NCA
+      normalization: none
+      normalization_mean: null
+      normalization_std: null
+      normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 32
       kernel_str:
       - ID
@@ -553,7 +614,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -567,11 +628,16 @@ configs:
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
-      apply_if_finite: false
-      max_consecutive_errors: 8
+      apply_if_finite: true
+      max_consecutive_errors: 16
       learn_rate: 0.001
       warmup_steps: 64
-      decay_rate: 0.99
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
     loss:
       primary:
       - l2
@@ -584,6 +650,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 0.0
@@ -605,7 +672,7 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 12000
+      iterations: 8000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -615,15 +682,19 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-2
+        group: stability-and-regeneration-3
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: null
 - index: 5
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration-2
     model.family: NCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -651,23 +722,32 @@ configs:
     data.regeneration.initial_probability: 0.05
     data.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 12000
+    run.iterations: 8000
     loss.primary:
     - l2
     loss.regulariser_coeffs.intermediate_state: 1.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
-    optimiser.type: nadam
+    loss.regulariser_coeffs.localised_hidden: 1.0
     optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
-    trainer.loop_autodiff: checkpointed
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.loop_autodiff: lax
     experiment.stability_mode: terminal_carry_and_regeneration
     data.terminal_carry.enabled: true
     data.regeneration.enabled: true
+    experiment.name: stability-and-regeneration-3
+    logging.wandb.group: stability-and-regeneration-3
     seed: 506456969
   config:
     seed: 506456969
     experiment:
-      name: nca_emoji_template
+      name: stability-and-regeneration-3
       stability_mode: terminal_carry_and_regeneration
     system:
       precision: tensorfloat32
@@ -722,6 +802,11 @@ configs:
         final_probability: 0.25
     model:
       family: NCA
+      normalization: none
+      normalization_mean: null
+      normalization_std: null
+      normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 32
       kernel_str:
       - ID
@@ -758,7 +843,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -772,11 +857,16 @@ configs:
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
-      apply_if_finite: false
-      max_consecutive_errors: 8
+      apply_if_finite: true
+      max_consecutive_errors: 16
       learn_rate: 0.001
       warmup_steps: 64
-      decay_rate: 0.99
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
     loss:
       primary:
       - l2
@@ -789,6 +879,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 0.0
@@ -810,7 +901,7 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 12000
+      iterations: 8000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -820,15 +911,19 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-2
+        group: stability-and-regeneration-3
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: null
 - index: 6
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration-2
     model.family: gNCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -856,23 +951,32 @@ configs:
     data.regeneration.initial_probability: 0.05
     data.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 12000
+    run.iterations: 8000
     loss.primary:
     - l2
     loss.regulariser_coeffs.intermediate_state: 1.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
-    optimiser.type: nadam
+    loss.regulariser_coeffs.localised_hidden: 1.0
     optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
-    trainer.loop_autodiff: checkpointed
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.loop_autodiff: lax
     experiment.stability_mode: clean
     data.terminal_carry.enabled: false
     data.regeneration.enabled: false
+    experiment.name: stability-and-regeneration-3
+    logging.wandb.group: stability-and-regeneration-3
     seed: 2127877499
   config:
     seed: 2127877499
     experiment:
-      name: nca_emoji_template
+      name: stability-and-regeneration-3
       stability_mode: clean
     system:
       precision: tensorfloat32
@@ -927,6 +1031,11 @@ configs:
         final_probability: 0.25
     model:
       family: gNCA
+      normalization: none
+      normalization_mean: null
+      normalization_std: null
+      normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 32
       kernel_str:
       - ID
@@ -963,7 +1072,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -977,11 +1086,16 @@ configs:
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
-      apply_if_finite: false
-      max_consecutive_errors: 8
+      apply_if_finite: true
+      max_consecutive_errors: 16
       learn_rate: 0.001
       warmup_steps: 64
-      decay_rate: 0.99
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
     loss:
       primary:
       - l2
@@ -994,6 +1108,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 0.0
@@ -1015,7 +1130,7 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 12000
+      iterations: 8000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -1025,15 +1140,19 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-2
+        group: stability-and-regeneration-3
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: null
 - index: 7
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration-2
     model.family: gNCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -1061,23 +1180,32 @@ configs:
     data.regeneration.initial_probability: 0.05
     data.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 12000
+    run.iterations: 8000
     loss.primary:
     - l2
     loss.regulariser_coeffs.intermediate_state: 1.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
-    optimiser.type: nadam
+    loss.regulariser_coeffs.localised_hidden: 1.0
     optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
-    trainer.loop_autodiff: checkpointed
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.loop_autodiff: lax
     experiment.stability_mode: terminal_carry
     data.terminal_carry.enabled: true
     data.regeneration.enabled: false
+    experiment.name: stability-and-regeneration-3
+    logging.wandb.group: stability-and-regeneration-3
     seed: 1930549411
   config:
     seed: 1930549411
     experiment:
-      name: nca_emoji_template
+      name: stability-and-regeneration-3
       stability_mode: terminal_carry
     system:
       precision: tensorfloat32
@@ -1132,6 +1260,11 @@ configs:
         final_probability: 0.25
     model:
       family: gNCA
+      normalization: none
+      normalization_mean: null
+      normalization_std: null
+      normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 32
       kernel_str:
       - ID
@@ -1168,7 +1301,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1182,11 +1315,16 @@ configs:
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
-      apply_if_finite: false
-      max_consecutive_errors: 8
+      apply_if_finite: true
+      max_consecutive_errors: 16
       learn_rate: 0.001
       warmup_steps: 64
-      decay_rate: 0.99
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
     loss:
       primary:
       - l2
@@ -1199,6 +1337,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 0.0
@@ -1220,7 +1359,7 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 12000
+      iterations: 8000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -1230,15 +1369,19 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-2
+        group: stability-and-regeneration-3
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: null
 - index: 0
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration-2
     model.family: gNCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -1266,23 +1409,32 @@ configs:
     data.regeneration.initial_probability: 0.05
     data.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 12000
+    run.iterations: 8000
     loss.primary:
     - l2
     loss.regulariser_coeffs.intermediate_state: 1.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
-    optimiser.type: nadam
+    loss.regulariser_coeffs.localised_hidden: 1.0
     optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
-    trainer.loop_autodiff: checkpointed
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.loop_autodiff: lax
     experiment.stability_mode: regeneration
     data.terminal_carry.enabled: false
     data.regeneration.enabled: true
+    experiment.name: stability-and-regeneration-3
+    logging.wandb.group: stability-and-regeneration-3
     seed: 2028277857
   config:
     seed: 2028277857
     experiment:
-      name: nca_emoji_template
+      name: stability-and-regeneration-3
       stability_mode: regeneration
     system:
       precision: tensorfloat32
@@ -1337,6 +1489,11 @@ configs:
         final_probability: 0.25
     model:
       family: gNCA
+      normalization: none
+      normalization_mean: null
+      normalization_std: null
+      normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 32
       kernel_str:
       - ID
@@ -1373,7 +1530,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1387,11 +1544,16 @@ configs:
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
-      apply_if_finite: false
-      max_consecutive_errors: 8
+      apply_if_finite: true
+      max_consecutive_errors: 16
       learn_rate: 0.001
       warmup_steps: 64
-      decay_rate: 0.99
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
     loss:
       primary:
       - l2
@@ -1404,6 +1566,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 0.0
@@ -1425,7 +1588,7 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 12000
+      iterations: 8000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -1435,15 +1598,19 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-2
+        group: stability-and-regeneration-3
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: null
 - index: 3
   overrides:
     logging.wandb.project: NCA-emoji-multi-attractor
-    logging.wandb.group: stability-and-regeneration-2
     model.family: gNCA
     model.channels: 32
     model.fire_rate: 0.5
@@ -1471,23 +1638,32 @@ configs:
     data.regeneration.initial_probability: 0.05
     data.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 12000
+    run.iterations: 8000
     loss.primary:
     - l2
     loss.regulariser_coeffs.intermediate_state: 1.0
     loss.regulariser_coeffs.contiguous_growth: 1.0
-    optimiser.type: nadam
+    loss.regulariser_coeffs.localised_hidden: 1.0
     optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.type: nadam
     optimiser.gradient_clip_norm: 1.0
-    trainer.loop_autodiff: checkpointed
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    trainer.loop_autodiff: lax
     experiment.stability_mode: terminal_carry_and_regeneration
     data.terminal_carry.enabled: true
     data.regeneration.enabled: true
+    experiment.name: stability-and-regeneration-3
+    logging.wandb.group: stability-and-regeneration-3
     seed: 1630434966
   config:
     seed: 1630434966
     experiment:
-      name: nca_emoji_template
+      name: stability-and-regeneration-3
       stability_mode: terminal_carry_and_regeneration
     system:
       precision: tensorfloat32
@@ -1542,6 +1718,11 @@ configs:
         final_probability: 0.25
     model:
       family: gNCA
+      normalization: none
+      normalization_mean: null
+      normalization_std: null
+      normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 32
       kernel_str:
       - ID
@@ -1578,7 +1759,7 @@ configs:
       model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       clear_cache_every: null
       log_every: 100
       pool_admission_enabled: true
@@ -1592,11 +1773,16 @@ configs:
       blocknorm: true
       sam: false
       gradient_clip_norm: 1.0
-      apply_if_finite: false
-      max_consecutive_errors: 8
+      apply_if_finite: true
+      max_consecutive_errors: 16
       learn_rate: 0.001
       warmup_steps: 64
-      decay_rate: 0.99
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
     loss:
       primary:
       - l2
@@ -1609,6 +1795,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         latent_channel_match: 0.0
@@ -1630,7 +1817,7 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 12000
+      iterations: 8000
       warmup: 10
       write_images: true
       sparse_pruning: false
@@ -1640,8 +1827,13 @@ configs:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-2
+        group: stability-and-regeneration-3
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: null
