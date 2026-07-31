@@ -12,10 +12,9 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
-    import ast
-    from pathlib import Path
-    import sys
-    sys.path.append('/home/alex/PhD/Differentiable-Patterning/')
+    from pathlib import Path as _Path
+    import sys as _sys
+    _sys.path.append('/home/alex/PhD/Differentiable-Patterning/')
     import marimo as mo
     import matplotlib.pyplot as plt
     import numpy as np
@@ -82,7 +81,7 @@ def _(ProcessingStep, mo):
     percentile_low = mo.ui.number(0.0, 99.0, value=0.5, step=0.1, label="Histogram low percentile")
     percentile_high = mo.ui.number(1.0, 100.0, value=99.95, step=0.05, label="Histogram high percentile")
     load_button = mo.ui.run_button(label="Load dataset")
-    controls = mo.vstack(
+    _controls = mo.vstack(
         [
             mo.hstack([dataset_kind, downsample, batches, knockout]),
             root,
@@ -92,7 +91,7 @@ def _(ProcessingStep, mo):
             load_button,
         ]
     )
-    controls
+    _controls
     return (
         align,
         batches,
@@ -130,42 +129,42 @@ def _(
     timesteps,
 ):
     load_button
-    selected_times = tuple(int(value.strip()) for value in timesteps.value.split(",") if value.strip())
-    selected_files = tuple(value.strip() for value in filenames.value.split(",") if value.strip())
-    ordered_processing = tuple(processing.value)
+    _selected_times = tuple(int(value.strip()) for value in timesteps.value.split(",") if value.strip())
+    _selected_files = tuple(value.strip() for value in filenames.value.split(",") if value.strip())
+    _ordered_processing = tuple(processing.value)
     if dataset_kind.value == "micropattern_260726":
         loaded = load_micropattern_260726(
             root.value,
-            timesteps=selected_times,
+            timesteps=_selected_times,
             downsample=downsample.value,
             replicate_count=batches.value,
             align=align.value,
             hist_eqs=(percentile_low.value, percentile_high.value),
         )
     elif dataset_kind.value == "micropattern_grouped":
-        ko_time = {"baseline": None, "ko0": 0, "ko24": 24}[knockout.value]
+        _ko_time = {"baseline": None, "ko0": 0, "ko24": 24}[knockout.value]
         loaded = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=root.value,
             DOWNSAMPLE=downsample.value,
             BATCHES=batches.value,
-            TIMESTEPS=selected_times,
-            FILTER_KN_TIME=ko_time,
+            TIMESTEPS=_selected_times,
+            FILTER_KN_TIME=_ko_time,
             HIST_EQS=(percentile_low.value, percentile_high.value),
-            PROCESSING_MODES=ordered_processing,
+            PROCESSING_MODES=_ordered_processing,
         )
     elif dataset_kind.value == "micropattern_4ch":
         loaded = load_micropattern_circle_4ch_individual(
             impath=root.value,
             DOWNSAMPLE=downsample.value,
             BATCHES=batches.value,
-            TIMESTEPS=selected_times,
+            TIMESTEPS=_selected_times,
             HIST_EQS=(percentile_low.value, percentile_high.value),
-            PROCESSING_MODES=ordered_processing,
+            PROCESSING_MODES=_ordered_processing,
         )
     elif dataset_kind.value == "emoji":
-        loaded = load_emoji_sequence(selected_files, root.value, downsample.value, True)
+        loaded = load_emoji_sequence(_selected_files, root.value, downsample.value, True)
     else:
-        loaded = load_textures(selected_files, root.value, downsample.value, True)
+        loaded = load_textures(_selected_files, root.value, downsample.value, True)
     return (loaded,)
 
 
@@ -175,7 +174,7 @@ def _(loaded, mo, np):
     names = tuple(getattr(loaded, "channel_names", ()))
     if not names:
         names = tuple(f"channel {index}" for index in range(data.shape[2]))
-    summary = {
+    _summary = {
         "shape [B,T,C,X,Y]": tuple(data.shape),
         "dtype": str(data.dtype),
         "minimum": float(np.nanmin(data)),
@@ -185,49 +184,96 @@ def _(loaded, mo, np):
         "finite fraction": float(np.isfinite(data).mean()),
     }
     batch_index = mo.ui.slider(0, data.shape[0] - 1, value=0, label="Batch")
-    time_index = mo.ui.slider(0, data.shape[1] - 1, value=0, label="Time")
-    channel_index = mo.ui.slider(0, data.shape[2] - 1, value=0, label="Channel")
+    time_indices = mo.ui.multiselect(
+        options={str(index): index for index in range(data.shape[1])},
+        value=["0"],
+        label="Timesteps to tile",
+    )
+    channel_indices = mo.ui.multiselect(
+        options={name: index for index, name in enumerate(names)},
+        value=[names[0]],
+        label="Channels to tile",
+    )
     zero_to_nan = mo.ui.checkbox(value=True, label="Discard zero values (set to NaN)")
-    mo.vstack([mo.md("## Loaded data"), mo.ui.table([summary]), mo.hstack([batch_index, time_index, channel_index,zero_to_nan])])
-    return batch_index, channel_index, data, names, time_index, zero_to_nan
+    mo.vstack(
+        [
+            mo.md("## Loaded data"),
+            mo.ui.table([_summary]),
+            mo.hstack([batch_index, time_indices, channel_indices, zero_to_nan]),
+        ]
+    )
+    return batch_index, channel_indices, data, names, time_indices, zero_to_nan
 
 
 @app.cell
 def _(
     batch_index,
-    channel_index,
+    channel_indices,
     data,
     loaded,
     mo,
     names,
     np,
     plt,
-    time_index,
+    time_indices,
     zero_to_nan,
 ):
-    image = data[batch_index.value, time_index.value, channel_index.value]
-    figure, axes = plt.subplots(1, 2, figsize=(11, 4))
-    if zero_to_nan.value:
-        image = np.where(image == 0, np.nan, image)
-    finite = image[np.isfinite(image)]
-    axes[0].imshow(image, cmap="viridis")
-    axes[0].set_title(names[channel_index.value])
-    axes[0].axis("off")
-    axes[1].hist(finite.ravel(), bins=80)
-    axes[1].set_title("Pixel distribution")
-    axes[1].set_xlabel("value")
-    boundary = getattr(loaded, "boundary_mask", None)
-    if boundary is not None:
-        axes[0].contour(np.asarray(boundary)[batch_index.value, 0], levels=[0.5], colors="white", linewidths=0.7)
-    figure.tight_layout()
-    mo.vstack([mo.md("## Image and histogram"), figure])
+    # Multiselect values are strings for the timestep control and channel
+    # names for the channel control. Preserve the option order in the plot.
+    _selected_times = [int(value) for value in time_indices.value]
+    _selected_channels = [
+        int(value) if isinstance(value, (int, np.integer)) else names.index(value)
+        for value in channel_indices.value
+    ]
+    _selected_times = _selected_times or [0]
+    _selected_channels = _selected_channels or [0]
+    _n_tiles = len(_selected_times) * len(_selected_channels)
+    _figure, _axes = plt.subplots(
+        len(_selected_channels),
+        len(_selected_times),
+        figsize=(3.2 * len(_selected_times), 3.0 * len(_selected_channels)),
+        squeeze=False,
+    )
+    _histogram_figure, _histogram_axis = plt.subplots(figsize=(8, 4))
+    for _column, _time in enumerate(_selected_times):
+        for _row, _channel in enumerate(_selected_channels):
+            _image = data[batch_index.value, _time, _channel]
+            if zero_to_nan.value:
+                _image = np.where(_image == 0, np.nan, _image)
+            _finite = _image[np.isfinite(_image)]
+            _axes[_row, _column].imshow(_image, cmap="viridis")
+            _axes[_row, _column].set_title(f"t={_time}, {names[_channel]}")
+            _axes[_row, _column].axis("off")
+            if _finite.size:
+                _histogram_axis.hist(
+                    _finite.ravel(),
+                    bins=80,
+                    density=True,
+                    histtype="step",
+                    linewidth=1.5,
+                    label=f"t={_time}, {names[_channel]}",
+                )
+    _boundary = getattr(loaded, "boundary_mask", None)
+    if _boundary is not None:
+        _boundary_image = np.asarray(_boundary)[batch_index.value, 0]
+        for _axis in _axes.flat:
+            _axis.contour(_boundary_image, levels=[0.5], colors="black", linewidths=0.7)
+    _histogram_axis.set_title("Overlaid intensity distributions")
+    _histogram_axis.set_xlabel("intensity")
+    _histogram_axis.set_ylabel("density")
+    if _n_tiles > 1:
+        _histogram_axis.legend(fontsize="small", ncol=2)
+    _histogram_axis.grid(alpha=0.2)
+    _figure.tight_layout()
+    _histogram_figure.tight_layout()
+    mo.vstack([mo.md("## Tiled monochrome images"), _figure, _histogram_figure])
     return
 
 
 @app.cell
 def _(data, mo, names, np, plt):
-    channel_values = data.transpose(2, 0, 1, 3, 4).reshape(data.shape[2], -1)
-    stats = [
+    _channel_values = data.transpose(2, 0, 1, 3, 4).reshape(data.shape[2], -1)
+    _stats = [
         {
             "channel": name,
             "mean": float(np.nanmean(values)),
@@ -236,14 +282,14 @@ def _(data, mo, names, np, plt):
             "p50": float(np.nanpercentile(values, 50)),
             "p99": float(np.nanpercentile(values, 99)),
         }
-        for name, values in zip(names, channel_values)
+        for name, values in zip(names, _channel_values)
     ]
-    _figure, axis = plt.subplots(figsize=(max(7, len(names) * 0.6), 3.5))
-    axis.boxplot([values[np.isfinite(values)] for values in channel_values], showfliers=False)
-    axis.set_xticks(range(1, len(names) + 1), names, rotation=60, ha="right")
-    axis.set_ylabel("value")
+    _figure, _axis = plt.subplots(figsize=(max(7, len(names) * 0.6), 3.5))
+    _axis.boxplot([values[np.isfinite(values)] for values in _channel_values], showfliers=False)
+    _axis.set_xticks(range(1, len(names) + 1), names, rotation=60, ha="right")
+    _axis.set_ylabel("value")
     _figure.tight_layout()
-    mo.vstack([mo.md("## Channel statistics"), mo.ui.table(stats), _figure])
+    mo.vstack([mo.md("## Channel statistics"), mo.ui.table(_stats), _figure])
     return
 
 
