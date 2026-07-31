@@ -247,7 +247,7 @@ def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
                 dtype=jnp.int32,
             )
 
-        def data_callback(self,x,y,i,key):
+        def advance_pool(self,x,y,i,key):
             x_true,_ =self.split_x_y(1)	
             reinjection_key = getattr(self, "_sharded_global_key", key)
             x = masked_reinject_callback_bit(

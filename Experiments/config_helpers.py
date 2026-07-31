@@ -257,6 +257,7 @@ def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
             "intermediate_state": "is",
             "latent_channel_match": "lcm",
             "latent_size": "ls",
+            "localised_hidden": "lh",
             "perturbation_conservation": "pc",
             "update_sensitivity": "us",
         },

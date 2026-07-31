@@ -229,7 +229,7 @@ def build_data_augmenter(cfg):
             self.save_data(data)
             return None
 
-        def data_callback(self, x, y, i, key):
+        def advance_pool(self, x, y, i, key):
             if shift_amount and hasattr(self, "PREVIOUS_KEY"):
                 x = self.unshift(x, shift_amount, self.PREVIOUS_KEY)
                 y = self.unshift(y, shift_amount, self.PREVIOUS_KEY)
