@@ -10,9 +10,9 @@ configs:
     system.gpu: H200
     system.precision: highest
     model.family: NormalizedNCA
-    normalization: none
-    normalization_mean: null
-    normalization_std: null
+    model.normalization: none
+    model.normalization_mean: null
+    model.normalization_std: null
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
@@ -21,7 +21,6 @@ configs:
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
-    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
     logging.singular_values.epsilon: 1.0e-08
@@ -43,6 +42,7 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     data.downsample: 8
+    data.task: micropattern_single_replicate
     data.experiment_groups:
     - cell_fate_s1
     data.data_channels: 4
@@ -65,11 +65,13 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
+    experiment.name: nca_4ch_1b4_normalised_test_1
+    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     seed: 577090037
   config:
     seed: 577090037
     experiment:
-      name: nca_micropattern_template
+      name: nca_4ch_1b4_normalised_test_1
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -86,16 +88,18 @@ configs:
       downsample: 8
       pad_multiple: null
       noise_strength: 0.005
-      duplicate_final_timestep: true
       intermediate_reinjection_probability: 1.0
       intermediate_reinjection_probability_end: 0.0
       intermediate_reinjection_decay_start_fraction: 0.25
+      duplicate_final_timestep: true
+      task: micropattern_single_replicate
     model:
       family: NormalizedNCA
       normalization: none
       normalization_mean: null
       normalization_std: null
       normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 48
       kernel_str:
       - ID
@@ -194,6 +198,11 @@ configs:
         project: nca_micropattern_groups
         group: nca_4ch_1b4_normalised_test_1
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: Nodal
@@ -201,17 +210,14 @@ configs:
     system:
       gpu: H200
       precision: highest
-    normalization: none
-    normalization_mean: null
-    normalization_std: null
 - index: 4
   overrides:
     system.gpu: H200
     system.precision: highest
     model.family: NormalizedNCA
-    normalization: none
-    normalization_mean: null
-    normalization_std: null
+    model.normalization: none
+    model.normalization_mean: null
+    model.normalization_std: null
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
@@ -220,7 +226,6 @@ configs:
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
-    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
     logging.singular_values.epsilon: 1.0e-08
@@ -242,6 +247,7 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     data.downsample: 8
+    data.task: micropattern_single_replicate
     data.experiment_groups:
     - cell_fate_s1
     data.data_channels: 4
@@ -264,11 +270,13 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
+    experiment.name: nca_4ch_1b4_normalised_test_1
+    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     seed: 271041745
   config:
     seed: 271041745
     experiment:
-      name: nca_micropattern_template
+      name: nca_4ch_1b4_normalised_test_1
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -285,16 +293,18 @@ configs:
       downsample: 8
       pad_multiple: null
       noise_strength: 0.005
-      duplicate_final_timestep: true
       intermediate_reinjection_probability: 1.0
       intermediate_reinjection_probability_end: 0.0
       intermediate_reinjection_decay_start_fraction: 0.25
+      duplicate_final_timestep: true
+      task: micropattern_single_replicate
     model:
       family: NormalizedNCA
       normalization: none
       normalization_mean: null
       normalization_std: null
       normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 48
       kernel_str:
       - ID
@@ -393,6 +403,11 @@ configs:
         project: nca_micropattern_groups
         group: nca_4ch_1b4_normalised_test_1
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: Nodal
@@ -400,17 +415,14 @@ configs:
     system:
       gpu: H200
       precision: highest
-    normalization: none
-    normalization_mean: null
-    normalization_std: null
 - index: 1
   overrides:
     system.gpu: H200
     system.precision: highest
     model.family: NormalizedNCA
-    normalization: fixed
-    normalization_mean: null
-    normalization_std: null
+    model.normalization: fixed
+    model.normalization_mean: null
+    model.normalization_std: null
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
@@ -419,7 +431,6 @@ configs:
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
-    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
     logging.singular_values.epsilon: 1.0e-08
@@ -441,6 +452,7 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     data.downsample: 8
+    data.task: micropattern_single_replicate
     data.experiment_groups:
     - cell_fate_s1
     data.data_channels: 4
@@ -463,11 +475,13 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
+    experiment.name: nca_4ch_1b4_normalised_test_1
+    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     seed: 1095513148
   config:
     seed: 1095513148
     experiment:
-      name: nca_micropattern_template
+      name: nca_4ch_1b4_normalised_test_1
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -484,16 +498,18 @@ configs:
       downsample: 8
       pad_multiple: null
       noise_strength: 0.005
-      duplicate_final_timestep: true
       intermediate_reinjection_probability: 1.0
       intermediate_reinjection_probability_end: 0.0
       intermediate_reinjection_decay_start_fraction: 0.25
+      duplicate_final_timestep: true
+      task: micropattern_single_replicate
     model:
       family: NormalizedNCA
-      normalization: none
+      normalization: fixed
       normalization_mean: null
       normalization_std: null
       normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 48
       kernel_str:
       - ID
@@ -592,6 +608,11 @@ configs:
         project: nca_micropattern_groups
         group: nca_4ch_1b4_normalised_test_1
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: Nodal
@@ -599,17 +620,14 @@ configs:
     system:
       gpu: H200
       precision: highest
-    normalization: fixed
-    normalization_mean: null
-    normalization_std: null
 - index: 5
   overrides:
     system.gpu: H200
     system.precision: highest
     model.family: NormalizedNCA
-    normalization: fixed
-    normalization_mean: null
-    normalization_std: null
+    model.normalization: fixed
+    model.normalization_mean: null
+    model.normalization_std: null
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
@@ -618,7 +636,6 @@ configs:
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
-    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
     logging.singular_values.epsilon: 1.0e-08
@@ -640,6 +657,7 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     data.downsample: 8
+    data.task: micropattern_single_replicate
     data.experiment_groups:
     - cell_fate_s1
     data.data_channels: 4
@@ -662,11 +680,13 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
+    experiment.name: nca_4ch_1b4_normalised_test_1
+    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     seed: 506456969
   config:
     seed: 506456969
     experiment:
-      name: nca_micropattern_template
+      name: nca_4ch_1b4_normalised_test_1
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -683,16 +703,18 @@ configs:
       downsample: 8
       pad_multiple: null
       noise_strength: 0.005
-      duplicate_final_timestep: true
       intermediate_reinjection_probability: 1.0
       intermediate_reinjection_probability_end: 0.0
       intermediate_reinjection_decay_start_fraction: 0.25
+      duplicate_final_timestep: true
+      task: micropattern_single_replicate
     model:
       family: NormalizedNCA
-      normalization: none
+      normalization: fixed
       normalization_mean: null
       normalization_std: null
       normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 48
       kernel_str:
       - ID
@@ -791,6 +813,11 @@ configs:
         project: nca_micropattern_groups
         group: nca_4ch_1b4_normalised_test_1
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: Nodal
@@ -798,17 +825,14 @@ configs:
     system:
       gpu: H200
       precision: highest
-    normalization: fixed
-    normalization_mean: null
-    normalization_std: null
 - index: 6
   overrides:
     system.gpu: H200
     system.precision: highest
     model.family: NormalizedNCA
-    normalization: instance
-    normalization_mean: null
-    normalization_std: null
+    model.normalization: instance
+    model.normalization_mean: null
+    model.normalization_std: null
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
@@ -817,7 +841,6 @@ configs:
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
-    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
     logging.singular_values.epsilon: 1.0e-08
@@ -839,6 +862,7 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     data.downsample: 8
+    data.task: micropattern_single_replicate
     data.experiment_groups:
     - cell_fate_s1
     data.data_channels: 4
@@ -861,11 +885,13 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
+    experiment.name: nca_4ch_1b4_normalised_test_1
+    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     seed: 2127877499
   config:
     seed: 2127877499
     experiment:
-      name: nca_micropattern_template
+      name: nca_4ch_1b4_normalised_test_1
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -882,16 +908,18 @@ configs:
       downsample: 8
       pad_multiple: null
       noise_strength: 0.005
-      duplicate_final_timestep: true
       intermediate_reinjection_probability: 1.0
       intermediate_reinjection_probability_end: 0.0
       intermediate_reinjection_decay_start_fraction: 0.25
+      duplicate_final_timestep: true
+      task: micropattern_single_replicate
     model:
       family: NormalizedNCA
-      normalization: none
+      normalization: instance
       normalization_mean: null
       normalization_std: null
       normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 48
       kernel_str:
       - ID
@@ -990,6 +1018,11 @@ configs:
         project: nca_micropattern_groups
         group: nca_4ch_1b4_normalised_test_1
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: Nodal
@@ -997,17 +1030,14 @@ configs:
     system:
       gpu: H200
       precision: highest
-    normalization: instance
-    normalization_mean: null
-    normalization_std: null
 - index: 7
   overrides:
     system.gpu: H200
     system.precision: highest
     model.family: NormalizedNCA
-    normalization: instance
-    normalization_mean: null
-    normalization_std: null
+    model.normalization: instance
+    model.normalization_mean: null
+    model.normalization_std: null
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
@@ -1016,7 +1046,6 @@ configs:
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
-    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
     logging.singular_values.epsilon: 1.0e-08
@@ -1038,6 +1067,7 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     data.downsample: 8
+    data.task: micropattern_single_replicate
     data.experiment_groups:
     - cell_fate_s1
     data.data_channels: 4
@@ -1060,11 +1090,13 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
+    experiment.name: nca_4ch_1b4_normalised_test_1
+    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     seed: 1930549411
   config:
     seed: 1930549411
     experiment:
-      name: nca_micropattern_template
+      name: nca_4ch_1b4_normalised_test_1
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1081,16 +1113,18 @@ configs:
       downsample: 8
       pad_multiple: null
       noise_strength: 0.005
-      duplicate_final_timestep: true
       intermediate_reinjection_probability: 1.0
       intermediate_reinjection_probability_end: 0.0
       intermediate_reinjection_decay_start_fraction: 0.25
+      duplicate_final_timestep: true
+      task: micropattern_single_replicate
     model:
       family: NormalizedNCA
-      normalization: none
+      normalization: instance
       normalization_mean: null
       normalization_std: null
       normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 48
       kernel_str:
       - ID
@@ -1189,6 +1223,11 @@ configs:
         project: nca_micropattern_groups
         group: nca_4ch_1b4_normalised_test_1
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: Nodal
@@ -1196,17 +1235,14 @@ configs:
     system:
       gpu: H200
       precision: highest
-    normalization: instance
-    normalization_mean: null
-    normalization_std: null
 - index: 0
   overrides:
     system.gpu: H200
     system.precision: highest
     model.family: NormalizedNCA
-    normalization: group
-    normalization_mean: null
-    normalization_std: null
+    model.normalization: group
+    model.normalization_mean: null
+    model.normalization_std: null
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
@@ -1215,7 +1251,6 @@ configs:
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
-    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
     logging.singular_values.epsilon: 1.0e-08
@@ -1237,6 +1272,7 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     data.downsample: 8
+    data.task: micropattern_single_replicate
     data.experiment_groups:
     - cell_fate_s1
     data.data_channels: 4
@@ -1259,11 +1295,13 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
+    experiment.name: nca_4ch_1b4_normalised_test_1
+    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     seed: 2028277857
   config:
     seed: 2028277857
     experiment:
-      name: nca_micropattern_template
+      name: nca_4ch_1b4_normalised_test_1
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1280,16 +1318,18 @@ configs:
       downsample: 8
       pad_multiple: null
       noise_strength: 0.005
-      duplicate_final_timestep: true
       intermediate_reinjection_probability: 1.0
       intermediate_reinjection_probability_end: 0.0
       intermediate_reinjection_decay_start_fraction: 0.25
+      duplicate_final_timestep: true
+      task: micropattern_single_replicate
     model:
       family: NormalizedNCA
-      normalization: none
+      normalization: group
       normalization_mean: null
       normalization_std: null
       normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 48
       kernel_str:
       - ID
@@ -1388,6 +1428,11 @@ configs:
         project: nca_micropattern_groups
         group: nca_4ch_1b4_normalised_test_1
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: Nodal
@@ -1395,17 +1440,14 @@ configs:
     system:
       gpu: H200
       precision: highest
-    normalization: group
-    normalization_mean: null
-    normalization_std: null
 - index: 3
   overrides:
     system.gpu: H200
     system.precision: highest
     model.family: NormalizedNCA
-    normalization: group
-    normalization_mean: null
-    normalization_std: null
+    model.normalization: group
+    model.normalization_mean: null
+    model.normalization_std: null
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
@@ -1414,7 +1456,6 @@ configs:
     run.repeat: 0
     run.t: 128
     logging.wandb.project: nca_micropattern_groups
-    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
     logging.singular_values.epsilon: 1.0e-08
@@ -1436,6 +1477,7 @@ configs:
     trainer.log_every: 200
     trainer.clear_cache_every: null
     data.downsample: 8
+    data.task: micropattern_single_replicate
     data.experiment_groups:
     - cell_fate_s1
     data.data_channels: 4
@@ -1458,11 +1500,13 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
+    experiment.name: nca_4ch_1b4_normalised_test_1
+    logging.wandb.group: nca_4ch_1b4_normalised_test_1
     seed: 1630434966
   config:
     seed: 1630434966
     experiment:
-      name: nca_micropattern_template
+      name: nca_4ch_1b4_normalised_test_1
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1479,16 +1523,18 @@ configs:
       downsample: 8
       pad_multiple: null
       noise_strength: 0.005
-      duplicate_final_timestep: true
       intermediate_reinjection_probability: 1.0
       intermediate_reinjection_probability_end: 0.0
       intermediate_reinjection_decay_start_fraction: 0.25
+      duplicate_final_timestep: true
+      task: micropattern_single_replicate
     model:
       family: NormalizedNCA
-      normalization: none
+      normalization: group
       normalization_mean: null
       normalization_std: null
       normalization_eps: 1.0e-06
+      normalization_channels: null
       channels: 48
       kernel_str:
       - ID
@@ -1587,6 +1633,11 @@ configs:
         project: nca_micropattern_groups
         group: nca_4ch_1b4_normalised_test_1
         tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: Experiments.config_helpers:build_model
     knockout:
       time: null
       channel: Nodal
@@ -1594,7 +1645,4 @@ configs:
     system:
       gpu: H200
       precision: highest
-    normalization: group
-    normalization_mean: null
-    normalization_std: null
 emit_files: false

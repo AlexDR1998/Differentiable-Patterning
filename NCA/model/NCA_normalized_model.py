@@ -41,6 +41,7 @@ class NormalizedNCA(NCA):
     NORMALIZATION_MEAN: Array
     NORMALIZATION_STD: Array
     NORMALIZATION_EPS: float
+    NORMALIZATION_CHANNELS: int
 
     def __init__(
         self,
@@ -55,6 +56,7 @@ class NormalizedNCA(NCA):
         NORMALIZATION_MEAN=None,
         NORMALIZATION_STD=None,
         NORMALIZATION_EPS=1e-6,
+        NORMALIZATION_CHANNELS=None,
     ):
         super().__init__(
             N_CHANNELS=N_CHANNELS,
@@ -72,6 +74,10 @@ class NormalizedNCA(NCA):
             raise ValueError(f"NORMALIZATION must be one of {sorted(valid)}")
         if NORMALIZATION_EPS <= 0:
             raise ValueError("NORMALIZATION_EPS must be positive")
+        if NORMALIZATION_CHANNELS is None:
+            NORMALIZATION_CHANNELS = N_CHANNELS
+        if not 0 < NORMALIZATION_CHANNELS <= N_CHANNELS:
+            raise ValueError("NORMALIZATION_CHANNELS must be in [1, N_CHANNELS]")
 
         if NORMALIZATION_MEAN is None:
             NORMALIZATION_MEAN = jnp.zeros(N_CHANNELS)
@@ -84,6 +90,12 @@ class NormalizedNCA(NCA):
         self.NORMALIZATION_MEAN = jnp.asarray(NORMALIZATION_MEAN)
         self.NORMALIZATION_STD = jnp.asarray(NORMALIZATION_STD)
         self.NORMALIZATION_EPS = NORMALIZATION_EPS
+        self.NORMALIZATION_CHANNELS = NORMALIZATION_CHANNELS
+        if self.NORMALIZATION_MEAN.size != N_CHANNELS or self.NORMALIZATION_STD.size != N_CHANNELS:
+            raise ValueError(
+                "Fixed statistics must contain one value per model channel; "
+                f"expected {N_CHANNELS}"
+            )
 
     def _normalise(self, x):
         if self.NORMALIZATION == "none":
@@ -92,12 +104,27 @@ class NormalizedNCA(NCA):
             # State tensors are [C, H, W]; make [C] statistics broadcastable.
             mean = self.NORMALIZATION_MEAN.reshape((-1, 1, 1))
             std = self.NORMALIZATION_STD.reshape((-1, 1, 1))
-        elif self.NORMALIZATION == "instance":
-            mean = jnp.mean(x, axis=(1, 2), keepdims=True)
-            std = jnp.std(x, axis=(1, 2), keepdims=True)
-        else:  # group
-            mean = jnp.mean(x, keepdims=True)
-            std = jnp.std(x, keepdims=True)
+        else:
+            normalised_channels = x[: self.NORMALIZATION_CHANNELS]
+            if self.NORMALIZATION == "instance":
+                data_mean = jnp.mean(normalised_channels, axis=(1, 2), keepdims=True)
+                data_std = jnp.std(normalised_channels, axis=(1, 2), keepdims=True)
+            else:  # group
+                data_mean = jnp.mean(normalised_channels, keepdims=True)
+                data_std = jnp.std(normalised_channels, keepdims=True)
+                data_mean = jnp.broadcast_to(
+                    data_mean, (self.NORMALIZATION_CHANNELS, 1, 1)
+                )
+                data_std = jnp.broadcast_to(
+                    data_std, (self.NORMALIZATION_CHANNELS, 1, 1)
+                )
+            hidden_channels = self.N_CHANNELS - self.NORMALIZATION_CHANNELS
+            mean = jnp.pad(data_mean, ((0, hidden_channels), (0, 0), (0, 0)))
+            std = jnp.pad(
+                data_std,
+                ((0, hidden_channels), (0, 0), (0, 0)),
+                constant_values=1.0,
+            )
         std = jnp.maximum(std, self.NORMALIZATION_EPS)
         return (x - mean) / std, mean, std
 
@@ -108,6 +135,7 @@ class NormalizedNCA(NCA):
                 "MODEL": "NormalizedNCA",
                 "NORMALIZATION": self.NORMALIZATION,
                 "NORMALIZATION_EPS": self.NORMALIZATION_EPS,
+                "NORMALIZATION_CHANNELS": self.NORMALIZATION_CHANNELS,
             }
         )
         return config
