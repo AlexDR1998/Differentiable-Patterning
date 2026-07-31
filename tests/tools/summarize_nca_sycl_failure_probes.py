@@ -15,6 +15,21 @@ def field(text, name, default="unknown"):
     return match.group(1).strip() if match else default
 
 
+def outcome(stdout_text, stderr_text):
+    if "NCA_SYCL_FAILURE_PROBE_RESULT=PASS" in stdout_text:
+        return "PASS"
+    combined = stdout_text + "\n" + stderr_text
+    if "DUE TO TIME LIMIT" in combined:
+        return "TIMEOUT"
+    if "Data corruption detected" in combined:
+        return "DATA_CORRUPTION"
+    if "urEventWait must not be called for an internal event" in combined:
+        return "INVALID_INTERNAL_EVENT_WAIT"
+    if "Aborted" in combined or "Fatal Python error" in combined:
+        return "NATIVE_ABORT"
+    return "FAIL"
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("log_directory", type=pathlib.Path)
@@ -27,12 +42,12 @@ def main():
         stderr = stdout.with_suffix(".err")
         text = stdout.read_text(errors="replace")
         error_text = stderr.read_text(errors="replace") if stderr.exists() else ""
-        passed = "NCA_SYCL_FAILURE_PROBE_RESULT=PASS" in text
+        result = outcome(text, error_text)
         records.append(
             (
                 field(text, "PROBE"),
                 field(text, "HOSTNAME"),
-                "PASS" if passed else "CRASH_OR_FAIL",
+                result,
                 stdout.name,
                 field(text + "\n" + error_text, "JAX_VERSION"),
                 field(text, "ELAPSED_SECONDS", default=""),
@@ -47,7 +62,7 @@ def main():
     )
     hosts = collections.Counter(host for _, host, _, _, _, _ in records)
     host_failures = collections.Counter(
-        host for _, host, outcome, _, _, _ in records if outcome != "PASS"
+        host for _, host, result, _, _, _ in records if result != "PASS"
     )
     print("PROBE OUTCOME COUNT")
     for key, count in sorted(counts.items()):
@@ -60,8 +75,8 @@ def main():
     for probe in probes:
         elapsed = [
             float(value)
-            for item_probe, _, outcome, _, _, value in records
-            if item_probe == probe and outcome == "PASS" and value
+            for item_probe, _, result, _, _, value in records
+            if item_probe == probe and result == "PASS" and value
         ]
         if elapsed:
             print(
@@ -73,9 +88,9 @@ def main():
                 sep="\t",
             )
     print("\nFAILED LOGS")
-    for probe, host, outcome, filename, version, _ in records:
-        if outcome != "PASS":
-            print(probe, host, version, filename, sep="\t")
+    for probe, host, result, filename, version, _ in records:
+        if result != "PASS":
+            print(probe, result, host, version, filename, sep="\t")
 
 
 if __name__ == "__main__":

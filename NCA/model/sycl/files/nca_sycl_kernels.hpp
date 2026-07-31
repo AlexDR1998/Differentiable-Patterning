@@ -81,6 +81,20 @@ inline void WaitAndReport(sycl::queue& queue, const char* stage) {
   }
 }
 
+inline void WaitForSubmittedWork(sycl::queue& queue, const char* stage) {
+  try {
+    // PJRT's queue may contain Unified Runtime internal events which cannot be
+    // passed to urEventWait. An explicit marker kernel gives us a user-visible
+    // event while still depending on all earlier work on the in-order queue.
+    sycl::event marker = queue.single_task([]() {});
+    marker.wait_and_throw();
+  } catch (const sycl::exception& error) {
+    ReportSyclFailure(stage, error);
+  } catch (const std::exception& error) {
+    ReportSyclFailure(stage, error);
+  }
+}
+
 class SerializedCustomCall {
  public:
   SerializedCustomCall(sycl::queue& queue, const char* stage,
@@ -90,7 +104,7 @@ class SerializedCustomCall {
   }
 
   ~SerializedCustomCall() {
-    if (lock_.owns_lock()) WaitAndReport(queue_, stage_);
+    if (lock_.owns_lock()) WaitForSubmittedWork(queue_, stage_);
   }
 
  private:
