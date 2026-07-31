@@ -47,6 +47,28 @@ def optional_cfg_value(cfg: Any, path: str, default: Any = None) -> Any:
     return value
 
 
+def apply_runtime_overrides(cfg: Any) -> None:
+    """Apply deployment-specific paths without embedding them in manifests."""
+    model_store_root = os.getenv("MODEL_STORE_ROOT")
+    if model_store_root:
+        OmegaConf.update(cfg, "model_store.enabled", True, force_add=True)
+        OmegaConf.update(cfg, "model_store.root", model_store_root, force_add=True)
+        print(f"model_store.root={model_store_root} (from MODEL_STORE_ROOT)")
+
+
+def apply_experiment_defaults(
+    cfg: Any, experiment_name: Any, overrides: Any = None
+) -> None:
+    """Propagate sweep-level identity into a selected run configuration."""
+    if not experiment_name:
+        return
+    OmegaConf.update(cfg, "experiment.name", str(experiment_name), force_add=True)
+    if not isinstance(overrides, dict) or "logging.wandb.group" not in overrides:
+        OmegaConf.update(
+            cfg, "logging.wandb.group", str(experiment_name), force_add=True
+        )
+
+
 def configure_xla_flags(cfg: Any) -> None:
     xla_flag_map = {
         "triton_gemm": "--xla_gpu_triton_gemm_any=True",
@@ -82,6 +104,7 @@ def configure_jax_runtime(cfg: Any) -> Any:
 
 
 def run_entrypoint(entrypoint_spec: str, cfg: Any) -> None:
+    apply_runtime_overrides(cfg)
     jax = configure_jax_runtime(cfg)
     entrypoint: Callable[[Any], Any] = import_callable(entrypoint_spec)
     if not env_flag("RUN_CONFIG_PROFILE"):
@@ -171,6 +194,9 @@ def main() -> None:
         worker_count = int(os.getenv("JOB_WORKER_COUNT", 1))
     _, entry = resolve_manifest_index(manifest_cfg, index=args.index, worker_index=worker_index, worker_count=worker_count)
     cfg = load_config_from_entry(entry, manifest_dir=manifest_path.parent)
+    apply_experiment_defaults(
+        cfg, manifest_cfg.get("experiment_name"), entry.get("overrides")
+    )
 
     entrypoint_spec = args.entrypoint or manifest_cfg.get("entrypoint")
     if not entrypoint_spec:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from Experiments.config_helpers import build_pool_admission_config, build_tags
+from Experiments.config_helpers import _cfg_get, build_pool_admission_config, build_tags
 
 
 def build_trainer(cfg, *, model, data, run_name, data_augmenter, model_directory, **domain_kwargs):
@@ -72,7 +72,7 @@ def train_model(
 ):
     """Run the common training contract, leaving data assembly to each domain."""
 
-    trainer.train(
+    result = trainer.train(
         t=cfg.run.t if timesteps is None else timesteps,
         iters=cfg.run.iterations,
         optimiser=optimiser,
@@ -102,3 +102,30 @@ def train_model(
         JAX_TRACE=cfg.trainer.get("jax_trace", False),
         key=key,
     )
+    model_store = _cfg_get(cfg, "model_store", None)
+    if _cfg_get(model_store, "enabled", False) and result.checkpoint_path is not None:
+        from Common.model_registry import publish_model_bundle
+
+        store_root = _cfg_get(model_store, "root", None)
+        if not store_root:
+            raise ValueError("model_store.root must be set when model bundling is enabled")
+        collection = _cfg_get(
+            model_store, "collection", cfg.logging.wandb.project
+        )
+        bundle = publish_model_bundle(
+            store_root=store_root,
+            collection=collection,
+            run_name=run_name,
+            checkpoint_path=result.checkpoint_path,
+            cfg=cfg,
+            training_result=result,
+            model_factory=_cfg_get(
+                model_store,
+                "model_factory",
+                "Experiments.config_helpers:build_model",
+            ),
+        )
+        bundle.verify()
+        result.checkpoint_path.unlink()
+        print(f"Published model bundle: {bundle.path}")
+    return result

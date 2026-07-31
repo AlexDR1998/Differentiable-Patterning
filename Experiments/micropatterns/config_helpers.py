@@ -94,19 +94,20 @@ def masked_reinject_callback_bit(
     key,
     channel_timestep_mask,
     knockout_times,
-    n_inject=None,
+    probability,
+    global_batch_indices=None,
+    global_batch_count=None,
 ):
     if hasattr(x, "ndim"):
         B, T = x.shape[:2]
         x = x.at[:, 1:].set(x[:, :-1])
         x = x.at[:, 0].set(x_true[:, 0])
-        eligible = B * (T - 1)
-        inject_count = eligible // 2 if n_inject is None else n_inject
-        if inject_count > 0:
-            scores = jax.random.uniform(key, shape=(eligible,))
-            inject_inds = jnp.argsort(scores)[:inject_count]
-            inject = jnp.zeros((eligible,), dtype=bool).at[inject_inds].set(True)
-            inject = inject.reshape((B, T - 1, 1))
+        global_B = B if global_batch_count is None else global_batch_count
+        indices = jnp.arange(B) if global_batch_indices is None else global_batch_indices
+        inject = jax.random.bernoulli(
+            key, probability, shape=(global_B, T - 1)
+        )[indices, :, None]
+        if T > 1:
             measured = channel_timestep_mask[:, : T - 1]
             if measured.shape[2] < obs_channels:
                 measured = jnp.pad(
@@ -137,15 +138,13 @@ def masked_reinject_callback_bit(
 
     B = len(x)
     T = x[0].shape[0]
-    N_ELIGIBLE = B * (T - 1)
-    N_INJECT = N_ELIGIBLE // 2 if n_inject is None else n_inject
+    global_B = B if global_batch_count is None else global_batch_count
+    indices = jnp.arange(B) if global_batch_indices is None else global_batch_indices
+    inject_mask = jax.random.bernoulli(
+        key, probability, shape=(global_B, T - 1)
+    )[indices]
 
-    if N_INJECT > 0:
-        scores = jax.random.uniform(key, shape=(N_ELIGIBLE,))
-        inject_inds = jnp.argsort(scores)[:N_INJECT]
-        inject_mask = jnp.zeros((N_ELIGIBLE,), dtype=bool).at[inject_inds].set(True)
-        inject_mask = inject_mask.reshape((B, T - 1))
-
+    if T > 1:
         for b in range(B):
             measured = channel_timestep_mask[b, : T - 1]
             if measured.shape[1] < obs_channels:
@@ -215,9 +214,20 @@ def build_data_augmenter(
         build_knockout_times(cfg.knockout.mode, cfg.knockout.time, cfg.data.batches)
     
     class DA_subclass(data_augmenter_base):
-        supports_sharded_inject_count = True
+        supports_global_reinjection_mask = True
 
         def __init__(self, *args, **kwargs):
+            kwargs["intermediate_reinjection_probability"] = cfg.data.get(
+                "intermediate_reinjection_probability", 0.5
+            )
+            kwargs["intermediate_reinjection_probability_end"] = cfg.data.get(
+                "intermediate_reinjection_probability_end",
+                kwargs["intermediate_reinjection_probability"],
+            )
+            kwargs["intermediate_reinjection_decay_start_fraction"] = cfg.data.get(
+                "intermediate_reinjection_decay_start_fraction", 0.25
+            )
+            kwargs["intermediate_reinjection_total_iterations"] = cfg.run.iterations
             super().__init__(*args, **kwargs)
             if channel_timestep_mask is None:
                 mask = jnp.ones(
@@ -243,14 +253,17 @@ def build_data_augmenter(
 
         def data_callback(self,x,y,i,key):
             x_true,_ =self.split_x_y(1)	
+            reinjection_key = getattr(self, "_sharded_global_key", key)
             x = masked_reinject_callback_bit(
                 x,
                 x_true,
                 self.OBS_CHANNELS,
-                jax.random.fold_in(key, 0),
+                jax.random.fold_in(reinjection_key, 0),
                 self.channel_timestep_mask,
                 self.knockout_times,
-                getattr(self, "_sharded_n_inject", None),
+                self.reinjection_probability(i),
+                getattr(self, "_global_batch_indices", None),
+                getattr(self, "_global_batch_count", None),
             )
             x = self.noise(x,cfg.data.noise_strength,key=key)
             self.PREVIOUS_KEY = key
@@ -259,6 +272,8 @@ def build_data_augmenter(
         f"da_ko{_compact_value(cfg.knockout.mode)}"
         f"_kot{_compact_value(cfg.knockout.time)}"
         f"_noise{cfg.data.noise_strength}"
+        f"_irp{cfg.data.get('intermediate_reinjection_probability', 0.5)}"
+        f"-{cfg.data.get('intermediate_reinjection_probability_end', cfg.data.get('intermediate_reinjection_probability', 0.5))}"
     )
     return DA_subclass, cfg_str
 

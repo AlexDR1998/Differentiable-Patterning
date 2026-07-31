@@ -21,6 +21,9 @@ EXCLUDED_WANDB_TAG_KEYS = {
     "logging.wandb.project",
     "logging.wandb.group",
     "logging.wandb.tags",
+    "model_store.root",
+    "model_store.collection",
+    "model_store.model_factory",
 }
 
 
@@ -32,23 +35,76 @@ def _cfg_get(cfg, key, default=None):
     return getattr(cfg, key, default)
 
 
-def compute_channel_statistics(data, channel_axis=2, epsilon=1e-6):
-    """Compute fixed per-channel mean/std from a loaded trajectory array.
+def compute_model_channel_statistics(
+    data,
+    model_channels,
+    channel_schema=None,
+    measurement_mask=None,
+    epsilon=1e-6,
+):
+    """Compute statistics in the channel layout actually consumed by an NCA.
 
-    The training data convention is ``[batch, time, channel, height, width]``
-    (and this also supports extra leading dimensions). Statistics are computed
-    over every axis except the channel axis.
+    Data is ``[batch, time, measurement, height, width]``. For grouped
+    experiments, the schema maps repeated measurement channels to unique state
+    channels; the same primary measurements used by the data augmenter are
+    used here. Unavailable measurements are excluded with ``measurement_mask``.
+    Any remaining model channels are hidden state and receive neutral
+    statistics (mean zero, standard deviation one).
     """
     import jax.numpy as jnp
 
     values = jnp.asarray(data)
-    if values.ndim < 3:
-        raise ValueError(f"Expected trajectory data with at least 3 dimensions, got {values.shape}")
-    channel_axis %= values.ndim
-    reduce_axes = tuple(axis for axis in range(values.ndim) if axis != channel_axis)
-    mean = jnp.mean(values, axis=reduce_axes)
-    std = jnp.maximum(jnp.std(values, axis=reduce_axes), epsilon)
-    return mean, std
+    if values.ndim != 5:
+        raise ValueError(f"Expected data shaped [B,T,C,H,W], got {values.shape}")
+    measurement_indices = (
+        tuple(channel_schema.primary_measurements)
+        if channel_schema is not None
+        else tuple(range(values.shape[2]))
+    )
+    state_channels = len(measurement_indices)
+    if model_channels < state_channels:
+        raise ValueError(
+            f"Model has {model_channels} channels but data requires {state_channels} state channels"
+        )
+    selected = values[:, :, jnp.asarray(measurement_indices), :, :]
+
+    if measurement_mask is None:
+        available = jnp.ones(selected.shape[:3], dtype=selected.dtype)
+    else:
+        available = jnp.asarray(measurement_mask, dtype=selected.dtype)
+        if available.ndim == 2:
+            available = jnp.broadcast_to(available[None], (values.shape[0], *available.shape))
+        if available.shape[0] != values.shape[0] or available.shape[2] != values.shape[2]:
+            raise ValueError(
+                "measurement_mask must align with data batch and measurement axes; "
+                f"got {available.shape} for data {values.shape}"
+            )
+        # Loss masks conventionally omit the initial timestep. In that case,
+        # compute statistics over the corresponding target timesteps only.
+        if available.shape[1] == values.shape[1] - 1:
+            selected = selected[:, 1:]
+        elif available.shape[1] != values.shape[1]:
+            raise ValueError(
+                "measurement_mask time axis must have T or T-1 entries; "
+                f"got {available.shape[1]} for T={values.shape[1]}"
+            )
+        available = available[:, :, jnp.asarray(measurement_indices)]
+
+    weights = available[..., None, None]
+    spatial_size = selected.shape[-2] * selected.shape[-1]
+    counts = jnp.sum(available, axis=(0, 1)) * spatial_size
+    if bool(jnp.any(counts == 0)):
+        missing = [int(index) for index in jnp.flatnonzero(counts == 0)]
+        raise ValueError(f"No available observations for state channels {missing}")
+    means = jnp.sum(selected * weights, axis=(0, 1, 3, 4)) / counts
+    centered = selected - means[None, None, :, None, None]
+    variances = jnp.sum(centered * centered * weights, axis=(0, 1, 3, 4)) / counts
+    stds = jnp.maximum(jnp.sqrt(variances), epsilon)
+
+    hidden_channels = model_channels - state_channels
+    means = jnp.pad(means, (0, hidden_channels), constant_values=0.0)
+    stds = jnp.pad(stds, (0, hidden_channels), constant_values=1.0)
+    return means, stds
 
 
 def _compact_value(value):
@@ -331,6 +387,14 @@ def build_model_config_string(cfg):
         normalization = _cfg_get(cfg.model, "normalization", "none")
         if normalization != "none":
             cfg_str += f"_norm{normalization}"
+            normalization_channels = _cfg_get(
+                cfg.model, "normalization_channels", cfg.model.channels
+            )
+            if normalization_channels not in {None, cfg.model.channels}:
+                cfg_str += f"_nc{normalization_channels}"
+            normalization_eps = _cfg_get(cfg.model, "normalization_eps", 1e-6)
+            if normalization_eps != 1e-6:
+                cfg_str += f"_neps{normalization_eps}"
     if cfg.model.family == "FastKaNCA":
         kan_cfg = _cfg_get(cfg.model, "kan", None)
         cfg_str += f"_kb{_cfg_get(kan_cfg, 'num_basis', 8)}"
@@ -391,6 +455,9 @@ def build_model(cfg, key=None):
             NORMALIZATION_MEAN=_cfg_get(cfg.model, "normalization_mean", None),
             NORMALIZATION_STD=_cfg_get(cfg.model, "normalization_std", None),
             NORMALIZATION_EPS=_cfg_get(cfg.model, "normalization_eps", 1e-6),
+            NORMALIZATION_CHANNELS=_cfg_get(
+                cfg.model, "normalization_channels", cfg.model.channels
+            ),
             key=key,
         )
     elif cfg.model.family == "NCA_fast":

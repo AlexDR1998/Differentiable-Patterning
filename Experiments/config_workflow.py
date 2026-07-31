@@ -116,6 +116,10 @@ def generate_manifest(base_cfg: dict[str, Any], sweep_cfg: dict[str, Any], outpu
                 override_values.update(branch_combo)
                 for branch_key in branch_value_keys:
                     override_values.setdefault(branch_key, None)
+                experiment_name = sweep_cfg.get("experiment_name")
+                if experiment_name:
+                    override_values["experiment.name"] = experiment_name
+                    override_values.setdefault("logging.wandb.group", experiment_name)
                 generated_index = len(generated_entries)
                 override_values["seed"] = (
                     generated_index if sweep_cfg.get("seed_mode", "index") == "index" else base_cfg.get("seed", 0)

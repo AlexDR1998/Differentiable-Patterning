@@ -31,6 +31,7 @@ import NCA.trainer.NCA_regulariser as regularisers
 from NCA.trainer.training_execution import TrainingExecution
 from einops import repeat, reduce, rearrange, einsum
 from Common.model.boundary import model_boundary, hard_boundary, no_boundary
+from Common.trainer.training_result import TrainingResult
 from tqdm import tqdm
 from jaxtyping import Float,Array,Key
 import time
@@ -707,7 +708,8 @@ class NCA_Trainer(object):
 		Returns
 		-------
 
-		None
+		TrainingResult
+			Checkpoint and best-loss metadata for downstream model publication.
 		"""
 
 		if key is None:
@@ -1111,6 +1113,7 @@ class NCA_Trainer(object):
 			flush=True,
 		)
 		best_loss = 100000000
+		best_iteration = None
 		loss_thresh = 1e16 # If loss exceeds this, training is diverging to NaN
 		model_saved = False
 		#prev_loss = 0
@@ -1297,7 +1300,8 @@ class NCA_Trainer(object):
 					model_saved=True
 					self.NCA_model = nca
 					self.NCA_model.save(self.MODEL_PATH,overwrite=True)
-					best_loss = mean_loss
+					best_loss = mean_loss_value
+					best_iteration = i
 
 			if self.IS_LOGGING:
 				# log_x = jtu.tree_map(self.NCA_model.latent_to_real, x_new)
@@ -1322,5 +1326,16 @@ class NCA_Trainer(object):
 				t=t,
 				boundary_callback=self.BOUNDARY_CALLBACK,
 				SAVE_TRAJECTORY=False)
+		wandb_run_id = None
 		if self.IS_LOGGING:
+			wandb_run_id = getattr(getattr(self.LOGGER, "run", None), "id", None)
 			self.LOGGER.finish()
+		checkpoint_path = Path(self.MODEL_PATH).with_suffix(".eqx") if model_saved else None
+		return TrainingResult(
+			checkpoint_path=checkpoint_path,
+			best_iteration=best_iteration,
+			best_loss=float(best_loss) if model_saved else None,
+			completed=error == 0 and model_saved,
+			error_code=error,
+			wandb_run_id=wandb_run_id,
+		)
