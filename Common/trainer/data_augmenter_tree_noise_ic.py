@@ -22,7 +22,7 @@ class DataAugmenterNoise(DataAugmenterAbstract):
     
 
     
-    def data_callback(self, x, y, i):
+    def advance_pool(self, x, y, i):
         """
 		Called after every training iteration to perform data augmentation and processing		
 

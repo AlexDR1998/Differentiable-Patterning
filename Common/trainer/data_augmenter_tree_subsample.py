@@ -13,7 +13,7 @@ class DataAugmenterSubsampleTexture(DataAugmenterAbstract):
         self.save_data(data)
 
 
-    def data_load(self):
+    def initialize_pool(self):
         x0,y0 = self.split_x_y(1)
         init_sample = lambda x:x[:,:,:self.sample_size,:self.sample_size]
         x0 = jax.tree_util.tree_map(init_sample,x0)
@@ -27,7 +27,7 @@ class DataAugmenterSubsampleTexture(DataAugmenterAbstract):
     #    x = jax.tree_util.tree_map(set_x0_noise,x)
     #    return x,y
         
-    def data_callback(self, x, y, i):
+    def advance_pool(self, x, y, i):
 
         if hasattr(self, "PREVIOUS_KEY"):
             key = jax.random.fold_in(self.PREVIOUS_KEY,i)

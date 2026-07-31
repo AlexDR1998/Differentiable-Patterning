@@ -18,7 +18,7 @@ class DataAugmenterAbstract(object):
 		"""
 		Class for handling data augmentation for NCA training. 
 		data_init is called before training,
-		data_callback is called during training
+		advance_pool is called during training
 		
 		Also handles JAX array sharding, so all methods of NCA_trainer work
 		on multi-gpu setups. Currently splits data onto different GPUs by batches
@@ -63,18 +63,18 @@ class DataAugmenterAbstract(object):
 		self.save_data(data)
 		return None
 	
-	def data_load(self,key):	
+	def initialize_pool(self,key):
 		x0,y0 = self.split_x_y(1)
-		x0,y0 = self.data_callback(x0,y0,0,key)
+		x0,y0 = self.advance_pool(x0,y0,0,key)
 		return x0,y0
 	
-	def data_callback(self,
+	def advance_pool(self,
 				   	  x:PyTree[Float[Array, "N C W H"]],
 					  y:PyTree[Float[Array, "N C W H"]],
 					  i,
 					  key):
 		"""
-		Called after every training iteration to perform data augmentation and processing		
+		Advance the pool after a completed training rollout.
 
 		OVERWRITE IN SUBCLASS
 		Parameters
