@@ -41,7 +41,7 @@ spec:
                 value: /workspace
               - name: DATA_PATH_BASE
                 value: /workspace/writeable/Data/
-              - name: MODEL_SAVE_PATH
+              - name: MODEL_STORE_ROOT
                 value: /workspace/writeable/Models/
               - name: XLA_PYTHON_CLIENT_MEM_FRACTION
                 value: "0.9"

@@ -180,7 +180,7 @@ PVC_PATH="${PVC_PATH:-$CODE_ROOT/}"
 [[ "$PVC_PATH" == */ ]] || PVC_PATH="$PVC_PATH/"
 export PVC_PATH
 export DATA_PATH_BASE="${DATA_PATH_BASE:-$IO_ROOT/Data/}"
-export MODEL_SAVE_PATH="${MODEL_SAVE_PATH:-$IO_ROOT/Models/}"
+export MODEL_STORE_ROOT="${MODEL_STORE_ROOT:-$IO_ROOT/Models/}"
 
 export RUN_CONFIG_PROFILE="$PROFILE_GPU"
 # The trainer captures a short warmed-up window. Do not wrap imports,
@@ -200,11 +200,12 @@ export PYTHONFAULTHANDLER="${PYTHONFAULTHANDLER:-1}"
 export PYTHONUNBUFFERED="${PYTHONUNBUFFERED:-1}"
 export NCA_SYCL_REPORT_QUEUE_ORDERING="${NCA_SYCL_REPORT_QUEUE_ORDERING:-1}"
 
-mkdir -p "$MODEL_SAVE_PATH" "$IO_ROOT/output" "$WANDB_CACHE_DIR" "$WANDB_DATA_DIR" "$WANDB_ARTIFACT_DIR" "$RUN_CONFIG_PROFILE_DIR"
+mkdir -p "$MODEL_STORE_ROOT" "$IO_ROOT/output" "$WANDB_CACHE_DIR" "$WANDB_DATA_DIR" "$WANDB_ARTIFACT_DIR" "$RUN_CONFIG_PROFILE_DIR"
 
 echo "Running manifest index $SLURM_ARRAY_TASK_ID/$((N_JOBS - 1)): $MANIFEST"
 echo "Using code root: $PVC_PATH"
 echo "Using job IO root: $IO_ROOT/"
+echo "Writing model bundles to: $MODEL_STORE_ROOT"
 echo "Writing wandb local files to: $WANDB_DIR"
 echo "GPU profiling: $PROFILE_GPU"
 echo "JAX profiles: $RUN_CONFIG_PROFILE_DIR"
