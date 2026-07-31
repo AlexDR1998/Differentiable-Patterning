@@ -124,9 +124,7 @@ def run(cfg):
     model, model_name = build_model(cfg, key=model_key)
     optimiser, optimiser_name, schedule = build_optimizer(cfg, return_schedule=True)
     schema = aux.get("channel_schema")
-    augmenter, _ = build_data_augmenter(
-        cfg, mask, schema, cfg.data.get("batch_multiplier", 1)
-    )
+    augmenter, _ = build_data_augmenter(cfg, mask, schema)
     target_timepoints = [f"t{time}h" for time in list(cfg.data.timesteps)[1:]]
     if cfg.data.get("duplicate_final_timestep", False):
         target_timepoints.append(f"{target_timepoints[-1]}_steady")

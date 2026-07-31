@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as jnp
+import pytest
 
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from Common.trainer.loss_multi_target import multi_target_loss
@@ -167,3 +168,50 @@ def test_sharded_reinjection_matches_global_two_and_four_batch_permutations():
             actual.extend(result)
 
         assert jnp.allclose(jnp.stack(actual), jnp.stack(expected))
+
+
+def test_snapshot_reinjection_resets_initial_state_and_honours_decay_start():
+    batch, time, channel = jnp.meshgrid(
+        jnp.arange(3), jnp.arange(5), jnp.arange(14), indexing="ij"
+    )
+    data = (1 + 1000 * batch + 100 * time + channel)[..., None, None].astype(
+        jnp.float32
+    )
+    data = jnp.broadcast_to(data, (3, 5, 14, 2, 2))
+    augmenter = DataAugmenter(
+        data,
+        intermediate_reinjection_probability=0.0,
+        intermediate_reinjection_probability_end=1.0,
+        intermediate_reinjection_decay_start_fraction=0.5,
+        intermediate_reinjection_total_iterations=100,
+    )
+    augmenter.noise_strength = 0.0
+    stale = [jnp.zeros((4, 10, 2, 2)) for _ in range(3)]
+    targets = [value[1:] for value in data]
+
+    before_decay, _ = augmenter.data_callback(
+        stale, targets, 25, jax.random.PRNGKey(30)
+    )
+    before_decay = jnp.stack(before_decay)
+    assert jnp.all(before_decay[:, 0] != 0.0)
+    assert jnp.all(before_decay[:, 1:] == 0.0)
+
+    after_decay, _ = augmenter.data_callback(
+        stale, targets, 100, jax.random.PRNGKey(30)
+    )
+    after_decay = jnp.stack(after_decay)
+    assert jnp.all(jnp.any(after_decay[:, 1:] != 0.0, axis=(2, 3, 4)))
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"intermediate_reinjection_probability": -0.1},
+        {"intermediate_reinjection_probability_end": 1.1},
+        {"intermediate_reinjection_decay_start_fraction": 1.0},
+    ],
+)
+def test_snapshot_reinjection_rejects_invalid_schedule(kwargs):
+    data = jnp.zeros((2, 5, 14, 2, 2))
+    with pytest.raises(ValueError):
+        DataAugmenter(data, **kwargs)

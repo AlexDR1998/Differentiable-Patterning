@@ -32,7 +32,9 @@ from NCA.trainer.kan_tensorboard_log import (
 
 
 def _logger_without_wandb():
-    return object.__new__(kaNCA_Train_log)
+    logger = object.__new__(kaNCA_Train_log)
+    logger.diagnostic_targets = None
+    return logger
 
 
 def test_fast_kan_logger_selection_uses_kan_logger():
@@ -69,7 +71,7 @@ def test_learning_rate_uses_training_wandb_category():
         LOG_EVERY=10,
     )
 
-    assert logged == [("Training/learning_rate", 5e-4, 1)]
+    assert logged == [("Train/learning_rate", 5e-4, 1)]
 
 
 def test_fast_kan_diagnostic_plot_helpers_return_images():

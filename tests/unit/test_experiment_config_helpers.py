@@ -332,7 +332,7 @@ def test_multi_attractor_requires_pairs():
         load_emoji_data(cfg, impath="/tmp/emojis/")
 
 
-def _micropattern_cfg(data_channels=12, knockout_mode=None):
+def _micropattern_cfg(data_channels=12, knockout_mode=None, pool_copies=1):
     return _cfg(
         {
             "data": {
@@ -341,6 +341,7 @@ def _micropattern_cfg(data_channels=12, knockout_mode=None):
                 "timesteps": [0, 12, 24, 36, 48],
                 "downsample": 1,
                 "noise_strength": 0.005,
+                "pool_copies": pool_copies,
             },
             "knockout": {
                 "mode": knockout_mode,
@@ -435,6 +436,21 @@ def test_micropattern_load_data_preserves_12_channel_data(monkeypatch):
     assert len(calls["12ch"]) == 1
     assert calls["12ch"][0]["impath"] == "/tmp/micropatterns/"
     assert calls["4ch"] == []
+
+
+def test_legacy_micropattern_pool_copies_duplicate_aligned_loader_outputs(monkeypatch):
+    micropattern_helpers, loaded_data_12, _, _, _ = _patch_micropattern_loader(
+        monkeypatch
+    )
+
+    data, _, _, boundary, channel_mask, _ = micropattern_helpers.load_data(
+        _micropattern_cfg(data_channels=12, pool_copies=2),
+        impath="/tmp/micropatterns/",
+    )
+
+    assert data.shape[0] == boundary.shape[0] == channel_mask.shape[0] == 4
+    assert jnp.array_equal(data[:2, :, :, 6:-6, 6:-6], loaded_data_12)
+    assert jnp.array_equal(data[2:, :, :, 6:-6, 6:-6], loaded_data_12)
 
 
 def test_micropattern_load_data_uses_4_channel_group_a_loader(monkeypatch):
@@ -560,6 +576,7 @@ def test_micropattern_masked_reinject_only_uses_measured_channels():
         key,
         mask,
         jnp.array([-1], dtype=jnp.int32),
+        1.0,
     )[0]
 
     propagated = x[0].at[1:].set(x[0][:-1]).at[0].set(x_true[0][0])
@@ -603,6 +620,7 @@ def test_micropattern_nodal_zeroing_wins_after_reinject_for_ko_batches():
         jax.random.PRNGKey(0),
         mask,
         jnp.array([0, 24, -1], dtype=jnp.int32),
+        1.0,
     )
 
     assert jnp.all(out[0][:, 7] == 0.0)

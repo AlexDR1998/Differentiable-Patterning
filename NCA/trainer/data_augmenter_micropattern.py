@@ -22,8 +22,8 @@ class MicropatternDataAugmenter(BasicAugmenter):
 
     The input is a list/array of raw measurement trajectories. The schema
     chooses one primary measurement per biological state for model inputs while
-    preserving all measurements as targets. ``batch_multiplier`` duplicates
-    replicate trajectories during initialisation.
+    preserving all measurements as targets. Batch cardinality is fixed by the
+    loader and remains unchanged during augmentation.
     """
 
     schema = MICROPATTERN_4CH_SCHEMA
@@ -36,7 +36,6 @@ class MicropatternDataAugmenter(BasicAugmenter):
 
     def __init__(self, *args, **kwargs):
         self.schema = kwargs.pop("schema", None) or type(self).schema
-        self.batch_multiplier = kwargs.pop("batch_multiplier", 1)
         self.group_reinjection = kwargs.pop(
             "group_reinjection", type(self).group_reinjection
         )
@@ -96,12 +95,6 @@ class MicropatternDataAugmenter(BasicAugmenter):
         x, _ = split_trajectory(state_data, N_steps, self.real_to_latent)
         y = jtu.tree_map(lambda data: data[N_steps:], self.data_saved)
         return x, y
-
-    def data_init(self, SHARDING=None):
-        data = self.return_saved_data()
-        if self.batch_multiplier != 1:
-            data = [leaf for _ in range(self.batch_multiplier) for leaf in data]
-        self.save_data(data)
 
     def reinjection_probability(self, i):
         """Return the configured piecewise-linear reinjection probability."""

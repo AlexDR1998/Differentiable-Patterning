@@ -144,5 +144,22 @@ def test_manifest_treats_weight_vectors_as_individual_sweep_values(tmp_path):
     )
 
     assert manifest["count"] == 2
+    assert manifest["configs"][0]["config"]["experiment"]["name"] == "weight-test"
+    assert manifest["configs"][0]["config"]["logging"]["wandb"]["group"] == "weight-test"
     assert manifest["configs"][0]["config"]["loss"]["channel_importance"] == uniform
     assert manifest["configs"][1]["config"]["loss"]["channel_importance"] == sox2
+
+
+def test_manifest_preserves_explicit_wandb_group(tmp_path):
+    manifest = generate_manifest(
+        {},
+        {
+            "experiment_name": "job-name",
+            "grid": {"logging.wandb.group": ["shared-analysis-group"]},
+        },
+        tmp_path,
+    )
+
+    config = manifest["configs"][0]["config"]
+    assert config["experiment"]["name"] == "job-name"
+    assert config["logging"]["wandb"]["group"] == "shared-analysis-group"

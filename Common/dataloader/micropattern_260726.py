@@ -440,14 +440,14 @@ def load_micropattern_260726(
     strict_replicates=False,
     boundary_radius_quantile=0.98,
     boundary_radius_scale=1.0,
-    batch_multiplier=1,
+    pool_copies=1,
 ):
     """Load physical replicates of the multichannel 260726 NCA dataset.
 
     ``boundary_radius_quantile`` robustly trims foreground pixels far from the
     inferred colony centre before constructing a circle.  Lower values or a
     ``boundary_radius_scale`` below one produce a stricter common boundary.
-    ``batch_multiplier`` repeats each selected physical batch in the returned
+    ``pool_copies`` repeats each selected physical batch in the returned
     training batch while retaining the original replicate provenance.
 
     Returns
@@ -455,7 +455,7 @@ def load_micropattern_260726(
     targets:
         Float32 array ``[B, T, M, X, Y]`` where ``M`` is the number of
         channels in the selected experiment groups and
-        ``B = replicate_count * len(conditions) * batch_multiplier``.
+        ``B = replicate_count * len(conditions) * pool_copies``.
     aux:
         Selected schema, provenance, group masks, histogram bins, and inventory.
     measurement_names:
@@ -476,9 +476,9 @@ def load_micropattern_260726(
         raise ValueError("boundary_radius_quantile must be in (0.5, 1.0]")
     if boundary_radius_scale <= 0:
         raise ValueError("boundary_radius_scale must be positive")
-    if batch_multiplier <= 0 or int(batch_multiplier) != batch_multiplier:
-        raise ValueError("batch_multiplier must be a positive integer")
-    batch_multiplier = int(batch_multiplier)
+    if pool_copies <= 0 or int(pool_copies) != pool_copies:
+        raise ValueError("pool_copies must be a positive integer")
+    pool_copies = int(pool_copies)
     conditions = tuple(conditions)
     timesteps = tuple(int(timestep) for timestep in timesteps)
     schema = MICROPATTERN_260726_SCHEMA.select_groups(experiment_groups)
@@ -674,26 +674,26 @@ def load_micropattern_260726(
     targets *= boundary_mask[:, None].astype(targets.dtype)
     group_masks = boundary_mask[:, None] & group_mask[..., None, None]
 
-    if batch_multiplier > 1:
-        targets = np.concatenate([targets] * batch_multiplier, axis=0)
+    if pool_copies > 1:
+        targets = np.concatenate([targets] * pool_copies, axis=0)
         measurement_mask = np.concatenate(
-            [measurement_mask] * batch_multiplier, axis=0
+            [measurement_mask] * pool_copies, axis=0
         )
-        boundary_mask = np.concatenate([boundary_mask] * batch_multiplier, axis=0)
-        group_masks = np.concatenate([group_masks] * batch_multiplier, axis=0)
-        group_mask = np.concatenate([group_mask] * batch_multiplier, axis=0)
+        boundary_mask = np.concatenate([boundary_mask] * pool_copies, axis=0)
+        group_masks = np.concatenate([group_masks] * pool_copies, axis=0)
+        group_mask = np.concatenate([group_mask] * pool_copies, axis=0)
         source_conditions = np.concatenate(
-            [source_conditions] * batch_multiplier, axis=0
+            [source_conditions] * pool_copies, axis=0
         )
-        substituted = np.concatenate([substituted] * batch_multiplier, axis=0)
-        source_files = np.concatenate([source_files] * batch_multiplier, axis=0)
-        batch_conditions = batch_conditions * batch_multiplier
-        batch_replicates = batch_replicates * batch_multiplier
+        substituted = np.concatenate([substituted] * pool_copies, axis=0)
+        source_files = np.concatenate([source_files] * pool_copies, axis=0)
+        batch_conditions = batch_conditions * pool_copies
+        batch_replicates = batch_replicates * pool_copies
 
     aux = {
         "channel_schema": schema,
         "selected_experiment_groups": schema.group_names,
-        "batch_multiplier": batch_multiplier,
+        "pool_copies": pool_copies,
         "manifest": records,
         "unselected_files": inventory["unselected_files"],
         "histogram_bins": histogram_bins,

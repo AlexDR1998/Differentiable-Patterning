@@ -168,7 +168,7 @@ def test_loader_can_select_a_group_without_cell_fate_s1(tmp_path):
     ]
 
 
-def test_loader_batch_multiplier_repeats_selected_batches(tmp_path):
+def test_loader_pool_copies_repeats_selected_batches(tmp_path):
     _make_control_dataset(tmp_path)
     histogram_bins = np.tile(
         np.array([[0.0, 1000.0]], dtype=np.float32), (4, 1)
@@ -180,7 +180,7 @@ def test_loader_batch_multiplier_repeats_selected_batches(tmp_path):
         timesteps=(0,),
         downsample=1,
         replicate_count=1,
-        batch_multiplier=2,
+        pool_copies=2,
         experiment_groups=("cell_fate_s1",),
         histogram_bins=histogram_bins,
         align=False,
@@ -189,7 +189,7 @@ def test_loader_batch_multiplier_repeats_selected_batches(tmp_path):
     assert np.asarray(data).shape[0] == 2
     assert np.asarray(boundary).shape[0] == 2
     assert np.asarray(measurement_mask).shape[0] == 2
-    assert aux["batch_multiplier"] == 2
+    assert aux["pool_copies"] == 2
     assert aux["batch_replicates"] == (1, 1)
 
 

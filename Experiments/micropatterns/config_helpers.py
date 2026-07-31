@@ -172,9 +172,7 @@ def masked_reinject_callback_bit(
     return x
 
 
-def build_data_augmenter(
-    cfg, channel_timestep_mask=None, channel_schema=None, batch_multiplier=1
-):
+def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
     data_channels = cfg.data.data_channels
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
         class DA_subclass(DataAugmenter260726):
@@ -182,7 +180,6 @@ def build_data_augmenter(
 
             def __init__(self, *args, **kwargs):
                 kwargs["schema"] = channel_schema
-                kwargs["batch_multiplier"] = batch_multiplier
                 kwargs["intermediate_reinjection_probability"] = cfg.data.get(
                     "intermediate_reinjection_probability", 0.5
                 )
@@ -198,7 +195,6 @@ def build_data_augmenter(
 
         return DA_subclass, (
             f"da_snapshot_noise{cfg.data.noise_strength}"
-            f"_bm{batch_multiplier}"
             f"_irp{cfg.data.get('intermediate_reinjection_probability', 0.5)}"
         )
     if data_channels == 4 and cfg.knockout.mode is not None:
@@ -281,6 +277,10 @@ def build_data_augmenter(
 def load_data(cfg, impath=None):
     custom_impath = impath is not None
     data_channels = cfg.data.data_channels
+    pool_copies = cfg.data.get("pool_copies", 1)
+    if pool_copies <= 0 or int(pool_copies) != pool_copies:
+        raise ValueError("data.pool_copies must be a positive integer")
+    pool_copies = int(pool_copies)
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
         if cfg.knockout.mode is not None:
             raise ValueError("micropatterns_260726 requires baseline data")
@@ -295,7 +295,7 @@ def load_data(cfg, impath=None):
             timesteps=tuple(cfg.data.timesteps),
             downsample=cfg.data.downsample,
             replicate_count=cfg.data.batches,
-            batch_multiplier=cfg.data.get("batch_multiplier", 1),
+            pool_copies=pool_copies,
             experiment_groups=cfg.data.get("experiment_groups", None),
         ))
         data = dataset.data
@@ -319,7 +319,7 @@ def load_data(cfg, impath=None):
         cfg_str = (
             f"data_b{cfg.data.batches}"
             f"_c{selected_channel_count}"
-            f"_bm{cfg.data.get('batch_multiplier', 1)}"
+            f"_pc{pool_copies}"
             f"_g{group_str}"
             f"_ds{cfg.data.downsample}"
             f"_ts{_compact_value(list(cfg.data.timesteps))}"
@@ -568,6 +568,16 @@ def load_data(cfg, impath=None):
                 f"when duplicate_final_timestep is enabled. Got {CHANNEL_TIMESTEP_MASK.shape}."
             )
 
+    # Pool cardinality is a data-assembly concern: duplicate every aligned
+    # batch component together before handing the result to the augmenter.
+    if pool_copies > 1:
+        data = jnp.concatenate([data] * pool_copies, axis=0)
+        boundary_mask = jnp.concatenate([boundary_mask] * pool_copies, axis=0)
+        if CHANNEL_TIMESTEP_MASK.ndim == 3:
+            CHANNEL_TIMESTEP_MASK = jnp.concatenate(
+                [CHANNEL_TIMESTEP_MASK] * pool_copies, axis=0
+            )
+
     # Data and boundary_mask are [B,T,C,H,W] and [B,1,H,W]. Keep the
     # historical six-pixel border unless a benchmark/experiment explicitly
     # requests aligned spatial dimensions.
@@ -600,6 +610,7 @@ def load_data(cfg, impath=None):
     cfg_str = (
         f"data_b{cfg.data.batches}"
         f"_c{data_channels}"
+        f"_pc{pool_copies}"
         f"_ds{cfg.data.downsample}"
         f"_ts{_compact_value(list(cfg.data.timesteps))}"
         f"_ko{_compact_value(cfg.knockout.mode)}"
