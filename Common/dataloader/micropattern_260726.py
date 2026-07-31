@@ -705,6 +705,7 @@ def load_micropattern_260726(
         "batch_conditions": tuple(batch_conditions),
         "batch_replicates": tuple(batch_replicates),
         "timesteps": timesteps,
+        "measurement_mask": measurement_mask,
         "loss_measurement_mask": measurement_mask[:, 1:],
     }
     return MicropatternDataset(
