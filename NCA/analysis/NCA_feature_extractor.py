@@ -155,7 +155,7 @@ class NCA_Feature_Extractor_Emoji(NCA_Feature_Extractor):
         "mushroom.png",
         ],
         impath_emojis=PVC_PATH+"Data/Emojis/",
-        downsample=1)
+        downsample=1).data
 
 
         # For the initial condition, take a small cropped square from the middle of the target image
