@@ -1,6 +1,6 @@
 import jax
-import jax.numpy as jnp
 
+from NCA.trainer.data_augmenter import scheduled_probability, terminal_carry
 from NCA.trainer.data_augmenter_nca_basic import DataAugmenter as BasicDataAugmenter
 from NCA.trainer.data_augmenter_nca_basic import jittable_callback_bit
 
@@ -18,9 +18,7 @@ class TerminalCarryDataAugmenter(BasicDataAugmenter):
     def scheduled_probability(i, start, schedule, initial, final):
         """Linearly move from ``initial`` to ``final`` after ``start``."""
 
-        progress = jnp.clip((i - start) / max(schedule, 1), 0.0, 1.0)
-        probability = initial + progress * (final - initial)
-        return jnp.where(i < start, 0.0, probability)
+        return scheduled_probability(i, start, schedule, initial, final)
 
     def terminal_carry_probability(self, i):
         """Return the configured terminal carry probability at iteration ``i``."""
@@ -40,16 +38,12 @@ class TerminalCarryDataAugmenter(BasicDataAugmenter):
 
         terminal_states = [trajectory[-1] for trajectory in x]
         x = jittable_callback_bit(x, x_true, self.OBS_CHANNELS, key)
-        carry = jax.random.bernoulli(
-            jax.random.fold_in(key, 1),
+        return terminal_carry(
+            x,
+            terminal_states,
             self.terminal_carry_probability(i),
-            (len(x),),
+            jax.random.fold_in(key, 1),
         )
-        for batch_index in range(len(x)):
-            x[batch_index] = x[batch_index].at[-1].set(
-                jnp.where(carry[batch_index], terminal_states[batch_index], x[batch_index][-1])
-            )
-        return x
 
     def data_callback(self, x, y, i, key):
         """Apply pool propagation, terminal carry, and the standard small noise."""
