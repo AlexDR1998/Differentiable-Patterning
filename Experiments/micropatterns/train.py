@@ -80,7 +80,7 @@ def run(cfg):
     from Experiments.config_helpers import (
         build_loss_args,
         build_model,
-        compute_channel_statistics,
+        compute_model_channel_statistics,
     )
     from Experiments.micropatterns.config_helpers import (
         build_data_augmenter,
@@ -91,13 +91,18 @@ def run(cfg):
     from NCA.trainer.optimizer import build_optimizer
 
     load_dotenv()
-    model_root = os.getenv("MODEL_SAVE_PATH")
-    if model_root is None:
-        raise ValueError("MODEL_SAVE_PATH must be set for micropattern training.")
+    model_root = _cfg_get(_cfg_get(cfg, "model_store", None), "root", None)
+    if not model_root:
+        raise ValueError("model_store.root must be set for micropattern training.")
 
     key = jax.random.PRNGKey(cfg.seed)
     model_key, train_key = jax.random.split(key)
     data, aux, channel_names, boundary, mask, _ = load_data(cfg)
+    if cfg.model.family == "NormalizedNCA":
+        schema = aux.get("channel_schema")
+        cfg.model.normalization_channels = (
+            schema.n_state_channels if schema is not None else data.shape[2]
+        )
     if (
         cfg.model.family == "NormalizedNCA"
         and cfg.model.get("normalization", "none") == "fixed"
@@ -106,7 +111,14 @@ def run(cfg):
             or cfg.model.get("normalization_std", None) is None
         )
     ):
-        mean, std = compute_channel_statistics(data)
+        statistics_mask = aux.get("measurement_mask", mask)
+        mean, std = compute_model_channel_statistics(
+            data,
+            model_channels=cfg.model.channels,
+            channel_schema=schema,
+            measurement_mask=statistics_mask,
+            epsilon=cfg.model.get("normalization_eps", 1e-6),
+        )
         cfg.model.normalization_mean = mean.tolist()
         cfg.model.normalization_std = std.tolist()
     model, model_name = build_model(cfg, key=model_key)
