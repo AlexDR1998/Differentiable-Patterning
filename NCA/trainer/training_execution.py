@@ -61,8 +61,8 @@ class TrainingExecution:
     def split_key(self, key):
         return jr.split(key)
 
-    def apply_data_callback(self, x, y, iteration, key):
-        return self.trainer.DATA_AUGMENTER.data_callback(x, y, iteration, key)
+    def apply_advance_pool(self, x, y, iteration, key):
+        return self.trainer.DATA_AUGMENTER.advance_pool(x, y, iteration, key)
 
     def prepare_log_dict(self, log_dict):
         return log_dict

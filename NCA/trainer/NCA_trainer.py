@@ -291,7 +291,7 @@ class NCA_Trainer(object):
 			name of directories to save tensorboard log and model parameters to.
 			if None, sets model_filename to current time
 		DATA_AUGMENTER : object, optional
-			DataAugmenter object. Has data_init and data_callback methods that can be re-written as needed. The default is DataAugmenter.
+			DataAugmenter object. Has data_init and advance_pool methods that can be re-written as needed. The default is DataAugmenter.
 		BOUNDARY_MASK : float32 [N_BOUNDARY_CHANNELS,WIDTH,HEIGHT], optional
 			Set of channels to keep fixed, encoding boundary conditions. The default is None.
 		BOUNDARY_MODE : string, optional
@@ -638,6 +638,7 @@ class NCA_Trainer(object):
 				  "intermediate_state":1.0,
 				  "boundary": 0.0,
 				  "contiguous_growth":1.0,
+				  "localised_hidden":0.0,
 				  "update_sensitivity":0.0,
 				  "perturbation_conservation":0.0
 				},
@@ -818,6 +819,7 @@ class NCA_Trainer(object):
 			"intermediate_state":regularisers.intermediate_reg,
 			"boundary":regularisers.boundary_regulariser,
 			"contiguous_growth":regularisers.contiguous_growth_regulariser,
+			"localised_hidden":regularisers.localised_hidden_regulariser,
 			"update_sensitivity":regularisers.update_sensitivity_regulariser,
 			"perturbation_conservation":regularisers.perturbation_conservation_regulariser,
 			"latent_channel_match":regularisers.latent_channel_match_regulariser,
@@ -1010,7 +1012,7 @@ class NCA_Trainer(object):
 		opt_state = self.OPTIMISER.init(nca_diff)
 		
 		# # Split data into x and y
-		x,y = self.DATA_AUGMENTER.data_load(key)
+		x,y = self.DATA_AUGMENTER.initialize_pool(key)
 		# x = jtu.tree_map(self.NCA_model.real_to_latent, x)
 		print(
 			f"Initial x shape(s): {describe_batch_shapes(x)}, "
@@ -1166,17 +1168,17 @@ class NCA_Trainer(object):
 				)
 
 				_, dry_x_new, dry_y_new, _, _, _, _, _ = dry_outputs
-				key, dry_callback_key = training_execution.split_key(key)
-				dry_callback_outputs = training_execution.apply_data_callback(
+				key, dry_advance_key = training_execution.split_key(key)
+				dry_advance_outputs = training_execution.apply_advance_pool(
 					dry_x_new,
 					dry_y_new,
 					i,
-					dry_callback_key,
+					dry_advance_key,
 				)
-				jax.block_until_ready(dry_callback_outputs)
+				jax.block_until_ready(dry_advance_outputs)
 
 				del dry_outputs
-				del dry_callback_outputs
+				del dry_advance_outputs
 
 			if JAX_TRACE and i == trace_start_step:
 				start_jax_training_trace(trace_dir)
@@ -1258,9 +1260,9 @@ class NCA_Trainer(object):
 				error=error,
 			)
 			if pool_decision["admit"]:
-				key, callback_key = training_execution.split_key(key)
-				x, y = training_execution.apply_data_callback(
-					x_new, y_new, i, callback_key
+				key, advance_key = training_execution.split_key(key)
+				x, y = training_execution.apply_advance_pool(
+					x_new, y_new, i, advance_key
 				)
 			pool_admission.update(pool_decision, mean_loss_value)
 			log_dict.update(pool_admission.log_dict(pool_decision))

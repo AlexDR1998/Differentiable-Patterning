@@ -15,7 +15,7 @@ class DataAugmenter(DataAugmenterAbstract):
         """
         Class for handling data augmentation for NCA training. 
         data_init is called before training,
-        data_callback is called during training
+        advance_pool is called during training
         
         Also handles JAX array sharding, so all methods of NCA_trainer work
         on multi-gpu setups. Currently splits data onto different GPUs by batches
@@ -45,7 +45,7 @@ class DataAugmenter(DataAugmenterAbstract):
         self.key = jax.random.PRNGKey(int(1000*time.time()))
 
 
-    def data_callback(self,x,y,i,key=None):
+    def advance_pool(self,x,y,i,key=None):
         """
         Called after every training iteration to perform data augmentation and processing		
 

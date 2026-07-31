@@ -14,7 +14,7 @@ class DataAugmenterSubsampleMicropatternTexture(DataAugmenterAbstract):
         
 
 
-    def data_load(self):
+    def initialize_pool(self):
         x0,y0 = self.split_x_y(1)
         init_sample = lambda x:x[:,:,:self.sample_size,:self.sample_size]
         x0 = jax.tree_util.tree_map(init_sample,x0)
@@ -47,7 +47,7 @@ class DataAugmenterSubsampleMicropatternTexture(DataAugmenterAbstract):
         x = jax.tree_util.tree_map(set_x0,x)
         return x,y
         
-    def data_callback(self, x, y, i):
+    def advance_pool(self, x, y, i):
         """
         Every self.sample_freq calls, reset x and y to a different sampled patch from self.split_x_y()
         Otherwise do the usual propagation of intermediate states. Set X0 to noise

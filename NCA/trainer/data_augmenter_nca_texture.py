@@ -47,7 +47,7 @@ class DataAugmenter(DataAugmenterAbstract):
         self.save_data(data)
         return None
 
-    def data_callback(self, 
+    def advance_pool(self,
                       x: PyTree[Float[Array, "N C W H"]], 
                       y: PyTree[Float[Array, "N C W H"]], 
                       i: Int[Scalar, ""],

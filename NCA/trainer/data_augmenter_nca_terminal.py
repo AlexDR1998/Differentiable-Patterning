@@ -45,7 +45,7 @@ class TerminalCarryDataAugmenter(BasicDataAugmenter):
             jax.random.fold_in(key, 1),
         )
 
-    def data_callback(self, x, y, i, key):
+    def advance_pool(self, x, y, i, key):
         """Apply pool propagation, terminal carry, and the standard small noise."""
 
         x_true, _ = self.split_x_y(1)

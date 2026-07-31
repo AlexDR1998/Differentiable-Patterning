@@ -453,6 +453,7 @@ class SyclTwoTileExecution(TrainingExecution):
         local._global_batch_indices = jax.device_put(
             jnp.asarray(batch_indices), device
         )
+        local._global_batch_count = len(augmenter.data_true)
         return local
 
     def prepare_inputs(self, nca, x, y, opt_state, key):
@@ -583,7 +584,7 @@ class SyclTwoTileExecution(TrainingExecution):
             allocations[tile] += 1
         return allocations
 
-    def apply_data_callback(self, x, y, iteration, key):
+    def apply_advance_pool(self, x, y, iteration, key):
         """Run augmenters on each tile's list of ``[N,C,H,W]`` leaves."""
         local_x = self._local_tile_trees(x, "state")
         local_y = self._local_tile_trees(y, "target")
@@ -597,14 +598,16 @@ class SyclTwoTileExecution(TrainingExecution):
         outputs = []
         for tile in range(self.TILE_COUNT):
             augmenter = self.data_augmenters[tile]
-            if getattr(augmenter, "supports_global_donor_pool", False):
+            if getattr(augmenter, "supports_global_donor_pool", False) or getattr(
+                augmenter, "supports_global_reinjection_mask", False
+            ):
                 augmenter._sharded_global_key = jax.device_put(
                     local_keys[0], self.devices[tile]
                 )
             if getattr(augmenter, "supports_sharded_inject_count", False):
                 augmenter._sharded_n_inject = injections[tile]
             outputs.append(
-                augmenter.data_callback(
+                augmenter.advance_pool(
                     local_x[tile], local_y[tile], iteration, local_keys[tile]
                 )
             )

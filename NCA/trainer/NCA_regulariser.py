@@ -157,6 +157,33 @@ def contiguous_growth_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
         return err
     return _batch_map(_reg, x_new, x, x_proc, x_new_proc)
 
+
+def localised_hidden_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
+    """
+        Encourages NCA to only use the hidden channels in regions where the observable channels are active. Penalises hidden channel activity in regions where observable channels are low.
+
+    Parameters
+    ----------
+        x: PyTree [Batch] of Arrays [N C H W]
+        x_new: PyTree [Batch] of Arrays [N C H W]
+        x_proc: PyTree [Batch] of Arrays [N L h w]
+        x_new_proc: PyTree [Batch] of Arrays [N L h w]
+        vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
+        key: Jax PRNGkey
+    Returns:
+        Sensitivity: Array [Batch] of floats
+    """
+
+    def _reg(x_new_proc):
+        x_new_proc_obs = x_new_proc[:,:aux["OBS_CHANNELS"]]
+        x_new_proc_hidden = x_new_proc[:,aux["OBS_CHANNELS"]:]
+        err = jnp.mean(jax.nn.relu(0.5-jnp.max(x_new_proc_obs,axis=1,keepdims=True))*jnp.abs(x_new_proc_hidden))
+        # err = jnp.mean(err,axis=(0,1)) # mean over N and C_hidden
+        return err
+    return _batch_map(_reg, x_new_proc)
+
+
+
 def update_sensitivity_regulariser(x,x_new,x_proc,x_new_proc,vv_nca,aux,key):
     """
     Measures NCA update step sensitivity to small changes in inputs. Computes a second update step with a small amount of noise added to the input.

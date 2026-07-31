@@ -50,7 +50,7 @@ class DataAugmenter(DataAugmenterAbstract):
         self.data_true = d_arr
         self.data_saved = d_arr
         
-    def data_callback(self,x,y,i):
+    def advance_pool(self,x,y,i):
         
         self.key = jr.fold_in(self.key,i)   		
         

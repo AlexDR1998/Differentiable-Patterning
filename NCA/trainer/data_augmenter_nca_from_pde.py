@@ -51,7 +51,7 @@ class DataAugmenter(DataAugmenterAbstract):
 
         
     #@eqx.filter_jit
-    def data_callback(self,x,y,i,key=None):
+    def advance_pool(self,x,y,i,key=None):
         """
         Called after every training iteration to perform data augmentation and processing		
 

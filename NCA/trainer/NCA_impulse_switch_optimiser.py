@@ -61,7 +61,7 @@ class NCA_impulse_optimiser(object):
         self.setup_logging(self.data,wandb_args)
         self.OUTPUT_DIRECTORY = OUTPUT_DIRECTORY
         self.FILENAME = FILENAME
-        state = self.DATA_AUGMENTER.data_load(key=jr.PRNGKey(0))[0][0]
+        state = self.DATA_AUGMENTER.initialize_pool(key=jr.PRNGKey(0))[0][0]
         print("Initial state shape: "+str(state.shape))
         
 
@@ -109,7 +109,7 @@ class NCA_impulse_optimiser(object):
         for i in range(self.BATCHES):
             # choose an initial state (wrap-around if POOL_SIZE > available data)
             key = jr.fold_in(key,i)
-            state = np.array(self.DATA_AUGMENTER.data_load(key)[0])[:,0] # Load x from x,y pair, and take first timestep of x
+            state = np.array(self.DATA_AUGMENTER.initialize_pool(key)[0])[:,0] # Load x from x,y pair, and take first timestep of x
             steps = jr.randint(key, (), minval=self.STEPS_TO_STABLE[0], maxval=self.STEPS_TO_STABLE[1])
             state,_ = self.run_nca_model_batch(state,steps,key)
             final_states.append(state)
@@ -127,7 +127,7 @@ class NCA_impulse_optimiser(object):
             Computes the full NCA trajectory including before and after the impulse perturbation, for logging/evaluation
         """
 
-        x0 = np.array(self.DATA_AUGMENTER.data_load(key)[0])[self.initial_index,0] # Load x from x,y pair, and take first timestep of x
+        x0 = np.array(self.DATA_AUGMENTER.initialize_pool(key)[0])[self.initial_index,0] # Load x from x,y pair, and take first timestep of x
         x0 = rearrange(x0,"C W H -> () C W H")
         final_1,trajectory_1 = self.run_nca_model_batch(x0,steps,key)
         # x1 = self.update_x(final_1,dx)

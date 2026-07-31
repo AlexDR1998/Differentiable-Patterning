@@ -877,7 +877,7 @@ class NCA_Train_log(Train_log):
 		if key is None:
 			key = jr.PRNGKey(int(time.time()))
 		x,y = DATA_AUGMENTER.split_x_y(1)
-		x,y = DATA_AUGMENTER.data_callback(x,y,0,key)
+		x,y = DATA_AUGMENTER.advance_pool(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]
 		# Log true data for side by side comparison
 		schema = self.diagnostic_channel_schema or getattr(DATA_AUGMENTER, "schema", None)
@@ -981,7 +981,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 		if key is None:
 			key = jr.PRNGKey(int(time.time()))
 		x,y = DATA_AUGMENTER.split_x_y(1)
-		x,y = DATA_AUGMENTER.data_callback(x,y,0,key)
+		x,y = DATA_AUGMENTER.advance_pool(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]
 		# Log true data for side by side comparison
 		schema = self.diagnostic_channel_schema or getattr(DATA_AUGMENTER, "schema", None)

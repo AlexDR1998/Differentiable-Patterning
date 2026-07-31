@@ -13,7 +13,7 @@ AugmenterBatch: TypeAlias = Tuple[PyTree[jax.Array], PyTree[jax.Array]]
 class NCAAugmenterProtocol(Protocol):
     """Minimum interface consumed by the NCA training loop.
 
-    Implementations may store a data pool, but each stochastic callback must
+    Implementations may store a data pool, but each stochastic update must
     derive its result from the supplied key. This keeps the numerical part of
     augmentation reproducible and compatible with JAX transformations.
     """
@@ -23,10 +23,10 @@ class NCAAugmenterProtocol(Protocol):
     def data_init(self, SHARDING: Any = None) -> None:
         ...
 
-    def data_load(self, key: jax.Array) -> AugmenterBatch:
+    def initialize_pool(self, key: jax.Array) -> AugmenterBatch:
         ...
 
-    def data_callback(
+    def advance_pool(
         self,
         x: PyTree[jax.Array],
         y: PyTree[jax.Array],

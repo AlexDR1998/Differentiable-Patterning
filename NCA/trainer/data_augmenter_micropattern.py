@@ -96,6 +96,19 @@ class MicropatternDataAugmenter(BasicAugmenter):
         y = jtu.tree_map(lambda data: data[N_steps:], self.data_saved)
         return x, y
 
+    def initialize_pool(self, key):
+        """Create time-aligned initial states without advancing the pool.
+
+        ``advance_pool`` expects completed NCA rollouts and shifts them into
+        the following transition slots. Raw snapshots are already aligned to
+        those slots, so initialization only applies input noise.
+        """
+
+        x, y = self.split_x_y(1)
+        x = self.noise(x, self.noise_strength, key=key)
+        self.PREVIOUS_KEY = key
+        return x, y
+
     def reinjection_probability(self, i):
         """Return the configured piecewise-linear reinjection probability."""
 
@@ -181,7 +194,7 @@ class MicropatternDataAugmenter(BasicAugmenter):
         self.PREVIOUS_KEY = noise_key
         return result
 
-    def data_callback(self, x, y, i, key):
+    def advance_pool(self, x, y, i, key):
         if self.group_reinjection:
             x = self._group_reinject(x, i, key)
         else:
