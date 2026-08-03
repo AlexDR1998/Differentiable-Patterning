@@ -3,6 +3,7 @@
 #include <sycl/sycl.hpp>
 
 #include <cstddef>
+#include <cstdlib>
 #include <cstdint>
 #include <cstring>
 
@@ -10,6 +11,41 @@ extern "C" void nca_sycl_backward(sycl::queue*, void**, const char*,
                                    std::size_t);
 
 namespace {
+
+constexpr std::int64_t kScratchGuardFloats = 64;
+constexpr float kScratchGuardValue = -1234567.0F;
+
+enum class ScratchDiagnosticMode { kDisabled, kReuse, kPerStep };
+
+ScratchDiagnosticMode GetScratchDiagnosticMode() {
+  const char* value = std::getenv("NCA_SYCL_DIAGNOSTIC_SCRATCH");
+  if (value == nullptr) return ScratchDiagnosticMode::kDisabled;
+  if (std::strcmp(value, "reuse") == 0) return ScratchDiagnosticMode::kReuse;
+  if (std::strcmp(value, "per_step") == 0) {
+    return ScratchDiagnosticMode::kPerStep;
+  }
+  return ScratchDiagnosticMode::kDisabled;
+}
+
+std::int64_t ScratchSlots(ScratchDiagnosticMode mode, std::int64_t steps) {
+  return mode == ScratchDiagnosticMode::kPerStep ? steps : 1;
+}
+
+std::int64_t GuardedScratchElements(std::int64_t payload_elements,
+                                    ScratchDiagnosticMode mode,
+                                    std::int64_t steps) {
+  return ScratchSlots(mode, steps) *
+         (payload_elements + 2 * kScratchGuardFloats);
+}
+
+float* ScratchPayload(float* base, std::int64_t payload_elements,
+                      std::int64_t step, ScratchDiagnosticMode mode) {
+  if (mode == ScratchDiagnosticMode::kDisabled) return base;
+  const std::int64_t slot =
+      mode == ScratchDiagnosticMode::kPerStep ? step : 0;
+  return base + slot * (payload_elements + 2 * kScratchGuardFloats) +
+         kScratchGuardFloats;
+}
 
 struct RolloutMetadata {
   std::int64_t version, batch, channels, height, width, features;
@@ -126,24 +162,28 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
   auto* output_weight_gradient =
       static_cast<float*>(buffers[12 + result_offset]);
   auto* bias_gradient = static_cast<float*>(buffers[13 + result_offset]);
-  auto* boundary_cotangent =
+  auto* boundary_cotangent_base =
       static_cast<float*>(buffers[14 + result_offset]);
-  auto* rolling_state_gradient =
+  auto* rolling_state_gradient_base =
       static_cast<float*>(buffers[15 + result_offset]);
-  auto* step_hidden_weight_gradient =
+  auto* step_hidden_weight_gradient_base =
       static_cast<float*>(buffers[16 + result_offset]);
-  auto* step_output_weight_gradient =
+  auto* step_output_weight_gradient_base =
       static_cast<float*>(buffers[17 + result_offset]);
-  auto* step_bias_gradient =
+  auto* step_bias_gradient_base =
       static_cast<float*>(buffers[18 + result_offset]);
-  auto* perception = static_cast<float*>(buffers[19 + result_offset]);
-  auto* hidden = static_cast<float*>(buffers[20 + result_offset]);
-  auto* hidden_gradient = static_cast<float*>(buffers[21 + result_offset]);
+  auto* perception_base = static_cast<float*>(buffers[19 + result_offset]);
+  auto* hidden_base = static_cast<float*>(buffers[20 + result_offset]);
+  auto* hidden_gradient_base =
+      static_cast<float*>(buffers[21 + result_offset]);
 
   const std::int64_t spatial_size = m.height * m.width;
   const std::int64_t state_elements = m.batch * m.channels * spatial_size;
   const std::int64_t hidden_weight_elements = m.features * m.features;
   const std::int64_t output_weight_elements = m.channels * m.features;
+  const std::int64_t activation_elements =
+      m.batch * m.features * spatial_size;
+  const ScratchDiagnosticMode scratch_mode = GetScratchDiagnosticMode();
   const BackwardMetadata backward_metadata{
       m.version, m.batch, m.channels, m.height, m.width, m.features,
       m.kernel_size, m.kernel_flags, m.padding, m.workgroup_size, 0,
@@ -156,8 +196,47 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
   queue->fill(bias_gradient, 0.0F,
               static_cast<std::size_t>(m.channels));
 
+  if (scratch_mode != ScratchDiagnosticMode::kDisabled) {
+    auto initialize_guarded = [&](float* base, std::int64_t payload_elements) {
+      queue->fill(base, kScratchGuardValue,
+                  static_cast<std::size_t>(GuardedScratchElements(
+                      payload_elements, scratch_mode, m.steps)));
+    };
+    initialize_guarded(boundary_cotangent_base, state_elements);
+    initialize_guarded(rolling_state_gradient_base, state_elements);
+    initialize_guarded(step_hidden_weight_gradient_base,
+                       hidden_weight_elements);
+    initialize_guarded(step_output_weight_gradient_base,
+                       output_weight_elements);
+    initialize_guarded(step_bias_gradient_base, m.channels);
+    initialize_guarded(perception_base, activation_elements);
+    initialize_guarded(hidden_base, activation_elements);
+    initialize_guarded(hidden_gradient_base, activation_elements);
+    // Ensure the diagnostic initialization cannot race with the work whose
+    // writes it is intended to surround, including on an out-of-order queue.
+    nca_sycl::WaitAndReport(*queue, "rollout/backward_guard_init");
+  }
+
   const float* current_cotangent = output_cotangent;
   for (std::int64_t step = m.steps; step-- > 0;) {
+    auto* boundary_cotangent = ScratchPayload(
+        boundary_cotangent_base, state_elements, step, scratch_mode);
+    auto* rolling_state_gradient = ScratchPayload(
+        rolling_state_gradient_base, state_elements, step, scratch_mode);
+    auto* step_hidden_weight_gradient = ScratchPayload(
+        step_hidden_weight_gradient_base, hidden_weight_elements, step,
+        scratch_mode);
+    auto* step_output_weight_gradient = ScratchPayload(
+        step_output_weight_gradient_base, output_weight_elements, step,
+        scratch_mode);
+    auto* step_bias_gradient = ScratchPayload(
+        step_bias_gradient_base, m.channels, step, scratch_mode);
+    auto* perception = ScratchPayload(perception_base, activation_elements,
+                                      step, scratch_mode);
+    auto* hidden = ScratchPayload(hidden_base, activation_elements, step,
+                                  scratch_mode);
+    auto* hidden_gradient = ScratchPayload(
+        hidden_gradient_base, activation_elements, step, scratch_mode);
     const float* step_state =
         step == 0 ? initial_state : trajectory + (step - 1) * state_elements;
     float* next_state_gradient =
@@ -184,6 +263,9 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
     AddInPlace(*queue, bias_gradient, step_bias_gradient, m.channels);
     nca_sycl::SynchronizeStage(*queue, "rollout_backward/accumulate_parameters");
     current_cotangent = next_state_gradient;
+  }
+  if (scratch_mode != ScratchDiagnosticMode::kDisabled) {
+    nca_sycl::WaitAndReport(*queue, "rollout/backward_guard_complete");
   }
   nca_sycl::SynchronizeCustomCall(*queue, "rollout/backward_complete");
 }

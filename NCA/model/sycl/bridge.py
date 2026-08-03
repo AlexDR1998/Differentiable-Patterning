@@ -20,6 +20,7 @@ _BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_backward"
 _ROLLOUT_FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_rollout_forward"
 _ROLLOUT_BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_rollout_backward"
 _METADATA_VERSION = 4
+_ROLLOUT_SCRATCH_GUARD_FLOATS = 64
 _LIBRARY: ctypes.CDLL | None = None
 _CAPSULES: tuple[object, ...] | None = None
 _REGISTERED = False
@@ -921,19 +922,36 @@ def _rollout_backward_abstract_eval(
     ):
         raise TypeError("NCA SYCL rollout backward accepts float32 only")
     scratch_shape = (state.shape[0], weight_hidden.shape[0], *state.shape[-2:])
+    diagnostic_mode = os.environ.get("NCA_SYCL_DIAGNOSTIC_SCRATCH", "").lower()
+    if diagnostic_mode not in ("", "reuse", "per_step"):
+        raise ValueError(
+            "NCA_SYCL_DIAGNOSTIC_SCRATCH must be unset, 'reuse', or "
+            f"'per_step', got {diagnostic_mode!r}"
+        )
+
+    def workspace(shape):
+        if not diagnostic_mode:
+            return core.ShapedArray(shape, state.dtype)
+        slots = trajectory.shape[0] if diagnostic_mode == "per_step" else 1
+        elements = int(np.prod(shape))
+        guarded_elements = slots * (
+            elements + 2 * _ROLLOUT_SCRATCH_GUARD_FLOATS
+        )
+        return core.ShapedArray((guarded_elements,), state.dtype)
+
     return (
         core.ShapedArray(state.shape, state.dtype),
         core.ShapedArray(weight_hidden.shape, state.dtype),
         core.ShapedArray(weight_output.shape, state.dtype),
         core.ShapedArray((state.shape[1],), state.dtype),
-        core.ShapedArray(state.shape, state.dtype),
-        core.ShapedArray(state.shape, state.dtype),
-        core.ShapedArray(weight_hidden.shape, state.dtype),
-        core.ShapedArray(weight_output.shape, state.dtype),
-        core.ShapedArray((state.shape[1],), state.dtype),
-        core.ShapedArray(scratch_shape, state.dtype),
-        core.ShapedArray(scratch_shape, state.dtype),
-        core.ShapedArray(scratch_shape, state.dtype),
+        workspace(state.shape),
+        workspace(state.shape),
+        workspace(weight_hidden.shape),
+        workspace(weight_output.shape),
+        workspace((state.shape[1],)),
+        workspace(scratch_shape),
+        workspace(scratch_shape),
+        workspace(scratch_shape),
     )
 
 
@@ -1204,6 +1222,68 @@ def sycl_nca_rollout(
     )
 
 
+def sycl_nca_rollout_backward_diagnostic(
+    state,
+    kernels,
+    weight_hidden,
+    weight_output,
+    bias_output,
+    masks,
+    boundary_mask,
+    output_cotangent,
+    trajectory_cotangent,
+    *,
+    kernel_flags: int,
+    padding: int,
+    boundary_code: int,
+    boundary_channels: int,
+):
+    """Return native two-pass gradients and all scratch results for guards.
+
+    This entry point is intended only for the hardware corruption probe. Set
+    ``NCA_SYCL_DIAGNOSTIC_SCRATCH`` to ``reuse`` or ``per_step`` before JAX
+    traces the function. The C++ custom call reads the same process setting.
+    """
+    diagnostic_mode = os.environ.get("NCA_SYCL_DIAGNOSTIC_SCRATCH", "").lower()
+    if diagnostic_mode not in ("reuse", "per_step"):
+        raise RuntimeError(
+            "sycl_nca_rollout_backward_diagnostic requires "
+            "NCA_SYCL_DIAGNOSTIC_SCRATCH=reuse or per_step"
+        )
+    _register_custom_call()
+    _, trajectory, _ = _bind_rollout_forward(
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        masks,
+        boundary_mask,
+        kernel_flags,
+        padding,
+        boundary_code,
+        boundary_channels,
+        0,
+    )
+    return _nca_rollout_backward_p.bind(
+        state,
+        kernels,
+        weight_hidden,
+        weight_output,
+        bias_output,
+        masks,
+        boundary_mask,
+        trajectory,
+        output_cotangent,
+        trajectory_cotangent,
+        kernel_flags=kernel_flags,
+        padding=padding,
+        boundary_code=boundary_code,
+        boundary_channels=boundary_channels,
+        regulariser_flags=0,
+    )
+
+
 def sycl_nca_forward(
     state,
     kernels,
@@ -1229,4 +1309,8 @@ def sycl_nca_forward(
     )
 
 
-__all__ = ["sycl_nca_forward", "sycl_nca_rollout"]
+__all__ = [
+    "sycl_nca_forward",
+    "sycl_nca_rollout",
+    "sycl_nca_rollout_backward_diagnostic",
+]

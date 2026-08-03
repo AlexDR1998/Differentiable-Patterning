@@ -77,3 +77,49 @@ For two-tile backward reliability, prefer
 oneMKL GEMMs while allowing the remaining SYCL kernels on both tiles to overlap.
 `trainer.sycl_serialize_backward_custom_calls: true` serializes the complete
 backward custom call and is retained as a slower reference/fallback.
+
+## Fused-backward scratch corruption probe
+
+The two-step hardware probe can preserve scratch reuse behind guard regions or
+give each reverse step an independent guarded slot:
+
+```bash
+python tests/hardware/nca_sycl_rollout_scratch_guard.py --mode reuse
+python tests/hardware/nca_sycl_rollout_scratch_guard.py --mode per_step
+```
+
+Run each mode in a fresh process. Both compare the fused gradients with two
+ordinary one-step native backward calls and validate prefix/suffix canaries on
+every scratch allocation. A failure only in `reuse` points to a scratch
+lifetime/dependency problem; a canary failure in either mode points to an
+out-of-bounds write. The diagnostic allocation mode is selected by the script
+through `NCA_SYCL_DIAGNOSTIC_SCRATCH` and has no production overhead when that
+variable is unset.
+
+Submit repeated, interleaved two-tile runs through Slurm with:
+
+```bash
+tests/tools/submit_nca_sycl_scratch_guard.sh
+```
+
+The default is 20 repetitions of each mode with four concurrent array tasks.
+Override these with `NCA_SYCL_SCRATCH_REPEATS` and
+`NCA_SYCL_SCRATCH_PARALLELISM`. The submit command prints the job-specific
+summarizer invocation. For example, a smaller AddressSanitizer array is:
+
+```bash
+NCA_SYCL_SCRATCH_ASAN=1 \
+NCA_SYCL_SCRATCH_REPEATS=5 \
+NCA_SYCL_SCRATCH_PARALLELISM=1 \
+  tests/tools/submit_nca_sycl_scratch_guard.sh
+```
+
+For wider device-side OOB coverage, build a diagnostic library with Intel's
+SYCL device AddressSanitizer and run the same probe using that library:
+
+```bash
+NCA_SYCL_DEVICE_ASAN=1 \
+  NCA/model/sycl/files/build_nca_sycl.sh /tmp/libnca_sycl_asan.so
+NCA_SYCL_LIBRARY=/tmp/libnca_sycl_asan.so \
+  python tests/hardware/nca_sycl_rollout_scratch_guard.py --mode per_step
+```

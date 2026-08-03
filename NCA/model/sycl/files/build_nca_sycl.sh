@@ -10,6 +10,13 @@ ROLLOUT_BACKWARD_SOURCE="${SCRIPT_DIR}/nca_sycl_rollout_backward.cpp"
 OUTPUT="${1:-${SCRIPT_DIR}/libnca_sycl.so}"
 SYCL_CXX="${CXX:-icpx}"
 
+OPTIMISATION_FLAGS=(-O3)
+SANITIZER_FLAGS=()
+if [[ "${NCA_SYCL_DEVICE_ASAN:-0}" != "0" ]]; then
+    OPTIMISATION_FLAGS=(-O0 -g)
+    SANITIZER_FLAGS=(-Xarch_device -fsanitize=address)
+fi
+
 if ! command -v "${SYCL_CXX}" >/dev/null 2>&1; then
     echo "Compiler not found: ${SYCL_CXX}" >&2
     echo "Source the cluster JAX/oneAPI setup before running this script." >&2
@@ -20,7 +27,8 @@ mkdir -p "$(dirname -- "${OUTPUT}")"
 set -x
 "${SYCL_CXX}" \
     -fsycl \
-    -O3 \
+    "${OPTIMISATION_FLAGS[@]}" \
+    "${SANITIZER_FLAGS[@]}" \
     -qmkl=sequential \
     -std=c++17 \
     -fPIC \
