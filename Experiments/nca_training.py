@@ -69,6 +69,7 @@ def train_model(
     run_name,
     key,
     timesteps=None,
+    evaluation_input=None,
 ):
     """Run the common training contract, leaving data assembly to each domain."""
 
@@ -124,6 +125,7 @@ def train_model(
                 "model_factory",
                 "Experiments.config_helpers:build_model",
             ),
+            evaluation_input=evaluation_input,
         )
         bundle.verify()
         result.checkpoint_path.unlink()

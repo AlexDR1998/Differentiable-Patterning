@@ -14,6 +14,7 @@ def run(cfg):
         build_model,
         compute_model_channel_statistics,
     )
+    from Common.model_registry import evaluation_input_provenance
     from Experiments.emoji.config_helpers import (
         build_data_augmenter,
         build_filename,
@@ -73,4 +74,5 @@ def run(cfg):
         run_name=run_name,
         key=train_key,
         timesteps=resolve_run_t(cfg),
+        evaluation_input=evaluation_input_provenance(data),
     )

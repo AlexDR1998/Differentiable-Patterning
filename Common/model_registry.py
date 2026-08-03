@@ -54,6 +54,67 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _array_fingerprint(value: Any) -> Dict[str, Any]:
+    """Describe an array without persisting its potentially large contents."""
+    import numpy as np
+
+    array = np.ascontiguousarray(np.asarray(value))
+    digest = hashlib.sha256(array.tobytes(order="C")).hexdigest()
+    return {
+        "sha256": digest,
+        "shape": list(array.shape),
+        "dtype": array.dtype.str,
+    }
+
+
+def evaluation_input_provenance(
+    data: Any,
+    *,
+    boundary_mask: Optional[Any] = None,
+) -> Dict[str, Any]:
+    """Fingerprint the canonical data-derived input used for local evaluation.
+
+    Bundles already retain the resolved configuration that tells an evaluator
+    how to reload its source dataset.  Persisting compact fingerprints instead
+    of the arrays themselves lets a later evaluator verify that the reloaded
+    initial state (and, where relevant, boundary mask) is exactly the one seen
+    during training.
+    """
+    import numpy as np
+
+    array = np.asarray(data)
+    if array.ndim < 2:
+        raise ValueError(
+            "Evaluation input data must have batch and time axes; "
+            f"got shape {array.shape}"
+        )
+    provenance: Dict[str, Any] = {
+        "schema_version": 1,
+        "kind": "data_t0",
+        "initial_state": _array_fingerprint(array[:, 0]),
+    }
+    if boundary_mask is not None:
+        provenance["boundary_mask"] = _array_fingerprint(boundary_mask)
+    return provenance
+
+
+def verify_evaluation_input(
+    data: Any,
+    provenance: Mapping[str, Any],
+    *,
+    boundary_mask: Optional[Any] = None,
+) -> None:
+    """Require reloaded evaluation inputs to match a bundle's provenance."""
+    if provenance.get("schema_version") != 1 or provenance.get("kind") != "data_t0":
+        raise ValueError("Unsupported evaluation input provenance")
+    actual = evaluation_input_provenance(data, boundary_mask=boundary_mask)
+    for key in ("initial_state", "boundary_mask"):
+        if provenance.get(key) != actual.get(key):
+            raise ValueError(
+                f"Reconstructed {key.replace('_', ' ')} does not match the model bundle"
+            )
+
+
 def _config_container(cfg: Any) -> Dict[str, Any]:
     if OmegaConf.is_config(cfg):
         value = OmegaConf.to_container(cfg, resolve=True)
@@ -163,6 +224,7 @@ def publish_model_bundle(
     training_result: TrainingResult,
     model_factory: str = DEFAULT_MODEL_FACTORY,
     repository_root: Optional[Union[str, Path]] = None,
+    evaluation_input: Optional[Mapping[str, Any]] = None,
 ) -> ModelBundle:
     """Atomically publish one completed checkpoint as an immutable bundle."""
     source = Path(checkpoint_path).expanduser().resolve()
@@ -232,6 +294,8 @@ def publish_model_bundle(
                 },
             },
         }
+        if evaluation_input is not None:
+            manifest["evaluation_input"] = dict(evaluation_input)
         _write_yaml(staging / "manifest.yaml", manifest)
         staging.rename(destination)
     except Exception:

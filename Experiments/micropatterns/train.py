@@ -82,6 +82,7 @@ def run(cfg):
         build_model,
         compute_model_channel_statistics,
     )
+    from Common.model_registry import evaluation_input_provenance
     from Experiments.micropatterns.config_helpers import (
         build_data_augmenter,
         expand_channel_timestep_mask_for_loss,
@@ -152,4 +153,5 @@ def run(cfg):
         loss_args=build_loss_args(cfg, overrides=loss_overrides),
         run_name=run_name,
         key=train_key,
+        evaluation_input=evaluation_input_provenance(data, boundary_mask=boundary),
     )

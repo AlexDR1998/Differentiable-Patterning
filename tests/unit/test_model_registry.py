@@ -5,9 +5,11 @@ OmegaConf = pytest.importorskip("omegaconf").OmegaConf
 
 from Common.model_registry import (
     ModelRegistry,
+    evaluation_input_provenance,
     open_model_bundle,
     publish_model_bundle,
     record_evaluation,
+    verify_evaluation_input,
 )
 from Common.trainer.training_result import TrainingResult
 
@@ -61,6 +63,37 @@ def test_publish_verify_and_index_bundle(tmp_path):
     assert models.loc[0, "best_loss"] == 0.25
     assert models.loc[0, "wandb_run_id"] == "run-123"
     assert registry.get(bundle.id).path == bundle.path
+
+
+def test_evaluation_input_provenance_is_compact_and_data_sensitive(tmp_path):
+    import numpy as np
+
+    data = np.arange(2 * 3 * 4, dtype=np.float32).reshape(2, 3, 4)
+    boundary = np.ones((2, 4), dtype=np.float32)
+    provenance = evaluation_input_provenance(data, boundary_mask=boundary)
+
+    assert provenance["kind"] == "data_t0"
+    assert provenance["initial_state"]["shape"] == [2, 4]
+    assert provenance["boundary_mask"]["shape"] == [2, 4]
+    assert len(provenance["initial_state"]["sha256"]) == 64
+    assert provenance != evaluation_input_provenance(data + 1, boundary_mask=boundary)
+    verify_evaluation_input(data, provenance, boundary_mask=boundary)
+    with pytest.raises(ValueError, match="initial state"):
+        verify_evaluation_input(data + 1, provenance, boundary_mask=boundary)
+
+    checkpoint = tmp_path / "source.eqx"
+    checkpoint.write_bytes(b"checkpoint")
+    bundle = publish_model_bundle(
+        store_root=tmp_path,
+        collection="tests",
+        run_name="model",
+        checkpoint_path=checkpoint,
+        cfg=_config(),
+        training_result=TrainingResult(checkpoint, 2, 1.5, True),
+        repository_root=tmp_path,
+        evaluation_input=provenance,
+    )
+    assert bundle.manifest.evaluation_input.initial_state.sha256 == provenance["initial_state"]["sha256"]
 
 
 def test_catalogue_is_rebuildable_and_indexes_evaluations(tmp_path):
