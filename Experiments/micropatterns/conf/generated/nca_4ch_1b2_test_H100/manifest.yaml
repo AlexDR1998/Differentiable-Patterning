@@ -45,7 +45,7 @@ configs:
     - cell_fate_s1
     data.data_channels: 4
     data.batches: 1
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -68,7 +68,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -224,7 +224,7 @@ configs:
     - cell_fate_s1
     data.data_channels: 4
     data.batches: 1
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -247,7 +247,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -403,7 +403,7 @@ configs:
     - cell_fate_s1
     data.data_channels: 4
     data.batches: 1
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -426,7 +426,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -582,7 +582,7 @@ configs:
     - cell_fate_s1
     data.data_channels: 4
     data.batches: 1
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     data.dataset: micropatterns_260726
     data.duplicate_final_timestep: false
     knockout.mode: null
@@ -605,7 +605,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:

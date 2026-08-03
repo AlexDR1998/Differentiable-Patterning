@@ -10,7 +10,7 @@ grid:
   model.kernel_str: [[ID, LAP, GRAD]]
   model.fire_rate: [0.5]
   data.downsample: [1]
-  data.regenerate: [true]
+  data.emoji.regenerate: [true]
   run.t: [64]
   run.iterations: [8000]
   optimiser.learn_rate: [0.001]

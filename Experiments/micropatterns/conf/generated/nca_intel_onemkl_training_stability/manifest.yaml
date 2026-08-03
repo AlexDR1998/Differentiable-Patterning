@@ -70,7 +70,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -262,7 +262,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -454,7 +454,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -646,7 +646,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -838,7 +838,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -1030,7 +1030,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -1222,7 +1222,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -1414,7 +1414,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -1606,7 +1606,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -1798,7 +1798,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -1990,7 +1990,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -2182,7 +2182,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -2374,7 +2374,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -2566,7 +2566,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0
@@ -2758,7 +2758,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      batch_multiplier: 1
+      pool_copies: 1
       experiment_groups: null
       timesteps:
       - 0

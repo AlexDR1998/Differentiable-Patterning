@@ -7,7 +7,7 @@ grid:
   logging.wandb.project: [nca_emoji_upscale]
   logging.wandb.group: [nca_emoji_upscale_loss_sweep_1]
   run.iterations: [2000]
-  data.pad: [[20, 20, 20, 20]]
+  data.emoji.pad: [[20, 20, 20, 20]]
   trainer.loop_autodiff: [lax]
 groups:
   - loss.primary: [[l2], [l2, vgg], [vgg]]

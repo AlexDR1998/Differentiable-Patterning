@@ -60,7 +60,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 577090037
   config:
     seed: 577090037
@@ -69,7 +69,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -244,7 +244,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 271041745
   config:
     seed: 271041745
@@ -253,7 +253,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -428,7 +428,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1095513148
   config:
     seed: 1095513148
@@ -437,7 +437,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -612,7 +612,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 506456969
   config:
     seed: 506456969
@@ -621,7 +621,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -796,7 +796,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 2127877499
   config:
     seed: 2127877499
@@ -805,7 +805,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -980,7 +980,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1930549411
   config:
     seed: 1930549411
@@ -989,7 +989,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -1164,7 +1164,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 2028277857
   config:
     seed: 2028277857
@@ -1173,7 +1173,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -1348,7 +1348,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1630434966
   config:
     seed: 1630434966
@@ -1357,7 +1357,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -1532,7 +1532,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 901749037
   config:
     seed: 901749037
@@ -1541,7 +1541,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -1716,7 +1716,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 403123852
   config:
     seed: 403123852
@@ -1725,7 +1725,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -1900,7 +1900,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 2095328386
   config:
     seed: 2095328386
@@ -1909,7 +1909,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -2084,7 +2084,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 121751464
   config:
     seed: 121751464
@@ -2093,7 +2093,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -2268,7 +2268,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1674216077
   config:
     seed: 1674216077
@@ -2277,7 +2277,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -2452,7 +2452,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1858720390
   config:
     seed: 1858720390
@@ -2461,7 +2461,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -2636,7 +2636,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 9045414
   config:
     seed: 9045414
@@ -2645,7 +2645,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -2820,7 +2820,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1912923437
   config:
     seed: 1912923437
@@ -2829,7 +2829,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -3004,7 +3004,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1143881027
   config:
     seed: 1143881027
@@ -3013,7 +3013,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -3188,7 +3188,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 982526257
   config:
     seed: 982526257
@@ -3197,7 +3197,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -3372,7 +3372,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 439062303
   config:
     seed: 439062303
@@ -3381,7 +3381,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -3556,7 +3556,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1363349907
   config:
     seed: 1363349907
@@ -3565,7 +3565,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -3740,7 +3740,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 131383004
   config:
     seed: 131383004
@@ -3749,7 +3749,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -3924,7 +3924,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 95872739
   config:
     seed: 95872739
@@ -3933,7 +3933,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -4108,7 +4108,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 109289145
   config:
     seed: 109289145
@@ -4117,7 +4117,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -4292,7 +4292,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 39534911
   config:
     seed: 39534911
@@ -4301,7 +4301,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -4476,7 +4476,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1637259727
   config:
     seed: 1637259727
@@ -4485,7 +4485,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -4660,7 +4660,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 930287327
   config:
     seed: 930287327
@@ -4669,7 +4669,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -4844,7 +4844,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1812976885
   config:
     seed: 1812976885
@@ -4853,7 +4853,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -5028,7 +5028,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 124729223
   config:
     seed: 124729223
@@ -5037,7 +5037,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -5212,7 +5212,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 952158461
   config:
     seed: 952158461
@@ -5221,7 +5221,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -5396,7 +5396,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1880712864
   config:
     seed: 1880712864
@@ -5405,7 +5405,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -5580,7 +5580,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 2129497364
   config:
     seed: 2129497364
@@ -5589,7 +5589,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -5764,7 +5764,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1001090105
   config:
     seed: 1001090105
@@ -5773,7 +5773,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -5948,7 +5948,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1484771968
   config:
     seed: 1484771968
@@ -5957,7 +5957,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -6132,7 +6132,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 991564255
   config:
     seed: 991564255
@@ -6141,7 +6141,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -6316,7 +6316,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 939657385
   config:
     seed: 939657385
@@ -6325,7 +6325,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -6500,7 +6500,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1973981844
   config:
     seed: 1973981844
@@ -6509,7 +6509,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -6684,7 +6684,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1244602538
   config:
     seed: 1244602538
@@ -6693,7 +6693,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -6868,7 +6868,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 92297589
   config:
     seed: 92297589
@@ -6877,7 +6877,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -7052,7 +7052,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1787479226
   config:
     seed: 1787479226
@@ -7061,7 +7061,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -7236,7 +7236,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 429497919
   config:
     seed: 429497919
@@ -7245,7 +7245,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -7420,7 +7420,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 798461319
   config:
     seed: 798461319
@@ -7429,7 +7429,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -7604,7 +7604,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1272987056
   config:
     seed: 1272987056
@@ -7613,7 +7613,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -7788,7 +7788,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 519218416
   config:
     seed: 519218416
@@ -7797,7 +7797,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -7972,7 +7972,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1428914934
   config:
     seed: 1428914934
@@ -7981,7 +7981,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -8156,7 +8156,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1812935769
   config:
     seed: 1812935769
@@ -8165,7 +8165,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -8340,7 +8340,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 815398389
   config:
     seed: 815398389
@@ -8349,7 +8349,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -8524,7 +8524,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1302957853
   config:
     seed: 1302957853
@@ -8533,7 +8533,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -8708,7 +8708,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1220455187
   config:
     seed: 1220455187
@@ -8717,7 +8717,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -8892,7 +8892,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 2144743702
   config:
     seed: 2144743702
@@ -8901,7 +8901,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -9076,7 +9076,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1689440956
   config:
     seed: 1689440956
@@ -9085,7 +9085,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -9260,7 +9260,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 148287319
   config:
     seed: 148287319
@@ -9269,7 +9269,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -9444,7 +9444,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 64
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 2062559164
   config:
     seed: 2062559164
@@ -9453,7 +9453,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -9628,7 +9628,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 128
-    data.batch_multiplier: 4
+    data.pool_copies: 4
     seed: 1042560227
   config:
     seed: 1042560227
@@ -9637,7 +9637,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 4
+      pool_copies: 4
       experiment_groups:
       - cell_fate_s1
       timesteps:
@@ -9812,7 +9812,7 @@ configs:
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
     run.t: 256
-    data.batch_multiplier: 2
+    data.pool_copies: 2
     seed: 1736404157
   config:
     seed: 1736404157
@@ -9821,7 +9821,7 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 1
-      batch_multiplier: 2
+      pool_copies: 2
       experiment_groups:
       - cell_fate_s1
       timesteps:

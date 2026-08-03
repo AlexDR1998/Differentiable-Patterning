@@ -7,7 +7,7 @@ grid:
   logging.wandb.project: [nca_emoji_upscale]
   logging.wandb.group: [nca_emoji_upscale_sweep_1_v2]
   run.iterations: [2000]
-  data.pad: [[20, 20, 20, 20]]
+  data.emoji.pad: [[20, 20, 20, 20]]
 branches:
   - when:
       model.family: uNCA

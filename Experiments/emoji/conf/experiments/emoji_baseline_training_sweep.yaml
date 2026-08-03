@@ -10,7 +10,7 @@ grid:
   model.kernel_str: [[ID, LAP, GRAD], [ID, LAP, DIFF]]
   model.fire_rate: [0.5]
   data.downsample: [1]
-  data.regenerate: [false, true]
+  data.emoji.regenerate: [false, true]
   run.iterations: [8000]
   loss.primary: [[l2]]
   loss.regulariser_coeffs.intermediate_state: [0.0]
