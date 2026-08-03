@@ -66,7 +66,7 @@ class DataAugmenter(DataAugmenterAbstract):
         self.save_data(data)
         
         return None
-    def data_load(self):
+    def initialize_pool(self):
         return self.split_x_y()
 
 
@@ -101,7 +101,7 @@ class DataAugmenter(DataAugmenterAbstract):
         Y = ((a_p[:,N_steps:],a_v[:,N_steps:]),ph[:,N_steps:])
         return X,Y
     @eqx.filter_jit
-    def data_callback(self, x, y, i,key):
+    def advance_pool(self, x, y, i,key):
         """Re-initialise X0 to uniform distribtion
 
         Args:

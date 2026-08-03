@@ -215,7 +215,7 @@ class AntTrainer(object):
 		error = 0
 		error_at = 0
 		#Y = self.DATA_AUGMENTER.return_saved_data()
-		X,Y = self.DATA_AUGMENTER.data_load()
+		X,Y = self.DATA_AUGMENTER.initialize_pool()
 		#print(X[1].shape)
 		#print(X[0][0].shape)
 		
@@ -248,7 +248,7 @@ class AntTrainer(object):
 				break
 			
 			if error==0:
-				X,Y = self.DATA_AUGMENTER.data_callback(X,Y,i,key)
+				X,Y = self.DATA_AUGMENTER.advance_pool(X,Y,i,key)
 				if i>WARMUP:
 					if mean_loss<best_loss:
 						model_saved=True

@@ -61,7 +61,7 @@ class DataAugmenter(DataAugmenter):
 
         
         return None
-    def data_load(self):
+    def initialize_pool(self):
         self.key = jr.fold_in(self.key,1)
         key1,key2,key3 = jr.split(self.key,3)
         x0,y0 = self.split_x_y()
@@ -73,7 +73,7 @@ class DataAugmenter(DataAugmenter):
         return ((x_p,x_v),x_ph),y0
 
 
-    def data_callback(self, x, y, i,key):
+    def advance_pool(self, x, y, i,key):
         self.key = jr.fold_in(self.key,i)
         key1,key2,key3 = jr.split(self.key,3)
         ((x_p,x_v),x_ph) = x
