@@ -27,7 +27,7 @@ class data_augmenter_subclass_regrowth(EmojiDataAugmenter):
         data = self.pad(data, [10, 10, 10, 10])
         self.save_data(data)
         return None
-    def data_callback(self,x,y,i,key):
+    def advance_pool(self,x,y,i,key):
         """
         Called after every training iteration to perform data augmentation and processing		
 
@@ -68,7 +68,7 @@ class data_augmenter_subclass(EmojiDataAugmenter):
         data = self.pad(data, [10, 10, 10, 10])
         self.save_data(data)
         return None
-    def data_callback(self,x,y,i,key):
+    def advance_pool(self,x,y,i,key):
         """
         Called after every training iteration to perform data augmentation and processing		
 

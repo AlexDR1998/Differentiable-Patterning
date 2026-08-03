@@ -132,7 +132,7 @@ nca_deterministic = nca_deterministic.load("models/"+filename+".eqx")
 da = DataAugmenter(data,CHANNELS-4)
 
 
-x,y = da.data_load()
+x,y = da.initialize_pool()
 x0 = x[0][0]
 #print(x[0].shape)
 trajectory = nca.run(t*4,x0)
