@@ -3,10 +3,42 @@ import jax.numpy as jnp
 import pytest
 
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
+from Common.trainer import loss_multi_target
 from Common.trainer.loss_multi_target import multi_target_loss
 from NCA.trainer.data_augmenter_260726 import DataAugmenter
 
 COMPONENT_NAMES = ("l2", "texture", "channel_mean", "radial", "correlation")
+
+
+def test_multi_target_passes_texture_augmentation_flags(monkeypatch):
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
+    prediction = jnp.zeros((2, 1, schema.n_state_channels, 4, 4))
+    target = jnp.zeros((2, 1, schema.n_measurement_channels, 4, 4))
+    observed = []
+
+    def texture_cost(
+        *args, random_channel_shuffle=False, random_crop=False
+    ):
+        observed.append((random_channel_shuffle, random_crop))
+        x, y = args[:2]
+        return jnp.zeros((x.shape[0], y.shape[0], x.shape[1]))
+
+    monkeypatch.setattr(loss_multi_target, "_texture_cost", texture_cost)
+    loss_multi_target.multi_target_pairwise_costs(
+        prediction,
+        target,
+        jnp.ones((4, 4), dtype=bool),
+        schema,
+        None,
+        jax.random.PRNGKey(0),
+        {
+            "random_channel_shuffle": True,
+            "random_crop": True,
+            "multi_target_weights": {"texture": 1.0},
+        },
+    )
+
+    assert observed == [(True, True)]
 
 
 def test_multi_target_loss_is_invariant_to_groupwise_batch_order():

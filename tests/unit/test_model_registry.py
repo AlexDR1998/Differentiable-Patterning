@@ -20,7 +20,7 @@ def _config():
             "seed": 7,
             "experiment": {"name": "baseline-sweep"},
             "model": {"family": "NCA", "channels": 4},
-            "data": {"dataset": "emojis", "task": "sequence"},
+            "data": {"dataset": "emojis", "emoji": {"task": "sequence"}},
             "logging": {
                 "wandb": {"project": "test-project", "group": "test-group"}
             },

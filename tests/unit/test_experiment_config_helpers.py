@@ -39,7 +39,7 @@ def _cfg(value):
 def _base_cfg(family):
     return _cfg(
         {
-            "data": {"data_channels": 4},
+            "data": {"dataset": "emojis", "emoji": {"data_channels": 4}},
             "model": {
                 "family": family,
                 "channels": 4,
@@ -138,11 +138,11 @@ def test_build_tags_truncates_long_values_for_wandb():
     cfg = _cfg(
         {
             "data": {
-                "sequence": [
+                "emoji": {"sequence": [
                     "alien_monster.png",
                     "microbe.png",
                     "very_long_emoji_filename_that_would_break_wandb_tags.png",
-                ]
+                ]}
             }
         }
     )
@@ -150,31 +150,31 @@ def test_build_tags_truncates_long_values_for_wandb():
     tags = build_tags(cfg)
 
     assert all(1 <= len(tag) <= 64 for tag in tags)
-    assert "data.sequence:al_mi_ve" in tags
+    assert "data.emoji.sequence:al_mi_ve" in tags
 
 
 def test_build_tags_uses_emoji_sequence_alias():
     cfg = _cfg(
         {
             "data": {
-                "sequence": [
+                "emoji": {"sequence": [
                     "avocado.png",
                     "mushroom.png",
                     "lizard.png",
                     "lizard.png",
-                ]
+                ]}
             }
         }
     )
 
-    assert "data.sequence:av_mu_li" in build_tags(cfg)
+    assert "data.emoji.sequence:av_mu_li" in build_tags(cfg)
 
 
 def test_build_tags_omits_wandb_routing_tags():
     cfg = _cfg(
         {
             "data": {
-                "sequence": ["avocado.png", "mushroom.png"],
+                "emoji": {"sequence": ["avocado.png", "mushroom.png"]},
             },
             "logging": {
                 "wandb": {
@@ -188,7 +188,7 @@ def test_build_tags_omits_wandb_routing_tags():
 
     tags = build_tags(cfg)
 
-    assert "data.sequence:av_mu" in tags
+    assert "data.emoji.sequence:av_mu" in tags
     assert not any(tag.startswith("logging.wandb.project:") for tag in tags)
     assert not any(tag.startswith("logging.wandb.group:") for tag in tags)
 
@@ -197,6 +197,7 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
     cfg = _cfg(
         {
             "data": {
+                "emoji": {
                 "data_channels": 4,
                 "sequence": [
                     "avocado.png",
@@ -210,6 +211,7 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
                 "regenerate": True,
                 "shift_amount": 10,
                 "noise_strength": 0.005,
+                },
             },
             "model": {
                 "family": "FastKaNCA",
@@ -265,13 +267,15 @@ def _multi_attractor_cfg(pairs, target_repeats=2):
     return _cfg(
         {
             "data": {
-                "task": "multi_attractor",
-                "pairs": pairs,
-                "target_repeats": target_repeats,
+                "emoji": {
+                    "task": "multi_attractor",
+                    "pairs": pairs,
+                    "target_repeats": target_repeats,
+                    "crop_square": False,
+                    "regenerate": False,
+                },
                 "batches": 2,
                 "downsample": 1,
-                "crop_square": False,
-                "regenerate": False,
             }
         }
     )
@@ -328,7 +332,7 @@ def test_multi_attractor_patch_initial_condition(monkeypatch):
 def test_multi_attractor_requires_pairs():
     cfg = _multi_attractor_cfg([])
 
-    with pytest.raises(ValueError, match="data.pairs must contain at least one pair"):
+    with pytest.raises(ValueError, match="data.emoji.pairs must contain at least one pair"):
         load_emoji_data(cfg, impath="/tmp/emojis/")
 
 
@@ -336,12 +340,14 @@ def _micropattern_cfg(data_channels=12, knockout_mode=None, pool_copies=1):
     return _cfg(
         {
             "data": {
-                "data_channels": data_channels,
                 "batches": 2,
-                "timesteps": [0, 12, 24, 36, 48],
                 "downsample": 1,
-                "noise_strength": 0.005,
-                "pool_copies": pool_copies,
+                "micropattern": {
+                    "data_channels": data_channels,
+                    "timesteps": [0, 12, 24, 36, 48],
+                    "noise_strength": 0.005,
+                    "pool_copies": pool_copies,
+                },
             },
             "knockout": {
                 "mode": knockout_mode,

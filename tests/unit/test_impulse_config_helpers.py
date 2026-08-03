@@ -38,7 +38,10 @@ def _impulse_cfg(checkpoint_path="model.eqx"):
                 "base_directory": None,
                 "base_env": "MODEL_SAVE_PATH",
             },
-            "data": {"data_channels": 4, "observed_channels": 4},
+            "data": {
+                "dataset": "emojis",
+                "emoji": {"data_channels": 4, "observed_channels": 4},
+            },
             "model": {
                 "family": "NCA",
                 "channels": 6,

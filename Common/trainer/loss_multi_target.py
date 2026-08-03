@@ -44,21 +44,47 @@ def _channel_means(x, mask):
     return (pixels * spatial_mask).sum(-1) / count
 
 
-def _texture_cost(x, y, params, metric, samples, size, key):
+def _texture_cost(
+    x,
+    y,
+    params,
+    metric,
+    samples,
+    size,
+    key,
+    random_channel_shuffle=False,
+    random_crop=False,
+):
     from Common.trainer import loss_vgg
 
     size = min(size, x.shape[-2], x.shape[-1])
-    if x.shape[-2:] != (size, size):
-        shape = (*x.shape[:-2], size, size)
-        x, y = jax.image.resize(x, shape, "linear"), jax.image.resize(y, shape, "linear")
     padding = (-x.shape[2]) % 3
     x = jnp.pad(x, ((0, 0), (0, 0), (0, padding), (0, 0), (0, 0)))
     y = jnp.pad(y, ((0, 0), (0, 0), (0, padding), (0, 0), (0, 0)))
+    if random_channel_shuffle:
+        # Keep prediction and target channels paired while changing their RGB
+        # grouping for this perceptual comparison.  Permuting after padding
+        # matches the VGG loss behaviour, including treatment of pad channels.
+        permutation = jax.random.permutation(
+            jax.random.fold_in(key, 0), x.shape[2]
+        )
+        x = jnp.take(x, permutation, axis=2)
+        y = jnp.take(y, permutation, axis=2)
     x = rearrange(x, "b n (p c) h w -> b n p h w c", c=3)
     y = rearrange(y, "b n (p c) h w -> b n p h w c", c=3)
     shape = (x.shape[0], y.shape[0], *x.shape[1:])
     x = jnp.broadcast_to(x[:, None], shape).reshape(-1, *x.shape[-3:])
     y = jnp.broadcast_to(y[None], shape).reshape(-1, *y.shape[-3:])
+    if random_crop:
+        # Crop every prediction-target/RGB-triplet comparison with the same
+        # offset for x and y, as required for a meaningful perceptual cost.
+        crop_key = jax.random.fold_in(key, 1)
+        x = loss_vgg._random_crop_to_vgg_input(x[:, None], crop_key)[:, 0]
+        y = loss_vgg._random_crop_to_vgg_input(y[:, None], crop_key)[:, 0]
+    if x.shape[-3:-1] != (size, size):
+        resized_shape = (*x.shape[:-3], size, size, x.shape[-1])
+        x = jax.image.resize(x, resized_shape, "linear")
+        y = jax.image.resize(y, resized_shape, "linear")
     loss = loss_vgg.lpips_variants[metric].apply(
         params, x, y, key, aux={"samples": samples}
     )
@@ -148,7 +174,9 @@ def multi_target_pairwise_costs(
         if weights["texture"]:
             components["texture"] = _texture_cost(
                 x, y, params, metric, samples, texture_size,
-                jax.random.fold_in(key, group_index)
+                jax.random.fold_in(key, group_index),
+                random_channel_shuffle=args.get("random_channel_shuffle", False),
+                random_crop=args.get("random_crop", False),
             )
         else:
             components["texture"] = jnp.zeros_like(components["channel_mean"])

@@ -163,3 +163,26 @@ def test_manifest_preserves_explicit_wandb_group(tmp_path):
     config = manifest["configs"][0]["config"]
     assert config["experiment"]["name"] == "job-name"
     assert config["logging"]["wandb"]["group"] == "shared-analysis-group"
+
+
+def test_manifest_preserves_baseline_values_not_set_by_selected_branch(tmp_path):
+    manifest = generate_manifest(
+        {"model": {"upsampler": {"radius": 2, "fourier_modes": 5}}},
+        {
+            "grid": {"model.family": ["uNCA"]},
+            "branches": [
+                {
+                    "when": {"model.family": "uNCA"},
+                    "grid": {"model.upsampler.fourier_modes": [3]},
+                },
+                {
+                    "when": {"model.family": "isouNCA"},
+                    "grid": {"model.upsampler.radius": [1]},
+                },
+            ],
+        },
+        tmp_path,
+    )
+
+    upsampler = manifest["configs"][0]["config"]["model"]["upsampler"]
+    assert upsampler == {"radius": 2, "fourier_modes": 3}
