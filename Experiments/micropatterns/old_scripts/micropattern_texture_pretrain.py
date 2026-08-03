@@ -165,7 +165,7 @@ def run_training(H,key):
         # def data_init(self,SHARDING=None):
         #     data = self.pad(data, 24)
         #     self.save_data(data)
-        def data_callback(self,x,y,i,key):
+        def advance_pool(self,x,y,i,key):
             x_true,_ =self.split_x_y(1)	
             x = jittable_callback_bit(x,x_true,self.OBS_CHANNELS)
             x = self.noise(x,NOISE_STRENGTH,key=key)

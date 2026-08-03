@@ -60,7 +60,7 @@ opt = NCA_Trainer(nca,
 				  model_filename="micropattern_shapes_gated_texture_fft_"+str(index),
 				  BOUNDARY_MASK=masks,
 				  DATA_AUGMENTER = DA)
-x0,y0 = opt.DATA_AUGMENTER.data_load()
+x0,y0 = opt.DATA_AUGMENTER.initialize_pool()
 print(len(x0))
 print(x0[0].shape)
 print(y0[0].shape)

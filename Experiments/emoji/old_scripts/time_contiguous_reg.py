@@ -63,7 +63,7 @@ def run(H,key):
                 data = self.pad(data, [10,10,10,10]) 		
                 self.save_data(data)
                 return None
-    else: # Redifine data_callback to not have regeneration
+    else: # Redifine advance_pool to not have regeneration
         class data_augmenter_subclass(DataAugmenter):
             #Redefine how data is pre-processed before training
             def data_init(self,SHARDING=None):
@@ -72,7 +72,7 @@ def run(H,key):
                 data = self.pad(data, [10,10,10,10]) 		
                 self.save_data(data)
                 return None
-            def data_callback(self, x, y, i, key):
+            def advance_pool(self, x, y, i, key):
                 am=10
                 if hasattr(self,"PREVIOUS_KEY"):
                     x = self.unshift(x, am, self.PREVIOUS_KEY)

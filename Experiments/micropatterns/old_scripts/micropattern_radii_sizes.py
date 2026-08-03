@@ -68,7 +68,7 @@ class data_augmenter_subclass(DataAugmenter):
 		data = self.return_saved_data()
 		self.save_data(data)
 		return None  
-	def data_callback(self, x, y, i):
+	def advance_pool(self, x, y, i):
 		x_true,_ =self.split_x_y(1)
 		reset_x0 = lambda x,x_true:x.at[0].set(x_true[0])
 		x = jax.tree_util.tree_map(reset_x0,x,x_true) # Keep first initial x correct

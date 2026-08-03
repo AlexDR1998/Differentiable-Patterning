@@ -81,7 +81,7 @@ MASK = np.array([
 
 # print("Testing data augmenter...")
 # data_augmenter = DataAugmenter(data,hidden_channels=CHANNELS-8)
-# x,y = data_augmenter.data_load(key=key)
+# x,y = data_augmenter.initialize_pool(key=key)
 # print("x shape = ",len(x),x[0].shape)
 # print("y shape = ",len(y),y[0].shape)
 
