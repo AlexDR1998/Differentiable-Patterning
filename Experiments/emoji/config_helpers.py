@@ -33,8 +33,8 @@ def build_loss_filename(cfg, include_layers=True):
 
 
 def build_data_config_string(cfg):
-    terminal_cfg = _cfg_get(cfg.data, "terminal_carry", None)
-    regeneration_cfg = _cfg_get(cfg.data, "regeneration", None)
+    terminal_cfg = _cfg_get(cfg.data.emoji, "terminal_carry", None)
+    regeneration_cfg = _cfg_get(cfg.data.emoji, "regeneration", None)
     terminal_str = ""
     if _cfg_get(terminal_cfg, "enabled", False):
         terminal_str = (
@@ -43,12 +43,12 @@ def build_data_config_string(cfg):
         )
     regeneration_str = ""
     regeneration_enabled = _cfg_get(
-        regeneration_cfg, "enabled", _cfg_get(cfg.data, "regenerate", False)
+        regeneration_cfg, "enabled", _cfg_get(cfg.data.emoji, "regenerate", False)
     )
     regeneration_initial = _cfg_get(regeneration_cfg, "initial_probability", 1.0)
     regeneration_final = _cfg_get(regeneration_cfg, "final_probability", regeneration_initial)
     legacy_regeneration = (
-        _cfg_get(cfg.data, "regenerate", False)
+        _cfg_get(cfg.data.emoji, "regenerate", False)
         and regeneration_initial == 1.0
         and regeneration_final == 1.0
         and _cfg_get(regeneration_cfg, "start_iteration", 0) == 0
@@ -56,9 +56,9 @@ def build_data_config_string(cfg):
     )
     if regeneration_enabled and not legacy_regeneration:
         regeneration_str = f"_rg{regeneration_initial}-{regeneration_final}"
-    task = _cfg_get(cfg.data, "task", "sequence")
+    task = _cfg_get(cfg.data.emoji, "task", "sequence")
     if task == "multi_attractor":
-        pairs = _as_list(_cfg_get(cfg.data, "pairs", None))
+        pairs = _as_list(_cfg_get(cfg.data.emoji, "pairs", None))
         aliases = []
         for pair in pairs:
             initial = _cfg_get(pair, "initial", None)
@@ -74,15 +74,15 @@ def build_data_config_string(cfg):
             f"data_multi_{pair_alias}"
             f"_b{cfg.data.batches}"
             f"_ds{cfg.data.downsample}"
-            f"_regen{cfg.data.regenerate}{terminal_str}{regeneration_str}"
+            f"_regen{cfg.data.emoji.regenerate}{terminal_str}{regeneration_str}"
         )
     if task != "sequence":
-        raise ValueError(f"Unknown emoji data.task {task!r}")
+        raise ValueError(f"Unknown data.emoji.task {task!r}")
     return (
-        f"data_{_sequence_alias(cfg.data.sequence)}"
+        f"data_{_sequence_alias(cfg.data.emoji.sequence)}"
         f"_b{cfg.data.batches}"
         f"_ds{cfg.data.downsample}"
-        f"_regen{cfg.data.regenerate}{terminal_str}{regeneration_str}"
+        f"_regen{cfg.data.emoji.regenerate}{terminal_str}{regeneration_str}"
     )
 
 
@@ -93,7 +93,7 @@ def _load_single_emoji(filename, cfg, impath):
         [filename],
         impath_emojis=impath,
         downsample=cfg.data.downsample,
-        crop_square=_cfg_get(cfg.data, "crop_square", False),
+        crop_square=_cfg_get(cfg.data.emoji, "crop_square", False),
     )
     data = loaded.data if hasattr(loaded, "data") else loaded
     return data[0, 0]
@@ -137,23 +137,23 @@ def _build_initial_condition(initial_cfg, cfg, impath):
 
 
 def _load_multi_attractor_data(cfg, impath):
-    pairs = _as_list(_cfg_get(cfg.data, "pairs", None))
+    pairs = _as_list(_cfg_get(cfg.data.emoji, "pairs", None))
     if not pairs:
-        raise ValueError("data.pairs must contain at least one pair for data.task=multi_attractor")
-    target_repeats = int(_cfg_get(cfg.data, "target_repeats", 2))
+        raise ValueError("data.emoji.pairs must contain at least one pair for data.emoji.task=multi_attractor")
+    target_repeats = int(_cfg_get(cfg.data.emoji, "target_repeats", 2))
     if target_repeats < 1:
-        raise ValueError("data.target_repeats must be at least 1")
+        raise ValueError("data.emoji.target_repeats must be at least 1")
 
     trajectories = []
     expected_shape = None
     for index, pair in enumerate(pairs):
         if not hasattr(pair, "get"):
-            raise ValueError(f"data.pairs[{index}] must be a mapping")
+            raise ValueError(f"data.emoji.pairs[{index}] must be a mapping")
         initial = _build_initial_condition(_cfg_get(pair, "initial", None), cfg, impath)
         target = _load_single_emoji(_cfg_get(pair, "target", None), cfg, impath)
         if initial.shape != target.shape:
             raise ValueError(
-                f"data.pairs[{index}] initial and target shapes differ: "
+                f"data.emoji.pairs[{index}] initial and target shapes differ: "
                 f"{initial.shape} != {target.shape}"
             )
         if expected_shape is not None and target.shape != expected_shape:
@@ -173,19 +173,19 @@ def load_data(cfg, impath=None):
         if data_path_base is None:
             raise ValueError("DATA_PATH_BASE must be set when load_data is called without impath.")
         impath = os.path.join(data_path_base, "Emojis", "")
-    task = _cfg_get(cfg.data, "task", "sequence")
+    task = _cfg_get(cfg.data.emoji, "task", "sequence")
     if task == "sequence":
         dataset = load_emoji_sequence(
-            _as_list(cfg.data.sequence),
+            _as_list(cfg.data.emoji.sequence),
             impath_emojis=impath,
             downsample=cfg.data.downsample,
-            crop_square=_cfg_get(cfg.data, "crop_square", False),
+            crop_square=_cfg_get(cfg.data.emoji, "crop_square", False),
         )
         data = dataset.data
     elif task == "multi_attractor":
         data = _load_multi_attractor_data(cfg, impath)
     else:
-        raise ValueError(f"Unknown emoji data.task {task!r}")
+        raise ValueError(f"Unknown data.emoji.task {task!r}")
     cfg_str = build_data_config_string(cfg)
     if custom_impath:
         cfg_str += "_custompath"
@@ -193,14 +193,14 @@ def load_data(cfg, impath=None):
 
 
 def build_data_augmenter(cfg):
-    pad = _pad_tuple(cfg.data.pad)
+    pad = _pad_tuple(cfg.data.emoji.pad)
     batches = cfg.data.batches
-    shift_amount = cfg.data.shift_amount
-    noise_strength = cfg.data.noise_strength
-    regenerate = cfg.data.regenerate
-    noise_mode = _cfg_get(cfg.data, "noise_mode", "full")
-    terminal_cfg = _cfg_get(cfg.data, "terminal_carry", None)
-    regeneration_cfg = _cfg_get(cfg.data, "regeneration", None)
+    shift_amount = cfg.data.emoji.shift_amount
+    noise_strength = cfg.data.emoji.noise_strength
+    regenerate = cfg.data.emoji.regenerate
+    noise_mode = _cfg_get(cfg.data.emoji, "noise_mode", "full")
+    terminal_cfg = _cfg_get(cfg.data.emoji, "terminal_carry", None)
+    regeneration_cfg = _cfg_get(cfg.data.emoji, "regeneration", None)
 
     terminal_enabled = _cfg_get(terminal_cfg, "enabled", False)
     terminal_start = _cfg_get(terminal_cfg, "start_iteration", 0)
@@ -298,8 +298,8 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
 
 
 def build_legacy_training_filename(cfg):
-    sequence_alias = _sequence_alias(cfg.data.sequence)
-    regen_str = "regenerate_" if cfg.data.regenerate else ""
+    sequence_alias = _sequence_alias(cfg.data.emoji.sequence)
+    regen_str = "regenerate_" if cfg.data.emoji.regenerate else ""
     loss_mode = "_".join(_as_list(cfg.loss.primary)).lower()
     return (
         f"emoji_{sequence_alias}_{loss_mode}_{cfg.model.family}_{regen_str}"

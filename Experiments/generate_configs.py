@@ -153,10 +153,13 @@ def main() -> None:
                     item["overrides"]["seed"] = new_seed
                 if isinstance(item.get("config"), dict) and "seed" in item["config"]:
                     item["config"]["seed"] = new_seed
+                if "config_path" in item and isinstance(item["config_path"], str):
+                    OmegaConf.save(OmegaConf.create(item["config"]), item["config_path"])
 
             should_resave_manifest = True
 
-        # If requested, shuffle the 'index' values (and update any config_path that depends on it).
+        # Indices are scheduler-facing identifiers. Keep emitted filenames stable:
+        # their contents remain paired with the corresponding manifest entry.
         if args.shuffle_indices:
             configs = manifest.get("configs", [])
             old_indices = [item.get("index") for item in configs]
@@ -165,8 +168,6 @@ def main() -> None:
 
             for item, new_idx in zip(configs, new_indices, strict=False):
                 item["index"] = int(new_idx)
-                if "config_path" in item and isinstance(item["config_path"], str):
-                    item["config_path"] = str(output_dir / f"config_{int(new_idx):04d}.yaml")
 
             should_resave_manifest = True
 

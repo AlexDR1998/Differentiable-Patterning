@@ -24,7 +24,7 @@ def build_run_name(cfg, model_name, optimiser_name):
             f"_batches{cfg.data.batches}"
             f"_{cfg.system.precision}"
             f"_loop{cfg.trainer.loop_autodiff}"
-            f"_gpu{cfg.system.gpu}"
+            f"_gpu{cfg.labels.gpu}"
         )
         if cfg.trainer.get("sharding", None) is not None:
             details += f"_shard{cfg.trainer.sharding}"
@@ -47,14 +47,14 @@ def build_run_name(cfg, model_name, optimiser_name):
             ),
         )
         details = (
-            f"train_{cfg.run.scaling}"
+            f"train_{cfg.labels.scaling}"
             f"_t{cfg.run.t}"
             f"_lr{cfg.optimiser.learn_rate}"
             f"_dr{cfg.optimiser.decay_rate}"
-            f"_dup{int(cfg.data.get('duplicate_final_timestep', False))}"
-            f"_irp{cfg.data.get('intermediate_reinjection_probability', 0.5)}"
-            f"_irpend{cfg.data.get('intermediate_reinjection_probability_end', cfg.data.get('intermediate_reinjection_probability', 0.5))}"
-            f"_irpstart{cfg.data.get('intermediate_reinjection_decay_start_fraction', 0.25)}"
+            f"_dup{int(cfg.data.micropattern.get('duplicate_final_timestep', False))}"
+            f"_irp{cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5)}"
+            f"_irpend{cfg.data.micropattern.get('intermediate_reinjection_probability_end', cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5))}"
+            f"_irpstart{cfg.data.micropattern.get('intermediate_reinjection_decay_start_fraction', 0.25)}"
         )
         repeat = _cfg_get(cfg.run, "repeat", None)
         if repeat is not None:
@@ -126,8 +126,8 @@ def run(cfg):
     optimiser, optimiser_name, schedule = build_optimizer(cfg, return_schedule=True)
     schema = aux.get("channel_schema")
     augmenter, _ = build_data_augmenter(cfg, mask, schema)
-    target_timepoints = [f"t{time}h" for time in list(cfg.data.timesteps)[1:]]
-    if cfg.data.get("duplicate_final_timestep", False):
+    target_timepoints = [f"t{time}h" for time in list(cfg.data.micropattern.timesteps)[1:]]
+    if cfg.data.micropattern.get("duplicate_final_timestep", False):
         target_timepoints.append(f"{target_timepoints[-1]}_steady")
 
     run_name = build_run_name(cfg, model_name, optimiser_name)

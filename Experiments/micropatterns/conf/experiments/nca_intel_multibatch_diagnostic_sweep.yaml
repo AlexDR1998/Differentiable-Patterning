@@ -10,7 +10,7 @@ grid:
   run.mode: [benchmark]
   model.family: [NCA_sycl]
   model.channels: [32]
-  run.scaling: [convective]
+  labels.scaling: [convective]
   run.iterations: [20]
   run.warmup: [10]
   optimiser.warmup_steps: [10]
@@ -46,10 +46,10 @@ grid:
   loss.regulariser_coeffs.latent_size: [0.0]
 
   data.downsample: [8]
-  data.data_channels: [14]
+  data.micropattern.data_channels: [14]
   data.batches: [2]
   data.dataset: [micropatterns_260726]
-  data.duplicate_final_timestep: [false]
+  data.micropattern.duplicate_final_timestep: [false]
 
   knockout.mode: [null]
   knockout.time: [null]
@@ -59,7 +59,7 @@ grid:
   model.upsampler.radius: [null]
   model.upsampler.depth: [null]
   model.upsampler.width_factor: [null]
-  system.gpu: [intel]
+  labels.gpu: [intel]
   # Compare normal FP32 GEMM with the production BF16/XMX path.
   system.precision: [highest]
   optimiser.type: [nadam]

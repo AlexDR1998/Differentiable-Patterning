@@ -61,8 +61,8 @@ def run(cfg):
         run_name=run_name,
         data_augmenter=augmenter,
         model_directory=os.path.join(model_root, cfg.logging.wandb.group, ""),
-        OBS_CHANNELS=cfg.data.observed_channels,
-        DATA_CHANNELS=cfg.data.data_channels,
+        OBS_CHANNELS=cfg.data.emoji.observed_channels,
+        DATA_CHANNELS=cfg.data.emoji.data_channels,
         LOSS_TIME_CHANNEL_MASK=cfg.trainer.loss_time_channel_mask,
     )
     return train_model(

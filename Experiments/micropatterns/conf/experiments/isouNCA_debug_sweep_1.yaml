@@ -4,7 +4,7 @@ output_subdir: generated/isouNCA_9ch_micropattern_debug_sweep_4
 seed_mode: index
 grid:
   model.family: [isouNCA]
-  run.scaling: [convective]
+  labels.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [isouNCA_9ch_micropattern_debug_sweep_4]
   run.iterations: [2000]
@@ -25,7 +25,7 @@ grid:
   model.upsampler.width_factor: [null]
 # groups:
   # - model.upscale_factor: [16,8,4,2]
-    # run.t : [16,32,64,128]    
+    # run.t : [16,32,64,128]
 # branches:
 #   - when:
 #       model.family: uNCA
@@ -33,7 +33,7 @@ grid:
 #       model.upsampler.fourier_modes: [1,2,4]
 #       model.upsampler.depth: [2]
 #       model.upsampler.width_factor: [4]
-    
+
 #   - when:
 #       model.family: isouNCA
 #     grid:
@@ -48,5 +48,4 @@ grid:
 #       loss.regulariser_coeffs.latent_channel_match: [0.0]
 #       model.upsampler.depth: [null]
       # model.upsampler.width_factor: [null]
-
 

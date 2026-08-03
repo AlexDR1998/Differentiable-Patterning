@@ -7,13 +7,13 @@ count: 20
 configs:
 - index: 5
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 0
     logging.wandb.project: nca_micropattern_groups
@@ -40,16 +40,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -64,7 +64,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 16
     data.downsample: 32
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -73,27 +73,34 @@ configs:
     seed: 577090037
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 32
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -122,7 +129,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -189,7 +195,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 0
     logging:
       backend: wandb
@@ -207,21 +212,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 15
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 0
     logging.wandb.project: nca_micropattern_groups
@@ -248,16 +250,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -272,7 +274,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 64
     data.downsample: 16
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -281,27 +283,34 @@ configs:
     seed: 271041745
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 16
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -330,7 +339,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -397,7 +405,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 0
     logging:
       backend: wandb
@@ -415,21 +422,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 14
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 0
     logging.wandb.project: nca_micropattern_groups
@@ -456,16 +460,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -480,7 +484,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 256
     data.downsample: 8
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -489,27 +493,34 @@ configs:
     seed: 1095513148
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 8
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -538,7 +549,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -605,7 +615,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 0
     logging:
       backend: wandb
@@ -623,21 +632,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 2
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 0
     logging.wandb.project: nca_micropattern_groups
@@ -664,16 +670,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -688,7 +694,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 1024
     data.downsample: 4
-    data.pool_copies: 2
+    data.micropattern.pool_copies: 2
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -697,27 +703,34 @@ configs:
     seed: 506456969
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 2
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 4
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 2
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -746,7 +759,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -813,7 +825,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 0
     logging:
       backend: wandb
@@ -831,21 +842,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 1
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 1
     logging.wandb.project: nca_micropattern_groups
@@ -872,16 +880,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -896,7 +904,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 16
     data.downsample: 32
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -905,27 +913,34 @@ configs:
     seed: 2127877499
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 32
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -954,7 +969,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1021,7 +1035,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 1
     logging:
       backend: wandb
@@ -1039,21 +1052,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 4
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 1
     logging.wandb.project: nca_micropattern_groups
@@ -1080,16 +1090,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -1104,7 +1114,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 64
     data.downsample: 16
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -1113,27 +1123,34 @@ configs:
     seed: 1930549411
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 16
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -1162,7 +1179,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1229,7 +1245,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 1
     logging:
       backend: wandb
@@ -1247,21 +1262,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 9
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 1
     logging.wandb.project: nca_micropattern_groups
@@ -1288,16 +1300,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -1312,7 +1324,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 256
     data.downsample: 8
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -1321,27 +1333,34 @@ configs:
     seed: 2028277857
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 8
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -1370,7 +1389,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -1437,7 +1455,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 1
     logging:
       backend: wandb
@@ -1455,21 +1472,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 7
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 1
     logging.wandb.project: nca_micropattern_groups
@@ -1496,16 +1510,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -1520,7 +1534,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 1024
     data.downsample: 4
-    data.pool_copies: 2
+    data.micropattern.pool_copies: 2
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -1529,27 +1543,34 @@ configs:
     seed: 1630434966
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 2
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 4
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 2
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -1578,7 +1599,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -1645,7 +1665,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 1
     logging:
       backend: wandb
@@ -1663,21 +1682,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 13
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 2
     logging.wandb.project: nca_micropattern_groups
@@ -1704,16 +1720,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -1728,7 +1744,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 16
     data.downsample: 32
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -1737,27 +1753,34 @@ configs:
     seed: 901749037
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 32
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -1786,7 +1809,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1853,7 +1875,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 2
     logging:
       backend: wandb
@@ -1871,21 +1892,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 8
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 2
     logging.wandb.project: nca_micropattern_groups
@@ -1912,16 +1930,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -1936,7 +1954,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 64
     data.downsample: 16
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -1945,27 +1963,34 @@ configs:
     seed: 403123852
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 16
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -1994,7 +2019,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2061,7 +2085,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 2
     logging:
       backend: wandb
@@ -2079,21 +2102,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 16
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 2
     logging.wandb.project: nca_micropattern_groups
@@ -2120,16 +2140,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -2144,7 +2164,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 256
     data.downsample: 8
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -2153,27 +2173,34 @@ configs:
     seed: 2095328386
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 8
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -2202,7 +2229,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -2269,7 +2295,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 2
     logging:
       backend: wandb
@@ -2287,21 +2312,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 11
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 2
     logging.wandb.project: nca_micropattern_groups
@@ -2328,16 +2350,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -2352,7 +2374,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 1024
     data.downsample: 4
-    data.pool_copies: 2
+    data.micropattern.pool_copies: 2
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -2361,27 +2383,34 @@ configs:
     seed: 121751464
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 2
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 4
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 2
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -2410,7 +2439,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -2477,7 +2505,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 2
     logging:
       backend: wandb
@@ -2495,21 +2522,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 6
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 3
     logging.wandb.project: nca_micropattern_groups
@@ -2536,16 +2560,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -2560,7 +2584,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 16
     data.downsample: 32
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -2569,27 +2593,34 @@ configs:
     seed: 1674216077
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 32
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -2618,7 +2649,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2685,7 +2715,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 3
     logging:
       backend: wandb
@@ -2703,21 +2732,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 3
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 3
     logging.wandb.project: nca_micropattern_groups
@@ -2744,16 +2770,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -2768,7 +2794,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 64
     data.downsample: 16
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -2777,27 +2803,34 @@ configs:
     seed: 1858720390
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 16
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -2826,7 +2859,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2893,7 +2925,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 3
     logging:
       backend: wandb
@@ -2911,21 +2942,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 10
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 3
     logging.wandb.project: nca_micropattern_groups
@@ -2952,16 +2980,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -2976,7 +3004,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 256
     data.downsample: 8
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -2985,27 +3013,34 @@ configs:
     seed: 9045414
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 8
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -3034,7 +3069,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -3101,7 +3135,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 3
     logging:
       backend: wandb
@@ -3119,21 +3152,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 12
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 3
     logging.wandb.project: nca_micropattern_groups
@@ -3160,16 +3190,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -3184,7 +3214,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 1024
     data.downsample: 4
-    data.pool_copies: 2
+    data.micropattern.pool_copies: 2
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -3193,27 +3223,34 @@ configs:
     seed: 1912923437
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 2
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 4
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 2
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -3242,7 +3279,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -3309,7 +3345,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 3
     logging:
       backend: wandb
@@ -3327,21 +3362,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 17
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 4
     logging.wandb.project: nca_micropattern_groups
@@ -3368,16 +3400,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -3392,7 +3424,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 16
     data.downsample: 32
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -3401,27 +3433,34 @@ configs:
     seed: 1143881027
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 32
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -3450,7 +3489,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3517,7 +3555,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 4
     logging:
       backend: wandb
@@ -3535,21 +3572,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 18
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 4
     logging.wandb.project: nca_micropattern_groups
@@ -3576,16 +3610,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -3600,7 +3634,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 64
     data.downsample: 16
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: lax
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -3609,27 +3643,34 @@ configs:
     seed: 982526257
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 16
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -3658,7 +3699,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3725,7 +3765,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 4
     logging:
       backend: wandb
@@ -3743,21 +3782,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 19
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 4
     logging.wandb.project: nca_micropattern_groups
@@ -3784,16 +3820,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -3808,7 +3844,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 256
     data.downsample: 8
-    data.pool_copies: 4
+    data.micropattern.pool_copies: 4
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -3817,27 +3853,34 @@ configs:
     seed: 439062303
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 4
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 8
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 4
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -3866,7 +3909,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -3933,7 +3975,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 4
     logging:
       backend: wandb
@@ -3951,21 +3992,18 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 - index: 0
   overrides:
-    system.gpu: H200
+    labels.gpu: H200
+    labels.scaling: diffusive
     system.precision: highest
     model.family: gNCA
     model.fire_rate: 0.5
     model.upscale_factor: null
     model.channels: 48
-    run.scaling: diffusive
     run.iterations: 8000
     run.repeat: 4
     logging.wandb.project: nca_micropattern_groups
@@ -3992,16 +4030,16 @@ configs:
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
     trainer.clear_cache_every: null
-    data.task: micropattern_single_replicate
-    data.experiment_groups:
+    data.micropattern.task: micropattern_single_replicate
+    data.micropattern.experiment_groups:
     - cell_fate_s1
-    data.data_channels: 4
+    data.micropattern.data_channels: 4
     data.batches: 1
-    data.intermediate_reinjection_probability: 1.0
-    data.intermediate_reinjection_probability_end: 0.0
-    data.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
     data.dataset: micropatterns_260726
-    data.duplicate_final_timestep: true
+    data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
     knockout.time: null
     knockout.channel: Nodal
@@ -4016,7 +4054,7 @@ configs:
     optimiser.max_consecutive_errors: 16
     run.t: 1024
     data.downsample: 4
-    data.pool_copies: 2
+    data.micropattern.pool_copies: 2
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_4ch_1b4_sweep_8
     logging.wandb.group: nca_4ch_1b4_sweep_8
@@ -4025,27 +4063,34 @@ configs:
     seed: 1363349907
     experiment:
       name: nca_4ch_1b4_sweep_8
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: diffusive
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 1
-      pool_copies: 2
-      experiment_groups:
-      - cell_fate_s1
-      timesteps:
-      - 0
-      - 12
-      - 24
-      - 36
-      - 48
-      data_channels: 4
       downsample: 4
-      pad_multiple: null
-      noise_strength: 0.005
-      intermediate_reinjection_probability: 1.0
-      intermediate_reinjection_probability_end: 0.0
-      intermediate_reinjection_decay_start_fraction: 0.25
-      duplicate_final_timestep: true
-      task: micropattern_single_replicate
+      micropattern:
+        pool_copies: 2
+        experiment_groups:
+        - cell_fate_s1
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: true
+        task: micropattern_single_replicate
     model:
       family: gNCA
       normalization: none
@@ -4074,7 +4119,6 @@ configs:
       sycl_serialize_custom_calls: false
       sycl_serialize_onemkl: false
       sycl_serialize_backward_custom_calls: false
-      model_directory: models/
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -4141,7 +4185,6 @@ configs:
       write_images: true
       sparse_pruning: false
       target_sparsity: 0.5
-      scaling: diffusive
       repeat: 4
     logging:
       backend: wandb
@@ -4159,10 +4202,7 @@ configs:
       collection: NCA-micropattern
       model_factory: Experiments.config_helpers:build_model
     knockout:
+      mode: null
       time: null
       channel: Nodal
-      mode: null
-    system:
-      gpu: H200
-      precision: highest
 emit_files: false

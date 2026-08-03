@@ -54,6 +54,7 @@ def build_trainer(cfg, *, model, data, run_name, data_augmenter, model_directory
         SHARDING=cfg.trainer.get("sharding", None),
         GRAD_LOSS=cfg.trainer.get("grad_loss", False),
         MODEL_DIRECTORY=model_directory,
+        LOG_DIRECTORY=cfg.trainer.get("log_directory", "logs/"),
         **domain_kwargs,
         **sycl_kwargs,
     )
@@ -98,6 +99,7 @@ def train_model(
         LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
         POOL_ADMISSION_CONFIG=build_pool_admission_config(cfg),
         SINGULAR_VALUE_LOGGING_CONFIG=cfg.logging.get("singular_values", None),
+        BACKEND=_cfg_get(cfg.logging, "backend", "wandb"),
         SPARSE_PRUNING=cfg.run.get("sparse_pruning", False),
         TARGET_SPARSITY=cfg.run.get("target_sparsity", 0.5),
         JAX_TRACE=cfg.trainer.get("jax_trace", False),

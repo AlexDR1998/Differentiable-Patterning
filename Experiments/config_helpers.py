@@ -35,6 +35,14 @@ def _cfg_get(cfg, key, default=None):
     return getattr(cfg, key, default)
 
 
+def data_channel_count(cfg):
+    """Return the measurement channel count for the configured data domain."""
+
+    if _cfg_get(cfg.data, "dataset") == "emojis":
+        return cfg.data.emoji.data_channels
+    return cfg.data.micropattern.data_channels
+
+
 def compute_model_channel_statistics(
     data,
     model_channels,
@@ -530,7 +538,7 @@ def build_model(cfg, key=None):
     elif cfg.model.family == "uNCA":
         model = uNCA(
             N_CHANNELS=cfg.model.channels,
-            O_CHANNELS=cfg.data.data_channels,
+            O_CHANNELS=data_channel_count(cfg),
             KERNEL_STR=cfg.model.kernel_str,
             ACTIVATION=activation,
             FIRE_RATE=cfg.model.fire_rate,
@@ -547,7 +555,7 @@ def build_model(cfg, key=None):
     elif cfg.model.family == "isouNCA":
         model = isouNCA(
             N_CHANNELS=cfg.model.channels,
-            O_CHANNELS=cfg.data.data_channels,
+            O_CHANNELS=data_channel_count(cfg),
             KERNEL_STR=cfg.model.kernel_str,
             ACTIVATION=activation,
             FIRE_RATE=cfg.model.fire_rate,
@@ -624,7 +632,7 @@ def build_tags(cfg, prefix=""):
         if hasattr(value, "items"):
             tags.extend(build_tags(value, prefix=f"{tag_key}."))
         else:
-            if tag_key == "data.sequence":
+            if tag_key == "data.emoji.sequence":
                 value = _sequence_alias(value)
             else:
                 value = _compact_value(value)

@@ -2,25 +2,47 @@ seed: 0
 
 experiment:
   name: nca_micropattern_template
+
+system:
+  precision: highest
+  xla_flags: null
+
+# Descriptive W&B metadata. These values do not configure JAX or the model.
+labels:
+  scaling: convective
+  gpu: null
 data:
   dataset: micropatterns
   batches: 2
-  batch_multiplier: 1
+  downsample: 1
+  micropattern:
+    pool_copies: 1
   # Null loads all experiment groups for the selected dataset.
-  experiment_groups: null
-  timesteps: [0, 12, 24, 36, 48]
+    experiment_groups: null
+    timesteps: [0, 12, 24, 36, 48]
   # For legacy micropatterns this is 4 or 12. For 260726 it must match the
   # selected experiment groups' measurement-channel count.
-  data_channels: 12
-  downsample: 1
+    data_channels: 12
   # Null retains the historical six-pixel border on each side. Set an integer
   # to pad each spatial dimension symmetrically to that multiple.
-  pad_multiple: null
-  noise_strength: 0.005
-  duplicate_final_timestep: false
+    pad_multiple: null
+    noise_strength: 0.005
+  # Per-slot Bernoulli reinjection schedule. Equal start/end values give a
+  # constant rate; e.g. 0.5 and 0.5 approximates the historical 50% policy.
+    intermediate_reinjection_probability: 0.5
+    intermediate_reinjection_probability_end: 0.5
+    intermediate_reinjection_decay_start_fraction: 0.25
+    duplicate_final_timestep: false
 
 model:
   family: NCA
+  # Switch to NormalizedNCA to test state normalisation without changing the
+  # rest of the experiment configuration.
+  normalization: none
+  normalization_mean: null
+  normalization_std: null
+  normalization_eps: 1.0e-6
+  normalization_channels: null
   channels: 32
   kernel_str: [ID, LAP, DIFF]
   fire_rate: 0.5
@@ -49,7 +71,11 @@ trainer:
   # Serialize native calls from both tiles with a process-wide mutex. This is
   # intentionally slow and distinguishes custom-call concurrency from sharding.
   sycl_serialize_custom_calls: false
-  model_directory: models/
+  # Narrow reliability mitigations for concurrent two-tile native backward.
+  # Prefer oneMKL-only serialization; backward-wide serialization is the
+  # slower fallback/reference mode.
+  sycl_serialize_onemkl: false
+  sycl_serialize_backward_custom_calls: false
   log_directory: logs/
   loss_time_channel_mask: null
   loop_autodiff: checkpointed
@@ -90,6 +116,7 @@ loss:
     intermediate_state: 1.0
     boundary: 5.0
     contiguous_growth: 0.0
+    localised_hidden: 0.0
     update_sensitivity: 0.0
     perturbation_conservation: 0.0
     latent_channel_match: 0.0
@@ -127,6 +154,15 @@ logging:
     group: base-config
     tags: null
 
+# Publish the best checkpoint with this resolved config and provenance. The
+# SQLite catalogue is rebuilt separately, so concurrent jobs never share it.
+model_store:
+  enabled: true
+  root: models
+  collection: ${logging.wandb.project}
+  model_factory: Experiments.config_helpers:build_model
+
 knockout:
+  mode: null
   time: null
   channel: Nodal

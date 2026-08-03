@@ -7,7 +7,7 @@ grid:
   # model.family: [NCA, NCA_sycl]
   model.family: [NCA_sycl]
   model.channels: [32]
-  run.scaling: [convective]
+  labels.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [intel_sycl_trace_1]
   run.iterations: [100]
@@ -34,7 +34,7 @@ grid:
   model.upsampler.depth: [null]
   model.upsampler.width_factor: [null]
   system.precision: [bfloat16]
-  system.gpu: [intel]
+  labels.gpu: [intel]
   optimiser.type: [nadam]
 
   system.xla_flags: [null]

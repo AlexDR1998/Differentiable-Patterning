@@ -83,19 +83,9 @@ def _matches_condition(values: dict[str, Any], condition: dict[str, Any]) -> boo
     return all(values.get(key) == expected_value for key, expected_value in condition.items())
 
 
-def _branch_keys(branches: list[dict[str, Any]]) -> set[str]:
-    branch_keys: set[str] = set()
-    for branch in branches:
-        branch_keys.update(key for key, _ in flatten_grid(cast(dict[str, Any], branch.get("grid", {}))))
-        for group in cast(list[dict[str, Any]], branch.get("groups", [])):
-            branch_keys.update(key for key, _ in flatten_grid(group))
-    return branch_keys
-
-
 def generate_manifest(base_cfg: dict[str, Any], sweep_cfg: dict[str, Any], output_dir: Path, emit_files: bool = False) -> dict[str, Any]:
     combos = _expand_section(sweep_cfg)
     branches = cast(list[dict[str, Any]], sweep_cfg.get("branches", []))
-    branch_value_keys = _branch_keys(branches) if branches else set()
 
     output_dir.mkdir(parents=True, exist_ok=True)
     generated_entries: list[dict[str, Any]] = []
@@ -114,8 +104,6 @@ def generate_manifest(base_cfg: dict[str, Any], sweep_cfg: dict[str, Any], outpu
             for branch_combo in branch_combos:
                 override_values = dict(base_overrides)
                 override_values.update(branch_combo)
-                for branch_key in branch_value_keys:
-                    override_values.setdefault(branch_key, None)
                 experiment_name = sweep_cfg.get("experiment_name")
                 if experiment_name:
                     override_values["experiment.name"] = experiment_name

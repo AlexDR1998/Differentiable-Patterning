@@ -4,7 +4,7 @@ output_subdir: generated/uNCA_9ch_micropattern_loss_target_sweep_2
 seed_mode: index
 grid:
   model.family: [uNCA]
-  run.scaling: [convective]
+  labels.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [uNCA_9ch_micropattern_loss_target_sweep_1]
   run.iterations: [8000]
@@ -30,7 +30,7 @@ grid:
   optimiser.decay_rate: [0.98]
 groups:
   - data.batches: [2]
-    model.channels: [64]    
+    model.channels: [64]
 branches:
   - when:
       loss.primary: [vgg_grouped,l2_grouped]
@@ -48,7 +48,7 @@ branches:
       # model.upsampler.fourier_modes: [4]
 #       model.upsampler.depth: [2]
 #       model.upsampler.width_factor: [4]
-    
+
 #   - when:
 #       model.family: isouNCA
 #     grid:
@@ -63,5 +63,4 @@ branches:
 #       loss.regulariser_coeffs.latent_channel_match: [0.0]
 #       model.upsampler.depth: [null]
       # model.upsampler.width_factor: [null]
-
 

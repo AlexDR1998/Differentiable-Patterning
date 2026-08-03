@@ -71,7 +71,7 @@ def expand_channel_timestep_mask_for_loss(
     mask = jnp.asarray(channel_timestep_mask)
     if (
         cfg.data.get("dataset", "micropatterns") != "micropatterns_260726"
-        and cfg.data.data_channels == 12
+        and cfg.data.micropattern.data_channels == 12
         and mask.shape[-1] == 9
     ):
         mask = jnp.concatenate(
@@ -173,10 +173,10 @@ def masked_reinject_callback_bit(
 
 
 def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
-    data_channels = cfg.data.data_channels
+    data_channels = cfg.data.micropattern.data_channels
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
         class DA_subclass(DataAugmenter260726):
-            noise_strength = cfg.data.noise_strength
+            noise_strength = cfg.data.micropattern.noise_strength
 
             def __init__(self, *args, **kwargs):
                 kwargs["schema"] = channel_schema
@@ -194,17 +194,17 @@ def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
                 super().__init__(*args, **kwargs)
 
         return DA_subclass, (
-            f"da_snapshot_noise{cfg.data.noise_strength}"
-            f"_irp{cfg.data.get('intermediate_reinjection_probability', 0.5)}"
+            f"da_snapshot_noise{cfg.data.micropattern.noise_strength}"
+            f"_irp{cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5)}"
         )
     if data_channels == 4 and cfg.knockout.mode is not None:
-        raise ValueError("data.data_channels=4 is only supported for no-knockout group-A data.")
+        raise ValueError("data.micropattern.data_channels=4 is only supported for no-knockout group-A data.")
     if data_channels == 4:
         data_augmenter_base = DataAugmenter4Ch
     elif data_channels == 12:
         data_augmenter_base = DataAugmenterGrouped
     else:
-        raise ValueError(f"Unsupported data.data_channels={data_channels}. Expected 4 or 12.")
+        raise ValueError(f"Unsupported data.micropattern.data_channels={data_channels}. Expected 4 or 12.")
 
     if cfg.knockout.mode is not None:
         build_knockout_times(cfg.knockout.mode, cfg.knockout.time, cfg.data.batches)
@@ -261,25 +261,25 @@ def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
                 getattr(self, "_global_batch_indices", None),
                 getattr(self, "_global_batch_count", None),
             )
-            x = self.noise(x,cfg.data.noise_strength,key=key)
+            x = self.noise(x,cfg.data.micropattern.noise_strength,key=key)
             self.PREVIOUS_KEY = key
             return x,y
     cfg_str = (
         f"da_ko{_compact_value(cfg.knockout.mode)}"
         f"_kot{_compact_value(cfg.knockout.time)}"
-        f"_noise{cfg.data.noise_strength}"
-        f"_irp{cfg.data.get('intermediate_reinjection_probability', 0.5)}"
-        f"-{cfg.data.get('intermediate_reinjection_probability_end', cfg.data.get('intermediate_reinjection_probability', 0.5))}"
+        f"_noise{cfg.data.micropattern.noise_strength}"
+        f"_irp{cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5)}"
+        f"-{cfg.data.micropattern.get('intermediate_reinjection_probability_end', cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5))}"
     )
     return DA_subclass, cfg_str
 
 
 def load_data(cfg, impath=None):
     custom_impath = impath is not None
-    data_channels = cfg.data.data_channels
-    pool_copies = cfg.data.get("pool_copies", 1)
+    data_channels = cfg.data.micropattern.data_channels
+    pool_copies = cfg.data.micropattern.get("pool_copies", 1)
     if pool_copies <= 0 or int(pool_copies) != pool_copies:
-        raise ValueError("data.pool_copies must be a positive integer")
+        raise ValueError("data.micropattern.pool_copies must be a positive integer")
     pool_copies = int(pool_copies)
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
         if cfg.knockout.mode is not None:
@@ -292,11 +292,11 @@ def load_data(cfg, impath=None):
         dataset = _coerce_dataset_result(load_micropattern_260726(
             impath,
             conditions=("ctrl",),
-            timesteps=tuple(cfg.data.timesteps),
+            timesteps=tuple(cfg.data.micropattern.timesteps),
             downsample=cfg.data.downsample,
             replicate_count=cfg.data.batches,
             pool_copies=pool_copies,
-            experiment_groups=cfg.data.get("experiment_groups", None),
+            experiment_groups=cfg.data.micropattern.get("experiment_groups", None),
         ))
         data = dataset.data
         aux = dataset.aux
@@ -309,7 +309,7 @@ def load_data(cfg, impath=None):
         )
         if data_channels is not None and data_channels != selected_channel_count:
             raise ValueError(
-                "data.data_channels does not match the selected 260726 "
+                "data.micropattern.data_channels does not match the selected 260726 "
                 f"experiment groups ({data_channels} != "
                 f"{selected_channel_count})"
             )
@@ -322,15 +322,15 @@ def load_data(cfg, impath=None):
             f"_pc{pool_copies}"
             f"_g{group_str}"
             f"_ds{cfg.data.downsample}"
-            f"_ts{_compact_value(list(cfg.data.timesteps))}"
+            f"_ts{_compact_value(list(cfg.data.micropattern.timesteps))}"
         )
         if custom_impath:
             cfg_str += "_custompath"
         return data, aux, names, boundary, mask[:, 1:], cfg_str
     if data_channels not in {4, 12}:
-        raise ValueError(f"Unsupported data.data_channels={data_channels}. Expected 4 or 12.")
+        raise ValueError(f"Unsupported data.micropattern.data_channels={data_channels}. Expected 4 or 12.")
     if data_channels == 4 and cfg.knockout.mode is not None:
-        raise ValueError("data.data_channels=4 is only supported for no-knockout group-A data.")
+        raise ValueError("data.micropattern.data_channels=4 is only supported for no-knockout group-A data.")
 
     if impath is None:
         data_path_base = os.getenv("DATA_PATH_BASE")
@@ -343,7 +343,7 @@ def load_data(cfg, impath=None):
             impath=os.path.join(impath, "A/*"),
             BATCHES=cfg.data.batches,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -370,7 +370,7 @@ def load_data(cfg, impath=None):
             FILTER_KN_TIME=cfg.knockout.time,
             BATCHES=cfg.data.batches,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -387,7 +387,7 @@ def load_data(cfg, impath=None):
             FILTER_KN_TIME=cfg.knockout.time,
             BATCHES=cfg.data.batches,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -406,7 +406,7 @@ def load_data(cfg, impath=None):
             FILTER_KN_TIME=cfg.knockout.time,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -417,7 +417,7 @@ def load_data(cfg, impath=None):
             FILTER_KN_TIME=None, # type: ignore
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -447,7 +447,7 @@ def load_data(cfg, impath=None):
             FILTER_KN_TIME=0,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -459,7 +459,7 @@ def load_data(cfg, impath=None):
             FILTER_KN_TIME=24,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -470,7 +470,7 @@ def load_data(cfg, impath=None):
             FILTER_KN_TIME=None, # pyright: ignore[reportArgumentType]
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -507,7 +507,7 @@ def load_data(cfg, impath=None):
             FILTER_KN_TIME=0,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -519,7 +519,7 @@ def load_data(cfg, impath=None):
             FILTER_KN_TIME=24,
             BATCHES=1,
             DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.timesteps),
+            TIMESTEPS=list(cfg.data.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -550,7 +550,7 @@ def load_data(cfg, impath=None):
     
         # NCA_hyperparameters["FIRE_RATE"]=1.0 # For fine tuning on both WT and KO data, we want to use all the data and not drop any updates randomly, as the dataset is already small.
     
-    if cfg.data.get("duplicate_final_timestep", False):
+    if cfg.data.micropattern.get("duplicate_final_timestep", False):
         data = jnp.concatenate([data, data[:, -1:]], axis=1)
         if len(CHANNEL_TIMESTEP_MASK.shape) == 2:
             CHANNEL_TIMESTEP_MASK = jnp.concatenate(
@@ -581,14 +581,14 @@ def load_data(cfg, impath=None):
     # Data and boundary_mask are [B,T,C,H,W] and [B,1,H,W]. Keep the
     # historical six-pixel border unless a benchmark/experiment explicitly
     # requests aligned spatial dimensions.
-    pad_multiple = cfg.data.get("pad_multiple", None)
+    pad_multiple = cfg.data.micropattern.get("pad_multiple", None)
     if pad_multiple is None:
         height_padding = (6, 6)
         width_padding = (6, 6)
     else:
         pad_multiple = int(pad_multiple)
         if pad_multiple <= 0:
-            raise ValueError("data.pad_multiple must be a positive integer or null")
+            raise ValueError("data.micropattern.pad_multiple must be a positive integer or null")
 
         def aligned_padding(size):
             extra = (-size) % pad_multiple
@@ -612,7 +612,7 @@ def load_data(cfg, impath=None):
         f"_c{data_channels}"
         f"_pc{pool_copies}"
         f"_ds{cfg.data.downsample}"
-        f"_ts{_compact_value(list(cfg.data.timesteps))}"
+        f"_ts{_compact_value(list(cfg.data.micropattern.timesteps))}"
         f"_ko{_compact_value(cfg.knockout.mode)}"
         f"_kot{_compact_value(cfg.knockout.time)}"
     )

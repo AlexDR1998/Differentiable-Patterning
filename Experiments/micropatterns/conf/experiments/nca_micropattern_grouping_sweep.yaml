@@ -1,59 +1,63 @@
-experiment_name: nca_4ch_1b4_sweep_6
+experiment_name: nca_4ch_1b4_sweep_8
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_4ch_1b4_sweep_6
+output_subdir: generated/nca_4ch_1b4_sweep_8_convective
 seed_mode: index
 grid:
-  system.gpu: [H200]
+  labels.gpu: [H200]
+  labels.scaling: [convective]
+
   system.precision: [highest]
 
   model.family: [gNCA]
   model.fire_rate: [0.5]
   model.upscale_factor: [null]
-  model.channels: [48]    
-  
-  run.scaling: [convective]
+  model.channels: [48]
+
   run.iterations: [8000]
-  run.repeat: [0,1,2,3]
-  run.t: [128]
-  
+  run.repeat: [0,1,2,3,4]
+  # run.t: [128]
   logging.wandb.project: [nca_micropattern_groups]
-  # logging.wandb.group: [nca_4ch_1b4_test]
-  logging.wandb.group: [nca_4ch_1b4_sweep_6]
   logging.singular_values.enabled: [true]
   logging.singular_values.plot_spectra: [true]
   logging.singular_values.epsilon: [1e-8]
-  
+
   loss.primary: [multi_target]
+  loss.args.multi_target_weights.l2: [0.0]
   loss.args.multi_target_weights.texture: [1.0]
   loss.args.multi_target_weights.channel_mean: [0.0]
   loss.args.multi_target_weights.correlation: [0.0]
-  loss.args.multi_target_weights.radial: [0.0,0.001,0.01,0.1]
+  # loss.args.multi_target_weights.radial: [0.0,0.001,0.01,0.1]
+  loss.args.multi_target_weights.radial: [0.1]
   loss.args.assignment: [hard]
   # loss.primary: [l2]
   # loss.primary: [multi_target]
   loss.regulariser_coeffs.latent_channel_match: [0.0]
   loss.regulariser_coeffs.contiguous_growth: [0.0]
   loss.regulariser_coeffs.latent_size: [0.0]
+  loss.regulariser_coeffs.update_sensitivity: [0.0]
+  loss.regulariser_coeffs.perturbation_conservation: [0.0]
+  loss.regulariser_coeffs.localised_hidden: [0.0]
   loss.regulariser_coeffs.intermediate_state: [10.0]
   loss.regulariser_coeffs.boundary: [10.0]
   loss.random_crop: [False]
   loss.random_channel_shuffle: [False]
-  
-  trainer.loop_autodiff: [lax]
+
+  # trainer.loop_autodiff: [lax]
   trainer.pool_admission_previous_relative_threshold: [1.0]
   trainer.log_every: [200]
   trainer.clear_cache_every: [null]
-  
-  data.downsample: [8]
-  data.experiment_groups: [["cell_fate_s1"]]
-  data.data_channels: [4] 
+
+  # data.downsample: [8,16]
+  data.micropattern.task: [micropattern_single_replicate]
+  data.micropattern.experiment_groups: [["cell_fate_s1"]]
+  data.micropattern.data_channels: [4]
   data.batches: [1]
-  data.batch_multiplier: [4]
-  data.intermediate_reinjection_probability: [1.0]
-  data.intermediate_reinjection_probability_end: [0.0]
-  data.intermediate_reinjection_decay_start_fraction: [0.25]
+  # data.micropattern.pool_copies: [4]
+  data.micropattern.intermediate_reinjection_probability: [1.0]
+  data.micropattern.intermediate_reinjection_probability_end: [0.0]
+  data.micropattern.intermediate_reinjection_decay_start_fraction: [0.25]
   data.dataset: [micropatterns_260726]
-  data.duplicate_final_timestep: [true]
+  data.micropattern.duplicate_final_timestep: [true]
   # data.batches: [4]
   knockout.mode: [null]
   knockout.time: [null]
@@ -66,16 +70,19 @@ grid:
   optimiser.schedule.type: [cosine]
   optimiser.schedule.final_factor: [0.5]
   optimiser.schedule.transition_fraction: [0.75]
-  optimiser.type: [nadam,muon]
+  optimiser.type: [nadam]
   optimiser.gradient_clip_norm: [1.0]
   optimiser.apply_if_finite: [true]
   optimiser.max_consecutive_errors: [16]
   # system.xla_flags: [[command_buffer]]
 # groups:
-  
-# groups:
-  # - run.t: [64,128,256]
-    # data.batch_multiplier: [4,4,2] # I think 256 and 4 batches will OOM on lax autodiff
+
+groups:
+  - run.t: [32,64,128,256]
+  # - run.t: [16,64,256,1024]
+    data.downsample: [32,16,8,4]
+    data.micropattern.pool_copies: [4,4,4,2] # I think 256 and 4 batches will OOM on lax autodiff
+    trainer.loop_autodiff: [lax,lax,checkpointed,checkpointed]
 
 # branches:
 #   - when:

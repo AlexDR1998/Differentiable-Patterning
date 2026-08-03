@@ -6,7 +6,7 @@ grid:
   run.mode: [benchmark]
   model.family: [NCA]
   model.channels: [32]
-  run.scaling: [convective]
+  labels.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [nca_loss_cache_spike_pool_gate_2]
   run.iterations: [400]
@@ -41,7 +41,7 @@ grid:
   # optimiser.type: [muon]
   trainer.log_every: [10]
   optimiser.type: [nadam,muon]
-  system.gpu: [H100]
+  labels.gpu: [H100]
   seed: [1234]
   # system.xla_flags: ["--xla_gpu_enable_latency_hiding_scheduler=true", "--xla_gpu_enable_latency_hiding_scheduler=true --xla_gpu_triton_gemm_any=True", "--xla_gpu_triton_gemm_any=True", "--xla_gpu_enable_command_buffer=FUSION"]
   # system.xla_flags: [[triton_gemm],[latency_hiding_scheduler],[command_buffer],[triton_gemm,latency_hiding_scheduler],null]
@@ -50,7 +50,7 @@ grid:
   # system.xla_flags: ["--xla_gpu_enable_latency_hiding_scheduler=true"]
 # groups:
   # - model.upscale_factor: [16,8,4,2]
-    # run.t : [16,32,64,128]    
+    # run.t : [16,32,64,128]
 branches:
   - when:
       trainer.pool_admission_enabled: true
@@ -63,7 +63,7 @@ branches:
 #       model.upsampler.fourier_modes: [1,2,4]
 #       model.upsampler.depth: [2]
 #       model.upsampler.width_factor: [4]
-    
+
 #   - when:
 #       model.family: isouNCA
 #     grid:
@@ -78,4 +78,3 @@ branches:
 #       loss.regulariser_coeffs.latent_channel_match: [0.0]
 #       model.upsampler.depth: [null]
       # model.upsampler.width_factor: [null]
-

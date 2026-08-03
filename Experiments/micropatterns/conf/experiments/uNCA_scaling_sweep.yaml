@@ -4,8 +4,8 @@ output_subdir: generated/nca_9ch_micropattern_scaling_sweep_2_h100
 seed_mode: index
 grid:
   model.family: [NCA, uNCA, isouNCA]
-  run.scaling: [diffusive, convective]
-  # run.scaling: [diffusive]
+  labels.scaling: [diffusive, convective]
+  # labels.scaling: [diffusive]
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [nca_9ch_micropattern_scaling_sweep_2]
   run.iterations: [4000]
@@ -23,12 +23,12 @@ grid:
   model.upsampler.fourier_modes: [5]
 branches:
   - when:
-      run.scaling: convective
+      labels.scaling: convective
     groups:
       - model.upscale_factor: [32,16,8,4,2]
-        run.t : [8,16,32,64,128]    
+        run.t : [8,16,32,64,128]
   - when:
-      run.scaling: diffusive
+      labels.scaling: diffusive
     groups:
       # - model.upscale_factor: [4,2]
       #   run.t: [512,2048]
@@ -43,5 +43,4 @@ branches:
 #       model.family: isouNCA
 #     grid:
 #       model.upsampler.radius: [2]
-
 

@@ -7,7 +7,7 @@ grid:
   # model.family: [NCA]
   model.family: [NCA_sycl]
   model.channels: [32]
-  run.scaling: [convective]
+  labels.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [intel_nvidia_baseline_nca_runtime_shard_kernel_reg_2]
   run.iterations: [100]
@@ -33,7 +33,7 @@ grid:
   model.upsampler.depth: [null]
   model.upsampler.width_factor: [null]
   # system.precision: [highest,bfloat16,tensorfloat32]
-  system.gpu: [intel]
+  labels.gpu: [intel]
   optimiser.type: [nadam]
   # system.xla_flags: ["--xla_gpu_enable_latency_hiding_scheduler=true", "--xla_gpu_enable_latency_hiding_scheduler=true --xla_gpu_triton_gemm_any=True", "--xla_gpu_triton_gemm_any=True", "--xla_gpu_enable_command_buffer=FUSION"]
   # system.xla_flags: [[triton_gemm],[latency_hiding_scheduler],[command_buffer],[triton_gemm,latency_hiding_scheduler],null]
@@ -42,11 +42,11 @@ grid:
   # system.xla_flags: [null]
   # system.xla_flags: [null]
   # system.xla_flags: ["--xla_gpu_enable_latency_hiding_scheduler=true"]
-  
+
 
 # groups:
   # - model.upscale_factor: [16,8,4,2]
-    # run.t : [16,32,64,128]    
+    # run.t : [16,32,64,128]
 branches:
   - when:
       model.family: NCA
@@ -66,7 +66,7 @@ branches:
 #       model.upsampler.fourier_modes: [1,2,4]
 #       model.upsampler.depth: [2]
 #       model.upsampler.width_factor: [4]
-    
+
 #   - when:
 #       model.family: isouNCA
 #     grid:

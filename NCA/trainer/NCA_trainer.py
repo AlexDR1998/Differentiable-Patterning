@@ -665,6 +665,7 @@ class NCA_Trainer(object):
 			  },
 			  POOL_ADMISSION_CONFIG = None,
 			  SINGULAR_VALUE_LOGGING_CONFIG = None,
+			  BACKEND = "wandb",
 			  LOOP_AUTODIFF = "checkpointed",
 			  SPARSE_PRUNING = False,
 			  TARGET_SPARSITY = 0.5,
@@ -786,7 +787,7 @@ class NCA_Trainer(object):
 			}
 		
 		self.setup_logging(
-			"wandb",
+			BACKEND,
 			wandb_args=wandb_args,
 			KNOCKOUT_ARGS=KNOCKOUT_ARGS,
 			SINGULAR_VALUE_LOGGING_CONFIG=singular_value_logging_config,

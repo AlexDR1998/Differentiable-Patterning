@@ -4,7 +4,7 @@ output_subdir: generated/nca_micropattern_nodal_ko_sweep
 seed_mode: index
 grid:
   model.family: [NCA]
-  run.scaling: [convective]
+  labels.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [NCA_9ch_micropattern_nodal_ko_sweep]
   run.iterations: [8000]
@@ -19,8 +19,8 @@ grid:
   # loss.layers: [[both,latent], [both,decoded],[both,both]]
   trainer.loop_autodiff: [checkpointed]
   data.downsample: [4]
-  data.data_channels: [12] 
-  data.duplicate_final_timestep: [true]
+  data.micropattern.data_channels: [12]
+  data.micropattern.duplicate_final_timestep: [true]
   # data.batches: [4]
   knockout.mode: [null]
   knockout.time: [null]
@@ -32,7 +32,7 @@ grid:
   loss.random_crop: [True]
   loss.random_channel_shuffle: [True]
   model.upscale_factor: [null]
-  model.channels: [64]    
+  model.channels: [64]
   # model.upsampler.radius: [2]
   # model.upsampler.fourier_modes: [4]
   # model.upsampler.depth: [4]
@@ -54,7 +54,7 @@ groups:
       # model.upsampler.fourier_modes: [4]
 #       model.upsampler.depth: [2]
 #       model.upsampler.width_factor: [4]
-    
+
 #   - when:
 #       model.family: isouNCA
 #     grid:

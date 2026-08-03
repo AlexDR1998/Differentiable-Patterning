@@ -7,12 +7,12 @@ grid:
   # model.family: [NCA, NCA_sycl]
   model.family: [NCA_sycl]
   model.channels: [32]
-  run.scaling: [convective]
+  labels.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [intel_multibatch_sweep_large_1]
   run.iterations: [8000]
   run.repeat: [0,]
-  
+
   loss.primary: [multi_target]
   loss.args.multi_target_weights.texture: [1.0]
   loss.args.multi_target_weights.channel_mean: [1.0]
@@ -22,23 +22,23 @@ grid:
   loss.layers: [[decoded]]
   loss.vgg_internal: [l2]
   loss.random_crop: [False]
-  
+
   trainer.loop_autodiff: [checkpointed]
   trainer.sharding: [2]
   trainer.sycl_fused_steps: [4]
   trainer.sycl_synchronize_custom_calls: [true]
   trainer.jax_trace: [false]
-  
+
   data.downsample: [8]
-  data.data_channels: [14] 
+  data.micropattern.data_channels: [14]
   data.batches: [2]
   data.dataset: [micropatterns_260726]
-  data.duplicate_final_timestep: [false]
-  
+  data.micropattern.duplicate_final_timestep: [false]
+
   knockout.mode: [null]
   knockout.time: [null]
   knockout.channel: [Nodal]
-  
+
   loss.regulariser_coeffs.boundary: [5.0]
   loss.regulariser_coeffs.latent_channel_match: [0.0]
   loss.regulariser_coeffs.contiguous_growth: [0.0]
@@ -50,7 +50,7 @@ grid:
   model.upsampler.depth: [null]
   model.upsampler.width_factor: [null]
   system.precision: [bfloat16]
-  system.gpu: [intel]
+  labels.gpu: [intel]
   optimiser.type: [nadam]
 
   system.xla_flags: [null]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 from omegaconf import OmegaConf
@@ -13,7 +14,11 @@ from Common.model_registry import ModelRegistry
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, help="Model store; defaults to MODEL_STORE_ROOT")
+    parser.add_argument(
+        "--root",
+        type=Path,
+        help="Model store; defaults to MODEL_STORE_ROOT, then ./models",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("reindex", help="Rebuild registry.sqlite from manifests")
     subparsers.add_parser("list", help="Print the indexed model table")
@@ -24,7 +29,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    registry = ModelRegistry(args.root) if args.root else ModelRegistry.from_env()
+    root = args.root or os.environ.get("MODEL_STORE_ROOT") or Path("models")
+    registry = ModelRegistry(root)
     if args.command == "reindex":
         print(registry.reindex())
     elif args.command == "list":

@@ -1,0 +1,71 @@
+experiment_name: nca_intel_onemkl_runtime_benchmark_2
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/nca_intel_onemkl_runtime_benchmark
+seed_mode: fixed
+
+# Compare stable execution policies at equal global batch size. Runtime metrics
+# exclude compilation and are emitted by the trainer under runtime/*.
+grid:
+  run.mode: [benchmark]
+  labels.scaling: [convective]
+  run.iterations: [200]
+  run.warmup: [20]
+  run.write_images: [false]
+  run.t: [64]
+  run.repeat: [0, 1, 2, 3, 4]
+
+  model.family: [NCA_sycl]
+  model.channels: [32]
+  model.upscale_factor: [1]
+  model.upsampler.radius: [null]
+  model.upsampler.depth: [null]
+  model.upsampler.width_factor: [null]
+
+  data.dataset: [micropatterns_260726]
+  data.micropattern.data_channels: [14]
+  data.batches: [2]
+  data.downsample: [8]
+  data.micropattern.duplicate_final_timestep: [false]
+
+  trainer.loop_autodiff: [checkpointed]
+  trainer.sycl_fused_steps: [4]
+  trainer.sycl_synchronize_custom_calls: [false]
+  trainer.sycl_strict_stage_synchronization: [false]
+  trainer.sycl_serialize_custom_calls: [false]
+  trainer.sycl_pmean_loss: [true]
+  trainer.sycl_pmean_regularisers: [true]
+  trainer.pool_admission_enabled: [false]
+  trainer.clear_cache_every: [0]
+  trainer.log_every: [20]
+
+  loss.primary: [multi_target]
+  loss.layers: [[decoded]]
+  loss.random_crop: [false]
+  loss.args.assignment: [hard]
+  loss.args.multi_target_weights.texture: [1.0, 0.0]
+  loss.args.multi_target_weights.channel_mean: [1.0]
+  loss.args.multi_target_weights.correlation: [1.0]
+  loss.args.multi_target_weights.radial: [1.0]
+  loss.regulariser_coeffs.intermediate_state: [1.0]
+  loss.regulariser_coeffs.boundary: [5.0]
+  loss.regulariser_coeffs.contiguous_growth: [0.0]
+  loss.regulariser_coeffs.latent_channel_match: [0.0]
+  loss.regulariser_coeffs.latent_size: [0.0]
+
+  optimiser.type: [nadam]
+  optimiser.warmup_steps: [20]
+  labels.gpu: [intel]
+  system.precision: [highest, bfloat16]
+  system.xla_flags: [null]
+  logging.wandb.project: [nca_intel_debug]
+  # logging.wandb.group: [nca_intel_onemkl_runtime_benchmark]
+  knockout.mode: [null]
+  knockout.time: [null]
+  knockout.channel: [Nodal]
+  seed: [5678]
+
+# Zip the three execution policies rather than taking their Cartesian product.
+groups:
+  - trainer.sharding: [null, 2, 2]
+    trainer.sycl_serialize_onemkl: [false, true, false]
+    trainer.sycl_serialize_backward_custom_calls: [false, false, true]

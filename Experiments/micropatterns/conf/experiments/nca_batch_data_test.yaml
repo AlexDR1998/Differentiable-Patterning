@@ -4,7 +4,7 @@ output_subdir: generated/nca_multibatch_micropattern_sweep_wide_1b
 seed_mode: index
 grid:
   model.family: [NCA]
-  run.scaling: [convective]
+  labels.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [nca_multibatch_micropattern_sweep_wide_1]
   run.iterations: [8000]
@@ -24,10 +24,10 @@ grid:
   # loss.layers: [[both,latent], [both,decoded],[both,both]]
   trainer.loop_autodiff: [lax]
   data.downsample: [8]
-  data.data_channels: [14] 
+  data.micropattern.data_channels: [14]
   data.batches: [2]
   data.dataset: [micropatterns_260726]
-  data.duplicate_final_timestep: [false]
+  data.micropattern.duplicate_final_timestep: [false]
   # data.batches: [4]
   knockout.mode: [null]
   knockout.time: [null]
@@ -43,7 +43,7 @@ grid:
   loss.random_crop: [False]
   loss.random_channel_shuffle: [False]
   model.upscale_factor: [null]
-  model.channels: [64]    
+  model.channels: [64]
 
   trainer.pool_admission_previous_relative_threshold: [1.0,1.05,1.1]
   optimiser.learn_rate: [1e-3]
@@ -61,4 +61,4 @@ grid:
   # system.xla_flags: [[command_buffer]]
   system.precision: [bfloat16]
 # groups:
-  
+
