@@ -50,14 +50,12 @@ def _texture_cost(
     params,
     metric,
     samples,
-    size,
     key,
     random_channel_shuffle=False,
     random_crop=False,
 ):
     from Common.trainer import loss_vgg
 
-    size = min(size, x.shape[-2], x.shape[-1])
     padding = (-x.shape[2]) % 3
     x = jnp.pad(x, ((0, 0), (0, 0), (0, padding), (0, 0), (0, 0)))
     y = jnp.pad(y, ((0, 0), (0, 0), (0, padding), (0, 0), (0, 0)))
@@ -81,10 +79,6 @@ def _texture_cost(
         crop_key = jax.random.fold_in(key, 1)
         x = loss_vgg._random_crop_to_vgg_input(x[:, None], crop_key)[:, 0]
         y = loss_vgg._random_crop_to_vgg_input(y[:, None], crop_key)[:, 0]
-    if x.shape[-3:-1] != (size, size):
-        resized_shape = (*x.shape[:-3], size, size, x.shape[-1])
-        x = jax.image.resize(x, resized_shape, "linear")
-        y = jax.image.resize(y, resized_shape, "linear")
     loss = loss_vgg.lpips_variants[metric].apply(
         params, x, y, key, aux={"samples": samples}
     )
@@ -141,7 +135,6 @@ def multi_target_pairwise_costs(
     weights = _weights(args)
     metric = args.get("metric", "l2")
     samples = args.get("samples", 128)
-    texture_size = args.get("texture_size", 128)
     radial_bins = args.get("radial_bins", 16)
     pair_weights = dict(zip(schema.co_measurement_pairs, schema.correlation_pair_weights))
     group_costs = []
@@ -173,7 +166,7 @@ def multi_target_pairwise_costs(
         }
         if weights["texture"]:
             components["texture"] = _texture_cost(
-                x, y, params, metric, samples, texture_size,
+                x, y, params, metric, samples,
                 jax.random.fold_in(key, group_index),
                 random_channel_shuffle=args.get("random_channel_shuffle", False),
                 random_crop=args.get("random_crop", False),

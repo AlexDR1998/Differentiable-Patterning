@@ -1025,7 +1025,7 @@ class NCA_Trainer(object):
 		if is_multi_target and LOSS_ARGS.get("multi_target_weights", {}).get("texture", 1.0):
 			multi_target_params = init_texture_params(
 				key,
-				(min(LOSS_ARGS.get("texture_size", 128), y[0].shape[-2]),) * 2,
+				y[0].shape[-2:],
 				LOSS_ARGS.get("metric", "l2"),
 				LOSS_ARGS.get("samples", 128),
 			)
