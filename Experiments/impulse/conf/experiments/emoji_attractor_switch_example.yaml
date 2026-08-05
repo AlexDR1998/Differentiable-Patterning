@@ -13,5 +13,4 @@ grid:
   impulse.intervention.channels: [hidden]
   impulse.intervention.spatial: [local]
   impulse.intervention.width: [0.1, 0.2]
-  impulse.regulariser_coefficients.l2: [0.1, 1.0]
-
+  impulse.loss.regularisers.l2: [0.1, 1.0]

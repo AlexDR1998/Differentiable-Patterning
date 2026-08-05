@@ -1,3 +1,4 @@
+schema_version: 1
 seed: 0
 
 experiment:
@@ -16,21 +17,22 @@ checkpoint:
 
 data:
   dataset: emojis
-  task: multi_attractor
-  sequence: []
-  pairs:
-    - initial: {image: crab.png, mode: patch, size: 12}
-      target: crab.png
-    - initial: {image: microbe.png, mode: patch, size: 12}
-      target: microbe.png
-  target_repeats: 2
   batches: 1
-  observed_channels: 4
-  data_channels: 4
   downsample: 1
-  crop_square: false
-  pad: [10, 10, 10, 10]
-  regenerate: false
+  emoji:
+    task: multi_attractor
+    sequence: []
+    pairs:
+      - initial: {image: crab.png, mode: patch, size: 12}
+        target: crab.png
+      - initial: {image: microbe.png, mode: patch, size: 12}
+        target: microbe.png
+    target_repeats: 2
+    observed_channels: 4
+    data_channels: 4
+    crop_square: false
+    pad: [10, 10, 10, 10]
+    regenerate: false
 
 model:
   family: NCA
@@ -41,26 +43,6 @@ model:
   padding: REPLICATE
   kernel_scale: 1
   parameter_noise_level: 0.01
-  upscale_factor: 1
-  upsampler:
-    depth: null
-    width_factor: null
-    fourier_modes: null
-    radius: null
-  kan:
-    hidden_features: null
-    num_basis: 8
-    grid_min: -2.0
-    grid_max: 2.0
-    rbf_width: null
-    trainable_width: true
-    use_base_branch: true
-    base_activation: identity
-    use_layernorm: true
-    spline_init_scale: 0.1
-    base_init_scale: 0.1
-    final_zero_init: true
-
 impulse:
   iterations: 1000
   batch_size: 8
@@ -95,17 +77,16 @@ impulse:
     reward_weight: 1.0
 
   loss:
-    primary: [l2]
-    component_weights: [1.0]
-    channels: observed
-    args: {}
-
-  regulariser_coefficients:
-    l1: 0.0
-    l2: 1.0
-    linf: 0.0
-    smoothness: 0.0
-    state_range: 0.0
+    terms:
+      - type: l2
+        weight: 1.0
+        channels: observed
+    regularisers:
+      l1: 0.0
+      l2: 1.0
+      linf: 0.0
+      smoothness: 0.0
+      state_range: 0.0
 
   optimiser:
     type: adam
@@ -115,4 +96,3 @@ impulse:
   output:
     directory: impulse_runs
     base_env: IMPULSE_OUTPUT_PATH
-
