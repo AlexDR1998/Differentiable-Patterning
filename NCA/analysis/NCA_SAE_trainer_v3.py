@@ -5,18 +5,18 @@ import jax.random as jr
 import optax
 import equinox as eqx
 import Common.trainer.loss as loss
-from NCA.trainer.data_augmenter_nca import DataAugmenter
+from NCA.trainer.data_augmenter.nca import DataAugmenter
 from Common.utils import key_pytree_gen
 from tqdm import tqdm
 import time
 import datetime
 from NCA.analysis.tensorboard_log import SAE_Train_log_v3
-from NCA.trainer.NCA_trainer import NCA_Trainer
+from NCA.trainer.trainer import NcaTrainer
 from NCA.analysis.optimiser import unitary_decoder_transform
 
 from pprint import pprint
 
-class NCA_SAE_Trainer(NCA_Trainer):
+class NCA_SAE_Trainer(NcaTrainer):
     """
     NCA_SAE_Trainer is a class for training a Sparse Autoencoder (SAE) on the features extracted from a NCA model.
     It inherits from the NCA_Trainer class and provides methods for training the SAE, logging the training process,
@@ -216,7 +216,7 @@ class NCA_SAE_Trainer(NCA_Trainer):
         else:
             self.OPTIMISER = optimiser
         opt_state = self.OPTIMISER.init(sae_diff)
-        x,y = self.DATA_AUGMENTER.data_load(key)
+        x,y = self.DATA_AUGMENTER.initialize_pool(key)
         best_loss = 100000000
         loss_thresh = 1e16
         model_saved = False
@@ -263,7 +263,7 @@ class NCA_SAE_Trainer(NCA_Trainer):
                 break
             if error==0:
                 if loss_diff<loss_diff_thresh or i<WARMUP:
-                    x,y = self.DATA_AUGMENTER.data_callback(x_new, y_new, i, key)
+                    x,y = self.DATA_AUGMENTER.advance_pool(x_new, y_new, i, key)
                 
                 
                 # Save model whenever mean_loss beats the previous best loss
@@ -286,6 +286,6 @@ class NCA_SAE_Trainer(NCA_Trainer):
             print("|-|-|-|-|-|-  Training did not converge, model was not saved  -|-|-|-|-|-|")
         elif self.IS_LOGGING and model_saved:
             x,y = self.DATA_AUGMENTER.split_x_y(1)
-            x,y = self.DATA_AUGMENTER.data_callback(x,y,0,key)
+            x,y = self.DATA_AUGMENTER.advance_pool(x,y,0,key)
             #try:
             self.LOGGER.tb_training_end_log(self.NCA_model,x,t*x[0].shape[0],self.BOUNDARY_CALLBACK)

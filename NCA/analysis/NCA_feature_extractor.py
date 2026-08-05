@@ -8,11 +8,11 @@ import datetime
 import Common.trainer.loss as loss
 import jaxpruner
 from functools import partial
-from NCA.trainer.tensorboard_log import NCA_Train_log, mNCA_Train_log
-from NCA.trainer.kan_tensorboard_log import kaNCA_Train_log
+from NCA.trainer.logging.tensorboard import NCA_Train_log, mNCA_Train_log
+from NCA.trainer.logging.kan_tensorboard import kaNCA_Train_log
 from NCA.model.NCA_KAN_model import kaNCA
 from NCA.model.NCA_multi_scale import mNCA
-from NCA.trainer.data_augmenter_nca import DataAugmenter
+from NCA.trainer.data_augmenter.nca import DataAugmenter
 from einops import repeat
 from Common.utils import key_pytree_gen,key_array_gen,load_emoji_sequence
 from Common.model.boundary import model_boundary
