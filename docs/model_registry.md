@@ -30,13 +30,20 @@ python -m Experiments.model_registry list
 python -m Experiments.model_registry show <model-id>
 ```
 
+The CLI uses `--root` when supplied, otherwise `MODEL_STORE_ROOT`, and finally
+the repository-local `models/` directory:
+
+```bash
+python -m Experiments.model_registry --root /path/to/Models reindex
+```
+
 ## Python and marimo
 
 The registry exposes ordinary pandas dataframes suitable for marimo tables,
 filters, and SQL-backed analysis:
 
 ```python
-from Common.model_registry import ModelRegistry
+from NCA.registry import ModelRegistry
 
 registry = ModelRegistry.from_env()
 models = registry.models_df()
@@ -61,7 +68,9 @@ registry.annotate(
 )
 ```
 
-The saved config is the resolved training config and must not be changed.
+The saved config is the resolved, versioned `ExperimentConfig` dataclass
+representation and must not be changed. `bundle.config` is typed, and model
+reconstruction receives only its saved `ModelConfig`.
 Notebook-specific rollout data and parameters should remain separate inputs.
 
 ## Recording evaluations
@@ -69,7 +78,7 @@ Notebook-specific rollout data and parameters should remain separate inputs.
 Evaluation summaries are immutable artifacts separate from model bundles:
 
 ```python
-from Common.model_registry import record_evaluation
+from NCA.registry import record_evaluation
 
 record_evaluation(
     store_root=registry.root,
@@ -93,3 +102,28 @@ An Equinox leaf checkpoint requires a matching model structure. Each bundle
 therefore records the resolved config, model factory, Git state, package
 versions, and checkpoint checksum. `bundle.load_model()` reconstructs the model
 through that factory, verifies the checksum, and then loads the leaves.
+
+## Reconstructing evaluation inputs
+
+New bundles include a compact `evaluation_input` record rather than a copy of
+the initial-condition arrays. It fingerprints the canonical `data[:, 0]` input
+and, when used, the boundary mask. The resolved config remains the recipe for
+reloading the source data. A local evaluator must rebuild that data and verify
+it before running:
+
+```python
+from NCA.registry import verify_evaluation_input
+
+bundle = registry.get(model_id)
+# Reload with the domain loader selected by bundle.config.
+data, boundary_mask = ...
+verify_evaluation_input(
+    data,
+    bundle.manifest.evaluation_input,
+    boundary_mask=boundary_mask,
+)
+```
+
+This adds only hashes, shapes, and dtypes to each bundle. If the external data
+or preprocessing has changed, verification fails instead of evaluating on a
+silently different initial condition.
