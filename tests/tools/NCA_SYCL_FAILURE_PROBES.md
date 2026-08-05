@@ -31,10 +31,10 @@ Set `NCA_SYCL_TRACE=1` only for a short diagnostic submission because Intel
 runtime tracing is verbose. Normal training launchers accept
 `NCA_SYCL_DIAGNOSTICS=1` and `NCA_SYCL_TRACE=1` as independent opt-in flags.
 
-Training diagnostics can independently disable `trainer.sycl_pmean_loss` and
-`trainer.sycl_pmean_regularisers`. Disabling the loss reduction also removes
+Training diagnostics can independently disable `trainer.backend.pmean_loss` and
+`trainer.backend.pmean_regularisers`. Disabling the loss reduction also removes
 its reverse-mode gradient collective, so the result is intentionally not a
-numerically equivalent training run. `trainer.sycl_serialize_custom_calls`
+numerically equivalent training run. `trainer.backend.serialize_custom_calls`
 keeps two-tile sharding but serializes native calls across tile threads.
 
 ## Reliability and speed validation

@@ -6,7 +6,7 @@ from Common.trainer.loss import build_loss_functions, l2_colony_grouped
 from Common.trainer.loss_vgg import grouped_vgg_triplet_weights
 from Experiments.config_helpers import build_loss_args, build_loss_filename
 from Experiments.config_workflow import generate_manifest
-from NCA.trainer.NCA_trainer import (
+from NCA.trainer.objective import (
     combine_loss_components,
     resolve_loss_component_weights,
 )
@@ -110,20 +110,21 @@ def test_channel_importance_validation_rejects_bad_grouped_configuration():
 def test_loss_config_plumbing_and_filename_include_non_default_weights():
     cfg = SimpleNamespace(
         loss=SimpleNamespace(
-            primary=["vgg_grouped", "l2_grouped"],
-            layers=None,
-            args=None,
-            vgg_internal="l2",
-            random_crop=False,
-            random_channel_shuffle=False,
-            channel_importance=[1.0, 1.0, 1.0, 4.0] + [1.0] * 8,
-            component_weights=[1.0, 2.0],
-            regulariser_coeffs={},
+            terms=[
+                SimpleNamespace(
+                    type="vgg_grouped", weight=1.0,
+                    metric="l2", random_crop=False,
+                    random_channel_shuffle=False,
+                    channel_importance=[1.0, 1.0, 1.0, 4.0] + [1.0] * 8,
+                ),
+                SimpleNamespace(type="l2_grouped", weight=2.0),
+            ],
+            regularisers={},
         )
     )
 
-    args = build_loss_args(cfg)
-    filename = build_loss_filename(cfg)
+    args = build_loss_args(cfg.loss)
+    filename = build_loss_filename(cfg.loss)
 
     assert args["channel_importance"][3] == 4.0
     assert args["component_weights"] == [1.0, 2.0]
@@ -135,10 +136,10 @@ def test_manifest_treats_weight_vectors_as_individual_sweep_values(tmp_path):
     uniform = [1.0] * 12
     sox2 = [1.0, 1.0, 1.0, 4.0] + [1.0] * 8
     manifest = generate_manifest(
-        {"loss": {"channel_importance": None}},
+        {"loss": {"terms": [{"type": "l2_grouped", "channel_importance": None}]}},
         {
             "experiment_name": "weight-test",
-            "grid": {"loss.channel_importance": [uniform, sox2]},
+            "grid": {"loss.terms.0.channel_importance": [uniform, sox2]},
         },
         tmp_path,
     )
@@ -146,8 +147,8 @@ def test_manifest_treats_weight_vectors_as_individual_sweep_values(tmp_path):
     assert manifest["count"] == 2
     assert manifest["configs"][0]["config"]["experiment"]["name"] == "weight-test"
     assert manifest["configs"][0]["config"]["logging"]["wandb"]["group"] == "weight-test"
-    assert manifest["configs"][0]["config"]["loss"]["channel_importance"] == uniform
-    assert manifest["configs"][1]["config"]["loss"]["channel_importance"] == sox2
+    assert manifest["configs"][0]["config"]["loss"]["terms"][0]["channel_importance"] == uniform
+    assert manifest["configs"][1]["config"]["loss"]["terms"][0]["channel_importance"] == sox2
 
 
 def test_manifest_preserves_explicit_wandb_group(tmp_path):
@@ -167,22 +168,18 @@ def test_manifest_preserves_explicit_wandb_group(tmp_path):
 
 def test_manifest_preserves_baseline_values_not_set_by_selected_branch(tmp_path):
     manifest = generate_manifest(
-        {"model": {"upsampler": {"radius": 2, "fourier_modes": 5}}},
+        {"model": {"channels": 8, "fire_rate": 0.5}},
         {
-            "grid": {"model.family": ["uNCA"]},
+            "grid": {"model.family": ["NCA"]},
             "branches": [
                 {
-                    "when": {"model.family": "uNCA"},
-                    "grid": {"model.upsampler.fourier_modes": [3]},
-                },
-                {
-                    "when": {"model.family": "isouNCA"},
-                    "grid": {"model.upsampler.radius": [1]},
+                    "when": {"model.family": "NCA"},
+                    "grid": {"model.channels": [12]},
                 },
             ],
         },
         tmp_path,
     )
 
-    upsampler = manifest["configs"][0]["config"]["model"]["upsampler"]
-    assert upsampler == {"radius": 2, "fourier_modes": 3}
+    model = manifest["configs"][0]["config"]["model"]
+    assert model == {"channels": 12, "fire_rate": 0.5, "family": "NCA"}

@@ -16,7 +16,7 @@ import numpy as np
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from NCA.model.NCA_sycl import NCA as SyclNCA
-from NCA.trainer.sycl_shard_map import filter_shard_map
+from NCA.trainer.backend.sycl.shard_map import filter_shard_map
 
 
 PROBE_ENVIRONMENTS = {

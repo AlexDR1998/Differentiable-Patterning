@@ -13,8 +13,8 @@ from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_model import NCA
 from NCA.model.NCA_model_fast import NCA as FastNCA
 from NCA.model.NCA_sycl import NCA as SyclNCA
-from NCA.trainer.data_augmenter_4ch_colony import DataAugmenter as DataAugmenter4Ch
-from NCA.trainer.data_augmenter_9ch_colony import DataAugmenter as DataAugmenterGrouped
+from NCA.trainer.data_augmenter.colony_4ch import DataAugmenter as DataAugmenter4Ch
+from NCA.trainer.data_augmenter.colony_9ch import DataAugmenter as DataAugmenterGrouped
 
 
 class ConfigDict(dict):
@@ -53,7 +53,7 @@ def _base_cfg(family):
 
 def test_build_model_constructs_nca():
     cfg = _base_cfg("NCA")
-    model, cfg_str = build_model(cfg, key=jax.random.PRNGKey(0))
+    model, cfg_str = build_model(cfg.model, key=jax.random.PRNGKey(0))
 
     assert isinstance(model, NCA)
     assert cfg_str.startswith("NCA")
@@ -61,7 +61,7 @@ def test_build_model_constructs_nca():
 
 def test_build_model_constructs_fast_nca_and_marks_filename():
     cfg = _base_cfg("NCA_fast")
-    model, cfg_str = build_model(cfg, key=jax.random.PRNGKey(0))
+    model, cfg_str = build_model(cfg.model, key=jax.random.PRNGKey(0))
 
     assert isinstance(model, FastNCA)
     assert cfg_str.startswith("NCA_fast_c4")
@@ -69,7 +69,7 @@ def test_build_model_constructs_fast_nca_and_marks_filename():
 
 def test_build_model_constructs_sycl_nca_and_marks_filename():
     cfg = _base_cfg("NCA_sycl")
-    model, cfg_str = build_model(cfg, key=jax.random.PRNGKey(0))
+    model, cfg_str = build_model(cfg.model, key=jax.random.PRNGKey(0))
 
     assert isinstance(model, SyclNCA)
     assert cfg_str.startswith("NCA_sycl_c4")
@@ -77,7 +77,7 @@ def test_build_model_constructs_sycl_nca_and_marks_filename():
 
 def test_build_model_constructs_fast_kan_nca_with_defaults():
     cfg = _base_cfg("FastKaNCA")
-    model, cfg_str = build_model(cfg, key=jax.random.PRNGKey(1))
+    model, cfg_str = build_model(cfg.model, key=jax.random.PRNGKey(1))
     x = jnp.ones((4, 6, 7))
     y = model(x, key=jax.random.PRNGKey(2))
 
@@ -98,7 +98,7 @@ def test_build_model_constructs_fast_kan_nca_with_kan_overrides():
         "extrapolation": "linear",
         "use_layernorm": False,
     }
-    model, _ = build_model(cfg, key=jax.random.PRNGKey(3))
+    model, _ = build_model(cfg.model, key=jax.random.PRNGKey(3))
 
     assert model.KAN_AUX["basis"] == "linear_spline"
     assert model.KAN_AUX["hidden_features"] == 6
@@ -112,7 +112,7 @@ def test_build_model_constructs_fast_kan_nca_with_kan_overrides():
 
 def test_build_model_config_string_handles_missing_kan_section():
     cfg = _base_cfg("FastKaNCA")
-    cfg_str = build_model_config_string(cfg)
+    cfg_str = build_model_config_string(cfg.model)
 
     assert "kb8" in cfg_str
     assert "pad" not in cfg_str
@@ -127,7 +127,7 @@ def test_build_model_config_string_marks_linear_spline_kan():
         "extrapolation": "zero",
     }
 
-    cfg_str = build_model_config_string(cfg)
+    cfg_str = build_model_config_string(cfg.model)
 
     assert "kb12" in cfg_str
     assert "klin" in cfg_str
@@ -197,6 +197,8 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
     cfg = _cfg(
         {
             "data": {
+                "batches": 2,
+                "downsample": 1,
                 "emoji": {
                 "data_channels": 4,
                 "sequence": [
@@ -205,8 +207,6 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
                     "lizard.png",
                     "lizard.png",
                 ],
-                "batches": 2,
-                "downsample": 1,
                 "pad": [10, 10, 10, 10],
                 "regenerate": True,
                 "shift_amount": 10,
@@ -229,9 +229,8 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
                 },
             },
             "loss": {
-                "primary": ["l2"],
-                "layers": ["decoded"],
-                "regulariser_coeffs": {
+                "terms": [{"type": "l2", "layer": "decoded"}],
+                "regularisers": {
                     "intermediate_state": 0.0,
                     "boundary": 0.0,
                     "contiguous_growth": 0.0,
@@ -243,11 +242,11 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
             "optimiser": {"learn_rate": 0.0003, "decay_rate": 0.99},
         }
     )
-    data_cfg_str = build_data_config_string(cfg)
-    data_augmenter, data_augmenter_cfg_str = build_data_augmenter(cfg)
+    data_cfg_str = build_data_config_string(cfg.data)
+    data_augmenter, data_augmenter_cfg_str = build_data_augmenter(cfg.data)
     filename = build_filename(
         cfg,
-        build_model_config_string(cfg),
+        build_model_config_string(cfg.model),
         data_cfg_str,
         data_augmenter_cfg_str,
     )
@@ -296,7 +295,7 @@ def test_multi_attractor_data_builds_independent_pair_trajectories(monkeypatch):
         ]
     )
 
-    data, cfg_str = load_emoji_data(cfg, impath="/tmp/emojis/")
+    data, cfg_str = load_emoji_data(cfg.data, impath="/tmp/emojis/")
 
     assert data.shape == (2, 3, 4, 8, 8)
     assert jnp.all(data[0, 0] == 1.0)
@@ -322,7 +321,7 @@ def test_multi_attractor_patch_initial_condition(monkeypatch):
         target_repeats=1,
     )
 
-    data, _ = load_emoji_data(cfg, impath="/tmp/emojis/")
+    data, _ = load_emoji_data(cfg.data, impath="/tmp/emojis/")
 
     assert data.shape == (1, 2, 4, 8, 8)
     assert data[0, 0].sum() == 4 * 2 * 2
@@ -333,13 +332,14 @@ def test_multi_attractor_requires_pairs():
     cfg = _multi_attractor_cfg([])
 
     with pytest.raises(ValueError, match="data.emoji.pairs must contain at least one pair"):
-        load_emoji_data(cfg, impath="/tmp/emojis/")
+        load_emoji_data(cfg.data, impath="/tmp/emojis/")
 
 
 def _micropattern_cfg(data_channels=12, knockout_mode=None, pool_copies=1):
-    return _cfg(
+    cfg = _cfg(
         {
             "data": {
+                "dataset": "micropatterns",
                 "batches": 2,
                 "downsample": 1,
                 "micropattern": {
@@ -356,6 +356,8 @@ def _micropattern_cfg(data_channels=12, knockout_mode=None, pool_copies=1):
             },
         }
     )
+    cfg.data.intervention = cfg.knockout
+    return cfg.data
 
 
 def _patch_micropattern_loader(monkeypatch):
@@ -498,8 +500,8 @@ def test_260726_loader_uses_configured_even_replicate_count(monkeypatch, batch_c
 
     monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
     cfg = _micropattern_cfg(data_channels=14)
-    cfg.data.dataset = "micropatterns_260726"
-    cfg.data.batches = batch_count
+    cfg.dataset = "micropatterns_260726"
+    cfg.batches = batch_count
 
     data, _, _, _, mask, cfg_str = micropattern_helpers.load_data(
         cfg, impath="/tmp/micropatterns/"
@@ -515,10 +517,10 @@ def test_micropattern_build_data_augmenter_selects_channel_specific_class():
     import Experiments.micropatterns.config_helpers as micropattern_helpers
 
     augmenter_12, _ = micropattern_helpers.build_data_augmenter(
-        _micropattern_cfg(data_channels=12)
+        _micropattern_cfg(data_channels=12), 2000
     )
     augmenter_4, _ = micropattern_helpers.build_data_augmenter(
-        _micropattern_cfg(data_channels=4)
+        _micropattern_cfg(data_channels=4), 2000
     )
 
     assert issubclass(augmenter_12, DataAugmenterGrouped)
@@ -639,7 +641,7 @@ def test_micropattern_rejects_unsupported_channel_count():
     import Experiments.micropatterns.config_helpers as micropattern_helpers
 
     with pytest.raises(ValueError, match="Expected 4 or 12"):
-        micropattern_helpers.build_data_augmenter(_micropattern_cfg(data_channels=5))
+        micropattern_helpers.build_data_augmenter(_micropattern_cfg(data_channels=5), 2000)
 
     with pytest.raises(ValueError, match="Expected 4 or 12"):
         micropattern_helpers.load_data(
@@ -654,7 +656,7 @@ def test_micropattern_rejects_4_channel_knockout_data():
     cfg = _micropattern_cfg(data_channels=4, knockout_mode="only_one_ko")
 
     with pytest.raises(ValueError, match="no-knockout group-A data"):
-        micropattern_helpers.build_data_augmenter(cfg)
+        micropattern_helpers.build_data_augmenter(cfg, 2000)
 
     with pytest.raises(ValueError, match="no-knockout group-A data"):
         micropattern_helpers.load_data(cfg, impath="/tmp/micropatterns/")

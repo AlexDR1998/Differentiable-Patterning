@@ -10,15 +10,15 @@ from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from Common.trainer.loss_multi_target import multi_target_loss
-from NCA.trainer.sycl_batching import apply_flat_batched_nca
-from NCA.trainer.NCA_sycl_trainer import (
+from NCA.trainer.backend.sycl.batching import apply_flat_batched_nca
+from NCA.trainer.backend.sycl.trainer import (
     configure_custom_call_synchronization,
     configure_regulariser_reduction,
     configure_stage_synchronization,
 )
-from NCA.trainer.sycl_execution import SyclTwoTileExecution
-from NCA.trainer.sycl_scan import scan_carry_only
-from NCA.trainer.sycl_shard_map import filter_shard_map
+from NCA.trainer.backend.sycl.execution import SyclTwoTileExecution
+from NCA.trainer.backend.sycl.scan import scan_carry_only
+from NCA.trainer.backend.sycl.shard_map import filter_shard_map
 
 
 class _BatchableReferenceModel:

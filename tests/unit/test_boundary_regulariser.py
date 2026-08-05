@@ -10,10 +10,7 @@ def _evaluate(states, callbacks):
     return boundary_regulariser(
         None,
         states,
-        None,
-        None,
-        None,
-        {"BOUNDARY_CALLBACK": callbacks},
+        {"boundary_callbacks": callbacks},
         None,
     )
 

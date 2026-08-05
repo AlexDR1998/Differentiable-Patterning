@@ -96,9 +96,12 @@ def test_checkpoint_helpers_resolve_environment_root_and_load_model(tmp_path):
     eqx.tree_serialise_leaves(checkpoint_path, original)
     cfg = _impulse_cfg("models/test_model")
 
-    resolved = resolve_checkpoint_path(cfg, env={"MODEL_SAVE_PATH": str(tmp_path)})
+    resolved = resolve_checkpoint_path(
+        cfg.checkpoint, env={"MODEL_SAVE_PATH": str(tmp_path)}
+    )
     loaded, _, loaded_path = load_model_checkpoint(
-        cfg,
+        cfg.model,
+        cfg.checkpoint,
         key=jax.random.PRNGKey(1),
         env={"MODEL_SAVE_PATH": str(tmp_path)},
     )
@@ -118,11 +121,20 @@ def test_impulse_builders_construct_configured_components(tmp_path):
     model = NCA(6, KERNEL_STR=["ID", "LAP"], FIRE_RATE=1.0, key=jax.random.PRNGKey(2))
     trajectories = jnp.zeros((2, 3, 6, 6, 6))
 
-    pair_source = build_pair_source(cfg, model, trajectories)
-    objective = build_objective(cfg)
-    intervention = build_intervention(cfg, model, trajectories, jax.random.PRNGKey(3))
-    optimiser = build_impulse_optimizer(cfg)
-    output = resolve_output_directory(cfg, env={"IMPULSE_OUTPUT_PATH": str(tmp_path)})
+    pair_source = build_pair_source(cfg.impulse, model, trajectories)
+    objective = build_objective(cfg.impulse.objective)
+    intervention = build_intervention(
+        cfg.impulse.intervention,
+        cfg.data.emoji.observed_channels,
+        model,
+        trajectories,
+        jax.random.PRNGKey(3),
+    )
+    optimiser = build_impulse_optimizer(cfg.impulse.optimiser)
+    output = resolve_output_directory(
+        cfg.impulse.output,
+        env={"IMPULSE_OUTPUT_PATH": str(tmp_path)},
+    )
 
     assert isinstance(pair_source, StableAttractorPairSource)
     assert isinstance(objective, TargetedObjective)

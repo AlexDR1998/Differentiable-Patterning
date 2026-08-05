@@ -5,7 +5,7 @@ import pytest
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from Common.trainer import loss_multi_target
 from Common.trainer.loss_multi_target import multi_target_loss
-from NCA.trainer.data_augmenter_260726 import DataAugmenter
+from NCA.trainer.data_augmenter.micropattern import DataAugmenter
 
 COMPONENT_NAMES = ("l2", "texture", "channel_mean", "radial", "correlation")
 
@@ -146,21 +146,14 @@ def test_soft_assignment_components_reconstruct_loss():
 
 
 def test_snapshot_augmenter_outputs_unique_state_and_measurement_targets():
-    class DownsamplingModel:
-        N_CHANNELS = 16
-
-        @staticmethod
-        def real_to_latent(x):
-            return jax.image.resize(x, (*x.shape[:-2], 4, 4), "linear")
-
     data = jax.random.uniform(jax.random.PRNGKey(2), (3, 5, 14, 8, 8))
-    augmenter = DataAugmenter(data, hidden_channels=2, nca_model=DownsamplingModel())
+    augmenter = DataAugmenter(data, hidden_channels=2)
     augmenter.noise_strength = 0.0
 
     x, y = augmenter.initialize_pool(jax.random.PRNGKey(3))
 
     assert len(x) == len(y) == 3
-    assert x[0].shape == (4, 16, 4, 4)
+    assert x[0].shape == (4, 12, 8, 8)
     assert y[0].shape == (4, 16, 8, 8)
     assert augmenter.OBS_CHANNELS == 10
     assert DataAugmenter.schema is MICROPATTERN_260726_SCHEMA

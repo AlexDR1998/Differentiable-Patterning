@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from NCA.trainer.data_augmenter_nca_terminal import TerminalCarryDataAugmenter
+from NCA.trainer.data_augmenter.nca_terminal import TerminalCarryDataAugmenter
 
 
 class AlwaysCarryAugmenter(TerminalCarryDataAugmenter):

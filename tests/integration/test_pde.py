@@ -19,7 +19,7 @@ from PDE.trainer.optimiser import non_negative_diffusion_chemotaxis
 from Common.utils import load_emoji_sequence
 from Common.model.spatial_operators import Ops
 
-from NCA.trainer.data_augmenter_nca import DataAugmenter as DataAugmenterNCA
+from NCA.trainer.data_augmenter.nca import DataAugmenter as DataAugmenterNCA
 #from PDE.trainer.PDE_trainer import PDE_Trainer
 from NCA.model.NCA_model import NCA
 

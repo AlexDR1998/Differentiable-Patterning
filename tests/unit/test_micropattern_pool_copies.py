@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import jax.random as jr
 
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
-from NCA.trainer.data_augmenter_260726 import DataAugmenter
+from NCA.trainer.data_augmenter.micropattern import DataAugmenter
 
 
 def test_260726_augmenter_preserves_loader_batch_count():

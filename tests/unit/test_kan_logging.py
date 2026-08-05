@@ -10,8 +10,8 @@ from unittest.mock import patch
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_model import NCA
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
-from NCA.trainer.NCA_trainer import select_wandb_train_logger_class
-from NCA.trainer.tensorboard_log import (
+from NCA.trainer.trainer import select_wandb_train_logger_class
+from NCA.trainer.logging.tensorboard import (
     NCA_Train_log,
     NCA_knockout_Train_log,
     _biomarker_name,
@@ -25,7 +25,7 @@ from NCA.trainer.tensorboard_log import (
     plot_radial_intensity_line_diagnostics,
     plot_total_intensity_diagnostics,
 )
-from NCA.trainer.kan_tensorboard_log import (
+from NCA.trainer.logging.kan_tensorboard import (
     kaNCA_Train_log,
     uses_fast_kan_diagnostics,
 )
@@ -130,8 +130,8 @@ def test_fast_kan_rollout_stats_rank_edges_from_visited_inputs():
         key=key,
     )
     logger = _logger_without_wandb()
-    x_latent = [jax.random.normal(key, shape=(2, 4, 5, 6))]
-    log_dict = {"x_latent": x_latent, "x_processed": x_latent}
+    states = [jax.random.normal(key, shape=(2, 4, 5, 6))]
+    log_dict = {"states": states}
 
     stats = logger._collect_fast_kan_rollout_stats(
         model,
@@ -165,11 +165,10 @@ def test_fast_kan_training_loop_logs_rollout_top_edges():
     )
     logger = _logger_without_wandb()
     logged = {"histograms": [], "scalars": [], "images": []}
-    x_latent = [jax.random.normal(key, shape=(2, 4, 5, 6))]
+    states = [jax.random.normal(key, shape=(2, 4, 5, 6))]
     log_dict = {
         "loss": 1.0,
-        "x_latent": x_latent,
-        "x_processed": x_latent,
+        "states": states,
     }
 
     logger.log_histogram = lambda tag, values, step=None: logged["histograms"].append(
@@ -404,7 +403,7 @@ def test_training_logger_emits_channel_time_diagnostics_without_wandb():
     logger.log_image = lambda tag, image, step=None: logged["images"].append(tag)
     predictions = [np.ones((2, 64, 5, 5), dtype=np.float32)]
 
-    logger.log_channel_time_diagnostics({"x_processed": predictions}, i=10)
+    logger.log_channel_time_diagnostics({"states": predictions}, i=10)
 
     assert logged["scalars"] == {
         "Diagnostics/total_intensity/mean_absolute_error": 0.0
@@ -425,11 +424,11 @@ def test_training_snapshots_include_every_batch_in_one_composite():
     logger.log_scalar = lambda *args, **kwargs: None
     values = [np.ones((2, 4, 3, 5), dtype=np.float32) * batch for batch in range(3)]
 
-    with patch("NCA.trainer.tensorboard_log.get_jax_memory_stats", return_value={}):
-        logger.log_model_outputs({"x_latent": values, "x_processed": values}, 1)
+    with patch("NCA.trainer.logging.tensorboard.get_jax_memory_stats", return_value={}):
+        logger.log_model_outputs({"states": values}, 1)
 
-    assert logged["Train/processed_batches"].shape == (9, 10, 3)
-    assert np.all(logged["Train/processed_batches"][6:] == 2)
+    assert logged["Train/visible_batches"].shape == (9, 10, 3)
+    assert np.all(logged["Train/visible_batches"][6:] == 2)
 
 
 def test_group_timestep_losses_log_one_histogram_at_diagnostic_interval():

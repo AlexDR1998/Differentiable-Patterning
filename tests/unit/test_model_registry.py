@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 OmegaConf = pytest.importorskip("omegaconf").OmegaConf
 
-from Common.model_registry import (
+from NCA.registry import (
     ModelRegistry,
     evaluation_input_provenance,
     open_model_bundle,
@@ -12,20 +12,22 @@ from Common.model_registry import (
     verify_evaluation_input,
 )
 from Common.trainer.training_result import TrainingResult
+from Experiments.config import experiment_config_from_mapping
 
 
 def _config():
-    return OmegaConf.create(
-        {
-            "seed": 7,
-            "experiment": {"name": "baseline-sweep"},
-            "model": {"family": "NCA", "channels": 4},
-            "data": {"dataset": "emojis", "emoji": {"task": "sequence"}},
-            "logging": {
-                "wandb": {"project": "test-project", "group": "test-group"}
-            },
-        }
+    value = OmegaConf.to_container(
+        OmegaConf.load("Experiments/emoji/conf/base_config.yaml"),
+        resolve=True,
     )
+    value["seed"] = 7
+    value["experiment"]["name"] = "baseline-sweep"
+    value["model"]["channels"] = 4
+    value["logging"]["wandb"] = {
+        "project": "test-project",
+        "group": "test-group",
+    }
+    return experiment_config_from_mapping(value)
 
 
 def test_publish_verify_and_index_bundle(tmp_path):
@@ -172,12 +174,12 @@ def test_load_model_reconstructs_from_saved_factory(tmp_path, monkeypatch):
             return "loaded-model"
 
     def build(cfg, key=None):
-        calls["family"] = cfg.model.family
+        calls["family"] = cfg.family
         calls["key"] = key
         return FakeModel(), "description"
 
     monkeypatch.setattr(
-        "Common.model_registry.importlib.import_module",
+        "NCA.registry.importlib.import_module",
         lambda name: SimpleNamespace(build=build),
     )
     key = object()

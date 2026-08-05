@@ -14,8 +14,8 @@ import numpy as np
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from NCA.model.NCA_sycl import FUSED_REGULARISER_FLAGS, NCA as SyclNCA
-from NCA.trainer.sycl_scan import scan_carry_only
-from NCA.trainer.sycl_shard_map import filter_shard_map
+from NCA.trainer.backend.sycl.scan import scan_carry_only
+from NCA.trainer.backend.sycl.shard_map import filter_shard_map
 
 
 CHANNELS = 32

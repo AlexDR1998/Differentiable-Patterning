@@ -16,12 +16,12 @@ def _data():
     return [jnp.arange(4 * 2 * 2 * 2, dtype=jnp.float32).reshape(4, 2, 2, 2)]
 
 
-def test_split_trajectory_applies_latent_conversion_only_to_inputs():
-    x, y = split_trajectory(_data(), real_to_latent=lambda value: value + 100)
+def test_split_trajectory_returns_input_states_and_observable_targets():
+    x, y = split_trajectory(_data())
 
     assert x[0].shape == (3, 2, 2, 2)
     assert y[0].shape == (3, 2, 2, 2)
-    assert jnp.array_equal(x[0], _data()[0][:-1] + 100)
+    assert jnp.array_equal(x[0], _data()[0][:-1])
     assert jnp.array_equal(y[0], _data()[0][1:])
 
 
