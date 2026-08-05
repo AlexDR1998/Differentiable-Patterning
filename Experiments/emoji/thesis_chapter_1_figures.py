@@ -1281,10 +1281,9 @@ def export_nca_web_assets(
     x0_array.tofile(out_dir / "x0.bin")
 
     deterministic = eqx.tree_at(lambda m: m.FIRE_RATE, nca, 1.0)
-    reference, _ = deterministic.run(
+    reference = deterministic.run(
         iters=reference_steps,
         x=np.asarray(x0_array),
-        SAVE_LATENTS=False,
         key=jr.PRNGKey(0),
     )
     reference = onp.asarray(reference[-1], dtype=onp.float32)

@@ -35,3 +35,5 @@ slurmlog/**
 perturbations/**
 **/__marimo__/**
 notebooks/**
+settings.json
+AGENTS.md
