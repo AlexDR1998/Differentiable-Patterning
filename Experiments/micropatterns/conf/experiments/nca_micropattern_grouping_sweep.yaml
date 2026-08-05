@@ -1,6 +1,6 @@
-experiment_name: nca_8ch_1b4_sweep_2_texture_settings
+experiment_name: nca_8ch_1b4_sweep_3_texture_settings
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_8ch_1b4_sweep_2_texture_settings
+output_subdir: generated/nca_8ch_1b4_sweep_3_texture_settings
 seed_mode: index
 grid:
   labels.gpu: [H200]
