@@ -48,17 +48,17 @@ local research artifacts rather than source code.
 Create an environment appropriate for the available hardware:
 
 ```bash
-pip install -r requirements_cpu.txt
+pip install -r requirements/requirements_cpu.txt
 # or
-pip install -r requirements_gpu.txt
+pip install -r requirements/requirements_gpu.txt
 ```
 
 Conda environments are also provided:
 
 ```bash
-conda env create -f env_cpu.yml
+conda env create -f requirements/env_cpu.yml
 # or
-conda env create -f env_gpu.yml
+conda env create -f requirements/env_gpu.yml
 ```
 
 JAX installations can be hardware- and driver-specific. The supplied GPU

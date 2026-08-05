@@ -2,6 +2,9 @@
 
 import hashlib
 import os
+from collections.abc import Mapping
+from dataclasses import fields, is_dataclass
+from enum import Enum
 from pathlib import Path
 
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
@@ -41,10 +44,12 @@ def data_channel_count(cfg):
 
 
 def _compact_value(value):
+    if isinstance(value, Enum):
+        value = value.value
     if value is None:
         return "none"
     if isinstance(value, (list, tuple)):
-        return "-".join(str(v) for v in value)
+        return "-".join(_compact_value(item) for item in value)
     return str(value)
 
 
@@ -411,7 +416,16 @@ def load_model_checkpoint(model_config, checkpoint_config, key=None, env=None):
 
 def build_tags(cfg, prefix=""):
     tags = []
-    for key, value in cfg.items():
+    if isinstance(cfg, Mapping) or hasattr(cfg, "items"):
+        items = cfg.items()
+    elif is_dataclass(cfg):
+        items = ((item.name, getattr(cfg, item.name)) for item in fields(cfg))
+    else:
+        raise TypeError(
+            f"W&B tag configuration nodes must be mappings or dataclasses, got {type(cfg).__name__}"
+        )
+
+    for key, value in items:
         if key == "seed":
             continue
         tag_key = f"{prefix}{key}"
@@ -419,8 +433,31 @@ def build_tags(cfg, prefix=""):
             continue
         if value is None:
             continue
-        if hasattr(value, "items"):
+        if (
+            isinstance(value, Mapping)
+            or hasattr(value, "items")
+            or is_dataclass(value)
+        ):
             tags.extend(build_tags(value, prefix=f"{tag_key}."))
+        elif isinstance(value, (list, tuple)) and any(
+            isinstance(item, Mapping)
+            or hasattr(item, "items")
+            or is_dataclass(item)
+            for item in value
+        ):
+            for index, item in enumerate(value):
+                if (
+                    isinstance(item, Mapping)
+                    or hasattr(item, "items")
+                    or is_dataclass(item)
+                ):
+                    tags.extend(build_tags(item, prefix=f"{tag_key}.{index}."))
+                else:
+                    tags.append(
+                        _safe_wandb_tag(
+                            f"{tag_key}.{index}:{_compact_value(item)}"
+                        )
+                    )
         else:
             if tag_key == "data.emoji.sequence":
                 value = _sequence_alias(value)
@@ -428,3 +465,13 @@ def build_tags(cfg, prefix=""):
                 value = _compact_value(value)
             tags.append(_safe_wandb_tag(f"{tag_key}:{value}"))
     return tags
+
+
+def build_wandb_tags(cfg):
+    """Build automatic configuration tags and retain user-supplied tags."""
+
+    automatic_tags = build_tags(cfg)
+    logging = _cfg_get(cfg, "logging", None)
+    wandb = _cfg_get(logging, "wandb", None)
+    explicit_tags = _cfg_get(wandb, "tags", None) or ()
+    return list(dict.fromkeys((*automatic_tags, *map(str, explicit_tags))))

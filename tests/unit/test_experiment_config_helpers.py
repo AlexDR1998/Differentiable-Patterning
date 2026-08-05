@@ -2,7 +2,14 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from Experiments.config_helpers import build_model, build_model_config_string, build_tags
+from Common.dataloader.preprocessing import PreprocessingConfig, ProcessingStep
+from Common.trainer.config import MultiTargetLossConfig
+from Experiments.config_helpers import (
+    build_model,
+    build_model_config_string,
+    build_tags,
+    build_wandb_tags,
+)
 from Experiments.emoji.config_helpers import (
     build_data_augmenter,
     build_data_config_string,
@@ -191,6 +198,76 @@ def test_build_tags_omits_wandb_routing_tags():
     assert "data.emoji.sequence:av_mu" in tags
     assert not any(tag.startswith("logging.wandb.project:") for tag in tags)
     assert not any(tag.startswith("logging.wandb.group:") for tag in tags)
+
+
+def test_build_wandb_tags_combines_automatic_and_explicit_tags():
+    cfg = _cfg(
+        {
+            "model": {"family": "NCA", "channels": 8},
+            "training": {"loop": {"iterations": 1000}},
+            "logging": {
+                "wandb": {
+                    "project": "NCA-test",
+                    "group": "comparison",
+                    "tags": ["paper", "model.family:NCA"],
+                }
+            },
+        }
+    )
+
+    tags = build_wandb_tags(cfg)
+
+    assert "model.family:NCA" in tags
+    assert "model.channels:8" in tags
+    assert "training.loop.iterations:1000" in tags
+    assert "paper" in tags
+    assert tags.count("model.family:NCA") == 1
+
+
+def test_build_tags_recurses_into_typed_preprocessing_config():
+    cfg = _cfg(
+        {
+            "data": {
+                "preprocessing": PreprocessingConfig(
+                    steps=(ProcessingStep.DOWNSAMPLE,),
+                    downsample=8,
+                )
+            }
+        }
+    )
+
+    tags = build_tags(cfg)
+
+    assert "data.preprocessing.steps:downsample" in tags
+    assert "data.preprocessing.downsample:8" in tags
+    assert not any(
+        tag.startswith("data.preprocessing:PreprocessingConfig") for tag in tags
+    )
+
+
+def test_build_tags_recurses_into_config_collections():
+    cfg = _cfg(
+        {
+            "training": {
+                "loss": {
+                    "terms": (
+                        MultiTargetLossConfig(
+                            type="multi_target",
+                            assignment="hard",
+                        ),
+                    )
+                }
+            }
+        }
+    )
+
+    tags = build_tags(cfg)
+
+    assert "training.loss.terms.0.type:multi_target" in tags
+    assert "training.loss.terms.0.assignment:hard" in tags
+    assert not any(
+        tag.startswith("training.loss.terms:MultiTargetLossConfig") for tag in tags
+    )
 
 
 def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
