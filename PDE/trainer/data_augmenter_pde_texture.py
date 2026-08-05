@@ -62,7 +62,7 @@ class DataAugmenter(DataAugmenterAbstract):
 
         
         
-    def data_callback(self,
+    def advance_pool(self,
                     X: PyTree[Float[Array, "C W H"]], 
                     Y: PyTree[Float[Array, "N C W H"]], 
                     i: Int[Scalar, ""],
@@ -106,7 +106,7 @@ class DataAugmenter(DataAugmenterAbstract):
         return X,Y
 
         
-    # def data_load(self,L,key):
+    # def initialize_pool(self,L,key):
     #     data = self.return_saved_data()
         
     #     return x0,y0

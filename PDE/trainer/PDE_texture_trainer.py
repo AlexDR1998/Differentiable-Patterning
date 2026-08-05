@@ -55,7 +55,7 @@ class PDE_Trainer(object):
             if None, sets model_filename to current time
         
         DATA_AUGMENTER : object, optional
-            DataAugmenter object. Has data_init and data_callback methods that can be re-written as needed. The default is DataAugmenter.
+            DataAugmenter object. Has data_init and advance_pool methods that can be re-written as needed. The default is DataAugmenter.
         BOUNDARY_MASK : float32 [N_BOUNDARY_CHANNELS,WIDTH,HEIGHT], optional
             Set of channels to keep fixed, encoding boundary conditions. The default is None.
         SHARDING : int, optional
@@ -253,7 +253,7 @@ class PDE_Trainer(object):
         opt_state = self.OPTIMISER.init(pde_diff)
         
         data_steps = self.DATA_AUGMENTER.data_saved[0].shape[0]
-        x,y = self.DATA_AUGMENTER.data_load(key=key)
+        x,y = self.DATA_AUGMENTER.initialize_pool(key=key)
         print(f"X init shape: {len(x)} {x[0].shape}")
         print(f"Y init shape: {len(y)} {y[0].shape}")
 
@@ -287,7 +287,7 @@ class PDE_Trainer(object):
             # Check if training has crashed or diverged yet
             if error==0:
                 # Do data augmentation update
-                x,y = self.DATA_AUGMENTER.data_callback(x, y, i, key=key)
+                x,y = self.DATA_AUGMENTER.advance_pool(x, y, i, key=key)
             
                 
                 # Save model whenever mean_loss beats the previous best loss
@@ -306,7 +306,7 @@ class PDE_Trainer(object):
             print("|-|-|-|-|-|-  Training did not converge, model was not saved  -|-|-|-|-|-|")
         elif self.IS_LOGGING and model_saved:
             x,y = self.DATA_AUGMENTER.split_x_y(1)
-            x,y = self.DATA_AUGMENTER.data_callback(x, y, 0, key=key)
+            x,y = self.DATA_AUGMENTER.advance_pool(x, y, 0, key=key)
             print(len(x))
             print(x[0].shape)
             self.LOGGER.tb_training_end_log(self.PDE_solver,x,data_steps,self.BOUNDARY_CALLBACK)

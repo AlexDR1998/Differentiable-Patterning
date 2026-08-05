@@ -53,7 +53,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		return x,y
 		
 		
-	def data_callback(self,
+	def advance_pool(self,
 				   	  x: PyTree[Float[Array, "1 C W H"]], 
 					  y: PyTree[Float[Array, "{L} C W H"]],
 					  ts: Float[Array, "Batches {L}"],
@@ -128,7 +128,7 @@ class DataAugmenter(DataAugmenterAbstract):
 		return x,y,ts
 
 		
-	def data_load(self,L,key):
+	def initialize_pool(self,L,key):
 		data = self.return_saved_data()
 		#pos = list(jax.random.randint(key,shape=(len(data),),minval=0,maxval=data[0].shape[0]-L-1))
 		pos = list(np.zeros(len(data)).astype(int))

@@ -55,7 +55,7 @@ class PDE_Trainer(object):
 			if None, sets model_filename to current time
 		
 		DATA_AUGMENTER : object, optional
-			DataAugmenter object. Has data_init and data_callback methods that can be re-written as needed. The default is DataAugmenter.
+			DataAugmenter object. Has data_init and advance_pool methods that can be re-written as needed. The default is DataAugmenter.
 		BOUNDARY_MASK : float32 [N_BOUNDARY_CHANNELS,WIDTH,HEIGHT], optional
 			Set of channels to keep fixed, encoding boundary conditions. The default is None.
 		SHARDING : int, optional
@@ -290,7 +290,7 @@ class PDE_Trainer(object):
 		
 		
 		data_steps = self.DATA_AUGMENTER.data_saved[0].shape[0]
-		x,y,ts = self.DATA_AUGMENTER.data_load(L=SUBTRAJECTORY_LENGTH,key=key)
+		x,y,ts = self.DATA_AUGMENTER.initialize_pool(L=SUBTRAJECTORY_LENGTH,key=key)
 		# x: Float[Array, "Batches 1 C W H"]
 		# y: Float[Array, "Batches SUBTRAJECTORY_LENGTH C W H"]
 		# ts: Float[Array, "Batches SUBTRAJECTORY_LENGTH"]
@@ -345,7 +345,7 @@ class PDE_Trainer(object):
 			error = check_training_diverged(mean_loss,x,i)
 			if error==0:
 				# Do data augmentation update
-				x,y,ts = self.DATA_AUGMENTER.data_callback(x=x, 
+				x,y,ts = self.DATA_AUGMENTER.advance_pool(x=x,
 														   y=y,
 														   ts=ts,
 														   i=i, 
