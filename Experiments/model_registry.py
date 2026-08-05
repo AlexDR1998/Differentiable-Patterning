@@ -9,7 +9,7 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 
-from Common.model_registry import ModelRegistry
+from NCA.registry import ModelRegistry
 
 
 def parse_args() -> argparse.Namespace:

@@ -284,20 +284,16 @@ class NCA(AbstractModel):
 		    iters: Int[Scalar, ""],
 			x: Float[Array, "{self.N_CHANNELS} x y"],
 			callback=lambda x:x,
-			SAVE_LATENTS=False,
-			key=None)->tuple[Float[Array,"{iters} {self.N_CHANNELS} x y"], Float[Array,"{iters} {self.N_CHANNELS} x y"]]:
+			key=None)->Float[Array,"{iters} {self.N_CHANNELS} x y"]:
 		
 		if key is None:
 			key = jax.random.PRNGKey(int(time.time()))
 		trajectory = []
-		trajectory.append(self.latent_to_real(x))
-		latents = [x]
+		trajectory.append(x)
 
 		for i in range(iters):
 			key = jax.random.fold_in(key,i)
 			x = self(x,callback,key=key)
-			trajectory.append(self.latent_to_real(x))
-			if SAVE_LATENTS:
-				latents.append(x)
-		return jnp.stack(trajectory), jnp.stack(latents)
+			trajectory.append(x)
+		return jnp.stack(trajectory)
 		

@@ -8,12 +8,9 @@ from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_gated_model import gNCA
 from NCA.model.NCA_gated_noise_model import gnNCA
 from NCA.model.NCA_model import NCA
-from NCA.model.NCA_normalized_model import NormalizedNCA
 from NCA.model.NCA_model_fast import NCA as NCAFast
 from NCA.model.NCA_sycl import NCA as NCASycl
 from NCA.model.NCA_noise_model import nNCA
-from NCA.model.NCA_upsample_isotropic_model import uNCA as isouNCA
-from NCA.model.NCA_upsample_model import uNCA
 
 
 MAX_WANDB_TAG_LENGTH = 64
@@ -41,78 +38,6 @@ def data_channel_count(cfg):
     if _cfg_get(cfg.data, "dataset") == "emojis":
         return cfg.data.emoji.data_channels
     return cfg.data.micropattern.data_channels
-
-
-def compute_model_channel_statistics(
-    data,
-    model_channels,
-    channel_schema=None,
-    measurement_mask=None,
-    epsilon=1e-6,
-):
-    """Compute statistics in the channel layout actually consumed by an NCA.
-
-    Data is ``[batch, time, measurement, height, width]``. For grouped
-    experiments, the schema maps repeated measurement channels to unique state
-    channels; the same primary measurements used by the data augmenter are
-    used here. Unavailable measurements are excluded with ``measurement_mask``.
-    Any remaining model channels are hidden state and receive neutral
-    statistics (mean zero, standard deviation one).
-    """
-    import jax.numpy as jnp
-
-    values = jnp.asarray(data)
-    if values.ndim != 5:
-        raise ValueError(f"Expected data shaped [B,T,C,H,W], got {values.shape}")
-    measurement_indices = (
-        tuple(channel_schema.primary_measurements)
-        if channel_schema is not None
-        else tuple(range(values.shape[2]))
-    )
-    state_channels = len(measurement_indices)
-    if model_channels < state_channels:
-        raise ValueError(
-            f"Model has {model_channels} channels but data requires {state_channels} state channels"
-        )
-    selected = values[:, :, jnp.asarray(measurement_indices), :, :]
-
-    if measurement_mask is None:
-        available = jnp.ones(selected.shape[:3], dtype=selected.dtype)
-    else:
-        available = jnp.asarray(measurement_mask, dtype=selected.dtype)
-        if available.ndim == 2:
-            available = jnp.broadcast_to(available[None], (values.shape[0], *available.shape))
-        if available.shape[0] != values.shape[0] or available.shape[2] != values.shape[2]:
-            raise ValueError(
-                "measurement_mask must align with data batch and measurement axes; "
-                f"got {available.shape} for data {values.shape}"
-            )
-        # Loss masks conventionally omit the initial timestep. In that case,
-        # compute statistics over the corresponding target timesteps only.
-        if available.shape[1] == values.shape[1] - 1:
-            selected = selected[:, 1:]
-        elif available.shape[1] != values.shape[1]:
-            raise ValueError(
-                "measurement_mask time axis must have T or T-1 entries; "
-                f"got {available.shape[1]} for T={values.shape[1]}"
-            )
-        available = available[:, :, jnp.asarray(measurement_indices)]
-
-    weights = available[..., None, None]
-    spatial_size = selected.shape[-2] * selected.shape[-1]
-    counts = jnp.sum(available, axis=(0, 1)) * spatial_size
-    if bool(jnp.any(counts == 0)):
-        missing = [int(index) for index in jnp.flatnonzero(counts == 0)]
-        raise ValueError(f"No available observations for state channels {missing}")
-    means = jnp.sum(selected * weights, axis=(0, 1, 3, 4)) / counts
-    centered = selected - means[None, None, :, None, None]
-    variances = jnp.sum(centered * centered * weights, axis=(0, 1, 3, 4)) / counts
-    stds = jnp.maximum(jnp.sqrt(variances), epsilon)
-
-    hidden_channels = model_channels - state_channels
-    means = jnp.pad(means, (0, hidden_channels), constant_values=0.0)
-    stds = jnp.pad(stds, (0, hidden_channels), constant_values=1.0)
-    return means, stds
 
 
 def _compact_value(value):
@@ -159,115 +84,64 @@ def compact_nonzero_config_string(values, aliases=None):
     return "_".join(parts)
 
 
-def uses_vgg_loss(loss_primary):
-    return any("vgg" in loss_name for loss_name in _as_list(loss_primary))
+def loss_terms(loss_config):
+    return list(_cfg_get(loss_config, "terms", ()))
 
 
-def resolve_loss_layers(loss_primary, layers):
-    loss_count = len(_as_list(loss_primary))
-    layers = _as_list(layers)
-    if loss_count == 0:
-        return layers
-    if not layers:
-        return ["decoded"] * loss_count
-    if len(layers) < loss_count:
-        layers = layers + [layers[-1]] * (loss_count - len(layers))
-    return layers[:loss_count]
+def loss_names(loss_config):
+    return [str(_cfg_get(term, "type")) for term in loss_terms(loss_config)]
 
 
-def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
-    loss_str = "_".join(_as_list(cfg.loss.primary)).lower()
-    layers = _cfg_get(cfg.loss, "layers", None)
-    if include_layers and layers is not None:
-        loss_str += f"_layers{'-'.join(resolve_loss_layers(cfg.loss.primary, layers)).lower()}"
-    if uses_vgg_loss(cfg.loss.primary):
-        vgg_internal = _cfg_get(
-            cfg.loss,
-            "vgg_internal",
-            _cfg_get(_cfg_get(cfg.loss, "args", None), "internal_loss_func", "l2"),
-        )
-        loss_str += f"_vgg{str(vgg_internal).lower()}"
-        if _cfg_get(cfg.loss, "random_crop", False):
-            loss_str += "_rc"
-        if _cfg_get(cfg.loss, "random_channel_shuffle", False):
-            loss_str += "_chshuffle"
+def loss_weights(loss_config):
+    return [float(_cfg_get(term, "weight", 1.0)) for term in loss_terms(loss_config)]
 
-    channel_importance = _cfg_get(cfg.loss, "channel_importance", None)
-    if channel_importance is not None:
-        non_default = [
-            f"{index + 1}x{_compact_value(weight)}"
-            for index, weight in enumerate(channel_importance)
-            if float(weight) != 1.0
-        ]
-        if non_default:
-            loss_str += "_ci" + "-".join(non_default)
 
-    component_weights = _cfg_get(cfg.loss, "component_weights", None)
-    if component_weights is not None and any(
-        float(weight) != 1.0 for weight in component_weights
-    ):
-        loss_str += "_cw" + "-".join(_compact_value(weight) for weight in component_weights)
-
-    loss_args = _cfg_get(cfg.loss, "args", None)
-    if "multi_target" in _as_list(cfg.loss.primary):
-        multi_target_weights = _cfg_get(loss_args, "multi_target_weights", None)
+def build_loss_filename(loss_config, include_loss_args=False):
+    terms = loss_terms(loss_config)
+    names = loss_names(loss_config)
+    loss_str = "_".join(names).lower()
+    for term in terms:
+        name = str(_cfg_get(term, "type"))
+        if "vgg" in name:
+            loss_str += f"_vgg{str(_cfg_get(term, 'metric', 'l2')).lower()}"
+            if _cfg_get(term, "random_crop", False): loss_str += "_rc"
+            if _cfg_get(term, "random_channel_shuffle", False): loss_str += "_chshuffle"
+        channel_importance = _cfg_get(term, "channel_importance", None)
+        if channel_importance is not None:
+            non_default = [f"{i + 1}x{_compact_value(w)}" for i, w in enumerate(channel_importance) if float(w) != 1.0]
+            if non_default: loss_str += "_ci" + "-".join(non_default)
+        if name == "multi_target":
+            multi_target_weights = _cfg_get(term, "multi_target_weights", None)
+        else:
+            multi_target_weights = None
         if multi_target_weights is not None:
             loss_str += (
                 f"_mtw_tex{_cfg_get(multi_target_weights, 'texture', 1.0):g}"
                 f"_cm{_cfg_get(multi_target_weights, 'channel_mean', 0.0):g}"
                 f"_corr{_cfg_get(multi_target_weights, 'correlation', 0.0):g}"
                 f"_rad{_cfg_get(multi_target_weights, 'radial', 0.0):g}"
+                f"_rchsh{int(bool(_cfg_get(term, 'random_channel_shuffle', False)))}"
+                f"_rcr{int(bool(_cfg_get(term, 'random_crop', False)))}"
             )
             l2_weight = _cfg_get(multi_target_weights, "l2", 0.0)
             if float(l2_weight) != 0.0:
                 loss_str += f"_l2{l2_weight:g}"
-    if include_loss_args and loss_args is not None:
-        uses_ott = any("ott" in loss_name for loss_name in _as_list(cfg.loss.primary))
-        if uses_ott:
-            sharpen = _cfg_get(loss_args, "sharpen", None)
-            arg_values = {
-                "S": _cfg_get(loss_args, "S", None),
-                "K": _cfg_get(loss_args, "K", None),
-                "D": _cfg_get(loss_args, "D", None),
-                "epsilon": _cfg_get(loss_args, "epsilon", None),
-                "sharpen": None if sharpen is None else str(sharpen).lower(),
-                "internal_loss_func": _cfg_get(loss_args, "internal_loss_func", None),
-            }
-            aliases = {
-                "S": "S",
-                "K": "K",
-                "D": "D",
-                "epsilon": "eps",
-                "sharpen": "sharp",
-                "internal_loss_func": "metric",
-            }
-        else:
-            arg_values = {
-                "samples": _cfg_get(loss_args, "samples", None),
-                "epsilon": _cfg_get(loss_args, "epsilon", None),
-                "tau": _cfg_get(loss_args, "tau", None),
-                "normalize": _cfg_get(loss_args, "normalize", None),
-                "amplitude_penalty": _cfg_get(loss_args, "amplitude_penalty", None),
-            }
-            aliases = {
-                "samples": "s",
-                "epsilon": "eps",
-                "tau": "tau",
-                "normalize": "norm",
-                "amplitude_penalty": "ap",
-            }
-        arg_str = compact_nonzero_config_string(arg_values, aliases=aliases)
-        if arg_str:
-            loss_str += f"_{arg_str}"
+        if include_loss_args:
+            keys = ("S", "K", "D", "epsilon", "sharpen", "samples", "tau", "normalize", "amplitude_penalty")
+            arg_str = compact_nonzero_config_string({key: _cfg_get(term, key, None) for key in keys})
+            if arg_str: loss_str += f"_{arg_str}"
+
+    weights = loss_weights(loss_config)
+    if any(weight != 1.0 for weight in weights):
+        loss_str += "_cw" + "-".join(_compact_value(weight) for weight in weights)
 
     reg_str = compact_nonzero_config_string(
-        cfg.loss.regulariser_coeffs,
+        _cfg_get(loss_config, "regularisers", {}),
         aliases={
             "boundary": "bd",
             "contiguous_growth": "cg",
             "intermediate_state": "is",
-            "latent_channel_match": "lcm",
-            "latent_size": "ls",
+            "hidden_state_size": "hs",
             "localised_hidden": "lh",
             "perturbation_conservation": "pc",
             "update_sensitivity": "us",
@@ -278,61 +152,45 @@ def build_loss_filename(cfg, include_layers=False, include_loss_args=False):
     return loss_str
 
 
-def build_loss_args(cfg, overrides=None):
-    loss_args_cfg = _cfg_get(cfg.loss, "args", None)
-    layers = resolve_loss_layers(cfg.loss.primary, _cfg_get(cfg.loss, "layers", None))
+def build_loss_args(loss_config, overrides=None):
+    terms = loss_terms(loss_config)
     loss_args = {
-        "channels": _cfg_get(loss_args_cfg, "channels", None),
-        "experiment_groups": _cfg_get(loss_args_cfg, "experiment_groups", None),
-        "S": _cfg_get(loss_args_cfg, "S", 1024),
-        "K": _cfg_get(loss_args_cfg, "K", 5),
-        "D": _cfg_get(loss_args_cfg, "D", 3),
-        "sharpen": _cfg_get(loss_args_cfg, "sharpen", True),
-        "epsilon": _cfg_get(loss_args_cfg, "epsilon", 0.1),
-        "internal_loss_func": _cfg_get(loss_args_cfg, "internal_loss_func", "l2"),
-        "samples": _cfg_get(loss_args_cfg, "samples", 128),
-        "layers": layers,
-        "random_crop": _cfg_get(cfg.loss, "random_crop", False),
-        "random_channel_shuffle": _cfg_get(cfg.loss, "random_channel_shuffle", False),
-        "channel_importance": _cfg_get(cfg.loss, "channel_importance", None),
-        "component_weights": _cfg_get(cfg.loss, "component_weights", None),
+        "component_weights": loss_weights(loss_config),
     }
-    vgg_internal = _cfg_get(cfg.loss, "vgg_internal", None)
-    if vgg_internal is not None:
-        loss_args["metric"] = vgg_internal
-    for optional_key in (
-        "normalize",
-        "tau",
-        "amplitude_penalty",
-        "multi_target_weights",
-        "radial_bins",
-        "assignment",
-        "assignment_tau",
-        "texture_size",
-    ):
-        value = _cfg_get(loss_args_cfg, optional_key, None)
-        if value is not None:
-            loss_args[optional_key] = value
+    ignored = {"type", "weight", "layer"}
+    for term in terms:
+        values = dict(term.items()) if hasattr(term, "items") else vars(term)
+        for key, value in values.items():
+            if key in ignored or value is None:
+                continue
+            runtime_key = "internal_loss_func" if key == "metric" else key
+            if key == "metric" and "vgg" in str(_cfg_get(term, "type")):
+                runtime_key = "metric"
+            previous = loss_args.get(runtime_key, value)
+            if previous != value:
+                raise ValueError(f"Loss terms require conflicting shared runtime value for {runtime_key!r}")
+            loss_args[runtime_key] = value
+    loss_args.setdefault("channels", None)
+    loss_args.setdefault("experiment_groups", None)
     if overrides is not None:
         loss_args.update(overrides)
     return loss_args
 
 
-def build_pool_admission_config(cfg):
+def build_pool_admission_config(trainer_config):
+    pool = trainer_config.pool_admission
     return {
-        "enabled": _cfg_get(cfg.trainer, "pool_admission_enabled", True),
-        "relative_threshold": _cfg_get(cfg.trainer, "pool_admission_relative_threshold", 1.25),
-        "previous_relative_threshold": _cfg_get(
-            cfg.trainer, "pool_admission_previous_relative_threshold", 1.10
-        ),
-        "absolute_threshold": _cfg_get(cfg.trainer, "pool_admission_absolute_threshold", None),
-        "ema_decay": _cfg_get(cfg.trainer, "pool_admission_ema_decay", 0.95),
-        "warmup": _cfg_get(cfg.trainer, "pool_admission_warmup", None),
+        "enabled": pool.enabled,
+        "relative_threshold": pool.relative_threshold,
+        "previous_relative_threshold": pool.previous_relative_threshold,
+        "absolute_threshold": pool.absolute_threshold,
+        "ema_decay": pool.ema_decay,
+        "warmup": pool.warmup,
     }
 
 
-def set_matmul_precision(cfg):
-    precision = _cfg_get(_cfg_get(cfg, "system", None), "precision", None)
+def set_matmul_precision(runtime_config):
+    precision = runtime_config.precision
     if precision is None:
         return
     import jax
@@ -340,8 +198,8 @@ def set_matmul_precision(cfg):
     jax.config.update("jax_default_matmul_precision", precision)
 
 
-def _build_kan_aux(cfg):
-    kan_cfg = _cfg_get(cfg.model, "kan", None)
+def _build_kan_aux(model_config):
+    kan_cfg = _cfg_get(model_config, "kan", None)
     hidden_features = _cfg_get(kan_cfg, "hidden_features", None)
     kan_aux = {
         "basis": _cfg_get(kan_cfg, "basis", "rbf"),
@@ -363,10 +221,10 @@ def _build_kan_aux(cfg):
     return kan_aux
 
 
-def _build_activation(cfg):
+def _build_activation(model_config):
     import jax
 
-    activation_name = _cfg_get(cfg.model, "activation", "relu")
+    activation_name = _cfg_get(model_config, "activation", "relu")
     if activation_name in {None, "relu"}:
         return jax.nn.relu
     if activation_name == "tanh":
@@ -380,7 +238,10 @@ def _build_activation(cfg):
     raise ValueError(f"Unsupported activation {activation_name}")
 
 
-def build_model_config_string(cfg):
+def build_model_config_string(model_config):
+    from types import SimpleNamespace
+
+    cfg = SimpleNamespace(model=model_config)
     cfg_str = (
         f"{cfg.model.family}"
         f"_c{cfg.model.channels}"
@@ -395,18 +256,6 @@ def build_model_config_string(cfg):
         cfg_str += f"_ks{kernel_scale}"
     if cfg.model.family in {"nNCA", "gnNCA"}:
         cfg_str += f"_pn{_cfg_get(cfg.model, 'parameter_noise_level', 0.01)}"
-    if cfg.model.family == "NormalizedNCA":
-        normalization = _cfg_get(cfg.model, "normalization", "none")
-        if normalization != "none":
-            cfg_str += f"_norm{normalization}"
-            normalization_channels = _cfg_get(
-                cfg.model, "normalization_channels", cfg.model.channels
-            )
-            if normalization_channels not in {None, cfg.model.channels}:
-                cfg_str += f"_nc{normalization_channels}"
-            normalization_eps = _cfg_get(cfg.model, "normalization_eps", 1e-6)
-            if normalization_eps != 1e-6:
-                cfg_str += f"_neps{normalization_eps}"
     if cfg.model.family == "FastKaNCA":
         kan_cfg = _cfg_get(cfg.model, "kan", None)
         cfg_str += f"_kb{_cfg_get(kan_cfg, 'num_basis', 8)}"
@@ -428,22 +277,15 @@ def build_model_config_string(cfg):
             cfg_str += "_noln"
         if not _cfg_get(kan_cfg, "final_zero_init", True):
             cfg_str += "_nozero"
-    elif cfg.model.family in {"uNCA", "isouNCA"}:
-        upsampler = _cfg_get(cfg.model, "upsampler", None)
-        cfg_str += (
-            f"_up{cfg.model.upscale_factor}"
-            f"_ud{_cfg_get(upsampler, 'depth', 'none')}"
-            f"_uw{_cfg_get(upsampler, 'width_factor', 'none')}"
-        )
-        if cfg.model.family == "uNCA":
-            cfg_str += f"_fm{_cfg_get(upsampler, 'fourier_modes', 'none')}"
-        else:
-            cfg_str += f"_rad{_cfg_get(upsampler, 'radius', 'none')}"
     return cfg_str
 
 
-def build_model(cfg, key=None):
-    activation = _build_activation(cfg)
+def build_model(model_config, key=None):
+    """Construct a model solely from its reconstructable typed config."""
+    from types import SimpleNamespace
+
+    cfg = SimpleNamespace(model=model_config)
+    activation = _build_activation(model_config)
     kernel_scale = _cfg_get(cfg.model, "kernel_scale", 1)
     if cfg.model.family == "NCA":
         model = NCA(
@@ -453,23 +295,6 @@ def build_model(cfg, key=None):
             FIRE_RATE=cfg.model.fire_rate,
             PADDING=cfg.model.padding,
             KERNEL_SCALE=kernel_scale,
-            key=key,
-        )
-    elif cfg.model.family == "NormalizedNCA":
-        model = NormalizedNCA(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            NORMALIZATION=_cfg_get(cfg.model, "normalization", "none"),
-            NORMALIZATION_MEAN=_cfg_get(cfg.model, "normalization_mean", None),
-            NORMALIZATION_STD=_cfg_get(cfg.model, "normalization_std", None),
-            NORMALIZATION_EPS=_cfg_get(cfg.model, "normalization_eps", 1e-6),
-            NORMALIZATION_CHANNELS=_cfg_get(
-                cfg.model, "normalization_channels", cfg.model.channels
-            ),
             key=key,
         )
     elif cfg.model.family == "NCA_fast":
@@ -532,49 +357,15 @@ def build_model(cfg, key=None):
             FIRE_RATE=cfg.model.fire_rate,
             PADDING=cfg.model.padding,
             KERNEL_SCALE=kernel_scale,
-            KAN_AUX=_build_kan_aux(cfg),
-            key=key,
-        )
-    elif cfg.model.family == "uNCA":
-        model = uNCA(
-            N_CHANNELS=cfg.model.channels,
-            O_CHANNELS=data_channel_count(cfg),
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            UPSAMPLER_AUX={
-                "depth": cfg.model.upsampler.depth,
-                "width_factor": cfg.model.upsampler.width_factor,
-                "fourier_modes": cfg.model.upsampler.fourier_modes,
-                "upsample_factor": cfg.model.upscale_factor,
-            },
-            key=key,
-        )
-    elif cfg.model.family == "isouNCA":
-        model = isouNCA(
-            N_CHANNELS=cfg.model.channels,
-            O_CHANNELS=data_channel_count(cfg),
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            UPSAMPLER_AUX={
-                "depth": cfg.model.upsampler.depth,
-                "width_factor": cfg.model.upsampler.width_factor,
-                "radius": cfg.model.upsampler.radius,
-                "upsample_factor": cfg.model.upscale_factor,
-            },
+            KAN_AUX=_build_kan_aux(model_config),
             key=key,
         )
     else:
         raise ValueError(f"Unknown model family {cfg.model.family}")
-    return model, build_model_config_string(cfg)
+    return model, build_model_config_string(model_config)
 
 
-def resolve_checkpoint_path(cfg, env=None):
+def resolve_checkpoint_path(checkpoint_config, env=None):
     """Resolve a configured checkpoint path and require an existing ``.eqx`` file.
 
     Relative paths are resolved against ``checkpoint.base_directory`` when it
@@ -583,8 +374,7 @@ def resolve_checkpoint_path(cfg, env=None):
     working directory.
     """
 
-    checkpoint_cfg = _cfg_get(cfg, "checkpoint", None)
-    configured_path = _cfg_get(checkpoint_cfg, "path", None)
+    configured_path = checkpoint_config.path
     if not configured_path:
         raise ValueError("checkpoint.path must be set")
 
@@ -592,9 +382,9 @@ def resolve_checkpoint_path(cfg, env=None):
     if path.suffix != ".eqx":
         path = path.with_suffix(".eqx")
     if not path.is_absolute():
-        base_directory = _cfg_get(checkpoint_cfg, "base_directory", None)
+        base_directory = checkpoint_config.base_directory
         environment = os.environ if env is None else env
-        base_env = _cfg_get(checkpoint_cfg, "base_env", "MODEL_SAVE_PATH")
+        base_env = checkpoint_config.base_env
         if base_directory is None and base_env:
             base_directory = environment.get(str(base_env))
         if base_directory is not None:
@@ -605,7 +395,7 @@ def resolve_checkpoint_path(cfg, env=None):
     return path
 
 
-def load_model_checkpoint(cfg, key=None, env=None):
+def load_model_checkpoint(model_config, checkpoint_config, key=None, env=None):
     """Construct the configured model architecture and load checkpoint leaves.
 
     The model section must describe the same architecture used to create the
@@ -613,8 +403,8 @@ def load_model_checkpoint(cfg, key=None, env=None):
     and the resolved checkpoint path.
     """
 
-    model, model_cfg_str = build_model(cfg, key=key)
-    checkpoint_path = resolve_checkpoint_path(cfg, env=env)
+    model, model_cfg_str = build_model(model_config, key=key)
+    checkpoint_path = resolve_checkpoint_path(checkpoint_config, env=env)
     model = model.load(checkpoint_path)
     return model, model_cfg_str, checkpoint_path
 

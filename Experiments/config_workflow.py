@@ -71,16 +71,43 @@ def _expand_section(section: dict[str, Any]) -> list[dict[str, Any]]:
 def build_nested_override(dotlist_items: dict[str, Any]) -> dict[str, Any]:
     root: dict[str, Any] = {}
     for dotted_key, value in dotlist_items.items():
-        cursor = root
         parts = dotted_key.split(".")
-        for part in parts[:-1]:
-            cursor = cursor.setdefault(part, {})
-        cursor[parts[-1]] = value
+        cursor: Any = root
+        for index, part in enumerate(parts):
+            final = index == len(parts) - 1
+            if isinstance(cursor, list):
+                item_index = int(part)
+                while len(cursor) <= item_index:
+                    cursor.append({})
+                if final:
+                    cursor[item_index] = value
+                else:
+                    next_is_index = parts[index + 1].isdigit()
+                    if not isinstance(cursor[item_index], (dict, list)):
+                        existing = cursor[item_index]
+                        cursor[item_index] = [] if next_is_index else (
+                            {"type": existing} if isinstance(existing, str) else {}
+                        )
+                    cursor = cursor[item_index]
+            else:
+                if final:
+                    cursor[part] = value
+                else:
+                    next_is_index = parts[index + 1].isdigit()
+                    expected = list if next_is_index else dict
+                    if part not in cursor or not isinstance(cursor[part], expected):
+                        cursor[part] = [] if next_is_index else {}
+                    cursor = cursor[part]
     return root
 
 
 def _matches_condition(values: dict[str, Any], condition: dict[str, Any]) -> bool:
-    return all(values.get(key) == expected_value for key, expected_value in condition.items())
+    def comparable(key: str, value: Any) -> Any:
+        if key == "loss.terms" and isinstance(value, list):
+            return [item.get("type") if isinstance(item, dict) else item for item in value]
+        return value
+
+    return all(comparable(key, values.get(key)) == expected_value for key, expected_value in condition.items())
 
 
 def generate_manifest(base_cfg: dict[str, Any], sweep_cfg: dict[str, Any], output_dir: Path, emit_files: bool = False) -> dict[str, Any]:

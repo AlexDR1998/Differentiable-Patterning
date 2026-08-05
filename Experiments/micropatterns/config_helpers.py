@@ -17,9 +17,9 @@ from Experiments.config_helpers import (
     build_loss_filename,
     build_model,
 )
-from NCA.trainer.data_augmenter_4ch_colony import DataAugmenter as DataAugmenter4Ch
-from NCA.trainer.data_augmenter_9ch_colony import DataAugmenter as DataAugmenterGrouped
-from NCA.trainer.data_augmenter_260726 import DataAugmenter as DataAugmenter260726
+from NCA.trainer.data_augmenter.colony_4ch import DataAugmenter as DataAugmenter4Ch
+from NCA.trainer.data_augmenter.colony_9ch import DataAugmenter as DataAugmenterGrouped
+from NCA.trainer.data_augmenter.micropattern import DataAugmenter as DataAugmenter260726
 
 
 NODAL_CHANNEL = 7
@@ -66,12 +66,12 @@ def _as_tree(data):
 
 
 def expand_channel_timestep_mask_for_loss(
-    cfg, channel_timestep_mask, channel_schema=None
+    data_config, channel_timestep_mask, channel_schema=None
 ):
     mask = jnp.asarray(channel_timestep_mask)
     if (
-        cfg.data.get("dataset", "micropatterns") != "micropatterns_260726"
-        and cfg.data.micropattern.data_channels == 12
+        data_config.dataset != "micropatterns_260726"
+        and data_config.micropattern.data_channels == 12
         and mask.shape[-1] == 9
     ):
         mask = jnp.concatenate(
@@ -172,7 +172,19 @@ def masked_reinject_callback_bit(
     return x
 
 
-def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
+def build_data_augmenter(
+    data_config,
+    total_iterations,
+    channel_timestep_mask=None,
+    channel_schema=None,
+):
+    from types import SimpleNamespace
+
+    cfg = SimpleNamespace(
+        data=data_config,
+        knockout=data_config.intervention,
+        run=SimpleNamespace(iterations=total_iterations),
+    )
     data_channels = cfg.data.micropattern.data_channels
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
         class DA_subclass(DataAugmenter260726):
@@ -180,14 +192,12 @@ def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
 
             def __init__(self, *args, **kwargs):
                 kwargs["schema"] = channel_schema
-                kwargs["intermediate_reinjection_probability"] = cfg.data.get(
-                    "intermediate_reinjection_probability", 0.5
-                )
-                kwargs["intermediate_reinjection_probability_end"] = cfg.data.get(
+                kwargs["intermediate_reinjection_probability"] = cfg.data.micropattern.intermediate_reinjection_probability
+                kwargs["intermediate_reinjection_probability_end"] = cfg.data.micropattern.get(
                     "intermediate_reinjection_probability_end",
                     kwargs["intermediate_reinjection_probability"],
                 )
-                kwargs["intermediate_reinjection_decay_start_fraction"] = cfg.data.get(
+                kwargs["intermediate_reinjection_decay_start_fraction"] = cfg.data.micropattern.get(
                     "intermediate_reinjection_decay_start_fraction", 0.25
                 )
                 kwargs["intermediate_reinjection_total_iterations"] = cfg.run.iterations
@@ -213,14 +223,12 @@ def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
         supports_global_reinjection_mask = True
 
         def __init__(self, *args, **kwargs):
-            kwargs["intermediate_reinjection_probability"] = cfg.data.get(
-                "intermediate_reinjection_probability", 0.5
-            )
-            kwargs["intermediate_reinjection_probability_end"] = cfg.data.get(
+            kwargs["intermediate_reinjection_probability"] = cfg.data.micropattern.intermediate_reinjection_probability
+            kwargs["intermediate_reinjection_probability_end"] = cfg.data.micropattern.get(
                 "intermediate_reinjection_probability_end",
                 kwargs["intermediate_reinjection_probability"],
             )
-            kwargs["intermediate_reinjection_decay_start_fraction"] = cfg.data.get(
+            kwargs["intermediate_reinjection_decay_start_fraction"] = cfg.data.micropattern.get(
                 "intermediate_reinjection_decay_start_fraction", 0.25
             )
             kwargs["intermediate_reinjection_total_iterations"] = cfg.run.iterations
@@ -274,7 +282,10 @@ def build_data_augmenter(cfg, channel_timestep_mask=None, channel_schema=None):
     return DA_subclass, cfg_str
 
 
-def load_data(cfg, impath=None):
+def load_data(data_config, impath=None):
+    from types import SimpleNamespace
+
+    cfg = SimpleNamespace(data=data_config, knockout=data_config.intervention)
     custom_impath = impath is not None
     data_channels = cfg.data.micropattern.data_channels
     pool_copies = cfg.data.micropattern.get("pool_copies", 1)

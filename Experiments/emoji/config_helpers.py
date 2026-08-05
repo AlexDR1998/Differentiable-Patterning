@@ -11,7 +11,7 @@ from Experiments.config_helpers import (
     _sequence_alias,
     build_loss_filename as _shared_build_loss_filename,
 )
-from NCA.trainer.data_augmenter_nca_terminal import TerminalCarryDataAugmenter
+from NCA.trainer.data_augmenter.nca_terminal import TerminalCarryDataAugmenter
 
 
 def _pad_tuple(value):
@@ -22,17 +22,17 @@ def _pad_tuple(value):
     return list(value)
 
 
-def build_loss_filename(cfg, include_layers=True):
-    include_layers = include_layers and cfg.model.family in {"uNCA", "isouNCA"}
-    include_loss_args = cfg.model.family in {"uNCA", "isouNCA"}
+def build_loss_filename(cfg):
     return _shared_build_loss_filename(
-        cfg,
-        include_layers=include_layers,
-        include_loss_args=include_loss_args,
+        cfg.loss,
+        include_loss_args=False,
     )
 
 
-def build_data_config_string(cfg):
+def build_data_config_string(data_config):
+    from types import SimpleNamespace
+
+    cfg = SimpleNamespace(data=data_config)
     terminal_cfg = _cfg_get(cfg.data.emoji, "terminal_carry", None)
     regeneration_cfg = _cfg_get(cfg.data.emoji, "regeneration", None)
     terminal_str = ""
@@ -166,7 +166,10 @@ def _load_multi_attractor_data(cfg, impath):
     return np.stack(trajectories)
 
 
-def load_data(cfg, impath=None):
+def load_data(data_config, impath=None):
+    from types import SimpleNamespace
+
+    cfg = SimpleNamespace(data=data_config)
     custom_impath = impath is not None
     if impath is None:
         data_path_base = os.getenv("DATA_PATH_BASE")
@@ -186,13 +189,16 @@ def load_data(cfg, impath=None):
         data = _load_multi_attractor_data(cfg, impath)
     else:
         raise ValueError(f"Unknown data.emoji.task {task!r}")
-    cfg_str = build_data_config_string(cfg)
+    cfg_str = build_data_config_string(data_config)
     if custom_impath:
         cfg_str += "_custompath"
     return data, cfg_str
 
 
-def build_data_augmenter(cfg):
+def build_data_augmenter(data_config):
+    from types import SimpleNamespace
+
+    cfg = SimpleNamespace(data=data_config)
     pad = _pad_tuple(cfg.data.emoji.pad)
     batches = cfg.data.batches
     shift_amount = cfg.data.emoji.shift_amount
@@ -300,15 +306,15 @@ def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
 def build_legacy_training_filename(cfg):
     sequence_alias = _sequence_alias(cfg.data.emoji.sequence)
     regen_str = "regenerate_" if cfg.data.emoji.regenerate else ""
-    loss_mode = "_".join(_as_list(cfg.loss.primary)).lower()
+    loss_mode = "_".join(term.type for term in cfg.loss.terms).lower()
     return (
         f"emoji_{sequence_alias}_{loss_mode}_{cfg.model.family}_{regen_str}"
         f"ch{cfg.model.channels}_ds{cfg.data.downsample}"
         f"_steps{resolve_run_t(cfg)}"
         f"_iters{cfg.run.iterations}"
-        f"_igc{cfg.loss.regulariser_coeffs.intermediate_state}"
-        f"_brc{cfg.loss.regulariser_coeffs.boundary}"
-        f"_cgc{cfg.loss.regulariser_coeffs.contiguous_growth}"
-        f"_pcc{cfg.loss.regulariser_coeffs.perturbation_conservation}"
-        f"_usc{cfg.loss.regulariser_coeffs.update_sensitivity}"
+        f"_igc{cfg.loss.regularisers.intermediate_state}"
+        f"_brc{cfg.loss.regularisers.boundary}"
+        f"_cgc{cfg.loss.regularisers.contiguous_growth}"
+        f"_pcc{cfg.loss.regularisers.perturbation_conservation}"
+        f"_usc{cfg.loss.regularisers.update_sensitivity}"
     )

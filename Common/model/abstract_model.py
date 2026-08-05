@@ -12,14 +12,6 @@ class AbstractModel(eqx.Module):
 	def __call__(self, *args, **kwargs) -> Any:
 		raise NotImplementedError
 
-	def real_to_latent(self, x):
-		# Converts the "true data" to the latent space of the NCA. For example, a simple downsample
-		return x
-
-	def latent_to_real(self, x):
-		# Converts the latent space of the NCA to the "true data" space. For example, a learnable upsampler.
-		return x
-	
 	def partition(self):
 		"""
 		Behaves like eqx.partition. Overwrite in subclasses to account for hard coded array parameters

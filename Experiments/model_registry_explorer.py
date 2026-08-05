@@ -266,7 +266,7 @@ def _(
             import numpy as np
 
             from Common.model.boundary import hard_boundary, model_boundary, no_boundary
-            from Common.model_registry import ModelRegistry, verify_evaluation_input
+            from NCA.registry import ModelRegistry, verify_evaluation_input
 
             _selected = results_table.value
             if _selected is None or len(_selected) == 0:
@@ -347,16 +347,15 @@ def _(
                     jnp.asarray(_initial),
                     ((0, _channels - _initial.shape[0]), (0, 0), (0, 0)),
                 )
-                _state = _model.real_to_latent(_state)
                 if _boundary is None:
                     _callback = no_boundary()
                 else:
-                    _boundary_state = _model.real_to_latent(jnp.asarray(_boundary))
+                    _boundary_state = jnp.asarray(_boundary)
                     if _bundle.config.trainer.get("boundary_mode", "soft") == "hard":
                         _callback = hard_boundary(_boundary_state)
                     else:
                         _callback = model_boundary(_boundary_state)
-                _trajectory, _ = _model.run(
+                _trajectory = _model.run(
                     int(rollout_steps.value),
                     _state,
                     callback=_callback,

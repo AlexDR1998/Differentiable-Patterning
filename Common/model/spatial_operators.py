@@ -43,6 +43,18 @@ class Ops(eqx.Module):
                     step size
             
         """
+        # ``KERNEL_SCALE`` is a discrete kernel radius. Typed configs provide
+        # an int, but accepting integral floats preserves older YAML-backed
+        # callers while preventing a float from reaching Conv2d.kernel_size.
+        if isinstance(KERNEL_SCALE, float):
+            if not KERNEL_SCALE.is_integer():
+                raise ValueError("KERNEL_SCALE must be a positive integer")
+            KERNEL_SCALE = int(KERNEL_SCALE)
+        elif not isinstance(KERNEL_SCALE, int):
+            raise TypeError("KERNEL_SCALE must be an integer")
+        if KERNEL_SCALE < 1:
+            raise ValueError("KERNEL_SCALE must be a positive integer")
+
         key = jax.random.PRNGKey(0) # Dummy key for conv2d init
         self.PADDING = PADDING
         self.dx = dx

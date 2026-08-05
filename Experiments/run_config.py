@@ -43,14 +43,18 @@ def synchronize_jax(jax_module: Any) -> None:
 
 
 def optional_cfg_value(cfg: Any, path: str, default: Any = None) -> Any:
-    value = OmegaConf.select(cfg, path, default=default)
+    value = cfg
+    for part in path.split("."):
+        value = getattr(value, part, default)
+        if value is default:
+            break
     return value
 
 
 def apply_runtime_overrides(cfg: Any) -> None:
     """Apply deployment-specific paths without embedding them in manifests."""
     model_store_root = os.getenv("MODEL_STORE_ROOT")
-    if model_store_root:
+    if model_store_root and OmegaConf.select(cfg, "model_store", default=None) is not None:
         OmegaConf.update(cfg, "model_store.enabled", True, force_add=True)
         OmegaConf.update(cfg, "model_store.root", model_store_root, force_add=True)
         print(f"model_store.root={model_store_root} (from MODEL_STORE_ROOT)")
@@ -105,10 +109,13 @@ def configure_jax_runtime(cfg: Any) -> Any:
 
 def run_entrypoint(entrypoint_spec: str, cfg: Any) -> None:
     apply_runtime_overrides(cfg)
-    jax = configure_jax_runtime(cfg)
+    from Experiments.config import load_experiment_config
+
+    typed_cfg = load_experiment_config(cfg)
+    jax = configure_jax_runtime(typed_cfg)
     entrypoint: Callable[[Any], Any] = import_callable(entrypoint_spec)
     if not env_flag("RUN_CONFIG_PROFILE"):
-        entrypoint(cfg)
+        entrypoint(typed_cfg)
         return
 
     profile_dir = Path(os.getenv("RUN_CONFIG_PROFILE_DIR", default_profile_dir()))
@@ -119,9 +126,9 @@ def run_entrypoint(entrypoint_spec: str, cfg: Any) -> None:
     if env_flag("RUN_CONFIG_PROFILE_TRACE"):
         create_perfetto_link = env_flag("RUN_CONFIG_PROFILE_PERFETTO_LINK")
         with jax.profiler.trace(str(profile_dir), create_perfetto_link=create_perfetto_link):
-            entrypoint(cfg)
+            entrypoint(typed_cfg)
     else:
-        entrypoint(cfg)
+        entrypoint(typed_cfg)
 
     try:
         synchronize_jax(jax)

@@ -1,135 +1,42 @@
-"""Shared assembly for config-driven NCA training entrypoints."""
+"""Lifecycle boundary shared by active NCA experiment entrypoints."""
 
-from __future__ import annotations
-
-from Experiments.config_helpers import _cfg_get, build_pool_admission_config, build_tags
-
-
-def build_trainer(cfg, *, model, data, run_name, data_augmenter, model_directory, **domain_kwargs):
-    """Construct the configured JAX or SYCL trainer."""
-
-    is_sycl = cfg.model.family == "NCA_sycl"
-    if is_sycl:
-        from NCA.trainer.NCA_sycl_trainer import NCA_sycl_Trainer
-
-        trainer_class = NCA_sycl_Trainer
-    else:
-        from NCA.trainer.NCA_trainer import NCA_Trainer
-
-        trainer_class = NCA_Trainer
-    sycl_kwargs = {}
-    if is_sycl:
-        sycl_kwargs = {
-            "SYCL_FUSED_STEPS": cfg.trainer.get("sycl_fused_steps", 2),
-            "SYCL_SYNCHRONIZE_CUSTOM_CALLS": cfg.trainer.get(
-                "sycl_synchronize_custom_calls", False
-            ),
-            "SYCL_STRICT_STAGE_SYNCHRONIZATION": cfg.trainer.get(
-                "sycl_strict_stage_synchronization", False
-            ),
-            "SYCL_REGULARISER_REDUCTION": cfg.trainer.get(
-                "sycl_regulariser_reduction", "atomic"
-            ),
-            "SYCL_PMEAN_LOSS": cfg.trainer.get("sycl_pmean_loss", True),
-            "SYCL_PMEAN_REGULARISERS": cfg.trainer.get(
-                "sycl_pmean_regularisers", True
-            ),
-            "SYCL_SERIALIZE_CUSTOM_CALLS": cfg.trainer.get(
-                "sycl_serialize_custom_calls", False
-            ),
-            "SYCL_SERIALIZE_ONEMKL": cfg.trainer.get(
-                "sycl_serialize_onemkl", False
-            ),
-            "SYCL_SERIALIZE_BACKWARD_CUSTOM_CALLS": cfg.trainer.get(
-                "sycl_serialize_backward_custom_calls", False
-            ),
-        }
-
-    return trainer_class(
-        NCA_model=model,
-        data=data,
-        model_filename=run_name,
-        DATA_AUGMENTER=data_augmenter,
-        BOUNDARY_MODE=cfg.trainer.get("boundary_mode", "soft"),
-        SHARDING=cfg.trainer.get("sharding", None),
-        GRAD_LOSS=cfg.trainer.get("grad_loss", False),
-        MODEL_DIRECTORY=model_directory,
-        LOG_DIRECTORY=cfg.trainer.get("log_directory", "logs/"),
-        **domain_kwargs,
-        **sycl_kwargs,
-    )
+from NCA.trainer.context import TrainerContext
+from NCA.trainer.trainer import build_trainer
 
 
-def train_model(
-    cfg,
-    *,
-    trainer,
-    optimiser,
-    learning_rate_schedule,
-    loss_args,
-    run_name,
-    key,
-    timesteps=None,
-    evaluation_input=None,
-):
-    """Run the common training contract, leaving data assembly to each domain."""
+def run_training(config, *, model, data, context: TrainerContext, key,
+                 timesteps=None, loss_overrides=None):
+    """Train and, when configured, publish the resulting model bundle."""
 
+    trainer = build_trainer(config, model, data, context)
     result = trainer.train(
-        t=cfg.run.t if timesteps is None else timesteps,
-        iters=cfg.run.iterations,
-        optimiser=optimiser,
-        LEARNING_RATE_SCHEDULE=learning_rate_schedule,
-        REGULARISER_COEFFS=dict(cfg.loss.regulariser_coeffs),
-        WARMUP=cfg.run.warmup,
-        WRITE_IMAGES=cfg.run.write_images,
-        LOSS_FUNC_STR=cfg.loss.primary,
-        LOSS_ARGS=loss_args,
-        KNOCKOUT_ARGS={
-            "channel": cfg.knockout.get("channel", None),
-            "time": cfg.knockout.get("time", None),
-        },
-        wandb_args={
-            "project": cfg.logging.wandb.project,
-            "group": cfg.logging.wandb.group,
-            "tags": build_tags(cfg),
-            "name": run_name,
-        },
-        LOG_EVERY=cfg.trainer.log_every,
-        CLEAR_CACHE_EVERY=cfg.trainer.clear_cache_every,
-        LOOP_AUTODIFF=cfg.trainer.loop_autodiff,
-        POOL_ADMISSION_CONFIG=build_pool_admission_config(cfg),
-        SINGULAR_VALUE_LOGGING_CONFIG=cfg.logging.get("singular_values", None),
-        BACKEND=_cfg_get(cfg.logging, "backend", "wandb"),
-        SPARSE_PRUNING=cfg.run.get("sparse_pruning", False),
-        TARGET_SPARSITY=cfg.run.get("target_sparsity", 0.5),
-        JAX_TRACE=cfg.trainer.get("jax_trace", False),
         key=key,
+        timesteps=timesteps,
+        loss_overrides=loss_overrides,
     )
-    model_store = _cfg_get(cfg, "model_store", None)
-    if _cfg_get(model_store, "enabled", False) and result.checkpoint_path is not None:
-        from Common.model_registry import publish_model_bundle
+    model_store = config.model_store
+    if model_store.enabled and result.checkpoint_path is not None:
+        from NCA.registry import publish_model_bundle
 
-        store_root = _cfg_get(model_store, "root", None)
-        if not store_root:
-            raise ValueError("model_store.root must be set when model bundling is enabled")
-        collection = _cfg_get(
-            model_store, "collection", cfg.logging.wandb.project
-        )
+        if not model_store.root:
+            raise ValueError(
+                "model_store.root must be set when model bundling is enabled"
+            )
+        collection = model_store.collection or config.logging.wandb.project
         bundle = publish_model_bundle(
-            store_root=store_root,
+            store_root=model_store.root,
             collection=collection,
-            run_name=run_name,
+            run_name=context.run_name,
             checkpoint_path=result.checkpoint_path,
-            cfg=cfg,
+            cfg=config,
             training_result=result,
-            model_factory=_cfg_get(
-                model_store,
-                "model_factory",
-                "Experiments.config_helpers:build_model",
-            ),
-            evaluation_input=evaluation_input,
+            model_factory=model_store.model_factory,
+            evaluation_input=context.evaluation_input,
         )
         bundle.verify()
         result.checkpoint_path.unlink()
         print(f"Published model bundle: {bundle.path}")
     return result
+
+
+__all__ = ["run_training"]
