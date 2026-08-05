@@ -13,8 +13,7 @@ class DataAugmenterAbstract(object):
 	
 	def __init__(self,
 			  	 data_true:PyTree[Float[Array, "N C W H"]],
-				 hidden_channels=0,
-				 nca_model=None):
+				 hidden_channels=0):
 		"""
 		Class for handling data augmentation for NCA training. 
 		data_init is called before training,
@@ -33,10 +32,6 @@ class DataAugmenterAbstract(object):
 		hidden_channels : int optional
 			number of hidden channels to zero-pad to data. Defaults to zero
 		"""
-		if nca_model is None:
-			self.real_to_latent = lambda x:x
-		else:
-			self.real_to_latent = nca_model.real_to_latent
 		self.OBS_CHANNELS = data_true[0].shape[1]
 		data_tree = []
 		try:
@@ -151,7 +146,6 @@ class DataAugmenterAbstract(object):
 
 		"""
 		x = jtu.tree_map(lambda data:data[:-N_steps],self.data_saved)
-		x = jtu.tree_map(lambda x:self.real_to_latent(x),x)
 		y = jtu.tree_map(lambda data:data[N_steps:],self.data_saved)
 		return x,y
 	

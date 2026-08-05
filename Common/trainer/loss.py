@@ -690,12 +690,12 @@ def build_loss_functions(loss_strings,loss_args):
 	if channel_importance is not None:
 		if len(channel_importance) != grouped_schema.n_measurement_channels:
 			raise ValueError(
-				"loss.channel_importance must contain 12 target-channel weights for grouped micropattern losses"
+				"loss term channel_importance must contain 12 target-channel weights for grouped micropattern losses"
 			)
 		if any(float(weight) < 0 for weight in channel_importance):
-			raise ValueError("loss.channel_importance cannot contain negative weights")
+			raise ValueError("loss term channel_importance cannot contain negative weights")
 		if not any(float(weight) > 0 for weight in channel_importance):
-			raise ValueError("loss.channel_importance must contain at least one positive weight")
+			raise ValueError("loss term channel_importance must contain at least one positive weight")
 		grouped_losses = {
 			"l2_grouped", "vgg_grouped", "vgg_grouped_and_l2",
 			"radial_profile_grouped", "channel_correlation_grouped",
@@ -703,7 +703,7 @@ def build_loss_functions(loss_strings,loss_args):
 		unsupported = [name for name in configured_loss_names if name not in grouped_losses]
 		if unsupported:
 			raise ValueError(
-				"loss.channel_importance is only supported for grouped micropattern losses; "
+				"loss term channel_importance is only supported for grouped micropattern losses; "
 				f"unsupported losses: {unsupported}"
 			)
 
