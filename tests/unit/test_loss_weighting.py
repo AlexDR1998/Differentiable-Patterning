@@ -151,6 +151,26 @@ def test_manifest_treats_weight_vectors_as_individual_sweep_values(tmp_path):
     assert manifest["configs"][1]["config"]["loss"]["terms"][0]["channel_importance"] == sox2
 
 
+def test_manifest_preserves_loss_type_when_indexed_fields_are_overridden(tmp_path):
+    manifest = generate_manifest(
+        {"loss": {"terms": [{"type": "l2"}]}},
+        {
+            "grid": {
+                "loss.terms": ["multi_target"],
+                "loss.terms.0.assignment": ["hard"],
+                "loss.terms.0.multi_target_weights.texture": [1.0],
+            },
+        },
+        tmp_path,
+    )
+
+    assert manifest["configs"][0]["config"]["loss"]["terms"] == [{
+        "type": "multi_target",
+        "assignment": "hard",
+        "multi_target_weights": {"texture": 1.0},
+    }]
+
+
 def test_manifest_preserves_explicit_wandb_group(tmp_path):
     manifest = generate_manifest(
         {},
