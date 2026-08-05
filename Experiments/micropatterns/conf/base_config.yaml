@@ -1,3 +1,4 @@
+schema_version: 1
 seed: 0
 
 experiment:
@@ -36,13 +37,6 @@ data:
 
 model:
   family: NCA
-  # Switch to NormalizedNCA to test state normalisation without changing the
-  # rest of the experiment configuration.
-  normalization: none
-  normalization_mean: null
-  normalization_std: null
-  normalization_eps: 1.0e-6
-  normalization_channels: null
   channels: 32
   kernel_str: [ID, LAP, DIFF]
   fire_rate: 0.5
@@ -52,34 +46,11 @@ trainer:
   boundary_mode: soft
   grad_loss: false
   sharding: null
-  # Sequential NCA timesteps grouped inside each SYCL custom call. A value of
-  # 1 uses the unfused one-step path. Ignored by non-SYCL model families.
-  sycl_fused_steps: 2
-  # Wait for fused native rollout calls before returning to XLA. Useful for
-  # diagnosing custom-call/collective ordering on Intel GPUs.
-  sycl_synchronize_custom_calls: false
-  # Diagnostic mode: wait and report asynchronous SYCL errors after each
-  # native forward/backward stage. This is intentionally expensive.
-  sycl_strict_stage_synchronization: false
-  # Fused regulariser accumulation: historical global atomics or deterministic
-  # workgroup partials followed by a second reduction kernel.
-  sycl_regulariser_reduction: atomic
-  # Diagnostic switches. Disabling loss pmean also removes the corresponding
-  # reverse-mode gradient collective and is not numerically equivalent.
-  sycl_pmean_loss: true
-  sycl_pmean_regularisers: true
-  # Serialize native calls from both tiles with a process-wide mutex. This is
-  # intentionally slow and distinguishes custom-call concurrency from sharding.
-  sycl_serialize_custom_calls: false
-  # Narrow reliability mitigations for concurrent two-tile native backward.
-  # Prefer oneMKL-only serialization; backward-wide serialization is the
-  # slower fallback/reference mode.
-  sycl_serialize_onemkl: false
-  sycl_serialize_backward_custom_calls: false
+  backend:
+    type: none
   log_directory: logs/
   loss_time_channel_mask: null
   loop_autodiff: checkpointed
-  clear_cache_every: 500
   log_every: 100
   pool_admission_enabled: true
   pool_admission_relative_threshold: 1.25
@@ -107,41 +78,24 @@ optimiser:
     transition_fraction: 0.75
 
 loss:
-  primary: l2
-  # Optional weights aligned with target-data channels and loss.primary.
-  # Null preserves uniform channel importance and equal loss-component weighting.
-  channel_importance: null
-  component_weights: null
-  regulariser_coeffs:
+  terms:
+    - type: l2
+      weight: 1.0
+
+  regularisers:
     intermediate_state: 1.0
     boundary: 5.0
     contiguous_growth: 0.0
     localised_hidden: 0.0
     update_sensitivity: 0.0
     perturbation_conservation: 0.0
-    latent_channel_match: 0.0
-    latent_size: 0.0
-  random_crop: true
-  random_channel_shuffle: false
-  args:
-    channels: null
-    experiment_groups: null
-    S: 1024
-    K: 5
-    D: 4
-    sharpen: true
-    epsilon: 0.1
-    internal_loss_func: l2
-    samples: 128
-
+    hidden_state_size: 0.0
 run:
   mode: train
   t: 32
   iterations: 2000
   warmup: 64
   write_images: true
-  sparse_pruning: false
-  target_sparsity: 0.5
 
 logging:
   backend: wandb

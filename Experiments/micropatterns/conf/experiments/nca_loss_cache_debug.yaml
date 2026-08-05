@@ -10,27 +10,18 @@ grid:
   logging.wandb.project: [nca_micropattern_upscale]
   logging.wandb.group: [nca_loss_cache_spike_pool_gate_2]
   run.iterations: [400]
-  loss.primary: [[l2_grouped]]
-  loss.layers: [[decoded]]
-  loss.vgg_internal: [l2]
+  loss.terms: [[l2_grouped]]
   trainer.loop_autodiff: [lax]
   # trainer.loop_autodiff: [lax]
-  trainer.clear_cache_every: [150]
   data.downsample: [4]
   knockout.mode: [null]
   knockout.time: [null]
   knockout.channel: [Nodal]
-  loss.regulariser_coeffs.boundary: [0.0]
-  loss.regulariser_coeffs.latent_channel_match: [0.0]
-  loss.regulariser_coeffs.contiguous_growth: [0.0]
-  loss.regulariser_coeffs.latent_size: [0.0]
-  loss.regulariser_coeffs.intermediate_state: [0.0]
-  loss.random_crop: [False]
-  model.upscale_factor: [1]
+  loss.regularisers.boundary: [0.0]
+  loss.regularisers.contiguous_growth: [0.0]
+  loss.regularisers.hidden_state_size: [0.0]
+  loss.regularisers.intermediate_state: [0.0]
   run.t: [64]
-  model.upsampler.radius: [null]
-  model.upsampler.depth: [null]
-  model.upsampler.width_factor: [null]
   system.precision: [tensorfloat32]
   trainer.pool_admission_enabled: [true,false]
   trainer.pool_admission_relative_threshold: [null]
@@ -49,7 +40,6 @@ grid:
   # system.xla_flags: [null]
   # system.xla_flags: ["--xla_gpu_enable_latency_hiding_scheduler=true"]
 # groups:
-  # - model.upscale_factor: [16,8,4,2]
     # run.t : [16,32,64,128]
 branches:
   - when:
@@ -60,21 +50,10 @@ branches:
       trainer.pool_admission_absolute_threshold: [null]
       trainer.pool_admission_ema_decay: [0.95]
       trainer.pool_admission_warmup: [null]
-#       model.upsampler.fourier_modes: [1,2,4]
-#       model.upsampler.depth: [2]
-#       model.upsampler.width_factor: [4]
 
 #   - when:
-#       model.family: isouNCA
 #     grid:
-#       model.upsampler.radius: [1,2,4]
-#       model.upsampler.depth: [2]
-#       model.upsampler.width_factor: [4]
 #   - when:
 #       model.family: NCA
 #     grid:
-#       model.upscale_factor: [1]
 #       run.t: [128]
-#       loss.regulariser_coeffs.latent_channel_match: [0.0]
-#       model.upsampler.depth: [null]
-      # model.upsampler.width_factor: [null]

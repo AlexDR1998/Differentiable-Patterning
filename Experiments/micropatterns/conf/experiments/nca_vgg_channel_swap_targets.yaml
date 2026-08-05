@@ -9,14 +9,13 @@ grid:
   logging.wandb.group: [NCA_9ch_micropattern_rad_cor_loss_cosine_schedule_1]
   run.iterations: [8000]
   run.repeat: [0,]
-  # loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
-  # loss.layers: [[decoded,latent],[decoded,decoded],[decoded,both]]
-  # loss.primary: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
-  # loss.primary: [[vgg_grouped,l2_grouped]]
-  # loss.primary: [[vgg,l2]]
-  loss.primary: [[vgg_grouped,l2_grouped,radial_profile_grouped,channel_correlation_grouped]]
-  # loss.layers: [[decoded,latent], [decoded,decoded],[decoded,both],[both,latent], [both,decoded],[both,both]]
-  # loss.layers: [[both,latent], [both,decoded],[both,both]]
+  # loss.terms: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
+  # loss.terms: [[vgg_grouped,l2_grouped],[ott_grouped,l2_grouped]]
+  # loss.terms: [[vgg_grouped,l2_grouped]]
+  # loss.terms: [[vgg,l2]]
+  loss.terms:
+    - [{type: vgg_grouped}, {type: l2_grouped}, {type: radial_profile_grouped, weight: 0}, {type: channel_correlation_grouped}]
+    - [{type: vgg_grouped}, {type: l2_grouped}, {type: radial_profile_grouped, weight: 10}, {type: channel_correlation_grouped}]
   trainer.loop_autodiff: [checkpointed]
   data.downsample: [4]
   data.micropattern.data_channels: [12]
@@ -25,31 +24,18 @@ grid:
   knockout.mode: [null]
   knockout.time: [null]
   knockout.channel: [Nodal]
-  loss.regulariser_coeffs.latent_channel_match: [0.0]
-  loss.regulariser_coeffs.contiguous_growth: [0.0]
-  loss.regulariser_coeffs.latent_size: [0.0]
-  loss.regulariser_coeffs.intermediate_state: [1.0]
-  loss.regulariser_coeffs.boundary: [5.0]
+  loss.regularisers.contiguous_growth: [0.0]
+  loss.regularisers.hidden_state_size: [0.0]
+  loss.regularisers.intermediate_state: [1.0]
+  loss.regularisers.boundary: [5.0]
   model.fire_rate: [0.5]
-  loss.random_crop: [False]
-  loss.random_channel_shuffle: [True, False]
-  model.upscale_factor: [null]
+  loss.terms.0.random_crop: [False]
+  loss.terms.0.random_channel_shuffle: [True, False]
   model.channels: [64]
-  loss.channel_importance:
+  loss.terms.0.channel_importance:
   - [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   # - [1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1]
   # - [1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1]
-  loss.component_weights:
-  # - [4, 1]
-  # - [2, 1]
-  - [1, 1, 0, 1]
-  - [1, 1, 10, 1]
-  # - [1, 2]
-  # - [1, 4]
-  # model.upsampler.radius: [2]
-  # model.upsampler.fourier_modes: [4]
-  # model.upsampler.depth: [4]
-  # model.upsampler.width_factor: [2]
   trainer.pool_admission_previous_relative_threshold: [1.10]
   optimiser.learn_rate: [5e-4]
   optimiser.decay_rate: [0.1]
@@ -61,7 +47,6 @@ grid:
   optimiser.apply_if_finite: [true]
   optimiser.max_consecutive_errors: [16]
   trainer.log_every: [200]
-  trainer.clear_cache_every: [null]
   # system.xla_flags: [[command_buffer]]
   # system.precision: [bfloat16]
 groups:
@@ -69,45 +54,32 @@ groups:
     run.t: [128]
 branches:
   - when:
-      loss.primary: [vgg,l2]
+      loss.terms: [vgg,l2]
       # model.family: NCA
     grid:
-      loss.vgg_internal: [l2]
+      loss.terms.0.metric: [l2]
   - when:
-      loss.primary: [vgg,l1]
+      loss.terms: [vgg,l1]
       # model.family: NCA
     grid:
-      loss.vgg_internal: [l2]
+      loss.terms.0.metric: [l2]
   - when:
-      loss.primary: [vgg_grouped,l2_grouped]
-      # model.family: uNCA
+      loss.terms: [vgg_grouped,l2_grouped]
     grid:
-      loss.vgg_internal: [l2]
-      # loss.random_channel_shuffle: [True, False]
-      # loss.random_crop: [True,False]
+      loss.terms.0.metric: [l2]
+      # loss.terms.0.random_channel_shuffle: [True, False]
+      # loss.terms.0.random_crop: [True,False]
   - when:
-      loss.primary: [ott_grouped,l2_grouped]
-      # model.family: uNCA
+      loss.terms: [ott_grouped,l2_grouped]
     grid:
-      loss.vgg_internal: [l2]
-      # loss.random_channel_shuffle: [True, False]
+      loss.terms.0.metric: [l2]
+      # loss.terms.0.random_channel_shuffle: [True, False]
 
     # grid:
-      # model.upsampler.fourier_modes: [4]
-#       model.upsampler.depth: [2]
-#       model.upsampler.width_factor: [4]
 
 #   - when:
-#       model.family: isouNCA
 #     grid:
-#       model.upsampler.radius: [1,2,4]
-#       model.upsampler.depth: [2]
-#       model.upsampler.width_factor: [4]
 #   - when:
 #       model.family: NCA
 #     grid:
-#       model.upscale_factor: [1]
 #       run.t: [128]
-#       loss.regulariser_coeffs.latent_channel_match: [0.0]
-#       model.upsampler.depth: [null]
-      # model.upsampler.width_factor: [null]

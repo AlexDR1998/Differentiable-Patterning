@@ -1,3 +1,4 @@
+schema_version: 1
 seed: 0
 
 experiment:
@@ -56,13 +57,6 @@ data:
 
 model:
   family: NCA
-  # Switch to NormalizedNCA to test state normalisation without changing the
-  # rest of the experiment configuration.
-  normalization: none
-  normalization_mean: null
-  normalization_std: null
-  normalization_eps: 1.0e-6
-  normalization_channels: null
   channels: 32
   kernel_str: [ID, LAP, GRAD]
   activation: relu
@@ -70,34 +64,15 @@ model:
   padding: REPLICATE
   kernel_scale: 1
   parameter_noise_level: 0.01
-  upscale_factor: 1
-  upsampler:
-    depth: null
-    width_factor: null
-    fourier_modes: null
-    radius: null
-  kan:
-    hidden_features: null
-    num_basis: 8
-    grid_min: -2.0
-    grid_max: 2.0
-    rbf_width: null
-    trainable_width: true
-    use_base_branch: true
-    base_activation: identity
-    use_layernorm: true
-    spline_init_scale: 0.1
-    base_init_scale: 0.1
-    final_zero_init: true
-
 trainer:
   boundary_mode: soft
   grad_loss: true
   sharding: null
+  backend:
+    type: none
   log_directory: logs/
   loss_time_channel_mask: null
   loop_autodiff: checkpointed
-  clear_cache_every: null
   log_every: 100
   pool_admission_enabled: true
   pool_admission_relative_threshold: 1.25
@@ -123,34 +98,18 @@ optimiser:
     transition_fraction: 0.75
 
 loss:
-  primary: [l2]
-  layers: [decoded]
-  vgg_internal: l2
-  random_crop: false
-  random_channel_shuffle: false
-  regulariser_coeffs:
+  terms:
+    - type: l2
+      weight: 1.0
+
+  regularisers:
     intermediate_state: 1.0
     boundary: 0.0
     contiguous_growth: 1.0
     localised_hidden: 0.0
     update_sensitivity: 0.0
     perturbation_conservation: 0.0
-    latent_channel_match: 0.0
-    latent_size: 0.0
-  args:
-    channels: null
-    experiment_groups: null
-    S: 1024
-    K: 5
-    D: 3
-    sharpen: true
-    epsilon: 0.1
-    internal_loss_func: l2
-    samples: 128
-    normalize: null
-    tau: null
-    amplitude_penalty: null
-
+    hidden_state_size: 0.0
 run:
   t: 64
   derive_t_from_fire_rate: false
@@ -158,8 +117,6 @@ run:
   iterations: 8000
   warmup: 10
   write_images: true
-  sparse_pruning: false
-  target_sparsity: 0.5
   filename_mode: hydra
 
 logging:

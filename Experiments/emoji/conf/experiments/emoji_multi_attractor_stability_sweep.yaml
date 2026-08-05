@@ -30,10 +30,10 @@ grid:
   data.emoji.regeneration.final_probability: [0.25]
   run.t: [128]
   run.iterations: [8000]
-  loss.primary: [[l2]]
-  loss.regulariser_coeffs.intermediate_state: [1.0]
-  loss.regulariser_coeffs.contiguous_growth: [1.0]
-  loss.regulariser_coeffs.localised_hidden: [1.0]
+  loss.terms: [[l2]]
+  loss.regularisers.intermediate_state: [1.0]
+  loss.regularisers.contiguous_growth: [1.0]
+  loss.regularisers.localised_hidden: [1.0]
 
 
   optimiser.learn_rate: [1e-3]
