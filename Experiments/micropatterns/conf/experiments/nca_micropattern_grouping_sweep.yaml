@@ -1,6 +1,6 @@
-experiment_name: nca_8ch_1b4_sweep_3_texture_settings
+experiment_name: nca_Nch_1b4_sweep_1_wide
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_8ch_1b4_sweep_3_texture_settings
+output_subdir: generated/nca_Nch_1b4_sweep_1_wide
 seed_mode: index
 grid:
   labels.gpu: [H200]
@@ -12,24 +12,24 @@ grid:
   model.fire_rate: [0.5]
   model.channels: [48]
 
-  run.iterations: [8000]
+  run.iterations: [12000]
   run.repeat: [0,1,2,3,4]
-  run.t: [64,128]
+  run.t: [128]
 
   trainer.loop_autodiff: [lax]
 
-  logging.wandb.project: [nca_micropattern_groups]
+  logging.wandb.project: [nca_micropattern_groups_v2]
   logging.singular_values.enabled: [true]
   logging.singular_values.plot_spectra: [true]
   logging.singular_values.epsilon: [1e-8]
 
   loss.terms: [multi_target]
-  loss.terms.0.multi_target_weights.l2: [0.0, 1.0]
+  loss.terms.0.multi_target_weights.l2: [0.0]
   loss.terms.0.multi_target_weights.texture: [1.0]
   loss.terms.0.multi_target_weights.channel_mean: [0.0]
-  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0,0.1]
   # loss.terms.0.multi_target_weights.radial: [0.0,0.001,0.01,0.1]
-  loss.terms.0.multi_target_weights.radial: [0.1]
+  loss.terms.0.multi_target_weights.radial: [0.1,1.0]
   loss.terms.0.assignment: [hard]
   # loss.terms: [l2]
   # loss.terms: [multi_target]
@@ -49,8 +49,7 @@ grid:
 
   # data.downsample: [8,16]
   data.micropattern.task: [micropattern_single_replicate]
-  data.micropattern.experiment_groups: [["cell_fate_s1", "cell_fate_s2"]]
-  data.micropattern.data_channels: [8]
+  
   data.batches: [1]
   data.downsample: [16]
   data.micropattern.pool_copies: [4]
@@ -77,8 +76,14 @@ grid:
   optimiser.apply_if_finite: [true]
   optimiser.max_consecutive_errors: [16]
   # system.xla_flags: [[command_buffer]]
-# groups:
-
+groups:
+  - data.micropattern.data_channels: [4,8,11,14]
+    data.micropattern.experiment_groups: 
+      - ["cell_fate_s1"]
+      - ["cell_fate_s1", "cell_fate_s2"]
+      - ["cell_fate_s1", "cell_fate_s2","rna_expression"]
+      - ["cell_fate_s1", "cell_fate_s2","rna_expression","protein_response"]
+    
 # groups:
 #   - run.t: [64,128]
 #   # - run.t: [16,64,256,1024]

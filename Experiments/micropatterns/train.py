@@ -55,6 +55,9 @@ def build_run_name(cfg, model_name, optimiser_name):
             f"_irpend{cfg.data.micropattern.get('intermediate_reinjection_probability_end', cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5))}"
             f"_irpstart{cfg.data.micropattern.get('intermediate_reinjection_decay_start_fraction', 0.25)}"
         )
+        experiment_groups = _as_list(cfg.data.micropattern.get("experiment_groups"))
+        if experiment_groups:
+            details += "_eg" + "-".join(str(group) for group in experiment_groups)
         repeat = cfg.training.loop.repeat
         if repeat is not None:
             details += f"_rep{repeat}"
