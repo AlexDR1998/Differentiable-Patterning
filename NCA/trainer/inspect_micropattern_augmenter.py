@@ -25,7 +25,7 @@ def _():
     import numpy as np
 
     from Common.dataloader.micropattern import load_micropattern_260726
-    from NCA.trainer.data_augmenter_260726 import DataAugmenter
+    from NCA.trainer.data_augmenter.micropattern import DataAugmenter
 
     return DataAugmenter, jax, jnp, load_micropattern_260726, mo, np, plt
 
@@ -333,18 +333,9 @@ def _(DataAugmenter, jax, jnp):
                 "Total NCA state channels cannot be smaller than the schema state count"
             )
 
-        class _IdentityModel:
-            N_CHANNELS = int(state_channels)
-
-            @staticmethod
-            def real_to_latent(_value):
-                return _value
-
-        _identity_model = _IdentityModel()
         _augmenter = DataAugmenter(
             data_true=jnp.asarray(data),
             hidden_channels=0,
-            nca_model=_identity_model,
             schema=schema,
             intermediate_reinjection_probability=float(probability_start),
             intermediate_reinjection_probability_end=float(probability_end),
@@ -359,7 +350,7 @@ def _(DataAugmenter, jax, jnp):
             # state. advance_pool can then shift t_(n+1) into the following
             # transition slot, exactly as it does with x_new during training.
             _x_before = [
-                _augmenter.real_to_latent(_augmenter._to_state(_trajectory)[1:])
+                _augmenter._to_state(_trajectory)[1:]
                 for _trajectory in _augmenter.data_saved
             ]
         elif input_mode == "initialization":

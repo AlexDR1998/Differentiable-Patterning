@@ -7,8 +7,8 @@ import jax.numpy as jnp
 import jax.tree_util as jtu
 
 
-def split_trajectory(data, n_steps: int = 1, real_to_latent=lambda x: x):
-    """Return latent initial states and observed target states.
+def split_trajectory(data, n_steps: int = 1):
+    """Return initial states and observable target states.
 
     ``data`` is a PyTree whose leaves have shape ``(time, channels, height,
     width)``. The input is never mutated.
@@ -16,7 +16,7 @@ def split_trajectory(data, n_steps: int = 1, real_to_latent=lambda x: x):
 
     if n_steps < 1:
         raise ValueError("n_steps must be at least one")
-    x = jtu.tree_map(lambda value: real_to_latent(value[:-n_steps]), data)
+    x = jtu.tree_map(lambda value: value[:-n_steps], data)
     y = jtu.tree_map(lambda value: value[n_steps:], data)
     return x, y
 

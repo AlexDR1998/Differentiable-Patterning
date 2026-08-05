@@ -14,22 +14,22 @@ from Common.trainer.loss_multi_target import multi_target_loss
 
 
 class TrainingExecution:
-    """Single-device reference behaviour for :class:`NCA_Trainer`."""
+    """Single-device reference behaviour for the config-driven trainer."""
 
     def __init__(self, trainer):
         self.trainer = trainer
 
     def boundary_callbacks(self):
-        return self.trainer.BOUNDARY_CALLBACK
+        return self.trainer.boundary_callbacks
 
     def loss_time_channel_mask(self):
-        return self.trainer.LOSS_TIME_CHANNEL_MASK
+        return self.trainer.loss_time_channel_mask
 
     def loss_cache(self):
-        return self.trainer.LOSS_CACHE
+        return self.trainer.loss_cache
 
     def diagnostic_boundary_masks(self):
-        masks = self.trainer.DIAGNOSTIC_BOUNDARY_MASK
+        masks = self.trainer.diagnostic_boundary_mask
         if masks is None:
             return None
         return [mask for mask in masks]
@@ -62,7 +62,7 @@ class TrainingExecution:
         return jr.split(key)
 
     def apply_advance_pool(self, x, y, iteration, key):
-        return self.trainer.DATA_AUGMENTER.advance_pool(x, y, iteration, key)
+        return self.trainer.data_augmenter.advance_pool(x, y, iteration, key)
 
     def prepare_log_dict(self, log_dict):
         return log_dict

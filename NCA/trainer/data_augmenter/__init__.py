@@ -1,8 +1,7 @@
-"""Pure, JAX-compatible building blocks for NCA data augmentation.
+"""JAX-compatible building blocks and active NCA data augmenters.
 
-The legacy augmenter classes remain in ``NCA.trainer`` for compatibility. New
-augmenters should use the functions and protocols exported here so that data
-representation, trajectory sampling, and stochastic transforms stay separate.
+The low-level transforms remain exported here, while task-specific augmenters
+live in this package as separate modules.
 """
 
 from .protocols import AugmenterBatch, NCAAugmenterProtocol

@@ -77,23 +77,23 @@ def reduce_on_plateau(optimizer,factor=0.8,patience=10,cooldown=5,accumulate_ste
     return opt
 
 
-def _schedule_config(cfg):
-    schedule_cfg = _cfg_get(cfg.optimiser, "schedule", None)
+def _schedule_config(optimizer_config):
+    schedule_cfg = _cfg_get(optimizer_config, "schedule", None)
     if isinstance(schedule_cfg, str):
         return schedule_cfg, None
     return _cfg_get(schedule_cfg, "type", "exponential"), schedule_cfg
 
 
-def build_learning_rate_schedule(cfg):
+def build_learning_rate_schedule(optimizer_config, total_steps):
     """Build the configured Optax learning-rate schedule and its name.
 
     All schedules share the existing linear warmup. Schedule-specific time is
     counted after warmup, except for the legacy exponential schedule whose
     transition length remains ``run.iterations`` for backward compatibility.
     """
-    peak_lr = float(cfg.optimiser.learn_rate)
-    warmup_steps = int(cfg.optimiser.warmup_steps)
-    total_steps = int(cfg.run.iterations)
+    peak_lr = float(optimizer_config.learn_rate)
+    warmup_steps = int(optimizer_config.warmup_steps)
+    total_steps = int(total_steps)
     if peak_lr <= 0:
         raise ValueError("optimiser.learn_rate must be positive")
     if not 0 <= warmup_steps < total_steps:
@@ -101,13 +101,16 @@ def build_learning_rate_schedule(cfg):
             "optimiser.warmup_steps must be non-negative and smaller than run.iterations"
         )
 
-    schedule_type, schedule_cfg = _schedule_config(cfg)
+    schedule_type, schedule_cfg = _schedule_config(optimizer_config)
     schedule_type = str(schedule_type).lower()
     decay_steps = total_steps - warmup_steps
 
     if schedule_type == "exponential":
+        configured_decay_rate = _cfg_get(schedule_cfg, "decay_rate", None)
         decay_rate = float(
-            _cfg_get(schedule_cfg, "decay_rate", cfg.optimiser.decay_rate)
+            optimizer_config.decay_rate
+            if configured_decay_rate is None
+            else configured_decay_rate
         )
         if decay_rate <= 0:
             raise ValueError("optimiser decay_rate must be positive")
@@ -180,43 +183,43 @@ def build_learning_rate_schedule(cfg):
 
 
 
-def build_optimizer(cfg, return_schedule=False):
+def build_optimizer(optimizer_config, total_steps, return_schedule=False):
     """
-        Takes a hydra config and constructs the appropriate optimizer with learning rate schedule and any additional features (block norm, SAM, etc.)
+        Construct an optimizer from its focused typed configuration.
     """
-    schedule, schedule_name = build_learning_rate_schedule(cfg)
-    if cfg.optimiser.type == "nadam":
+    schedule, schedule_name = build_learning_rate_schedule(optimizer_config, total_steps)
+    if optimizer_config.type == "nadam":
         base_optimizer = optax.nadam(schedule)
         opt_name = f"nadam_sched{schedule_name}"
-    elif cfg.optimiser.type == "muon":
+    elif optimizer_config.type == "muon":
         base_optimizer = muon_optimizer(schedule)
         opt_name = f"muon_sched{schedule_name}"
-    elif cfg.optimiser.type == "adamw":
+    elif optimizer_config.type == "adamw":
         base_optimizer = optax.adamw(schedule)
         opt_name = f"adamw_sched{schedule_name}"
     else:
-        raise ValueError(f"Unsupported optimizer type: {cfg.optimiser.type}")
+        raise ValueError(f"Unsupported optimizer type: {optimizer_config.type}")
 
     preprocessors = []
 
-    gradient_clip_norm = _cfg_get(cfg.optimiser, "gradient_clip_norm", None)
+    gradient_clip_norm = _cfg_get(optimizer_config, "gradient_clip_norm", None)
     if gradient_clip_norm is not None:
         preprocessors.append(optax.clip_by_global_norm(gradient_clip_norm))
         opt_name += f"_clip{gradient_clip_norm:g}"
 
-    if cfg.optimiser.blocknorm:
+    if optimizer_config.blocknorm:
         preprocessors.append(optax.scale_by_param_block_norm())
         opt_name += "_blocknorm"
 
     optimizer = optax.chain(*preprocessors, base_optimizer)
 
-    if cfg.optimiser.sam:
-        optimizer = sam_optimizer(optimizer, rho=cfg.optimiser.sam_rho, sync_period=cfg.optimiser.sam_sync_period)  
+    if optimizer_config.sam:
+        optimizer = sam_optimizer(optimizer, rho=optimizer_config.sam_rho, sync_period=optimizer_config.sam_sync_period)
         opt_name += "_sam"
 
-    apply_if_finite = _cfg_get(cfg.optimiser, "apply_if_finite", False)
+    apply_if_finite = _cfg_get(optimizer_config, "apply_if_finite", False)
     if apply_if_finite:
-        max_consecutive_errors = _cfg_get(cfg.optimiser, "max_consecutive_errors", 8)
+        max_consecutive_errors = _cfg_get(optimizer_config, "max_consecutive_errors", 8)
         optimizer = optax.apply_if_finite(
             optimizer,
             max_consecutive_errors=max_consecutive_errors,
