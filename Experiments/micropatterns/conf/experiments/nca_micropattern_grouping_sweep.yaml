@@ -3,7 +3,7 @@ entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_4ch_2b2_sweep_1_texture_settings
 seed_mode: index
 grid:
-  labels.gpu: [H200]
+  labels.gpu: [H100]
   labels.scaling: [convective]
 
   system.precision: [highest]

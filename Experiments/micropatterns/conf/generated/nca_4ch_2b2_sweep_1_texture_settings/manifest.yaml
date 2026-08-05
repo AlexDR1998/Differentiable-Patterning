@@ -7,7 +7,7 @@ count: 8
 configs:
 - index: 2
   overrides:
-    labels.gpu: H200
+    labels.gpu: H100
     labels.scaling: convective
     system.precision: highest
     model.family: gNCA
@@ -76,7 +76,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: H100
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -186,7 +186,7 @@ configs:
       channel: Nodal
 - index: 4
   overrides:
-    labels.gpu: H200
+    labels.gpu: H100
     labels.scaling: convective
     system.precision: highest
     model.family: gNCA
@@ -255,7 +255,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: H100
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -365,7 +365,7 @@ configs:
       channel: Nodal
 - index: 1
   overrides:
-    labels.gpu: H200
+    labels.gpu: H100
     labels.scaling: convective
     system.precision: highest
     model.family: gNCA
@@ -434,7 +434,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: H100
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -544,7 +544,7 @@ configs:
       channel: Nodal
 - index: 5
   overrides:
-    labels.gpu: H200
+    labels.gpu: H100
     labels.scaling: convective
     system.precision: highest
     model.family: gNCA
@@ -613,7 +613,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: H100
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -723,7 +723,7 @@ configs:
       channel: Nodal
 - index: 6
   overrides:
-    labels.gpu: H200
+    labels.gpu: H100
     labels.scaling: convective
     system.precision: highest
     model.family: gNCA
@@ -792,7 +792,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: H100
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -902,7 +902,7 @@ configs:
       channel: Nodal
 - index: 7
   overrides:
-    labels.gpu: H200
+    labels.gpu: H100
     labels.scaling: convective
     system.precision: highest
     model.family: gNCA
@@ -971,7 +971,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: H100
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -1081,7 +1081,7 @@ configs:
       channel: Nodal
 - index: 0
   overrides:
-    labels.gpu: H200
+    labels.gpu: H100
     labels.scaling: convective
     system.precision: highest
     model.family: gNCA
@@ -1150,7 +1150,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: H100
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -1260,7 +1260,7 @@ configs:
       channel: Nodal
 - index: 3
   overrides:
-    labels.gpu: H200
+    labels.gpu: H100
     labels.scaling: convective
     system.precision: highest
     model.family: gNCA
@@ -1329,7 +1329,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: H100
     data:
       dataset: micropatterns_260726
       batches: 2
