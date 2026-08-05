@@ -1,63 +1,121 @@
-# Differentiable-Patterning
-A collection of different projects and ideas that use differentiable programming to explore self organising systems with emergent pattern formation. Primarily for my PhD research. 
+# Differentiable Patterning
 
-The general idea is to build auto-differentiable complex systems that can be efficiently trained to yield specified (via data) spatio-temporal patterning.
+Differentiable Patterning is a research codebase for learning and analysing
+self-organising spatiotemporal systems with differentiable programming. It
+contains neural cellular automata (NCA), differentiable partial differential
+equation (PDE) models, and experiment workflows for image-based and biological
+micropatterning tasks.
 
+This is active research software rather than a polished general-purpose
+package. APIs, model families, and experiment configurations may change as the
+research develops. Full training workloads are intended for remote
+accelerator/cluster hardware.
 
+## Current scope
 
-## Quick start
-Clone the repository and install the requirements that best suit you, and play around with the code in the `demo/` directory. The code here is based on the [jax](https://docs.jax.dev/en/latest/) ecosystem, making heavy use of [equinox](https://docs.kidger.site/equinox/), [optax](https://optax.readthedocs.io/en/latest/) and [diffrax](https://docs.kidger.site/diffrax/).
+The actively maintained workflows focus on:
 
-### Requirements 
-To run code in this repository, choose:
- - `pip install -r requirements_<DEVICE>.txt`
- - `conda env create -f env_<DEVICE>.yml`
- - `docker pull alexdr1998/jax_equinox_scratch:latest`
+- Neural cellular automata for learning, generating, and analysing spatial
+  patterns.
+- Differentiable PDE solvers and parameterised reaction--diffusion-style
+  models.
+- Config-driven experiments for emoji, micropattern, and impulse-optimisation
+  tasks.
+- Reproducible local model bundles and visualisation/export tooling.
 
-Where `<DEVICE>` is either `cpu` or `gpu`, and the docker image is built with cuda
+`ABM/` and `Experiments/archive/` contain exploratory or historical work. They
+may be useful as research references, but are not the best starting point for
+new development.
 
+## Repository layout
 
-## Code Structure
-There are 2 main branches of work here: 
- - NCA (neural cellular automata)
- - PDE (partial differential equations)
- - ~~ABM (agent based modelling)~~
+| Path | Purpose |
+| --- | --- |
+| `Common/` | Shared JAX/Equinox models, spatial operators, data utilities, losses, and configuration support. |
+| `NCA/` | Neural cellular automaton models, training components, analysis, and registry support. |
+| `PDE/` | Differentiable PDE solvers, fixed models, and PDE training utilities. |
+| `Experiments/` | Hydra-configured experiment entry points and definitions. |
+| `demo/` | Small examples and walkthroughs for understanding the project. |
+| `docs/` | Maintained documentation for configuration, training, and model bundles. |
+| `WebDemo/` | Static WebGL visualisation and export tooling for compatible NCA models. |
+| `tests/` | Unit, integration, and hardware-specific checks. |
 
-There is considerable overlap between these, so they all inherit from base classes in Common. Everything that can be is a subclass of ```equinox.Module```, so that propagation of gradients works correctly.
-### Common structure
-- ```Common.model.abstract_model.py``` contains the ```AbstractModel``` class, a subclass of ```equinox.Module```
-  - This contains a few extra utility methods like saving to / loading from files
-- ```Common.model.spatial_operators.py``` contains the ```Ops``` class, a subclass of ```equinox.Module```
-  - This performs finite difference approximations of any 2D vector calculus operations (divergence, gradient, laplacians etc.)
-- ```Common.model.boundary.py``` contains the ```model_boundary``` class
-  - This enforces complex boundary conditions on model states during training and evalutation
-- ```Common.trainer.abstract_data_augmenter_tree.py``` contains a ```DataAugmenterAbstract``` class
-  - Subclasses of this handle any data augmentation during training of models.
-  - Data should be a PyTree (list) of arrays, which allows for simultaneously training to different sized patterns
-- ```Common.trainer.abstract_data_augmenter_array.py``` contains a ```DataAugmenterAbstract``` class
-  - Same as above, but only accepts data as one array. Does multi-gpu data parallelism through JAX sharding
-- ```Common.trainer.abstract_tensorboard_log.py``` contains a ```Train_log``` class
-  - Subclasses of this save various aspects of model parameters/state during and after training
-- ```Common.trainer.loss.py``` contains various custom loss functions
-- ```Common.utils.py``` contains various helper functions for loading and processing specific datasets
+Generated checkpoints, experiment outputs, W&B logs, figures, and videos are
+local research artifacts rather than source code.
 
-### NCA structure
-Everything is subclassed from Common. Important details are that:
-- Everything in ```NCA.model.``` is an ```AbstractModel``` subclass that also uses the ```Ops``` class
-- ```NCA.trainer.NCA_trainer.py``` includes the ```NCA_Trainer``` class
-  - This uses Optax to fit the NCA models to data
-- ```NCA.trainer.data_augmenter_*``` Include various ```DataAugmenter``` subclasses, each for training to a different task 
-- ```NCA.trainer.tensorboard_log.py``` subclasses ```Train_log``` to visualise model parameters during training
-- ```NCA.NCA_visualiser.py``` produces nice plots summarizing model parameters of an ```NCA``` model
+## Installation
 
-### PDE structure
-Everything is subclassed from Common. Important details are that:
-- ```PDE.model.solver.semidiscrete_solver.py``` contains the ```PDE_solver``` class, a subclass of ```AbstractModel```
-  - This uses ```diffrax``` to perform a fully auto-differentiable numerical ODE solve on a spatially discretised PDE (i.e. a system of ODEs)
-  - Needs to be initialised with the RHS of the PDE, an ```equinox.Module``` with call signature ```F: t,X,args -> X```  
-- ```PDE.model.reaction_diffusion_advection.update.py``` includes an auto-differentiable multi-species reaction diffusion advection equation, parameterised by neural networks
-- ```PDE.model.reaction_diffusion_chemotaxis.update.py``` includes an auto-differentiable multi-cell multi-signal reaction diffusion chemotaxis equation, parameterised by neural networks
-- ```PDE.model.fixed_models.*``` contains several example PDEs that perform pattern formation
-- ```PDE.trainer.PDE_trainer.py``` includes the ```PDE_Trainer``` that uses Optax to fit PDE paramaters such that the solutions of the PDE approximate a given time series
-- ```PDE/trainer/optimiser.py``` includes custom ```optax.GradientTransformation()``` that keeps diffusion coefficients non-negative
-  
+Create an environment appropriate for the available hardware:
+
+```bash
+pip install -r requirements_cpu.txt
+# or
+pip install -r requirements_gpu.txt
+```
+
+Conda environments are also provided:
+
+```bash
+conda env create -f env_cpu.yml
+# or
+conda env create -f env_gpu.yml
+```
+
+JAX installations can be hardware- and driver-specific. The supplied GPU
+requirements are a starting point; use the installation guidance appropriate
+for the target accelerator platform.
+
+## Start here
+
+For an overview of the current NCA workflow, begin with:
+
+- [`demo/nca_training_config_walkthrough.py`](demo/nca_training_config_walkthrough.py)
+- [`demo/nca_objectives_and_pool_dynamics.py`](demo/nca_objectives_and_pool_dynamics.py)
+- [Typed experiment configuration](docs/configuration.md)
+- [NCA trainer architecture](docs/nca_trainer.md)
+- [Local model registry](docs/model_registry.md)
+
+The `demo/` directory also contains PDE demonstrations and notebooks. These
+are intended for exploration; do not treat a training script as a lightweight
+smoke test.
+
+## Experiments and reproducibility
+
+Active experiments are defined in `Experiments/` using Hydra YAML
+configuration. Configurations are resolved and converted to typed, immutable
+dataclasses before model construction. Experiment-specific data loading,
+cluster launch settings, and expected compute requirements are intentionally
+kept close to the relevant experiment configuration.
+
+When enabled, NCA training publishes a versioned local model bundle containing
+the checkpoint, resolved configuration, provenance, and checksums. W&B is used
+for training logs. See the [model registry documentation](docs/model_registry.md)
+for bundle layout, recovery, and inspection commands.
+
+Cluster/container launch files, including `launch_slurm.sh`,
+`launch_batch_slurm.sh`, and `run.tpl.yml`, are provided for remote workflows.
+Review and adapt these to the target environment before submitting work.
+
+## Tests
+
+Run the lightweight unit test suite with:
+
+```bash
+pytest tests/unit
+```
+
+Integration and hardware tests may require GPU, SYCL, datasets, model assets,
+or cluster-specific configuration. They are not expected to run in every local
+development environment.
+
+## Web demo
+
+`WebDemo/` contains a static WebGL viewer for exported compatible NCA models,
+alongside a marimo analysis page. See the [WebDemo README](WebDemo/README.md)
+for export and serving instructions.
+
+## Research use
+
+If you build on this work, please contact the repository author for the most
+appropriate citation for the relevant model, experiment, or result. A formal
+citation and licence can be added here when they are available.
