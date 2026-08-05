@@ -8,6 +8,7 @@ import jax.tree_util as jtu
 
 from Common.trainer.loss import build_loss_functions, build_loss_initialiser
 from Common.trainer.loss_multi_target import init_texture_params
+from Experiments.config_helpers import build_wandb_tags
 import NCA.trainer.NCA_regulariser as regularisers
 from NCA.trainer.objective import resolve_loss_component_weights, resolve_objective
 from NCA.trainer.optimizer import build_optimizer
@@ -153,7 +154,7 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         wandb_args={
             "project": config.logging.wandb.project,
             "group": config.logging.wandb.group,
-            "tags": list(config.logging.wandb.tags or ()),
+            "tags": build_wandb_tags(config),
             "name": trainer.context.run_name,
         },
         knockout={

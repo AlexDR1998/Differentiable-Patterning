@@ -428,3 +428,13 @@ def build_tags(cfg, prefix=""):
                 value = _compact_value(value)
             tags.append(_safe_wandb_tag(f"{tag_key}:{value}"))
     return tags
+
+
+def build_wandb_tags(cfg):
+    """Build automatic configuration tags and retain user-supplied tags."""
+
+    automatic_tags = build_tags(cfg)
+    logging = _cfg_get(cfg, "logging", None)
+    wandb = _cfg_get(logging, "wandb", None)
+    explicit_tags = _cfg_get(wandb, "tags", None) or ()
+    return list(dict.fromkeys((*automatic_tags, *map(str, explicit_tags))))

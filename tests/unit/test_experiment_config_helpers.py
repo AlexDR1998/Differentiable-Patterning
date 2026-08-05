@@ -2,7 +2,12 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from Experiments.config_helpers import build_model, build_model_config_string, build_tags
+from Experiments.config_helpers import (
+    build_model,
+    build_model_config_string,
+    build_tags,
+    build_wandb_tags,
+)
 from Experiments.emoji.config_helpers import (
     build_data_augmenter,
     build_data_config_string,
@@ -191,6 +196,30 @@ def test_build_tags_omits_wandb_routing_tags():
     assert "data.emoji.sequence:av_mu" in tags
     assert not any(tag.startswith("logging.wandb.project:") for tag in tags)
     assert not any(tag.startswith("logging.wandb.group:") for tag in tags)
+
+
+def test_build_wandb_tags_combines_automatic_and_explicit_tags():
+    cfg = _cfg(
+        {
+            "model": {"family": "NCA", "channels": 8},
+            "training": {"loop": {"iterations": 1000}},
+            "logging": {
+                "wandb": {
+                    "project": "NCA-test",
+                    "group": "comparison",
+                    "tags": ["paper", "model.family:NCA"],
+                }
+            },
+        }
+    )
+
+    tags = build_wandb_tags(cfg)
+
+    assert "model.family:NCA" in tags
+    assert "model.channels:8" in tags
+    assert "training.loop.iterations:1000" in tags
+    assert "paper" in tags
+    assert tags.count("model.family:NCA") == 1
 
 
 def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
