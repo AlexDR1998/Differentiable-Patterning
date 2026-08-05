@@ -1,5 +1,5 @@
 from Common.trainer.abstract_wandb_log import Train_log
-from NCA.trainer.tensorboard_log import NCA_Train_log
+from NCA.trainer.logging.tensorboard import NCA_Train_log
 from Common.utils import squarish
 from jaxtyping import Float, Array
 import jax.numpy as jnp
