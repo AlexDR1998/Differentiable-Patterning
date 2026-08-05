@@ -3,6 +3,7 @@ jaxlib
 equinox
 optax
 diffrax
+hydra-core>=1.3.2
 tqdm
 wandb
 wandb[media]

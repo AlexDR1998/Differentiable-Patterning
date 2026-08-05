@@ -1,0 +1,12 @@
+{
+  "models": [
+    {
+      "id": "contiguous_regrowth",
+      "label": "contiguous_regrowth"
+    },
+    {
+      "id": "test_grow_crab",
+      "label": "test_grow_crab"
+    }
+  ]
+}

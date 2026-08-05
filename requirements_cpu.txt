@@ -3,6 +3,7 @@ jaxlib
 equinox
 optax
 diffrax
+hydra-core>=1.3.2
 tqdm
 wandb
 wandb[media]
@@ -19,3 +20,11 @@ ipykernel
 ipywidgets
 ffmpeg-python
 nbformat
+flax
+orbax-checkpoint
+requests
+clip-jax
+transformers
+pyparsing
+PyYAML
+pytest

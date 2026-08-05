@@ -1,0 +1,131 @@
+{
+  "modelId": "contiguous_regrowth",
+  "family": "NCA",
+  "channels": 32,
+  "kernels": [
+    "ID",
+    "GRAD",
+    "LAP"
+  ],
+  "sourceKernels": [
+    "ID",
+    "LAP",
+    "GRAD"
+  ],
+  "activation": "relu",
+  "padding": "REPLICATE",
+  "fireRate": 0.5,
+  "gridSize": [
+    140,
+    140
+  ],
+  "featureChannels": 128,
+  "hiddenChannels": 128,
+  "weights": {
+    "path": "weights.bin",
+    "tensors": {
+      "w0": {
+        "name": "w0",
+        "dtype": "float32",
+        "shape": [
+          128,
+          128
+        ],
+        "byteOffset": 0,
+        "byteLength": 65536
+      },
+      "w1": {
+        "name": "w1",
+        "dtype": "float32",
+        "shape": [
+          32,
+          128
+        ],
+        "byteOffset": 65536,
+        "byteLength": 16384
+      },
+      "b1": {
+        "name": "b1",
+        "dtype": "float32",
+        "shape": [
+          32
+        ],
+        "byteOffset": 81920,
+        "byteLength": 128
+      },
+      "grad_x": {
+        "name": "grad_x",
+        "dtype": "float32",
+        "shape": [
+          3,
+          3
+        ],
+        "byteOffset": 82048,
+        "byteLength": 36
+      },
+      "grad_y": {
+        "name": "grad_y",
+        "dtype": "float32",
+        "shape": [
+          3,
+          3
+        ],
+        "byteOffset": 82084,
+        "byteLength": 36
+      },
+      "lap": {
+        "name": "lap",
+        "dtype": "float32",
+        "shape": [
+          3,
+          3
+        ],
+        "byteOffset": 82120,
+        "byteLength": 36
+      },
+      "average": {
+        "name": "average",
+        "dtype": "float32",
+        "shape": [
+          3,
+          3
+        ],
+        "byteOffset": 82156,
+        "byteLength": 36
+      }
+    }
+  },
+  "initialState": {
+    "path": "x0.bin",
+    "dtype": "float32",
+    "shape": [
+      32,
+      140,
+      140
+    ]
+  },
+  "display": {
+    "channels": [
+      0,
+      1,
+      2
+    ],
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "validation": {
+    "referenceSteps": 8,
+    "referenceFireRate": 1.0,
+    "reference": {
+      "path": "reference.bin",
+      "dtype": "float32",
+      "shape": [
+        32,
+        140,
+        140
+      ]
+    }
+  }
+}

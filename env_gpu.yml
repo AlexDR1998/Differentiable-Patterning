@@ -25,3 +25,11 @@ dependencies:
     - ipywidgets
     - ffmpeg-python
     - nbformat
+    - flax
+    - orbax-checkpoint
+    - requests
+    - clip-jax
+    - transformers
+    - pyparsing
+    - PyYAML
+    - pytest

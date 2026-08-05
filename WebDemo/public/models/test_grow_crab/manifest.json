@@ -1,0 +1,126 @@
+{
+  "modelId": "test_grow_crab",
+  "family": "NCA",
+  "channels": 20,
+  "kernels": [
+    "ID",
+    "GRAD",
+    "LAP"
+  ],
+  "activation": "relu",
+  "padding": "CIRCULAR",
+  "fireRate": 0.5,
+  "gridSize": [
+    96,
+    96
+  ],
+  "featureChannels": 80,
+  "hiddenChannels": 80,
+  "weights": {
+    "path": "weights.bin",
+    "tensors": {
+      "w0": {
+        "name": "w0",
+        "dtype": "float32",
+        "shape": [
+          80,
+          80
+        ],
+        "byteOffset": 0,
+        "byteLength": 25600
+      },
+      "w1": {
+        "name": "w1",
+        "dtype": "float32",
+        "shape": [
+          20,
+          80
+        ],
+        "byteOffset": 25600,
+        "byteLength": 6400
+      },
+      "b1": {
+        "name": "b1",
+        "dtype": "float32",
+        "shape": [
+          20
+        ],
+        "byteOffset": 32000,
+        "byteLength": 80
+      },
+      "grad_x": {
+        "name": "grad_x",
+        "dtype": "float32",
+        "shape": [
+          3,
+          3
+        ],
+        "byteOffset": 32080,
+        "byteLength": 36
+      },
+      "grad_y": {
+        "name": "grad_y",
+        "dtype": "float32",
+        "shape": [
+          3,
+          3
+        ],
+        "byteOffset": 32116,
+        "byteLength": 36
+      },
+      "lap": {
+        "name": "lap",
+        "dtype": "float32",
+        "shape": [
+          3,
+          3
+        ],
+        "byteOffset": 32152,
+        "byteLength": 36
+      },
+      "average": {
+        "name": "average",
+        "dtype": "float32",
+        "shape": [
+          3,
+          3
+        ],
+        "byteOffset": 32188,
+        "byteLength": 36
+      }
+    }
+  },
+  "initialState": {
+    "path": "x0.bin",
+    "dtype": "float32",
+    "shape": [
+      20,
+      96,
+      96
+    ]
+  },
+  "display": {
+    "channels": [
+      0,
+      1,
+      2
+    ],
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "validation": {
+    "referenceSteps": 8,
+    "referenceFireRate": 1.0,
+    "reference": {
+      "path": "reference.bin",
+      "dtype": "float32",
+      "shape": [
+        20,
+        96,
+        96
+      ]
+    }
+  }
+}

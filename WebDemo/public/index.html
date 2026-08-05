@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NCA WebGL Demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #111416;
+        color: #e8ecef;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      main {
+        width: min(980px, calc(100vw - 32px));
+        margin: 32px auto;
+        display: grid;
+        gap: 18px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 6vw, 4.8rem);
+        line-height: 0.95;
+        max-width: 820px;
+      }
+
+      h2 {
+        font-size: 1.1rem;
+      }
+
+      .intro {
+        display: grid;
+        gap: 12px;
+        padding: 18px 0 6px;
+      }
+
+      .intro p,
+      .notes {
+        max-width: 760px;
+        color: #aab4bb;
+        line-height: 1.55;
+      }
+
+      .tool {
+        display: grid;
+        gap: 14px;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      button,
+      select,
+      input {
+        font: inherit;
+      }
+
+      button {
+        min-height: 34px;
+        border: 1px solid #3a4249;
+        background: #1b2024;
+        color: #f5f7f8;
+        border-radius: 6px;
+        padding: 0 12px;
+        cursor: pointer;
+      }
+
+      button[aria-pressed="true"] {
+        background: #315f75;
+        border-color: #5b93aa;
+      }
+
+      label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+      }
+
+      canvas {
+        width: min(768px, calc(100vw - 32px));
+        aspect-ratio: 1;
+        image-rendering: pixelated;
+        background: #050607;
+        border: 1px solid #31383e;
+        touch-action: none;
+      }
+
+      .status {
+        min-height: 20px;
+        color: #aab4bb;
+        font-size: 14px;
+      }
+
+      .error {
+        color: #ffb1a6;
+      }
+
+      .analysis {
+        display: grid;
+        gap: 18px;
+        margin-top: 10px;
+      }
+
+      .analysis-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+      }
+
+      .panel {
+        border-top: 1px solid #31383e;
+        padding-top: 14px;
+        display: grid;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .metadata {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr);
+        column-gap: 14px;
+        row-gap: 8px;
+        color: #d8dee4;
+      }
+
+      .metadata dt {
+        color: #8f9ba5;
+      }
+
+      .metadata dd {
+        margin: 0;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.92rem;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #31383e;
+        padding: 0.4rem 0.5rem;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      th:first-child,
+      td:first-child {
+        text-align: left;
+      }
+
+      th {
+        color: #8f9ba5;
+        font-weight: 500;
+      }
+
+      .chart {
+        width: 100%;
+        min-height: 260px;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        color: #aab4bb;
+        font-size: 0.9rem;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .legend-swatch {
+        width: 12px;
+        height: 3px;
+        border-radius: 999px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="intro">
+        <h1>Interactive Neural Cellular Automata</h1>
+        <p>
+          A browser-side WebGL rollout of exported NCA checkpoints. The canvas
+          runs the model from static assets, while the summaries below read the
+          same initial state and reference rollout used for validation.
+        </p>
+      </section>
+
+      <section class="tool">
+        <canvas id="nca-canvas" width="768" height="768"></canvas>
+        <div class="toolbar">
+          <label>
+            Model
+            <select id="model-select"></select>
+          </label>
+          <button id="reset" type="button">Reset</button>
+          <button id="play-pause" type="button">Play</button>
+          <button id="step-once" type="button">Step</button>
+          <button id="display-rgb" type="button" aria-pressed="true">RGB</button>
+          <button id="display-hidden-grid" type="button" aria-pressed="false">Hidden Grid</button>
+          <button id="brush-zero" type="button" aria-pressed="true">Zero</button>
+          <button id="brush-random" type="button" aria-pressed="false">Random</button>
+          <button id="brush-target-all" type="button" aria-pressed="true">All</button>
+          <button id="brush-target-rgb" type="button" aria-pressed="false">RGB Only</button>
+          <label>
+            Speed
+            <input id="playback-speed" type="range" min="-4" max="2" value="0">
+            <span id="playback-speed-value">1x</span>
+          </label>
+          <label>
+            Radius
+            <input id="brush-radius" type="range" min="1" max="16" value="6">
+          </label>
+          <label>
+            Hidden Saturation
+            <input id="hidden-saturation" type="range" min="0.25" max="8" step="0.25" value="1">
+            <span id="hidden-saturation-value">1x</span>
+          </label>
+          <button id="validate" type="button">Validate</button>
+        </div>
+        <div id="status" class="status">Loading model...</div>
+      </section>
+
+      <section class="analysis">
+        <div class="analysis-grid">
+          <section class="panel">
+            <h2>Exported Model</h2>
+            <dl id="model-metadata" class="metadata"></dl>
+          </section>
+          <section class="panel">
+            <h2>Largest Channel-Mass Changes</h2>
+            <div id="channel-change-chart" class="chart"></div>
+          </section>
+        </div>
+        <section class="panel">
+          <h2>Reference Rollout Summary</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>channel</th>
+                <th>initial sum</th>
+                <th>reference sum</th>
+                <th>delta sum</th>
+                <th>reference max</th>
+              </tr>
+            </thead>
+            <tbody id="channel-summary-body"></tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <h2>Live Spatial Mean By Channel</h2>
+          <div id="live-intensity-legend" class="legend"></div>
+          <div id="live-intensity-chart" class="chart"></div>
+        </section>
+        <p class="notes">
+          The live WebGL state is intentionally separate from these summaries:
+          the analysis describes exported assets and the deterministic reference
+          rollout, while the canvas remains free for interactive perturbations.
+        </p>
+      </section>
+    </main>
+    <script type="module" src="./js/app.js?v=13"></script>
+  </body>
+</html>
