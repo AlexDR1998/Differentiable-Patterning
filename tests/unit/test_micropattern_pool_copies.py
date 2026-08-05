@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import jax.numpy as jnp
 import jax.random as jr
 
@@ -36,6 +38,17 @@ def test_initialize_pool_preserves_raw_timestep_alignment():
 
     assert jnp.array_equal(jnp.stack(initialized_x), jnp.stack(split_x))
     assert jnp.array_equal(jnp.stack(initialized_y), jnp.stack(split_y))
+
+
+def test_initialize_pool_pads_schema_state_to_model_channels():
+    data = _time_coded_data(batch_count=1)
+    model = SimpleNamespace(N_CHANNELS=48)
+    augmenter = DataAugmenter(data_true=data, nca_model=model)
+    augmenter.noise_strength = 0.0
+
+    initialized_x, _ = augmenter.initialize_pool(jr.PRNGKey(0))
+
+    assert initialized_x[0].shape[1] == model.N_CHANNELS
 
 
 def test_advance_pool_shifts_perfect_rollout_into_next_transition_slots():

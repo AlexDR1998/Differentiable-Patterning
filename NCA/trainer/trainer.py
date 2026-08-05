@@ -85,6 +85,7 @@ class NcaTrainer:
 		augmenter_kwargs = dict(
 			data_true=data,
 			hidden_channels=0 if channel_schema is not None else self.channels-self.data_channels,
+			nca_model=self.model,
 			)
 		self.data_augmenter = data_augmenter(**augmenter_kwargs)
 		self.data_augmenter.data_init(self.sharding)

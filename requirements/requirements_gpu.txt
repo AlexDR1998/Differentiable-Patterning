@@ -28,3 +28,4 @@ transformers
 pyparsing
 PyYAML
 pytest
+marimo

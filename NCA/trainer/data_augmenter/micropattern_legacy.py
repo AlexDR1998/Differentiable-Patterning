@@ -66,7 +66,7 @@ class MicropatternDataAugmenter(BasicAugmenter):
             raise ValueError(
                 "intermediate_reinjection_decay_start_fraction must be in [0, 1)"
             )
-        model = kwargs.get("nca_model")
+        model = kwargs.pop("nca_model", None)
         self.channels = (
             model.N_CHANNELS
             if model is not None
