@@ -96,7 +96,12 @@ def build_nested_override(dotlist_items: dict[str, Any]) -> dict[str, Any]:
                     next_is_index = parts[index + 1].isdigit()
                     expected = list if next_is_index else dict
                     if part not in cursor or not isinstance(cursor[part], expected):
-                        cursor[part] = [] if next_is_index else {}
+                        existing = cursor.get(part)
+                        cursor[part] = (
+                            [existing]
+                            if next_is_index and existing is not None
+                            else ([] if next_is_index else {})
+                        )
                     cursor = cursor[part]
     return root
 
