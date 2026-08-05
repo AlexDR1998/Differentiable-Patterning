@@ -5,6 +5,7 @@ import jax
 import numpy as np
 
 from Experiments.config_helpers import load_model_checkpoint, set_matmul_precision
+from Experiments.config_helpers import loss_names, loss_weights
 from Experiments.impulse.config_helpers import (
     build_impulse_optimizer,
     build_intervention,
@@ -20,28 +21,38 @@ from NCA.trainer.impulse import NCAImpulseOptimiser
 def run(cfg):
     """Load a trained NCA, optimise an intervention, and save float outputs."""
 
-    set_matmul_precision(cfg)
+    set_matmul_precision(cfg.runtime)
     key = jax.random.PRNGKey(cfg.seed)
     model_key, intervention_key, train_key = jax.random.split(key, 3)
-    model, _, checkpoint_path = load_model_checkpoint(cfg, key=model_key)
-    trajectories = load_impulse_data(cfg, model)
-    pair_source = build_pair_source(cfg, model, trajectories)
-    intervention = build_intervention(cfg, model, trajectories, intervention_key)
+    model, _, checkpoint_path = load_model_checkpoint(
+        cfg.model,
+        cfg.checkpoint,
+        key=model_key,
+    )
+    trajectories = load_impulse_data(cfg.data, model)
+    pair_source = build_pair_source(cfg.impulse, model, trajectories)
+    intervention = build_intervention(
+        cfg.impulse.intervention,
+        cfg.data.emoji.observed_channels,
+        model,
+        trajectories,
+        intervention_key,
+    )
 
     impulse_cfg = cfg.impulse
     optimiser = NCAImpulseOptimiser(
         model=model,
         pair_source=pair_source,
         intervention=intervention,
-        objective=build_objective(cfg),
-        optimiser=build_impulse_optimizer(cfg),
-        observed_channels=cfg.data.observed_channels,
+        objective=build_objective(cfg.impulse.objective),
+        optimiser=build_impulse_optimizer(cfg.impulse.optimiser),
+        observed_channels=cfg.data.emoji.observed_channels,
         rollout_steps=impulse_cfg.rollout.steps,
-        loss_names=list(impulse_cfg.loss.primary),
-        loss_args=loss_args_from_config(cfg),
-        component_weights=impulse_cfg.loss.component_weights,
-        loss_channels=impulse_cfg.loss.channels,
-        regulariser_coefficients=dict(impulse_cfg.regulariser_coefficients),
+        loss_names=loss_names(impulse_cfg.loss),
+        loss_args=loss_args_from_config(cfg.impulse.loss),
+        component_weights=loss_weights(impulse_cfg.loss),
+        loss_channels=impulse_cfg.loss.terms[0].channels or "observed",
+        regulariser_coefficients=dict(impulse_cfg.loss.regularisers),
         scan_kind=impulse_cfg.rollout.scan_kind,
         resample_every=impulse_cfg.resample_every,
     )
@@ -53,7 +64,7 @@ def run(cfg):
         log_every=impulse_cfg.log_every,
     )
 
-    output_directory = resolve_output_directory(cfg)
+    output_directory = resolve_output_directory(cfg.impulse.output)
     run_name = f"{checkpoint_path.stem}_{impulse_cfg.objective.type}"
     eqx.tree_serialise_leaves(output_directory / f"{run_name}.eqx", result.best_intervention)
     np.savez_compressed(
@@ -74,4 +85,3 @@ def run(cfg):
         json.dump(summary, handle, indent=2)
     print(f"Saved impulse result to {output_directory / run_name}")
     return result
-

@@ -27,15 +27,15 @@ def _as_dict(value):
     return {key: item for key, item in value.items()}
 
 
-def load_impulse_data(cfg, model, impath=None):
+def load_impulse_data(data_config, model, impath=None):
     """Load emoji trajectories and transform them into NCA latent states."""
 
-    if cfg.data.dataset != "emojis":
+    if data_config.dataset != "emojis":
         raise ValueError("The initial impulse entrypoint currently supports data.dataset=emojis")
-    data, _ = load_emoji_data(cfg, impath=impath)
+    data, _ = load_emoji_data(data_config, impath=impath)
     data = jnp.asarray(data)
 
-    pad = _cfg_get(cfg.data, "pad", None)
+    pad = data_config.emoji.pad
     if pad is not None:
         if isinstance(pad, int):
             pad = [pad, pad, pad, pad]
@@ -46,7 +46,6 @@ def load_impulse_data(cfg, model, impath=None):
 
     batch_count, time_count = data.shape[:2]
     flat_data = data.reshape((-1, *data.shape[2:]))
-    flat_data = jax.vmap(model.real_to_latent)(flat_data)
     data = flat_data.reshape((batch_count, time_count, *flat_data.shape[1:]))
 
     model_channels = model.N_CHANNELS
@@ -59,10 +58,10 @@ def load_impulse_data(cfg, model, impath=None):
     return data
 
 
-def build_pair_source(cfg, model, trajectories):
+def build_pair_source(impulse_config, model, trajectories):
     """Construct the configured initial-state/target-state provider."""
 
-    pair_cfg = cfg.impulse.pair_source
+    pair_cfg = impulse_config.pair_source
     pair_type = pair_cfg.type
     if pair_type == "external_target":
         return ExternalTargetPairSource(trajectories[:, 0], trajectories[:, -1])
@@ -70,7 +69,7 @@ def build_pair_source(cfg, model, trajectories):
         return ModelFuturePairSource(
             trajectories[:, 0],
             target_steps=pair_cfg.target_steps,
-            scan_kind=cfg.impulse.rollout.scan_kind,
+            scan_kind=impulse_config.rollout.scan_kind,
         )
     if pair_type == "trajectory_state":
         return TrajectoryStatePairSource(
@@ -84,15 +83,14 @@ def build_pair_source(cfg, model, trajectories):
             source_index=pair_cfg.source_index,
             target_index=pair_cfg.target_index,
             stabilisation_steps=tuple(pair_cfg.stabilisation_steps),
-            scan_kind=cfg.impulse.rollout.scan_kind,
+            scan_kind=impulse_config.rollout.scan_kind,
         )
     raise ValueError(f"Unknown impulse pair source {pair_type!r}")
 
 
-def build_objective(cfg):
+def build_objective(objective_cfg):
     """Construct the configured targeted, destructive, or preservative objective."""
 
-    objective_cfg = cfg.impulse.objective
     if objective_cfg.type == "targeted":
         return TargetedObjective(target_weight=objective_cfg.target_weight)
     if objective_cfg.type == "minimal_destructive":
@@ -107,27 +105,25 @@ def build_objective(cfg):
     raise ValueError(f"Unknown impulse objective {objective_cfg.type!r}")
 
 
-def build_intervention(cfg, model, trajectories, key):
+def build_intervention(intervention_cfg, observed_channels, model, trajectories, key):
     """Initialise the legacy Equinox perturbation module from config."""
 
-    intervention_cfg = cfg.impulse.intervention
     return perturbation(
         mode={
             "channel": intervention_cfg.channels,
             "spatial": intervention_cfg.spatial,
         },
         CHANNELS=model.N_CHANNELS,
-        OBS_CHANNELS=cfg.data.observed_channels,
+        OBS_CHANNELS=observed_channels,
         x=trajectories[:1, 0],
         WIDTH=intervention_cfg.width,
         key=key,
     )
 
 
-def build_impulse_optimizer(cfg):
+def build_impulse_optimizer(optimiser_cfg):
     """Build the lightweight Optax optimiser used for intervention parameters."""
 
-    optimiser_cfg = cfg.impulse.optimiser
     constructors = {
         "adam": optax.adam,
         "nadam": optax.nadam,
@@ -143,10 +139,9 @@ def build_impulse_optimizer(cfg):
     return optimiser
 
 
-def resolve_output_directory(cfg, env=None):
+def resolve_output_directory(output_cfg, env=None):
     """Resolve and create the directory used for intervention outputs."""
 
-    output_cfg = cfg.impulse.output
     directory = Path(str(output_cfg.directory)).expanduser()
     environment = os.environ if env is None else env
     if not directory.is_absolute():
@@ -159,8 +154,8 @@ def resolve_output_directory(cfg, env=None):
     return directory
 
 
-def loss_args_from_config(cfg):
+def loss_args_from_config(loss_config):
     """Return plain loss arguments accepted by ``build_loss_functions``."""
+    from Experiments.config_helpers import build_loss_args
 
-    return _as_dict(_cfg_get(cfg.impulse.loss, "args", None))
-
+    return build_loss_args(loss_config)
