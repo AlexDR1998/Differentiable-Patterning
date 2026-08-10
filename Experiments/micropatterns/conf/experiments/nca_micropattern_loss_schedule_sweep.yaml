@@ -14,7 +14,7 @@ grid:
   model.channels: [48]
 
   run.iterations: [12000]
-  run.repeat: [0,]
+  run.repeat: [0,1,2,3,4]
   run.t: [128]
 
   trainer.loop_autodiff: [lax]
