@@ -7,6 +7,7 @@ import jax.numpy as jnp
 from einops import rearrange
 
 from Common.trainer.loss import masked_channel_correlations, radial_profiles
+from Common.trainer.loss_components import MULTI_TARGET_WEIGHT_DEFAULTS
 
 
 def init_texture_params(key, spatial_shape, metric="l2", samples=128):
@@ -113,11 +114,7 @@ def _assignment(cost, components, mode, tau):
 def _weights(args):
     """Return multi-target component weights with defaults."""
     return {
-        "l2": 0.0,
-        "texture": 1.0,
-        "channel_mean": 1.0,
-        "radial": 1.0,
-        "correlation": 1.0,
+        **MULTI_TARGET_WEIGHT_DEFAULTS,
         **args.get("multi_target_weights", {}),
     }
 
@@ -164,7 +161,12 @@ def multi_target_pairwise_costs(
             "radial": _pairwise_l2(x_radial, y_radial, channel_weights[:, None]),
             "correlation": _pairwise_l2(x_corr, y_corr, correlation_weights),
         }
-        if weights["texture"]:
+        texture_enabled = (
+            args["texture_enabled"]
+            if "texture_enabled" in args
+            else bool(weights["texture"])
+        )
+        if texture_enabled:
             components["texture"] = _texture_cost(
                 x, y, params, metric, samples,
                 jax.random.fold_in(key, group_index),
@@ -210,6 +212,7 @@ def multi_target_assignment(costs, components, schema, args):
         for name in weights
     }
     diagnostics = {name: weights[name] * value for name, value in components.items()}
+    diagnostics.update({f"raw/{name}": value for name, value in components.items()})
     diagnostics["assignment_regularisation"] = jnp.stack(assignment_regularisation).mean(0)
     diagnostics["assignment_entropy"] = jnp.stack(assignment_entropy).mean(0)
     for group_index, group_name in enumerate(schema.group_names):

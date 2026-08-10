@@ -45,7 +45,7 @@ def resolve_objective(loss_config, overrides=None) -> ResolvedObjective:
     arguments = {
         "component_weights": [float(term.weight) for term in terms],
     }
-    ignored = {"type", "weight"}
+    ignored = {"type", "weight", "schedule", "multi_target_schedules"}
     for term in terms:
         for name, value in term.items():
             if name in ignored or value is None:

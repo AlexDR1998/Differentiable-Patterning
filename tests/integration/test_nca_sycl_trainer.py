@@ -349,8 +349,8 @@ def test_sharded_loss_evenly_processes_four_outer_batches():
         jax.random.PRNGKey(1), jax.random.PRNGKey(2)
     )
 
-    def local_loss(weight, static_scale, states, local_targets, steps, key):
-        del steps, key
+    def local_loss(weight, static_scale, states, local_targets, key, loss_weights):
+        del key, loss_weights
         losses = jnp.stack(
             [
                 jnp.mean((weight * state - target) ** 2)
@@ -372,8 +372,8 @@ def test_sharded_loss_evenly_processes_four_outer_batches():
         static_scale,
         packed_batches,
         packed_targets,
-        1,
         tile_keys,
+        jnp.asarray([1.0], dtype=jnp.float32),
     )
 
     def reference(candidate):

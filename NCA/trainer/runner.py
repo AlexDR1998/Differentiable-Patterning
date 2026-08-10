@@ -99,11 +99,12 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
         setup.targets,
         setup.optimizer_state,
         setup.key,
+        setup.initial_loss_weights,
     )
     compiled_step, compile_seconds = compile_and_time(train_step, state)
     runtime = RuntimeMetrics(compile_seconds)
     checkpoint = BestCheckpoint(
-        Path(trainer.model_path).with_suffix(".eqx"), setup.warmup
+        Path(trainer.model_path).with_suffix(".eqx"), setup.checkpoint_warmup
     )
     admission = PoolAdmissionController(
         trainer.config.training.trainer.pool_admission, setup.warmup
@@ -120,7 +121,8 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
     for iteration in progress:
         iteration_start = time.perf_counter()
         state = state._replace(
-            key=setup.execution.fold_in_key(state.key, iteration)
+            key=setup.execution.fold_in_key(state.key, iteration),
+            loss_weights=setup.loss_weight_schedule(iteration),
         )
         if setup.trace_enabled and iteration == trace_start:
             start_trace(trace_directory)

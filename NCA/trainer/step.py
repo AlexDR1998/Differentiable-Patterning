@@ -49,7 +49,9 @@ def _channel_mask(trainer, setup, component, time_mask):
     ).astype(jnp.bool_)
 
 
-def _batch_loss(trainer, setup, model, states, targets, time_mask, cache, key):
+def _batch_loss(
+    trainer, setup, model, states, targets, time_mask, cache, key, component_weights
+):
     predicted = states[:, : trainer.observed_channels]
     expected = targets[:, : trainer.data_channels]
     if trainer.grad_loss:
@@ -67,7 +69,7 @@ def _batch_loss(trainer, setup, model, states, targets, time_mask, cache, key):
                 cache,
             )
         )
-    return combine_loss_components(losses, setup.loss_component_weights)
+    return combine_loss_components(losses, component_weights)
 
 
 def build_train_step(trainer, setup):
@@ -86,7 +88,7 @@ def build_train_step(trainer, setup):
                 totals[name] += function(before, after, aux, key)
         return totals
 
-    def objective(differentiable, static, states, targets, key):
+    def objective(differentiable, static, states, targets, key, loss_weights):
         model = eqx.combine(differentiable, static)
         batched_model = trainer._make_batched_nca(model)
         regulariser_totals = {
@@ -107,6 +109,10 @@ def build_train_step(trainer, setup):
         diagnostics = {}
         if setup.is_multi_target:
             boundary = jnp.asarray(trainer.diagnostic_boundary_mask)[0, 0]
+            loss_arguments = {
+                **setup.loss_arguments,
+                "multi_target_weights": loss_weights.multi_target,
+            }
             losses, components = execution.multi_target_loss(
                 jnp.stack(states)[:, :, : trainer.observed_channels],
                 jnp.stack(targets)[:, :, : trainer.data_channels],
@@ -114,13 +120,16 @@ def build_train_step(trainer, setup):
                 trainer.channel_schema,
                 setup.multi_target_params,
                 key,
-                setup.loss_arguments,
+                loss_arguments,
             )
-            diagnostics = {
-                f"loss_component/{name}": jnp.mean(value)
-                for name, value in components.items()
-                if not name.startswith("group/")
-            }
+            diagnostics = {}
+            for name, value in components.items():
+                if name.startswith("raw/"):
+                    diagnostics[
+                        f"loss_component_raw/{name.removeprefix('raw/')}"
+                    ] = jnp.mean(value)
+                elif not name.startswith("group/"):
+                    diagnostics[f"loss_component/{name}"] = jnp.mean(value)
             diagnostics.update(
                 {
                     f"loss_detail/{name.removeprefix('group/')}": value
@@ -140,6 +149,7 @@ def build_train_step(trainer, setup):
                         mask,
                         cache,
                         loss_key,
+                        loss_weights.terms,
                     ),
                     states,
                     targets,
@@ -174,6 +184,7 @@ def build_train_step(trainer, setup):
             state.states,
             state.targets,
             state.key,
+            state.loss_weights,
         )
         states, losses, regulariser_losses, diagnostics = auxiliary
         updates, optimizer_state = setup.optimiser.update(
@@ -187,8 +198,27 @@ def build_train_step(trainer, setup):
             **regulariser_losses,
             **diagnostics,
         }
+        metrics.update(
+            {
+                f"loss_weight/term_{index}_{name}": state.loss_weights.terms[index]
+                for index, name in enumerate(setup.loss_names)
+            }
+        )
+        metrics.update(
+            {
+                f"loss_weight/{name}": value
+                for name, value in state.loss_weights.multi_target.items()
+            }
+        )
         return StepOutput(
-            TrainState(model, states, state.targets, optimizer_state, state.key),
+            TrainState(
+                model,
+                states,
+                state.targets,
+                optimizer_state,
+                state.key,
+                state.loss_weights,
+            ),
             loss,
             metrics,
         )

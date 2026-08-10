@@ -17,6 +17,7 @@ from Common.trainer.config import (
     GroupedPointwiseLossConfig,
     LossConfig,
     LossTermConfig,
+    LossWeightScheduleConfig,
     MultiTargetLossConfig,
     OptimizerConfig,
     OttLossConfig,
@@ -278,6 +279,21 @@ def _loss_term(value: Any, path: str) -> LossTermConfig:
         "channels": lambda x: x if x is None or isinstance(x, str) else _tuple(x),
         "experiment_groups": lambda x: None if x is None else _tuple(x),
         "channel_importance": lambda x: None if x is None else _tuple(x),
+        "schedule": lambda x: None if x is None else _strict(
+            LossWeightScheduleConfig, x, f"{path}.schedule"
+        ),
+        "multi_target_schedules": lambda schedules: None
+        if schedules is None
+        else {
+            str(name): _strict(
+                LossWeightScheduleConfig,
+                schedule,
+                f"{path}.multi_target_schedules.{name}",
+            )
+            for name, schedule in _mapping(
+                schedules, f"{path}.multi_target_schedules"
+            ).items()
+        },
     }
     return _strict(cls, node, path, **converters)
 

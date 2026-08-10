@@ -140,6 +140,10 @@ def build_loss_filename(loss_config, include_loss_args=False):
     if any(weight != 1.0 for weight in weights):
         loss_str += "_cw" + "-".join(_compact_value(weight) for weight in weights)
 
+    schedule_label = _cfg_get(loss_config, "schedule_label", None)
+    if schedule_label:
+        loss_str += f"_ls{schedule_label}"
+
     reg_str = compact_nonzero_config_string(
         _cfg_get(loss_config, "regularisers", {}),
         aliases={
