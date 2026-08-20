@@ -108,7 +108,7 @@ class NCA(FastNCA):
         )[:, 0]
         weight_hidden = self.layers[0].weight[:, :, 0, 0]
         weight_output = self.layers[2].weight[:, :, 0, 0]
-        bias_output = self.layers[2].bias.reshape(self.N_CHANNELS)
+        bias_output = self.layers[2].bias.reshape(self.layers[2].weight.shape[0])
         return kernels, weight_hidden, weight_output, bias_output
 
     def _sycl_update(self, x: Array, update_mask: Array) -> Array:
@@ -232,4 +232,45 @@ class NCA(FastNCA):
 
 SyclNCA = NCA
 
-__all__ = ["FUSED_REGULARISER_FLAGS", "NCA", "SyclNCA"]
+
+class gNCA(NCA):
+    """GLU-gated NCA using the same native fused SYCL rollout backend."""
+
+    def __init__(self, *args, key=None, **kwargs):
+        if key is None:
+            key = jax.random.PRNGKey(int(time.time()))
+        super().__init__(*args, key=key, **kwargs)
+        output_key = jax.random.fold_in(key, 1)
+        output = eqx.nn.Conv2d(
+            in_channels=self.N_FEATURES,
+            out_channels=2 * self.N_CHANNELS,
+            kernel_size=1,
+            use_bias=True,
+            key=output_key,
+        )
+        output = eqx.tree_at(
+            lambda layer: (layer.weight, layer.bias),
+            output,
+            (
+                jnp.zeros_like(output.weight),
+                jnp.zeros_like(output.bias),
+            ),
+        )
+        self.layers[2] = output
+        self.layers.append(lambda value: jax.nn.glu(value, axis=0))
+
+    def get_config(self):
+        config = super().get_config()
+        config["MODEL"] = "gNCA_sycl"
+        return config
+
+
+GatedSyclNCA = gNCA
+
+__all__ = [
+    "FUSED_REGULARISER_FLAGS",
+    "GatedSyclNCA",
+    "NCA",
+    "SyclNCA",
+    "gNCA",
+]

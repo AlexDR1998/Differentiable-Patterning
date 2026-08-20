@@ -79,6 +79,11 @@ def jax_nca_forward(
     hidden = jnp.maximum(hidden, 0)
     update = jnp.einsum("cf,bfhw->bchw", weight_output, hidden)
     update = update + bias_output[None, :, None, None]
+    if update.shape[1] == 2 * channels:
+        values, gates = jnp.split(update, 2, axis=1)
+        update = values * lax.logistic(gates)
+    elif update.shape[1] != channels:
+        raise ValueError("NCA output width must be C or 2C")
     result = state + update_mask * update
     return result[0] if was_unbatched else result
 

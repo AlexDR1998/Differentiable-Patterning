@@ -296,10 +296,10 @@ class NcaTrainer:
 def build_trainer(config, model, data, context: TrainerContext) -> NcaTrainer:
 	"""Construct the trainer selected by the typed backend configuration."""
 	backend_type = config.training.trainer.backend.type
-	is_sycl_model = config.model.family == "NCA_sycl"
+	is_sycl_model = config.model.family in {"NCA_sycl", "gNCA_sycl"}
 	if (backend_type == "sycl") != is_sycl_model:
 		raise ValueError(
-			"model.family='NCA_sycl' and trainer.backend.type='sycl' "
+			"model.family in {'NCA_sycl', 'gNCA_sycl'} and trainer.backend.type='sycl' "
 			"must be selected together"
 		)
 	if backend_type == "sycl":

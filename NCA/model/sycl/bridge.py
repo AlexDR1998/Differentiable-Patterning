@@ -19,7 +19,7 @@ _FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_forward"
 _BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_backward"
 _ROLLOUT_FORWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_rollout_forward"
 _ROLLOUT_BACKWARD_TARGET_NAME = "differentiable_patterning_nca_sycl_rollout_backward"
-_METADATA_VERSION = 4
+_METADATA_VERSION = 5
 _ROLLOUT_SCRATCH_GUARD_FLOATS = 64
 _LIBRARY: ctypes.CDLL | None = None
 _CAPSULES: tuple[object, ...] | None = None
@@ -180,11 +180,17 @@ def _abstract_eval(
         )
     if kernel_size % 2 != 1:
         raise ValueError("NCA SYCL perception kernels must have odd size")
+    output_channels = weight_output.shape[0]
+    if output_channels not in (channels, 2 * channels):
+        raise ValueError(
+            "NCA SYCL output width must be C (baseline) or 2C (gated), "
+            f"got {output_channels} for C={channels}"
+        )
     expected = {
         "kernels": (4, kernel_size, kernel_size),
         "weight_hidden": (features, features),
-        "weight_output": (channels, features),
-        "bias_output": (channels,),
+        "weight_output": (output_channels, features),
+        "bias_output": (output_channels,),
     }
     actual = {
         "kernels": kernels.shape,
@@ -208,7 +214,10 @@ def _abstract_eval(
         core.ShapedArray(state.shape, state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
-        core.ShapedArray(state.shape, state.dtype),
+        core.ShapedArray(
+            (*state.shape[:-3], output_channels, *state.shape[-2:]),
+            state.dtype,
+        ),
     )
 
 
@@ -229,13 +238,14 @@ def _lowering(ctx, *operands, kernel_flags, padding):
         workgroup_size *= 2
 
     metadata = struct.pack(
-        "=11q",
+        "=12q",
         _METADATA_VERSION,
         batch,
         channels,
         height,
         width,
         features,
+        ctx.avals_in[3].shape[0],
         kernel_size,
         int(kernel_flags),
         int(padding),
@@ -338,11 +348,15 @@ def _backward_abstract_eval(
     padding,
     per_example_weights,
 ):
-    del bias_output, kernel_flags, padding
+    del kernel_flags, padding
     if output_cotangent.shape != state.shape:
         raise ValueError("NCA SYCL output cotangent must match the state shape")
     if state.shape != update_mask.shape:
         raise ValueError("NCA SYCL update mask must match the state shape")
+    if weight_output.shape[0] not in (state.shape[-3], 2 * state.shape[-3]):
+        raise ValueError("NCA SYCL output width must be C or 2C")
+    if bias_output.shape != (weight_output.shape[0],):
+        raise ValueError("NCA SYCL output bias must match the output width")
     if state.ndim == 3:
         scratch_shape = (weight_hidden.shape[0], *state.shape[-2:])
     elif state.ndim == 4:
@@ -376,10 +390,14 @@ def _backward_abstract_eval(
         core.ShapedArray(state.shape, dtype),
         core.ShapedArray((*parameter_prefix, *weight_hidden.shape), dtype),
         core.ShapedArray((*parameter_prefix, *weight_output.shape), dtype),
-        core.ShapedArray((*parameter_prefix, state.shape[-3]), dtype),
+        core.ShapedArray((*parameter_prefix, *bias_output.shape), dtype),
         core.ShapedArray(scratch_shape, dtype),
         core.ShapedArray(scratch_shape, dtype),
         core.ShapedArray(scratch_shape, dtype),
+        core.ShapedArray(
+            (*state.shape[:-3], weight_output.shape[0], *state.shape[-2:]),
+            dtype,
+        ),
     )
 
 
@@ -464,6 +482,7 @@ def _metadata_from_avals(
     state_aval,
     weight_hidden_aval,
     kernels_aval,
+    weight_output_aval,
     kernel_flags,
     padding,
     per_example_weights,
@@ -479,13 +498,14 @@ def _metadata_from_avals(
     while workgroup_size < max(features, channels):
         workgroup_size *= 2
     return struct.pack(
-        "=12q",
+        "=13q",
         _METADATA_VERSION,
         batch,
         channels,
         height,
         width,
         features,
+        weight_output_aval.shape[0],
         kernel_size,
         int(kernel_flags),
         int(padding),
@@ -499,7 +519,7 @@ def _backward_lowering(
     ctx, *operands, kernel_flags, padding, per_example_weights
 ):
     metadata = _metadata_from_avals(
-        ctx.avals_in[0], ctx.avals_in[2], ctx.avals_in[1],
+        ctx.avals_in[0], ctx.avals_in[2], ctx.avals_in[1], ctx.avals_in[3],
         kernel_flags, padding, per_example_weights
     )
     operand_layouts = [
@@ -664,6 +684,7 @@ def _rollout_metadata(
     state_aval,
     kernels_aval,
     weight_hidden_aval,
+    weight_output_aval,
     masks_aval,
     *,
     kernel_flags,
@@ -682,13 +703,14 @@ def _rollout_metadata(
     while workgroup_size < max(features, channels):
         workgroup_size *= 2
     return struct.pack(
-        "=15q",
+        "=16q",
         _METADATA_VERSION,
         batch,
         channels,
         height,
         width,
         features,
+        weight_output_aval.shape[0],
         kernel_size,
         int(kernel_flags),
         int(padding),
@@ -762,6 +784,11 @@ def _rollout_forward_abstract_eval(
         raise ValueError(
             f"Rollout expected {expected_features} features, got {features}"
         )
+    if weight_output.shape not in (
+        (channels, features),
+        (2 * channels, features),
+    ) or bias_output.shape != (weight_output.shape[0],):
+        raise ValueError("Rollout output layer must have width C or 2C")
     if boundary_code == 1:
         expected_boundary = (boundary_channels, *state.shape[-2:])
     elif boundary_code == 2:
@@ -779,7 +806,10 @@ def _rollout_forward_abstract_eval(
         core.ShapedArray(masks.shape, state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
         core.ShapedArray(scratch_shape, state.dtype),
-        core.ShapedArray(state.shape, state.dtype),
+        core.ShapedArray(
+            (state.shape[0], weight_output.shape[0], *state.shape[-2:]),
+            state.dtype,
+        ),
     ]
     if regulariser_flags:
         outputs.insert(2, core.ShapedArray((2,), state.dtype))
@@ -833,7 +863,7 @@ def _rollout_forward_lowering(
         ctx.avals_in[0],
         ctx.avals_in[1],
         ctx.avals_in[2],
-        ctx.avals_in[5],
+        ctx.avals_in[3], ctx.avals_in[5],
         kernel_flags=kernel_flags,
         padding=padding,
         boundary_code=boundary_code,
@@ -883,7 +913,6 @@ def _rollout_backward_abstract_eval(
     regulariser_flags,
 ):
     del (
-        bias_output,
         kernel_flags,
         padding,
         boundary_code,
@@ -895,6 +924,11 @@ def _rollout_backward_abstract_eval(
         raise ValueError("Rollout output cotangent must match state")
     if trajectory_cotangent.shape != trajectory.shape:
         raise ValueError("Rollout trajectory cotangent must match trajectory")
+    channels = state.shape[1]
+    if weight_output.shape[0] not in (channels, 2 * channels):
+        raise ValueError("Rollout output width must be C or 2C")
+    if bias_output.shape != (weight_output.shape[0],):
+        raise ValueError("Rollout output bias must match the output width")
     if regulariser_flags:
         if regulariser_cotangent is None or regulariser_cotangent.shape != (2,):
             raise ValueError("Rollout regulariser cotangent must have shape [2]")
@@ -908,6 +942,7 @@ def _rollout_backward_abstract_eval(
         kernels,
         weight_hidden,
         weight_output,
+        bias_output,
         masks,
         boundary_mask,
         trajectory,
@@ -943,15 +978,16 @@ def _rollout_backward_abstract_eval(
         core.ShapedArray(state.shape, state.dtype),
         core.ShapedArray(weight_hidden.shape, state.dtype),
         core.ShapedArray(weight_output.shape, state.dtype),
-        core.ShapedArray((state.shape[1],), state.dtype),
+        core.ShapedArray(bias_output.shape, state.dtype),
         workspace(state.shape),
         workspace(state.shape),
         workspace(weight_hidden.shape),
         workspace(weight_output.shape),
-        workspace((state.shape[1],)),
+        workspace(bias_output.shape),
         workspace(scratch_shape),
         workspace(scratch_shape),
         workspace(scratch_shape),
+        workspace((state.shape[0], weight_output.shape[0], *state.shape[-2:])),
     )
 
 
@@ -1002,7 +1038,7 @@ def _rollout_backward_lowering(
         ctx.avals_in[0],
         ctx.avals_in[1],
         ctx.avals_in[2],
-        ctx.avals_in[5],
+        ctx.avals_in[3], ctx.avals_in[5],
         kernel_flags=kernel_flags,
         padding=padding,
         boundary_code=boundary_code,

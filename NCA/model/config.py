@@ -38,7 +38,7 @@ class ModelConfig(ConfigValue):
 
     def __post_init__(self):
         supported = {
-            "NCA", "NCA_fast", "NCA_sycl", "gNCA", "nNCA", "gnNCA",
+            "NCA", "NCA_fast", "NCA_sycl", "gNCA_sycl", "gNCA", "nNCA", "gnNCA",
             "FastKaNCA",
         }
         if self.family not in supported:

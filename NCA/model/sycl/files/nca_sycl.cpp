@@ -15,6 +15,7 @@ struct Metadata {
   std::int64_t height;
   std::int64_t width;
   std::int64_t features;
+  std::int64_t output_channels;
   std::int64_t kernel_size;
   std::int64_t kernel_flags;
   std::int64_t padding;
@@ -22,12 +23,14 @@ struct Metadata {
   std::int64_t xmx_mode;
 };
 
-static_assert(sizeof(Metadata) == 11 * sizeof(std::int64_t));
+static_assert(sizeof(Metadata) == 12 * sizeof(std::int64_t));
 
 bool ValidMetadata(const Metadata& metadata) {
   return metadata.version == nca_sycl::kMetadataVersion &&
          metadata.batch > 0 && metadata.channels > 0 &&
          metadata.height > 0 && metadata.width > 0 && metadata.features > 0 &&
+         (metadata.output_channels == metadata.channels ||
+          metadata.output_channels == 2 * metadata.channels) &&
          metadata.features <= 256 && metadata.kernel_size > 0 &&
          metadata.kernel_size % 2 == 1 && metadata.workgroup_size >=
              std::max(metadata.features, metadata.channels);
@@ -85,9 +88,9 @@ extern "C" void nca_sycl_forward(sycl::queue* queue, void** buffers,
                       });
   nca_sycl::SynchronizeStage(*queue, "forward/relu");
   nca_sycl::Gemm(*queue, oneapi::mkl::transpose::nontrans,
-                 oneapi::mkl::transpose::trans, cells, metadata.channels,
+                 oneapi::mkl::transpose::trans, cells, metadata.output_channels,
                  metadata.features, hidden, metadata.features, weight_output,
-                 metadata.features, delta, metadata.channels,
+                 metadata.features, delta, metadata.output_channels,
                  metadata.xmx_mode);
   nca_sycl::SynchronizeStage(*queue, "forward/output_gemm");
   // Fuse bias, fire mask, residual update, and the cell-major to NCHW layout
@@ -102,10 +105,17 @@ extern "C" void nca_sycl_forward(sycl::queue* queue, void** buffers,
         const std::int64_t spatial = cell % spatial_size;
         const std::int64_t state_index =
             (batch * metadata.channels + channel) * spatial_size + spatial;
-        output[state_index] =
-            state[state_index] +
-            update_mask[state_index] *
-                (delta[linear] + bias_output[channel]);
+        const std::int64_t value_index =
+            cell * metadata.output_channels + channel;
+        float update = delta[value_index] + bias_output[channel];
+        if (metadata.output_channels == 2 * metadata.channels) {
+          const float gate_logit =
+              delta[value_index + metadata.channels] +
+              bias_output[channel + metadata.channels];
+          update *= 1.0F / (1.0F + sycl::exp(-gate_logit));
+        }
+        output[state_index] = state[state_index] +
+                              update_mask[state_index] * update;
       });
   nca_sycl::SynchronizeStage(*queue, "forward/epilogue");
 }

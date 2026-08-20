@@ -3,6 +3,8 @@ import jax.numpy as jnp
 import pytest
 
 from NCA.model.NCA_model_fast import NCA as FastNCA
+from NCA.model.NCA_gated_model import gNCA
+from NCA.model.NCA_sycl import gNCA as SyclGatedNCA
 from NCA.model.sycl.reference import jax_nca_forward
 
 
@@ -25,7 +27,7 @@ def _model_operands(model, state, key):
         kernels,
         model.layers[0].weight[:, :, 0, 0],
         model.layers[2].weight[:, :, 0, 0],
-        model.layers[2].bias.reshape(model.N_CHANNELS),
+        model.layers[2].bias.reshape(model.layers[2].weight.shape[0]),
         jax.random.bernoulli(
             key, p=model.FIRE_RATE, shape=state.shape
         ).astype(state.dtype),
@@ -111,3 +113,57 @@ def test_sycl_backward_reference_has_finite_parameter_and_state_gradients():
     for gradient, value in zip(gradients, differentiable):
         assert gradient.shape == value.shape
         assert jnp.all(jnp.isfinite(gradient))
+
+
+def test_gated_sycl_reference_matches_gnca():
+    kernel_str = ["ID", "LAP"]
+    keys = jax.random.split(jax.random.PRNGKey(27), 6)
+    model = gNCA(
+        3,
+        KERNEL_STR=kernel_str,
+        PADDING="CIRCULAR",
+        FIRE_RATE=0.7,
+        key=keys[0],
+    )
+    model.set_weights(
+        [
+            0.1 * jax.random.normal(keys[1], model.layers[0].weight.shape),
+            0.1 * jax.random.normal(keys[2], model.layers[2].weight.shape),
+            0.1 * jax.random.normal(keys[3], model.layers[2].bias.shape),
+        ]
+    )
+    state = jax.random.normal(keys[4], (3, 7, 8))
+    operands = list(_model_operands(model, state, keys[5]))
+    actual = jax_nca_forward(
+        *operands,
+        kernel_flags=sum(FLAGS[name] for name in kernel_str),
+        padding=PADDING["CIRCULAR"],
+    )
+    expected = model(state, key=keys[5])
+    assert jnp.allclose(actual, expected, rtol=1e-6, atol=1e-6)
+
+    gradients = jax.grad(
+        lambda output_weight, output_bias: jnp.sum(
+            jax_nca_forward(
+                operands[0], operands[1], operands[2], output_weight,
+                output_bias, operands[5],
+                kernel_flags=sum(FLAGS[name] for name in kernel_str),
+                padding=PADDING["CIRCULAR"],
+            ) ** 2
+        ),
+        argnums=(0, 1),
+    )(operands[3], operands[4])
+    assert gradients[0].shape == operands[3].shape
+    assert gradients[1].shape == operands[4].shape
+    assert all(jnp.all(jnp.isfinite(value)) for value in gradients)
+
+
+def test_gated_sycl_model_exposes_doubled_zero_initialised_output():
+    model = SyclGatedNCA(
+        3, KERNEL_STR=["ID", "LAP"], key=jax.random.PRNGKey(41)
+    )
+    assert model.layers[2].weight.shape == (6, 6, 1, 1)
+    assert model.layers[2].bias.shape == (6, 1, 1)
+    assert jnp.all(model.layers[2].weight == 0)
+    assert jnp.all(model.layers[2].bias == 0)
+    assert model.get_config()["MODEL"] == "gNCA_sycl"

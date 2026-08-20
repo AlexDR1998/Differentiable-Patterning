@@ -48,19 +48,19 @@ float* ScratchPayload(float* base, std::int64_t payload_elements,
 }
 
 struct RolloutMetadata {
-  std::int64_t version, batch, channels, height, width, features;
+  std::int64_t version, batch, channels, height, width, features, output_channels;
   std::int64_t kernel_size, kernel_flags, padding, workgroup_size, xmx_mode;
   std::int64_t steps, boundary_code, boundary_channels, regulariser_flags;
 };
 
 struct BackwardMetadata {
-  std::int64_t version, batch, channels, height, width, features;
+  std::int64_t version, batch, channels, height, width, features, output_channels;
   std::int64_t kernel_size, kernel_flags, padding, workgroup_size;
   std::int64_t per_example_weights, xmx_mode;
 };
 
-static_assert(sizeof(RolloutMetadata) == 15 * sizeof(std::int64_t));
-static_assert(sizeof(BackwardMetadata) == 12 * sizeof(std::int64_t));
+static_assert(sizeof(RolloutMetadata) == 16 * sizeof(std::int64_t));
+static_assert(sizeof(BackwardMetadata) == 13 * sizeof(std::int64_t));
 
 void ApplyBoundaryCotangent(sycl::queue& queue, const float* input,
                             const float* direct, float* output,
@@ -176,16 +176,20 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
   auto* hidden_base = static_cast<float*>(buffers[20 + result_offset]);
   auto* hidden_gradient_base =
       static_cast<float*>(buffers[21 + result_offset]);
+  auto* delta_base = static_cast<float*>(buffers[22 + result_offset]);
 
   const std::int64_t spatial_size = m.height * m.width;
   const std::int64_t state_elements = m.batch * m.channels * spatial_size;
   const std::int64_t hidden_weight_elements = m.features * m.features;
-  const std::int64_t output_weight_elements = m.channels * m.features;
+  const std::int64_t output_weight_elements = m.output_channels * m.features;
+  const std::int64_t output_elements =
+      m.batch * m.output_channels * spatial_size;
   const std::int64_t activation_elements =
       m.batch * m.features * spatial_size;
   const ScratchDiagnosticMode scratch_mode = GetScratchDiagnosticMode();
   const BackwardMetadata backward_metadata{
       m.version, m.batch, m.channels, m.height, m.width, m.features,
+      m.output_channels,
       m.kernel_size, m.kernel_flags, m.padding, m.workgroup_size, 0,
       m.xmx_mode};
 
@@ -194,7 +198,7 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
   queue->fill(output_weight_gradient, 0.0F,
               static_cast<std::size_t>(output_weight_elements));
   queue->fill(bias_gradient, 0.0F,
-              static_cast<std::size_t>(m.channels));
+              static_cast<std::size_t>(m.output_channels));
 
   if (scratch_mode != ScratchDiagnosticMode::kDisabled) {
     auto initialize_guarded = [&](float* base, std::int64_t payload_elements) {
@@ -208,10 +212,11 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
                        hidden_weight_elements);
     initialize_guarded(step_output_weight_gradient_base,
                        output_weight_elements);
-    initialize_guarded(step_bias_gradient_base, m.channels);
+    initialize_guarded(step_bias_gradient_base, m.output_channels);
     initialize_guarded(perception_base, activation_elements);
     initialize_guarded(hidden_base, activation_elements);
     initialize_guarded(hidden_gradient_base, activation_elements);
+    initialize_guarded(delta_base, output_elements);
     // Ensure the diagnostic initialization cannot race with the work whose
     // writes it is intended to surround, including on an out-of-order queue.
     nca_sycl::WaitAndReport(*queue, "rollout/backward_guard_init");
@@ -230,13 +235,14 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
         step_output_weight_gradient_base, output_weight_elements, step,
         scratch_mode);
     auto* step_bias_gradient = ScratchPayload(
-        step_bias_gradient_base, m.channels, step, scratch_mode);
+        step_bias_gradient_base, m.output_channels, step, scratch_mode);
     auto* perception = ScratchPayload(perception_base, activation_elements,
                                       step, scratch_mode);
     auto* hidden = ScratchPayload(hidden_base, activation_elements, step,
                                   scratch_mode);
     auto* hidden_gradient = ScratchPayload(
         hidden_gradient_base, activation_elements, step, scratch_mode);
+    auto* delta = ScratchPayload(delta_base, output_elements, step, scratch_mode);
     const float* step_state =
         step == 0 ? initial_state : trajectory + (step - 1) * state_elements;
     float* next_state_gradient =
@@ -252,7 +258,7 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
         bias_output, masks + step * state_elements, boundary_cotangent,
         next_state_gradient, step_hidden_weight_gradient,
         step_output_weight_gradient, step_bias_gradient, perception, hidden,
-        hidden_gradient};
+        hidden_gradient, delta};
     nca_sycl_backward(queue, step_buffers,
                       reinterpret_cast<const char*>(&backward_metadata),
                       sizeof(backward_metadata));
@@ -260,7 +266,7 @@ extern "C" void nca_sycl_rollout_backward(sycl::queue* queue, void** buffers,
                hidden_weight_elements);
     AddInPlace(*queue, output_weight_gradient, step_output_weight_gradient,
                output_weight_elements);
-    AddInPlace(*queue, bias_gradient, step_bias_gradient, m.channels);
+    AddInPlace(*queue, bias_gradient, step_bias_gradient, m.output_channels);
     nca_sycl::SynchronizeStage(*queue, "rollout_backward/accumulate_parameters");
     current_cotangent = next_state_gradient;
   }

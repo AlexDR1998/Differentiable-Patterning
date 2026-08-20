@@ -442,11 +442,11 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
     if logging_node.get("singular_values") is not None:
         logging_node["singular_values"] = _strict(SingularValueLoggingConfig, logging_node["singular_values"], "logging.singular_values")
     logging = _strict(LoggingConfig, logging_node, "logging")
-    uses_sycl_model = model.family == "NCA_sycl"
+    uses_sycl_model = model.family in {"NCA_sycl", "gNCA_sycl"}
     uses_sycl_trainer = training.trainer.backend.type == "sycl"
     if uses_sycl_model != uses_sycl_trainer:
         raise ValueError(
-            "model.family='NCA_sycl' and training.trainer.backend.type='sycl' "
+            "model.family in {'NCA_sycl', 'gNCA_sycl'} and training.trainer.backend.type='sycl' "
             "must be configured together"
         )
     return ExperimentConfig(

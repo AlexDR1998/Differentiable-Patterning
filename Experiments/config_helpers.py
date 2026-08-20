@@ -12,7 +12,7 @@ from NCA.model.NCA_gated_model import gNCA
 from NCA.model.NCA_gated_noise_model import gnNCA
 from NCA.model.NCA_model import NCA
 from NCA.model.NCA_model_fast import NCA as NCAFast
-from NCA.model.NCA_sycl import NCA as NCASycl
+from NCA.model.NCA_sycl import NCA as NCASycl, gNCA as GatedNCASycl
 from NCA.model.NCA_noise_model import nNCA
 
 
@@ -318,6 +318,16 @@ def build_model(model_config, key=None):
         )
     elif cfg.model.family == "NCA_sycl":
         model = NCASycl(
+            N_CHANNELS=cfg.model.channels,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
+            key=key,
+        )
+    elif cfg.model.family == "gNCA_sycl":
+        model = GatedNCASycl(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
             ACTIVATION=activation,
