@@ -19,6 +19,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -139,7 +140,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -257,6 +258,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -377,7 +379,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -495,6 +497,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -615,7 +618,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -733,6 +736,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -853,7 +857,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -971,6 +975,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -1093,7 +1098,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1211,6 +1216,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -1333,7 +1339,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1451,6 +1457,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -1573,7 +1580,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1691,6 +1698,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -1813,7 +1821,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1931,6 +1939,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -2055,7 +2064,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2173,6 +2182,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -2297,7 +2307,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2415,6 +2425,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -2539,7 +2550,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2657,6 +2668,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -2781,7 +2793,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2899,6 +2911,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -3025,7 +3038,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3143,6 +3156,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -3269,7 +3283,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3387,6 +3401,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -3513,7 +3528,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3631,6 +3646,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -3757,7 +3773,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3875,6 +3891,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -3995,7 +4012,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -4113,6 +4130,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -4233,7 +4251,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -4351,6 +4369,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -4471,7 +4490,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -4589,6 +4608,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -4709,7 +4729,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -4827,6 +4847,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -4949,7 +4970,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -5067,6 +5088,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -5189,7 +5211,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -5307,6 +5329,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -5429,7 +5452,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -5547,6 +5570,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -5669,7 +5693,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -5787,6 +5811,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -5911,7 +5936,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -6029,6 +6054,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -6153,7 +6179,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -6271,6 +6297,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -6395,7 +6422,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -6513,6 +6540,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -6637,7 +6665,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -6755,6 +6783,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -6881,7 +6910,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -6999,6 +7028,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -7125,7 +7155,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -7243,6 +7273,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -7369,7 +7400,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -7487,6 +7518,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -7613,7 +7645,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -7731,6 +7763,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -7851,7 +7884,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -7969,6 +8002,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -8089,7 +8123,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -8207,6 +8241,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -8327,7 +8362,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -8445,6 +8480,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -8565,7 +8601,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -8683,6 +8719,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -8805,7 +8842,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -8923,6 +8960,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -9045,7 +9083,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -9163,6 +9201,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -9285,7 +9324,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -9403,6 +9442,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -9525,7 +9565,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -9643,6 +9683,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -9767,7 +9808,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -9885,6 +9926,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -10009,7 +10051,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -10127,6 +10169,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -10251,7 +10294,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -10369,6 +10412,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -10493,7 +10537,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -10611,6 +10655,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -10737,7 +10782,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -10855,6 +10900,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -10981,7 +11027,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -11099,6 +11145,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -11225,7 +11272,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -11343,6 +11390,7 @@ configs:
     trainer.loop_autodiff: lax
     trainer.pool_admission_previous_relative_threshold: 1.0
     trainer.log_every: 200
+    trainer.backend.type: sycl
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
     logging.singular_values.plot_spectra: true
@@ -11469,7 +11517,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax

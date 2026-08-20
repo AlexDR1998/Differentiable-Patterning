@@ -20,6 +20,7 @@ grid:
   trainer.loop_autodiff: [lax]
   trainer.pool_admission_previous_relative_threshold: [1.0]
   trainer.log_every: [200]
+  trainer.backend.type: [sycl]
 
   logging.wandb.project: [nca_micropattern_loss_schedules]
   logging.singular_values.enabled: [true]
