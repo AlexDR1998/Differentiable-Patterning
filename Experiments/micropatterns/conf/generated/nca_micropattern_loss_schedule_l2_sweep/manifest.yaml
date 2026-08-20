@@ -7,10 +7,10 @@ count: 48
 configs:
 - index: 17
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -102,7 +102,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -126,7 +126,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -245,10 +245,10 @@ configs:
       channel: Nodal
 - index: 19
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -340,7 +340,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -364,7 +364,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -483,10 +483,10 @@ configs:
       channel: Nodal
 - index: 20
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -578,7 +578,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -602,7 +602,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -721,10 +721,10 @@ configs:
       channel: Nodal
 - index: 21
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -816,7 +816,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -840,7 +840,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -959,10 +959,10 @@ configs:
       channel: Nodal
 - index: 7
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -1055,7 +1055,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1080,7 +1080,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -1199,10 +1199,10 @@ configs:
       channel: Nodal
 - index: 42
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -1295,7 +1295,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1320,7 +1320,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -1439,10 +1439,10 @@ configs:
       channel: Nodal
 - index: 4
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -1535,7 +1535,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1560,7 +1560,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -1679,10 +1679,10 @@ configs:
       channel: Nodal
 - index: 46
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -1775,7 +1775,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1800,7 +1800,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -1919,10 +1919,10 @@ configs:
       channel: Nodal
 - index: 39
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -2016,7 +2016,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -2042,7 +2042,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -2161,10 +2161,10 @@ configs:
       channel: Nodal
 - index: 10
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -2258,7 +2258,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -2284,7 +2284,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -2403,10 +2403,10 @@ configs:
       channel: Nodal
 - index: 14
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -2500,7 +2500,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -2526,7 +2526,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -2645,10 +2645,10 @@ configs:
       channel: Nodal
 - index: 13
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -2742,7 +2742,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -2768,7 +2768,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -2887,10 +2887,10 @@ configs:
       channel: Nodal
 - index: 22
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -2985,7 +2985,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -3012,7 +3012,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -3131,10 +3131,10 @@ configs:
       channel: Nodal
 - index: 3
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -3229,7 +3229,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -3256,7 +3256,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -3375,10 +3375,10 @@ configs:
       channel: Nodal
 - index: 8
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -3473,7 +3473,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -3500,7 +3500,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -3619,10 +3619,10 @@ configs:
       channel: Nodal
 - index: 45
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -3717,7 +3717,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -3744,7 +3744,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -3863,10 +3863,10 @@ configs:
       channel: Nodal
 - index: 29
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -3958,7 +3958,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -3982,7 +3982,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -4101,10 +4101,10 @@ configs:
       channel: Nodal
 - index: 27
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -4196,7 +4196,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -4220,7 +4220,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -4339,10 +4339,10 @@ configs:
       channel: Nodal
 - index: 18
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -4434,7 +4434,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -4458,7 +4458,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -4577,10 +4577,10 @@ configs:
       channel: Nodal
 - index: 9
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -4672,7 +4672,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -4696,7 +4696,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -4815,10 +4815,10 @@ configs:
       channel: Nodal
 - index: 1
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -4911,7 +4911,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -4936,7 +4936,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -5055,10 +5055,10 @@ configs:
       channel: Nodal
 - index: 41
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -5151,7 +5151,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -5176,7 +5176,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -5295,10 +5295,10 @@ configs:
       channel: Nodal
 - index: 0
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -5391,7 +5391,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -5416,7 +5416,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -5535,10 +5535,10 @@ configs:
       channel: Nodal
 - index: 34
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -5631,7 +5631,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -5656,7 +5656,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -5775,10 +5775,10 @@ configs:
       channel: Nodal
 - index: 40
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -5872,7 +5872,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -5898,7 +5898,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -6017,10 +6017,10 @@ configs:
       channel: Nodal
 - index: 43
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -6114,7 +6114,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -6140,7 +6140,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -6259,10 +6259,10 @@ configs:
       channel: Nodal
 - index: 12
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -6356,7 +6356,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -6382,7 +6382,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -6501,10 +6501,10 @@ configs:
       channel: Nodal
 - index: 38
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -6598,7 +6598,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -6624,7 +6624,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -6743,10 +6743,10 @@ configs:
       channel: Nodal
 - index: 16
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -6841,7 +6841,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -6868,7 +6868,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -6987,10 +6987,10 @@ configs:
       channel: Nodal
 - index: 33
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -7085,7 +7085,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -7112,7 +7112,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -7231,10 +7231,10 @@ configs:
       channel: Nodal
 - index: 24
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -7329,7 +7329,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -7356,7 +7356,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -7475,10 +7475,10 @@ configs:
       channel: Nodal
 - index: 6
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -7573,7 +7573,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -7600,7 +7600,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -7719,10 +7719,10 @@ configs:
       channel: Nodal
 - index: 28
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -7814,7 +7814,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -7838,7 +7838,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -7957,10 +7957,10 @@ configs:
       channel: Nodal
 - index: 5
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -8052,7 +8052,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -8076,7 +8076,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -8195,10 +8195,10 @@ configs:
       channel: Nodal
 - index: 36
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -8290,7 +8290,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -8314,7 +8314,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -8433,10 +8433,10 @@ configs:
       channel: Nodal
 - index: 35
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -8528,7 +8528,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -8552,7 +8552,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -8671,10 +8671,10 @@ configs:
       channel: Nodal
 - index: 23
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -8767,7 +8767,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -8792,7 +8792,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -8911,10 +8911,10 @@ configs:
       channel: Nodal
 - index: 11
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9007,7 +9007,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -9032,7 +9032,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -9151,10 +9151,10 @@ configs:
       channel: Nodal
 - index: 26
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9247,7 +9247,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -9272,7 +9272,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -9391,10 +9391,10 @@ configs:
       channel: Nodal
 - index: 44
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9487,7 +9487,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -9512,7 +9512,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -9631,10 +9631,10 @@ configs:
       channel: Nodal
 - index: 15
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9728,7 +9728,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -9754,7 +9754,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -9873,10 +9873,10 @@ configs:
       channel: Nodal
 - index: 30
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9970,7 +9970,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -9996,7 +9996,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -10115,10 +10115,10 @@ configs:
       channel: Nodal
 - index: 2
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -10212,7 +10212,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -10238,7 +10238,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -10357,10 +10357,10 @@ configs:
       channel: Nodal
 - index: 47
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -10454,7 +10454,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -10480,7 +10480,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -10599,10 +10599,10 @@ configs:
       channel: Nodal
 - index: 25
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -10697,7 +10697,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -10724,7 +10724,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -10843,10 +10843,10 @@ configs:
       channel: Nodal
 - index: 32
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -10941,7 +10941,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -10968,7 +10968,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -11087,10 +11087,10 @@ configs:
       channel: Nodal
 - index: 31
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -11185,7 +11185,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -11212,7 +11212,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -11331,10 +11331,10 @@ configs:
       channel: Nodal
 - index: 37
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
+    model.family: gNCA_sycl
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -11429,7 +11429,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -11456,7 +11456,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID

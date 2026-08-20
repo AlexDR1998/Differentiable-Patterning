@@ -4,12 +4,12 @@ output_subdir: generated/nca_micropattern_loss_schedule_l2_sweep
 seed_mode: index
 
 grid:
-  labels.gpu: [H200]
+  labels.gpu: [intel]
   labels.scaling: [convective]
 
   system.precision: [highest]
 
-  model.family: [gNCA]
+  model.family: [gNCA_sycl]
   model.fire_rate: [0.5]
   model.channels: [48]
 
