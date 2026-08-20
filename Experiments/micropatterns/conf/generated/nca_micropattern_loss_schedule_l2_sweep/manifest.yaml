@@ -64,6 +64,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -173,6 +178,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -291,6 +302,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -400,6 +416,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -518,6 +540,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -627,6 +654,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -745,6 +778,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -854,6 +892,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -973,6 +1017,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -1083,6 +1132,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -1202,6 +1257,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -1312,6 +1372,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -1431,6 +1497,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -1541,6 +1612,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -1660,6 +1737,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -1770,6 +1852,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -1890,6 +1978,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -2001,6 +2094,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -2121,6 +2220,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -2232,6 +2336,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -2352,6 +2462,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -2463,6 +2578,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -2583,6 +2704,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -2694,6 +2820,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -2815,6 +2947,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -2927,6 +3064,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -3048,6 +3191,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -3160,6 +3308,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -3281,6 +3435,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -3393,6 +3552,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -3514,6 +3679,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -3626,6 +3796,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -3744,6 +3920,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -3853,6 +4034,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -3971,6 +4158,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -4080,6 +4272,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -4198,6 +4396,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -4307,6 +4510,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -4425,6 +4634,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -4534,6 +4748,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -4653,6 +4873,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -4763,6 +4988,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -4882,6 +5113,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -4992,6 +5228,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -5111,6 +5353,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -5221,6 +5468,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -5340,6 +5593,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -5450,6 +5708,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -5570,6 +5834,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -5681,6 +5950,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -5801,6 +6076,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -5912,6 +6192,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -6032,6 +6318,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -6143,6 +6434,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -6263,6 +6560,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -6374,6 +6676,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -6495,6 +6803,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -6607,6 +6920,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -6728,6 +7047,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -6840,6 +7164,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -6961,6 +7291,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -7073,6 +7408,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -7194,6 +7535,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -7306,6 +7652,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -7424,6 +7776,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -7533,6 +7890,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -7651,6 +8014,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -7760,6 +8128,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -7878,6 +8252,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -7987,6 +8366,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -8105,6 +8490,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -8214,6 +8604,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -8333,6 +8729,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -8443,6 +8844,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -8562,6 +8969,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -8672,6 +9084,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -8791,6 +9209,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -8901,6 +9324,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -9020,6 +9449,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -9130,6 +9564,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -9250,6 +9690,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -9361,6 +9806,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -9481,6 +9932,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -9592,6 +10048,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -9712,6 +10174,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -9823,6 +10290,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -9943,6 +10416,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -10054,6 +10532,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -10175,6 +10659,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -10287,6 +10776,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -10408,6 +10903,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -10520,6 +11020,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -10641,6 +11147,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -10753,6 +11264,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -10874,6 +11391,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -10986,6 +11508,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0

@@ -84,6 +84,17 @@ groups:
   #   4. cosine texture-to-macro reverse-order ablation.
   - loss.schedule_label:
       [static, cos_macro, lin_macro, cos_reverse]
+    loss.terms.0.multi_target_schedules.l2.type:
+      [constant, cosine, linear, cosine]
+    loss.terms.0.multi_target_schedules.l2.initial_factor:
+      [1.0, 1.0, 1.0, 0.05]
+    loss.terms.0.multi_target_schedules.l2.final_factor:
+      [1.0, 0.25, 0.25, 1.0]
+    loss.terms.0.multi_target_schedules.l2.start_fraction:
+      [0.0, 0.30, 0.30, 0.30]
+    loss.terms.0.multi_target_schedules.l2.end_fraction:
+      [1.0, 0.75, 0.75, 0.75]
+
     loss.terms.0.multi_target_schedules.texture.type:
       [constant, cosine, linear, cosine]
     loss.terms.0.multi_target_schedules.texture.initial_factor:
