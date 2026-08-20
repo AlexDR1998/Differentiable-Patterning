@@ -1,6 +1,6 @@
-experiment_name: nca_micropattern_loss_schedule_sweep
+experiment_name: nca_micropattern_loss_schedule_l2_sweep
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_micropattern_loss_schedule_sweep
+output_subdir: generated/nca_micropattern_loss_schedule_l2_sweep
 seed_mode: index
 
 grid:
@@ -14,7 +14,7 @@ grid:
   model.channels: [48]
 
   run.iterations: [12000]
-  run.repeat: [0,1,2,3,4]
+  run.repeat: [0,1,2]
   run.t: [128]
 
   trainer.loop_autodiff: [lax]
@@ -27,11 +27,11 @@ grid:
   logging.singular_values.epsilon: [1e-8]
 
   loss.terms: [multi_target]
-  loss.terms.0.multi_target_weights.l2: [0.0]
+  loss.terms.0.multi_target_weights.l2: [1.0]
   loss.terms.0.multi_target_weights.texture: [1.0]
-  loss.terms.0.multi_target_weights.channel_mean: [1.0]
-  loss.terms.0.multi_target_weights.correlation: [1.0]
-  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [0.0]
   loss.terms.0.assignment: [hard]
   loss.terms.0.random_crop: [false]
   loss.terms.0.random_channel_shuffle: [true]
