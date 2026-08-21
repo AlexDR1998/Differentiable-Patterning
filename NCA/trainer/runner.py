@@ -179,7 +179,7 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
         )
         if checkpoint.should_save(iteration, loss_value):
             trainer.model = state.model
-            trainer.model.save(trainer.model_path, overwrite=True)
+            trainer.model.save(checkpoint.path, overwrite=True)
             checkpoint.record(iteration, loss_value)
             saved = True
         if trainer.is_logging:

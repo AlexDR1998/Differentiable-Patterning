@@ -6,6 +6,7 @@
 #   "jax",
 #   "equinox",
 #   "omegaconf",
+#   "python-dotenv",
 # ]
 # ///
 
@@ -19,23 +20,34 @@ Run from the repository root with:
 import marimo
 
 __generated_with = "0.23.10"
-app = marimo.App(width="medium")
+app = marimo.App(width="full")
 
-
-@app.cell
-def _():
+with app.setup:
+    import sys
+    from pathlib import Path
+    _repository_root = Path(__file__).resolve().parents[1]
+    if str(_repository_root) not in sys.path:
+        sys.path.insert(0, str(_repository_root))
     import os
     import sqlite3
     from pathlib import Path
 
     import marimo as mo
     import pandas as pd
+    from dotenv import load_dotenv
+    load_dotenv(_repository_root / ".env", override=False)
+        # try:
+    import jax.numpy as jnp
+    import jax.random as jr
+    import matplotlib.pyplot as plt
+    import numpy as np
 
-    return Path, mo, os, pd, sqlite3
+    from Common.model.boundary import hard_boundary, model_boundary, no_boundary
+    from NCA.registry import ModelRegistry, verify_evaluation_input
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md("""
     # Model registry explorer
 
@@ -46,17 +58,24 @@ def _(mo):
     return
 
 
-@app.cell
-def _(Path, mo, os):
+@app.cell(hide_code=True)
+def _():
     _repository_root = Path(__file__).resolve().parents[1]
     _default_store = os.environ.get("MODEL_STORE_ROOT", str(_repository_root / "models"))
+    _default_data_root = os.environ.get("DATA_PATH_BASE", "")
     store_root = mo.ui.text(_default_store, label="Model store")
-    store_root
-    return (store_root,)
+    data_root = mo.ui.text(
+        _default_data_root,
+        label="Data root",
+        placeholder="Directory containing 260726_nca_dataset or Emojis",
+        full_width=True,
+    )
+    mo.vstack([store_root, data_root])
+    return data_root, store_root
 
 
-@app.cell
-def _(Path, pd, sqlite3, store_root):
+@app.cell(hide_code=True)
+def _(store_root):
     _store_path = Path(store_root.value).expanduser()
     database_path = _store_path / "registry.sqlite"
     if not database_path.is_file():
@@ -75,9 +94,9 @@ def _(Path, pd, sqlite3, store_root):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     search_text = mo.ui.text(
-        placeholder="Model ID, slug, collection, experiment, alias, tag, or dataset",
+        placeholder="Model ID, name, collection, experiment, tag, or dataset",
         label="Search",
         full_width=True,
     )
@@ -88,19 +107,37 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
+def _(database_error, database_path):
+    if database_error:
+        _wandb_tag_options = []
+    else:
+        with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
+            _wandb_tag_rows = pd.read_sql_query(
+                "SELECT DISTINCT tag FROM model_wandb_tags ORDER BY tag", _connection
+            )
+        _wandb_tag_options = _wandb_tag_rows["tag"].tolist()
+    wandb_tag_filter = mo.ui.multiselect(
+        options=_wandb_tag_options,
+        label="W&B tags (match all)",
+        full_width=True,
+    )
+    wandb_tag_filter
+    return (wandb_tag_filter,)
+
+
+@app.cell(hide_code=True)
 def _(
     database_error,
     database_path,
     dataset_filter,
     family_filter,
-    pd,
     search_text,
-    sqlite3,
+    wandb_tag_filter,
 ):
     _columns = [
-        "model_id", "alias", "slug", "family", "dataset", "task", "collection",
+        "model_id", "alias", "display_name", "family", "dataset", "task", "collection",
         "experiment", "status", "best_loss", "best_iteration", "seed", "created_at",
-        "tags",
+        "annotation_tags", "wandb_tags",
     ]
     if database_error:
         results = pd.DataFrame(columns=_columns)
@@ -110,11 +147,13 @@ def _(
         _query = search_text.value.strip()
         if _query:
             _searchable_metadata = (
-                "COALESCE(m.model_id, '') || ' ' || COALESCE(m.slug, '') || ' ' || "
+                "COALESCE(m.model_id, '') || ' ' || COALESCE(m.config_id, '') || ' ' || "
+                "COALESCE(m.display_name, '') || ' ' || COALESCE(m.slug, '') || ' ' || "
                 "COALESCE(m.collection, '') || ' ' || COALESCE(m.experiment, '') || ' ' || "
                 "COALESCE(m.family, '') || ' ' || COALESCE(m.dataset, '') || ' ' || "
                 "COALESCE(m.task, '') || ' ' || COALESCE(a.alias, '') || ' ' || "
-                "COALESCE(a.notes, '') || ' ' || COALESCE(t.tags, '')"
+                "COALESCE(a.notes, '') || ' ' || COALESCE(t.tags, '') || ' ' || "
+                "COALESCE(wt.tags, '')"
             )
             _clauses.append(f"LOWER({_searchable_metadata}) LIKE LOWER(?)")
             _parameters.append(f"%{_query}%")
@@ -124,6 +163,12 @@ def _(
         if dataset_filter.value.strip():
             _clauses.append("LOWER(m.dataset) = LOWER(?)")
             _parameters.append(dataset_filter.value.strip())
+        for _wandb_tag in wandb_tag_filter.value:
+            _clauses.append(
+                "EXISTS (SELECT 1 FROM model_wandb_tags AS wf "
+                "WHERE wf.model_id = m.model_id AND wf.tag = ?)"
+            )
+            _parameters.append(_wandb_tag)
 
         _where = f" WHERE {' AND '.join(_clauses)}" if _clauses else ""
         _sql = f"""
@@ -131,14 +176,20 @@ def _(
                 SELECT model_id, GROUP_CONCAT(tag, ', ') AS tags
                 FROM model_tags
                 GROUP BY model_id
+            ), wandb_tags AS (
+                SELECT model_id, GROUP_CONCAT(tag, ', ') AS tags
+                FROM model_wandb_tags
+                GROUP BY model_id
             )
             SELECT
-                m.model_id, a.alias, m.slug, m.family, m.dataset, m.task,
+                m.model_id, a.alias, m.display_name, m.family, m.dataset, m.task,
                 m.collection, m.experiment, m.status, m.best_loss,
-                m.best_iteration, m.seed, m.created_at, t.tags
+                m.best_iteration, m.seed, m.created_at,
+                t.tags AS annotation_tags, wt.tags AS wandb_tags
             FROM models AS m
             LEFT JOIN model_annotations AS a ON a.model_id = m.model_id
             LEFT JOIN tags AS t ON t.model_id = m.model_id
+            LEFT JOIN wandb_tags AS wt ON wt.model_id = m.model_id
             {_where}
             ORDER BY m.created_at DESC
             LIMIT 500
@@ -149,7 +200,7 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(database_error, mo, results):
+def _(database_error, results):
     if database_error:
         _message = mo.callout(database_error, kind="danger")
     else:
@@ -158,22 +209,22 @@ def _(database_error, mo, results):
     return
 
 
-@app.cell
-def _(mo, results):
+@app.cell(hide_code=True)
+def _(results):
     results_table = mo.ui.table(
         results,
         selection="multi",
         page_size=15,
         show_data_types=False,
-        freeze_columns_left=["model_id"],
-        wrapped_columns=["slug", "tags"],
+        freeze_columns_left=["model_id","experiment"],
+        wrapped_columns=["display_name", "annotation_tags", "wandb_tags"],
     )
     results_table
     return (results_table,)
 
 
 @app.cell(hide_code=True)
-def _(database_path, mo, pd, results_table, sqlite3):
+def _(database_path, results_table):
     _selected = results_table.value
     if _selected is None or len(_selected) == 0:
         _detail = mo.md("Select a model to view its indexed metadata.")
@@ -184,11 +235,17 @@ def _(database_path, mo, pd, results_table, sqlite3):
                 SELECT model_id, GROUP_CONCAT(tag, ', ') AS tags
                 FROM model_tags
                 GROUP BY model_id
+            ), wandb_tags AS (
+                SELECT model_id, GROUP_CONCAT(tag, ', ') AS tags
+                FROM model_wandb_tags
+                GROUP BY model_id
             )
-            SELECT m.*, a.alias, a.notes, t.tags
+            SELECT m.*, a.alias, a.notes, t.tags AS annotation_tags,
+                   wt.tags AS wandb_tags
             FROM models AS m
             LEFT JOIN model_annotations AS a ON a.model_id = m.model_id
             LEFT JOIN tags AS t ON t.model_id = m.model_id
+            LEFT JOIN wandb_tags AS wt ON wt.model_id = m.model_id
             WHERE m.model_id = ?
         """
         with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
@@ -203,7 +260,7 @@ def _(database_path, mo, pd, results_table, sqlite3):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md("""
     ## Side-by-side rollout
 
@@ -215,8 +272,8 @@ def _(mo):
     return
 
 
-@app.cell
-def _(mo):
+@app.cell(hide_code=True)
+def _():
     evaluation_mode = mo.ui.dropdown(
         ["Verified bundle input", "Specific .npy input"],
         value="Verified bundle input",
@@ -245,11 +302,31 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
+def _():
+    _timepoint_options = ["0h", "12h", "24h", "36h", "48h"]
+    _channel_options = [
+        "DAPI", "LMBR", "TBXT", "SOX17", "SOX2", "FOXA2",
+        "CER1", "LEFTY", "NODAL", "LEF1", "SMAD23",
+    ]
+    timepoint_filter = mo.ui.multiselect(
+        options=_timepoint_options,
+        value=_timepoint_options,
+        label="Displayed timepoints",
+    )
+    channel_filter = mo.ui.multiselect(
+        options=_channel_options,
+        value=_channel_options,
+        label="Displayed channels",
+    )
+    mo.hstack([timepoint_filter, channel_filter])
+    return channel_filter, timepoint_filter
+
+
+@app.cell(hide_code=True)
 def _(
-    Path,
+    data_root,
     evaluation_mode,
     initial_condition_path,
-    mo,
     results_table,
     rollout_seed,
     rollout_steps,
@@ -257,129 +334,222 @@ def _(
     store_root,
 ):
     if not run_comparison.value:
-        _comparison = mo.md("Choose models and click **Run selected models** to start a rollout.")
+        comparison_rollouts = None
+        _status = mo.md("Choose models and click **Run selected models** to start a rollout.")
     else:
-        try:
-            import jax.numpy as jnp
-            import jax.random as jr
-            import matplotlib.pyplot as plt
-            import numpy as np
 
-            from Common.model.boundary import hard_boundary, model_boundary, no_boundary
-            from NCA.registry import ModelRegistry, verify_evaluation_input
 
-            _selected = results_table.value
-            if _selected is None or len(_selected) == 0:
-                raise ValueError("Select at least one model from the search results.")
-            if len(_selected) > 8:
-                raise ValueError("Select at most eight models for one comparison.")
+        _selected = results_table.value
+        if _selected is None or len(_selected) == 0:
+            raise ValueError("Select at least one model from the search results.")
+        if len(_selected) > 8:
+            raise ValueError("Select at most eight models for one comparison.")
 
-            _registry = ModelRegistry(Path(store_root.value).expanduser())
-            _bundles = [_registry.get(_model_id) for _model_id in _selected["model_id"]]
+        _registry = ModelRegistry(Path(store_root.value).expanduser())
+        _bundles = [_registry.get(_model_id) for _model_id in _selected["model_id"]]
 
-            def _load_verified_input(_bundle):
-                _cfg = _bundle.config
-                if _cfg.data.dataset == "emojis":
-                    from Experiments.emoji.config_helpers import load_data
+        def _load_verified_input(_bundle):
+            _cfg = _bundle.config
+            _data_root = Path(data_root.value).expanduser()
+            if not data_root.value.strip():
+                raise ValueError(
+                    "Set Data root to DATA_PATH_BASE before using verified bundle input."
+                )
+            if _cfg.data.dataset == "emojis":
+                from Experiments.emoji.config_helpers import load_data
 
-                    _data, _ = load_data(_cfg)
-                    _boundary = None
-                elif str(_cfg.data.dataset).startswith("micropatterns"):
-                    from Experiments.micropatterns.config_helpers import load_data
+                _data_path = _data_root / "Emojis"
+                _data, _ = load_data(_cfg.data, impath=str(_data_path))
+                _boundary = None
+                _channel_names = ()
+            elif str(_cfg.data.dataset).startswith("micropatterns"):
+                from Experiments.micropatterns.config_helpers import load_data
 
-                    _data, _, _, _boundary, _, _ = load_data(_cfg)
+                if _cfg.data.dataset == "micropatterns_260726":
+                    _data_path = _data_root / "260726_nca_dataset"
                 else:
+                    _data_path = _data_root / "Timecourse_seperate_colonies"
+                if not _data_path.is_dir():
                     raise ValueError(
-                        f"No local evaluation loader is registered for dataset {_cfg.data.dataset!r}."
+                        f"Dataset {_cfg.data.dataset!r} is not available at "
+                        f"{_data_path}. Set Data root to the directory containing "
+                        f"{_data_path.name}."
                     )
-                if "evaluation_input" not in _bundle.manifest:
-                    raise ValueError(
-                        f"{_bundle.id} has no evaluation-input fingerprint; republish it or use a specific input."
-                    )
-                verify_evaluation_input(
-                    _data,
-                    _bundle.manifest.evaluation_input,
-                    boundary_mask=_boundary,
+                _data, _, _channel_names, _boundary, _, _ = load_data(
+                    _cfg.data, impath=str(_data_path)
                 )
-                _initial = np.asarray(_data)[0, 0]
-                _boundary = None if _boundary is None else np.asarray(_boundary)[0]
-                return _initial, _boundary
-
-            if evaluation_mode.value == "Verified bundle input":
-                _inputs = [_load_verified_input(_bundle) for _bundle in _bundles]
-                _fingerprint = _bundles[0].manifest.evaluation_input.initial_state.sha256
-                _boundary_fingerprint = _bundles[0].manifest.evaluation_input.get(
-                    "boundary_mask", None
-                )
-                if any(
-                    _bundle.manifest.evaluation_input.initial_state.sha256 != _fingerprint
-                    for _bundle in _bundles[1:]
-                ) or any(
-                    _bundle.manifest.evaluation_input.get("boundary_mask", None)
-                    != _boundary_fingerprint
-                    for _bundle in _bundles[1:]
-                ):
-                    raise ValueError(
-                        "Selected models have different verified inputs; "
-                        "compare them with a specific input instead."
-                    )
             else:
-                _input_path = Path(initial_condition_path.value).expanduser()
-                if not _input_path.is_file():
-                    raise ValueError("Specific input must be an existing .npy file.")
-                _initial = np.load(_input_path, allow_pickle=False)
-                if _initial.ndim == 4:
-                    _initial = _initial[0]
-                if _initial.ndim != 3:
-                    raise ValueError("Specific input must have shape C x H x W or B x C x H x W.")
-                _inputs = [(_initial, None)] * len(_bundles)
+                raise ValueError(
+                    f"No local evaluation loader is registered for dataset {_cfg.data.dataset!r}."
+                )
+            if "evaluation_input" not in _bundle.manifest:
+                raise ValueError(
+                    f"{_bundle.id} has no evaluation-input fingerprint; republish it or use a specific input."
+                )
+            verify_evaluation_input(
+                _data,
+                _bundle.manifest.evaluation_input,
+                boundary_mask=_boundary,
+            )
+            _initial = np.asarray(_data)[0, 0]
+            _boundary = None if _boundary is None else np.asarray(_boundary)[0]
+            return _initial, _boundary, tuple(_channel_names)
 
-            _final_states = []
-            for _index, (_bundle, (_initial, _boundary)) in enumerate(zip(_bundles, _inputs)):
-                _model = _bundle.load_model(key=jr.PRNGKey(int(rollout_seed.value)))
-                _channels = int(_model.N_CHANNELS)
-                if _initial.shape[0] > _channels:
-                    raise ValueError(
-                        f"{_bundle.id} has {_channels} state channels but the input has "
-                        f"{_initial.shape[0]}."
+        if evaluation_mode.value == "Verified bundle input":
+            _inputs = [_load_verified_input(_bundle) for _bundle in _bundles]
+            _fingerprint = _bundles[0].manifest.evaluation_input.initial_state.sha256
+            _boundary_fingerprint = _bundles[0].manifest.evaluation_input.get(
+                "boundary_mask", None
+            )
+            _inputs_differ = any(
+                _bundle.manifest.evaluation_input.initial_state.sha256 != _fingerprint
+                for _bundle in _bundles[1:]
+            ) or any(
+                _bundle.manifest.evaluation_input.get("boundary_mask", None)
+                != _boundary_fingerprint
+                for _bundle in _bundles[1:]
+            )
+        else:
+            _input_path = Path(initial_condition_path.value).expanduser()
+            if not _input_path.is_file():
+                raise ValueError("Specific input must be an existing .npy file.")
+            _initial = np.load(_input_path, allow_pickle=False)
+            if _initial.ndim == 4:
+                _initial = _initial[0]
+            if _initial.ndim != 3:
+                raise ValueError("Specific input must have shape C x H x W or B x C x H x W.")
+            _inputs = [(_initial, None, ())] * len(_bundles)
+            _inputs_differ = False
+
+        _rollouts = []
+        for _index, (_bundle, (_initial, _boundary, _channel_names)) in enumerate(
+            zip(_bundles, _inputs)
+        ):
+            _model = _bundle.load_model(key=jr.PRNGKey(int(rollout_seed.value)))
+            _channels = int(_model.N_CHANNELS)
+            if _initial.shape[0] > _channels:
+                raise ValueError(
+                    f"{_bundle.id} has {_channels} state channels but the input has "
+                    f"{_initial.shape[0]}."
+                )
+            _state = jnp.pad(
+                jnp.asarray(_initial),
+                ((0, _channels - _initial.shape[0]), (0, 0), (0, 0)),
+            )
+            if _boundary is None:
+                _callback = no_boundary()
+            else:
+                _boundary_state = jnp.asarray(_boundary)
+                if _bundle.config.trainer.get("boundary_mode", "soft") == "hard":
+                    _callback = hard_boundary(_boundary_state)
+                else:
+                    _callback = model_boundary(_boundary_state)
+            if str(_bundle.config.data.dataset).startswith("micropatterns"):
+                _time_labels = tuple(
+                    f"{int(_hour)}h"
+                    for _hour in _bundle.config.data.micropattern.timesteps
+                )
+            else:
+                _time_labels = ("0h", "12h", "24h", "36h", "48h")
+            _steps_per_observation = int(_bundle.config.run.t)
+            _frame_indices = tuple(
+                _time_index * _steps_per_observation
+                for _time_index in range(len(_time_labels))
+            )
+            _total_steps = max(int(rollout_steps.value), _frame_indices[-1])
+            _trajectory = _model.run(
+                _total_steps,
+                _state,
+                callback=_callback,
+                key=jr.PRNGKey(int(rollout_seed.value) + _index),
+            )
+            _observed_channels = int(_initial.shape[0])
+            _names = list(_channel_names[:_observed_channels])
+            _names.extend(
+                f"Channel {_channel_index + 1}"
+                for _channel_index in range(len(_names), _observed_channels)
+            )
+            _frames = np.asarray(_trajectory)[list(_frame_indices), :_observed_channels]
+            _rollouts.append((_bundle, _frames, _time_labels, tuple(_names)))
+
+        comparison_rollouts = tuple(_rollouts)
+        _input_note = (
+            " Each model used its own individually verified input."
+            if _inputs_differ
+            else ""
+        )
+        _status = mo.md(
+            f"Ran {len(_bundles)} model(s). Use the display filters to compare subsets."
+            f"{_input_note}"
+        )
+    _status
+    return (comparison_rollouts,)
+
+
+@app.cell(hide_code=True)
+def _(channel_filter, comparison_rollouts, timepoint_filter):
+    if comparison_rollouts is None:
+        _comparison = mo.md("")
+    elif not timepoint_filter.value or not channel_filter.value:
+        _comparison = mo.callout(
+            "Select at least one timepoint and one channel.", kind="info"
+        )
+    else:
+        _figures = []
+        for _bundle, _frames, _time_labels, _channel_names in comparison_rollouts:
+            _time_indices = [
+                _index for _index, _label in enumerate(_time_labels)
+                if _label in timepoint_filter.value
+            ]
+            _channel_indices = [
+                _index for _index, _name in enumerate(_channel_names)
+                if _name.rsplit("/", 1)[-1] in channel_filter.value
+            ]
+            if not _time_indices or not _channel_indices:
+                continue
+            _selected_times = tuple(_time_labels[_index] for _index in _time_indices)
+            _selected_channels = tuple(
+                _channel_names[_index] for _index in _channel_indices
+            )
+            _selected_frames = _frames[np.ix_(_time_indices, _channel_indices)]
+            _row_count = len(_selected_channels)
+            _column_count = len(_selected_times)
+            _figure, _axes = plt.subplots(
+                _row_count,
+                _column_count,
+                figsize=(2.2 * _column_count, 2.2 * _row_count),
+                squeeze=False,
+            )
+            for _channel_index, _channel_name in enumerate(_selected_channels):
+                _channel_frames = _selected_frames[:, _channel_index]
+                _vmin = float(np.nanmin(_channel_frames))
+                _vmax = float(np.nanmax(_channel_frames))
+                if _vmax <= _vmin:
+                    _vmax = _vmin + 1.0
+                for _time_index, _time_label in enumerate(_selected_times):
+                    _axis = _axes[_channel_index, _time_index]
+                    _axis.imshow(
+                        _channel_frames[_time_index],
+                        cmap="gray",
+                        vmin=_vmin,
+                        vmax=_vmax,
                     )
-                _state = jnp.pad(
-                    jnp.asarray(_initial),
-                    ((0, _channels - _initial.shape[0]), (0, 0), (0, 0)),
-                )
-                if _boundary is None:
-                    _callback = no_boundary()
-                else:
-                    _boundary_state = jnp.asarray(_boundary)
-                    if _bundle.config.trainer.get("boundary_mode", "soft") == "hard":
-                        _callback = hard_boundary(_boundary_state)
-                    else:
-                        _callback = model_boundary(_boundary_state)
-                _trajectory = _model.run(
-                    int(rollout_steps.value),
-                    _state,
-                    callback=_callback,
-                    key=jr.PRNGKey(int(rollout_seed.value) + _index),
-                )
-                _final_states.append(np.asarray(_trajectory[-1]))
-
-            _figure, _axes = plt.subplots(1, len(_final_states), figsize=(4 * len(_final_states), 4))
-            _axes = np.atleast_1d(_axes)
-            for _axis, _bundle, _state in zip(_axes, _bundles, _final_states):
-                _image = np.moveaxis(_state[: min(3, _state.shape[0])], 0, -1)
-                if _image.shape[-1] == 1:
-                    _axis.imshow(_image[..., 0], cmap="viridis")
-                else:
-                    _axis.imshow(np.pad(_image, ((0, 0), (0, 0), (0, 3 - _image.shape[-1]))))
-                _axis.set_title(str(_bundle.manifest.slug), fontsize=8)
-                _axis.axis("off")
+                    if _channel_index == 0:
+                        _axis.set_title(_time_label)
+                    if _time_index == 0:
+                        _axis.set_ylabel(_channel_name, rotation=0, ha="right", va="center")
+                    _axis.set_xticks([])
+                    _axis.set_yticks([])
+            # _figure.suptitle(str(_bundle.manifest.slug), fontsize=10)
             _figure.tight_layout()
-            _comparison = mo.vstack([
-                mo.md(f"Compared {len(_bundles)} models after {int(rollout_steps.value)} steps."),
-                _figure,
-            ])
-        except Exception as _error:
-            _comparison = mo.callout(str(_error), kind="danger")
+            _figures.append(_figure)
+        if _figures:
+            _comparison = mo.hstack(_figures)
+        else:
+            _comparison = mo.callout(
+                "None of the selected models contain the chosen channels or timepoints.",
+                kind="info",
+            )
     _comparison
     return
 

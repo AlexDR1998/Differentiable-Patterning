@@ -34,17 +34,21 @@ from Experiments.config import (
 from Common.trainer.training_result import TrainingResult
 
 
-BUNDLE_SCHEMA_VERSION = 2
+BUNDLE_SCHEMA_VERSION = 3
 DEFAULT_MODEL_FACTORY = "Experiments.config_helpers:build_model"
+CONFIG_ID_LENGTH = 12
 
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _identifier() -> str:
+def _identifier(config_id: Optional[str] = None) -> str:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    return f"{stamp}-{uuid.uuid4().hex[:12]}"
+    attempt_id = uuid.uuid4().hex[:8]
+    if config_id is None:
+        return f"{stamp}-{attempt_id}"
+    return f"{stamp}-cfg{config_id[:CONFIG_ID_LENGTH]}-{attempt_id}"
 
 
 def _slug(value: str) -> str:
@@ -144,6 +148,23 @@ def _config_digest(config: Mapping[str, Any]) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
+def create_model_id(cfg: Any) -> str:
+    """Create a short, collision-resistant ID for one training attempt.
+
+    The configuration component groups equivalent resolved configurations;
+    the timestamp and random component distinguish concurrent or repeated
+    attempts using that configuration.
+    """
+    return _identifier(_config_digest(_config_container(cfg)))
+
+
+def _wandb_tags(cfg: Any) -> list[str]:
+    # Import lazily to keep registry loading independent of experiment helpers.
+    from Experiments.config_helpers import build_wandb_tags
+
+    return build_wandb_tags(cfg)
+
+
 def _git_provenance(repo: Path) -> Dict[str, Any]:
     def run(*args: str) -> Optional[str]:
         try:
@@ -234,7 +255,8 @@ def publish_model_bundle(
     *,
     store_root: Union[str, Path],
     collection: str,
-    run_name: str,
+    model_id: str,
+    display_name: str,
     checkpoint_path: Union[str, Path],
     cfg: Any,
     training_result: TrainingResult,
@@ -248,8 +270,15 @@ def publish_model_bundle(
         raise FileNotFoundError(f"Checkpoint not found: {source}")
 
     config = _config_container(cfg)
-    model_id = _identifier()
-    slug = _slug(run_name)
+    config_sha256 = _config_digest(config)
+    config_id = config_sha256[:CONFIG_ID_LENGTH]
+    expected_config_component = f"cfg{config_id}"
+    if Path(model_id).name != model_id or expected_config_component not in model_id:
+        raise ValueError(
+            "model_id must be a storage ID created from this configuration "
+            "by create_model_id()"
+        )
+    slug = _slug(display_name)
     collection_slug = _slug(collection)
     experiment_name = (
         config.get("experiment", {}).get("name")
@@ -264,7 +293,7 @@ def publish_model_bundle(
         / experiment_slug
     )
     parent.mkdir(parents=True, exist_ok=True)
-    destination = parent / f"{slug}--{model_id}"
+    destination = parent / model_id
     repo = Path(repository_root or Path(__file__).resolve().parents[1])
 
     staging = Path(tempfile.mkdtemp(prefix=f".{destination.name}.", dir=parent))
@@ -275,6 +304,8 @@ def publish_model_bundle(
         manifest = {
             "schema_version": BUNDLE_SCHEMA_VERSION,
             "id": model_id,
+            "config_id": config_id,
+            "display_name": display_name,
             "slug": slug,
             "collection": collection,
             "experiment": experiment_name,
@@ -299,7 +330,7 @@ def publish_model_bundle(
                 "task": config.get("data", {}).get("augmentation", {}).get("task"),
             },
             "provenance": {
-                "config_sha256": _config_digest(config),
+                "config_sha256": config_sha256,
                 "git": _git_provenance(repo),
                 "python": sys.version.split()[0],
                 "packages": _package_versions(("jax", "equinox", "optax", "diffrax")),
@@ -307,6 +338,7 @@ def publish_model_bundle(
                     "project": config.get("logging", {}).get("wandb", {}).get("project"),
                     "group": config.get("logging", {}).get("wandb", {}).get("group"),
                     "run_id": training_result.wandb_run_id,
+                    "tags": _wandb_tags(cfg),
                 },
             },
         }
@@ -347,8 +379,8 @@ class ModelRegistry:
             connection.executescript(
                 """
                 CREATE TABLE models (
-                    model_id TEXT PRIMARY KEY, slug TEXT, collection TEXT,
-                    experiment TEXT,
+                    model_id TEXT PRIMARY KEY, config_id TEXT,
+                    display_name TEXT, slug TEXT, collection TEXT, experiment TEXT,
                     path TEXT, created_at TEXT, status TEXT, family TEXT,
                     dataset TEXT, task TEXT, seed INTEGER, best_loss REAL,
                     best_iteration INTEGER, config_sha256 TEXT,
@@ -364,32 +396,25 @@ class ModelRegistry:
                     model_id TEXT PRIMARY KEY, alias TEXT, notes TEXT
                 );
                 CREATE TABLE model_tags (model_id TEXT, tag TEXT);
+                CREATE TABLE model_wandb_tags (model_id TEXT, tag TEXT);
                 CREATE INDEX models_family_idx ON models(family);
                 CREATE INDEX models_dataset_idx ON models(dataset);
                 CREATE INDEX evaluations_model_idx ON evaluations(model_id);
                 CREATE INDEX model_tags_tag_idx ON model_tags(tag);
+                CREATE INDEX model_wandb_tags_tag_idx ON model_wandb_tags(tag);
                 """
             )
             for path in self.bundle_paths():
-                try:
-                    bundle = open_model_bundle(path)
-                except ValueError as error:
-                    if "Unsupported bundle schema version" not in str(error):
-                        raise
-                    # A newer registry must still be usable when its local
-                    # store contains bundles published before a schema change.
-                    # They cannot be reconstructed safely without an explicit
-                    # migration, so leave them out of this derived index.
-                    print(f"Skipping incompatible model bundle: {path} ({error})")
-                    continue
+                bundle = open_model_bundle(path)
                 manifest = bundle.manifest
                 git = manifest.provenance.git
                 wandb = manifest.provenance.wandb
                 connection.execute(
-                    "INSERT INTO models VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    "INSERT INTO models VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (
-                        str(manifest.id), str(manifest.slug), str(manifest.collection),
-                        manifest.get("experiment"), str(path),
+                        str(manifest.id), str(manifest.config_id),
+                        str(manifest.display_name), str(manifest.slug),
+                        str(manifest.collection), manifest.get("experiment"), str(path),
                         str(manifest.created_at), str(manifest.status),
                         manifest.model.get("family"), manifest.data.get("dataset"),
                         manifest.data.get("task"), bundle.config.get("seed"),
@@ -401,6 +426,11 @@ class ModelRegistry:
                         wandb.get("run_id"),
                     ),
                 )
+                for tag in wandb.get("tags", []):
+                    connection.execute(
+                        "INSERT INTO model_wandb_tags VALUES (?,?)",
+                        (str(manifest.id), str(tag)),
+                    )
             self._index_evaluations(connection)
             self._index_annotations(connection)
             connection.commit()
@@ -474,6 +504,13 @@ class ModelRegistry:
         with sqlite3.connect(self.database_path) as connection:
             return pd.read_sql_query("SELECT * FROM model_tags", connection)
 
+    def wandb_tags_df(self):
+        import pandas as pd
+
+        self._ensure_index()
+        with sqlite3.connect(self.database_path) as connection:
+            return pd.read_sql_query("SELECT * FROM model_wandb_tags", connection)
+
     def annotate(
         self,
         model_id: str,
@@ -506,16 +543,25 @@ class ModelRegistry:
             if values.get("alias")
         }
         identifier = aliases.get(identifier, identifier)
-        matches = []
+        matching_paths = []
         for path in self.bundle_paths():
-            bundle = open_model_bundle(path)
-            if identifier in {bundle.id, str(bundle.manifest.slug), path.name}:
-                matches.append(bundle)
-        if not matches:
+            # Inspect only the identifying metadata first. Opening every bundle
+            # here makes an unrelated bundle from an older schema prevent any
+            # lookup in a mixed-version store.
+            manifest = OmegaConf.load(path / "manifest.yaml")
+            if identifier in {
+                str(manifest.get("id", "")),
+                str(manifest.get("slug", "")),
+                path.name,
+            }:
+                matching_paths.append(path)
+        if not matching_paths:
             raise KeyError(f"Unknown model {identifier!r}")
-        if len(matches) > 1:
+        if len(matching_paths) > 1:
             raise ValueError(f"Model name {identifier!r} is ambiguous; use its ID")
-        return matches[0]
+        # Validate the selected bundle fully. In particular, selecting an old
+        # schema still reports that incompatibility rather than hiding it.
+        return open_model_bundle(matching_paths[0])
 
     def load(self, identifier: str, key=None):
         return self.get(identifier).load_model(key=key)

@@ -15,6 +15,7 @@ class TrainerContext:
     run_name: str
     model_directory: str
     data_augmenter: type
+    storage_id: str | None = None
     boundary_mask: Any = None
     channel_schema: Any = None
     channel_names: tuple[str, ...] | list[str] | None = None
@@ -23,4 +24,3 @@ class TrainerContext:
     observed_channels: int | None = None
     data_channels: int | None = None
     evaluation_input: Any = None
-

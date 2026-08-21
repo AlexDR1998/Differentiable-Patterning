@@ -23,10 +23,13 @@ def run_training(config, *, model, data, context: TrainerContext, key,
                 "model_store.root must be set when model bundling is enabled"
             )
         collection = model_store.collection or config.logging.wandb.project
+        if context.storage_id is None:
+            raise ValueError("TrainerContext.storage_id is required for model publication")
         bundle = publish_model_bundle(
             store_root=model_store.root,
             collection=collection,
-            run_name=context.run_name,
+            model_id=context.storage_id,
+            display_name=context.run_name,
             checkpoint_path=result.checkpoint_path,
             cfg=config,
             training_result=result,

@@ -129,7 +129,9 @@ class NcaTrainer:
 		
 		self._log_root = trainer_config.log_directory
 		self._model_root = context.model_directory
-		self.model_filename = context.run_name
+		# Keep human-readable names in logging metadata. Checkpoint paths use a
+		# bounded, collision-resistant storage ID supplied by the entrypoint.
+		self.model_filename = context.storage_id or context.run_name
 		#print(jax.tree_util.tree_structure(self.boundary_callbacks))
 		
 	def setup_logging(self,logging_backend,wandb_args,knockout,singular_value_settings=None):
