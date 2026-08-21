@@ -1,4 +1,4 @@
-experiment_name: hnca_micropattern_hyperparameter_sweep_v3
+experiment_name: hnca_micropattern_hyperparameter_sweep_v4
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/hnca_micropattern_hyperparameter_sweep
 seed_mode: index
