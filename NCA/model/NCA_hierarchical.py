@@ -154,6 +154,21 @@ class HNCA(AbstractModel):
             "FIRE_RATE": self.FIRE_RATE,
         }
 
+    def get_weights(self):
+        """Return trainable arrays in the format expected by NCA loggers.
+
+        ``AbstractModel.get_weights`` returns a ``(leaves, tree_def)`` pair,
+        which is useful for generic reconstruction but is not the historical
+        NCA logging contract. The NCA loggers iterate directly over a flat
+        sequence of arrays.
+        """
+        differentiable, _ = self.partition()
+        return [
+            jnp.squeeze(value)
+            for value in jax.tree_util.tree_leaves(differentiable)
+            if eqx.is_array(value)
+        ]
+
     def _validate_state(self, x):
         if x.ndim != 3 or x.shape[0] != self.N_CHANNELS:
             raise ValueError(
