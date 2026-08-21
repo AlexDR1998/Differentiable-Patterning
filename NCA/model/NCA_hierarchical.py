@@ -13,7 +13,6 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import jax.random as jr
-from einops import reduce, repeat
 from jaxtyping import Array, Float, Int, Scalar
 
 from Common.model.abstract_model import AbstractModel
@@ -180,21 +179,44 @@ class HNCA(AbstractModel):
         """Expose only the fine grid to generic boundary regularisation."""
         return state[..., : self.LEVEL_CHANNELS, :, :]
 
+    def prepare_pool_state(self, state):
+        """Rebuild the parent from the child at each training-pool boundary.
+
+        The reference HNCA training loop pools child states and constructs a
+        fresh parent in its model-specific input wrapper. The packed-array
+        representation must do this explicitly or the additive Sensor signal
+        accumulates in the parent across successive optimiser iterations.
+        """
+        if state.shape[-3] != self.N_CHANNELS:
+            raise ValueError(
+                "HNCA pool state must have "
+                f"{self.N_CHANNELS} channels; got {state.shape[-3]}"
+            )
+        child = state[..., : self.LEVEL_CHANNELS, :, :]
+        parent = self._pool(child)
+        return jnp.concatenate((child, self._upsample(parent)), axis=-3)
+
     def _pool(self, x):
-        return reduce(
-            x,
-            "c (h sh) (w sw) -> c h w",
-            "mean",
-            sh=self.SCALE,
-            sw=self.SCALE,
+        height, width = x.shape[-2:]
+        if height % self.SCALE or width % self.SCALE:
+            raise ValueError(
+                f"Spatial dimensions {(height, width)} must be divisible by "
+                f"SCALE={self.SCALE}"
+            )
+        blocked_shape = (
+            *x.shape[:-2],
+            height // self.SCALE,
+            self.SCALE,
+            width // self.SCALE,
+            self.SCALE,
         )
+        return x.reshape(blocked_shape).mean(axis=(-3, -1))
 
     def _upsample(self, x):
-        return repeat(
-            x,
-            "c h w -> c (h sh) (w sw)",
-            sh=self.SCALE,
-            sw=self.SCALE,
+        return jnp.repeat(
+            jnp.repeat(x, self.SCALE, axis=-2),
+            self.SCALE,
+            axis=-1,
         )
 
     def __call__(

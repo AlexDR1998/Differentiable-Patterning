@@ -158,6 +158,7 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
             states, targets = setup.execution.apply_advance_pool(
                 state.states, state.targets, iteration, augment_key
             )
+            states = jtu.tree_map(state.model.prepare_pool_state, states)
             state = state._replace(
                 states=states, targets=targets, key=next_key
             )

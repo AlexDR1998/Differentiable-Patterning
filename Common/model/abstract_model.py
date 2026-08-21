@@ -35,6 +35,15 @@ class AbstractModel(eqx.Module):
 		from fine-resolution boundary penalties.
 		"""
 		return state
+
+	def prepare_pool_state(self, state):
+		"""Prepare a state before it is used as a new training rollout input.
+
+		Ordinary models preserve the complete recurrent state. Hierarchical
+		models can override this to reconstruct auxiliary levels that should
+		not themselves be persisted by the training pool.
+		"""
+		return state
 	
 	def combine(self,diff,static):
 		"""

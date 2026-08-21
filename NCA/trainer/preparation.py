@@ -127,6 +127,7 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         )
 
     states, targets = trainer.data_augmenter.initialize_pool(key)
+    states = jtu.tree_map(trainer.model.prepare_pool_state, states)
     loss_weight_schedule = build_loss_weight_schedule(
         config.training.loss, loop.iterations
     )
