@@ -4,6 +4,7 @@ import os
 import time
 from pathlib import Path
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
@@ -72,16 +73,82 @@ class RuntimeMetrics:
 
 
 def _divergence_code(loss, states):
-    if bool(jax.device_get(jnp.isnan(loss))):
-        return 1
+    """Classify divergence without confusing a bad state for a bad loss.
+
+    The objective is evaluated from ``states``, so state finiteness must be
+    checked first. Otherwise a NaN produced by the rollout is always reported
+    as a loss NaN and the useful distinction is lost.
+    """
     if any(
-        bool(jax.device_get(jnp.any(jnp.isnan(value))))
+        bool(jax.device_get(jnp.any(~jnp.isfinite(value))))
         for value in jtu.tree_leaves(states)
     ):
         return 2
-    if float(jax.device_get(loss)) > 1e16:
+    if bool(jax.device_get(~jnp.isfinite(loss))):
+        return 1
+    if abs(float(jax.device_get(loss))) > 1e16:
         return 3
     return 0
+
+
+def _array_diagnostic(value):
+    value = jnp.asarray(value)
+    finite = jnp.isfinite(value)
+    finite_count = int(jax.device_get(jnp.sum(finite)))
+    total_count = value.size
+    if finite_count:
+        finite_values = jnp.where(finite, value, 0)
+        max_abs = float(jax.device_get(jnp.max(jnp.abs(finite_values))))
+    else:
+        max_abs = float("nan")
+    return {
+        "shape": tuple(value.shape),
+        "finite": f"{finite_count}/{total_count}",
+        "nan": int(jax.device_get(jnp.sum(jnp.isnan(value)))),
+        "inf": int(jax.device_get(jnp.sum(jnp.isinf(value)))),
+        "finite_max_abs": max_abs,
+    }
+
+
+def _report_divergence(output, state, iteration):
+    """Print enough numerical context to locate the first failing subsystem."""
+    print(f"Divergence diagnostics at step {iteration}:")
+    print(f"  loss: {_array_diagnostic(output.loss)}")
+
+    level_channels = getattr(state.model, "LEVEL_CHANNELS", None)
+    for batch_index, batch_states in enumerate(jtu.tree_leaves(state.states)):
+        if level_channels is None:
+            print(f"  state[{batch_index}]: {_array_diagnostic(batch_states)}")
+            continue
+        child = batch_states[..., :level_channels, :, :]
+        parent = batch_states[..., level_channels:, :, :]
+        print(f"  state[{batch_index}].child: {_array_diagnostic(child)}")
+        print(f"  state[{batch_index}].parent: {_array_diagnostic(parent)}")
+
+    for name, value in output.metrics.items():
+        if name == "states":
+            continue
+        leaves = jtu.tree_leaves(value)
+        if leaves and all(hasattr(leaf, "shape") for leaf in leaves):
+            bad = any(
+                bool(jax.device_get(jnp.any(~jnp.isfinite(leaf))))
+                for leaf in leaves
+            )
+            if bad or name.startswith(("loss", "boundary")):
+                summaries = [_array_diagnostic(leaf) for leaf in leaves]
+                print(f"  metric.{name}: {summaries}")
+
+    bad_parameter_leaves = []
+    for path, value in jtu.tree_leaves_with_path(state.model):
+        if eqx.is_array(value) and not bool(
+            jax.device_get(jnp.all(jnp.isfinite(value)))
+        ):
+            bad_parameter_leaves.append((jtu.keystr(path), _array_diagnostic(value)))
+    if bad_parameter_leaves:
+        for name, summary in bad_parameter_leaves:
+            print(f"  parameter.{name}: {summary}")
+    else:
+        print("  model parameters: all finite")
 
 
 def run_training(trainer, setup, train_step, *, progress_callback=None):
@@ -150,6 +217,7 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
         error_code = _divergence_code(output.loss, state.states)
         if error_code:
             error_iteration = iteration
+            _report_divergence(output, state, iteration)
             break
 
         decision = admission.decide(loss_value, iteration)
