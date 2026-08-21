@@ -10,6 +10,7 @@ from pathlib import Path
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_gated_model import gNCA
 from NCA.model.NCA_gated_noise_model import gnNCA
+from NCA.model.NCA_hierarchical import HNCA
 from NCA.model.NCA_model import NCA
 from NCA.model.NCA_model_fast import NCA as NCAFast
 from NCA.model.NCA_sycl import NCA as NCASycl, gNCA as GatedNCASycl
@@ -286,6 +287,16 @@ def build_model_config_string(model_config):
             cfg_str += "_noln"
         if not _cfg_get(kan_cfg, "final_zero_init", True):
             cfg_str += "_nozero"
+    if cfg.model.family == "HNCA":
+        cfg_str += f"_s{cfg.model.scale}"
+        if cfg.model.parent_learnable_kernels:
+            cfg_str += "_plk"
+        if cfg.model.child_gated:
+            cfg_str += "_cg"
+        if cfg.model.parent_gated:
+            cfg_str += "_pg"
+        if cfg.model.actuator_gated:
+            cfg_str += "_ag"
     return cfg_str
 
 
@@ -377,6 +388,22 @@ def build_model(model_config, key=None):
             PADDING=cfg.model.padding,
             KERNEL_SCALE=kernel_scale,
             KAN_AUX=_build_kan_aux(model_config),
+            key=key,
+        )
+    elif cfg.model.family == "HNCA":
+        model = HNCA(
+            N_CHANNELS=cfg.model.channels,
+            SCALE=cfg.model.scale,
+            OBS_CHANNELS=cfg.model.obs_channels,
+            PARENT_LEARNABLE_KERNELS=cfg.model.parent_learnable_kernels,
+            CHILD_GATED=cfg.model.child_gated,
+            PARENT_GATED=cfg.model.parent_gated,
+            ACTUATOR_GATED=cfg.model.actuator_gated,
+            KERNEL_STR=cfg.model.kernel_str,
+            ACTIVATION=activation,
+            FIRE_RATE=cfg.model.fire_rate,
+            PADDING=cfg.model.padding,
+            KERNEL_SCALE=kernel_scale,
             key=key,
         )
     else:

@@ -88,9 +88,12 @@ def boundary_regulariser(state, next_state, context, key):
     """
     del state, key
 
+    select_state = context.get("boundary_state_selector", lambda value: value)
+
     def _reg(callback, state):
         if isinstance(callback, no_boundary):
             return jnp.zeros((), dtype=state.dtype)
+        state = select_state(state)
         if isinstance(callback, model_boundary):
             mask = jnp.asarray(callback.MASK, dtype=state.dtype)
             boundary_channels = mask.shape[0]

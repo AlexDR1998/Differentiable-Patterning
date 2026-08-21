@@ -44,6 +44,7 @@ from Experiments.impulse.config import (
 )
 from Experiments.micropatterns.config import KnockoutConfig, MicropatternDataConfig
 from NCA.model.config import (
+    HNCAModelConfig,
     KANConfig,
     KANModelConfig,
     ModelConfig,
@@ -403,6 +404,8 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
     if model_node.get("family") == "FastKaNCA":
         model_node["kan"] = _strict(KANConfig, model_node.get("kan"), "model.kan")
         model_class = KANModelConfig
+    elif model_node.get("family") == "HNCA":
+        model_class = HNCAModelConfig
     model = _strict(model_class, model_node, "model")
 
     training_node = _mapping(root.get("training"), "training")

@@ -26,6 +26,15 @@ class AbstractModel(eqx.Module):
 		"""
 		diff,static = eqx.partition(self,eqx.is_array)
 		return diff,static
+
+	def boundary_regulariser_state(self, state):
+		"""Return the part of ``state`` governed by the spatial boundary.
+
+		Most models evolve one grid, so the complete state is appropriate.
+		Hierarchical models can override this view to exclude auxiliary grids
+		from fine-resolution boundary penalties.
+		"""
+		return state
 	
 	def combine(self,diff,static):
 		"""

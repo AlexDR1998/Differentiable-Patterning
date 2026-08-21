@@ -254,7 +254,10 @@ class NcaTrainer:
 				reg_logs,
 				state,
 				new_state,
-				{"model": vv_nca},
+				{
+					"model": vv_nca,
+					"boundary_state_selector": nca.boundary_regulariser_state,
+				},
 				step_key,
 			)
 			return (step_key, new_state, reg_logs), None
