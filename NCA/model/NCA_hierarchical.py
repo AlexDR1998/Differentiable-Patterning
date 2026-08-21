@@ -39,6 +39,7 @@ class HNCA(AbstractModel):
     child_nca: NCA
     parent_nca: NCA
     actuator: eqx.nn.Conv2d
+    sensor_gain: Array
     N_CHANNELS: int
     LEVEL_CHANNELS: int
     OBS_CHANNELS: int
@@ -96,6 +97,12 @@ class HNCA(AbstractModel):
         self.ACTUATOR_GATED = ACTUATOR_GATED
         self.KERNEL_STR = list(KERNEL_STR)
         self.FIRE_RATE = FIRE_RATE
+        # The reference SimpleMultiplexer learns a separate mixing strength
+        # for every destination feature. Starting from zero prevents the
+        # Sensor from acting as a unit-strength recurrent forcing term before
+        # the hierarchy has learned how to use child feedback. ``tanh`` in the
+        # forward pass keeps these coefficients bounded during training.
+        self.sensor_gain = jnp.zeros((N_CHANNELS, 1, 1))
 
         block_kwargs = dict(
             N_CHANNELS=N_CHANNELS,
@@ -235,7 +242,7 @@ class HNCA(AbstractModel):
 
         # Sensor and multiplexer: summarize the child and add it to every
         # corresponding parent channel.
-        parent_input = parent + self._pool(child)
+        parent_input = parent + jnp.tanh(self.sensor_gain) * self._pool(child)
 
         # Actuator and multiplexer: parent directives are projected and routed
         # exclusively into the child's hidden channels.
