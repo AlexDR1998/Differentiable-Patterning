@@ -1,4 +1,4 @@
-experiment_name: hnca_micropattern_hyperparameter_sweep_v4
+experiment_name: hnca_micropattern_hyperparameter_sweep_v5
 entrypoint: Experiments.micropatterns.train:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/hnca_micropattern_hyperparameter_sweep.yaml
@@ -46,7 +46,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -73,14 +73,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 577090037
   config:
     schema_version: 1
     seed: 577090037
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -168,7 +168,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -190,7 +190,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -242,7 +242,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -270,14 +270,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 271041745
   config:
     schema_version: 1
     seed: 271041745
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -366,7 +366,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -388,7 +388,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -440,7 +440,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -467,14 +467,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1095513148
   config:
     schema_version: 1
     seed: 1095513148
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -562,7 +562,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -584,7 +584,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -636,7 +636,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -664,14 +664,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 506456969
   config:
     schema_version: 1
     seed: 506456969
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -760,7 +760,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -782,7 +782,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -834,7 +834,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -861,14 +861,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 2127877499
   config:
     schema_version: 1
     seed: 2127877499
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -956,7 +956,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -978,7 +978,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -1030,7 +1030,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -1058,14 +1058,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1930549411
   config:
     schema_version: 1
     seed: 1930549411
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -1154,7 +1154,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -1176,7 +1176,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -1228,7 +1228,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -1255,14 +1255,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 2028277857
   config:
     schema_version: 1
     seed: 2028277857
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -1350,7 +1350,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -1372,7 +1372,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -1424,7 +1424,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -1452,14 +1452,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1630434966
   config:
     schema_version: 1
     seed: 1630434966
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -1548,7 +1548,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -1570,7 +1570,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -1622,7 +1622,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -1649,14 +1649,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 901749037
   config:
     schema_version: 1
     seed: 901749037
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -1744,7 +1744,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -1766,7 +1766,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -1818,7 +1818,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -1846,14 +1846,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 403123852
   config:
     schema_version: 1
     seed: 403123852
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -1942,7 +1942,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -1964,7 +1964,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -2016,7 +2016,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -2043,14 +2043,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 2095328386
   config:
     schema_version: 1
     seed: 2095328386
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -2138,7 +2138,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -2160,7 +2160,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -2212,7 +2212,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -2240,14 +2240,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 121751464
   config:
     schema_version: 1
     seed: 121751464
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -2336,7 +2336,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -2358,7 +2358,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -2410,7 +2410,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -2437,14 +2437,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1674216077
   config:
     schema_version: 1
     seed: 1674216077
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -2532,7 +2532,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -2554,7 +2554,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -2606,7 +2606,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -2634,14 +2634,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1858720390
   config:
     schema_version: 1
     seed: 1858720390
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -2730,7 +2730,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -2752,7 +2752,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -2804,7 +2804,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -2831,14 +2831,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 9045414
   config:
     schema_version: 1
     seed: 9045414
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -2926,7 +2926,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -2948,7 +2948,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -3000,7 +3000,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -3028,14 +3028,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1912923437
   config:
     schema_version: 1
     seed: 1912923437
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -3124,7 +3124,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -3146,7 +3146,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -3198,7 +3198,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -3225,14 +3225,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1143881027
   config:
     schema_version: 1
     seed: 1143881027
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -3320,7 +3320,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -3342,7 +3342,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -3394,7 +3394,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -3422,14 +3422,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 982526257
   config:
     schema_version: 1
     seed: 982526257
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -3518,7 +3518,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -3540,7 +3540,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -3592,7 +3592,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -3619,14 +3619,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 439062303
   config:
     schema_version: 1
     seed: 439062303
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -3714,7 +3714,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -3736,7 +3736,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -3788,7 +3788,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -3816,14 +3816,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1363349907
   config:
     schema_version: 1
     seed: 1363349907
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -3912,7 +3912,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -3934,7 +3934,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -3986,7 +3986,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -4013,14 +4013,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 131383004
   config:
     schema_version: 1
     seed: 131383004
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -4108,7 +4108,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -4130,7 +4130,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -4182,7 +4182,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -4210,14 +4210,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 95872739
   config:
     schema_version: 1
     seed: 95872739
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -4306,7 +4306,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -4328,7 +4328,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -4380,7 +4380,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -4407,14 +4407,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 109289145
   config:
     schema_version: 1
     seed: 109289145
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -4502,7 +4502,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -4524,7 +4524,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -4576,7 +4576,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -4604,14 +4604,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 39534911
   config:
     schema_version: 1
     seed: 39534911
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -4700,7 +4700,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -4722,7 +4722,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -4774,7 +4774,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -4801,14 +4801,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1637259727
   config:
     schema_version: 1
     seed: 1637259727
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -4896,7 +4896,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -4918,7 +4918,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -4970,7 +4970,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -4998,14 +4998,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 930287327
   config:
     schema_version: 1
     seed: 930287327
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -5094,7 +5094,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -5116,7 +5116,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -5168,7 +5168,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -5195,14 +5195,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1812976885
   config:
     schema_version: 1
     seed: 1812976885
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -5290,7 +5290,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -5312,7 +5312,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -5364,7 +5364,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -5392,14 +5392,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 124729223
   config:
     schema_version: 1
     seed: 124729223
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -5488,7 +5488,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -5510,7 +5510,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -5562,7 +5562,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -5589,14 +5589,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 952158461
   config:
     schema_version: 1
     seed: 952158461
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -5684,7 +5684,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -5706,7 +5706,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -5758,7 +5758,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -5786,14 +5786,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1880712864
   config:
     schema_version: 1
     seed: 1880712864
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -5882,7 +5882,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -5904,7 +5904,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -5956,7 +5956,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -5983,14 +5983,14 @@ configs:
     model.obs_channels: 4
     data.micropattern.experiment_groups:
     - cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 2129497364
   config:
     schema_version: 1
     seed: 2129497364
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -6078,7 +6078,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -6100,7 +6100,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
@@ -6152,7 +6152,7 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     loss.regularisers.localised_hidden: 0.0
-    loss.regularisers.intermediate_state: 0.0
+    loss.regularisers.intermediate_state: 10.0
     loss.regularisers.boundary: 10.0
     data.micropattern.task: micropattern_single_replicate
     data.batches: 1
@@ -6180,14 +6180,14 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     - cell_fate_s2
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v4
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v4
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v5
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v5
     seed: 1001090105
   config:
     schema_version: 1
     seed: 1001090105
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v4
+      name: hnca_micropattern_hyperparameter_sweep_v5
     system:
       precision: highest
       xla_flags: null
@@ -6276,7 +6276,7 @@ configs:
         random_crop: false
         random_channel_shuffle: true
       regularisers:
-        intermediate_state: 0.0
+        intermediate_state: 10.0
         boundary: 10.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
@@ -6298,7 +6298,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v4
+        group: hnca_micropattern_hyperparameter_sweep_v5
         tags: null
     model_store:
       enabled: true
