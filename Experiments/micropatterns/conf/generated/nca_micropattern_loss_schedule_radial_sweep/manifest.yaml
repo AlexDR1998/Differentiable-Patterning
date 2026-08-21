@@ -7,10 +7,11 @@ count: 48
 configs:
 - index: 17
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -64,6 +65,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -97,7 +103,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -121,7 +127,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -134,7 +140,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -173,6 +179,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -234,10 +246,11 @@ configs:
       channel: Nodal
 - index: 19
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -291,6 +304,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -324,7 +342,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -348,7 +366,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -361,7 +379,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -400,6 +418,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -461,10 +485,11 @@ configs:
       channel: Nodal
 - index: 20
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -518,6 +543,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -551,7 +581,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -575,7 +605,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -588,7 +618,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -627,6 +657,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -688,10 +724,11 @@ configs:
       channel: Nodal
 - index: 21
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -745,6 +782,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -778,7 +820,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -802,7 +844,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -815,7 +857,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -854,6 +896,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -915,10 +963,11 @@ configs:
       channel: Nodal
 - index: 7
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -973,6 +1022,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -1006,7 +1060,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1031,7 +1085,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -1044,7 +1098,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1083,6 +1137,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -1144,10 +1204,11 @@ configs:
       channel: Nodal
 - index: 42
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -1202,6 +1263,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -1235,7 +1301,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1260,7 +1326,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -1273,7 +1339,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1312,6 +1378,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -1373,10 +1445,11 @@ configs:
       channel: Nodal
 - index: 4
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -1431,6 +1504,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -1464,7 +1542,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1489,7 +1567,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -1502,7 +1580,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1541,6 +1619,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -1602,10 +1686,11 @@ configs:
       channel: Nodal
 - index: 46
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -1660,6 +1745,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -1693,7 +1783,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1718,7 +1808,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -1731,7 +1821,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -1770,6 +1860,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -1831,10 +1927,11 @@ configs:
       channel: Nodal
 - index: 39
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -1890,6 +1987,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -1923,7 +2025,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -1949,7 +2051,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -1962,7 +2064,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2001,6 +2103,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -2062,10 +2170,11 @@ configs:
       channel: Nodal
 - index: 10
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -2121,6 +2230,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -2154,7 +2268,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -2180,7 +2294,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -2193,7 +2307,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2232,6 +2346,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -2293,10 +2413,11 @@ configs:
       channel: Nodal
 - index: 14
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -2352,6 +2473,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -2385,7 +2511,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -2411,7 +2537,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -2424,7 +2550,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2463,6 +2589,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -2524,10 +2656,11 @@ configs:
       channel: Nodal
 - index: 13
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -2583,6 +2716,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -2616,7 +2754,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -2642,7 +2780,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -2655,7 +2793,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2694,6 +2832,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -2755,10 +2899,11 @@ configs:
       channel: Nodal
 - index: 22
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -2815,6 +2960,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -2848,7 +2998,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -2875,7 +3025,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -2888,7 +3038,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -2927,6 +3077,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -2988,10 +3144,11 @@ configs:
       channel: Nodal
 - index: 3
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -3048,6 +3205,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -3081,7 +3243,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -3108,7 +3270,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -3121,7 +3283,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3160,6 +3322,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -3221,10 +3389,11 @@ configs:
       channel: Nodal
 - index: 8
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -3281,6 +3450,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -3314,7 +3488,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -3341,7 +3515,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -3354,7 +3528,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3393,6 +3567,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -3454,10 +3634,11 @@ configs:
       channel: Nodal
 - index: 45
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -3514,6 +3695,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -3547,7 +3733,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -3574,7 +3760,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -3587,7 +3773,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3626,6 +3812,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -3687,10 +3879,11 @@ configs:
       channel: Nodal
 - index: 29
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -3744,6 +3937,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -3777,7 +3975,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -3801,7 +3999,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -3814,7 +4012,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -3853,6 +4051,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -3914,10 +4118,11 @@ configs:
       channel: Nodal
 - index: 27
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -3971,6 +4176,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -4004,7 +4214,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -4028,7 +4238,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -4041,7 +4251,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -4080,6 +4290,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -4141,10 +4357,11 @@ configs:
       channel: Nodal
 - index: 18
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -4198,6 +4415,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -4231,7 +4453,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -4255,7 +4477,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -4268,7 +4490,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -4307,6 +4529,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -4368,10 +4596,11 @@ configs:
       channel: Nodal
 - index: 9
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -4425,6 +4654,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -4458,7 +4692,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -4482,7 +4716,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -4495,7 +4729,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -4534,6 +4768,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -4595,10 +4835,11 @@ configs:
       channel: Nodal
 - index: 1
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -4653,6 +4894,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -4686,7 +4932,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -4711,7 +4957,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -4724,7 +4970,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -4763,6 +5009,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -4824,10 +5076,11 @@ configs:
       channel: Nodal
 - index: 41
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -4882,6 +5135,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -4915,7 +5173,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -4940,7 +5198,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -4953,7 +5211,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -4992,6 +5250,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -5053,10 +5317,11 @@ configs:
       channel: Nodal
 - index: 0
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -5111,6 +5376,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -5144,7 +5414,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -5169,7 +5439,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -5182,7 +5452,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -5221,6 +5491,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -5282,10 +5558,11 @@ configs:
       channel: Nodal
 - index: 34
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -5340,6 +5617,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -5373,7 +5655,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -5398,7 +5680,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -5411,7 +5693,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -5450,6 +5732,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -5511,10 +5799,11 @@ configs:
       channel: Nodal
 - index: 40
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -5570,6 +5859,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -5603,7 +5897,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -5629,7 +5923,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -5642,7 +5936,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -5681,6 +5975,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -5742,10 +6042,11 @@ configs:
       channel: Nodal
 - index: 43
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -5801,6 +6102,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -5834,7 +6140,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -5860,7 +6166,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -5873,7 +6179,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -5912,6 +6218,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -5973,10 +6285,11 @@ configs:
       channel: Nodal
 - index: 12
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -6032,6 +6345,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -6065,7 +6383,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -6091,7 +6409,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -6104,7 +6422,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -6143,6 +6461,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -6204,10 +6528,11 @@ configs:
       channel: Nodal
 - index: 38
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -6263,6 +6588,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -6296,7 +6626,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -6322,7 +6652,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -6335,7 +6665,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -6374,6 +6704,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -6435,10 +6771,11 @@ configs:
       channel: Nodal
 - index: 16
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -6495,6 +6832,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -6528,7 +6870,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -6555,7 +6897,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -6568,7 +6910,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -6607,6 +6949,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -6668,10 +7016,11 @@ configs:
       channel: Nodal
 - index: 33
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -6728,6 +7077,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -6761,7 +7115,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -6788,7 +7142,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -6801,7 +7155,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -6840,6 +7194,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -6901,10 +7261,11 @@ configs:
       channel: Nodal
 - index: 24
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -6961,6 +7322,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -6994,7 +7360,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -7021,7 +7387,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -7034,7 +7400,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -7073,6 +7439,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -7134,10 +7506,11 @@ configs:
       channel: Nodal
 - index: 6
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -7194,6 +7567,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -7227,7 +7605,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -7254,7 +7632,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -7267,7 +7645,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -7306,6 +7684,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -7367,10 +7751,11 @@ configs:
       channel: Nodal
 - index: 28
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -7424,6 +7809,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -7457,7 +7847,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -7481,7 +7871,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -7494,7 +7884,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -7533,6 +7923,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -7594,10 +7990,11 @@ configs:
       channel: Nodal
 - index: 5
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -7651,6 +8048,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -7684,7 +8086,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -7708,7 +8110,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -7721,7 +8123,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -7760,6 +8162,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -7821,10 +8229,11 @@ configs:
       channel: Nodal
 - index: 36
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -7878,6 +8287,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -7911,7 +8325,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -7935,7 +8349,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -7948,7 +8362,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -7987,6 +8401,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -8048,10 +8468,11 @@ configs:
       channel: Nodal
 - index: 35
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -8105,6 +8526,11 @@ configs:
     data.micropattern.experiment_groups:
     - cell_fate_s1
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -8138,7 +8564,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -8162,7 +8588,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -8175,7 +8601,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -8214,6 +8640,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -8275,10 +8707,11 @@ configs:
       channel: Nodal
 - index: 23
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -8333,6 +8766,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -8366,7 +8804,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -8391,7 +8829,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -8404,7 +8842,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -8443,6 +8881,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -8504,10 +8948,11 @@ configs:
       channel: Nodal
 - index: 11
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -8562,6 +9007,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -8595,7 +9045,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -8620,7 +9070,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -8633,7 +9083,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -8672,6 +9122,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -8733,10 +9189,11 @@ configs:
       channel: Nodal
 - index: 26
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -8791,6 +9248,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -8824,7 +9286,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -8849,7 +9311,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -8862,7 +9324,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -8901,6 +9363,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -8962,10 +9430,11 @@ configs:
       channel: Nodal
 - index: 44
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9020,6 +9489,11 @@ configs:
     - cell_fate_s1
     - cell_fate_s2
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -9053,7 +9527,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -9078,7 +9552,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -9091,7 +9565,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -9130,6 +9604,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -9191,10 +9671,11 @@ configs:
       channel: Nodal
 - index: 15
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9250,6 +9731,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -9283,7 +9769,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -9309,7 +9795,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -9322,7 +9808,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -9361,6 +9847,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -9422,10 +9914,11 @@ configs:
       channel: Nodal
 - index: 30
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9481,6 +9974,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -9514,7 +10012,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -9540,7 +10038,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -9553,7 +10051,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -9592,6 +10090,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -9653,10 +10157,11 @@ configs:
       channel: Nodal
 - index: 2
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9712,6 +10217,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -9745,7 +10255,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -9771,7 +10281,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -9784,7 +10294,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -9823,6 +10333,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -9884,10 +10400,11 @@ configs:
       channel: Nodal
 - index: 47
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -9943,6 +10460,11 @@ configs:
     - cell_fate_s2
     - rna_expression
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -9976,7 +10498,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -10002,7 +10524,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -10015,7 +10537,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -10054,6 +10576,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0
@@ -10115,10 +10643,11 @@ configs:
       channel: Nodal
 - index: 25
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -10175,6 +10704,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: static
+    loss.terms.0.multi_target_schedules.l2.type: constant
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.0
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.texture.type: constant
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -10208,7 +10742,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -10235,7 +10769,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -10248,7 +10782,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -10287,6 +10821,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: constant
+            initial_factor: 1.0
+            final_factor: 1.0
+            start_fraction: 0.0
+            end_fraction: 1.0
           texture:
             type: constant
             initial_factor: 1.0
@@ -10348,10 +10888,11 @@ configs:
       channel: Nodal
 - index: 32
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -10408,6 +10949,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_macro
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -10441,7 +10987,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -10468,7 +11014,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -10481,7 +11027,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -10520,6 +11066,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 0.05
@@ -10581,10 +11133,11 @@ configs:
       channel: Nodal
 - index: 31
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -10641,6 +11194,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: lin_macro
+    loss.terms.0.multi_target_schedules.l2.type: linear
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.final_factor: 0.25
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: linear
     loss.terms.0.multi_target_schedules.texture.initial_factor: 0.05
     loss.terms.0.multi_target_schedules.texture.final_factor: 1.0
@@ -10674,7 +11232,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -10701,7 +11259,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -10714,7 +11272,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -10753,6 +11311,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: linear
+            initial_factor: 1.0
+            final_factor: 0.25
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: linear
             initial_factor: 0.05
@@ -10814,10 +11378,11 @@ configs:
       channel: Nodal
 - index: 37
   overrides:
-    labels.gpu: H200
+    labels.gpu: intel
+    model.family: gNCA_sycl
+    trainer.backend.type: sycl
     labels.scaling: convective
     system.precision: highest
-    model.family: gNCA
     model.fire_rate: 0.5
     model.channels: 48
     run.iterations: 12000
@@ -10874,6 +11439,11 @@ configs:
     - rna_expression
     - protein_response
     loss.schedule_label: cos_reverse
+    loss.terms.0.multi_target_schedules.l2.type: cosine
+    loss.terms.0.multi_target_schedules.l2.initial_factor: 0.05
+    loss.terms.0.multi_target_schedules.l2.final_factor: 1.0
+    loss.terms.0.multi_target_schedules.l2.start_fraction: 0.3
+    loss.terms.0.multi_target_schedules.l2.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.texture.type: cosine
     loss.terms.0.multi_target_schedules.texture.initial_factor: 1.0
     loss.terms.0.multi_target_schedules.texture.final_factor: 0.25
@@ -10907,7 +11477,7 @@ configs:
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H200
+      gpu: intel
     data:
       dataset: micropatterns_260726
       batches: 1
@@ -10934,7 +11504,7 @@ configs:
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
-      family: gNCA
+      family: gNCA_sycl
       channels: 48
       kernel_str:
       - ID
@@ -10947,7 +11517,7 @@ configs:
       grad_loss: false
       sharding: null
       backend:
-        type: none
+        type: sycl
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -10986,6 +11556,12 @@ configs:
         random_crop: false
         random_channel_shuffle: true
         multi_target_schedules:
+          l2:
+            type: cosine
+            initial_factor: 0.05
+            final_factor: 1.0
+            start_fraction: 0.3
+            end_fraction: 0.75
           texture:
             type: cosine
             initial_factor: 1.0

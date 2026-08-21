@@ -1,15 +1,20 @@
-experiment_name: nca_micropattern_loss_schedule_l2_sweep
+experiment_name: nca_micropattern_loss_schedule_radial_sweep
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_micropattern_loss_schedule_l2_sweep
+output_subdir: generated/nca_micropattern_loss_schedule_radial_sweep
 seed_mode: index
 
 grid:
+  
   labels.gpu: [intel]
-  labels.scaling: [convective]
+  model.family: [gNCA_sycl]
+  trainer.backend.type: [sycl]
 
+  # labels.gpu: [H100]
+  # model.family: [gNCA]
+  
+  labels.scaling: [convective]
   system.precision: [highest]
 
-  model.family: [gNCA_sycl]
   model.fire_rate: [0.5]
   model.channels: [48]
 
@@ -20,7 +25,6 @@ grid:
   trainer.loop_autodiff: [lax]
   trainer.pool_admission_previous_relative_threshold: [1.0]
   trainer.log_every: [200]
-  trainer.backend.type: [sycl]
 
   logging.wandb.project: [nca_micropattern_loss_schedules]
   logging.singular_values.enabled: [true]
@@ -28,11 +32,11 @@ grid:
   logging.singular_values.epsilon: [1e-8]
 
   loss.terms: [multi_target]
-  loss.terms.0.multi_target_weights.l2: [1.0]
+  loss.terms.0.multi_target_weights.l2: [0.0]
   loss.terms.0.multi_target_weights.texture: [1.0]
   loss.terms.0.multi_target_weights.channel_mean: [0.0]
   loss.terms.0.multi_target_weights.correlation: [0.0]
-  loss.terms.0.multi_target_weights.radial: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
   loss.terms.0.assignment: [hard]
   loss.terms.0.random_crop: [false]
   loss.terms.0.random_channel_shuffle: [true]
