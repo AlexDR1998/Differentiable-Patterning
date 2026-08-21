@@ -119,6 +119,18 @@ class HNCA(AbstractModel):
             use_bias=True,
             key=actuator_key,
         )
+        # The child and parent NCA output layers begin at zero update.  The
+        # recurrent cross-scale path must obey the same invariant; otherwise
+        # a random actuator creates an unstable child-parent feedback loop
+        # before the first optimiser step.
+        self.actuator = eqx.tree_at(
+            lambda layer: (layer.weight, layer.bias),
+            self.actuator,
+            (
+                jnp.zeros_like(self.actuator.weight),
+                jnp.zeros_like(self.actuator.bias),
+            ),
+        )
 
     def get_config(self):
         return {
