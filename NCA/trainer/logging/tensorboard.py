@@ -892,7 +892,8 @@ class NCA_Train_log(Train_log):
 		
 		SNAPSHOTS = []
 		for b in tqdm(range(BATCHES)):
-			T = nca.run(t*NUMBER_OF_IMAGES, x[b][0], boundary_callback[b])  # Shape T C x y
+			initial_state = nca.prepare_pool_state(x[b][0])
+			T = nca.run(t*NUMBER_OF_IMAGES, initial_state, boundary_callback[b])  # Shape T C x y
 			self.log_video(f"Evaluation/trajectory_batch_{b + 1}",T[:,:3],step=None)
 			T_snapshot = _trajectory_snapshot_channels(
 				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema
