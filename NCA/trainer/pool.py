@@ -29,6 +29,11 @@ class PoolAdmissionController:
         self.warmup = default_warmup if config.warmup is None else config.warmup
         self.state = PoolAdmissionState()
 
+    def reset_references(self) -> None:
+        """Forget scalar comparisons after the training objective changes."""
+        self.state.loss_ema = None
+        self.state.previous_admitted_loss = None
+
     def decide(self, loss: float, iteration: int) -> PoolDecision:
         state = self.state
         reference = loss if state.loss_ema is None else state.loss_ema

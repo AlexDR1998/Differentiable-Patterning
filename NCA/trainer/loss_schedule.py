@@ -14,6 +14,19 @@ class ScheduledLossWeights(NamedTuple):
     multi_target: dict[str, object]
 
 
+def schedule_stage(schedule, iteration, total_iterations):
+    """Return the active zero-based stage for a piecewise schedule."""
+    if schedule is None or schedule.type == "constant" or schedule.stages is None:
+        return 0
+    last_iteration = max(int(total_iterations) - 1, 1)
+    progress = float(iteration) / last_iteration
+    transition = (progress - schedule.start_fraction) / (
+        schedule.end_fraction - schedule.start_fraction
+    )
+    transition = min(max(transition, 0.0), 1.0)
+    return min(int(transition * schedule.stages), schedule.stages - 1)
+
+
 def schedule_factor(schedule, iteration, total_iterations):
     """Evaluate a configured multiplier without changing JAX tree structure."""
     dtype = jnp.float32
@@ -30,6 +43,9 @@ def schedule_factor(schedule, iteration, total_iterations):
         schedule.end_fraction - schedule.start_fraction
     )
     transition = jnp.clip(transition, 0.0, 1.0)
+    if schedule.stages is not None:
+        stage = schedule_stage(schedule, iteration, total_iterations)
+        transition = jnp.asarray(stage / (schedule.stages - 1), dtype=dtype)
     if schedule.type == "cosine":
         transition = 0.5 - 0.5 * jnp.cos(jnp.pi * transition)
     return initial + (final - initial) * transition
@@ -74,6 +90,19 @@ def build_loss_weight_schedule(loss_config, total_iterations):
         raise ValueError("Only one multi_target loss term can be scheduled")
     multi_target_term = multi_target_terms[0] if multi_target_terms else None
 
+    all_schedules = tuple(term.schedule for term in terms) + tuple(
+        schedule
+        for term in terms
+        for schedule in (getattr(term, "multi_target_schedules", None) or {}).values()
+    )
+
+    def stage_signature(iteration):
+        return tuple(
+            schedule_stage(schedule, iteration, total_iterations)
+            for schedule in all_schedules
+            if schedule is not None and schedule.stages is not None
+        )
+
     def weight_schedule(iteration):
         term_weights = jnp.stack(
             [
@@ -85,9 +114,8 @@ def build_loss_weight_schedule(loss_config, total_iterations):
         multi_target = {}
         if multi_target_term is not None:
             schedules = multi_target_term.multi_target_schedules or {}
-            for name, base_weight in _multi_target_base_weights(
-                multi_target_term
-            ).items():
+            base_weights = _multi_target_base_weights(multi_target_term)
+            for name, base_weight in base_weights.items():
                 multi_target[name] = jnp.asarray(
                     base_weight
                     * schedule_factor(
@@ -95,8 +123,20 @@ def build_loss_weight_schedule(loss_config, total_iterations):
                     ),
                     dtype=jnp.float32,
                 )
+            if multi_target_term.normalize_weights:
+                reference_total = sum(base_weights.values())
+                if reference_total <= 0:
+                    raise ValueError(
+                        "Normalized multi-target loss weights require a positive total"
+                    )
+                effective_total = jnp.sum(jnp.stack(tuple(multi_target.values())))
+                scale = jnp.asarray(reference_total, dtype=jnp.float32) / effective_total
+                multi_target = {
+                    name: value * scale for name, value in multi_target.items()
+                }
         return ScheduledLossWeights(term_weights, multi_target)
 
+    weight_schedule.stage_signature = stage_signature
     return weight_schedule
 
 

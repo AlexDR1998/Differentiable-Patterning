@@ -183,10 +183,16 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
     error_code = 0
     error_iteration = None
     saved = False
+    previous_loss_stage = setup.loss_weight_schedule.stage_signature(0)
 
     progress = tqdm(range(setup.iterations))
     for iteration in progress:
         iteration_start = time.perf_counter()
+        loss_stage = setup.loss_weight_schedule.stage_signature(iteration)
+        loss_stage_changed = loss_stage != previous_loss_stage
+        if loss_stage_changed:
+            admission.reset_references()
+        previous_loss_stage = loss_stage
         state = state._replace(
             key=setup.execution.fold_in_key(state.key, iteration),
             loss_weights=setup.loss_weight_schedule(iteration),
@@ -232,6 +238,8 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
             )
         admission.update(decision, loss_value)
         metrics.update(admission.metrics(decision))
+        metrics["loss_schedule/stage"] = max(loss_stage, default=0)
+        metrics["loss_schedule/stage_changed"] = int(loss_stage_changed)
         runtime.record_iteration(iteration, time.perf_counter() - iteration_start)
         metrics.update(runtime.as_log_dict())
 

@@ -1,6 +1,6 @@
-experiment_name: nca_micropattern_loss_schedule_radial_sweep
+experiment_name: nca_micropattern_loss_schedule_radial_sweep_v3
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_micropattern_loss_schedule_radial_sweep
+output_subdir: generated/nca_micropattern_loss_schedule_radial_sweep_v3
 seed_mode: index
 
 grid:
@@ -9,7 +9,7 @@ grid:
   model.family: [gNCA_sycl]
   trainer.backend.type: [sycl]
 
-  # labels.gpu: [H100]
+  # labels.gpu: [H200]
   # model.family: [gNCA]
   
   labels.scaling: [convective]
@@ -19,11 +19,11 @@ grid:
   model.channels: [48]
 
   run.iterations: [12000]
-  run.repeat: [0,1,2]
+  run.repeat: [0,1,2,3,4]
   run.t: [128]
 
   trainer.loop_autodiff: [lax]
-  trainer.pool_admission_previous_relative_threshold: [1.0]
+  trainer.pool_admission_previous_relative_threshold: [1.0,1.05]
   trainer.log_every: [200]
 
   logging.wandb.project: [nca_micropattern_loss_schedules]
@@ -37,6 +37,7 @@ grid:
   loss.terms.0.multi_target_weights.channel_mean: [0.0]
   loss.terms.0.multi_target_weights.correlation: [0.0]
   loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.normalize_weights: [true]
   loss.terms.0.assignment: [hard]
   loss.terms.0.random_crop: [false]
   loss.terms.0.random_channel_shuffle: [true]
@@ -57,7 +58,7 @@ grid:
   data.micropattern.intermediate_reinjection_probability_end: [0.0]
   data.micropattern.intermediate_reinjection_decay_start_fraction: [0.25]
   data.dataset: [micropatterns_260726]
-  data.micropattern.duplicate_final_timestep: [true]
+  data.micropattern.duplicate_final_timestep: [false]
 
   knockout.mode: [null]
   knockout.time: [null]
@@ -75,12 +76,12 @@ grid:
 
 groups:
   # Increasing measurement coverage: 4, 8, 11, and 14 data channels.
-  - data.micropattern.data_channels: [4, 8, 11, 14]
+  - data.micropattern.data_channels: [4, 8] #, 11, 14]
     data.micropattern.experiment_groups:
       - [cell_fate_s1]
       - [cell_fate_s1, cell_fate_s2]
-      - [cell_fate_s1, cell_fate_s2, rna_expression]
-      - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+      # - [cell_fate_s1, cell_fate_s2, rna_expression]
+      # - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
 
   # Schedule columns are:
   #   1. static joint objective;
@@ -99,6 +100,8 @@ groups:
       [0.0, 0.30, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.l2.end_fraction:
       [1.0, 0.75, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.l2.stages:
+      [null, 8, 8, 8]
 
     loss.terms.0.multi_target_schedules.texture.type:
       [constant, cosine, linear, cosine]
@@ -110,6 +113,8 @@ groups:
       [0.0, 0.30, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.texture.end_fraction:
       [1.0, 0.75, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.texture.stages:
+      [null, 8, 8, 8]
 
     loss.terms.0.multi_target_schedules.channel_mean.type:
       [constant, cosine, linear, cosine]
@@ -121,6 +126,8 @@ groups:
       [0.0, 0.30, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.channel_mean.end_fraction:
       [1.0, 0.75, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.channel_mean.stages:
+      [null, 8, 8, 8]
 
     loss.terms.0.multi_target_schedules.correlation.type:
       [constant, cosine, linear, cosine]
@@ -132,6 +139,8 @@ groups:
       [0.0, 0.30, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.correlation.end_fraction:
       [1.0, 0.75, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.correlation.stages:
+      [null, 8, 8, 8]
 
     loss.terms.0.multi_target_schedules.radial.type:
       [constant, cosine, linear, cosine]
@@ -143,3 +152,5 @@ groups:
       [0.0, 0.30, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.radial.end_fraction:
       [1.0, 0.75, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.radial.stages:
+      [null, 8, 8, 8]

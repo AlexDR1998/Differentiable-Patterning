@@ -24,6 +24,7 @@ class LossWeightScheduleConfig(ConfigValue):
     final_factor: float = 1.0
     start_fraction: float = 0.0
     end_fraction: float = 1.0
+    stages: int | None = None
 
     def __post_init__(self):
         if self.type not in {"constant", "linear", "cosine"}:
@@ -41,6 +42,11 @@ class LossWeightScheduleConfig(ConfigValue):
             raise ValueError(
                 "non-constant loss weight schedules require a non-empty transition"
             )
+        if self.stages is not None:
+            if self.type == "constant":
+                raise ValueError("constant loss weight schedules cannot define stages")
+            if self.stages < 2:
+                raise ValueError("staged loss weight schedules require at least two stages")
 
 
 @dataclass(frozen=True)
@@ -132,6 +138,7 @@ class SummaryLossConfig(LossTermConfig):
 class MultiTargetLossConfig(LossTermConfig):
     multi_target_weights: Mapping[str, float] | None = None
     multi_target_schedules: Mapping[str, LossWeightScheduleConfig] | None = None
+    normalize_weights: bool = False
     assignment: str = "hard"
     assignment_tau: float = 0.05
     radial_bins: int = 16

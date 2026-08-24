@@ -41,3 +41,24 @@ def test_pool_admission_state_is_explicit():
     assert not second.admit
     assert second.reject_relative
     assert second.reject_previous_relative
+
+
+def test_pool_admission_reference_reset_preserves_counts():
+    config = SimpleNamespace(
+        enabled=True,
+        relative_threshold=1.25,
+        previous_relative_threshold=1.1,
+        absolute_threshold=None,
+        ema_decay=0.5,
+        warmup=0,
+    )
+    controller = PoolAdmissionController(config, default_warmup=0)
+    first = controller.decide(1.0, iteration=0)
+    controller.update(first, 1.0)
+
+    controller.reset_references()
+    after_reset = controller.decide(100.0, iteration=1)
+
+    assert after_reset.admit
+    assert controller.state.admitted == 1
+    assert controller.state.rejected == 0

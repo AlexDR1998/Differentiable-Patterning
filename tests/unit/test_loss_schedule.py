@@ -47,6 +47,29 @@ def test_cosine_loss_schedule_has_smooth_midpoint():
     assert jnp.isclose(schedule_factor(schedule, 50, 101), 0.625)
 
 
+def test_staged_cosine_schedule_has_eight_constant_levels():
+    schedule = LossWeightScheduleConfig(
+        type="cosine",
+        initial_factor=0.0,
+        final_factor=1.0,
+        start_fraction=0.0,
+        end_fraction=1.0,
+        stages=8,
+    )
+
+    values = [
+        float(schedule_factor(schedule, iteration, 801))
+        for iteration in range(801)
+    ]
+    levels = sorted(set(values))
+
+    assert len(levels) == 8
+    assert jnp.isclose(levels[0], 0.0)
+    assert jnp.isclose(levels[-1], 1.0)
+    assert values[99] == values[0]
+    assert values[100] != values[99]
+
+
 def test_builder_schedules_terms_and_multi_target_components():
     config = LossConfig(
         terms=(
@@ -76,6 +99,47 @@ def test_builder_schedules_terms_and_multi_target_components():
         "channel_mean",
         "radial",
         "correlation",
+    )
+
+
+def test_multi_target_normalization_preserves_configured_weight_sum():
+    config = LossConfig(
+        terms=(
+            MultiTargetLossConfig(
+                type="multi_target",
+                multi_target_weights={
+                    "l2": 1.0,
+                    "texture": 1.0,
+                    "channel_mean": 0.0,
+                    "radial": 0.0,
+                    "correlation": 0.0,
+                },
+                multi_target_schedules={
+                    "l2": LossWeightScheduleConfig(
+                        type="cosine", initial_factor=1.0, final_factor=0.25
+                    ),
+                    "texture": LossWeightScheduleConfig(
+                        type="cosine", initial_factor=0.05, final_factor=1.0
+                    ),
+                },
+                normalize_weights=True,
+            ),
+        )
+    )
+    schedule = build_loss_weight_schedule(config, 101)
+
+    for iteration in (0, 50, 100):
+        weights = schedule(iteration).multi_target
+        assert jnp.isclose(sum(weights.values()), 2.0)
+    assert jnp.isclose(
+        schedule(0).multi_target["l2"]
+        / schedule(0).multi_target["texture"],
+        20.0,
+    )
+    assert jnp.isclose(
+        schedule(100).multi_target["l2"]
+        / schedule(100).multi_target["texture"],
+        0.25,
     )
 
 
