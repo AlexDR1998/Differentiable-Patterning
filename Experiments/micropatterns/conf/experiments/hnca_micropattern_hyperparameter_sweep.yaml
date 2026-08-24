@@ -1,10 +1,10 @@
-experiment_name: hnca_micropattern_hyperparameter_sweep_v5
+experiment_name: hnca_micropattern_hyperparameter_sweep_v6
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/hnca_micropattern_hyperparameter_sweep
 seed_mode: index
 
 grid:
-  labels.gpu: [H200]
+  labels.gpu: [H100]
   labels.scaling: [convective]
   system.precision: [highest]
 
@@ -35,7 +35,7 @@ grid:
 
   # Fixed radial-VGG objective: no loss-weight schedules are configured.
   loss.terms: [multi_target]
-  loss.terms.0.multi_target_weights.l2: [0.0]
+  loss.terms.0.multi_target_weights.l2: [0.0,1.0]
   loss.terms.0.multi_target_weights.texture: [1.0]
   loss.terms.0.multi_target_weights.channel_mean: [0.0]
   loss.terms.0.multi_target_weights.correlation: [0.0]
@@ -62,7 +62,7 @@ grid:
   data.micropattern.intermediate_reinjection_probability_end: [0.0]
   data.micropattern.intermediate_reinjection_decay_start_fraction: [0.25]
   data.dataset: [micropatterns_260726]
-  data.micropattern.duplicate_final_timestep: [true]
+  data.micropattern.duplicate_final_timestep: [true,false]
 
   knockout.mode: [null]
   knockout.time: [null]
@@ -78,10 +78,15 @@ grid:
   optimiser.apply_if_finite: [true]
   optimiser.max_consecutive_errors: [16]
 
+
+  data.micropattern.data_channels: [4]
+  model.obs_channels: [4]
+  data.micropattern.experiment_groups: [cell_fate_s1]
+  
 groups:
   # Keep the model's protected fine channels aligned with the measurements.
-  - data.micropattern.data_channels: [4, 8]
-    model.obs_channels: [4, 8]
-    data.micropattern.experiment_groups:
-      - [cell_fate_s1]
-      - [cell_fate_s1, cell_fate_s2]
+  # - data.micropattern.data_channels: [4, 8]
+  #   model.obs_channels: [4, 8]
+  #   data.micropattern.experiment_groups:
+  #     - [cell_fate_s1]
+  #     - [cell_fate_s1, cell_fate_s2]
