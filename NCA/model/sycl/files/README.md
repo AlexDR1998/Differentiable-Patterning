@@ -1,4 +1,9 @@
-# Baseline NCA SYCL kernel
+# NCA SYCL kernel
+
+Both the baseline `NCA_sycl` output layer (`C` outputs) and the GLU-gated
+`gNCA_sycl` layer (`2C` outputs) are supported. The latter fuses
+`value * sigmoid(gate)` into native single-step and multi-step rollouts and
+their reverse passes.
 
 Build this shared library inside the same oneAPI environment used by the Intel
 JAX plugin:

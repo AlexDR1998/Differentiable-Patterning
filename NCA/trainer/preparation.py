@@ -11,6 +11,10 @@ from Common.trainer.loss_multi_target import init_texture_params
 from Experiments.config_helpers import build_wandb_tags
 import NCA.trainer.NCA_regulariser as regularisers
 from NCA.trainer.objective import resolve_loss_component_weights, resolve_objective
+from NCA.trainer.loss_schedule import (
+    build_loss_weight_schedule,
+    final_transition_iteration,
+)
 from NCA.trainer.optimizer import build_optimizer
 
 
@@ -19,6 +23,7 @@ class PreparedTraining:
     timesteps: int
     iterations: int
     warmup: int
+    checkpoint_warmup: int
     log_interval: int
     write_images: bool
     trace_enabled: bool
@@ -29,6 +34,8 @@ class PreparedTraining:
     loss_arguments: dict[str, Any]
     loss_functions: tuple[Callable, ...]
     loss_component_weights: Any
+    loss_weight_schedule: Callable
+    initial_loss_weights: Any
     loss_channels: Any
     loss_cache: Any
     is_multi_target: bool
@@ -120,10 +127,18 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         )
 
     states, targets = trainer.data_augmenter.initialize_pool(key)
+    states = jtu.tree_map(trainer.model.prepare_pool_state, states)
+    loss_weight_schedule = build_loss_weight_schedule(
+        config.training.loss, loop.iterations
+    )
+    initial_loss_weights = loss_weight_schedule(0)
     multi_target_params = None
-    if is_multi_target and arguments.get("multi_target_weights", {}).get(
-        "texture", 1.0
-    ):
+    texture_enabled = bool(
+        arguments.get("multi_target_weights", {}).get("texture", 1.0)
+    )
+    if is_multi_target:
+        arguments["texture_enabled"] = texture_enabled
+    if is_multi_target and texture_enabled:
         multi_target_params = init_texture_params(
             key,
             targets[0].shape[-2:],
@@ -168,6 +183,16 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         timesteps=loop.t if timesteps is None else timesteps,
         iterations=loop.iterations,
         warmup=config.training.checkpoint.warmup,
+        checkpoint_warmup=max(
+            config.training.checkpoint.warmup,
+            max(
+                0,
+                final_transition_iteration(
+                    config.training.loss, loop.iterations
+                )
+                - 1,
+            ),
+        ),
         log_interval=trainer_config.log_every,
         write_images=loop.write_images,
         trace_enabled=trainer_config.jax_trace,
@@ -180,6 +205,8 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         loss_component_weights=resolve_loss_component_weights(
             arguments.get("component_weights"), len(names)
         ),
+        loss_weight_schedule=loss_weight_schedule,
+        initial_loss_weights=initial_loss_weights,
         loss_channels=loss_channels,
         loss_cache=loss_cache,
         is_multi_target=is_multi_target,

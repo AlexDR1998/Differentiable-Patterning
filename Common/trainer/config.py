@@ -16,6 +16,40 @@ class ScheduleConfig(ConfigValue):
 
 
 @dataclass(frozen=True)
+class LossWeightScheduleConfig(ConfigValue):
+    """Multiply one configured loss weight over a fraction of training."""
+
+    type: str = "constant"
+    initial_factor: float = 1.0
+    final_factor: float = 1.0
+    start_fraction: float = 0.0
+    end_fraction: float = 1.0
+    stages: int | None = None
+
+    def __post_init__(self):
+        if self.type not in {"constant", "linear", "cosine"}:
+            raise ValueError(
+                "loss weight schedule type must be 'constant', 'linear', or 'cosine'"
+            )
+        if self.initial_factor < 0 or self.final_factor < 0:
+            raise ValueError("loss weight schedule factors cannot be negative")
+        if not 0 <= self.start_fraction <= self.end_fraction <= 1:
+            raise ValueError(
+                "loss weight schedule fractions must satisfy "
+                "0 <= start_fraction <= end_fraction <= 1"
+            )
+        if self.type != "constant" and self.start_fraction == self.end_fraction:
+            raise ValueError(
+                "non-constant loss weight schedules require a non-empty transition"
+            )
+        if self.stages is not None:
+            if self.type == "constant":
+                raise ValueError("constant loss weight schedules cannot define stages")
+            if self.stages < 2:
+                raise ValueError("staged loss weight schedules require at least two stages")
+
+
+@dataclass(frozen=True)
 class OptimizerConfig(ConfigValue):
     type: str = "nadam"
     learn_rate: float = 1e-3
@@ -45,6 +79,7 @@ class LossTermConfig(ConfigValue):
     weight: float = 1.0
     channels: tuple[int, ...] | str | None = None
     experiment_groups: tuple[str, ...] | None = None
+    schedule: LossWeightScheduleConfig | None = None
 
     def __post_init__(self):
         if self.weight < 0:
@@ -102,6 +137,8 @@ class SummaryLossConfig(LossTermConfig):
 @dataclass(frozen=True)
 class MultiTargetLossConfig(LossTermConfig):
     multi_target_weights: Mapping[str, float] | None = None
+    multi_target_schedules: Mapping[str, LossWeightScheduleConfig] | None = None
+    normalize_weights: bool = False
     assignment: str = "hard"
     assignment_tau: float = 0.05
     radial_bins: int = 16
@@ -117,9 +154,19 @@ class LossConfig(ConfigValue):
         default_factory=lambda: (PointwiseLossConfig(),)
     )
     regularisers: Mapping[str, float] = field(default_factory=dict)
+    schedule_label: str | None = None
 
     def __post_init__(self):
         if not self.terms:
             raise ValueError("training.loss.terms must contain at least one term")
         if not any(term.weight > 0 for term in self.terms):
             raise ValueError("training.loss.terms must contain a positive weight")
+        if self.schedule_label is not None:
+            if not self.schedule_label or any(
+                not (character.isalnum() or character in "-_")
+                for character in self.schedule_label
+            ):
+                raise ValueError(
+                    "training.loss.schedule_label must contain only letters, "
+                    "numbers, '-' and '_'"
+                )

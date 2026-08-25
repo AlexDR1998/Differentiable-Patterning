@@ -1,8 +1,15 @@
 from types import SimpleNamespace
 
+import jax.numpy as jnp
+
 from Common.trainer.config import LossConfig, PointwiseLossConfig
 from NCA.trainer.objective import resolve_objective
-from NCA.trainer.pool import PoolAdmissionController
+from NCA.trainer.pool import PoolAdmissionController, TimePoolAdmissionController
+from NCA.trainer.runner import (
+    _merge_advanced_states,
+    _update_training_pool,
+)
+from NCA.trainer.state import TrainState
 
 
 def test_objective_is_resolved_from_typed_loss_config():
@@ -41,3 +48,166 @@ def test_pool_admission_state_is_explicit():
     assert not second.admit
     assert second.reject_relative
     assert second.reject_previous_relative
+
+
+def test_pool_admission_reference_reset_preserves_counts():
+    config = SimpleNamespace(
+        enabled=True,
+        relative_threshold=1.25,
+        previous_relative_threshold=1.1,
+        absolute_threshold=None,
+        ema_decay=0.5,
+        warmup=0,
+    )
+    controller = PoolAdmissionController(config, default_warmup=0)
+    first = controller.decide(1.0, iteration=0)
+    controller.update(first, 1.0)
+
+    controller.reset_references()
+    after_reset = controller.decide(100.0, iteration=1)
+
+    assert after_reset.admit
+    assert controller.state.admitted == 1
+    assert controller.state.rejected == 0
+
+
+def test_time_pool_admission_tracks_each_transition_independently():
+    config = SimpleNamespace(
+        enabled=True,
+        relative_threshold=1.25,
+        previous_relative_threshold=1.1,
+        absolute_threshold=None,
+        ema_decay=0.5,
+        warmup=0,
+    )
+    controller = TimePoolAdmissionController(config, default_warmup=0)
+    initial = controller.decide((1.0, 10.0), iteration=0)
+    controller.update(initial, (1.0, 10.0))
+
+    decisions = controller.decide((2.0, 10.5), iteration=1)
+
+    assert not decisions[0].admit
+    assert decisions[1].admit
+
+
+def test_rejected_transition_restores_destination_from_pre_rollout_pool():
+    previous = [jnp.arange(4, dtype=jnp.float32).reshape(4, 1, 1, 1)]
+    advanced = [jnp.array([10.0, 20.0, 30.0, 40.0]).reshape(4, 1, 1, 1)]
+
+    merged = _merge_advanced_states(
+        advanced,
+        previous,
+        source_admitted=(True, False, True),
+    )
+
+    assert jnp.array_equal(
+        merged[0][:, 0, 0, 0],
+        jnp.array([10.0, 20.0, 2.0, 40.0]),
+    )
+
+
+def test_rejected_transition_merge_handles_sycl_tile_axis():
+    previous = [jnp.zeros((2, 4, 1, 1, 1))]
+    advanced = [jnp.ones((2, 4, 1, 1, 1))]
+
+    merged = _merge_advanced_states(
+        advanced,
+        previous,
+        source_admitted=(False, True, False),
+    )
+
+    assert jnp.array_equal(
+        merged[0][:, :, 0, 0, 0],
+        jnp.array([[1.0, 0.0, 1.0, 0.0]] * 2),
+    )
+
+
+def test_scalar_rejection_restores_pool_without_running_augmentation():
+    class Model:
+        @staticmethod
+        def prepare_pool_state(value):
+            return value
+
+    class Execution:
+        @staticmethod
+        def split_key(key):
+            raise AssertionError("Rejected pool must not split an augmentation key")
+
+        @staticmethod
+        def apply_advance_pool(states, targets, iteration, key):
+            raise AssertionError("Rejected pool must not run augmentation")
+
+    previous_states = [jnp.zeros((4, 1, 1, 1))]
+    previous_targets = [jnp.zeros((4, 1, 1, 1))]
+    rolled_states = [jnp.ones((4, 1, 1, 1))]
+    state = TrainState(
+        Model(),
+        rolled_states,
+        previous_targets,
+        "updated optimizer",
+        jnp.array([1, 2], dtype=jnp.uint32),
+        "weights",
+    )
+
+    result = _update_training_pool(
+        state,
+        previous_states,
+        previous_targets,
+        source_admitted=False,
+        iteration=10,
+        execution=Execution(),
+    )
+
+    assert result.states is previous_states
+    assert result.targets is previous_targets
+    assert result.model is state.model
+    assert result.optimizer_state == "updated optimizer"
+    assert jnp.array_equal(result.key, state.key)
+    assert result.loss_weights == "weights"
+
+
+def test_scalar_acceptance_runs_augmentation_and_keeps_training_update():
+    class Model:
+        @staticmethod
+        def prepare_pool_state(value):
+            return value
+
+    class Execution:
+        calls = 0
+
+        @staticmethod
+        def split_key(key):
+            return key + 1, key + 2
+
+        @classmethod
+        def apply_advance_pool(cls, states, targets, iteration, key):
+            cls.calls += 1
+            assert iteration == 10
+            return [states[0] + 1], [targets[0] + 1]
+
+    previous_states = [jnp.zeros((4, 1, 1, 1))]
+    previous_targets = [jnp.zeros((4, 1, 1, 1))]
+    state = TrainState(
+        Model(),
+        [jnp.ones((4, 1, 1, 1))],
+        previous_targets,
+        "updated optimizer",
+        jnp.array([1, 2], dtype=jnp.uint32),
+        "weights",
+    )
+
+    result = _update_training_pool(
+        state,
+        previous_states,
+        previous_targets,
+        source_admitted=True,
+        iteration=10,
+        execution=Execution(),
+    )
+
+    assert Execution.calls == 1
+    assert jnp.all(result.states[0] == 2)
+    assert jnp.all(result.targets[0] == 1)
+    assert result.model is state.model
+    assert result.optimizer_state == "updated optimizer"
+    assert jnp.array_equal(result.key, state.key + 1)

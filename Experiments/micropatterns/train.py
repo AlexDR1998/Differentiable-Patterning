@@ -64,7 +64,7 @@ def build_run_name(cfg, model_name, optimiser_name):
     else:
         raise ValueError(f"Unknown run.mode {mode!r}; expected 'train' or 'benchmark'")
 
-    if cfg.model.family == "NCA_sycl":
+    if cfg.model.family in {"NCA_sycl", "gNCA_sycl"}:
         backend = cfg.training.trainer.backend
         details += f"_fuse{backend.fused_steps}"
         details += f"_sync{int(backend.synchronize_custom_calls)}"
@@ -81,7 +81,7 @@ def run(cfg):
     from dotenv import load_dotenv
 
     from Experiments.config_helpers import build_model
-    from NCA.registry import evaluation_input_provenance
+    from NCA.registry import create_model_id, evaluation_input_provenance
     from Experiments.micropatterns.config_helpers import (
         build_data_augmenter,
         expand_channel_timestep_mask_for_loss,
@@ -119,6 +119,7 @@ def run(cfg):
     run_name = build_run_name(cfg, model_name, optimiser_name)
     context = TrainerContext(
         run_name=run_name,
+        storage_id=create_model_id(cfg),
         model_directory=os.path.join(model_root, cfg.logging.wandb.group, ""),
         data_augmenter=augmenter,
         boundary_mask=boundary,

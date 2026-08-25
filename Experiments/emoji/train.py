@@ -10,7 +10,7 @@ def run(cfg):
     from dotenv import load_dotenv
 
     from Experiments.config_helpers import build_model
-    from NCA.registry import evaluation_input_provenance
+    from NCA.registry import create_model_id, evaluation_input_provenance
     from Experiments.emoji.config_helpers import (
         build_data_augmenter,
         build_filename,
@@ -40,6 +40,7 @@ def run(cfg):
 
     context = TrainerContext(
         run_name=run_name,
+        storage_id=create_model_id(cfg),
         model_directory=os.path.join(model_root, cfg.logging.wandb.group, ""),
         data_augmenter=augmenter,
         observed_channels=cfg.data.emoji.observed_channels,

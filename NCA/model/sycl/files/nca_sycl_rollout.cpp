@@ -14,22 +14,24 @@ extern "C" void nca_sycl_forward(sycl::queue*, void**, const char*,
 namespace {
 
 struct RolloutMetadata {
-  std::int64_t version, batch, channels, height, width, features;
+  std::int64_t version, batch, channels, height, width, features, output_channels;
   std::int64_t kernel_size, kernel_flags, padding, workgroup_size, xmx_mode;
   std::int64_t steps, boundary_code, boundary_channels, regulariser_flags;
 };
 
 struct ForwardMetadata {
-  std::int64_t version, batch, channels, height, width, features;
+  std::int64_t version, batch, channels, height, width, features, output_channels;
   std::int64_t kernel_size, kernel_flags, padding, workgroup_size, xmx_mode;
 };
 
-static_assert(sizeof(RolloutMetadata) == 15 * sizeof(std::int64_t));
-static_assert(sizeof(ForwardMetadata) == 11 * sizeof(std::int64_t));
+static_assert(sizeof(RolloutMetadata) == 16 * sizeof(std::int64_t));
+static_assert(sizeof(ForwardMetadata) == 12 * sizeof(std::int64_t));
 
 bool ValidMetadata(const RolloutMetadata& m) {
   return m.version == nca_sycl::kMetadataVersion && m.batch > 0 &&
          m.channels > 0 && m.height > 0 && m.width > 0 && m.features > 0 &&
+         (m.output_channels == m.channels ||
+          m.output_channels == 2 * m.channels) &&
          m.steps > 0 && m.kernel_size > 0 && m.kernel_size % 2 == 1 &&
          m.boundary_code >= 0 && m.boundary_code <= 2 &&
          m.boundary_channels >= 0 && m.boundary_channels <= m.channels &&
@@ -359,6 +361,7 @@ extern "C" void nca_sycl_rollout_forward(sycl::queue* queue, void** buffers,
       m.batch * m.channels * m.height * m.width;
   const ForwardMetadata forward_metadata{
       m.version, m.batch, m.channels, m.height, m.width, m.features,
+      m.output_channels,
       m.kernel_size, m.kernel_flags, m.padding, m.workgroup_size, m.xmx_mode};
   if (compute_regularisers) queue->fill(regularisers, 0.0F, 2);
   for (std::int64_t step = 0; step < m.steps; ++step) {

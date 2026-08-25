@@ -9,6 +9,7 @@ class TrainState(NamedTuple):
     targets: Any
     optimizer_state: Any
     key: Any
+    loss_weights: Any
 
 
 class StepOutput(NamedTuple):
@@ -21,4 +22,3 @@ class RolloutResult(NamedTuple):
     key: Any
     states: Any
     regulariser_totals: dict[str, Any]
-

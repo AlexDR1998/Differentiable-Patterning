@@ -62,6 +62,7 @@ with app.setup:
     from NCA.model.config import ModelConfig
     from NCA.registry import (
         ModelRegistry,
+        create_model_id,
         evaluation_input_provenance,
         publish_model_bundle,
         verify_evaluation_input,
@@ -593,6 +594,7 @@ def _(
             )
             trainer_context = TrainerContext(
                 run_name=run_name,
+                storage_id=create_model_id(experiment_config),
                 model_directory=os.path.join(
                     experiment_config.model_store.root,
                     experiment_config.logging.wandb.group,
@@ -719,7 +721,8 @@ def _(
                     experiment_config.model_store.collection
                     or experiment_config.logging.wandb.project
                 ),
-                run_name=run_name,
+                model_id=trainer_context.storage_id,
+                display_name=run_name,
                 checkpoint_path=_training_result.checkpoint_path,
                 cfg=experiment_config,
                 training_result=_training_result,

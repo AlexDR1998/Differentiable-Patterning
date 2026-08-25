@@ -4,6 +4,7 @@ import os
 import time
 from pathlib import Path
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
@@ -18,7 +19,7 @@ from NCA.trainer.instrumentation import (
     start_trace,
     stop_trace,
 )
-from NCA.trainer.pool import PoolAdmissionController
+from NCA.trainer.pool import PoolAdmissionController, TimePoolAdmissionController
 from NCA.trainer.state import TrainState
 
 
@@ -72,16 +73,146 @@ class RuntimeMetrics:
 
 
 def _divergence_code(loss, states):
-    if bool(jax.device_get(jnp.isnan(loss))):
-        return 1
+    """Classify divergence without confusing a bad state for a bad loss.
+
+    The objective is evaluated from ``states``, so state finiteness must be
+    checked first. Otherwise a NaN produced by the rollout is always reported
+    as a loss NaN and the useful distinction is lost.
+    """
     if any(
-        bool(jax.device_get(jnp.any(jnp.isnan(value))))
+        bool(jax.device_get(jnp.any(~jnp.isfinite(value))))
         for value in jtu.tree_leaves(states)
     ):
         return 2
-    if float(jax.device_get(loss)) > 1e16:
+    if bool(jax.device_get(~jnp.isfinite(loss))):
+        return 1
+    if abs(float(jax.device_get(loss))) > 1e16:
         return 3
     return 0
+
+
+def _array_diagnostic(value):
+    value = jnp.asarray(value)
+    finite = jnp.isfinite(value)
+    finite_count = int(jax.device_get(jnp.sum(finite)))
+    total_count = value.size
+    if finite_count:
+        finite_values = jnp.where(finite, value, 0)
+        max_abs = float(jax.device_get(jnp.max(jnp.abs(finite_values))))
+    else:
+        max_abs = float("nan")
+    return {
+        "shape": tuple(value.shape),
+        "finite": f"{finite_count}/{total_count}",
+        "nan": int(jax.device_get(jnp.sum(jnp.isnan(value)))),
+        "inf": int(jax.device_get(jnp.sum(jnp.isinf(value)))),
+        "finite_max_abs": max_abs,
+    }
+
+
+def _merge_advanced_states(advanced, previous, source_admitted):
+    """Keep a shifted prediction only when its source transition was admitted."""
+    source_admitted = jnp.asarray(source_admitted, dtype=jnp.bool_)
+    destination_admitted = jnp.concatenate(
+        [jnp.ones((1,), dtype=jnp.bool_), source_admitted]
+    )
+
+    def merge(advanced_value, previous_value):
+        time_axis = advanced_value.ndim - 4
+        if (
+            time_axis < 0
+            or advanced_value.shape[time_axis] != len(destination_admitted)
+        ):
+            raise ValueError(
+                "Pool state time dimension is incompatible with admission mask: "
+                f"shape {advanced_value.shape}, mask length {len(destination_admitted)}"
+            )
+        mask_shape = (
+            (1,) * time_axis
+            + (len(destination_admitted),)
+            + (1,) * (advanced_value.ndim - time_axis - 1)
+        )
+        return jnp.where(
+            destination_admitted.reshape(mask_shape),
+            advanced_value,
+            previous_value,
+        )
+
+    return jtu.tree_map(merge, advanced, previous)
+
+
+def _update_training_pool(
+    state,
+    states_before_step,
+    targets_before_step,
+    source_admitted,
+    iteration,
+    execution,
+):
+    """Advance admitted transitions and discard every rejected rollout."""
+    admission_mask = None
+    if isinstance(source_admitted, bool):
+        admitted = source_admitted
+    else:
+        admission_mask = tuple(bool(value) for value in source_admitted)
+        admitted = any(admission_mask)
+    if not admitted:
+        return state._replace(
+            states=states_before_step,
+            targets=targets_before_step,
+        )
+
+    next_key, augment_key = execution.split_key(state.key)
+    states, targets = execution.apply_advance_pool(
+        state.states, state.targets, iteration, augment_key
+    )
+    if admission_mask is not None and not all(admission_mask):
+        states = _merge_advanced_states(
+            states, states_before_step, admission_mask
+        )
+    states = jtu.tree_map(state.model.prepare_pool_state, states)
+    return state._replace(states=states, targets=targets, key=next_key)
+
+
+def _report_divergence(output, state, iteration):
+    """Print enough numerical context to locate the first failing subsystem."""
+    print(f"Divergence diagnostics at step {iteration}:")
+    print(f"  loss: {_array_diagnostic(output.loss)}")
+
+    level_channels = getattr(state.model, "LEVEL_CHANNELS", None)
+    for batch_index, batch_states in enumerate(jtu.tree_leaves(state.states)):
+        if level_channels is None:
+            print(f"  state[{batch_index}]: {_array_diagnostic(batch_states)}")
+            continue
+        child = batch_states[..., :level_channels, :, :]
+        parent = batch_states[..., level_channels:, :, :]
+        print(f"  state[{batch_index}].child: {_array_diagnostic(child)}")
+        print(f"  state[{batch_index}].parent: {_array_diagnostic(parent)}")
+
+    for name, value in output.metrics.items():
+        if name == "states":
+            continue
+        leaves = jtu.tree_leaves(value)
+        if leaves and all(hasattr(leaf, "shape") for leaf in leaves):
+            bad = any(
+                bool(jax.device_get(jnp.any(~jnp.isfinite(leaf))))
+                for leaf in leaves
+            )
+            if bad or name.startswith(("loss", "boundary")):
+                summaries = [_array_diagnostic(leaf) for leaf in leaves]
+                print(f"  metric.{name}: {summaries}")
+
+    bad_parameter_leaves = []
+    for path, value in jtu.tree_leaves_with_path(state.model):
+        if eqx.is_array(value) and not bool(
+            jax.device_get(jnp.all(jnp.isfinite(value)))
+        ):
+            bad_parameter_leaves.append((jtu.keystr(path), _array_diagnostic(value)))
+    if bad_parameter_leaves:
+        for name, summary in bad_parameter_leaves:
+            print(f"  parameter.{name}: {summary}")
+    else:
+        print("  model parameters: all finite")
 
 
 def run_training(trainer, setup, train_step, *, progress_callback=None):
@@ -99,14 +230,18 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
         setup.targets,
         setup.optimizer_state,
         setup.key,
+        setup.initial_loss_weights,
     )
     compiled_step, compile_seconds = compile_and_time(train_step, state)
     runtime = RuntimeMetrics(compile_seconds)
     checkpoint = BestCheckpoint(
-        Path(trainer.model_path).with_suffix(".eqx"), setup.warmup
+        Path(trainer.model_path).with_suffix(".eqx"), setup.checkpoint_warmup
     )
-    admission = PoolAdmissionController(
-        trainer.config.training.trainer.pool_admission, setup.warmup
+    admission_config = trainer.config.training.trainer.pool_admission
+    admission = (
+        TimePoolAdmissionController(admission_config, setup.warmup)
+        if setup.is_multi_target
+        else PoolAdmissionController(admission_config, setup.warmup)
     )
     trace_start = min(5, max(0, setup.iterations - 1))
     trace_stop = min(trace_start + 4, setup.iterations - 1)
@@ -115,12 +250,21 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
     error_code = 0
     error_iteration = None
     saved = False
+    previous_loss_stage = setup.loss_weight_schedule.stage_signature(0)
 
     progress = tqdm(range(setup.iterations))
     for iteration in progress:
         iteration_start = time.perf_counter()
+        loss_stage = setup.loss_weight_schedule.stage_signature(iteration)
+        loss_stage_changed = loss_stage != previous_loss_stage
+        if loss_stage_changed:
+            admission.reset_references()
+        previous_loss_stage = loss_stage
+        states_before_step = state.states
+        targets_before_step = state.targets
         state = state._replace(
-            key=setup.execution.fold_in_key(state.key, iteration)
+            key=setup.execution.fold_in_key(state.key, iteration),
+            loss_weights=setup.loss_weight_schedule(iteration),
         )
         if setup.trace_enabled and iteration == trace_start:
             start_trace(trace_directory)
@@ -148,19 +292,38 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
         error_code = _divergence_code(output.loss, state.states)
         if error_code:
             error_iteration = iteration
+            _report_divergence(output, state, iteration)
             break
 
-        decision = admission.decide(loss_value, iteration)
-        if decision.admit:
-            next_key, augment_key = setup.execution.split_key(state.key)
-            states, targets = setup.execution.apply_advance_pool(
-                state.states, state.targets, iteration, augment_key
+        if setup.is_multi_target:
+            per_time_losses = jax.device_get(
+                setup.execution.prepare_admission_losses(output.metrics["losses"])
             )
-            state = state._replace(
-                states=states, targets=targets, key=next_key
+            # The final transition has no subsequent biological input slot.
+            propagation_losses = tuple(
+                float(value) for value in per_time_losses[:-1]
             )
-        admission.update(decision, loss_value)
-        metrics.update(admission.metrics(decision))
+            decisions = admission.decide(propagation_losses, iteration)
+            source_admitted = tuple(decision.admit for decision in decisions)
+        else:
+            decision = admission.decide(loss_value, iteration)
+            source_admitted = decision.admit
+        state = _update_training_pool(
+            state,
+            states_before_step,
+            targets_before_step,
+            source_admitted,
+            iteration,
+            setup.execution,
+        )
+        if setup.is_multi_target:
+            admission.update(decisions, propagation_losses)
+            metrics.update(admission.metrics(decisions))
+        else:
+            admission.update(decision, loss_value)
+            metrics.update(admission.metrics(decision))
+        metrics["loss_schedule/stage"] = max(loss_stage, default=0)
+        metrics["loss_schedule/stage_changed"] = int(loss_stage_changed)
         runtime.record_iteration(iteration, time.perf_counter() - iteration_start)
         metrics.update(runtime.as_log_dict())
 
@@ -177,7 +340,7 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
         )
         if checkpoint.should_save(iteration, loss_value):
             trainer.model = state.model
-            trainer.model.save(trainer.model_path, overwrite=True)
+            trainer.model.save(checkpoint.path, overwrite=True)
             checkpoint.record(iteration, loss_value)
             saved = True
         if trainer.is_logging:

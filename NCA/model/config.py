@@ -38,8 +38,8 @@ class ModelConfig(ConfigValue):
 
     def __post_init__(self):
         supported = {
-            "NCA", "NCA_fast", "NCA_sycl", "gNCA", "nNCA", "gnNCA",
-            "FastKaNCA",
+            "NCA", "NCA_fast", "NCA_sycl", "gNCA_sycl", "gNCA", "nNCA", "gnNCA",
+            "FastKaNCA", "HNCA",
         }
         if self.family not in supported:
             raise ValueError(f"Unsupported model family {self.family!r}")
@@ -54,3 +54,22 @@ class KANModelConfig(ModelConfig):
     """Configuration for NCA families whose update network uses KAN layers."""
 
     kan: KANConfig = field(default_factory=KANConfig)
+
+
+@dataclass(frozen=True)
+class HNCAModelConfig(ModelConfig):
+    """Configuration for the two-level hierarchical NCA."""
+
+    scale: int = 4
+    obs_channels: int = 4
+    parent_learnable_kernels: bool = False
+    child_gated: bool = False
+    parent_gated: bool = False
+    actuator_gated: bool = False
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.scale < 1:
+            raise ValueError("model.scale must be a positive integer")
+        if not 0 <= self.obs_channels < self.channels:
+            raise ValueError("model.obs_channels must be in [0, model.channels)")

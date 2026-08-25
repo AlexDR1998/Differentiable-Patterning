@@ -129,7 +129,9 @@ class NcaTrainer:
 		
 		self._log_root = trainer_config.log_directory
 		self._model_root = context.model_directory
-		self.model_filename = context.run_name
+		# Keep human-readable names in logging metadata. Checkpoint paths use a
+		# bounded, collision-resistant storage ID supplied by the entrypoint.
+		self.model_filename = context.storage_id or context.run_name
 		#print(jax.tree_util.tree_structure(self.boundary_callbacks))
 		
 	def setup_logging(self,logging_backend,wandb_args,knockout,singular_value_settings=None):
@@ -252,7 +254,10 @@ class NcaTrainer:
 				reg_logs,
 				state,
 				new_state,
-				{"model": vv_nca},
+				{
+					"model": vv_nca,
+					"boundary_state_selector": nca.boundary_regulariser_state,
+				},
 				step_key,
 			)
 			return (step_key, new_state, reg_logs), None
@@ -296,10 +301,10 @@ class NcaTrainer:
 def build_trainer(config, model, data, context: TrainerContext) -> NcaTrainer:
 	"""Construct the trainer selected by the typed backend configuration."""
 	backend_type = config.training.trainer.backend.type
-	is_sycl_model = config.model.family == "NCA_sycl"
+	is_sycl_model = config.model.family in {"NCA_sycl", "gNCA_sycl"}
 	if (backend_type == "sycl") != is_sycl_model:
 		raise ValueError(
-			"model.family='NCA_sycl' and trainer.backend.type='sycl' "
+			"model.family in {'NCA_sycl', 'gNCA_sycl'} and trainer.backend.type='sycl' "
 			"must be selected together"
 		)
 	if backend_type == "sycl":

@@ -11,7 +11,7 @@
 
 namespace nca_sycl {
 
-constexpr std::int64_t kMetadataVersion = 4;
+constexpr std::int64_t kMetadataVersion = 5;
 constexpr std::int64_t kIdFlag = 1 << 0;
 constexpr std::int64_t kDiffFlag = 1 << 1;
 constexpr std::int64_t kGradFlag = 1 << 2;

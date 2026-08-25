@@ -17,6 +17,7 @@ from Common.trainer.config import (
     GroupedPointwiseLossConfig,
     LossConfig,
     LossTermConfig,
+    LossWeightScheduleConfig,
     MultiTargetLossConfig,
     OptimizerConfig,
     OttLossConfig,
@@ -43,6 +44,7 @@ from Experiments.impulse.config import (
 )
 from Experiments.micropatterns.config import KnockoutConfig, MicropatternDataConfig
 from NCA.model.config import (
+    HNCAModelConfig,
     KANConfig,
     KANModelConfig,
     ModelConfig,
@@ -278,6 +280,21 @@ def _loss_term(value: Any, path: str) -> LossTermConfig:
         "channels": lambda x: x if x is None or isinstance(x, str) else _tuple(x),
         "experiment_groups": lambda x: None if x is None else _tuple(x),
         "channel_importance": lambda x: None if x is None else _tuple(x),
+        "schedule": lambda x: None if x is None else _strict(
+            LossWeightScheduleConfig, x, f"{path}.schedule"
+        ),
+        "multi_target_schedules": lambda schedules: None
+        if schedules is None
+        else {
+            str(name): _strict(
+                LossWeightScheduleConfig,
+                schedule,
+                f"{path}.multi_target_schedules.{name}",
+            )
+            for name, schedule in _mapping(
+                schedules, f"{path}.multi_target_schedules"
+            ).items()
+        },
     }
     return _strict(cls, node, path, **converters)
 
@@ -387,6 +404,8 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
     if model_node.get("family") == "FastKaNCA":
         model_node["kan"] = _strict(KANConfig, model_node.get("kan"), "model.kan")
         model_class = KANModelConfig
+    elif model_node.get("family") == "HNCA":
+        model_class = HNCAModelConfig
     model = _strict(model_class, model_node, "model")
 
     training_node = _mapping(root.get("training"), "training")
@@ -426,11 +445,11 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
     if logging_node.get("singular_values") is not None:
         logging_node["singular_values"] = _strict(SingularValueLoggingConfig, logging_node["singular_values"], "logging.singular_values")
     logging = _strict(LoggingConfig, logging_node, "logging")
-    uses_sycl_model = model.family == "NCA_sycl"
+    uses_sycl_model = model.family in {"NCA_sycl", "gNCA_sycl"}
     uses_sycl_trainer = training.trainer.backend.type == "sycl"
     if uses_sycl_model != uses_sycl_trainer:
         raise ValueError(
-            "model.family='NCA_sycl' and training.trainer.backend.type='sycl' "
+            "model.family in {'NCA_sycl', 'gNCA_sycl'} and training.trainer.backend.type='sycl' "
             "must be configured together"
         )
     return ExperimentConfig(

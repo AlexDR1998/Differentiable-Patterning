@@ -5,6 +5,7 @@ OmegaConf = pytest.importorskip("omegaconf").OmegaConf
 
 from NCA.registry import (
     ModelRegistry,
+    create_model_id,
     evaluation_input_provenance,
     open_model_bundle,
     publish_model_bundle,
@@ -26,6 +27,7 @@ def _config():
     value["logging"]["wandb"] = {
         "project": "test-project",
         "group": "test-group",
+        "tags": ["paper-candidate"],
     }
     return experiment_config_from_mapping(value)
 
@@ -44,7 +46,8 @@ def test_publish_verify_and_index_bundle(tmp_path):
     bundle = publish_model_bundle(
         store_root=tmp_path,
         collection="NCA Emoji",
-        run_name="Baseline run",
+        model_id=create_model_id(_config()),
+        display_name="Baseline run",
         checkpoint_path=checkpoint,
         cfg=_config(),
         training_result=result,
@@ -52,6 +55,10 @@ def test_publish_verify_and_index_bundle(tmp_path):
     )
 
     bundle.verify()
+    assert bundle.path.name == bundle.id
+    assert bundle.manifest.display_name == "Baseline run"
+    assert bundle.id.startswith(f"{bundle.manifest.created_at[:10].replace('-', '')[:8]}")
+    assert f"cfg{bundle.manifest.config_id}" in bundle.id
     assert bundle.path.parent.name == "baseline-sweep"
     assert bundle.path.parent.parent.name == "nca-emoji"
     assert open_model_bundle(bundle.path).id == bundle.id
@@ -64,7 +71,36 @@ def test_publish_verify_and_index_bundle(tmp_path):
     assert models.loc[0, "experiment"] == "baseline-sweep"
     assert models.loc[0, "best_loss"] == 0.25
     assert models.loc[0, "wandb_run_id"] == "run-123"
+    assert "paper-candidate" in set(registry.wandb_tags_df()["tag"])
     assert registry.get(bundle.id).path == bundle.path
+
+
+def test_get_ignores_unrelated_bundle_with_unsupported_schema(tmp_path):
+    checkpoint = tmp_path / "source.eqx"
+    checkpoint.write_bytes(b"checkpoint")
+    bundle = publish_model_bundle(
+        store_root=tmp_path,
+        collection="z-current",
+        model_id=create_model_id(_config()),
+        display_name="current-model",
+        checkpoint_path=checkpoint,
+        cfg=_config(),
+        training_result=TrainingResult(checkpoint, 2, 1.5, True),
+        repository_root=tmp_path,
+    )
+    legacy_path = tmp_path / "bundles" / "a-legacy" / "experiment" / "legacy-model"
+    legacy_path.mkdir(parents=True)
+    OmegaConf.save(
+        OmegaConf.create({"schema_version": 1, "id": "legacy-id", "slug": "legacy"}),
+        legacy_path / "manifest.yaml",
+    )
+    OmegaConf.save(OmegaConf.create({}), legacy_path / "config.yaml")
+
+    registry = ModelRegistry(tmp_path)
+
+    assert registry.get(bundle.id).path == bundle.path
+    with pytest.raises(ValueError, match="Unsupported bundle schema version 1"):
+        registry.get("legacy-id")
 
 
 def test_evaluation_input_provenance_is_compact_and_data_sensitive(tmp_path):
@@ -88,7 +124,8 @@ def test_evaluation_input_provenance_is_compact_and_data_sensitive(tmp_path):
     bundle = publish_model_bundle(
         store_root=tmp_path,
         collection="tests",
-        run_name="model",
+        model_id=create_model_id(_config()),
+        display_name="model",
         checkpoint_path=checkpoint,
         cfg=_config(),
         training_result=TrainingResult(checkpoint, 2, 1.5, True),
@@ -105,7 +142,8 @@ def test_catalogue_is_rebuildable_and_indexes_evaluations(tmp_path):
     bundle = publish_model_bundle(
         store_root=tmp_path,
         collection="tests",
-        run_name="model",
+        model_id=create_model_id(_config()),
+        display_name="model",
         checkpoint_path=checkpoint,
         cfg=_config(),
         training_result=result,
@@ -137,7 +175,8 @@ def test_verify_detects_checkpoint_changes(tmp_path):
     bundle = publish_model_bundle(
         store_root=tmp_path,
         collection="tests",
-        run_name="model",
+        model_id=create_model_id(_config()),
+        display_name="model",
         checkpoint_path=checkpoint,
         cfg=_config(),
         training_result=TrainingResult(checkpoint, 2, 1.5, True),
@@ -159,7 +198,8 @@ def test_load_model_reconstructs_from_saved_factory(tmp_path, monkeypatch):
     bundle = publish_model_bundle(
         store_root=tmp_path,
         collection="tests",
-        run_name="model",
+        model_id=create_model_id(_config()),
+        display_name="model",
         checkpoint_path=checkpoint,
         cfg=_config(),
         training_result=TrainingResult(checkpoint, 2, 1.5, True),
@@ -198,7 +238,8 @@ def test_annotations_are_separate_and_queryable(tmp_path):
     bundle = publish_model_bundle(
         store_root=tmp_path,
         collection="tests",
-        run_name="model",
+        model_id=create_model_id(_config()),
+        display_name="model",
         checkpoint_path=checkpoint,
         cfg=_config(),
         training_result=TrainingResult(checkpoint, 2, 1.5, True),

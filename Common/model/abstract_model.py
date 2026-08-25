@@ -26,6 +26,24 @@ class AbstractModel(eqx.Module):
 		"""
 		diff,static = eqx.partition(self,eqx.is_array)
 		return diff,static
+
+	def boundary_regulariser_state(self, state):
+		"""Return the part of ``state`` governed by the spatial boundary.
+
+		Most models evolve one grid, so the complete state is appropriate.
+		Hierarchical models can override this view to exclude auxiliary grids
+		from fine-resolution boundary penalties.
+		"""
+		return state
+
+	def prepare_pool_state(self, state):
+		"""Prepare a state before it is used as a new training rollout input.
+
+		Ordinary models preserve the complete recurrent state. Hierarchical
+		models can override this to reconstruct auxiliary levels that should
+		not themselves be persisted by the training pool.
+		"""
+		return state
 	
 	def combine(self,diff,static):
 		"""
@@ -95,11 +113,12 @@ class AbstractModel(eqx.Module):
 		# 		raise RuntimeError(f'File {path} already exists.')
 		suffix = ".eqx"
 		path = Path(path)
+		if path.suffix != suffix:
+			path = path.with_suffix(suffix)
 		path.parent.mkdir(parents=True, exist_ok=True)
-		with open(path, "wb") as f:
-			hyperparam_str = json.dumps(hyperparams)
-			f.write((hyperparam_str + "\n").encode())
-			eqx.tree_serialise_leaves(path.with_suffix(suffix),self) # type: ignore
+		if path.exists() and not overwrite:
+			raise RuntimeError(f'File {path} already exists.')
+		eqx.tree_serialise_leaves(path, self)
 
 	
 	def load(self, path: Union[str, Path]):

@@ -1,6 +1,7 @@
 """Recurrent training-pool admission policy."""
 
 from dataclasses import dataclass
+from typing import Sequence
 
 
 @dataclass
@@ -28,6 +29,11 @@ class PoolAdmissionController:
         self.config = config
         self.warmup = default_warmup if config.warmup is None else config.warmup
         self.state = PoolAdmissionState()
+
+    def reset_references(self) -> None:
+        """Forget scalar comparisons after the training objective changes."""
+        self.state.loss_ema = None
+        self.state.previous_admitted_loss = None
 
     def decide(self, loss: float, iteration: int) -> PoolDecision:
         state = self.state
@@ -97,3 +103,78 @@ class PoolAdmissionController:
             "pool/admit_count": self.state.admitted,
             "pool/reject_count": self.state.rejected,
         }
+
+
+class TimePoolAdmissionController:
+    """Apply the established admission policy independently per time slot."""
+
+    def __init__(self, config, default_warmup: int):
+        self.config = config
+        self.default_warmup = default_warmup
+        self.controllers: list[PoolAdmissionController] = []
+
+    def _ensure_size(self, size: int) -> None:
+        if not self.controllers:
+            self.controllers = [
+                PoolAdmissionController(self.config, self.default_warmup)
+                for _ in range(size)
+            ]
+        elif len(self.controllers) != size:
+            raise ValueError(
+                "Pool admission time dimension changed from "
+                f"{len(self.controllers)} to {size}"
+            )
+
+    def reset_references(self) -> None:
+        for controller in self.controllers:
+            controller.reset_references()
+
+    def decide(
+        self, losses: Sequence[float], iteration: int
+    ) -> tuple[PoolDecision, ...]:
+        self._ensure_size(len(losses))
+        return tuple(
+            controller.decide(float(loss), iteration)
+            for controller, loss in zip(self.controllers, losses)
+        )
+
+    def update(
+        self, decisions: Sequence[PoolDecision], losses: Sequence[float]
+    ) -> None:
+        for controller, decision, loss in zip(
+            self.controllers, decisions, losses
+        ):
+            controller.update(decision, float(loss))
+
+    def metrics(self, decisions: Sequence[PoolDecision]) -> dict[str, float | int]:
+        admitted = [decision.admit for decision in decisions]
+        metrics: dict[str, float | int] = {
+            "pool/admit": int(all(admitted)),
+            "pool/reject": int(not all(admitted)),
+            "pool/reject_relative": int(
+                any(decision.reject_relative for decision in decisions)
+            ),
+            "pool/reject_previous_relative": int(
+                any(decision.reject_previous_relative for decision in decisions)
+            ),
+            "pool/reject_absolute": int(
+                any(decision.reject_absolute for decision in decisions)
+            ),
+            "pool/admit_fraction": sum(admitted) / max(len(admitted), 1),
+            "pool/admit_count": sum(
+                controller.state.admitted for controller in self.controllers
+            ),
+            "pool/reject_count": sum(
+                controller.state.rejected for controller in self.controllers
+            ),
+        }
+        for index, (controller, decision) in enumerate(
+            zip(self.controllers, decisions)
+        ):
+            metrics.update(
+                {
+                    f"pool/time_{index}/{name.removeprefix('pool/')}": value
+                    for name, value in controller.metrics(decision).items()
+                }
+            )
+        return metrics

@@ -129,18 +129,24 @@ class SyclTwoTileExecution(TrainingExecution):
         """Shard a local loss before the caller applies reverse-mode AD.
 
         ``compute_loss`` consumes one tile-local outer-B PyTree whose state
-        leaves have shape ``[N, C, H, W]``. The returned loss is scalar and
-        replicated; auxiliary state and per-example losses regain a leading
-        tile axis for the global trainer.
+        leaves have shape ``[N, C, H, W]`` plus replicated scheduled loss
+        weights. The returned loss is scalar and replicated; auxiliary state
+        and per-example losses regain a leading tile axis for the global
+        trainer.
         """
         self._ensure_devices()
 
-        def tile_local_loss(nca_diff, nca_static, x, y, key):
+        def tile_local_loss(nca_diff, nca_static, x, y, key, loss_weights):
             local_x = self._remove_local_tile_axis(x, "state")
             local_y = self._remove_local_tile_axis(y, "target")
             local_key = self._remove_local_tile_axis(key, "PRNG key")
             mean_loss, auxiliary = compute_loss(
-                nca_diff, nca_static, local_x, local_y, local_key
+                nca_diff,
+                nca_static,
+                local_x,
+                local_y,
+                local_key,
+                loss_weights,
             )
             states, losses, regulariser_losses, loss_diagnostics = auxiliary
             return mean_loss, (
@@ -159,6 +165,7 @@ class SyclTwoTileExecution(TrainingExecution):
                 P(self.AXIS_NAME),
                 P(self.AXIS_NAME),
                 P(self.AXIS_NAME),
+                P(),
             ),
             out_specs=(
                 P(),

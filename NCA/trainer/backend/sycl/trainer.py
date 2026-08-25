@@ -305,7 +305,10 @@ class SyclNcaTrainer(NcaTrainer):
                     reg_logs,
                     previous_state,
                     new_state,
-                    {"model": vv_nca},
+                    {
+                        "model": vv_nca,
+                        "boundary_state_selector": nca.boundary_regulariser_state,
+                    },
                     step_keys[offset],
                     skip=fused_regularisers,
                 )
