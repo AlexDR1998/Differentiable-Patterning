@@ -90,7 +90,7 @@ def main() -> int:
     parser.add_argument(
         "--wandb-mode",
         choices=("offline", "online", "disabled"),
-        default="offline",
+        default="online",
         help="W&B mode passed to each run (default: offline)",
     )
     parser.add_argument(
