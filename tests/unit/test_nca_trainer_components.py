@@ -7,7 +7,6 @@ from NCA.trainer.objective import resolve_objective
 from NCA.trainer.pool import PoolAdmissionController, TimePoolAdmissionController
 from NCA.trainer.runner import (
     _merge_advanced_states,
-    _pool_transition_count,
     _update_training_pool,
 )
 from NCA.trainer.state import TrainState
@@ -154,7 +153,7 @@ def test_scalar_rejection_restores_pool_without_running_augmentation():
         state,
         previous_states,
         previous_targets,
-        source_admitted=(False, False, False),
+        source_admitted=False,
         iteration=10,
         execution=Execution(),
     )
@@ -163,8 +162,52 @@ def test_scalar_rejection_restores_pool_without_running_augmentation():
     assert result.targets is previous_targets
     assert result.model is state.model
     assert result.optimizer_state == "updated optimizer"
+    assert jnp.array_equal(result.key, state.key)
+    assert result.loss_weights == "weights"
 
 
-def test_pool_transition_count_supports_reference_and_sycl_layouts():
-    assert _pool_transition_count([jnp.zeros((4, 1, 1, 1))]) == 3
-    assert _pool_transition_count([jnp.zeros((2, 4, 1, 1, 1))]) == 3
+def test_scalar_acceptance_runs_augmentation_and_keeps_training_update():
+    class Model:
+        @staticmethod
+        def prepare_pool_state(value):
+            return value
+
+    class Execution:
+        calls = 0
+
+        @staticmethod
+        def split_key(key):
+            return key + 1, key + 2
+
+        @classmethod
+        def apply_advance_pool(cls, states, targets, iteration, key):
+            cls.calls += 1
+            assert iteration == 10
+            return [states[0] + 1], [targets[0] + 1]
+
+    previous_states = [jnp.zeros((4, 1, 1, 1))]
+    previous_targets = [jnp.zeros((4, 1, 1, 1))]
+    state = TrainState(
+        Model(),
+        [jnp.ones((4, 1, 1, 1))],
+        previous_targets,
+        "updated optimizer",
+        jnp.array([1, 2], dtype=jnp.uint32),
+        "weights",
+    )
+
+    result = _update_training_pool(
+        state,
+        previous_states,
+        previous_targets,
+        source_admitted=True,
+        iteration=10,
+        execution=Execution(),
+    )
+
+    assert Execution.calls == 1
+    assert jnp.all(result.states[0] == 2)
+    assert jnp.all(result.targets[0] == 1)
+    assert result.model is state.model
+    assert result.optimizer_state == "updated optimizer"
+    assert jnp.array_equal(result.key, state.key + 1)

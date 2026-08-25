@@ -141,15 +141,6 @@ def _merge_advanced_states(advanced, previous, source_admitted):
     return jtu.tree_map(merge, advanced, previous)
 
 
-def _pool_transition_count(states):
-    """Return the number of source slots that can feed a later time slot."""
-    leaf = jtu.tree_leaves(states)[0]
-    time_axis = leaf.ndim - 4
-    if time_axis < 0:
-        raise ValueError(f"Pool state leaf has no time axis: shape {leaf.shape}")
-    return max(int(leaf.shape[time_axis]) - 1, 0)
-
-
 def _update_training_pool(
     state,
     states_before_step,
@@ -159,8 +150,13 @@ def _update_training_pool(
     execution,
 ):
     """Advance admitted transitions and discard every rejected rollout."""
-    source_admitted = tuple(bool(value) for value in source_admitted)
-    if not any(source_admitted):
+    admission_mask = None
+    if isinstance(source_admitted, bool):
+        admitted = source_admitted
+    else:
+        admission_mask = tuple(bool(value) for value in source_admitted)
+        admitted = any(admission_mask)
+    if not admitted:
         return state._replace(
             states=states_before_step,
             targets=targets_before_step,
@@ -170,9 +166,9 @@ def _update_training_pool(
     states, targets = execution.apply_advance_pool(
         state.states, state.targets, iteration, augment_key
     )
-    if not all(source_admitted):
+    if admission_mask is not None and not all(admission_mask):
         states = _merge_advanced_states(
-            states, states_before_step, source_admitted
+            states, states_before_step, admission_mask
         )
     states = jtu.tree_map(state.model.prepare_pool_state, states)
     return state._replace(states=states, targets=targets, key=next_key)
@@ -311,9 +307,7 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
             source_admitted = tuple(decision.admit for decision in decisions)
         else:
             decision = admission.decide(loss_value, iteration)
-            source_admitted = (decision.admit,) * _pool_transition_count(
-                states_before_step
-            )
+            source_admitted = decision.admit
         state = _update_training_pool(
             state,
             states_before_step,
