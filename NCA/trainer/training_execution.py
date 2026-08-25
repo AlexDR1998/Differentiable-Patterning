@@ -8,6 +8,7 @@ trainers can replace this object without adding flags throughout ``train``.
 from __future__ import annotations
 
 import equinox as eqx
+import jax.numpy as jnp
 import jax.random as jr
 
 from Common.trainer.loss_multi_target import multi_target_loss
@@ -66,6 +67,15 @@ class TrainingExecution:
 
     def prepare_log_dict(self, log_dict):
         return log_dict
+
+    def prepare_admission_losses(self, losses):
+        """Return one existing objective value per biological time slot."""
+        losses = jnp.asarray(losses)
+        if losses.ndim < 1:
+            raise ValueError("Per-time pool admission requires a loss vector")
+        if losses.ndim == 1:
+            return losses
+        return jnp.mean(losses, axis=tuple(range(losses.ndim - 1)))
 
 
 __all__ = ["TrainingExecution"]

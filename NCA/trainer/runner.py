@@ -19,7 +19,7 @@ from NCA.trainer.instrumentation import (
     start_trace,
     stop_trace,
 )
-from NCA.trainer.pool import PoolAdmissionController
+from NCA.trainer.pool import PoolAdmissionController, TimePoolAdmissionController
 from NCA.trainer.state import TrainState
 
 
@@ -110,6 +110,37 @@ def _array_diagnostic(value):
     }
 
 
+def _merge_advanced_states(advanced, previous, source_admitted):
+    """Keep a shifted prediction only when its source transition was admitted."""
+    source_admitted = jnp.asarray(source_admitted, dtype=jnp.bool_)
+    destination_admitted = jnp.concatenate(
+        [jnp.ones((1,), dtype=jnp.bool_), source_admitted]
+    )
+
+    def merge(advanced_value, previous_value):
+        time_axis = advanced_value.ndim - 4
+        if (
+            time_axis < 0
+            or advanced_value.shape[time_axis] != len(destination_admitted)
+        ):
+            raise ValueError(
+                "Pool state time dimension is incompatible with admission mask: "
+                f"shape {advanced_value.shape}, mask length {len(destination_admitted)}"
+            )
+        mask_shape = (
+            (1,) * time_axis
+            + (len(destination_admitted),)
+            + (1,) * (advanced_value.ndim - time_axis - 1)
+        )
+        return jnp.where(
+            destination_admitted.reshape(mask_shape),
+            advanced_value,
+            previous_value,
+        )
+
+    return jtu.tree_map(merge, advanced, previous)
+
+
 def _report_divergence(output, state, iteration):
     """Print enough numerical context to locate the first failing subsystem."""
     print(f"Divergence diagnostics at step {iteration}:")
@@ -173,9 +204,9 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
     checkpoint = BestCheckpoint(
         Path(trainer.model_path).with_suffix(".eqx"), setup.checkpoint_warmup
     )
-    admission = PoolAdmissionController(
-        trainer.config.training.trainer.pool_admission, setup.warmup
-    )
+    admission_config = trainer.config.training.trainer.pool_admission
+    admission = PoolAdmissionController(admission_config, setup.warmup)
+    time_admission = TimePoolAdmissionController(admission_config, setup.warmup)
     trace_start = min(5, max(0, setup.iterations - 1))
     trace_stop = min(trace_start + 4, setup.iterations - 1)
     trace_active = False
@@ -192,7 +223,9 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
         loss_stage_changed = loss_stage != previous_loss_stage
         if loss_stage_changed:
             admission.reset_references()
+            time_admission.reset_references()
         previous_loss_stage = loss_stage
+        states_before_step = state.states
         state = state._replace(
             key=setup.execution.fold_in_key(state.key, iteration),
             loss_weights=setup.loss_weight_schedule(iteration),
@@ -226,18 +259,40 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
             _report_divergence(output, state, iteration)
             break
 
-        decision = admission.decide(loss_value, iteration)
-        if decision.admit:
+        if setup.is_multi_target:
+            per_time_losses = jax.device_get(
+                setup.execution.prepare_admission_losses(output.metrics["losses"])
+            )
+            # The final transition has no subsequent biological input slot.
+            propagation_losses = tuple(
+                float(value) for value in per_time_losses[:-1]
+            )
+            decisions = time_admission.decide(propagation_losses, iteration)
+            source_admitted = tuple(decision.admit for decision in decisions)
+            should_advance = True
+        else:
+            decision = admission.decide(loss_value, iteration)
+            source_admitted = None
+            should_advance = decision.admit
+        if should_advance:
             next_key, augment_key = setup.execution.split_key(state.key)
             states, targets = setup.execution.apply_advance_pool(
                 state.states, state.targets, iteration, augment_key
             )
+            if source_admitted is not None:
+                states = _merge_advanced_states(
+                    states, states_before_step, source_admitted
+                )
             states = jtu.tree_map(state.model.prepare_pool_state, states)
             state = state._replace(
                 states=states, targets=targets, key=next_key
             )
-        admission.update(decision, loss_value)
-        metrics.update(admission.metrics(decision))
+        if setup.is_multi_target:
+            time_admission.update(decisions, propagation_losses)
+            metrics.update(time_admission.metrics(decisions))
+        else:
+            admission.update(decision, loss_value)
+            metrics.update(admission.metrics(decision))
         metrics["loss_schedule/stage"] = max(loss_stage, default=0)
         metrics["loss_schedule/stage_changed"] = int(loss_stage_changed)
         runtime.record_iteration(iteration, time.perf_counter() - iteration_start)

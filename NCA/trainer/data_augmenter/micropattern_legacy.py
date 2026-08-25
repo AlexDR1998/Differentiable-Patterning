@@ -177,6 +177,8 @@ class MicropatternDataAugmenter(BasicAugmenter):
                         donor_key, donor_count
                     )[global_indices]
                     values = measurements[donors, time_index][:, measurement_indices]
+                    # Truth scaffolding replaces only observed channels. Hidden
+                    # channels deliberately remain propagated as trajectory memory.
                     keep = (
                         inject[:, time_index - 1]
                         & (choices[:, time_index - 1] == group_index)
