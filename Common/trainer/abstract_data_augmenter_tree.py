@@ -13,7 +13,8 @@ class DataAugmenterAbstract(object):
 	
 	def __init__(self,
 			  	 data_true:PyTree[Float[Array, "N C W H"]],
-				 hidden_channels=0):
+				 hidden_channels=0,
+				 nca_model=None):
 		"""
 		Class for handling data augmentation for NCA training. 
 		data_init is called before training,
@@ -31,6 +32,8 @@ class DataAugmenterAbstract(object):
 			true un-augmented data
 		hidden_channels : int optional
 			number of hidden channels to zero-pad to data. Defaults to zero
+		nca_model : optional
+			NCA model supplied by the trainer. Base augmenters do not use it.
 		"""
 		self.OBS_CHANNELS = data_true[0].shape[1]
 		data_tree = []
