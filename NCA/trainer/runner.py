@@ -141,6 +141,43 @@ def _merge_advanced_states(advanced, previous, source_admitted):
     return jtu.tree_map(merge, advanced, previous)
 
 
+def _pool_transition_count(states):
+    """Return the number of source slots that can feed a later time slot."""
+    leaf = jtu.tree_leaves(states)[0]
+    time_axis = leaf.ndim - 4
+    if time_axis < 0:
+        raise ValueError(f"Pool state leaf has no time axis: shape {leaf.shape}")
+    return max(int(leaf.shape[time_axis]) - 1, 0)
+
+
+def _update_training_pool(
+    state,
+    states_before_step,
+    targets_before_step,
+    source_admitted,
+    iteration,
+    execution,
+):
+    """Advance admitted transitions and discard every rejected rollout."""
+    source_admitted = tuple(bool(value) for value in source_admitted)
+    if not any(source_admitted):
+        return state._replace(
+            states=states_before_step,
+            targets=targets_before_step,
+        )
+
+    next_key, augment_key = execution.split_key(state.key)
+    states, targets = execution.apply_advance_pool(
+        state.states, state.targets, iteration, augment_key
+    )
+    if not all(source_admitted):
+        states = _merge_advanced_states(
+            states, states_before_step, source_admitted
+        )
+    states = jtu.tree_map(state.model.prepare_pool_state, states)
+    return state._replace(states=states, targets=targets, key=next_key)
+
+
 def _report_divergence(output, state, iteration):
     """Print enough numerical context to locate the first failing subsystem."""
     print(f"Divergence diagnostics at step {iteration}:")
@@ -205,8 +242,11 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
         Path(trainer.model_path).with_suffix(".eqx"), setup.checkpoint_warmup
     )
     admission_config = trainer.config.training.trainer.pool_admission
-    admission = PoolAdmissionController(admission_config, setup.warmup)
-    time_admission = TimePoolAdmissionController(admission_config, setup.warmup)
+    admission = (
+        TimePoolAdmissionController(admission_config, setup.warmup)
+        if setup.is_multi_target
+        else PoolAdmissionController(admission_config, setup.warmup)
+    )
     trace_start = min(5, max(0, setup.iterations - 1))
     trace_stop = min(trace_start + 4, setup.iterations - 1)
     trace_active = False
@@ -223,9 +263,9 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
         loss_stage_changed = loss_stage != previous_loss_stage
         if loss_stage_changed:
             admission.reset_references()
-            time_admission.reset_references()
         previous_loss_stage = loss_stage
         states_before_step = state.states
+        targets_before_step = state.targets
         state = state._replace(
             key=setup.execution.fold_in_key(state.key, iteration),
             loss_weights=setup.loss_weight_schedule(iteration),
@@ -267,29 +307,24 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
             propagation_losses = tuple(
                 float(value) for value in per_time_losses[:-1]
             )
-            decisions = time_admission.decide(propagation_losses, iteration)
+            decisions = admission.decide(propagation_losses, iteration)
             source_admitted = tuple(decision.admit for decision in decisions)
-            should_advance = True
         else:
             decision = admission.decide(loss_value, iteration)
-            source_admitted = None
-            should_advance = decision.admit
-        if should_advance:
-            next_key, augment_key = setup.execution.split_key(state.key)
-            states, targets = setup.execution.apply_advance_pool(
-                state.states, state.targets, iteration, augment_key
+            source_admitted = (decision.admit,) * _pool_transition_count(
+                states_before_step
             )
-            if source_admitted is not None:
-                states = _merge_advanced_states(
-                    states, states_before_step, source_admitted
-                )
-            states = jtu.tree_map(state.model.prepare_pool_state, states)
-            state = state._replace(
-                states=states, targets=targets, key=next_key
-            )
+        state = _update_training_pool(
+            state,
+            states_before_step,
+            targets_before_step,
+            source_admitted,
+            iteration,
+            setup.execution,
+        )
         if setup.is_multi_target:
-            time_admission.update(decisions, propagation_losses)
-            metrics.update(time_admission.metrics(decisions))
+            admission.update(decisions, propagation_losses)
+            metrics.update(admission.metrics(decisions))
         else:
             admission.update(decision, loss_value)
             metrics.update(admission.metrics(decision))

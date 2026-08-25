@@ -5,7 +5,12 @@ import jax.numpy as jnp
 from Common.trainer.config import LossConfig, PointwiseLossConfig
 from NCA.trainer.objective import resolve_objective
 from NCA.trainer.pool import PoolAdmissionController, TimePoolAdmissionController
-from NCA.trainer.runner import _merge_advanced_states
+from NCA.trainer.runner import (
+    _merge_advanced_states,
+    _pool_transition_count,
+    _update_training_pool,
+)
+from NCA.trainer.state import TrainState
 
 
 def test_objective_is_resolved_from_typed_loss_config():
@@ -116,3 +121,50 @@ def test_rejected_transition_merge_handles_sycl_tile_axis():
         merged[0][:, :, 0, 0, 0],
         jnp.array([[1.0, 0.0, 1.0, 0.0]] * 2),
     )
+
+
+def test_scalar_rejection_restores_pool_without_running_augmentation():
+    class Model:
+        @staticmethod
+        def prepare_pool_state(value):
+            return value
+
+    class Execution:
+        @staticmethod
+        def split_key(key):
+            raise AssertionError("Rejected pool must not split an augmentation key")
+
+        @staticmethod
+        def apply_advance_pool(states, targets, iteration, key):
+            raise AssertionError("Rejected pool must not run augmentation")
+
+    previous_states = [jnp.zeros((4, 1, 1, 1))]
+    previous_targets = [jnp.zeros((4, 1, 1, 1))]
+    rolled_states = [jnp.ones((4, 1, 1, 1))]
+    state = TrainState(
+        Model(),
+        rolled_states,
+        previous_targets,
+        "updated optimizer",
+        jnp.array([1, 2], dtype=jnp.uint32),
+        "weights",
+    )
+
+    result = _update_training_pool(
+        state,
+        previous_states,
+        previous_targets,
+        source_admitted=(False, False, False),
+        iteration=10,
+        execution=Execution(),
+    )
+
+    assert result.states is previous_states
+    assert result.targets is previous_targets
+    assert result.model is state.model
+    assert result.optimizer_state == "updated optimizer"
+
+
+def test_pool_transition_count_supports_reference_and_sycl_layouts():
+    assert _pool_transition_count([jnp.zeros((4, 1, 1, 1))]) == 3
+    assert _pool_transition_count([jnp.zeros((2, 4, 1, 1, 1))]) == 3
