@@ -1,4 +1,4 @@
-experiment_name: hnca_micropattern_hyperparameter_sweep_v6
+experiment_name: hnca_micropattern_hyperparameter_sweep_v7
 entrypoint: Experiments.micropatterns.train:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/hnca_micropattern_hyperparameter_sweep.yaml
@@ -54,7 +54,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -72,14 +72,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 577090037
   config:
     schema_version: 1
     seed: 577090037
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -104,7 +104,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -188,7 +188,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -248,7 +248,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -266,14 +266,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 271041745
   config:
     schema_version: 1
     seed: 271041745
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -298,7 +298,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -382,7 +382,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -442,7 +442,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -460,14 +460,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1095513148
   config:
     schema_version: 1
     seed: 1095513148
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -492,7 +492,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -576,7 +576,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -636,7 +636,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -654,14 +654,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 506456969
   config:
     schema_version: 1
     seed: 506456969
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -686,7 +686,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -770,7 +770,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -830,7 +830,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -848,14 +848,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 2127877499
   config:
     schema_version: 1
     seed: 2127877499
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -880,7 +880,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -964,7 +964,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -1024,7 +1024,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -1042,14 +1042,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1930549411
   config:
     schema_version: 1
     seed: 1930549411
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -1074,7 +1074,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -1158,7 +1158,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -1218,7 +1218,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -1236,14 +1236,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 2028277857
   config:
     schema_version: 1
     seed: 2028277857
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -1268,7 +1268,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -1352,7 +1352,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -1412,7 +1412,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -1430,14 +1430,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1630434966
   config:
     schema_version: 1
     seed: 1630434966
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -1462,7 +1462,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -1546,7 +1546,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -1606,7 +1606,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -1624,14 +1624,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 901749037
   config:
     schema_version: 1
     seed: 901749037
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -1656,7 +1656,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -1740,7 +1740,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -1800,7 +1800,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -1818,14 +1818,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 403123852
   config:
     schema_version: 1
     seed: 403123852
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -1850,7 +1850,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -1934,7 +1934,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -1994,7 +1994,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -2012,14 +2012,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 2095328386
   config:
     schema_version: 1
     seed: 2095328386
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -2044,7 +2044,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -2128,7 +2128,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -2188,7 +2188,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -2206,14 +2206,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 121751464
   config:
     schema_version: 1
     seed: 121751464
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -2238,7 +2238,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -2322,7 +2322,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -2382,7 +2382,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -2400,14 +2400,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1674216077
   config:
     schema_version: 1
     seed: 1674216077
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -2432,7 +2432,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -2516,7 +2516,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -2576,7 +2576,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -2594,14 +2594,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1858720390
   config:
     schema_version: 1
     seed: 1858720390
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -2626,7 +2626,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -2710,7 +2710,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -2770,7 +2770,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -2788,14 +2788,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 9045414
   config:
     schema_version: 1
     seed: 9045414
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -2820,7 +2820,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -2904,7 +2904,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -2964,7 +2964,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -2982,14 +2982,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1912923437
   config:
     schema_version: 1
     seed: 1912923437
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -3014,7 +3014,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -3098,7 +3098,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -3158,7 +3158,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -3176,14 +3176,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1143881027
   config:
     schema_version: 1
     seed: 1143881027
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -3208,7 +3208,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -3292,7 +3292,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -3352,7 +3352,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -3370,14 +3370,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 982526257
   config:
     schema_version: 1
     seed: 982526257
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -3402,7 +3402,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -3486,7 +3486,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -3546,7 +3546,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -3564,14 +3564,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 439062303
   config:
     schema_version: 1
     seed: 439062303
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -3596,7 +3596,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -3680,7 +3680,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -3740,7 +3740,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -3758,14 +3758,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1363349907
   config:
     schema_version: 1
     seed: 1363349907
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -3790,7 +3790,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -3874,7 +3874,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -3934,7 +3934,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -3952,14 +3952,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 131383004
   config:
     schema_version: 1
     seed: 131383004
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -3984,7 +3984,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -4068,7 +4068,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -4128,7 +4128,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -4146,14 +4146,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 95872739
   config:
     schema_version: 1
     seed: 95872739
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -4178,7 +4178,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -4262,7 +4262,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -4322,7 +4322,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -4340,14 +4340,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 109289145
   config:
     schema_version: 1
     seed: 109289145
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -4372,7 +4372,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -4456,7 +4456,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -4516,7 +4516,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -4534,14 +4534,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 39534911
   config:
     schema_version: 1
     seed: 39534911
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -4566,7 +4566,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -4650,7 +4650,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -4710,7 +4710,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -4728,14 +4728,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1637259727
   config:
     schema_version: 1
     seed: 1637259727
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -4760,7 +4760,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -4844,7 +4844,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -4904,7 +4904,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -4922,14 +4922,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 930287327
   config:
     schema_version: 1
     seed: 930287327
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -4954,7 +4954,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -5038,7 +5038,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -5098,7 +5098,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -5116,14 +5116,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1812976885
   config:
     schema_version: 1
     seed: 1812976885
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -5148,7 +5148,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -5232,7 +5232,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -5292,7 +5292,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -5310,14 +5310,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 124729223
   config:
     schema_version: 1
     seed: 124729223
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -5342,7 +5342,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -5426,7 +5426,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -5486,7 +5486,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -5504,14 +5504,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 952158461
   config:
     schema_version: 1
     seed: 952158461
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -5536,7 +5536,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -5620,7 +5620,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -5680,7 +5680,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -5698,14 +5698,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1880712864
   config:
     schema_version: 1
     seed: 1880712864
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -5730,7 +5730,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -5814,7 +5814,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -5874,7 +5874,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -5892,14 +5892,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 2129497364
   config:
     schema_version: 1
     seed: 2129497364
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -5924,7 +5924,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -6008,7 +6008,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -6068,7 +6068,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -6086,14 +6086,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1001090105
   config:
     schema_version: 1
     seed: 1001090105
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -6118,7 +6118,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -6202,7 +6202,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -6262,7 +6262,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -6280,14 +6280,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1484771968
   config:
     schema_version: 1
     seed: 1484771968
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -6312,7 +6312,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -6396,7 +6396,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -6456,7 +6456,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -6474,14 +6474,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 991564255
   config:
     schema_version: 1
     seed: 991564255
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -6506,7 +6506,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -6590,7 +6590,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -6650,7 +6650,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -6668,14 +6668,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 939657385
   config:
     schema_version: 1
     seed: 939657385
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -6700,7 +6700,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -6784,7 +6784,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -6844,7 +6844,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -6862,14 +6862,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1973981844
   config:
     schema_version: 1
     seed: 1973981844
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -6894,7 +6894,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -6978,7 +6978,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -7038,7 +7038,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -7056,14 +7056,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1244602538
   config:
     schema_version: 1
     seed: 1244602538
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -7088,7 +7088,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -7172,7 +7172,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -7232,7 +7232,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -7250,14 +7250,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 92297589
   config:
     schema_version: 1
     seed: 92297589
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -7282,7 +7282,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -7366,7 +7366,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -7426,7 +7426,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -7444,14 +7444,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1787479226
   config:
     schema_version: 1
     seed: 1787479226
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -7476,7 +7476,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -7560,7 +7560,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -7620,7 +7620,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -7638,14 +7638,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 429497919
   config:
     schema_version: 1
     seed: 429497919
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -7670,7 +7670,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -7754,7 +7754,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -7814,7 +7814,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -7832,14 +7832,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 798461319
   config:
     schema_version: 1
     seed: 798461319
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -7864,7 +7864,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -7948,7 +7948,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -8008,7 +8008,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -8026,14 +8026,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1272987056
   config:
     schema_version: 1
     seed: 1272987056
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -8058,7 +8058,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -8142,7 +8142,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -8202,7 +8202,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -8220,14 +8220,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 519218416
   config:
     schema_version: 1
     seed: 519218416
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -8252,7 +8252,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -8336,7 +8336,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -8396,7 +8396,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -8414,14 +8414,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1428914934
   config:
     schema_version: 1
     seed: 1428914934
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -8446,7 +8446,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -8530,7 +8530,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -8590,7 +8590,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -8608,14 +8608,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1812935769
   config:
     schema_version: 1
     seed: 1812935769
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -8640,7 +8640,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -8724,7 +8724,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -8784,7 +8784,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -8802,14 +8802,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 815398389
   config:
     schema_version: 1
     seed: 815398389
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -8834,7 +8834,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -8918,7 +8918,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -8978,7 +8978,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -8996,14 +8996,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1302957853
   config:
     schema_version: 1
     seed: 1302957853
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -9028,7 +9028,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -9112,7 +9112,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -9172,7 +9172,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -9190,14 +9190,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1220455187
   config:
     schema_version: 1
     seed: 1220455187
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -9222,7 +9222,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -9306,7 +9306,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -9366,7 +9366,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -9384,14 +9384,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 2144743702
   config:
     schema_version: 1
     seed: 2144743702
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -9416,7 +9416,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -9500,7 +9500,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -9560,7 +9560,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -9578,14 +9578,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1689440956
   config:
     schema_version: 1
     seed: 1689440956
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -9610,7 +9610,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -9694,7 +9694,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -9754,7 +9754,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -9772,14 +9772,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 148287319
   config:
     schema_version: 1
     seed: 148287319
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -9804,7 +9804,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -9888,7 +9888,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -9948,7 +9948,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -9966,14 +9966,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 2062559164
   config:
     schema_version: 1
     seed: 2062559164
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -9998,7 +9998,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -10082,7 +10082,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -10142,7 +10142,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -10160,14 +10160,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1042560227
   config:
     schema_version: 1
     seed: 1042560227
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -10192,7 +10192,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -10276,7 +10276,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -10336,7 +10336,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -10354,14 +10354,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1736404157
   config:
     schema_version: 1
     seed: 1736404157
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -10386,7 +10386,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -10470,7 +10470,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -10530,7 +10530,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -10548,14 +10548,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1779465077
   config:
     schema_version: 1
     seed: 1779465077
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -10580,7 +10580,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -10664,7 +10664,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -10724,7 +10724,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -10742,14 +10742,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 743061144
   config:
     schema_version: 1
     seed: 743061144
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -10774,7 +10774,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -10858,7 +10858,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -10918,7 +10918,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -10936,14 +10936,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1576784849
   config:
     schema_version: 1
     seed: 1576784849
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -10968,7 +10968,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -11052,7 +11052,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -11112,7 +11112,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -11130,14 +11130,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1609337231
   config:
     schema_version: 1
     seed: 1609337231
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -11162,7 +11162,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -11246,7 +11246,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -11306,7 +11306,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -11324,14 +11324,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 371375481
   config:
     schema_version: 1
     seed: 371375481
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -11356,7 +11356,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -11440,7 +11440,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -11500,7 +11500,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -11518,14 +11518,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1885325846
   config:
     schema_version: 1
     seed: 1885325846
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -11550,7 +11550,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -11634,7 +11634,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -11694,7 +11694,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -11712,14 +11712,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 463561237
   config:
     schema_version: 1
     seed: 463561237
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -11744,7 +11744,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -11828,7 +11828,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -11888,7 +11888,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -11906,14 +11906,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 703078820
   config:
     schema_version: 1
     seed: 703078820
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -11938,7 +11938,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -12022,7 +12022,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -12082,7 +12082,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: true
     knockout.mode: null
@@ -12100,14 +12100,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1689017785
   config:
     schema_version: 1
     seed: 1689017785
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -12132,7 +12132,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: true
         task: micropattern_single_replicate
     model:
@@ -12216,7 +12216,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true
@@ -12276,7 +12276,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -12294,14 +12294,14 @@ configs:
     data.micropattern.data_channels: 4
     model.obs_channels: 4
     data.micropattern.experiment_groups: cell_fate_s1
-    experiment.name: hnca_micropattern_hyperparameter_sweep_v6
-    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v6
+    experiment.name: hnca_micropattern_hyperparameter_sweep_v7
+    logging.wandb.group: hnca_micropattern_hyperparameter_sweep_v7
     seed: 1591382744
   config:
     schema_version: 1
     seed: 1591382744
     experiment:
-      name: hnca_micropattern_hyperparameter_sweep_v6
+      name: hnca_micropattern_hyperparameter_sweep_v7
     system:
       precision: highest
       xla_flags: null
@@ -12326,7 +12326,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -12410,7 +12410,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: hnca_micropatterns
-        group: hnca_micropattern_hyperparameter_sweep_v6
+        group: hnca_micropattern_hyperparameter_sweep_v7
         tags: null
     model_store:
       enabled: true

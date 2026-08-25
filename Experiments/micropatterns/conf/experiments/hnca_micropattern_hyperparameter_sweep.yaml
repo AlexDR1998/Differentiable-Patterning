@@ -1,4 +1,4 @@
-experiment_name: hnca_micropattern_hyperparameter_sweep_v6
+experiment_name: hnca_micropattern_hyperparameter_sweep_v7
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/hnca_micropattern_hyperparameter_sweep
 seed_mode: index
@@ -60,7 +60,7 @@ grid:
   data.micropattern.pool_copies: [4]
   data.micropattern.intermediate_reinjection_probability: [1.0]
   data.micropattern.intermediate_reinjection_probability_end: [0.0]
-  data.micropattern.intermediate_reinjection_decay_start_fraction: [0.25]
+  data.micropattern.intermediate_reinjection_decay_start_fraction: [0.01]
   data.dataset: [micropatterns_260726]
   data.micropattern.duplicate_final_timestep: [true,false]
 

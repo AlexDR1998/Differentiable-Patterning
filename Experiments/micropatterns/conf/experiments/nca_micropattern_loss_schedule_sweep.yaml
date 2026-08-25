@@ -1,6 +1,6 @@
-experiment_name: nca_micropattern_loss_schedule_radial_sweep_v3
+experiment_name: nca_micropattern_loss_schedule_l2_sweep_v4
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_micropattern_loss_schedule_radial_sweep_v3
+output_subdir: generated/nca_micropattern_loss_schedule_l2_sweep_v4
 seed_mode: index
 
 grid:
@@ -23,7 +23,7 @@ grid:
   run.t: [128]
 
   trainer.loop_autodiff: [lax]
-  trainer.pool_admission_previous_relative_threshold: [1.0,1.05]
+  trainer.pool_admission_previous_relative_threshold: [1.0,1.1]
   trainer.log_every: [200]
 
   logging.wandb.project: [nca_micropattern_loss_schedules]
@@ -32,11 +32,11 @@ grid:
   logging.singular_values.epsilon: [1e-8]
 
   loss.terms: [multi_target]
-  loss.terms.0.multi_target_weights.l2: [0.0]
+  loss.terms.0.multi_target_weights.l2: [1.0]
   loss.terms.0.multi_target_weights.texture: [1.0]
   loss.terms.0.multi_target_weights.channel_mean: [0.0]
   loss.terms.0.multi_target_weights.correlation: [0.0]
-  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.multi_target_weights.radial: [0.0]
   loss.terms.0.normalize_weights: [true]
   loss.terms.0.assignment: [hard]
   loss.terms.0.random_crop: [false]
@@ -56,7 +56,7 @@ grid:
   data.micropattern.pool_copies: [4]
   data.micropattern.intermediate_reinjection_probability: [1.0]
   data.micropattern.intermediate_reinjection_probability_end: [0.0]
-  data.micropattern.intermediate_reinjection_decay_start_fraction: [0.25]
+  data.micropattern.intermediate_reinjection_decay_start_fraction: [0.01]
   data.dataset: [micropatterns_260726]
   data.micropattern.duplicate_final_timestep: [false]
 

@@ -1,8 +1,8 @@
-experiment_name: nca_micropattern_loss_schedule_l2_sweep_v3
+experiment_name: nca_micropattern_loss_schedule_l2_sweep_v4
 entrypoint: Experiments.micropatterns.train:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_micropattern_loss_schedule_sweep.yaml
-output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/nca_micropattern_loss_schedule_l2_sweep_v3
+output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/nca_micropattern_loss_schedule_l2_sweep_v4
 count: 80
 configs:
 - index: 13
@@ -47,7 +47,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -96,14 +96,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 577090037
   config:
     schema_version: 1
     seed: 577090037
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -129,7 +129,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -245,7 +245,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -298,7 +298,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -347,14 +347,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 271041745
   config:
     schema_version: 1
     seed: 271041745
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -380,7 +380,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -496,7 +496,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -549,7 +549,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -598,14 +598,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1095513148
   config:
     schema_version: 1
     seed: 1095513148
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -631,7 +631,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -747,7 +747,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -800,7 +800,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -849,14 +849,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 506456969
   config:
     schema_version: 1
     seed: 506456969
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -882,7 +882,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -998,7 +998,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -1051,7 +1051,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -1101,14 +1101,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 2127877499
   config:
     schema_version: 1
     seed: 2127877499
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -1135,7 +1135,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -1251,7 +1251,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -1304,7 +1304,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -1354,14 +1354,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1930549411
   config:
     schema_version: 1
     seed: 1930549411
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -1388,7 +1388,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -1504,7 +1504,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -1557,7 +1557,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -1607,14 +1607,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 2028277857
   config:
     schema_version: 1
     seed: 2028277857
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -1641,7 +1641,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -1757,7 +1757,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -1810,7 +1810,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -1860,14 +1860,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1630434966
   config:
     schema_version: 1
     seed: 1630434966
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -1894,7 +1894,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -2010,7 +2010,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -2034,7 +2034,7 @@ configs:
     run.repeat: 0
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -2063,7 +2063,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -2112,14 +2112,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 901749037
   config:
     schema_version: 1
     seed: 901749037
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -2145,7 +2145,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -2169,7 +2169,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -2261,7 +2261,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -2285,7 +2285,7 @@ configs:
     run.repeat: 0
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -2314,7 +2314,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -2363,14 +2363,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 403123852
   config:
     schema_version: 1
     seed: 403123852
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -2396,7 +2396,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -2420,7 +2420,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -2512,7 +2512,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -2536,7 +2536,7 @@ configs:
     run.repeat: 0
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -2565,7 +2565,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -2614,14 +2614,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 2095328386
   config:
     schema_version: 1
     seed: 2095328386
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -2647,7 +2647,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -2671,7 +2671,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -2763,7 +2763,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -2787,7 +2787,7 @@ configs:
     run.repeat: 0
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -2816,7 +2816,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -2865,14 +2865,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 121751464
   config:
     schema_version: 1
     seed: 121751464
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -2898,7 +2898,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -2922,7 +2922,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -3014,7 +3014,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -3038,7 +3038,7 @@ configs:
     run.repeat: 0
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -3067,7 +3067,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -3117,14 +3117,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1674216077
   config:
     schema_version: 1
     seed: 1674216077
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -3151,7 +3151,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -3175,7 +3175,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -3267,7 +3267,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -3291,7 +3291,7 @@ configs:
     run.repeat: 0
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -3320,7 +3320,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -3370,14 +3370,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1858720390
   config:
     schema_version: 1
     seed: 1858720390
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -3404,7 +3404,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -3428,7 +3428,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -3520,7 +3520,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -3544,7 +3544,7 @@ configs:
     run.repeat: 0
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -3573,7 +3573,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -3623,14 +3623,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 9045414
   config:
     schema_version: 1
     seed: 9045414
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -3657,7 +3657,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -3681,7 +3681,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -3773,7 +3773,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -3797,7 +3797,7 @@ configs:
     run.repeat: 0
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -3826,7 +3826,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -3876,14 +3876,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1912923437
   config:
     schema_version: 1
     seed: 1912923437
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -3910,7 +3910,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -3934,7 +3934,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -4026,7 +4026,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -4079,7 +4079,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -4128,14 +4128,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1143881027
   config:
     schema_version: 1
     seed: 1143881027
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -4161,7 +4161,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -4277,7 +4277,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -4330,7 +4330,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -4379,14 +4379,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 982526257
   config:
     schema_version: 1
     seed: 982526257
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -4412,7 +4412,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -4528,7 +4528,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -4581,7 +4581,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -4630,14 +4630,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 439062303
   config:
     schema_version: 1
     seed: 439062303
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -4663,7 +4663,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -4779,7 +4779,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -4832,7 +4832,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -4881,14 +4881,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1363349907
   config:
     schema_version: 1
     seed: 1363349907
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -4914,7 +4914,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -5030,7 +5030,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -5083,7 +5083,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -5133,14 +5133,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 131383004
   config:
     schema_version: 1
     seed: 131383004
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -5167,7 +5167,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -5283,7 +5283,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -5336,7 +5336,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -5386,14 +5386,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 95872739
   config:
     schema_version: 1
     seed: 95872739
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -5420,7 +5420,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -5536,7 +5536,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -5589,7 +5589,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -5639,14 +5639,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 109289145
   config:
     schema_version: 1
     seed: 109289145
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -5673,7 +5673,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -5789,7 +5789,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -5842,7 +5842,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -5892,14 +5892,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 39534911
   config:
     schema_version: 1
     seed: 39534911
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -5926,7 +5926,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -6042,7 +6042,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -6066,7 +6066,7 @@ configs:
     run.repeat: 1
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -6095,7 +6095,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -6144,14 +6144,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1637259727
   config:
     schema_version: 1
     seed: 1637259727
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -6177,7 +6177,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -6201,7 +6201,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -6293,7 +6293,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -6317,7 +6317,7 @@ configs:
     run.repeat: 1
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -6346,7 +6346,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -6395,14 +6395,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 930287327
   config:
     schema_version: 1
     seed: 930287327
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -6428,7 +6428,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -6452,7 +6452,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -6544,7 +6544,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -6568,7 +6568,7 @@ configs:
     run.repeat: 1
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -6597,7 +6597,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -6646,14 +6646,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1812976885
   config:
     schema_version: 1
     seed: 1812976885
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -6679,7 +6679,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -6703,7 +6703,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -6795,7 +6795,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -6819,7 +6819,7 @@ configs:
     run.repeat: 1
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -6848,7 +6848,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -6897,14 +6897,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 124729223
   config:
     schema_version: 1
     seed: 124729223
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -6930,7 +6930,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -6954,7 +6954,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -7046,7 +7046,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -7070,7 +7070,7 @@ configs:
     run.repeat: 1
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -7099,7 +7099,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -7149,14 +7149,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 952158461
   config:
     schema_version: 1
     seed: 952158461
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -7183,7 +7183,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -7207,7 +7207,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -7299,7 +7299,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -7323,7 +7323,7 @@ configs:
     run.repeat: 1
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -7352,7 +7352,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -7402,14 +7402,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1880712864
   config:
     schema_version: 1
     seed: 1880712864
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -7436,7 +7436,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -7460,7 +7460,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -7552,7 +7552,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -7576,7 +7576,7 @@ configs:
     run.repeat: 1
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -7605,7 +7605,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -7655,14 +7655,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 2129497364
   config:
     schema_version: 1
     seed: 2129497364
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -7689,7 +7689,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -7713,7 +7713,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -7805,7 +7805,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -7829,7 +7829,7 @@ configs:
     run.repeat: 1
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -7858,7 +7858,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -7908,14 +7908,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1001090105
   config:
     schema_version: 1
     seed: 1001090105
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -7942,7 +7942,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -7966,7 +7966,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -8058,7 +8058,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -8111,7 +8111,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -8160,14 +8160,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1484771968
   config:
     schema_version: 1
     seed: 1484771968
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -8193,7 +8193,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -8309,7 +8309,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -8362,7 +8362,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -8411,14 +8411,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 991564255
   config:
     schema_version: 1
     seed: 991564255
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -8444,7 +8444,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -8560,7 +8560,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -8613,7 +8613,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -8662,14 +8662,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 939657385
   config:
     schema_version: 1
     seed: 939657385
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -8695,7 +8695,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -8811,7 +8811,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -8864,7 +8864,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -8913,14 +8913,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1973981844
   config:
     schema_version: 1
     seed: 1973981844
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -8946,7 +8946,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -9062,7 +9062,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -9115,7 +9115,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -9165,14 +9165,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1244602538
   config:
     schema_version: 1
     seed: 1244602538
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -9199,7 +9199,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -9315,7 +9315,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -9368,7 +9368,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -9418,14 +9418,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 92297589
   config:
     schema_version: 1
     seed: 92297589
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -9452,7 +9452,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -9568,7 +9568,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -9621,7 +9621,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -9671,14 +9671,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1787479226
   config:
     schema_version: 1
     seed: 1787479226
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -9705,7 +9705,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -9821,7 +9821,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -9874,7 +9874,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -9924,14 +9924,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 429497919
   config:
     schema_version: 1
     seed: 429497919
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -9958,7 +9958,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -10074,7 +10074,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -10098,7 +10098,7 @@ configs:
     run.repeat: 2
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -10127,7 +10127,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -10176,14 +10176,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 798461319
   config:
     schema_version: 1
     seed: 798461319
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -10209,7 +10209,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -10233,7 +10233,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -10325,7 +10325,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -10349,7 +10349,7 @@ configs:
     run.repeat: 2
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -10378,7 +10378,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -10427,14 +10427,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1272987056
   config:
     schema_version: 1
     seed: 1272987056
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -10460,7 +10460,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -10484,7 +10484,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -10576,7 +10576,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -10600,7 +10600,7 @@ configs:
     run.repeat: 2
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -10629,7 +10629,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -10678,14 +10678,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 519218416
   config:
     schema_version: 1
     seed: 519218416
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -10711,7 +10711,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -10735,7 +10735,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -10827,7 +10827,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -10851,7 +10851,7 @@ configs:
     run.repeat: 2
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -10880,7 +10880,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -10929,14 +10929,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1428914934
   config:
     schema_version: 1
     seed: 1428914934
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -10962,7 +10962,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -10986,7 +10986,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -11078,7 +11078,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -11102,7 +11102,7 @@ configs:
     run.repeat: 2
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -11131,7 +11131,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -11181,14 +11181,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1812935769
   config:
     schema_version: 1
     seed: 1812935769
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -11215,7 +11215,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -11239,7 +11239,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -11331,7 +11331,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -11355,7 +11355,7 @@ configs:
     run.repeat: 2
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -11384,7 +11384,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -11434,14 +11434,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 815398389
   config:
     schema_version: 1
     seed: 815398389
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -11468,7 +11468,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -11492,7 +11492,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -11584,7 +11584,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -11608,7 +11608,7 @@ configs:
     run.repeat: 2
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -11637,7 +11637,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -11687,14 +11687,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1302957853
   config:
     schema_version: 1
     seed: 1302957853
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -11721,7 +11721,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -11745,7 +11745,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -11837,7 +11837,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -11861,7 +11861,7 @@ configs:
     run.repeat: 2
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -11890,7 +11890,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -11940,14 +11940,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1220455187
   config:
     schema_version: 1
     seed: 1220455187
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -11974,7 +11974,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -11998,7 +11998,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -12090,7 +12090,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -12143,7 +12143,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -12192,14 +12192,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 2144743702
   config:
     schema_version: 1
     seed: 2144743702
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -12225,7 +12225,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -12341,7 +12341,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -12394,7 +12394,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -12443,14 +12443,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1689440956
   config:
     schema_version: 1
     seed: 1689440956
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -12476,7 +12476,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -12592,7 +12592,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -12645,7 +12645,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -12694,14 +12694,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 148287319
   config:
     schema_version: 1
     seed: 148287319
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -12727,7 +12727,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -12843,7 +12843,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -12896,7 +12896,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -12945,14 +12945,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 2062559164
   config:
     schema_version: 1
     seed: 2062559164
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -12978,7 +12978,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -13094,7 +13094,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -13147,7 +13147,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -13197,14 +13197,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1042560227
   config:
     schema_version: 1
     seed: 1042560227
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -13231,7 +13231,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -13347,7 +13347,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -13400,7 +13400,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -13450,14 +13450,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1736404157
   config:
     schema_version: 1
     seed: 1736404157
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -13484,7 +13484,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -13600,7 +13600,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -13653,7 +13653,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -13703,14 +13703,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1779465077
   config:
     schema_version: 1
     seed: 1779465077
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -13737,7 +13737,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -13853,7 +13853,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -13906,7 +13906,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -13956,14 +13956,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 743061144
   config:
     schema_version: 1
     seed: 743061144
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -13990,7 +13990,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -14106,7 +14106,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -14130,7 +14130,7 @@ configs:
     run.repeat: 3
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -14159,7 +14159,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -14208,14 +14208,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1576784849
   config:
     schema_version: 1
     seed: 1576784849
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -14241,7 +14241,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -14265,7 +14265,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -14357,7 +14357,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -14381,7 +14381,7 @@ configs:
     run.repeat: 3
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -14410,7 +14410,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -14459,14 +14459,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1609337231
   config:
     schema_version: 1
     seed: 1609337231
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -14492,7 +14492,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -14516,7 +14516,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -14608,7 +14608,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -14632,7 +14632,7 @@ configs:
     run.repeat: 3
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -14661,7 +14661,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -14710,14 +14710,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 371375481
   config:
     schema_version: 1
     seed: 371375481
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -14743,7 +14743,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -14767,7 +14767,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -14859,7 +14859,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -14883,7 +14883,7 @@ configs:
     run.repeat: 3
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -14912,7 +14912,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -14961,14 +14961,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1885325846
   config:
     schema_version: 1
     seed: 1885325846
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -14994,7 +14994,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -15018,7 +15018,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -15110,7 +15110,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -15134,7 +15134,7 @@ configs:
     run.repeat: 3
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -15163,7 +15163,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -15213,14 +15213,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 463561237
   config:
     schema_version: 1
     seed: 463561237
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -15247,7 +15247,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -15271,7 +15271,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -15363,7 +15363,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -15387,7 +15387,7 @@ configs:
     run.repeat: 3
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -15416,7 +15416,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -15466,14 +15466,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 703078820
   config:
     schema_version: 1
     seed: 703078820
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -15500,7 +15500,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -15524,7 +15524,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -15616,7 +15616,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -15640,7 +15640,7 @@ configs:
     run.repeat: 3
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -15669,7 +15669,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -15719,14 +15719,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1689017785
   config:
     schema_version: 1
     seed: 1689017785
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -15753,7 +15753,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -15777,7 +15777,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -15869,7 +15869,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -15893,7 +15893,7 @@ configs:
     run.repeat: 3
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -15922,7 +15922,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -15972,14 +15972,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1591382744
   config:
     schema_version: 1
     seed: 1591382744
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -16006,7 +16006,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -16030,7 +16030,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -16122,7 +16122,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -16175,7 +16175,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -16224,14 +16224,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 2103217660
   config:
     schema_version: 1
     seed: 2103217660
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -16257,7 +16257,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -16373,7 +16373,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -16426,7 +16426,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -16475,14 +16475,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 127023494
   config:
     schema_version: 1
     seed: 127023494
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -16508,7 +16508,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -16624,7 +16624,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -16677,7 +16677,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -16726,14 +16726,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 2015714664
   config:
     schema_version: 1
     seed: 2015714664
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -16759,7 +16759,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -16875,7 +16875,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -16928,7 +16928,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -16977,14 +16977,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 186776492
   config:
     schema_version: 1
     seed: 186776492
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -17010,7 +17010,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -17126,7 +17126,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -17179,7 +17179,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -17229,14 +17229,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1325123798
   config:
     schema_version: 1
     seed: 1325123798
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -17263,7 +17263,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -17379,7 +17379,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -17432,7 +17432,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -17482,14 +17482,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1690497763
   config:
     schema_version: 1
     seed: 1690497763
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -17516,7 +17516,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -17632,7 +17632,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -17685,7 +17685,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -17735,14 +17735,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 731644238
   config:
     schema_version: 1
     seed: 731644238
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -17769,7 +17769,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -17885,7 +17885,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -17938,7 +17938,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -17988,14 +17988,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 724106992
   config:
     schema_version: 1
     seed: 724106992
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -18022,7 +18022,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -18138,7 +18138,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -18162,7 +18162,7 @@ configs:
     run.repeat: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -18191,7 +18191,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -18240,14 +18240,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 974688455
   config:
     schema_version: 1
     seed: 974688455
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -18273,7 +18273,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -18297,7 +18297,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -18389,7 +18389,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -18413,7 +18413,7 @@ configs:
     run.repeat: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -18442,7 +18442,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -18491,14 +18491,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 52834893
   config:
     schema_version: 1
     seed: 52834893
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -18524,7 +18524,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -18548,7 +18548,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -18640,7 +18640,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -18664,7 +18664,7 @@ configs:
     run.repeat: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -18693,7 +18693,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -18742,14 +18742,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 856916273
   config:
     schema_version: 1
     seed: 856916273
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -18775,7 +18775,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -18799,7 +18799,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -18891,7 +18891,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -18915,7 +18915,7 @@ configs:
     run.repeat: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -18944,7 +18944,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -18993,14 +18993,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 997188871
   config:
     schema_version: 1
     seed: 997188871
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -19026,7 +19026,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -19050,7 +19050,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -19142,7 +19142,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -19166,7 +19166,7 @@ configs:
     run.repeat: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -19195,7 +19195,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -19245,14 +19245,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.0
     loss.terms.0.multi_target_schedules.radial.end_fraction: 1.0
     loss.terms.0.multi_target_schedules.radial.stages: null
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1737120419
   config:
     schema_version: 1
     seed: 1737120419
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -19279,7 +19279,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -19303,7 +19303,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -19395,7 +19395,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -19419,7 +19419,7 @@ configs:
     run.repeat: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -19448,7 +19448,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -19498,14 +19498,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1476720930
   config:
     schema_version: 1
     seed: 1476720930
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -19532,7 +19532,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -19556,7 +19556,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -19648,7 +19648,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -19672,7 +19672,7 @@ configs:
     run.repeat: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -19701,7 +19701,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -19751,14 +19751,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1517300986
   config:
     schema_version: 1
     seed: 1517300986
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -19785,7 +19785,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -19809,7 +19809,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -19901,7 +19901,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
@@ -19925,7 +19925,7 @@ configs:
     run.repeat: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    trainer.pool_admission_previous_relative_threshold: 1.05
+    trainer.pool_admission_previous_relative_threshold: 1.1
     trainer.log_every: 200
     logging.wandb.project: nca_micropattern_loss_schedules
     logging.singular_values.enabled: true
@@ -19954,7 +19954,7 @@ configs:
     data.micropattern.pool_copies: 4
     data.micropattern.intermediate_reinjection_probability: 1.0
     data.micropattern.intermediate_reinjection_probability_end: 0.0
-    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.25
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
     data.dataset: micropatterns_260726
     data.micropattern.duplicate_final_timestep: false
     knockout.mode: null
@@ -20004,14 +20004,14 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v3
-    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v3
+    experiment.name: nca_micropattern_loss_schedule_l2_sweep_v4
+    logging.wandb.group: nca_micropattern_loss_schedule_l2_sweep_v4
     seed: 1971955755
   config:
     schema_version: 1
     seed: 1971955755
     experiment:
-      name: nca_micropattern_loss_schedule_l2_sweep_v3
+      name: nca_micropattern_loss_schedule_l2_sweep_v4
     system:
       precision: highest
       xla_flags: null
@@ -20038,7 +20038,7 @@ configs:
         noise_strength: 0.005
         intermediate_reinjection_probability: 1.0
         intermediate_reinjection_probability_end: 0.0
-        intermediate_reinjection_decay_start_fraction: 0.25
+        intermediate_reinjection_decay_start_fraction: 0.01
         duplicate_final_timestep: false
         task: micropattern_single_replicate
     model:
@@ -20062,7 +20062,7 @@ configs:
       log_every: 200
       pool_admission_enabled: true
       pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.05
+      pool_admission_previous_relative_threshold: 1.1
       pool_admission_absolute_threshold: null
       pool_admission_ema_decay: 0.95
       pool_admission_warmup: null
@@ -20154,7 +20154,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_loss_schedules
-        group: nca_micropattern_loss_schedule_l2_sweep_v3
+        group: nca_micropattern_loss_schedule_l2_sweep_v4
         tags: null
     model_store:
       enabled: true
