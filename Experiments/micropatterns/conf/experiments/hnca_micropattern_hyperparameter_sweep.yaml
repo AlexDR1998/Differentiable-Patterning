@@ -1,4 +1,4 @@
-experiment_name: hnca_micropattern_hyperparameter_sweep_v7
+experiment_name: hnca_micropattern_hyperparameter_sweep_v8
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/hnca_micropattern_hyperparameter_sweep
 seed_mode: index
@@ -20,7 +20,7 @@ grid:
   model.parent_gated: [false, true]
   model.actuator_gated: [false, true]
 
-  run.iterations: [8000]
+  run.iterations: [12000]
   run.repeat: [0]
   run.t: [128]
 
@@ -59,7 +59,7 @@ grid:
   data.micropattern.intermediate_reinjection_probability_end: [0.0]
   data.micropattern.intermediate_reinjection_decay_start_fraction: [0.01]
   data.dataset: [micropatterns_260726]
-  data.micropattern.duplicate_final_timestep: [true,false]
+  data.micropattern.duplicate_final_timestep: [false]
 
   knockout.mode: [null]
   knockout.time: [null]
@@ -81,6 +81,47 @@ grid:
   data.micropattern.experiment_groups: [cell_fate_s1]
   
 groups:
+
+  - loss.schedule_label:
+      [static, cos_macro, cos_reverse]
+    loss.terms.0.multi_target_schedules.l2.type:
+      [constant, cosine, cosine]
+    loss.terms.0.multi_target_schedules.l2.initial_factor:
+      [1.0, 1.0, 0.05]
+    loss.terms.0.multi_target_schedules.l2.final_factor:
+      [1.0, 0.25, 1.0]
+    loss.terms.0.multi_target_schedules.l2.start_fraction:
+      [0.0, 0.30, 0.30]
+    loss.terms.0.multi_target_schedules.l2.end_fraction:
+      [1.0, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.l2.stages:
+      [null, 8, 8]
+
+    loss.terms.0.multi_target_schedules.texture.type:
+      [constant, cosine, cosine]
+    loss.terms.0.multi_target_schedules.texture.initial_factor:
+      [1.0, 0.05, 1.0]
+    loss.terms.0.multi_target_schedules.texture.final_factor:
+      [1.0, 1.0, 0.25]
+    loss.terms.0.multi_target_schedules.texture.start_fraction:
+      [0.0, 0.30, 0.30]
+    loss.terms.0.multi_target_schedules.texture.end_fraction:
+      [1.0, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.texture.stages:
+      [null, 8, 8]
+
+    loss.terms.0.multi_target_schedules.radial.type:
+      [constant, cosine, cosine]
+    loss.terms.0.multi_target_schedules.radial.initial_factor:
+      [1.0, 1.0, 0.05]
+    loss.terms.0.multi_target_schedules.radial.final_factor:
+      [1.0, 0.25, 1.0]
+    loss.terms.0.multi_target_schedules.radial.start_fraction:
+      [0.0, 0.30, 0.30]
+    loss.terms.0.multi_target_schedules.radial.end_fraction:
+      [1.0, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.radial.stages:
+      [null, 8, 8]
   # Keep the model's protected fine channels aligned with the measurements.
   # - data.micropattern.data_channels: [4, 8]
   #   model.obs_channels: [4, 8]
