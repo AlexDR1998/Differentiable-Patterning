@@ -50,6 +50,8 @@ def build_run_name(cfg, model_name, optimiser_name):
             f"_t{cfg.training.loop.t}"
             f"_lr{cfg.training.optimizer.learn_rate}"
             f"_dr{cfg.training.optimizer.decay_rate}"
+            f"_b{cfg.data.batches}"
+            f"_pc{cfg.data.micropattern.get('pool_copies', 1)}"
             f"_dup{int(cfg.data.micropattern.get('duplicate_final_timestep', False))}"
             f"_irp{cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5)}"
             f"_irpend{cfg.data.micropattern.get('intermediate_reinjection_probability_end', cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5))}"

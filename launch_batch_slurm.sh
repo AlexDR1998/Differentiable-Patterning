@@ -48,7 +48,7 @@ CODE_ROOT="${CODE_ROOT%/}"
 # Default the Slurm array name to the manifest/YAML experiment name while
 # retaining an explicit environment override for one-off submissions.
 JOB_NAME="${SLURM_JOB_NAME:-$EXPERIMENT_NAME}"
-TIME="${SLURM_TIME:-08:00:00}"
+TIME="${SLURM_TIME:-12:00:00}"
 
 MEM="${SLURM_MEM:-64G}"
 ARRAY_PARALLELISM="${SLURM_ARRAY_PARALLELISM:-4}"

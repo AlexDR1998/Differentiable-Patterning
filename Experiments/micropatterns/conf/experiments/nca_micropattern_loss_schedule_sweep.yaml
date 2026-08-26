@@ -1,6 +1,6 @@
-experiment_name: nca_micropattern_loss_schedule_l2_sweep_v4
+experiment_name: nca_micropattern_loss_schedule_replicate_sweep_v1
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_micropattern_loss_schedule_l2_sweep_v4
+output_subdir: generated/nca_micropattern_loss_schedule_replicate_sweep_v1
 seed_mode: index
 
 grid:
@@ -19,11 +19,11 @@ grid:
   model.channels: [48]
 
   run.iterations: [12000]
-  run.repeat: [0,1,2,3,4]
+  run.repeat: [0,1,2]
   run.t: [128]
 
   trainer.loop_autodiff: [lax]
-  trainer.pool_admission_previous_relative_threshold: [1.0,1.1]
+  trainer.pool_admission_previous_relative_threshold: [1.05]
   trainer.log_every: [200]
 
   logging.wandb.project: [nca_micropattern_loss_schedules]
@@ -32,11 +32,11 @@ grid:
   logging.singular_values.epsilon: [1e-8]
 
   loss.terms: [multi_target]
-  loss.terms.0.multi_target_weights.l2: [1.0]
+  # loss.terms.0.multi_target_weights.l2: [1.0]
   loss.terms.0.multi_target_weights.texture: [1.0]
   loss.terms.0.multi_target_weights.channel_mean: [0.0]
   loss.terms.0.multi_target_weights.correlation: [0.0]
-  loss.terms.0.multi_target_weights.radial: [0.0]
+  # loss.terms.0.multi_target_weights.radial: [0.0]
   loss.terms.0.normalize_weights: [true]
   loss.terms.0.assignment: [hard]
   loss.terms.0.random_crop: [false]
@@ -50,10 +50,10 @@ grid:
   loss.regularisers.intermediate_state: [10.0]
   loss.regularisers.boundary: [10.0]
 
-  data.micropattern.task: [micropattern_single_replicate]
-  data.batches: [1]
+  data.micropattern.task: [micropattern_multi_replicate]
+  # data.batches: [1]
   data.downsample: [16]
-  data.micropattern.pool_copies: [4]
+  # data.micropattern.pool_copies: [4]
   data.micropattern.intermediate_reinjection_probability: [1.0]
   data.micropattern.intermediate_reinjection_probability_end: [0.0]
   data.micropattern.intermediate_reinjection_decay_start_fraction: [0.01]
@@ -76,81 +76,86 @@ grid:
 
 groups:
   # Increasing measurement coverage: 4, 8, 11, and 14 data channels.
-  - data.micropattern.data_channels: [4, 8] #, 11, 14]
+  - data.micropattern.data_channels: [4, 8, 11, 14]
     data.micropattern.experiment_groups:
       - [cell_fate_s1]
       - [cell_fate_s1, cell_fate_s2]
-      # - [cell_fate_s1, cell_fate_s2, rna_expression]
-      # - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+      - [cell_fate_s1, cell_fate_s2, rna_expression]
+      - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
 
+
+  - data.micropattern.pool_copies: [4,2,1]
+    data.batches: [1,2,4]
+
+  - loss.terms.0.multi_target_weights.radial: [0.0, 1.0]
+    loss.terms.0.multi_target_weights.l2: [1.0, 0.0]
   # Schedule columns are:
   #   1. static joint objective;
   #   2. cosine macro-to-texture curriculum (recommended);
-  #   3. matched linear macro-to-texture curriculum;
-  #   4. cosine texture-to-macro reverse-order ablation.
+  #   3. cosine texture-to-macro reverse-order ablation.
   - loss.schedule_label:
-      [static, cos_macro, lin_macro, cos_reverse]
+      [static, cos_macro, cos_reverse]
     loss.terms.0.multi_target_schedules.l2.type:
-      [constant, cosine, linear, cosine]
+      [constant, cosine, cosine]
     loss.terms.0.multi_target_schedules.l2.initial_factor:
-      [1.0, 1.0, 1.0, 0.05]
+      [1.0, 1.0, 0.05]
     loss.terms.0.multi_target_schedules.l2.final_factor:
-      [1.0, 0.25, 0.25, 1.0]
+      [1.0, 0.25, 1.0]
     loss.terms.0.multi_target_schedules.l2.start_fraction:
-      [0.0, 0.30, 0.30, 0.30]
+      [0.0, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.l2.end_fraction:
-      [1.0, 0.75, 0.75, 0.75]
+      [1.0, 0.75, 0.75]
     loss.terms.0.multi_target_schedules.l2.stages:
-      [null, 8, 8, 8]
+      [null, 8, 8]
 
     loss.terms.0.multi_target_schedules.texture.type:
-      [constant, cosine, linear, cosine]
+      [constant, cosine, cosine]
     loss.terms.0.multi_target_schedules.texture.initial_factor:
-      [1.0, 0.05, 0.05, 1.0]
+      [1.0, 0.05, 1.0]
     loss.terms.0.multi_target_schedules.texture.final_factor:
-      [1.0, 1.0, 1.0, 0.25]
+      [1.0, 1.0, 0.25]
     loss.terms.0.multi_target_schedules.texture.start_fraction:
-      [0.0, 0.30, 0.30, 0.30]
+      [0.0, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.texture.end_fraction:
-      [1.0, 0.75, 0.75, 0.75]
+      [1.0, 0.75, 0.75]
     loss.terms.0.multi_target_schedules.texture.stages:
-      [null, 8, 8, 8]
+      [null, 8, 8]
 
     loss.terms.0.multi_target_schedules.channel_mean.type:
-      [constant, cosine, linear, cosine]
+      [constant, cosine, cosine]
     loss.terms.0.multi_target_schedules.channel_mean.initial_factor:
-      [1.0, 1.0, 1.0, 0.05]
+      [1.0, 1.0, 0.05]
     loss.terms.0.multi_target_schedules.channel_mean.final_factor:
-      [1.0, 0.25, 0.25, 1.0]
+      [1.0, 0.25, 1.0]
     loss.terms.0.multi_target_schedules.channel_mean.start_fraction:
-      [0.0, 0.30, 0.30, 0.30]
+      [0.0, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.channel_mean.end_fraction:
-      [1.0, 0.75, 0.75, 0.75]
+      [1.0, 0.75, 0.75]
     loss.terms.0.multi_target_schedules.channel_mean.stages:
-      [null, 8, 8, 8]
+      [null, 8, 8]
 
     loss.terms.0.multi_target_schedules.correlation.type:
-      [constant, cosine, linear, cosine]
+      [constant, cosine, cosine]
     loss.terms.0.multi_target_schedules.correlation.initial_factor:
-      [1.0, 1.0, 1.0, 0.05]
+      [1.0, 1.0, 0.05]
     loss.terms.0.multi_target_schedules.correlation.final_factor:
-      [1.0, 0.25, 0.25, 1.0]
+      [1.0, 0.25, 1.0]
     loss.terms.0.multi_target_schedules.correlation.start_fraction:
-      [0.0, 0.30, 0.30, 0.30]
+      [0.0, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.correlation.end_fraction:
-      [1.0, 0.75, 0.75, 0.75]
+      [1.0, 0.75, 0.75]
     loss.terms.0.multi_target_schedules.correlation.stages:
-      [null, 8, 8, 8]
+      [null, 8, 8]
 
     loss.terms.0.multi_target_schedules.radial.type:
-      [constant, cosine, linear, cosine]
+      [constant, cosine, cosine]
     loss.terms.0.multi_target_schedules.radial.initial_factor:
-      [1.0, 1.0, 1.0, 0.05]
+      [1.0, 1.0, 0.05]
     loss.terms.0.multi_target_schedules.radial.final_factor:
-      [1.0, 0.25, 0.25, 1.0]
+      [1.0, 0.25, 1.0]
     loss.terms.0.multi_target_schedules.radial.start_fraction:
-      [0.0, 0.30, 0.30, 0.30]
+      [0.0, 0.30, 0.30]
     loss.terms.0.multi_target_schedules.radial.end_fraction:
-      [1.0, 0.75, 0.75, 0.75]
+      [1.0, 0.75, 0.75]
     loss.terms.0.multi_target_schedules.radial.stages:
-      [null, 8, 8, 8]
+      [null, 8, 8]
