@@ -26,6 +26,19 @@ def test_active_base_configs_convert_and_round_trip(path):
     assert experiment_config_from_mapping(config_to_dict(config)) == config
 
 
+def test_micropattern_initialization_and_curriculum_are_typed():
+    value = yaml.safe_load(
+        Path("Experiments/micropatterns/conf/base_config.yaml").read_text()
+    )
+    value["initialization"]["model_id"] = "baseline-model"
+    value["knockout"]["curriculum"] = ["baseline", "ko_24h"]
+
+    config = experiment_config_from_mapping(value)
+
+    assert config.initialization.model_id == "baseline-model"
+    assert config.data.intervention.curriculum == ("baseline", "ko_24h")
+
+
 def test_unknown_fields_are_rejected_with_their_section():
     value = yaml.safe_load(
         Path("Experiments/emoji/conf/base_config.yaml").read_text()

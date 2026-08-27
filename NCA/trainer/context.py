@@ -27,3 +27,4 @@ class TrainerContext:
     validation_data: Any = None
     validation_boundary_mask: Any = None
     validation_loss_time_channel_mask: Any = None
+    validation_intervention_times: Any = None

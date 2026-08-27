@@ -14,6 +14,40 @@ def _as_list(value):
     return list(value)
 
 
+def load_initial_model(cfg, key, model_root):
+    from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
+    from Experiments.config import config_to_dict
+    from Experiments.config_helpers import build_model, build_model_config_string
+
+    model_id = cfg.initialization.model_id
+    if model_id is None:
+        return build_model(cfg.model, key=key)
+
+    from NCA.registry import ModelRegistry
+
+    bundle = ModelRegistry(model_root).get(model_id)
+    if config_to_dict(bundle.config.model) != config_to_dict(cfg.model):
+        raise ValueError(
+            f"Pretrained model {model_id!r} has an incompatible model configuration"
+        )
+    parent_data = bundle.config.data
+    all_groups = MICROPATTERN_260726_SCHEMA.group_names
+    parent_groups = parent_data.micropattern.experiment_groups or all_groups
+    child_groups = cfg.data.micropattern.experiment_groups or all_groups
+    if (
+        parent_data.dataset != "micropatterns_260726"
+        or parent_data.micropattern.data_channels != 14
+        or tuple(parent_groups) != tuple(child_groups)
+        or cfg.data.dataset != "micropatterns_260726"
+        or cfg.data.micropattern.data_channels != 14
+    ):
+        raise ValueError(
+            "Nodal fine-tuning requires compatible full 14-channel "
+            "micropatterns_260726 parent and child configurations"
+        )
+    return bundle.load_model(key=key), build_model_config_string(cfg.model)
+
+
 def build_run_name(cfg, model_name, optimiser_name):
     mode = cfg.training.loop.mode
     if mode == "benchmark":
@@ -70,6 +104,11 @@ def build_run_name(cfg, model_name, optimiser_name):
             details += "_tr" + "-".join(map(str, train_replicates))
         if validation_replicates:
             details += "_vr" + "-".join(map(str, validation_replicates))
+        curriculum = _as_list(cfg.data.intervention.curriculum)
+        if curriculum:
+            details += "_cur" + "-".join(curriculum)
+        if cfg.initialization.model_id is not None:
+            details += "_ft"
         repeat = cfg.training.loop.repeat
         if repeat is not None:
             details += f"_rep{repeat}"
@@ -92,7 +131,6 @@ def run(cfg):
     import jax
     from dotenv import load_dotenv
 
-    from Experiments.config_helpers import build_model
     from NCA.registry import create_model_id, evaluation_input_provenance
     from Experiments.micropatterns.config_helpers import (
         build_data_augmenter,
@@ -112,7 +150,7 @@ def run(cfg):
     model_key, train_key = jax.random.split(key)
     training_data, validation_data = load_train_validation_data(cfg.data)
     data, aux, channel_names, boundary, mask, _ = training_data
-    model, model_name = build_model(cfg.model, key=model_key)
+    model, model_name = load_initial_model(cfg, model_key, model_root)
     _, optimiser_name, _ = build_optimizer(
         cfg.training.optimizer,
         cfg.training.loop.iterations,
@@ -124,6 +162,7 @@ def run(cfg):
         cfg.training.loop.iterations,
         mask,
         schema,
+        aux.get("intervention_times"),
     )
     target_timepoints = [f"t{time}h" for time in list(cfg.data.micropattern.timesteps)[1:]]
     if cfg.data.micropattern.get("duplicate_final_timestep", False):
@@ -155,6 +194,11 @@ def run(cfg):
             else expand_channel_timestep_mask_for_loss(
                 cfg.data, validation_data[4], schema
             )
+        ),
+        validation_intervention_times=(
+            None
+            if validation_data is None
+            else validation_data[1].get("intervention_times")
         ),
     )
     loss_overrides = {"D": 3} if cfg.training.loop.mode == "benchmark" else None

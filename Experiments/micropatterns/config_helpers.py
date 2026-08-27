@@ -1,5 +1,6 @@
 import math
 import os
+from dataclasses import replace
 
 import equinox as eqx
 import jax
@@ -23,6 +24,41 @@ from NCA.trainer.data_augmenter.micropattern import DataAugmenter as DataAugment
 
 
 NODAL_CHANNEL = 7
+CURRICULUM_CONDITIONS = {
+    "baseline": ("ctrl", -1),
+    "ko_0h": ("sl0", 0),
+    "ko_24h": ("sl24", 24),
+}
+
+
+def resolve_knockout_curriculum(intervention):
+    curriculum = intervention.curriculum
+    if curriculum is None:
+        return ("baseline",)
+    curriculum = tuple(curriculum)
+    if not curriculum:
+        raise ValueError("knockout.curriculum cannot be empty")
+    unknown = sorted(set(curriculum) - CURRICULUM_CONDITIONS.keys())
+    if unknown:
+        raise ValueError(f"Unknown knockout curriculum entries: {unknown}")
+    return curriculum
+
+
+def clamp_nodal(x, intervention_times, nodal_channel, global_batch_indices=None):
+    times = jnp.asarray(intervention_times, dtype=jnp.int32)
+    if global_batch_indices is not None:
+        times = times[jnp.asarray(global_batch_indices)]
+    values = list(x)
+    for batch, knockout_time in enumerate(times):
+        knockout_index = knockout_time // 12
+        zero = (knockout_time >= 0) & (
+            jnp.arange(values[batch].shape[0]) >= knockout_index
+        )
+        nodal = jnp.where(
+            zero[:, None, None], 0.0, values[batch][:, nodal_channel]
+        )
+        values[batch] = values[batch].at[:, nodal_channel].set(nodal)
+    return values
 
 
 def _coerce_dataset_result(result):
@@ -177,6 +213,7 @@ def build_data_augmenter(
     total_iterations,
     channel_timestep_mask=None,
     channel_schema=None,
+    intervention_times=None,
 ):
     from types import SimpleNamespace
 
@@ -187,6 +224,14 @@ def build_data_augmenter(
     )
     data_channels = cfg.data.micropattern.data_channels
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
+        if (
+            intervention_times is not None
+            and "NODAL" not in channel_schema.state_channels
+        ):
+            raise ValueError(
+                "Knockout curricula require NODAL in the selected state schema"
+            )
+
         class DA_subclass(DataAugmenter260726):
             noise_strength = cfg.data.micropattern.noise_strength
 
@@ -202,6 +247,27 @@ def build_data_augmenter(
                 )
                 kwargs["intermediate_reinjection_total_iterations"] = cfg.run.iterations
                 super().__init__(*args, **kwargs)
+
+            def initialize_pool(self, key):
+                x, y = super().initialize_pool(key)
+                if intervention_times is not None:
+                    x = clamp_nodal(
+                        x,
+                        intervention_times,
+                        self.schema.state_channels.index("NODAL"),
+                    )
+                return x, y
+
+            def advance_pool(self, x, y, i, key):
+                x, y = super().advance_pool(x, y, i, key)
+                if intervention_times is not None:
+                    x = clamp_nodal(
+                        x,
+                        intervention_times,
+                        self.schema.state_channels.index("NODAL"),
+                        getattr(self, "_global_batch_indices", None),
+                    )
+                return x, y
 
         return DA_subclass, (
             f"da_snapshot_noise{cfg.data.micropattern.noise_strength}"
@@ -318,10 +384,26 @@ def load_train_validation_data(data_config, impath=None):
             "micropatterns_260726"
         )
 
+    histogram_bins = None
+    curriculum = resolve_knockout_curriculum(data_config.intervention)
+    if data_config.dataset == "micropatterns_260726" and curriculum != ("baseline",):
+        baseline_config = replace(
+            data_config,
+            intervention=replace(data_config.intervention, curriculum=("baseline",)),
+        )
+        baseline = load_data(
+            baseline_config,
+            impath,
+            replicate_indices=tuple(value - 1 for value in train_replicates),
+            pool_copies_override=1,
+        )
+        histogram_bins = baseline[1]["histogram_bins"]
+
     train = load_data(
         data_config,
         impath,
         replicate_indices=tuple(value - 1 for value in train_replicates),
+        histogram_bins=histogram_bins,
     )
     if not validation_replicates:
         return train, None
@@ -357,22 +439,26 @@ def load_data(
         raise ValueError("data.micropattern.pool_copies must be a positive integer")
     pool_copies = int(pool_copies)
     if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
-        if cfg.knockout.mode is not None:
-            raise ValueError("micropatterns_260726 requires baseline data")
+        curriculum = resolve_knockout_curriculum(cfg.knockout)
+        if curriculum != ("baseline",) and data_channels != 14:
+            raise ValueError("Knockout curricula require the full 14-channel schema")
         if impath is None:
             data_path_base = os.getenv("DATA_PATH_BASE")
             if data_path_base is None:
                 raise ValueError("DATA_PATH_BASE must be set when load_data is called without impath.")
             impath = os.path.join(data_path_base, "260726_nca_dataset")
+        conditions = tuple(dict.fromkeys(
+            CURRICULUM_CONDITIONS[item][0] for item in curriculum
+        ))
         dataset = _coerce_dataset_result(load_micropattern_260726(
             impath,
-            conditions=("ctrl",),
+            conditions=conditions,
             timesteps=tuple(cfg.data.micropattern.timesteps),
             downsample=cfg.data.downsample,
             replicate_count=cfg.data.batches,
             replicate_indices=replicate_indices,
             histogram_bins=histogram_bins,
-            pool_copies=pool_copies,
+            pool_copies=1,
             experiment_groups=cfg.data.micropattern.get("experiment_groups", None),
         ))
         data = dataset.data
@@ -380,6 +466,41 @@ def load_data(
         names = dataset.channel_names
         boundary = dataset.boundary_mask
         mask = dataset.measurement_mask
+        replicates_per_condition = data.shape[0] // len(conditions)
+        condition_slices = {
+            condition: slice(
+                index * replicates_per_condition,
+                (index + 1) * replicates_per_condition,
+            )
+            for index, condition in enumerate(conditions)
+        }
+        selections = [
+            condition_slices[CURRICULUM_CONDITIONS[item][0]]
+            for item in curriculum
+        ]
+        data = jnp.concatenate(
+            [data[selection] for selection in selections], axis=0
+        )
+        boundary = jnp.concatenate(
+            [boundary[selection] for selection in selections], axis=0
+        )
+        mask = jnp.concatenate(
+            [mask[selection] for selection in selections], axis=0
+        )
+        intervention_times = tuple(
+            time
+            for item in curriculum
+            for time in [CURRICULUM_CONDITIONS[item][1]] * replicates_per_condition
+        )
+        if pool_copies > 1:
+            data = jnp.concatenate([data] * pool_copies, axis=0)
+            boundary = jnp.concatenate([boundary] * pool_copies, axis=0)
+            mask = jnp.concatenate([mask] * pool_copies, axis=0)
+            intervention_times *= pool_copies
+        aux["curriculum"] = curriculum
+        aux["intervention_times"] = (
+            None if curriculum == ("baseline",) else intervention_times
+        )
         selected_schema = dataset.schema
         selected_channel_count = getattr(
             selected_schema, "n_measurement_channels", data.shape[2]
@@ -400,6 +521,7 @@ def load_data(
             f"_g{group_str}"
             f"_ds{cfg.data.downsample}"
             f"_ts{_compact_value(list(cfg.data.micropattern.timesteps))}"
+            f"_cur{_compact_value(curriculum)}"
         )
         if custom_impath:
             cfg_str += "_custompath"

@@ -48,6 +48,14 @@ class ValidationEvaluator:
         states = jnp.pad(observed, ((0, 0), (0, 0), (0, padding), (0, 0), (0, 0)))
         self.states = [trainer.model.prepare_pool_state(value) for value in states]
         self.targets = [value for value in data[:, 1:]]
+        self.intervention_times = context_times = (
+            trainer.context.validation_intervention_times
+        )
+        self.nodal_channel = (
+            None
+            if context_times is None or "NODAL" not in schema.state_channels
+            else schema.state_channels.index("NODAL")
+        )
         self.execution = self.trainer._training_execution()
         self._compiled = eqx.filter_jit(self._evaluate)
 
@@ -168,6 +176,16 @@ class ValidationEvaluator:
                 no_regularisers,
                 self.execution,
             )
+            if self.intervention_times is not None:
+                endpoint_hours = 12 * (transition + 1)
+                rollout_states = [
+                    state.at[:, self.nodal_channel].set(0.0)
+                    if knockout_time >= 0 and endpoint_hours >= knockout_time
+                    else state
+                    for state, knockout_time in zip(
+                        rollout_states, self.intervention_times
+                    )
+                ]
             snapshots.append(rollout_states)
         rollout_predictions = [
             jnp.concatenate([snapshot[batch] for snapshot in snapshots], axis=0)

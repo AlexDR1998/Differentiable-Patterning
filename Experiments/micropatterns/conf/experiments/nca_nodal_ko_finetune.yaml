@@ -1,0 +1,52 @@
+experiment_name: nca_nodal_ko_finetune
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/nca_nodal_ko_finetune
+seed_mode: index
+
+# Set this to the registry ID of a full 14-channel baseline bundle.
+grid:
+  initialization.model_id: ["${oc.env:NODAL_BASELINE_MODEL_ID}"]
+
+  labels.gpu: [intel]
+  model.family: [gNCA_sycl]
+  model.channels: [48]
+  trainer.backend.type: [sycl]
+  trainer.loop_autodiff: [lax]
+
+  data.dataset: [micropatterns_260726]
+  data.micropattern.data_channels: [14]
+  data.micropattern.experiment_groups:
+    - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+  data.micropattern.pool_copies: [1]
+  data.downsample: [16]
+  knockout.channel: [Nodal]
+  knockout.curriculum:
+    - [ko_0h]
+    - [ko_24h]
+    - [ko_0h, ko_24h]
+    - [baseline, ko_0h]
+    - [baseline, ko_24h]
+    - [baseline, ko_0h, ko_24h]
+    - [baseline, baseline, ko_0h, ko_24h]
+
+  run.iterations: [500, 2000, 8000]
+  run.t: [128]
+  optimiser.learn_rate: [1e-5, 1e-4]
+  optimiser.type: [nadam]
+  optimiser.gradient_clip_norm: [1.0]
+  trainer.log_every: [200]
+  trainer.validation_every: [500]
+  trainer.validation_rollout: [true]
+
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [1.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [0.0]
+  loss.terms.0.random_channel_shuffle: [true]
+
+groups:
+  - data.batches: [1]
+    data.micropattern.train_replicates: [[1]]
+    data.micropattern.validation_replicates: [[2, 3, 4, 5, 6, 7, 8]]

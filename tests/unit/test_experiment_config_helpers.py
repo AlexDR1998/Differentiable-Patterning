@@ -438,7 +438,12 @@ def test_multi_attractor_requires_pairs():
         load_emoji_data(cfg.data, impath="/tmp/emojis/")
 
 
-def _micropattern_cfg(data_channels=12, knockout_mode=None, pool_copies=1):
+def _micropattern_cfg(
+    data_channels=12,
+    knockout_mode=None,
+    pool_copies=1,
+    curriculum=None,
+):
     cfg = _cfg(
         {
             "data": {
@@ -456,6 +461,7 @@ def _micropattern_cfg(data_channels=12, knockout_mode=None, pool_copies=1):
                 "mode": knockout_mode,
                 "time": None if knockout_mode is None else 0,
                 "channel": "Nodal",
+                "curriculum": curriculum,
             },
         }
     )
@@ -651,6 +657,57 @@ def test_260726_train_validation_split_reuses_training_histogram_bins(monkeypatc
     assert jnp.array_equal(calls[1]["histogram_bins"], training_bins)
 
 
+def test_260726_knockout_curriculum_uses_standard_conditions_and_schema(monkeypatch):
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+
+    calls = []
+
+    def fake_loader(path, **kwargs):
+        calls.append(kwargs)
+        conditions = kwargs["conditions"]
+        batch_count = 2 * len(conditions)
+        data = jnp.arange(batch_count)[:, None, None, None, None]
+        data = jnp.broadcast_to(data, (batch_count, 5, 14, 2, 3))
+        boundary = jnp.ones((batch_count, 1, 2, 3), dtype=bool)
+        mask = jnp.ones((batch_count, 5, 14), dtype=bool)
+        return (
+            data,
+            {
+                "channel_schema": object(),
+                "histogram_bins": jnp.ones((14, 2)),
+            },
+            ["marker"] * 14,
+            boundary,
+            mask,
+        )
+
+    monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
+    cfg = _micropattern_cfg(
+        data_channels=14,
+        curriculum=("baseline", "baseline", "ko_0h", "ko_24h"),
+    )
+    cfg.dataset = "micropatterns_260726"
+
+    data, aux, _, _, mask, cfg_str = micropattern_helpers.load_data(
+        cfg, impath="/tmp/micropatterns/"
+    )
+
+    assert calls[0]["conditions"] == ("ctrl", "sl0", "sl24")
+    assert data.shape[0] == mask.shape[0] == 8
+    assert aux["intervention_times"] == (-1, -1, -1, -1, 0, 0, 24, 24)
+    assert "_curbaseline-baseline-ko_0h-ko_24h" in cfg_str
+
+
+def test_260726_knockout_requires_full_schema():
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+
+    cfg = _micropattern_cfg(data_channels=11, curriculum=("ko_0h",))
+    cfg.dataset = "micropatterns_260726"
+
+    with pytest.raises(ValueError, match="full 14-channel schema"):
+        micropattern_helpers.load_data(cfg, impath="/tmp/micropatterns/")
+
+
 def test_micropattern_build_data_augmenter_selects_channel_specific_class():
     import Experiments.micropatterns.config_helpers as micropattern_helpers
 
@@ -773,6 +830,20 @@ def test_micropattern_nodal_zeroing_wins_after_reinject_for_ko_batches():
     assert jnp.all(out[1][:2, 7] != 0.0)
     assert jnp.all(out[1][2:, 7] == 0.0)
     assert jnp.all(out[2][:, 7] != 0.0)
+
+
+def test_canonical_nodal_clamp_uses_per_batch_intervention_times():
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+
+    states = [jnp.ones((4, 10, 1, 1)) for _ in range(3)]
+    clamped = micropattern_helpers.clamp_nodal(
+        states, (-1, 0, 24), nodal_channel=7
+    )
+
+    assert jnp.all(clamped[0][:, 7] == 1.0)
+    assert jnp.all(clamped[1][:, 7] == 0.0)
+    assert jnp.all(clamped[2][:2, 7] == 1.0)
+    assert jnp.all(clamped[2][2:, 7] == 0.0)
 
 
 def test_micropattern_rejects_unsupported_channel_count():
