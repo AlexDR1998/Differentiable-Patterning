@@ -132,19 +132,46 @@ def _():
 def _(database_error, database_path):
     if database_error:
         _wandb_tag_options = []
+        _numeric_tag_options = []
     else:
         with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
             _wandb_tag_rows = pd.read_sql_query(
                 "SELECT DISTINCT tag FROM model_wandb_tags ORDER BY tag", _connection
             )
         _wandb_tag_options = _wandb_tag_rows["tag"].tolist()
+        _tag_values = {}
+        for _tag in _wandb_tag_options:
+            _tag_key, _separator, _tag_value = _tag.partition(":")
+            if _separator:
+                _tag_values.setdefault(_tag_key, []).append(_tag_value)
+        _numeric_tag_options = []
+        for _tag_key, _values in _tag_values.items():
+            try:
+                [float(_value) for _value in _values]
+            except ValueError:
+                continue
+            _numeric_tag_options.append(_tag_key)
     wandb_tag_filter = mo.ui.multiselect(
         options=_wandb_tag_options,
         label="Configuration/W&B tags (match all)",
         full_width=True,
     )
-    wandb_tag_filter
-    return (wandb_tag_filter,)
+    numeric_tag_sort = mo.ui.dropdown(
+        options=["No sort", "Created at", *_numeric_tag_options],
+        value="No sort",
+        label="Sort by numerical tag",
+        full_width=True,
+    )
+    numeric_tag_sort_direction = mo.ui.dropdown(
+        options=["Ascending", "Descending"],
+        value="Ascending",
+        label="Direction",
+    )
+    mo.vstack([
+        wandb_tag_filter,
+        mo.hstack([numeric_tag_sort, numeric_tag_sort_direction], widths=[3, 1]),
+    ])
+    return numeric_tag_sort, numeric_tag_sort_direction, wandb_tag_filter
 
 
 @app.cell(hide_code=True)
@@ -153,6 +180,8 @@ def _(
     database_path,
     dataset_filter,
     family_filter,
+    numeric_tag_sort,
+    numeric_tag_sort_direction,
     search_text,
     wandb_tag_filter,
 ):
@@ -193,6 +222,34 @@ def _(
             _parameters.append(_wandb_tag)
 
         _where = f" WHERE {' AND '.join(_clauses)}" if _clauses else ""
+        _sort_key = numeric_tag_sort.value
+        if _sort_key in {"No sort", "Created at"}:
+            _numeric_sort_cte = ""
+            _numeric_sort_join = ""
+            _numeric_sort_select = ""
+            _order_clause = (
+                "" if _sort_key == "No sort" else "ORDER BY m.created_at DESC"
+            )
+            _query_parameters = _parameters
+        else:
+            _direction = (
+                "ASC" if numeric_tag_sort_direction.value == "Ascending" else "DESC"
+            )
+            _numeric_sort_cte = """, numeric_sort AS (
+                SELECT model_id,
+                       MAX(CAST(SUBSTR(tag, INSTR(tag, ':') + 1) AS REAL)) AS value
+                FROM model_wandb_tags
+                WHERE SUBSTR(tag, 1, INSTR(tag, ':') - 1) = ?
+                GROUP BY model_id
+            )"""
+            _numeric_sort_join = (
+                "LEFT JOIN numeric_sort AS ns ON ns.model_id = m.model_id"
+            )
+            _numeric_sort_select = ", ns.value AS numeric_tag_value"
+            _order_clause = (
+                f"ORDER BY ns.value IS NULL, ns.value {_direction}, m.created_at DESC"
+            )
+            _query_parameters = [_sort_key, *_parameters]
         _sql = f"""
             WITH tags AS (
                 SELECT model_id, GROUP_CONCAT(tag, ', ') AS tags
@@ -202,22 +259,28 @@ def _(
                 SELECT model_id, GROUP_CONCAT(tag, ', ') AS tags
                 FROM model_wandb_tags
                 GROUP BY model_id
-            )
+            ){_numeric_sort_cte}
             SELECT
                 m.model_id, a.alias, m.display_name, m.family, m.dataset, m.task,
                 m.collection, m.experiment, m.status, m.best_loss,
                 m.best_iteration, m.seed, m.created_at,
                 t.tags AS annotation_tags, wt.tags AS wandb_tags
+                {_numeric_sort_select}
             FROM models AS m
             LEFT JOIN model_annotations AS a ON a.model_id = m.model_id
             LEFT JOIN tags AS t ON t.model_id = m.model_id
             LEFT JOIN wandb_tags AS wt ON wt.model_id = m.model_id
+            {_numeric_sort_join}
             {_where}
-            ORDER BY m.created_at DESC
+            {_order_clause}
             LIMIT 500
         """
         with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
-            results = pd.read_sql_query(_sql, _connection, params=_parameters)
+            results = pd.read_sql_query(_sql, _connection, params=_query_parameters)
+        if _sort_key not in {"No sort", "Created at"}:
+            results = results.rename(
+                columns={"numeric_tag_value": f"sort: {_sort_key}"}
+            )
     return (results,)
 
 

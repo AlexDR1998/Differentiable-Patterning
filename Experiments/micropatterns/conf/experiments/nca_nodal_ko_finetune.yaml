@@ -3,9 +3,10 @@ entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_nodal_ko_finetune
 seed_mode: index
 
-# Set this to the registry ID of a full 14-channel baseline bundle.
+# Replace null with the registry ID of a full 14-channel baseline bundle before
+# generating the sweep. Leaving it null constructs a fresh model.
 grid:
-  initialization.model_id: ["${oc.env:NODAL_BASELINE_MODEL_ID}"]
+  initialization.model_id: [null]
 
   labels.gpu: [intel]
   model.family: [gNCA_sycl]
@@ -47,6 +48,6 @@ grid:
   loss.terms.0.random_channel_shuffle: [true]
 
 groups:
-  - data.batches: [1]
-    data.micropattern.train_replicates: [[1]]
-    data.micropattern.validation_replicates: [[2, 3, 4, 5, 6, 7, 8]]
+  - data.batches: [4]
+    data.micropattern.train_replicates: [[1,2,3,4]]
+    data.micropattern.validation_replicates: [[]]
