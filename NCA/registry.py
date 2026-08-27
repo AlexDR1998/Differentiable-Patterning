@@ -18,7 +18,8 @@ import subprocess
 import sys
 import tempfile
 import uuid
-from dataclasses import asdict, dataclass, is_dataclass
+import warnings
+from dataclasses import asdict, dataclass, is_dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping, Optional, Union
@@ -37,6 +38,10 @@ from Common.trainer.training_result import TrainingResult
 BUNDLE_SCHEMA_VERSION = 3
 DEFAULT_MODEL_FACTORY = "Experiments.config_helpers:build_model"
 CONFIG_ID_LENGTH = 12
+PORTABLE_MODEL_FAMILIES = {
+    "NCA_sycl": "NCA_fast",
+    "gNCA_sycl": "gNCA",
+}
 
 
 def _utc_now() -> str:
@@ -165,6 +170,12 @@ def _wandb_tags(cfg: Any) -> list[str]:
     return build_wandb_tags(cfg)
 
 
+def _registry_tags(cfg: Any) -> list[str]:
+    from Experiments.config_helpers import build_registry_tags
+
+    return build_registry_tags(cfg)
+
+
 def _git_provenance(repo: Path) -> Dict[str, Any]:
     def run(*args: str) -> Optional[str]:
         try:
@@ -216,18 +227,34 @@ class ModelBundle:
                 f"Checkpoint checksum mismatch for {self.id}: {actual} != {expected}"
             )
 
-    def load_model(self, key=None):
-        """Reconstruct the model with its saved factory and load Equinox leaves."""
+    def load_model(self, key=None, *, implementation: str = "recorded"):
+        """Reconstruct the model and load its saved Equinox leaves.
+
+        ``implementation="portable"`` replaces a backend-specific SYCL NCA
+        with its numerically equivalent standard JAX implementation. The
+        bundle configuration and provenance remain unchanged.
+        """
         self.verify()
         if key is None:
             import jax.random as jr
 
             key = jr.PRNGKey(0)
+        if implementation == "recorded":
+            model_config = self.config.model
+        elif implementation == "portable":
+            portable_family = PORTABLE_MODEL_FAMILIES.get(
+                self.config.model.family, self.config.model.family
+            )
+            model_config = replace(self.config.model, family=portable_family)
+        else:
+            raise ValueError(
+                "implementation must be either 'recorded' or 'portable'"
+            )
         module_name, separator, attribute = str(self.manifest.model.factory).partition(":")
         if not separator:
             raise ValueError("model.factory must use the 'module:function' form")
         factory = getattr(importlib.import_module(module_name), attribute)
-        model = factory(self.config.model, key=key)
+        model = factory(model_config, key=key)
         if isinstance(model, tuple):
             model = model[0]
         return model.load(self.checkpoint_path)
@@ -404,8 +431,15 @@ class ModelRegistry:
                 CREATE INDEX model_wandb_tags_tag_idx ON model_wandb_tags(tag);
                 """
             )
+            skipped_legacy_bundles = []
             for path in self.bundle_paths():
-                bundle = open_model_bundle(path)
+                try:
+                    bundle = open_model_bundle(path)
+                except ValueError as error:
+                    if not str(error).startswith("Unsupported bundle schema version"):
+                        raise
+                    skipped_legacy_bundles.append(path)
+                    continue
                 manifest = bundle.manifest
                 git = manifest.provenance.git
                 wandb = manifest.provenance.wandb
@@ -426,11 +460,18 @@ class ModelRegistry:
                         wandb.get("run_id"),
                     ),
                 )
-                for tag in wandb.get("tags", []):
+                for tag in _registry_tags(bundle.config):
                     connection.execute(
                         "INSERT INTO model_wandb_tags VALUES (?,?)",
                         (str(manifest.id), str(tag)),
                     )
+            if skipped_legacy_bundles:
+                warnings.warn(
+                    f"Skipped {len(skipped_legacy_bundles)} legacy model bundle(s) "
+                    f"with unsupported schemas while rebuilding {self.database_path}.",
+                    UserWarning,
+                    stacklevel=2,
+                )
             self._index_evaluations(connection)
             self._index_annotations(connection)
             connection.commit()

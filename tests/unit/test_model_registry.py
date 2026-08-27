@@ -32,6 +32,17 @@ def _config():
     return experiment_config_from_mapping(value)
 
 
+def _sycl_config(family):
+    value = OmegaConf.to_container(
+        OmegaConf.load("Experiments/emoji/conf/base_config.yaml"),
+        resolve=True,
+    )
+    value["model"]["family"] = family
+    value["model"]["channels"] = 4
+    value["trainer"]["backend"]["type"] = "sycl"
+    return experiment_config_from_mapping(value)
+
+
 def test_publish_verify_and_index_bundle(tmp_path):
     checkpoint = tmp_path / "source.eqx"
     checkpoint.write_bytes(b"test-equinox-leaves")
@@ -101,6 +112,9 @@ def test_get_ignores_unrelated_bundle_with_unsupported_schema(tmp_path):
     assert registry.get(bundle.id).path == bundle.path
     with pytest.raises(ValueError, match="Unsupported bundle schema version 1"):
         registry.get("legacy-id")
+    with pytest.warns(UserWarning, match="Skipped 1 legacy model bundle"):
+        registry.reindex()
+    assert set(registry.models_df()["model_id"]) == {bundle.id}
 
 
 def test_evaluation_input_provenance_is_compact_and_data_sensitive(tmp_path):
@@ -230,6 +244,76 @@ def test_load_model_reconstructs_from_saved_factory(tmp_path, monkeypatch):
         "key": key,
         "checkpoint": bundle.checkpoint_path,
     }
+
+
+@pytest.mark.parametrize(
+    ("recorded_family", "portable_module", "portable_class"),
+    [
+        ("NCA_sycl", "NCA.model.NCA_model_fast", "NCA"),
+        ("gNCA_sycl", "NCA.model.NCA_gated_model", "gNCA"),
+    ],
+)
+def test_load_model_portably_reconstructs_sycl_checkpoints(
+    tmp_path, recorded_family, portable_module, portable_class
+):
+    eqx = pytest.importorskip("equinox")
+    jax = pytest.importorskip("jax")
+    jnp = pytest.importorskip("jax.numpy")
+    jr = pytest.importorskip("jax.random")
+    from Experiments.config_helpers import build_model
+
+    cfg = _sycl_config(recorded_family)
+    source, _ = build_model(cfg.model, key=jr.PRNGKey(3))
+    checkpoint = tmp_path / "source.eqx"
+    source.save(checkpoint)
+    bundle = publish_model_bundle(
+        store_root=tmp_path,
+        collection="portable-tests",
+        model_id=create_model_id(cfg),
+        display_name=recorded_family,
+        checkpoint_path=checkpoint,
+        cfg=cfg,
+        training_result=TrainingResult(checkpoint, 2, 1.5, True),
+        repository_root=tmp_path,
+    )
+
+    loaded = bundle.load_model(key=jr.PRNGKey(9), implementation="portable")
+    source_arrays = [
+        leaf for leaf in jax.tree_util.tree_leaves(source) if eqx.is_array(leaf)
+    ]
+    loaded_arrays = [
+        leaf for leaf in jax.tree_util.tree_leaves(loaded) if eqx.is_array(leaf)
+    ]
+
+    assert type(loaded).__module__ == portable_module
+    assert type(loaded).__name__ == portable_class
+    assert len(source_arrays) == len(loaded_arrays)
+    assert all(
+        jnp.array_equal(source_leaf, loaded_leaf)
+        for source_leaf, loaded_leaf in zip(source_arrays, loaded_arrays)
+    )
+    state = jr.normal(jr.PRNGKey(10), (cfg.model.channels, 8, 9))
+    updated = loaded(state, key=jr.PRNGKey(11))
+    assert updated.shape == state.shape
+    assert jnp.all(jnp.isfinite(updated))
+
+
+def test_load_model_rejects_unknown_implementation(tmp_path):
+    checkpoint = tmp_path / "source.eqx"
+    checkpoint.write_bytes(b"checkpoint")
+    bundle = publish_model_bundle(
+        store_root=tmp_path,
+        collection="tests",
+        model_id=create_model_id(_config()),
+        display_name="model",
+        checkpoint_path=checkpoint,
+        cfg=_config(),
+        training_result=TrainingResult(checkpoint, 2, 1.5, True),
+        repository_root=tmp_path,
+    )
+
+    with pytest.raises(ValueError, match="implementation"):
+        bundle.load_model(implementation="unknown")
 
 
 def test_annotations_are_separate_and_queryable(tmp_path):

@@ -7,6 +7,7 @@ from Common.trainer.config import MultiTargetLossConfig
 from Experiments.config_helpers import (
     build_model,
     build_model_config_string,
+    build_registry_tags,
     build_tags,
     build_wandb_tags,
 )
@@ -158,6 +159,21 @@ def test_build_tags_truncates_long_values_for_wandb():
 
     assert all(1 <= len(tag) <= 64 for tag in tags)
     assert "data.emoji.sequence:al_mi_ve" in tags
+
+
+def test_build_registry_tags_preserves_long_values():
+    experiment_groups = [
+        "cell_fate_s1", "cell_fate_s2", "cell_fate_s3", "cell_fate_s4"
+    ]
+    cfg = _cfg({"data": {"augmentation": {"experiment_groups": experiment_groups}}})
+
+    tags = build_registry_tags(cfg)
+
+    assert (
+        "data.augmentation.experiment_groups:cell_fate_s1-cell_fate_s2-"
+        "cell_fate_s3-cell_fate_s4"
+    ) in tags
+    assert not any("~" in tag for tag in tags)
 
 
 def test_build_tags_uses_emoji_sequence_alias():

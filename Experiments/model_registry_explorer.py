@@ -86,9 +86,31 @@ def _(store_root):
     else:
         try:
             with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
-                pd.read_sql_query("SELECT 1 FROM models LIMIT 1", _connection)
-            database_error = None
-        except sqlite3.Error as _error:
+                _table_rows = _connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table'"
+                ).fetchall()
+                _tables = {_row[0] for _row in _table_rows}
+                _required_tables = {
+                    "models", "evaluations", "model_annotations", "model_tags",
+                    "model_wandb_tags",
+                }
+                _model_columns = {
+                    _row[1] for _row in _connection.execute("PRAGMA table_info(models)")
+                }
+                _required_model_columns = {"model_id", "config_id", "display_name"}
+                _missing_schema = sorted(
+                    (_required_tables - _tables)
+                    | (_required_model_columns - _model_columns)
+                )
+            if _missing_schema:
+                database_error = (
+                    f"The registry at {database_path} uses an outdated schema "
+                    f"(missing: {', '.join(_missing_schema)}). Rebuild it with "
+                    f"`python -m Experiments.model_registry --root {_store_path} reindex`."
+                )
+            else:
+                database_error = None
+        except (sqlite3.Error, OSError) as _error:
             database_error = f"Could not read {database_path}: {_error}"
     return database_error, database_path
 
@@ -118,7 +140,7 @@ def _(database_error, database_path):
         _wandb_tag_options = _wandb_tag_rows["tag"].tolist()
     wandb_tag_filter = mo.ui.multiselect(
         options=_wandb_tag_options,
-        label="W&B tags (match all)",
+        label="Configuration/W&B tags (match all)",
         full_width=True,
     )
     wandb_tag_filter
@@ -217,7 +239,7 @@ def _(results):
         page_size=15,
         show_data_types=False,
         freeze_columns_left=["model_id","experiment"],
-        wrapped_columns=["display_name", "annotation_tags", "wandb_tags"],
+        wrapped_columns=[],
     )
     results_table
     return (results_table,)
@@ -425,7 +447,10 @@ def _(
         for _index, (_bundle, (_initial, _boundary, _channel_names)) in enumerate(
             zip(_bundles, _inputs)
         ):
-            _model = _bundle.load_model(key=jr.PRNGKey(int(rollout_seed.value)))
+            _model = _bundle.load_model(
+                key=jr.PRNGKey(int(rollout_seed.value)),
+                implementation="portable",
+            )
             _channels = int(_model.N_CHANNELS)
             if _initial.shape[0] > _channels:
                 raise ValueError(

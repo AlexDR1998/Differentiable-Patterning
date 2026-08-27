@@ -70,6 +70,8 @@ def _sequence_alias(sequence):
 
 
 def _safe_wandb_tag(tag, max_length=MAX_WANDB_TAG_LENGTH):
+    if max_length is None:
+        return tag
     if len(tag) <= max_length:
         return tag
     digest = hashlib.sha1(tag.encode("utf-8")).hexdigest()[:8]
@@ -470,7 +472,7 @@ def load_model_checkpoint(model_config, checkpoint_config, key=None, env=None):
     return model, model_cfg_str, checkpoint_path
 
 
-def build_tags(cfg, prefix=""):
+def build_tags(cfg, prefix="", max_length=MAX_WANDB_TAG_LENGTH):
     tags = []
     if isinstance(cfg, Mapping) or hasattr(cfg, "items"):
         items = cfg.items()
@@ -494,7 +496,9 @@ def build_tags(cfg, prefix=""):
             or hasattr(value, "items")
             or is_dataclass(value)
         ):
-            tags.extend(build_tags(value, prefix=f"{tag_key}."))
+            tags.extend(
+                build_tags(value, prefix=f"{tag_key}.", max_length=max_length)
+            )
         elif isinstance(value, (list, tuple)) and any(
             isinstance(item, Mapping)
             or hasattr(item, "items")
@@ -507,11 +511,18 @@ def build_tags(cfg, prefix=""):
                     or hasattr(item, "items")
                     or is_dataclass(item)
                 ):
-                    tags.extend(build_tags(item, prefix=f"{tag_key}.{index}."))
+                    tags.extend(
+                        build_tags(
+                            item,
+                            prefix=f"{tag_key}.{index}.",
+                            max_length=max_length,
+                        )
+                    )
                 else:
                     tags.append(
                         _safe_wandb_tag(
-                            f"{_wandb_tag_key(f'{tag_key}.{index}')}:{_compact_value(item)}"
+                            f"{_wandb_tag_key(f'{tag_key}.{index}')}:{_compact_value(item)}",
+                            max_length=max_length,
                         )
                     )
         else:
@@ -519,7 +530,11 @@ def build_tags(cfg, prefix=""):
                 value = _sequence_alias(value)
             else:
                 value = _compact_value(value)
-            tags.append(_safe_wandb_tag(f"{_wandb_tag_key(tag_key)}:{value}"))
+            tags.append(
+                _safe_wandb_tag(
+                    f"{_wandb_tag_key(tag_key)}:{value}", max_length=max_length
+                )
+            )
     return tags
 
 
@@ -527,6 +542,16 @@ def build_wandb_tags(cfg):
     """Build automatic configuration tags and retain user-supplied tags."""
 
     automatic_tags = build_tags(cfg)
+    logging = _cfg_get(cfg, "logging", None)
+    wandb = _cfg_get(logging, "wandb", None)
+    explicit_tags = _cfg_get(wandb, "tags", None) or ()
+    return list(dict.fromkeys((*automatic_tags, *map(str, explicit_tags))))
+
+
+def build_registry_tags(cfg):
+    """Build readable, untruncated tags for the local model registry."""
+
+    automatic_tags = build_tags(cfg, max_length=None)
     logging = _cfg_get(cfg, "logging", None)
     wandb = _cfg_get(logging, "wandb", None)
     explicit_tags = _cfg_get(wandb, "tags", None) or ()
