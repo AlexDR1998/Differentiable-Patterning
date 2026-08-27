@@ -87,11 +87,12 @@ def _resolve_manifest_path(root, directory, value):
     )
 
 
-def _select_replicates(files, group, replicate_count):
+def _select_replicates(files, group, replicate_indices):
     """Return fixed replicate slots plus any deliberately unused files."""
 
     files = sorted(files, key=_natural_sort_key)
-    selected = [None] * replicate_count
+    replicate_indices = tuple(replicate_indices)
+    selected = [None] * len(replicate_indices)
     unselected = []
     if group == "rna_expression":
         for path in files:
@@ -100,13 +101,20 @@ def _select_replicates(files, group, replicate_count):
                 unselected.append(path)
                 continue
             replicate = int(match.group(1)) - 1
-            if 0 <= replicate < replicate_count and selected[replicate] is None:
-                selected[replicate] = path
+            if replicate in replicate_indices:
+                slot = replicate_indices.index(replicate)
+                if selected[slot] is None:
+                    selected[slot] = path
+                    continue
+                unselected.append(path)
             else:
                 unselected.append(path)
     else:
-        selected[: min(len(files), replicate_count)] = files[:replicate_count]
-        unselected.extend(files[replicate_count:])
+        for replicate, path in enumerate(files):
+            if replicate in replicate_indices:
+                selected[replicate_indices.index(replicate)] = path
+            else:
+                unselected.append(path)
     return selected, unselected
 
 
@@ -115,12 +123,15 @@ def build_micropattern_260726_manifest(
     conditions=("ctrl",),
     timesteps=(0, 12, 24, 36, 48),
     replicate_count=3,
+    replicate_indices=None,
     replicate_manifest=None,
     experiment_groups=None,
     substitute_preperturbation=True,
 ):
     """Index selected files without reading image pixels.
 
+    ``replicate_indices`` selects zero-based physical replicate slots. When it
+    is omitted, the first ``replicate_count`` slots are loaded.
     ``replicate_manifest`` may override automatic selection for any
     ``(condition, group, timestep)`` key with an ordered sequence of up to
     ``replicate_count`` relative or absolute filenames.
@@ -142,8 +153,17 @@ def build_micropattern_260726_manifest(
         raise ValueError("conditions cannot contain duplicates")
     if len(set(timesteps)) != len(timesteps):
         raise ValueError("timesteps cannot contain duplicates")
-    if replicate_count <= 0:
-        raise ValueError("replicate_count must be positive")
+    if replicate_indices is None:
+        if replicate_count <= 0:
+            raise ValueError("replicate_count must be positive")
+        replicate_indices = tuple(range(replicate_count))
+    else:
+        replicate_indices = tuple(int(index) for index in replicate_indices)
+        if not replicate_indices or min(replicate_indices) < 0:
+            raise ValueError("replicate_indices must contain non-negative indices")
+        if len(set(replicate_indices)) != len(replicate_indices):
+            raise ValueError("replicate_indices cannot contain duplicates")
+        replicate_count = len(replicate_indices)
     required_conditions = set(conditions)
     if substitute_preperturbation and any(
         condition in {"sl0", "sl24"} for condition in conditions
@@ -173,16 +193,12 @@ def build_micropattern_260726_manifest(
                 override = replicate_manifest.get(key)
                 if override is None:
                     slots, unused = _select_replicates(
-                        files_by_time[timestep], group, replicate_count
+                        files_by_time[timestep], group, replicate_indices
                     )
                 else:
-                    if len(override) > replicate_count:
-                        raise ValueError(
-                            f"Manifest entry {key} contains more than "
-                            f"{replicate_count} files"
-                        )
                     slots = [None] * replicate_count
-                    for replicate, value in enumerate(override):
+                    for slot, replicate in enumerate(replicate_indices):
+                        value = override[replicate] if replicate < len(override) else None
                         if value is not None:
                             resolved = _resolve_manifest_path(
                                 root, directory, value
@@ -192,7 +208,7 @@ def build_micropattern_260726_manifest(
                                     f"Manifest file {resolved} does not belong to "
                                     f"{condition}/{group}/{timestep}h"
                                 )
-                            slots[replicate] = resolved
+                            slots[slot] = resolved
                     chosen = {path for path in slots if path is not None}
                     if len(chosen) != sum(path is not None for path in slots):
                         raise ValueError(f"Manifest entry {key} repeats a source file")
@@ -201,7 +217,7 @@ def build_micropattern_260726_manifest(
                     ]
                 selected[key] = tuple(slots)
                 unselected_files.extend(unused)
-                for replicate, path in enumerate(slots):
+                for slot, path in enumerate(slots):
                     if path is not None:
                         records.append(
                             MicropatternImageRecord(
@@ -209,13 +225,14 @@ def build_micropattern_260726_manifest(
                                 condition=condition,
                                 group=group,
                                 timestep=timestep,
-                                replicate=replicate,
+                                replicate=replicate_indices[slot],
                             )
                         )
 
     return {
         "records": tuple(records),
         "selected": selected,
+        "replicate_indices": replicate_indices,
         "unselected_files": tuple(
             str(path) for path in sorted(set(unselected_files), key=_natural_sort_key)
         ),
@@ -431,6 +448,7 @@ def load_micropattern_260726(
     timesteps=(0, 12, 24, 36, 48),
     downsample=4,
     replicate_count=3,
+    replicate_indices=None,
     replicate_manifest=None,
     experiment_groups=None,
     substitute_preperturbation=True,
@@ -449,6 +467,8 @@ def load_micropattern_260726(
     ``boundary_radius_scale`` below one produce a stricter common boundary.
     ``pool_copies`` repeats each selected physical batch in the returned
     training batch while retaining the original replicate provenance.
+    ``replicate_indices`` selects zero-based physical replicate slots; its
+    order determines their order on the returned batch axis.
 
     Returns
     -------
@@ -487,11 +507,14 @@ def load_micropattern_260726(
         conditions=conditions,
         timesteps=timesteps,
         replicate_count=replicate_count,
+        replicate_indices=replicate_indices,
         replicate_manifest=replicate_manifest,
         experiment_groups=schema.group_names,
         substitute_preperturbation=substitute_preperturbation,
     )
     selected = inventory["selected"]
+    replicate_indices = inventory["replicate_indices"]
+    replicate_count = len(replicate_indices)
     if strict_replicates:
         missing = []
         for condition in conditions:
@@ -501,10 +524,10 @@ def load_micropattern_260726(
                 )
                 for group in schema.group_names:
                     slots = selected[(source_condition, group, timestep)]
-                    for replicate, path in enumerate(slots):
+                    for slot, path in enumerate(slots):
                         if path is None:
                             missing.append(
-                                f"{condition}/{group}/{timestep}h/replicate-{replicate + 1}"
+                                f"{condition}/{group}/{timestep}h/replicate-{replicate_indices[slot] + 1}"
                             )
         if missing:
             raise ValueError("Missing required measurements: " + ", ".join(missing))
@@ -599,8 +622,8 @@ def load_micropattern_260726(
     batch_conditions = []
     batch_replicates = []
     for condition_index, condition in enumerate(conditions):
-        for replicate in range(replicate_count):
-            batch = condition_index * replicate_count + replicate
+        for slot, replicate in enumerate(replicate_indices):
+            batch = condition_index * replicate_count + slot
             batch_conditions.append(condition)
             batch_replicates.append(replicate + 1)
             for time_index, timestep in enumerate(timesteps):
@@ -704,6 +727,7 @@ def load_micropattern_260726(
         "source_files": source_files,
         "batch_conditions": tuple(batch_conditions),
         "batch_replicates": tuple(batch_replicates),
+        "replicate_indices": replicate_indices,
         "timesteps": timesteps,
         "measurement_mask": measurement_mask,
         "loss_measurement_mask": measurement_mask[:, 1:],

@@ -215,7 +215,14 @@ def _report_divergence(output, state, iteration):
         print("  model parameters: all finite")
 
 
-def run_training(trainer, setup, train_step, *, progress_callback=None):
+def run_training(
+    trainer,
+    setup,
+    train_step,
+    *,
+    progress_callback=None,
+    validation_evaluator=None,
+):
     """Compile once, then coordinate state, pool, logging and checkpoints.
 
     ``progress_callback``, when provided, is called after each successful
@@ -324,6 +331,24 @@ def run_training(trainer, setup, train_step, *, progress_callback=None):
             metrics.update(admission.metrics(decision))
         metrics["loss_schedule/stage"] = max(loss_stage, default=0)
         metrics["loss_schedule/stage_changed"] = int(loss_stage_changed)
+        validation_every = getattr(
+            trainer.config.training.trainer, "validation_every", None
+        )
+        should_validate = (
+            validation_evaluator is not None
+            and validation_every is not None
+            and (
+                iteration % validation_every == 0
+                or iteration == setup.iterations - 1
+            )
+        )
+        if should_validate:
+            validation_metrics = validation_evaluator(
+                state.model, state.loss_weights
+            )
+            metrics.update(
+                jax.device_get(setup.execution.prepare_log_dict(validation_metrics))
+            )
         runtime.record_iteration(iteration, time.perf_counter() - iteration_start)
         metrics.update(runtime.as_log_dict())
 

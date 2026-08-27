@@ -139,6 +139,29 @@ def test_loader_group_selection_is_independent_of_replicate_count(tmp_path):
     assert set(record.group for record in aux["manifest"]) == {"cell_fate_s1"}
 
 
+def test_loader_selects_explicit_physical_replicates(tmp_path):
+    _make_control_dataset(tmp_path)
+    histogram_bins = np.tile(
+        np.array([[0.0, 1000.0]], dtype=np.float32), (4, 1)
+    )
+
+    data, aux, _, _, measurement_mask = load_micropattern_260726(
+        tmp_path,
+        conditions=("ctrl",),
+        timesteps=(0,),
+        downsample=1,
+        replicate_indices=(2, 0),
+        experiment_groups=("cell_fate_s1",),
+        histogram_bins=histogram_bins,
+        align=False,
+    )
+
+    assert aux["batch_replicates"] == (3, 1)
+    assert aux["replicate_indices"] == (2, 0)
+    assert np.all(measurement_mask)
+    assert np.allclose(np.asarray(data)[:, 0, 0, 3, 3], [0.301, 0.101])
+
+
 def test_loader_can_select_a_group_without_cell_fate_s1(tmp_path):
     _make_control_dataset(tmp_path)
     histogram_bins = np.tile(

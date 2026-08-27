@@ -270,6 +270,32 @@ def test_build_tags_recurses_into_config_collections():
     )
 
 
+def test_build_tags_aliases_multi_target_schedule_paths_before_truncation():
+    cfg = _cfg(
+        {
+            "training": {
+                "loss": {
+                    "terms": ({
+                        "type": "multi_target",
+                        "multi_target_schedules": {
+                            "correlation": {
+                                "initial_factor": 1.0,
+                                "final_factor": 0.25,
+                            }
+                        },
+                    },)
+                }
+            }
+        }
+    )
+
+    tags = build_tags(cfg)
+
+    assert "loss_schedule.correlation.initial_factor:1.0" in tags
+    assert "loss_schedule.correlation.final_factor:0.25" in tags
+    assert not any("multi_target_schedules.correlatio~" in tag for tag in tags)
+
+
 def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
     cfg = _cfg(
         {
@@ -588,6 +614,41 @@ def test_260726_loader_uses_configured_even_replicate_count(monkeypatch, batch_c
     assert mask.shape == (batch_count, 4, 14)
     assert calls[0][1]["replicate_count"] == batch_count
     assert f"data_b{batch_count}_c14" in cfg_str
+
+
+def test_260726_train_validation_split_reuses_training_histogram_bins(monkeypatch):
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+
+    calls = []
+    training_bins = jnp.arange(28, dtype=jnp.float32).reshape(14, 2)
+
+    def fake_loader(path, **kwargs):
+        calls.append(kwargs)
+        indices = tuple(kwargs["replicate_indices"])
+        count = len(indices) * kwargs["pool_copies"]
+        data = jnp.zeros((count, 5, 14, 2, 3))
+        boundary = jnp.ones((count, 1, 2, 3), dtype=bool)
+        mask = jnp.ones((count, 5, 14), dtype=bool)
+        bins = training_bins if kwargs["histogram_bins"] is None else kwargs["histogram_bins"]
+        return data, {"channel_schema": object(), "histogram_bins": bins}, ["marker"] * 14, boundary, mask
+
+    monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
+    cfg = _micropattern_cfg(data_channels=14, pool_copies=2)
+    cfg.dataset = "micropatterns_260726"
+    cfg.batches = 2
+    cfg.micropattern.train_replicates = (1, 2)
+    cfg.micropattern.validation_replicates = (3, 4)
+
+    training, validation = micropattern_helpers.load_train_validation_data(
+        cfg, impath="/tmp/micropatterns/"
+    )
+
+    assert training[0].shape[0] == 4
+    assert validation[0].shape[0] == 2
+    assert calls[0]["replicate_indices"] == (0, 1)
+    assert calls[1]["replicate_indices"] == (2, 3)
+    assert calls[1]["pool_copies"] == 1
+    assert jnp.array_equal(calls[1]["histogram_bins"], training_bins)
 
 
 def test_micropattern_build_data_augmenter_selects_channel_specific_class():

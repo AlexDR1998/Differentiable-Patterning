@@ -9,6 +9,8 @@ from Common.config import ConfigValue
 class MicropatternDataConfig(ConfigValue):
     task: str | None = None
     pool_copies: int = 1
+    train_replicates: tuple[int, ...] | None = None
+    validation_replicates: tuple[int, ...] | None = None
     experiment_groups: tuple[str, ...] | None = None
     timesteps: tuple[int, ...] = (0, 12, 24, 36, 48)
     data_channels: int | None = 12
@@ -25,3 +27,9 @@ class KnockoutConfig(ConfigValue):
     mode: str | None = None
     time: int | None = None
     channel: str | None = None
+    curriculum: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True)
+class ModelInitializationConfig(ConfigValue):
+    model_id: str | None = None

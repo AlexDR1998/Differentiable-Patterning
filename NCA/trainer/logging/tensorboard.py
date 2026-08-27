@@ -833,6 +833,10 @@ class NCA_Train_log(Train_log):
 					self.log_scalar(f"StatePool/{name.removeprefix('pool/')}",log_dict[name],step=i)
 				elif name.startswith("runtime/"):
 					self.log_scalar(f"Runtime/{name.removeprefix('runtime/')}",log_dict[name],step=i)
+				elif name.startswith("validation/"):
+					self.log_scalar(f"Validation/{name.removeprefix('validation/')}",log_dict[name],step=i)
+				elif name.startswith("validation_rollout/"):
+					self.log_scalar(f"ValidationRollout/{name.removeprefix('validation_rollout/')}",log_dict[name],step=i)
 				# elif name == "learning_rate":
 					# self.log_scalar("Train/learning_rate", log_dict[name], step=i)
 				else:
@@ -881,7 +885,7 @@ class NCA_Train_log(Train_log):
 			for batch_index, batch in enumerate(DATA_AUGMENTER.return_observed_data())
 		]
 		self.log_image(
-			'Evaluation/true_data',
+			'TrainingRollout/true_data',
 			np.concatenate(true_images, axis=0),
 			step=None
 		)
@@ -894,7 +898,7 @@ class NCA_Train_log(Train_log):
 		for b in tqdm(range(BATCHES)):
 			initial_state = nca.prepare_pool_state(x[b][0])
 			T = nca.run(t*NUMBER_OF_IMAGES, initial_state, boundary_callback[b])  # Shape T C x y
-			self.log_video(f"Evaluation/trajectory_batch_{b + 1}",T[:,:3],step=None)
+			self.log_video(f"TrainingRollout/trajectory_batch_{b + 1}",T[:,:3],step=None)
 			T_snapshot = _trajectory_snapshot_channels(
 				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema
 			)
@@ -915,10 +919,10 @@ class NCA_Train_log(Train_log):
 				_cy,_cx = squarish(hidden.shape[1]//3)
 				hidden = rearrange(hidden,"Time (cx cy C) x y  -> Time C (cx x) (cy y)",C=3,cy=_cy,cx=_cx)
 				hidden = (np.tanh(hidden)+1.0)/2.0
-				self.log_video(f"Evaluation/hidden_trajectory_batch_{b + 1}",hidden,step=None)
+				self.log_video(f"TrainingRollout/hidden_trajectory_batch_{b + 1}",hidden,step=None)
 
 		self.log_image(
-			'Evaluation/trajectory_snapshot',
+			'TrainingRollout/trajectory_snapshot',
 			np.concatenate(SNAPSHOTS, axis=0),
 			step=None
 		)
@@ -988,7 +992,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 			for batch_index, batch in enumerate(DATA_AUGMENTER.return_observed_data())
 		]
 		self.log_image(
-			'Evaluation/true_data',
+			'TrainingRollout/true_data',
 			np.concatenate(true_images, axis=0),
 			step=None
 		)
@@ -1012,10 +1016,10 @@ class NCA_knockout_Train_log(NCA_Train_log):
 				T.append(xb)
 			T = np.array(T) # Shape T C x y
 			
-			self.log_video(f"Evaluation/trajectory_comp_batch_{b + 1}",rearrange(T[:,:9],"T (cx cy) X Y -> T cx X (cy Y)",cx=3,cy=3),step=None) # type: ignore
+			self.log_video(f"TrainingRollout/trajectory_comp_batch_{b + 1}",rearrange(T[:,:9],"T (cx cy) X Y -> T cx X (cy Y)",cx=3,cy=3),step=None) # type: ignore
 			_T_mono = rearrange(T[:,:9],"T (cx cy) X Y -> T () (cx X) (cy Y)",cx=3,cy=3)
 			_T_mono = repeat(_T_mono,"T () x y -> T 3 x y")
-			self.log_video(f"Evaluation/trajectory_monochrome_batch_{b + 1}",_T_mono,step=None) # type: ignore
+			self.log_video(f"TrainingRollout/trajectory_monochrome_batch_{b + 1}",_T_mono,step=None) # type: ignore
 			T_snapshot = _trajectory_snapshot_channels(
 				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema
 			)
@@ -1030,7 +1034,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3]) # type: ignore
 
 		self.log_image(
-			'Evaluation/trajectory_snapshot',
+			'TrainingRollout/trajectory_snapshot',
 			np.concatenate(SNAPSHOTS, axis=0),
 			step=None
 		)

@@ -18,6 +18,10 @@ data:
   downsample: 1
   micropattern:
     pool_copies: 1
+  # Physical replicate IDs are one-based. Null training IDs retain the
+  # historical first-data.batches behavior; null validation disables it.
+    train_replicates: null
+    validation_replicates: null
   # Null loads all experiment groups for the selected dataset.
     experiment_groups: null
     timesteps: [0, 12, 24, 36, 48]
@@ -52,6 +56,8 @@ trainer:
   loss_time_channel_mask: null
   loop_autodiff: checkpointed
   log_every: 100
+  validation_every: null
+  validation_rollout: false
   pool_admission_enabled: true
   pool_admission_relative_threshold: 1.25
   pool_admission_previous_relative_threshold: 1.10
@@ -116,7 +122,11 @@ model_store:
   collection: ${logging.wandb.project}
   model_factory: Experiments.config_helpers:build_model
 
+initialization:
+  model_id: null
+
 knockout:
   mode: null
   time: null
   channel: Nodal
+  curriculum: null

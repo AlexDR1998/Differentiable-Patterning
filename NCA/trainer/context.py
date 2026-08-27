@@ -24,3 +24,6 @@ class TrainerContext:
     observed_channels: int | None = None
     data_channels: int | None = None
     evaluation_input: Any = None
+    validation_data: Any = None
+    validation_boundary_mask: Any = None
+    validation_loss_time_channel_mask: Any = None

@@ -282,13 +282,77 @@ def build_data_augmenter(
     return DA_subclass, cfg_str
 
 
-def load_data(data_config, impath=None):
+def load_train_validation_data(data_config, impath=None):
+    """Load disjoint physical-replicate splits with train-fitted scaling."""
+
+    configured_train = data_config.micropattern.get("train_replicates", None)
+    configured_validation = data_config.micropattern.get(
+        "validation_replicates", None
+    )
+    train_replicates = (
+        tuple(range(1, data_config.batches + 1))
+        if configured_train is None
+        else tuple(configured_train)
+    )
+    validation_replicates = (
+        () if configured_validation is None else tuple(configured_validation)
+    )
+    if not train_replicates or min(train_replicates) < 1:
+        raise ValueError("train_replicates must contain positive, one-based IDs")
+    if len(set(train_replicates)) != len(train_replicates):
+        raise ValueError("train_replicates cannot contain duplicates")
+    if validation_replicates and min(validation_replicates) < 1:
+        raise ValueError(
+            "validation_replicates must contain positive, one-based IDs"
+        )
+    if len(set(validation_replicates)) != len(validation_replicates):
+        raise ValueError("validation_replicates cannot contain duplicates")
+    overlap = set(train_replicates) & set(validation_replicates)
+    if overlap:
+        raise ValueError(
+            f"Training and validation replicates overlap: {sorted(overlap)}"
+        )
+    if data_config.dataset != "micropatterns_260726" and validation_replicates:
+        raise ValueError(
+            "Replicate-held-out validation is currently supported only for "
+            "micropatterns_260726"
+        )
+
+    train = load_data(
+        data_config,
+        impath,
+        replicate_indices=tuple(value - 1 for value in train_replicates),
+    )
+    if not validation_replicates:
+        return train, None
+    validation = load_data(
+        data_config,
+        impath,
+        replicate_indices=tuple(value - 1 for value in validation_replicates),
+        histogram_bins=train[1]["histogram_bins"],
+        pool_copies_override=1,
+    )
+    return train, validation
+
+
+def load_data(
+    data_config,
+    impath=None,
+    *,
+    replicate_indices=None,
+    histogram_bins=None,
+    pool_copies_override=None,
+):
     from types import SimpleNamespace
 
     cfg = SimpleNamespace(data=data_config, knockout=data_config.intervention)
     custom_impath = impath is not None
     data_channels = cfg.data.micropattern.data_channels
-    pool_copies = cfg.data.micropattern.get("pool_copies", 1)
+    pool_copies = (
+        cfg.data.micropattern.get("pool_copies", 1)
+        if pool_copies_override is None
+        else pool_copies_override
+    )
     if pool_copies <= 0 or int(pool_copies) != pool_copies:
         raise ValueError("data.micropattern.pool_copies must be a positive integer")
     pool_copies = int(pool_copies)
@@ -306,6 +370,8 @@ def load_data(data_config, impath=None):
             timesteps=tuple(cfg.data.micropattern.timesteps),
             downsample=cfg.data.downsample,
             replicate_count=cfg.data.batches,
+            replicate_indices=replicate_indices,
+            histogram_bins=histogram_bins,
             pool_copies=pool_copies,
             experiment_groups=cfg.data.micropattern.get("experiment_groups", None),
         ))

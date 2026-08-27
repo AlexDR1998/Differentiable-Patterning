@@ -282,6 +282,7 @@ class NcaTrainer:
 		from NCA.trainer.preparation import prepare_training
 		from NCA.trainer.runner import run_training
 		from NCA.trainer.step import build_train_step
+		from NCA.trainer.validation import build_validation_evaluator
 
 		setup = prepare_training(
 			self,
@@ -290,11 +291,13 @@ class NcaTrainer:
 			loss_overrides=loss_overrides,
 		)
 		step = build_train_step(self, setup)
+		validation_evaluator = build_validation_evaluator(self, setup)
 		return run_training(
 			self,
 			setup,
 			step,
 			progress_callback=progress_callback,
+			validation_evaluator=validation_evaluator,
 		)
 
 

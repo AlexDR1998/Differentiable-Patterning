@@ -60,6 +60,16 @@ def build_run_name(cfg, model_name, optimiser_name):
         experiment_groups = _as_list(cfg.data.micropattern.get("experiment_groups"))
         if experiment_groups:
             details += "_eg" + "-".join(str(group) for group in experiment_groups)
+        train_replicates = _as_list(
+            cfg.data.micropattern.get("train_replicates")
+        )
+        validation_replicates = _as_list(
+            cfg.data.micropattern.get("validation_replicates")
+        )
+        if train_replicates:
+            details += "_tr" + "-".join(map(str, train_replicates))
+        if validation_replicates:
+            details += "_vr" + "-".join(map(str, validation_replicates))
         repeat = cfg.training.loop.repeat
         if repeat is not None:
             details += f"_rep{repeat}"
@@ -87,7 +97,7 @@ def run(cfg):
     from Experiments.micropatterns.config_helpers import (
         build_data_augmenter,
         expand_channel_timestep_mask_for_loss,
-        load_data,
+        load_train_validation_data,
     )
     from Experiments.nca_training import run_training
     from NCA.trainer.context import TrainerContext
@@ -100,7 +110,8 @@ def run(cfg):
 
     key = jax.random.PRNGKey(cfg.seed)
     model_key, train_key = jax.random.split(key)
-    data, aux, channel_names, boundary, mask, _ = load_data(cfg.data)
+    training_data, validation_data = load_train_validation_data(cfg.data)
+    data, aux, channel_names, boundary, mask, _ = training_data
     model, model_name = build_model(cfg.model, key=model_key)
     _, optimiser_name, _ = build_optimizer(
         cfg.training.optimizer,
@@ -133,6 +144,17 @@ def run(cfg):
         ),
         evaluation_input=evaluation_input_provenance(
             data, boundary_mask=boundary
+        ),
+        validation_data=None if validation_data is None else validation_data[0],
+        validation_boundary_mask=(
+            None if validation_data is None else validation_data[3]
+        ),
+        validation_loss_time_channel_mask=(
+            None
+            if validation_data is None
+            else expand_channel_timestep_mask_for_loss(
+                cfg.data, validation_data[4], schema
+            )
         ),
     )
     loss_overrides = {"D": 3} if cfg.training.loop.mode == "benchmark" else None

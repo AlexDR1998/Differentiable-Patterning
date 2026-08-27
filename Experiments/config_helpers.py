@@ -26,6 +26,10 @@ EXCLUDED_WANDB_TAG_KEYS = {
     "model_store.collection",
     "model_store.model_factory",
 }
+WANDB_TAG_KEY_ALIASES = {
+    "training.loss.terms.0.multi_target_schedules": "loss_schedule",
+    "training.loss.terms.0.multi_target_weights": "loss_weight",
+}
 
 
 def _cfg_get(cfg, key, default=None):
@@ -70,6 +74,17 @@ def _safe_wandb_tag(tag, max_length=MAX_WANDB_TAG_LENGTH):
         return tag
     digest = hashlib.sha1(tag.encode("utf-8")).hexdigest()[:8]
     return f"{tag[: max_length - 9]}~{digest}"
+
+
+def _wandb_tag_key(key):
+    """Shorten known deep configuration paths before length protection."""
+
+    for prefix, alias in WANDB_TAG_KEY_ALIASES.items():
+        if key == prefix:
+            return alias
+        if key.startswith(f"{prefix}."):
+            return f"{alias}{key[len(prefix):]}"
+    return key
 
 
 def _as_list(value):
@@ -496,7 +511,7 @@ def build_tags(cfg, prefix=""):
                 else:
                     tags.append(
                         _safe_wandb_tag(
-                            f"{tag_key}.{index}:{_compact_value(item)}"
+                            f"{_wandb_tag_key(f'{tag_key}.{index}')}:{_compact_value(item)}"
                         )
                     )
         else:
@@ -504,7 +519,7 @@ def build_tags(cfg, prefix=""):
                 value = _sequence_alias(value)
             else:
                 value = _compact_value(value)
-            tags.append(_safe_wandb_tag(f"{tag_key}:{value}"))
+            tags.append(_safe_wandb_tag(f"{_wandb_tag_key(tag_key)}:{value}"))
     return tags
 
 

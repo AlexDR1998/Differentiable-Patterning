@@ -65,6 +65,8 @@ class TrainerConfig(ConfigValue):
     loss_time_channel_mask: Any = None
     loop_autodiff: str = "checkpointed"
     log_every: int = 100
+    validation_every: int | None = None
+    validation_rollout: bool = False
     jax_trace: bool = False
     pool_admission: PoolAdmissionConfig = field(default_factory=PoolAdmissionConfig)
     backend: TrainerBackendConfig = field(default_factory=TrainerBackendConfig)
@@ -78,3 +80,5 @@ class TrainerConfig(ConfigValue):
             raise ValueError("trainer.sharding must be positive or None")
         if self.log_every < 1:
             raise ValueError("trainer.log_every must be positive")
+        if self.validation_every is not None and self.validation_every < 1:
+            raise ValueError("trainer.validation_every must be positive or None")

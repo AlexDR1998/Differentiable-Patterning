@@ -49,7 +49,7 @@ case "$cluster" in
             usage >&2
             exit 1
         fi
-        rsync -r -e ssh rc-rich1@login-cpu-hpc.cam-ac.uk:/home/rc-rich1/rds/rds-airr-p100-NQDJLHPwRqs/Models/bundles/ ./models/bundles/
+        rsync -r -e ssh rc-rich1@login-dawn.hpc.cam.ac.uk:/home/rc-rich1/rds/rds-airr-p100-NQDJLHPwRqs/Models/bundles/ ./models/bundles/
         ;;
     *)
         echo "--cluster must be either 'eidf' or 'dawn'." >&2

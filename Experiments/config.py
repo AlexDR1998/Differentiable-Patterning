@@ -42,7 +42,11 @@ from Experiments.impulse.config import (
     ImpulseRolloutConfig,
     OutputConfig,
 )
-from Experiments.micropatterns.config import KnockoutConfig, MicropatternDataConfig
+from Experiments.micropatterns.config import (
+    KnockoutConfig,
+    MicropatternDataConfig,
+    ModelInitializationConfig,
+)
 from NCA.model.config import (
     HNCAModelConfig,
     KANConfig,
@@ -196,6 +200,9 @@ class ExperimentConfig(ConfigValue):
     training: TrainingConfig
     logging: LoggingConfig
     model_store: ModelStoreConfig
+    initialization: ModelInitializationConfig = field(
+        default_factory=ModelInitializationConfig
+    )
     labels: LabelsConfig = field(default_factory=LabelsConfig)
 
     # Compatibility names at the Experiments boundary. Common/ and NCA receive
@@ -338,7 +345,7 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
     schema_version = int(root.get("schema_version", CONFIG_SCHEMA_VERSION))
     if schema_version != CONFIG_SCHEMA_VERSION:
         raise ValueError(f"Unsupported experiment config schema version {schema_version}")
-    allowed = {"schema_version", "seed", "experiment", "system", "runtime", "data", "model", "training", "trainer", "optimiser", "loss", "run", "logging", "model_store", "knockout", "labels"}
+    allowed = {"schema_version", "seed", "experiment", "system", "runtime", "data", "model", "training", "trainer", "optimiser", "loss", "run", "logging", "model_store", "initialization", "knockout", "labels"}
     unknown = set(root) - allowed
     if unknown:
         raise ValueError(f"Unknown top-level configuration fields: {sorted(unknown)}")
@@ -384,13 +391,22 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
     elif dataset in {"micropatterns", "micropatterns_260726"}:
         raw = _mapping(micropattern_node, "data.micropattern")
         if raw.get("experiment_groups") is not None: raw["experiment_groups"] = _tuple(raw["experiment_groups"])
+        for split_name in ("train_replicates", "validation_replicates"):
+            if raw.get(split_name) is not None:
+                raw[split_name] = tuple(int(value) for value in raw[split_name])
         raw["timesteps"] = _tuple(raw.get("timesteps", (0, 12, 24, 36, 48)))
         augmentation = _strict(MicropatternDataConfig, raw, "data.micropattern")
     else:
         raise ValueError(f"Unsupported data.dataset {dataset!r}")
+    intervention_node = _mapping(
+        stable_intervention if stable_intervention is not None else root.get("knockout"),
+        "data.intervention",
+    )
+    if intervention_node.get("curriculum") is not None:
+        intervention_node["curriculum"] = _tuple(intervention_node["curriculum"])
     intervention = _strict(
         KnockoutConfig,
-        stable_intervention if stable_intervention is not None else root.get("knockout"),
+        intervention_node,
         "data.intervention",
     )
     data = DataConfig(dataset, batches, preprocessing, augmentation, intervention)
@@ -462,6 +478,11 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
         training=training,
         logging=logging,
         model_store=_strict(ModelStoreConfig, root.get("model_store"), "model_store"),
+        initialization=_strict(
+            ModelInitializationConfig,
+            root.get("initialization"),
+            "initialization",
+        ),
         labels=_strict(LabelsConfig, root.get("labels"), "labels"),
     )
 

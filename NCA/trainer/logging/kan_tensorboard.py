@@ -554,6 +554,10 @@ class kaNCA_Train_log(NCA_Train_log):
 			if name != "states":
 				if name.startswith("pool/"):
 					self.log_scalar(f"StatePool/{name.removeprefix('pool/')}",log_dict[name],step=i)
+				elif name.startswith("validation/"):
+					self.log_scalar(f"Validation/{name.removeprefix('validation/')}",log_dict[name],step=i)
+				elif name.startswith("validation_rollout/"):
+					self.log_scalar(f"ValidationRollout/{name.removeprefix('validation_rollout/')}",log_dict[name],step=i)
 				elif name == "learning_rate":
 					self.log_scalar("Training/learning_rate", log_dict[name], step=i)
 				else:
