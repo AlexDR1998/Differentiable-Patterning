@@ -144,7 +144,7 @@ class ValidationEvaluator:
     def _evaluate(self, model, loss_weights):
         batched_model = self.trainer._make_batched_nca(model)
 
-        def no_regularisers(totals, before, after, context, key):
+        def no_regularisers(totals, before, after, context, key, skip=()):
             return totals
 
         _, states, _ = self.trainer._run_nca_steps(
