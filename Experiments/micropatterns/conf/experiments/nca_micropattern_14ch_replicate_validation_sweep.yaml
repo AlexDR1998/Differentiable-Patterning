@@ -4,9 +4,9 @@ output_subdir: generated/nca_micropattern_14ch_replicate_validation_sweep_v2
 seed_mode: index
 
 grid:
-  labels.gpu: [H100]
-  model.family: [gNCA]
-  # trainer.backend.type: [sycl]
+  labels.gpu: [intel]
+  model.family: [gNCA_sycl]
+  trainer.backend.type: [sycl]
   labels.scaling: [convective]
   system.precision: [highest]
 
