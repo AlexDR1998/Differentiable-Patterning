@@ -57,3 +57,5 @@ case "$cluster" in
         exit 1
         ;;
 esac
+
+python -m Experiments.model_registry --root ./models reindex
