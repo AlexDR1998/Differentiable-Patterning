@@ -44,23 +44,6 @@ def resolve_knockout_curriculum(intervention):
     return curriculum
 
 
-def clamp_nodal(x, intervention_times, nodal_channel, global_batch_indices=None):
-    times = jnp.asarray(intervention_times, dtype=jnp.int32)
-    if global_batch_indices is not None:
-        times = times[jnp.asarray(global_batch_indices)]
-    values = list(x)
-    for batch, knockout_time in enumerate(times):
-        knockout_index = knockout_time // 12
-        zero = (knockout_time >= 0) & (
-            jnp.arange(values[batch].shape[0]) >= knockout_index
-        )
-        nodal = jnp.where(
-            zero[:, None, None], 0.0, values[batch][:, nodal_channel]
-        )
-        values[batch] = values[batch].at[:, nodal_channel].set(nodal)
-    return values
-
-
 def _coerce_dataset_result(result):
     """Accept old tuple-returning test doubles while loaders migrate."""
 
@@ -237,6 +220,12 @@ def build_data_augmenter(
 
             def __init__(self, *args, **kwargs):
                 kwargs["schema"] = channel_schema
+                self.intervention_times = intervention_times
+                self.nodal_channel = (
+                    channel_schema.state_channels.index("NODAL")
+                    if intervention_times is not None
+                    else None
+                )
                 kwargs["intermediate_reinjection_probability"] = cfg.data.micropattern.intermediate_reinjection_probability
                 kwargs["intermediate_reinjection_probability_end"] = cfg.data.micropattern.get(
                     "intermediate_reinjection_probability_end",
@@ -247,27 +236,6 @@ def build_data_augmenter(
                 )
                 kwargs["intermediate_reinjection_total_iterations"] = cfg.run.iterations
                 super().__init__(*args, **kwargs)
-
-            def initialize_pool(self, key):
-                x, y = super().initialize_pool(key)
-                if intervention_times is not None:
-                    x = clamp_nodal(
-                        x,
-                        intervention_times,
-                        self.schema.state_channels.index("NODAL"),
-                    )
-                return x, y
-
-            def advance_pool(self, x, y, i, key):
-                x, y = super().advance_pool(x, y, i, key)
-                if intervention_times is not None:
-                    x = clamp_nodal(
-                        x,
-                        intervention_times,
-                        self.schema.state_channels.index("NODAL"),
-                        getattr(self, "_global_batch_indices", None),
-                    )
-                return x, y
 
         return DA_subclass, (
             f"da_snapshot_noise{cfg.data.micropattern.noise_strength}"

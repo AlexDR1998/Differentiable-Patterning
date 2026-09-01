@@ -184,6 +184,7 @@ def run(cfg):
         evaluation_input=evaluation_input_provenance(
             data, boundary_mask=boundary
         ),
+        training_intervention_times=aux.get("intervention_times"),
         validation_data=None if validation_data is None else validation_data[0],
         validation_boundary_mask=(
             None if validation_data is None else validation_data[3]

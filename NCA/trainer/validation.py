@@ -23,6 +23,16 @@ class ValidationEvaluator:
         data = jnp.asarray(data)
         self.trainer = copy(trainer)
         self.trainer.batch_count = data.shape[0]
+        self.trainer.intervention_times = context_times = (
+            trainer.context.validation_intervention_times
+        )
+        self.trainer.nodal_channel = (
+            None
+            if context_times is None
+            or trainer.channel_schema is None
+            or "NODAL" not in trainer.channel_schema.state_channels
+            else trainer.channel_schema.state_channels.index("NODAL")
+        )
         self.trainer.diagnostic_boundary_mask = boundary_mask
         callback_type = (
             model_boundary
@@ -48,14 +58,6 @@ class ValidationEvaluator:
         states = jnp.pad(observed, ((0, 0), (0, 0), (0, padding), (0, 0), (0, 0)))
         self.states = [trainer.model.prepare_pool_state(value) for value in states]
         self.targets = [value for value in data[:, 1:]]
-        self.intervention_times = context_times = (
-            trainer.context.validation_intervention_times
-        )
-        self.nodal_channel = (
-            None
-            if context_times is None or "NODAL" not in schema.state_channels
-            else schema.state_channels.index("NODAL")
-        )
         self.execution = self.trainer._training_execution()
         self._compiled = eqx.filter_jit(self._evaluate)
 
@@ -124,17 +126,14 @@ class ValidationEvaluator:
         )
         metrics = {}
         by_name = {}
-        timepoint_names = self.trainer.timepoint_names or ()
-        for (group_name, time_index, name), value in values.items():
-            timepoint = (
-                timepoint_names[time_index]
-                if time_index < len(timepoint_names)
-                else f"time_{time_index + 1}"
-            )
-            metrics[
-                f"{prefix}/variation/{group_name}/{timepoint}/{name}"
-            ] = value
+        by_group_and_name = {}
+        for (group_name, _time_index, name), value in values.items():
+            by_group_and_name.setdefault((group_name, name), []).append(value)
             by_name.setdefault(name, []).append(value)
+        for (group_name, name), metric_values in by_group_and_name.items():
+            metrics[f"{prefix}/variation/{group_name}/{name}"] = jnp.mean(
+                jnp.stack(metric_values)
+            )
         for name, metric_values in by_name.items():
             metrics[f"{prefix}/variation/{name}"] = jnp.mean(
                 jnp.stack(metric_values)
@@ -165,9 +164,12 @@ class ValidationEvaluator:
         rollout_states = [state[:1] for state in self.states]
         snapshots = []
         for transition in range(self.targets[0].shape[0]):
+            rollout_model = self.trainer._make_batched_nca(
+                model, time_offset=transition
+            )
             _, rollout_states, _ = self.trainer._run_nca_steps(
                 model,
-                batched_model,
+                rollout_model,
                 rollout_states,
                 {},
                 self.setup.timesteps,
@@ -176,16 +178,6 @@ class ValidationEvaluator:
                 no_regularisers,
                 self.execution,
             )
-            if self.intervention_times is not None:
-                endpoint_hours = 12 * (transition + 1)
-                rollout_states = [
-                    state.at[:, self.nodal_channel].set(0.0)
-                    if knockout_time >= 0 and endpoint_hours >= knockout_time
-                    else state
-                    for state, knockout_time in zip(
-                        rollout_states, self.intervention_times
-                    )
-                ]
             snapshots.append(rollout_states)
         rollout_predictions = [
             jnp.concatenate([snapshot[batch] for snapshot in snapshots], axis=0)

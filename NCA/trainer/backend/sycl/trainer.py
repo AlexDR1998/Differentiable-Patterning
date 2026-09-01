@@ -144,9 +144,11 @@ class SyclNcaTrainer(NcaTrainer):
             f"or 2; got {self.sharding}"
         )
 
-    def _make_batched_nca(self, nca):
+    def _make_batched_nca(self, nca, time_offset=0):
         """Return a PyTree call over state leaves shaped ``[N,C,H,W]``."""
-        fallback = super()._make_batched_nca(nca)
+        fallback = super()._make_batched_nca(nca, time_offset=time_offset)
+        if self.intervention_times is not None:
+            return fallback
         batched_call = getattr(nca, "batched_call", None)
         if batched_call is None:
             return fallback
@@ -230,6 +232,18 @@ class SyclNcaTrainer(NcaTrainer):
         Intermediate states remain visible so existing per-step regularisers
         retain the reference trainer's semantics.
         """
+        if self.intervention_times is not None:
+            return super()._run_nca_steps(
+                nca,
+                vv_nca,
+                states,
+                reg_logs_internal,
+                t,
+                key,
+                loop_autodiff,
+                apply_intermediate_regs,
+                training_execution,
+            )
         rollout = getattr(nca, "batched_rollout", None)
         training_callbacks = training_execution.boundary_callbacks()
         callbacks = jtu.tree_leaves(training_callbacks)

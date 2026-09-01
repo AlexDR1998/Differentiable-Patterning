@@ -20,6 +20,7 @@ LOG_BACKEND = os.environ.get("LOG_BACKEND", "wandb")
 #if LOG_BACKEND=="wandb":
 from Common.utils import get_jax_memory_stats
 from Common.trainer.abstract_wandb_log import Train_log
+from NCA.trainer.intervention import apply_model_with_blocked_channel
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch
 #elif LOG_BACKEND=="tensorboard":
 #	from Common.trainer.abstract_tensorboard_log import Train_log
@@ -897,7 +898,27 @@ class NCA_Train_log(Train_log):
 		SNAPSHOTS = []
 		for b in tqdm(range(BATCHES)):
 			initial_state = nca.prepare_pool_state(x[b][0])
-			T = nca.run(t*NUMBER_OF_IMAGES, initial_state, boundary_callback[b])  # Shape T C x y
+			intervention_times = getattr(DATA_AUGMENTER, "intervention_times", None)
+			if intervention_times is None:
+				T = nca.run(t*NUMBER_OF_IMAGES, initial_state, boundary_callback[b])
+			else:
+				state = initial_state
+				trajectory = [state]
+				rollout_key = jr.fold_in(key, b)
+				knockout_time = intervention_times[b]
+				for step in range(t * NUMBER_OF_IMAGES):
+					rollout_key = jr.fold_in(rollout_key, step)
+					state = apply_model_with_blocked_channel(
+						nca,
+						state,
+						boundary_callback[b],
+						rollout_key,
+						DATA_AUGMENTER.nodal_channel,
+						(knockout_time >= 0)
+						and (step // t >= knockout_time // 12),
+					)
+					trajectory.append(state)
+				T = jnp.stack(trajectory)
 			self.log_video(f"TrainingRollout/trajectory_batch_{b + 1}",T[:,:3],step=None)
 			T_snapshot = _trajectory_snapshot_channels(
 				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema

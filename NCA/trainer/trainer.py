@@ -22,6 +22,10 @@ from NCA.model.NCA_multi_scale import mNCA
 from NCA.model.NCA_multihead_attention import aNCA
 from NCA.trainer.training_execution import TrainingExecution
 from NCA.trainer.context import TrainerContext
+from NCA.trainer.intervention import (
+	apply_model_with_blocked_channel,
+	nodal_read_block_mask,
+)
 from einops import repeat, rearrange
 from Common.model.boundary import model_boundary, hard_boundary, no_boundary
 
@@ -57,6 +61,14 @@ class NcaTrainer:
 		self.channel_schema = channel_schema
 		self.channel_names = context.channel_names
 		self.timepoint_names = context.timepoint_names
+		self.intervention_times = context.training_intervention_times
+		self.nodal_channel = (
+			channel_schema.state_channels.index("NODAL")
+			if self.intervention_times is not None
+			and channel_schema is not None
+			and "NODAL" in channel_schema.state_channels
+			else None
+		)
 		boundary_mask = context.boundary_mask
 		self.diagnostic_boundary_mask = boundary_mask
 		
@@ -78,6 +90,10 @@ class NcaTrainer:
 		
 		
 		self.sharding = trainer_config.sharding
+		if self.intervention_times is not None and self.sharding not in (None, 1):
+			raise ValueError(
+				"NODAL read-block interventions currently require trainer.sharding=null or 1"
+			)
 		self.grad_loss = trainer_config.grad_loss
 		self.loss_time_channel_mask = context.loss_time_channel_mask
 		# Set up data and data augmenter class
@@ -206,18 +222,54 @@ class NcaTrainer:
 		self.model_path = str(Path(self._model_root) / self.model_filename)
 		print("Saving model to: "+self.model_path)
 
-	def _make_batched_nca(self, nca):
+	def _make_batched_nca(self, nca, time_offset=0):
 		"""Build the established vmap/tree-map NCA application path.
 
 		Accelerator-specific trainers may override this hook without adding
 		backend flags or batching branches to the core training loop.
 		"""
-		apply_with_boundary = jax.vmap(
-			nca, in_axes=(0, None, 0), out_axes=0, axis_name="N"
-		)
-		return lambda x, callback, key_array: jtu.tree_map(
-			apply_with_boundary, x, callback, key_array
-		)
+		if self.intervention_times is None:
+			apply_with_boundary = jax.vmap(
+				nca, in_axes=(0, None, 0), out_axes=0, axis_name="N"
+			)
+			return lambda x, callback, key_array: jtu.tree_map(
+				apply_with_boundary, x, callback, key_array
+			)
+
+		if self.nodal_channel is None:
+			raise ValueError("NODAL intervention requires a NODAL state channel")
+		intervention_times = tuple(self.intervention_times)
+
+		def apply_interventions(x, callbacks, key_array):
+			if len(x) != len(intervention_times):
+				raise ValueError(
+					"Intervention times must match the outer training batch"
+				)
+			outputs = []
+			for states, callback, keys, knockout_time in zip(
+				x, callbacks, key_array, intervention_times
+			):
+				blocked = nodal_read_block_mask(
+					knockout_time,
+					states.shape[0],
+					time_offset=time_offset,
+				)
+				outputs.append(jax.vmap(
+					lambda state, item_key, is_blocked: apply_model_with_blocked_channel(
+						nca,
+						state,
+						callback,
+						item_key,
+						self.nodal_channel,
+						is_blocked,
+					),
+					in_axes=(0, 0, 0),
+					out_axes=0,
+					axis_name="N",
+				)(states, keys, blocked))
+			return type(x)(outputs)
+
+		return apply_interventions
 
 	def _training_execution(self):
 		return TrainingExecution(self)

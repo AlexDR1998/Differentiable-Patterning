@@ -1,4 +1,4 @@
-experiment_name: nca_nodal_ko_finetune
+experiment_name: nca_nodal_ko_finetune_2b_rad_cosrev_1
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_nodal_ko_finetune
 seed_mode: index
@@ -6,14 +6,14 @@ seed_mode: index
 # Replace null with the registry ID of a full 14-channel baseline bundle before
 # generating the sweep. Leaving it null constructs a fresh model.
 grid:
-  initialization.model_id: [null]
-
+  
+  
   labels.gpu: [intel]
-  model.family: [gNCA_sycl]
-  model.channels: [48]
+
   trainer.backend.type: [sycl]
   trainer.loop_autodiff: [lax]
 
+  logging.wandb.project: [nca_micropattern_KO_finetune]
   data.dataset: [micropatterns_260726]
   data.micropattern.data_channels: [14]
   data.micropattern.experiment_groups:
@@ -30,24 +30,38 @@ grid:
     - [baseline, ko_0h, ko_24h]
     - [baseline, baseline, ko_0h, ko_24h]
 
-  run.iterations: [500, 2000, 8000]
+  run.iterations: [250, 500, 2000, 8000]
   run.t: [128]
   optimiser.learn_rate: [1e-5, 1e-4]
   optimiser.type: [nadam]
   optimiser.gradient_clip_norm: [1.0]
   trainer.log_every: [200]
-  trainer.validation_every: [500]
+  trainer.validation_every: [200]
   trainer.validation_rollout: [true]
 
   loss.terms: [multi_target]
-  loss.terms.0.multi_target_weights.l2: [1.0]
-  loss.terms.0.multi_target_weights.texture: [1.0]
+  # loss.terms.0.multi_target_weights.l2: [0.0]
+  # loss.terms.0.multi_target_weights.texture: [1.0]
   loss.terms.0.multi_target_weights.channel_mean: [0.0]
   loss.terms.0.multi_target_weights.correlation: [0.0]
-  loss.terms.0.multi_target_weights.radial: [0.0]
+  # loss.terms.0.multi_target_weights.radial: [1.0]
   loss.terms.0.random_channel_shuffle: [true]
 
 groups:
-  - data.batches: [4]
-    data.micropattern.train_replicates: [[1,2,3,4]]
-    data.micropattern.validation_replicates: [[]]
+  # - initialization.model_id: [20260831T213902Z-cfgce945394bb51-4e99cc6b,20260831T202033Z-cfg85e412b71d3d-448a4033] 
+  # # 1,2 or 3,4 replicate, cos_reverse, radial, gNCA, repeat 2 and repeat 1 respectively
+  #   data.batches: [2,2]
+  #   data.micropattern.train_replicates: [[1,2],[3,4]]
+  #   data.micropattern.validation_replicates: [[3,4],[1,2]]
+  #   model.family: [gNCA_sycl,gNCA_sycl]
+  #   model.channels: [48,48]
+  - initialization.model_id: [20260831T213902Z-cfgce945394bb51-4e99cc6b] 
+  # 1,2 or 3,4 replicate, cos_reverse, radial, gNCA, repeat 2 and repeat 1 respectively
+    data.batches: [2]
+    data.micropattern.train_replicates: [[1,2]]
+    data.micropattern.validation_replicates: [[3,4]]
+    model.family: [gNCA_sycl]
+    model.channels: [48]
+  - loss.terms.0.multi_target_weights.l2: [0.0,1.0,1.0,0.0,1.0,1.0]
+    loss.terms.0.multi_target_weights.radial: [1.0,0.0,1.0,1.0,0.0,1.0]
+    loss.terms.0.multi_target_weights.texture: [1.0,1.0,1.0,0.0,0.0,0.0]

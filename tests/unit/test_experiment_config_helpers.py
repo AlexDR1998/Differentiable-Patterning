@@ -848,18 +848,34 @@ def test_micropattern_nodal_zeroing_wins_after_reinject_for_ko_batches():
     assert jnp.all(out[2][:, 7] != 0.0)
 
 
-def test_canonical_nodal_clamp_uses_per_batch_intervention_times():
-    import Experiments.micropatterns.config_helpers as micropattern_helpers
-
-    states = [jnp.ones((4, 10, 1, 1)) for _ in range(3)]
-    clamped = micropattern_helpers.clamp_nodal(
-        states, (-1, 0, 24), nodal_channel=7
+def test_nodal_knockout_blocks_read_but_preserves_recurrent_channel():
+    from NCA.trainer.intervention import (
+        apply_model_with_blocked_channel,
+        nodal_read_block_mask,
     )
 
-    assert jnp.all(clamped[0][:, 7] == 1.0)
-    assert jnp.all(clamped[1][:, 7] == 0.0)
-    assert jnp.all(clamped[2][:2, 7] == 1.0)
-    assert jnp.all(clamped[2][2:, 7] == 0.0)
+    class ReadNodalModel:
+        def __call__(self, state, boundary_callback, key):
+            update = jnp.array([state[1], 2.0])
+            return boundary_callback(state + update)
+
+    state = jnp.array([3.0, 5.0])
+    output = apply_model_with_blocked_channel(
+        ReadNodalModel(),
+        state,
+        lambda value: value,
+        jax.random.PRNGKey(0),
+        channel=1,
+        blocked=True,
+    )
+
+    assert jnp.all(output == jnp.array([3.0, 7.0]))
+
+    assert jnp.all(
+        nodal_read_block_mask(24, 4) == jnp.array([False, False, True, True])
+    )
+    assert jnp.all(nodal_read_block_mask(0, 4))
+    assert not jnp.any(nodal_read_block_mask(-1, 4))
 
 
 def test_micropattern_rejects_unsupported_channel_count():
