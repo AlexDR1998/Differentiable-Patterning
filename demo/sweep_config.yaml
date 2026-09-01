@@ -1,0 +1,15 @@
+output_root:  #demo/final_step_g1g2g3    # parent folder for models
+script:       demo/general_train_nca_to_pde.py
+
+grid:
+  PDE: ["g2", "g3"]
+  BATCHES: [10]
+  CHANNELS: [16]
+  TIME_SAMPLING: [128]
+  LEARN_RATE:    [5e-5]
+  FIRE_RATE:     [1.0]
+  STATE_REGULARISER: [1.0]
+  TARGET_SPARSITY: [0.0]
+  SPARSE_PRUNING: [False]
+  LOSS:          ["l1"]
+  KERNEL_SCALE: [1]

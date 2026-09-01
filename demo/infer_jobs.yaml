@@ -1,0 +1,10 @@
+# infer_jobs.yaml
+script: demo/general_nca_batch_inference.py    # patched version
+mix:    "0:4,1:1,2:3,3:3,4:3"                       # IC composition
+out_root: batch_inference                           # parent output dir
+default_pde: sch
+
+models:                                             # explicit list
+
+  # - models/demo/final_step_g1g2g3/2025-08-14T22-14_PDg2_BA10_CH16_TI128_LE5e-5_FI1.0_ST1.0_TA0.0_SPFalse_LOl1_KE1_g2.eqx
+  # - models/demo/final_step_g1g2g3/2025-08-15T22-12_PDg3_BA10_CH16_TI128_LE5e-5_FI1.0_ST1.0_TA0.0_SPFalse_LOl1_KE1_g3.eqx
