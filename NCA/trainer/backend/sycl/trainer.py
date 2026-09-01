@@ -13,7 +13,10 @@ from Common.model.boundary import hard_boundary, model_boundary, no_boundary
 from Common.utils import key_pytree_gen
 from NCA.model.NCA_sycl import FUSED_REGULARISER_FLAGS
 from NCA.trainer.trainer import NcaTrainer
-from NCA.trainer.backend.sycl.batching import apply_flat_batched_nca
+from NCA.trainer.backend.sycl.batching import (
+    apply_flat_batched_nca,
+    apply_flat_batched_nca_interventions,
+)
 from NCA.trainer.backend.sycl.execution import SyclTwoTileExecution
 from NCA.trainer.backend.sycl.scan import scan_carry_only
 
@@ -147,11 +150,25 @@ class SyclNcaTrainer(NcaTrainer):
     def _make_batched_nca(self, nca, time_offset=0):
         """Return a PyTree call over state leaves shaped ``[N,C,H,W]``."""
         fallback = super()._make_batched_nca(nca, time_offset=time_offset)
-        if self.intervention_times is not None:
-            return fallback
         batched_call = getattr(nca, "batched_call", None)
         if batched_call is None:
             return fallback
+
+        if self.intervention_times is not None:
+            intervention_times = tuple(self.intervention_times)
+
+            def apply_interventions(x, callbacks, key_array):
+                return apply_flat_batched_nca_interventions(
+                    nca,
+                    x,
+                    callbacks,
+                    key_array,
+                    intervention_times,
+                    self.nodal_channel,
+                    time_offset=time_offset,
+                )
+
+            return apply_interventions
 
         def apply_batched(x, callbacks, key_array):
             return apply_flat_batched_nca(

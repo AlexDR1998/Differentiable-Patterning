@@ -10,7 +10,10 @@ from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from Common.trainer.loss_multi_target import multi_target_loss
-from NCA.trainer.backend.sycl.batching import apply_flat_batched_nca
+from NCA.trainer.backend.sycl.batching import (
+    apply_flat_batched_nca,
+    apply_flat_batched_nca_interventions,
+)
 from NCA.trainer.backend.sycl.trainer import (
     configure_custom_call_synchronization,
     configure_regulariser_reduction,
@@ -486,6 +489,41 @@ def test_sycl_trainer_keeps_outer_batch_leaves_as_separate_calls():
     )
 
     assert model.batch_sizes == [2, 3]
+
+
+def test_sycl_interventions_batch_branches_without_batching_model_weights():
+    model = _RecordingBatchableReferenceModel()
+    states = [
+        jnp.asarray(
+            [
+                [[[1.0]], [[10.0]]],
+                [[[2.0]], [[20.0]]],
+                [[[3.0]], [[30.0]]],
+                [[[4.0]], [[40.0]]],
+            ]
+        )
+    ]
+    keys = [jnp.asarray([[1, 0], [2, 0], [3, 0], [4, 0]], dtype=jnp.uint32)]
+    callbacks = [lambda value: 2.0 * value]
+
+    actual = apply_flat_batched_nca_interventions(
+        model,
+        states,
+        callbacks,
+        keys,
+        intervention_times=(24,),
+        nodal_channel=1,
+    )
+
+    ordinary = 2.0 * (states[0] + keys[0][:, :1, None, None])
+    read_states = states[0].at[:, 1].set(0.0)
+    blocked = 2.0 * (
+        states[0]
+        + (read_states + keys[0][:, :1, None, None] - read_states)
+    )
+    expected = jnp.concatenate([ordinary[:2], blocked[2:]], axis=0)
+    assert jnp.array_equal(actual[0], expected)
+    assert model.batch_sizes == [4, 4]
 
 
 def test_concatenated_shared_weight_gradient_equals_example_sum():
