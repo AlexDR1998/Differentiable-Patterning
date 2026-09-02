@@ -1,4 +1,4 @@
-experiment_name: nca_nodal_ko_finetune_2b_rad_cosrev_1
+experiment_name: nca_nodal_ko_finetune_2b_rad_cosrev_2
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_nodal_ko_finetune
 seed_mode: index

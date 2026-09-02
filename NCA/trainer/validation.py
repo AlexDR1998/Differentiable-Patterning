@@ -77,6 +77,9 @@ class ValidationEvaluator:
                 self.setup.multi_target_params,
                 self.key,
                 arguments,
+                measurement_mask=jnp.stack(
+                    self.trainer.loss_time_channel_mask
+                )[..., 0, 0],
             )
             metrics = {f"{prefix}/loss": jnp.mean(losses)}
             for name, value in components.items():

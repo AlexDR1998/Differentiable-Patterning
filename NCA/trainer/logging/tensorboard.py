@@ -10,6 +10,7 @@ from tqdm import tqdm
 from jaxtyping import Float,Array,Key,PyTree
 import os
 import jax
+import jax.numpy as jnp
 import jax.random as jr
 import time
 from dotenv import load_dotenv

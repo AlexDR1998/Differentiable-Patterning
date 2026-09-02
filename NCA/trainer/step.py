@@ -121,6 +121,9 @@ def build_train_step(trainer, setup):
                 setup.multi_target_params,
                 key,
                 loss_arguments,
+                measurement_mask=jnp.stack(execution.loss_time_channel_mask())[
+                    ..., 0, 0
+                ],
             )
             diagnostics = {}
             for name, value in components.items():

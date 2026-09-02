@@ -220,6 +220,7 @@ def build_data_augmenter(
 
             def __init__(self, *args, **kwargs):
                 kwargs["schema"] = channel_schema
+                kwargs["measurement_mask"] = channel_timestep_mask
                 self.intervention_times = intervention_times
                 self.nodal_channel = (
                     channel_schema.state_channels.index("NODAL")

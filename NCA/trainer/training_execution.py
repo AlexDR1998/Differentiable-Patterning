@@ -39,11 +39,13 @@ class TrainingExecution:
         return mean_loss, regulariser_losses
 
     def multi_target_loss(
-        self, prediction, target, boundary, schema, params, key, args
+        self, prediction, target, boundary, schema, params, key, args,
+        measurement_mask=None,
     ):
         """Evaluate the reference full-batch multi-target loss."""
         return multi_target_loss(
-            prediction, target, boundary, schema, params, key, args
+            prediction, target, boundary, schema, params, key, args,
+            measurement_mask=measurement_mask,
         )
 
     def transform_step(self, make_step):

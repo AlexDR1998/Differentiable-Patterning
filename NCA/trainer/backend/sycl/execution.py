@@ -198,12 +198,17 @@ class SyclTwoTileExecution(TrainingExecution):
         )
 
     def multi_target_loss(
-        self, prediction, target, boundary, schema, params, key, args
+        self, prediction, target, boundary, schema, params, key, args,
+        measurement_mask=None,
     ):
         """Gather scalar cost rows instead of complete prediction images."""
         target = jax.lax.all_gather(
             target, self.AXIS_NAME, axis=0, tiled=False
         ).reshape((-1, *target.shape[1:]))
+        if measurement_mask is not None:
+            measurement_mask = jax.lax.all_gather(
+                measurement_mask, self.AXIS_NAME, axis=0, tiled=False
+            ).reshape((-1, *measurement_mask.shape[1:]))
         key = jax.lax.all_gather(key, self.AXIS_NAME)[0]
         costs, components = multi_target_pairwise_costs(
             prediction, target, boundary, schema, params, key, args
@@ -216,6 +221,7 @@ class SyclTwoTileExecution(TrainingExecution):
             jtu.tree_map(gather_rows, components),
             schema,
             args,
+            measurement_mask=measurement_mask,
         )
 
     def _pack_items(self, items, name, *, sharded=True, expected_ndim=None):

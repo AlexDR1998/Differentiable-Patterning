@@ -52,6 +52,7 @@ class MicropatternDataAugmenter(BasicAugmenter):
         self.intermediate_reinjection_total_iterations = kwargs.pop(
             "intermediate_reinjection_total_iterations", None
         )
+        self.measurement_mask = kwargs.pop("measurement_mask", None)
         if not all(
             0.0 <= probability <= 1.0
             for probability in (
@@ -78,6 +79,18 @@ class MicropatternDataAugmenter(BasicAugmenter):
             )
         super().__init__(*args, **kwargs)
         self.OBS_CHANNELS = self.schema.n_state_channels
+        if self.measurement_mask is not None:
+            expected_shape = (
+                len(self.data_saved),
+                self.data_saved[0].shape[0] - 1,
+                self.schema.n_measurement_channels,
+            )
+            if self.measurement_mask.shape != expected_shape:
+                raise ValueError(
+                    "Reinjection measurement mask must have shape "
+                    f"[batch, target_time, measurement]={expected_shape}, got "
+                    f"{self.measurement_mask.shape}"
+                )
         self.state_groups = tuple(
             tuple(self.schema.target_to_state[index] for index in group)
             for group in self.schema.group_measurement_indices
@@ -177,12 +190,18 @@ class MicropatternDataAugmenter(BasicAugmenter):
                         donor_key, donor_count
                     )[global_indices]
                     values = measurements[donors, time_index][:, measurement_indices]
+                    if self.measurement_mask is None:
+                        measured = jnp.ones_like(values, dtype=bool)
+                    else:
+                        measured = jnp.asarray(self.measurement_mask)[
+                            donors, time_index - 1
+                        ][:, measurement_indices].astype(bool)
                     # Truth scaffolding replaces only observed channels. Hidden
                     # channels deliberately remain propagated as trajectory memory.
                     keep = (
                         inject[:, time_index - 1]
                         & (choices[:, time_index - 1] == group_index)
-                    )[:, None, None, None]
+                    )[:, None, None, None] & measured[:, :, None, None]
                     x = x.at[:, time_index, state_indices].set(
                         jnp.where(keep, values, x[:, time_index, state_indices])
                     )

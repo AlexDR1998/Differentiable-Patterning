@@ -90,6 +90,53 @@ def test_multi_target_loss_accepts_a_selected_schema():
     assert not any(name.startswith("group/rna_expression/") for name in components)
 
 
+def test_multi_target_loss_ignores_missing_group_timepoints():
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
+    prediction = jax.random.uniform(
+        jax.random.PRNGKey(30), (2, 2, schema.n_state_channels, 4, 4)
+    )
+    target = jnp.take(prediction, jnp.asarray(schema.target_to_state), axis=2)
+    target = target.at[1, 1].set(1000.0)
+    measurement_mask = jnp.ones(target.shape[:3], dtype=bool)
+    measurement_mask = measurement_mask.at[1, 1].set(False)
+
+    loss, _ = multi_target_loss(
+        prediction,
+        target,
+        jnp.ones((4, 4), dtype=bool),
+        schema,
+        None,
+        jax.random.PRNGKey(31),
+        {"multi_target_weights": {"texture": 0.0}},
+        measurement_mask=measurement_mask,
+    )
+
+    assert jnp.allclose(loss, 0.0, atol=1e-5)
+
+
+def test_snapshot_reinjection_skips_unmeasured_channels():
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
+    data = jnp.ones((2, 3, schema.n_measurement_channels, 2, 2))
+    measurement_mask = jnp.zeros((2, 2, schema.n_measurement_channels), dtype=bool)
+    augmenter = DataAugmenter(
+        data,
+        schema=schema,
+        measurement_mask=measurement_mask,
+        intermediate_reinjection_probability=1.0,
+    )
+    augmenter.noise_strength = 0.0
+    states = [
+        jnp.zeros((2, schema.n_state_channels, 2, 2)) for _ in range(2)
+    ]
+    targets = [value[1:] for value in data]
+
+    result, _ = augmenter.advance_pool(
+        states, targets, 0, jax.random.PRNGKey(32)
+    )
+
+    assert jnp.all(jnp.stack(result)[:, 1:] == 0)
+
+
 def test_multi_target_l2_is_computed_within_channel_groups():
     schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
     prediction = jnp.zeros((1, 1, schema.n_state_channels, 2, 2))

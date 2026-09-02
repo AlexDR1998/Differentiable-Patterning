@@ -41,7 +41,7 @@ def _():
     )
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(ProcessingStep, mo):
     dataset_kind = mo.ui.dropdown(
         options={
@@ -67,6 +67,30 @@ def _(ProcessingStep, mo):
     timesteps = mo.ui.text(value="0,12,24,36,48", label="Timesteps (hours)")
     downsample = mo.ui.slider(1, 16, value=4, label="Downsample")
     batches = mo.ui.slider(1, 8, value=1, label="Replicates/batches")
+    conditions = mo.ui.multiselect(
+        options={"Control": "ctrl", "Nodal knockout at 0h": "sl0", "Nodal knockout at 24h": "sl24"},
+        value=["Control"],
+        label="260726 conditions",
+    )
+    experiment_groups = mo.ui.multiselect(
+        options={
+            "Cell fate (stain 1)": "cell_fate_s1",
+            "Cell fate (stain 2)": "cell_fate_s2",
+            "RNA expression": "rna_expression",
+            "Protein response": "protein_response",
+        },
+        value=[
+            "Cell fate (stain 1)",
+            "Cell fate (stain 2)",
+            "RNA expression",
+            "Protein response",
+        ],
+        label="260726 experiment groups",
+    )
+    substitute_preperturbation = mo.ui.checkbox(
+        value=True,
+        label="Use control measurements before knockout",
+    )
     knockout = mo.ui.dropdown(
         options={"Baseline": "baseline", "Knockout at 0h": "ko0", "Knockout at 24h": "ko24"},
         value="Baseline",
@@ -84,6 +108,8 @@ def _(ProcessingStep, mo):
     _controls = mo.vstack(
         [
             mo.hstack([dataset_kind, downsample, batches, knockout]),
+            mo.hstack([conditions, substitute_preperturbation]),
+            experiment_groups,
             root,
             filenames,
             mo.hstack([timesteps, align, percentile_low, percentile_high]),
@@ -95,8 +121,10 @@ def _(ProcessingStep, mo):
     return (
         align,
         batches,
+        conditions,
         dataset_kind,
         downsample,
+        experiment_groups,
         filenames,
         knockout,
         load_button,
@@ -104,16 +132,19 @@ def _(ProcessingStep, mo):
         percentile_low,
         processing,
         root,
+        substitute_preperturbation,
         timesteps,
     )
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     align,
     batches,
+    conditions,
     dataset_kind,
     downsample,
+    experiment_groups,
     filenames,
     knockout,
     load_button,
@@ -126,6 +157,7 @@ def _(
     percentile_low,
     processing,
     root,
+    substitute_preperturbation,
     timesteps,
 ):
     load_button
@@ -133,11 +165,17 @@ def _(
     _selected_files = tuple(value.strip() for value in filenames.value.split(",") if value.strip())
     _ordered_processing = tuple(processing.value)
     if dataset_kind.value == "micropattern_260726":
+        _selected_conditions = tuple(conditions.value)
+        if not _selected_conditions:
+            raise ValueError("Select at least one 260726 condition")
         loaded = load_micropattern_260726(
             root.value,
+            conditions=_selected_conditions,
             timesteps=_selected_times,
             downsample=downsample.value,
             replicate_count=batches.value,
+            experiment_groups=tuple(experiment_groups.value) or None,
+            substitute_preperturbation=substitute_preperturbation.value,
             align=align.value,
             hist_eqs=(percentile_low.value, percentile_high.value),
         )
@@ -168,7 +206,7 @@ def _(
     return (loaded,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(loaded, mo, np):
     data = np.asarray(loaded.data)
     names = tuple(getattr(loaded, "channel_names", ()))
@@ -183,7 +221,27 @@ def _(loaded, mo, np):
         "standard deviation": float(np.nanstd(data)),
         "finite fraction": float(np.isfinite(data).mean()),
     }
-    batch_index = mo.ui.slider(0, data.shape[0] - 1, value=0, label="Batch")
+    _aux = getattr(loaded, "aux", {})
+    _batch_conditions = tuple(_aux.get("batch_conditions", ()))
+    _batch_replicates = tuple(_aux.get("batch_replicates", ()))
+    _batch_options = {
+        (
+            f"{index}: {condition}, replicate {replicate}"
+            if index < len(_batch_conditions) and index < len(_batch_replicates)
+            else f"Batch {index}"
+        ): index
+        for index, (condition, replicate) in enumerate(
+            zip(
+                _batch_conditions or ("",) * data.shape[0],
+                _batch_replicates or ("",) * data.shape[0],
+            )
+        )
+    }
+    batch_index = mo.ui.dropdown(
+        options=_batch_options,
+        value=next(iter(_batch_options)),
+        label="Batch / condition",
+    )
     time_indices = mo.ui.multiselect(
         options={str(index): index for index in range(data.shape[1])},
         value=["0"],
@@ -203,6 +261,59 @@ def _(loaded, mo, np):
         ]
     )
     return batch_index, channel_indices, data, names, time_indices, zero_to_nan
+
+
+@app.cell(hide_code=True)
+def _(batch_index, loaded, mo, np, plt):
+    _mask = getattr(loaded, "measurement_mask", None)
+    _aux = getattr(loaded, "aux", {})
+    _groups = tuple(_aux.get("selected_experiment_groups", ()))
+    _group_mask = _aux.get("group_mask")
+    _source_conditions = _aux.get("source_conditions")
+    _substituted = _aux.get("is_substituted")
+    _source_files = _aux.get("source_files")
+    _times = tuple(_aux.get("timesteps", ()))
+
+    if _mask is None or not _groups:
+        _provenance_view = mo.md(
+            "## Measurement availability and provenance\n\n"
+            "This dataset does not expose modern micropattern provenance metadata."
+        )
+    else:
+        _mask_array = np.asarray(_mask)[batch_index.value]
+        _group_mask_array = np.asarray(_group_mask)[batch_index.value]
+        _rows = []
+        for _time_index, _time in enumerate(_times):
+            for _group_index, _group in enumerate(_groups):
+                _available = bool(_group_mask_array[_time_index, _group_index])
+                _rows.append(
+                    {
+                        "time (h)": _time,
+                        "experiment group": _group,
+                        "available": _available,
+                        "source condition": str(_source_conditions[batch_index.value, _time_index, _group_index]) if _available else "—",
+                        "control substituted": bool(_substituted[batch_index.value, _time_index, _group_index]) if _available else False,
+                        "source file": str(_source_files[batch_index.value, _time_index, _group_index]) if _available else "—",
+                    }
+                )
+        _availability_figure, _availability_axis = plt.subplots(
+            figsize=(max(7, _mask_array.shape[1] * 0.55), 3.5)
+        )
+        _availability_axis.imshow(_mask_array, aspect="auto", cmap="Greens", vmin=0, vmax=1)
+        _availability_axis.set_yticks(range(len(_times)), [f"{time}h" for time in _times])
+        _availability_axis.set_xlabel("measurement channel")
+        _availability_axis.set_ylabel("time")
+        _availability_axis.set_title("Available measurements for selected condition/replicate")
+        _availability_figure.tight_layout()
+        _provenance_view = mo.vstack(
+            [
+                mo.md("## Measurement availability and knockout provenance"),
+                _availability_figure,
+                mo.ui.table(_rows, selection=None, pagination=True, page_size=12),
+            ]
+        )
+    _provenance_view
+    return
 
 
 @app.cell

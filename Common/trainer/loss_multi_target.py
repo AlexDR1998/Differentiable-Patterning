@@ -86,12 +86,20 @@ def _texture_cost(
     return loss.reshape(shape[:4] + (-1,)).mean((3, 4))
 
 
-def _assignment(cost, components, mode, tau):
+def _assignment(cost, components, mode, tau, target_mask=None):
     batch_count = cost.shape[0]
     orders = jnp.asarray(tuple(permutations(range(batch_count))))
-    assigned = lambda values: jax.vmap(
-        lambda order: values[jnp.arange(batch_count), order].mean(0)
-    )(orders)
+    if target_mask is None:
+        target_mask = jnp.ones((batch_count, cost.shape[-1]), dtype=cost.dtype)
+    target_mask = jnp.asarray(target_mask, dtype=cost.dtype)
+
+    def assigned(values):
+        def assign_order(order):
+            weights = target_mask[order]
+            selected = values[jnp.arange(batch_count), order]
+            return (selected * weights).sum(0) / jnp.maximum(weights.sum(0), 1.0)
+
+        return jax.vmap(assign_order)(orders)
     values = assigned(cost)
     component_values = {name: assigned(value) for name, value in components.items()}
     if mode == "hard":
@@ -186,47 +194,84 @@ def multi_target_pairwise_costs(
     }
 
 
-def multi_target_assignment(costs, components, schema, args):
+def multi_target_assignment(costs, components, schema, args, measurement_mask=None):
     """Assign complete square pairwise matrices and return loss diagnostics."""
     weights = _weights(args)
     group_losses = []
     group_components = []
     assignment_regularisation = []
     assignment_entropy = []
+    if measurement_mask is None:
+        group_masks = [None] * len(schema.experiment_groups)
+    else:
+        measurement_mask = jnp.asarray(measurement_mask, dtype=bool)
+        expected_shape = (costs.shape[2], costs.shape[3], schema.n_measurement_channels)
+        if measurement_mask.shape != expected_shape:
+            raise ValueError(
+                "Multi-target measurement mask must have shape "
+                f"[target_batch, time, measurement]={expected_shape}, got "
+                f"{measurement_mask.shape}"
+            )
+        group_masks = [
+            jnp.all(measurement_mask[:, :, channels], axis=-1)
+            for channels in schema.group_measurement_indices
+        ]
     groups = zip(*(components[name] for name in weights))
-    for cost, group in zip(costs, groups):
+    for cost, group, group_mask in zip(costs, groups, group_masks):
         group = dict(zip(weights, group))
         loss, assigned, regularisation, entropy = _assignment(
             cost,
             group,
             args.get("assignment", "hard"),
             args.get("assignment_tau", 0.05),
+            group_mask,
         )
         group_losses.append(loss)
         group_components.append(assigned)
         assignment_regularisation.append(regularisation)
         assignment_entropy.append(entropy)
 
+    group_valid = jnp.stack(
+        [
+            jnp.ones_like(group_losses[0], dtype=bool)
+            if mask is None
+            else jnp.any(mask, axis=0)
+            for mask in group_masks
+        ]
+    )
+    valid_count = jnp.maximum(group_valid.sum(0), 1)
     components = {
-        name: jnp.stack([group[name] for group in group_components]).mean(0)
+        name: (
+            jnp.stack([group[name] for group in group_components]) * group_valid
+        ).sum(0)
+        / valid_count
         for name in weights
     }
     diagnostics = {name: weights[name] * value for name, value in components.items()}
     diagnostics.update({f"raw/{name}": value for name, value in components.items()})
-    diagnostics["assignment_regularisation"] = jnp.stack(assignment_regularisation).mean(0)
-    diagnostics["assignment_entropy"] = jnp.stack(assignment_entropy).mean(0)
+    diagnostics["assignment_regularisation"] = (
+        jnp.stack(assignment_regularisation) * group_valid
+    ).sum(0) / valid_count
+    diagnostics["assignment_entropy"] = (
+        jnp.stack(assignment_entropy) * group_valid
+    ).sum(0) / valid_count
     for group_index, group_name in enumerate(schema.group_names):
         diagnostics[f"group/{group_name}/total"] = group_losses[group_index]
         for name in weights:
             diagnostics[f"group/{group_name}/{name}"] = (
                 weights[name] * group_components[group_index][name]
             )
-    return jnp.stack(group_losses).mean(0), jax.lax.stop_gradient(diagnostics)
+    loss = (jnp.stack(group_losses) * group_valid).sum(0) / valid_count
+    return loss, jax.lax.stop_gradient(diagnostics)
 
 
-def multi_target_loss(prediction, target, boundary, schema, params, key, args):
+def multi_target_loss(
+    prediction, target, boundary, schema, params, key, args, measurement_mask=None
+):
     """Match unordered batches independently for each time and experiment group."""
     costs, components = multi_target_pairwise_costs(
         prediction, target, boundary, schema, params, key, args
     )
-    return multi_target_assignment(costs, components, schema, args)
+    return multi_target_assignment(
+        costs, components, schema, args, measurement_mask=measurement_mask
+    )
