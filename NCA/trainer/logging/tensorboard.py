@@ -48,6 +48,23 @@ def _trajectory_snapshot_channels(T, data_augmenter, t, channel_schema=None):
 	return T_snapshot[:,:data_augmenter.OBS_CHANNELS]
 
 
+def _trajectory_condition_labels(data_augmenter, batch_count, default_knockout_time=None):
+	"""Return human-readable condition labels aligned with rollout batches."""
+	intervention_times = getattr(data_augmenter, "intervention_times", None)
+	if intervention_times is None:
+		if default_knockout_time is None:
+			return ("baseline",) * batch_count
+		intervention_times = (default_knockout_time,) * batch_count
+	if len(intervention_times) != batch_count:
+		raise ValueError(
+			"Intervention times must match the number of logged trajectory batches"
+		)
+	return tuple(
+		"baseline" if time is None or int(time) < 0 else f"Nodal KO at {int(time)}h"
+		for time in intervention_times
+	)
+
+
 def _target_aligned_diagnostic_channels(outputs, grouped_channels=False, channel_schema=None):
 	"""Convert model outputs to the target channel layout used by diagnostics."""
 	outputs = np.array(outputs)
@@ -874,6 +891,7 @@ class NCA_Train_log(Train_log):
 		x,y = DATA_AUGMENTER.split_x_y(1)
 		x,y = DATA_AUGMENTER.advance_pool(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]
+		condition_labels = _trajectory_condition_labels(DATA_AUGMENTER, len(x))
 		# Log true data for side by side comparison
 		schema = self.diagnostic_channel_schema or getattr(DATA_AUGMENTER, "schema", None)
 		channel_count = schema.n_measurement_channels if schema else DATA_AUGMENTER.OBS_CHANNELS
@@ -882,7 +900,7 @@ class NCA_Train_log(Train_log):
 				batch[:, :channel_count],
 				self.channel_names,
 				_timepoint_labels(self.timepoint_names, batch.shape[0]),
-				f"True measurements · batch {batch_index + 1}",
+				f"True measurements · {condition_labels[batch_index]} · batch {batch_index + 1}",
 			)
 			for batch_index, batch in enumerate(DATA_AUGMENTER.return_observed_data())
 		]
@@ -928,7 +946,7 @@ class NCA_Train_log(Train_log):
 				T_snapshot,
 				self.channel_names,
 				_timepoint_labels(self.timepoint_names, T_snapshot.shape[0]),
-				f"NCA predictions · batch {b + 1}",
+				f"NCA predictions · {condition_labels[b]} · batch {b + 1}",
 			))
 			
 			if SAVE_TRAJECTORY:
@@ -1001,6 +1019,9 @@ class NCA_knockout_Train_log(NCA_Train_log):
 		x,y = DATA_AUGMENTER.split_x_y(1)
 		x,y = DATA_AUGMENTER.advance_pool(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]
+		condition_labels = _trajectory_condition_labels(
+			DATA_AUGMENTER, len(x), default_knockout_time=self.knockout_time
+		)
 		# Log true data for side by side comparison
 		schema = self.diagnostic_channel_schema or getattr(DATA_AUGMENTER, "schema", None)
 		channel_count = schema.n_measurement_channels if schema else DATA_AUGMENTER.OBS_CHANNELS
@@ -1009,7 +1030,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 				batch[:, :channel_count],
 				self.channel_names,
 				_timepoint_labels(self.timepoint_names, batch.shape[0]),
-				f"True measurements · batch {batch_index + 1}",
+				f"True measurements · {condition_labels[batch_index]} · batch {batch_index + 1}",
 			)
 			for batch_index, batch in enumerate(DATA_AUGMENTER.return_observed_data())
 		]
@@ -1049,7 +1070,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 				T_snapshot,
 				self.channel_names,
 				_timepoint_labels(self.timepoint_names, T_snapshot.shape[0]),
-				f"NCA predictions · batch {b + 1}",
+				f"NCA predictions · {condition_labels[b]} · batch {b + 1}",
 			))
 			
 			if SAVE_TRAJECTORY:

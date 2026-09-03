@@ -114,6 +114,49 @@ def test_multi_target_loss_ignores_missing_group_timepoints():
     assert jnp.allclose(loss, 0.0, atol=1e-5)
 
 
+def test_multi_target_assignment_does_not_cross_intervention_conditions():
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
+    prediction = jnp.stack(
+        [
+            jnp.zeros((1, schema.n_state_channels, 2, 2)),
+            jnp.ones((1, schema.n_state_channels, 2, 2)),
+        ]
+    )
+    target = jnp.take(prediction[::-1], jnp.asarray(schema.target_to_state), axis=2)
+    arguments = {
+        "multi_target_weights": {
+            "l2": 1.0,
+            "texture": 0.0,
+            "channel_mean": 0.0,
+            "radial": 0.0,
+            "correlation": 0.0,
+        }
+    }
+
+    unrestricted, _ = multi_target_loss(
+        prediction,
+        target,
+        jnp.ones((2, 2), dtype=bool),
+        schema,
+        None,
+        jax.random.PRNGKey(33),
+        arguments,
+    )
+    condition_matched, _ = multi_target_loss(
+        prediction,
+        target,
+        jnp.ones((2, 2), dtype=bool),
+        schema,
+        None,
+        jax.random.PRNGKey(33),
+        arguments,
+        assignment_groups=(-1, 0),
+    )
+
+    assert jnp.allclose(unrestricted, 0.0)
+    assert jnp.all(condition_matched > 0)
+
+
 def test_snapshot_reinjection_skips_unmeasured_channels():
     schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
     data = jnp.ones((2, 3, schema.n_measurement_channels, 2, 2))
@@ -135,6 +178,18 @@ def test_snapshot_reinjection_skips_unmeasured_channels():
     )
 
     assert jnp.all(jnp.stack(result)[:, 1:] == 0)
+
+
+def test_snapshot_reinjection_donors_preserve_intervention_condition():
+    augmenter = object.__new__(DataAugmenter)
+    augmenter.intervention_times = (-1, -1, 0, 0, 24, 24)
+    labels = jnp.asarray(augmenter.intervention_times)
+
+    for seed in range(10):
+        donors = augmenter._matched_donors(
+            jax.random.PRNGKey(seed), 6, jnp.arange(6)
+        )
+        assert jnp.array_equal(labels[donors], labels)
 
 
 def test_multi_target_l2_is_computed_within_channel_groups():

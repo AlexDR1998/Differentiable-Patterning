@@ -5,6 +5,7 @@ from dataclasses import replace
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import numpy as np
 from einops import repeat
 
 from Common.dataloader.micropattern import (
@@ -447,6 +448,11 @@ def load_data(
             condition_slices[CURRICULUM_CONDITIONS[item][0]]
             for item in curriculum
         ]
+        selection_indices = tuple(
+            batch_index
+            for selection in selections
+            for batch_index in range(selection.start, selection.stop)
+        )
         data = jnp.concatenate(
             [data[selection] for selection in selections], axis=0
         )
@@ -466,6 +472,27 @@ def load_data(
             boundary = jnp.concatenate([boundary] * pool_copies, axis=0)
             mask = jnp.concatenate([mask] * pool_copies, axis=0)
             intervention_times *= pool_copies
+        final_indices = selection_indices * pool_copies
+        batch_aux_keys = (
+            "group_boundary_masks",
+            "group_mask",
+            "source_conditions",
+            "is_substituted",
+            "source_files",
+            "batch_conditions",
+            "batch_replicates",
+        )
+        for key in batch_aux_keys:
+            value = aux.get(key)
+            if value is None:
+                continue
+            if isinstance(value, tuple):
+                aux[key] = tuple(value[index] for index in final_indices)
+            else:
+                aux[key] = value[np.asarray(final_indices)]
+        aux["pool_copies"] = pool_copies
+        aux["measurement_mask"] = mask
+        aux["loss_measurement_mask"] = mask[:, 1:]
         aux["curriculum"] = curriculum
         aux["intervention_times"] = (
             None if curriculum == ("baseline",) else intervention_times

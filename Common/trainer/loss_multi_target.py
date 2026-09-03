@@ -1,6 +1,6 @@
 """Permutation-invariant loss for small batches of snapshot measurements."""
 
-from itertools import combinations, permutations
+from itertools import combinations, permutations, product
 
 import jax
 import jax.numpy as jnp
@@ -86,9 +86,36 @@ def _texture_cost(
     return loss.reshape(shape[:4] + (-1,)).mean((3, 4))
 
 
-def _assignment(cost, components, mode, tau, target_mask=None):
+def _condition_preserving_orders(batch_count, assignment_groups):
+    if assignment_groups is None:
+        return tuple(permutations(range(batch_count)))
+    assignment_groups = tuple(assignment_groups)
+    if len(assignment_groups) != batch_count:
+        raise ValueError("Assignment groups must match the multi-target batch size")
+    unique_groups = tuple(dict.fromkeys(assignment_groups))
+    group_indices = tuple(
+        tuple(index for index, value in enumerate(assignment_groups) if value == group)
+        for group in unique_groups
+    )
+    orders = []
+    for group_permutations in product(
+        *(tuple(permutations(indices)) for indices in group_indices)
+    ):
+        order = list(range(batch_count))
+        for indices, permuted in zip(group_indices, group_permutations):
+            for index, target_index in zip(indices, permuted):
+                order[index] = target_index
+        orders.append(tuple(order))
+    return tuple(orders)
+
+
+def _assignment(
+    cost, components, mode, tau, target_mask=None, assignment_groups=None
+):
     batch_count = cost.shape[0]
-    orders = jnp.asarray(tuple(permutations(range(batch_count))))
+    orders = jnp.asarray(
+        _condition_preserving_orders(batch_count, assignment_groups)
+    )
     if target_mask is None:
         target_mask = jnp.ones((batch_count, cost.shape[-1]), dtype=cost.dtype)
     target_mask = jnp.asarray(target_mask, dtype=cost.dtype)
@@ -194,7 +221,14 @@ def multi_target_pairwise_costs(
     }
 
 
-def multi_target_assignment(costs, components, schema, args, measurement_mask=None):
+def multi_target_assignment(
+    costs,
+    components,
+    schema,
+    args,
+    measurement_mask=None,
+    assignment_groups=None,
+):
     """Assign complete square pairwise matrices and return loss diagnostics."""
     weights = _weights(args)
     group_losses = []
@@ -225,6 +259,7 @@ def multi_target_assignment(costs, components, schema, args, measurement_mask=No
             args.get("assignment", "hard"),
             args.get("assignment_tau", 0.05),
             group_mask,
+            assignment_groups,
         )
         group_losses.append(loss)
         group_components.append(assigned)
@@ -266,12 +301,25 @@ def multi_target_assignment(costs, components, schema, args, measurement_mask=No
 
 
 def multi_target_loss(
-    prediction, target, boundary, schema, params, key, args, measurement_mask=None
+    prediction,
+    target,
+    boundary,
+    schema,
+    params,
+    key,
+    args,
+    measurement_mask=None,
+    assignment_groups=None,
 ):
     """Match unordered batches independently for each time and experiment group."""
     costs, components = multi_target_pairwise_costs(
         prediction, target, boundary, schema, params, key, args
     )
     return multi_target_assignment(
-        costs, components, schema, args, measurement_mask=measurement_mask
+        costs,
+        components,
+        schema,
+        args,
+        measurement_mask=measurement_mask,
+        assignment_groups=assignment_groups,
     )

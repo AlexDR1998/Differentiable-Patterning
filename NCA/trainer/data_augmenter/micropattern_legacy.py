@@ -140,6 +140,33 @@ class MicropatternDataAugmenter(BasicAugmenter):
             self.intermediate_reinjection_probability_end - probability
         )
 
+    def _matched_donors(self, key, donor_count, global_indices):
+        """Permute replicate donors without crossing intervention conditions."""
+
+        intervention_times = getattr(self, "intervention_times", None)
+        if intervention_times is None:
+            return jax.random.permutation(key, donor_count)[global_indices]
+        intervention_times = tuple(int(value) for value in intervention_times)
+        if len(intervention_times) != donor_count:
+            raise ValueError(
+                "Intervention times must match the global reinjection donor pool"
+            )
+        donors = jnp.arange(donor_count)
+        for group_index, intervention_time in enumerate(
+            dict.fromkeys(intervention_times)
+        ):
+            indices = jnp.asarray(
+                [
+                    index
+                    for index, value in enumerate(intervention_times)
+                    if value == intervention_time
+                ]
+            )
+            donors = donors.at[indices].set(
+                jax.random.permutation(jax.random.fold_in(key, group_index), indices)
+            )
+        return donors[global_indices]
+
     def _group_reinject(self, x, i, key):
         """Apply the legacy snapshot pool update with coherent group donors.
 
@@ -164,7 +191,9 @@ class MicropatternDataAugmenter(BasicAugmenter):
         x = x.at[:, 1:].set(x[:, :-1])
 
         global_key, reset_key = jax.random.split(global_key)
-        reset_donors = jax.random.permutation(reset_key, donor_count)[global_indices]
+        reset_donors = self._matched_donors(
+            reset_key, donor_count, global_indices
+        )
         x = x.at[:, 0].set(truth[reset_donors, 0])
 
         if time_count > 1:
@@ -186,12 +215,12 @@ class MicropatternDataAugmenter(BasicAugmenter):
                     zip(self.schema.group_measurement_indices, self.state_groups)
                 ):
                     global_key, donor_key = jax.random.split(global_key)
-                    donors = jax.random.permutation(
-                        donor_key, donor_count
-                    )[global_indices]
+                    donors = self._matched_donors(
+                        donor_key, donor_count, global_indices
+                    )
                     values = measurements[donors, time_index][:, measurement_indices]
                     if self.measurement_mask is None:
-                        measured = jnp.ones_like(values, dtype=bool)
+                        measured = jnp.ones(values.shape[:2], dtype=bool)
                     else:
                         measured = jnp.asarray(self.measurement_mask)[
                             donors, time_index - 1

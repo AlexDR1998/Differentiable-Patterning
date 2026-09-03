@@ -124,6 +124,7 @@ def build_train_step(trainer, setup):
                 measurement_mask=jnp.stack(execution.loss_time_channel_mask())[
                     ..., 0, 0
                 ],
+                assignment_groups=trainer.intervention_times,
             )
             diagnostics = {}
             for name, value in components.items():

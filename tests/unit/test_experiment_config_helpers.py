@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 
 from Common.dataloader.preprocessing import PreprocessingConfig, ProcessingStep
@@ -691,6 +692,11 @@ def test_260726_knockout_curriculum_uses_standard_conditions_and_schema(monkeypa
             {
                 "channel_schema": object(),
                 "histogram_bins": jnp.ones((14, 2)),
+                "batch_conditions": tuple(
+                    condition for condition in conditions for _ in range(2)
+                ),
+                "batch_replicates": (1, 2) * len(conditions),
+                "source_conditions": np.arange(batch_count)[:, None],
             },
             ["marker"] * 14,
             boundary,
@@ -711,6 +717,14 @@ def test_260726_knockout_curriculum_uses_standard_conditions_and_schema(monkeypa
     assert calls[0]["conditions"] == ("ctrl", "sl0", "sl24")
     assert data.shape[0] == mask.shape[0] == 8
     assert aux["intervention_times"] == (-1, -1, -1, -1, 0, 0, 24, 24)
+    assert aux["batch_conditions"] == (
+        "ctrl", "ctrl", "ctrl", "ctrl", "sl0", "sl0", "sl24", "sl24"
+    )
+    np.testing.assert_array_equal(
+        np.asarray(aux["source_conditions"])[:, 0], [0, 1, 0, 1, 2, 3, 4, 5]
+    )
+    assert aux["measurement_mask"].shape == (8, 5, 14)
+    assert aux["loss_measurement_mask"].shape == (8, 4, 14)
     assert "_curbaseline-baseline-ko_0h-ko_24h" in cfg_str
 
 

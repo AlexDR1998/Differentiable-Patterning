@@ -200,6 +200,7 @@ class SyclTwoTileExecution(TrainingExecution):
     def multi_target_loss(
         self, prediction, target, boundary, schema, params, key, args,
         measurement_mask=None,
+        assignment_groups=None,
     ):
         """Gather scalar cost rows instead of complete prediction images."""
         target = jax.lax.all_gather(
@@ -222,6 +223,7 @@ class SyclTwoTileExecution(TrainingExecution):
             schema,
             args,
             measurement_mask=measurement_mask,
+            assignment_groups=assignment_groups,
         )
 
     def _pack_items(self, items, name, *, sharded=True, expected_ndim=None):

@@ -80,6 +80,7 @@ class ValidationEvaluator:
                 measurement_mask=jnp.stack(
                     self.trainer.loss_time_channel_mask
                 )[..., 0, 0],
+                assignment_groups=self.trainer.intervention_times,
             )
             metrics = {f"{prefix}/loss": jnp.mean(losses)}
             for name, value in components.items():

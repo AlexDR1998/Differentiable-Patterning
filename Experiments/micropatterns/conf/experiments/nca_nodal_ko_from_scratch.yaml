@@ -5,24 +5,32 @@ seed_mode: index
 
 grid:
   initialization.model_id: [null]
-
+  # run.repeat: [0, 1, 2, 3, 4]
+  run.repeat: [0]
   labels.gpu: [intel]
   model.family: [gNCA_sycl]
   model.channels: [48]
   trainer.backend.type: [sycl]
   trainer.loop_autodiff: [lax]
+  logging.wandb.project: [nca_micropattern_KO_finetune]
 
   data.dataset: [micropatterns_260726]
   data.micropattern.data_channels: [14]
   data.micropattern.experiment_groups:
     - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
   data.downsample: [16]
+  # data.batches: [2]
+  # data.micropattern.train_replicates: [[1,2]]
+  # data.micropattern.validation_replicates: [[3,4]]
+  
   knockout.channel: [Nodal]
   knockout.curriculum:
-    - [ko_0h, ko_24h]
+    - [baseline, ko_0h]
+    - [baseline, ko_24h]
     - [baseline, ko_0h, ko_24h]
+    # - [baseline, baseline, ko_0h, ko_24h]
 
-  run.iterations: [8000]
+  run.iterations: [12000]
   run.t: [128]
   optimiser.learn_rate: [1e-4]
   optimiser.type: [nadam]
@@ -32,14 +40,107 @@ grid:
   trainer.validation_rollout: [true]
 
   loss.terms: [multi_target]
-  loss.terms.0.multi_target_weights.l2: [1.0]
+  loss.terms.0.multi_target_weights.l2: [0.0]
   loss.terms.0.multi_target_weights.texture: [1.0]
   loss.terms.0.multi_target_weights.channel_mean: [0.0]
   loss.terms.0.multi_target_weights.correlation: [0.0]
-  loss.terms.0.multi_target_weights.radial: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
   loss.terms.0.random_channel_shuffle: [true]
 
 groups:
-  - data.batches: [1]
-    data.micropattern.train_replicates: [[1]]
-    data.micropattern.validation_replicates: [[2, 3, 4, 5, 6, 7, 8]]
+  - loss.schedule_label: [static, cos_macro, cos_reverse]
+    loss.terms.0.multi_target_schedules.l2.type:
+      [constant, cosine, cosine]
+    loss.terms.0.multi_target_schedules.l2.initial_factor:
+      [1.0, 1.0, 0.05]
+    loss.terms.0.multi_target_schedules.l2.final_factor:
+      [1.0, 0.25, 1.0]
+    loss.terms.0.multi_target_schedules.l2.start_fraction:
+      [0.0, 0.30, 0.30]
+    loss.terms.0.multi_target_schedules.l2.end_fraction:
+      [1.0, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.l2.stages:
+      [null, 8, 8]
+
+    loss.terms.0.multi_target_schedules.texture.type:
+      [constant, cosine, cosine]
+    loss.terms.0.multi_target_schedules.texture.initial_factor:
+      [1.0, 0.05, 1.0]
+    loss.terms.0.multi_target_schedules.texture.final_factor:
+      [1.0, 1.0, 0.25]
+    loss.terms.0.multi_target_schedules.texture.start_fraction:
+      [0.0, 0.30, 0.30]
+    loss.terms.0.multi_target_schedules.texture.end_fraction:
+      [1.0, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.texture.stages:
+      [null, 8, 8]
+
+    loss.terms.0.multi_target_schedules.channel_mean.type:
+      [constant, cosine, cosine]
+    loss.terms.0.multi_target_schedules.channel_mean.initial_factor:
+      [1.0, 1.0, 0.05]
+    loss.terms.0.multi_target_schedules.channel_mean.final_factor:
+      [1.0, 0.25, 1.0]
+    loss.terms.0.multi_target_schedules.channel_mean.start_fraction:
+      [0.0, 0.30, 0.30]
+    loss.terms.0.multi_target_schedules.channel_mean.end_fraction:
+      [1.0, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.channel_mean.stages:
+      [null, 8, 8]
+
+    loss.terms.0.multi_target_schedules.correlation.type:
+      [constant, cosine, cosine]
+    loss.terms.0.multi_target_schedules.correlation.initial_factor:
+      [1.0, 1.0, 0.05]
+    loss.terms.0.multi_target_schedules.correlation.final_factor:
+      [1.0, 0.25, 1.0]
+    loss.terms.0.multi_target_schedules.correlation.start_fraction:
+      [0.0, 0.30, 0.30]
+    loss.terms.0.multi_target_schedules.correlation.end_fraction:
+      [1.0, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.correlation.stages:
+      [null, 8, 8]
+
+    loss.terms.0.multi_target_schedules.radial.type:
+      [constant, cosine, cosine]
+    loss.terms.0.multi_target_schedules.radial.initial_factor:
+      [1.0, 1.0, 0.05]
+    loss.terms.0.multi_target_schedules.radial.final_factor:
+      [1.0, 0.25, 1.0]
+    loss.terms.0.multi_target_schedules.radial.start_fraction:
+      [0.0, 0.30, 0.30]
+    loss.terms.0.multi_target_schedules.radial.end_fraction:
+      [1.0, 0.75, 0.75]
+    loss.terms.0.multi_target_schedules.radial.stages:
+      [null, 8, 8]
+  - data.batches: [1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3]
+    data.micropattern.train_replicates:
+      - [1]
+      - [2]
+      - [3]
+      - [4]
+      - [1, 2]
+      - [1, 3]
+      - [1, 4]
+      - [2, 3]
+      - [2, 4]
+      - [3, 4]
+      - [1, 2, 3]
+      - [1, 2, 4]
+      - [1, 3, 4]
+      - [2, 3, 4]
+    data.micropattern.validation_replicates:
+      - [2, 3, 4]
+      - [1, 3, 4]
+      - [1, 2, 4]
+      - [1, 2, 3]
+      - [3, 4]
+      - [2, 4]
+      - [2, 3]
+      - [1, 4]
+      - [1, 3]
+      - [1, 2]
+      - [4]
+      - [3]
+      - [2]
+      - [1]

@@ -41,11 +41,13 @@ class TrainingExecution:
     def multi_target_loss(
         self, prediction, target, boundary, schema, params, key, args,
         measurement_mask=None,
+        assignment_groups=None,
     ):
         """Evaluate the reference full-batch multi-target loss."""
         return multi_target_loss(
             prediction, target, boundary, schema, params, key, args,
             measurement_mask=measurement_mask,
+            assignment_groups=assignment_groups,
         )
 
     def transform_step(self, make_step):

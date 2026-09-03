@@ -16,6 +16,7 @@ from NCA.trainer.logging.tensorboard import (
     NCA_knockout_Train_log,
     _biomarker_name,
     _target_aligned_diagnostic_channels,
+    _trajectory_condition_labels,
     _trajectory_snapshot_channels,
     compute_channel_correlation_diagnostics,
     compute_channel_time_diagnostics,
@@ -35,6 +36,19 @@ def _logger_without_wandb():
     logger = object.__new__(kaNCA_Train_log)
     logger.diagnostic_targets = None
     return logger
+
+
+def test_trajectory_condition_labels_follow_batch_interventions():
+    augmenter = type(
+        "Augmenter", (), {"intervention_times": (-1, 0, 24, None)}
+    )()
+
+    assert _trajectory_condition_labels(augmenter, 4) == (
+        "baseline",
+        "Nodal KO at 0h",
+        "Nodal KO at 24h",
+        "baseline",
+    )
 
 
 def test_fast_kan_logger_selection_uses_kan_logger():
