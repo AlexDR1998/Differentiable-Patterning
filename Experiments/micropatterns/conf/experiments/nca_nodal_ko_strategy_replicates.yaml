@@ -1,0 +1,111 @@
+experiment_name: nca_nodal_ko_strategy_replicates
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/nca_nodal_ko_strategy_replicates
+seed_mode: index
+
+# Controlled comparison of fresh training against WT-pretrained fine-tuning.
+# The first group zips each initialization to its matching held-out replicate split;
+# it is then crossed with six intervention curricula and ten stochastic repeats.
+# Total jobs: 4 initialization/split cases * 6 curricula * 10 repeats = 240.
+grid:
+  run.repeat: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+  labels.gpu: [intel]
+  model.family: [gNCA_sycl]
+  model.channels: [48]
+  trainer.backend.type: [sycl]
+  trainer.loop_autodiff: [lax]
+
+  logging.wandb.project: [nca_micropattern_KO_strategy_replicates]
+
+  data.dataset: [micropatterns_260726]
+  data.micropattern.data_channels: [14]
+  data.micropattern.experiment_groups:
+    - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+  data.micropattern.pool_copies: [1]
+  data.downsample: [16]
+
+  knockout.channel: [Nodal]
+  knockout.curriculum:
+    - [ko_0h]
+    - [ko_24h]
+    - [ko_0h, ko_24h]
+    - [baseline, ko_0h]
+    - [baseline, ko_24h]
+    - [baseline, ko_0h, ko_24h]
+
+  # run.iterations: [12000]
+  run.t: [128]
+  optimiser.learn_rate: [1e-4]
+  optimiser.type: [nadam]
+  optimiser.gradient_clip_norm: [1.0]
+  trainer.log_every: [200]
+  trainer.validation_every: [500]
+  trainer.validation_rollout: [true]
+
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [0.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.random_channel_shuffle: [true]
+
+  # Cosine-reverse schedule: begin texture-led and progressively emphasize
+  # radial structure over the middle of training.
+  loss.schedule_label: [cos_reverse]
+  loss.terms.0.multi_target_schedules.l2.type: [cosine]
+  loss.terms.0.multi_target_schedules.l2.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.l2.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.l2.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.l2.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.l2.stages: [8]
+
+  loss.terms.0.multi_target_schedules.texture.type: [cosine]
+  loss.terms.0.multi_target_schedules.texture.initial_factor: [1.0]
+  loss.terms.0.multi_target_schedules.texture.final_factor: [0.25]
+  loss.terms.0.multi_target_schedules.texture.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.texture.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.texture.stages: [8]
+
+  loss.terms.0.multi_target_schedules.channel_mean.type: [cosine]
+  loss.terms.0.multi_target_schedules.channel_mean.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.channel_mean.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.channel_mean.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.channel_mean.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.channel_mean.stages: [8]
+
+  loss.terms.0.multi_target_schedules.correlation.type: [cosine]
+  loss.terms.0.multi_target_schedules.correlation.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.correlation.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.correlation.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.correlation.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.correlation.stages: [8]
+
+  loss.terms.0.multi_target_schedules.radial.type: [cosine]
+  loss.terms.0.multi_target_schedules.radial.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.radial.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.radial.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.radial.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.radial.stages: [8]
+
+groups:
+  # Fresh 12->34, fresh 34->12, fine-tuned 12->34, fine-tuned 34->12.
+  # The pretrained IDs are the matching WT models used by the corrected KO sweep.
+  - initialization.model_id:
+      - null
+      - null
+      - 20260831T213902Z-cfgce945394bb51-4e99cc6b
+      - 20260831T202033Z-cfg85e412b71d3d-448a4033
+    data.batches: [2, 2, 2, 2]
+    data.micropattern.train_replicates:
+      - [1, 2]
+      - [3, 4]
+      - [1, 2]
+      - [3, 4]
+    data.micropattern.validation_replicates:
+      - [3, 4]
+      - [1, 2]
+      - [3, 4]
+      - [1, 2]
+    run.iterations: [16000,16000,4000,4000]
