@@ -1,0 +1,115 @@
+experiment_name: nca_micropattern_replicate_resolutions
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/nca_micropattern_replicate_resolutions
+seed_mode: index
+
+# Resolution-transfer sweep for the established 14-channel replicate regime.
+# The reference discretisation is downsample=16, run.t=128.  Each branch
+# keeps its physical rollout interval fixed while changing spatial resolution.
+# With h proportional to downsample, convective dynamics require t ∝ h^-1 and
+# diffusive dynamics require t ∝ h^-2.
+#
+# Total jobs: 2 held-out replicate splits * 10 repeats * 3 resolutions
+#             * 2 scaling laws = 120.
+grid:
+  run.repeat: [0, 1, 2, 3, 4]
+
+  labels.gpu: [H200]
+  labels.scaling: [convective, diffusive]
+  model.family: [gNCA]
+  model.channels: [48]
+  # trainer.backend.type: [sycl]
+  
+
+  logging.wandb.project: [nca_micropattern_replicate_resolutions]
+
+  data.dataset: [micropatterns_260726]
+  data.micropattern.task: [micropattern_multi_replicate]
+  data.micropattern.data_channels: [14]
+  data.micropattern.experiment_groups:
+    - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+  data.micropattern.pool_copies: [1]
+
+  knockout.mode: [null]
+  knockout.time: [null]
+  knockout.curriculum: [null]
+
+  run.iterations: [12000]
+  optimiser.learn_rate: [1e-4]
+  optimiser.type: [nadam]
+  optimiser.gradient_clip_norm: [1.0]
+  trainer.log_every: [200]
+  trainer.validation_every: [500]
+  trainer.validation_rollout: [true]
+
+  # Established VGG/texture + radial objective.
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [0.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.random_channel_shuffle: [true]
+
+  # Reverse cosine schedule: texture first, radial structure later.
+  loss.schedule_label: [cos_reverse]
+  loss.terms.0.multi_target_schedules.l2.type: [cosine]
+  loss.terms.0.multi_target_schedules.l2.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.l2.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.l2.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.l2.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.l2.stages: [8]
+
+  loss.terms.0.multi_target_schedules.texture.type: [cosine]
+  loss.terms.0.multi_target_schedules.texture.initial_factor: [1.0]
+  loss.terms.0.multi_target_schedules.texture.final_factor: [0.25]
+  loss.terms.0.multi_target_schedules.texture.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.texture.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.texture.stages: [8]
+
+  loss.terms.0.multi_target_schedules.channel_mean.type: [cosine]
+  loss.terms.0.multi_target_schedules.channel_mean.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.channel_mean.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.channel_mean.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.channel_mean.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.channel_mean.stages: [8]
+
+  loss.terms.0.multi_target_schedules.correlation.type: [cosine]
+  loss.terms.0.multi_target_schedules.correlation.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.correlation.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.correlation.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.correlation.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.correlation.stages: [8]
+
+  loss.terms.0.multi_target_schedules.radial.type: [cosine]
+  loss.terms.0.multi_target_schedules.radial.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.radial.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.radial.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.radial.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.radial.stages: [8]
+
+groups:
+  # Train each two-replicate partition and validate on its complement.
+  - data.batches: [2, 2]
+    data.micropattern.train_replicates:
+      - [1, 2]
+      - [3, 4]
+    data.micropattern.validation_replicates:
+      - [3, 4]
+      - [1, 2]
+
+branches:
+  - when:
+      labels.scaling: convective
+    groups:
+      # t = 128 * (16 / downsample)
+      - data.downsample: [4, 8, 16, 32]
+        run.t: [512, 256, 128, 64]
+        trainer.loop_autodiff: [checkpointed,lax, lax, lax]
+  - when:
+      labels.scaling: diffusive
+    groups:
+      # t = 128 * (16 / downsample)^2
+      - data.downsample: [4, 8, 16, 32]
+        run.t: [2048, 512, 128, 32]
+        trainer.loop_autodiff: [checkpointed,checkpointed, lax, lax]
