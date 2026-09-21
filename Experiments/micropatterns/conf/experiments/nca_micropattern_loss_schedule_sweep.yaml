@@ -5,9 +5,9 @@ seed_mode: index
 
 grid:
   
-  labels.gpu: [intel]
-  model.family: [gNCA_sycl]
-  trainer.backend.type: [sycl]
+  labels.gpu: [nvidia]
+  model.family: [gNCA]
+  trainer.backend.type: [nvidia]
 
   # labels.gpu: [H200]
   # model.family: [gNCA]

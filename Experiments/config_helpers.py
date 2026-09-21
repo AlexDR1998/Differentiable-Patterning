@@ -13,11 +13,14 @@ from NCA.model.NCA_gated_noise_model import gnNCA
 from NCA.model.NCA_hierarchical import HNCA
 from NCA.model.NCA_model import NCA
 from NCA.model.NCA_model_fast import NCA as NCAFast
-from NCA.model.NCA_sycl import NCA as NCASycl, gNCA as GatedNCASycl
 from NCA.model.NCA_noise_model import nNCA
 
 
 MAX_WANDB_TAG_LENGTH = 64
+PORTABLE_MODEL_FAMILIES = {
+    "NCA_sycl": "NCA_fast",
+    "gNCA_sycl": "gNCA",
+}
 EXCLUDED_WANDB_TAG_KEYS = {
     "logging.wandb.project",
     "logging.wandb.group",
@@ -265,12 +268,13 @@ def _build_activation(model_config):
     raise ValueError(f"Unsupported activation {activation_name}")
 
 
-def build_model_config_string(model_config):
+def build_model_config_string(model_config, family=None):
     from types import SimpleNamespace
 
     cfg = SimpleNamespace(model=model_config)
+    family = cfg.model.family if family is None else family
     cfg_str = (
-        f"{cfg.model.family}"
+        f"{family}"
         f"_c{cfg.model.channels}"
         # f"_k{_compact_value(list(cfg.model.kernel_str))}"
         # f"_fr{cfg.model.fire_rate}"
@@ -281,9 +285,9 @@ def build_model_config_string(model_config):
     kernel_scale = _cfg_get(cfg.model, "kernel_scale", 1)
     if kernel_scale != 1:
         cfg_str += f"_ks{kernel_scale}"
-    if cfg.model.family in {"nNCA", "gnNCA"}:
+    if family in {"nNCA", "gnNCA"}:
         cfg_str += f"_pn{_cfg_get(cfg.model, 'parameter_noise_level', 0.01)}"
-    if cfg.model.family == "FastKaNCA":
+    if family == "FastKaNCA":
         kan_cfg = _cfg_get(cfg.model, "kan", None)
         cfg_str += f"_kb{_cfg_get(kan_cfg, 'num_basis', 8)}"
         basis = _cfg_get(kan_cfg, "basis", "rbf")
@@ -304,7 +308,7 @@ def build_model_config_string(model_config):
             cfg_str += "_noln"
         if not _cfg_get(kan_cfg, "final_zero_init", True):
             cfg_str += "_nozero"
-    if cfg.model.family == "HNCA":
+    if family == "HNCA":
         cfg_str += f"_s{cfg.model.scale}"
         if cfg.model.parent_learnable_kernels:
             cfg_str += "_plk"
@@ -318,13 +322,14 @@ def build_model_config_string(model_config):
 
 
 def build_model(model_config, key=None):
-    """Construct a model solely from its reconstructable typed config."""
+    """Construct a model from config, mapping archived SYCL families to JAX."""
     from types import SimpleNamespace
 
+    family = PORTABLE_MODEL_FAMILIES.get(model_config.family, model_config.family)
     cfg = SimpleNamespace(model=model_config)
     activation = _build_activation(model_config)
     kernel_scale = _cfg_get(cfg.model, "kernel_scale", 1)
-    if cfg.model.family == "NCA":
+    if family == "NCA":
         model = NCA(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
@@ -334,7 +339,7 @@ def build_model(model_config, key=None):
             KERNEL_SCALE=kernel_scale,
             key=key,
         )
-    elif cfg.model.family == "NCA_fast":
+    elif family == "NCA_fast":
         model = NCAFast(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
@@ -344,27 +349,7 @@ def build_model(model_config, key=None):
             KERNEL_SCALE=kernel_scale,
             key=key,
         )
-    elif cfg.model.family == "NCA_sycl":
-        model = NCASycl(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            key=key,
-        )
-    elif cfg.model.family == "gNCA_sycl":
-        model = GatedNCASycl(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            key=key,
-        )
-    elif cfg.model.family == "gNCA":
+    elif family == "gNCA":
         model = gNCA(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
@@ -374,7 +359,7 @@ def build_model(model_config, key=None):
             KERNEL_SCALE=kernel_scale,
             key=key,
         )
-    elif cfg.model.family == "nNCA":
+    elif family == "nNCA":
         model = nNCA(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
@@ -385,7 +370,7 @@ def build_model(model_config, key=None):
             PARAMETER_NOISE_LEVEL=_cfg_get(cfg.model, "parameter_noise_level", 0.01),
             key=key,
         )
-    elif cfg.model.family == "gnNCA":
+    elif family == "gnNCA":
         model = gnNCA(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
@@ -396,7 +381,7 @@ def build_model(model_config, key=None):
             PARAMETER_NOISE_LEVEL=_cfg_get(cfg.model, "parameter_noise_level", 0.01),
             key=key,
         )
-    elif cfg.model.family == "FastKaNCA":
+    elif family == "FastKaNCA":
         model = FastKaNCA(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
@@ -407,7 +392,7 @@ def build_model(model_config, key=None):
             KAN_AUX=_build_kan_aux(model_config),
             key=key,
         )
-    elif cfg.model.family == "HNCA":
+    elif family == "HNCA":
         model = HNCA(
             N_CHANNELS=cfg.model.channels,
             SCALE=cfg.model.scale,
@@ -424,8 +409,8 @@ def build_model(model_config, key=None):
             key=key,
         )
     else:
-        raise ValueError(f"Unknown model family {cfg.model.family}")
-    return model, build_model_config_string(model_config)
+        raise ValueError(f"Unknown model family {family}")
+    return model, build_model_config_string(model_config, family=family)
 
 
 def resolve_checkpoint_path(checkpoint_config, env=None):
@@ -476,15 +461,15 @@ def load_model_registry_list(
     export_path,
     store_root=None,
     key=None,
-    implementation="recorded",
+    implementation="portable",
     env=None,
 ):
     """Load the NCA models named by a model-registry explorer YAML export.
 
     Models are returned in export order. Each registry bundle verifies its
-    checkpoint checksum before reconstructing the recorded architecture and
-    loading its Equinox leaves. Set ``implementation="portable"`` to replace
-    a recorded SYCL implementation with its equivalent standard JAX model.
+    checkpoint checksum before reconstructing the architecture and loading its
+    Equinox leaves. Portable loading is the default and replaces an archived
+    SYCL implementation with its equivalent standard JAX model.
 
     ``store_root`` defaults to ``MODEL_STORE_ROOT`` and then ``./models``,
     matching the registry CLI and explorer defaults.

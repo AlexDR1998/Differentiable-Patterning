@@ -104,7 +104,7 @@ Run the lightweight unit test suite with:
 pytest tests/unit
 ```
 
-Integration and hardware tests may require GPU, SYCL, datasets, model assets,
+Integration and hardware tests may require a GPU, datasets, model assets,
 or cluster-specific configuration. They are not expected to run in every local
 development environment.
 

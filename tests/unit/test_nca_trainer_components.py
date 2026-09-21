@@ -106,7 +106,7 @@ def test_rejected_transition_restores_destination_from_pre_rollout_pool():
     )
 
 
-def test_rejected_transition_merge_handles_sycl_tile_axis():
+def test_rejected_transition_merge_handles_leading_device_axis():
     previous = [jnp.zeros((2, 4, 1, 1, 1))]
     advanced = [jnp.ones((2, 4, 1, 1, 1))]
 

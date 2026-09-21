@@ -148,7 +148,7 @@ def test_trainer_backend_defaults_to_unconstrained_jax():
     assert config.training.trainer.backend.type == "none"
 
 
-def test_sycl_trainer_settings_are_scoped_to_sycl_backend():
+def test_archived_sycl_settings_remain_deserializable_for_old_bundles():
     value = yaml.safe_load(
         Path("Experiments/micropatterns/conf/base_config.yaml").read_text()
     )

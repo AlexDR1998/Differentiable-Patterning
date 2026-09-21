@@ -54,9 +54,9 @@ from NCA.model.config import (
     ModelConfig,
 )
 from NCA.trainer.config import (
+    ArchivedSyclTrainerBackendConfig,
     NvidiaTrainerBackendConfig,
     PoolAdmissionConfig,
-    SyclTrainerBackendConfig,
     TrainerBackendConfig,
     TrainerConfig,
 )
@@ -84,7 +84,7 @@ def _trainer_backend(value: Any, path: str) -> TrainerBackendConfig:
     classes = {
         "none": TrainerBackendConfig,
         "nvidia": NvidiaTrainerBackendConfig,
-        "sycl": SyclTrainerBackendConfig,
+        "sycl": ArchivedSyclTrainerBackendConfig,
     }
     if backend_type not in classes:
         raise ValueError(
@@ -461,13 +461,6 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
     if logging_node.get("singular_values") is not None:
         logging_node["singular_values"] = _strict(SingularValueLoggingConfig, logging_node["singular_values"], "logging.singular_values")
     logging = _strict(LoggingConfig, logging_node, "logging")
-    uses_sycl_model = model.family in {"NCA_sycl", "gNCA_sycl"}
-    uses_sycl_trainer = training.trainer.backend.type == "sycl"
-    if uses_sycl_model != uses_sycl_trainer:
-        raise ValueError(
-            "model.family in {'NCA_sycl', 'gNCA_sycl'} and training.trainer.backend.type='sycl' "
-            "must be configured together"
-        )
     return ExperimentConfig(
         schema_version=schema_version,
         seed=int(root.get("seed", 0)),

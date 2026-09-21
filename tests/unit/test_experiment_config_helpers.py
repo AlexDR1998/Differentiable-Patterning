@@ -22,7 +22,6 @@ from Experiments.emoji.config_helpers import (
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_model import NCA
 from NCA.model.NCA_model_fast import NCA as FastNCA
-from NCA.model.NCA_sycl import NCA as SyclNCA
 from NCA.trainer.data_augmenter.colony_4ch import DataAugmenter as DataAugmenter4Ch
 from NCA.trainer.data_augmenter.colony_9ch import DataAugmenter as DataAugmenterGrouped
 
@@ -138,12 +137,12 @@ def test_build_model_constructs_fast_nca_and_marks_filename():
     assert cfg_str.startswith("NCA_fast_c4")
 
 
-def test_build_model_constructs_sycl_nca_and_marks_filename():
+def test_build_model_maps_archived_sycl_family_to_portable_nca():
     cfg = _base_cfg("NCA_sycl")
     model, cfg_str = build_model(cfg.model, key=jax.random.PRNGKey(0))
 
-    assert isinstance(model, SyclNCA)
-    assert cfg_str.startswith("NCA_sycl_c4")
+    assert isinstance(model, FastNCA)
+    assert cfg_str.startswith("NCA_fast_c4")
 
 
 def test_build_model_constructs_fast_kan_nca_with_defaults():

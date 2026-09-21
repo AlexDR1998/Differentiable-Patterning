@@ -115,15 +115,6 @@ def build_run_name(cfg, model_name, optimiser_name):
     else:
         raise ValueError(f"Unknown run.mode {mode!r}; expected 'train' or 'benchmark'")
 
-    if cfg.model.family in {"NCA_sycl", "gNCA_sycl"}:
-        backend = cfg.training.trainer.backend
-        details += f"_fuse{backend.fused_steps}"
-        details += f"_sync{int(backend.synchronize_custom_calls)}"
-        details += f"_stagesync{int(backend.strict_stage_synchronization)}"
-        details += f"_regreduce{backend.regulariser_reduction}"
-        details += f"_mklserial{int(backend.serialize_onemkl)}"
-        details += f"_bwdserial{int(backend.serialize_backward_custom_calls)}"
-
     return f"{model_name}_{loss_name}_{details}_{optimiser_name}"
 
 

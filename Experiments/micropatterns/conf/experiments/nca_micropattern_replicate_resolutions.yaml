@@ -18,7 +18,7 @@ grid:
   labels.scaling: [convective, diffusive]
   model.family: [gNCA]
   model.channels: [48]
-  # trainer.backend.type: [sycl]
+  trainer.backend.type: [nvidia]
   
   system.precision: [bfloat16]
 

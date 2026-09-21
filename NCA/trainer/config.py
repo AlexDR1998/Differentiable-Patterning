@@ -35,7 +35,9 @@ class NvidiaTrainerBackendConfig(TrainerBackendConfig):
 
 
 @dataclass(frozen=True)
-class SyclTrainerBackendConfig(TrainerBackendConfig):
+class ArchivedSyclTrainerBackendConfig(TrainerBackendConfig):
+    """Legacy schema retained solely to deserialize archived model bundles."""
+
     type: str = "sycl"
     fused_steps: int = 2
     synchronize_custom_calls: bool = False
@@ -46,14 +48,6 @@ class SyclTrainerBackendConfig(TrainerBackendConfig):
     serialize_custom_calls: bool = False
     serialize_onemkl: bool = False
     serialize_backward_custom_calls: bool = False
-
-    def __post_init__(self):
-        if self.fused_steps < 1:
-            raise ValueError("trainer.backend.fused_steps must be positive")
-        if self.regulariser_reduction not in {"atomic", "two_stage"}:
-            raise ValueError(
-                "trainer.backend.regulariser_reduction must be 'atomic' or 'two_stage'"
-            )
 
 
 @dataclass(frozen=True)

@@ -8,9 +8,9 @@ seed_mode: index
 grid:
   
   
-  labels.gpu: [intel]
+  labels.gpu: [nvidia]
 
-  trainer.backend.type: [sycl]
+  trainer.backend.type: [nvidia]
   trainer.loop_autodiff: [lax]
 
   logging.wandb.project: [nca_micropattern_KO_finetune]
@@ -53,14 +53,14 @@ groups:
     data.batches: [2,2]
     data.micropattern.train_replicates: [[1,2],[3,4]]
     data.micropattern.validation_replicates: [[3,4],[1,2]]
-    model.family: [gNCA_sycl,gNCA_sycl]
+    model.family: [gNCA,gNCA]
     model.channels: [48,48]
   # - initialization.model_id: [20260831T213902Z-cfgce945394bb51-4e99cc6b] 
   # # 1,2 or 3,4 replicate, cos_reverse, radial, gNCA, repeat 2 and repeat 1 respectively
   #   data.batches: [2]
   #   data.micropattern.train_replicates: [[1,2]]
   #   data.micropattern.validation_replicates: [[3,4]]
-  #   model.family: [gNCA_sycl]
+  #   model.family: [gNCA]
   #   model.channels: [48]
   - loss.terms.0.multi_target_weights.l2: [0.0,0.0,1.0,1.0,0.0,1.0,1.0]
     loss.terms.0.multi_target_weights.radial: [0.0,1.0,0.0,1.0,1.0,0.0,1.0]

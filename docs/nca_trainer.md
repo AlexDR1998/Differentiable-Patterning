@@ -29,7 +29,6 @@ Models, arrays and PRNG keys are runtime values and do not belong in config.
 - `checkpointing.py` owns best-checkpoint policy.
 - `instrumentation.py` contains optional profiling and timing.
 - `training_execution.py` defines standard execution behavior.
-- `sycl_execution.py` contains two-tile execution behavior.
 - `trainer.py` is the public backend-selection boundary.
 
 The compiled numerical step performs rollout, objective differentiation and
@@ -38,4 +37,3 @@ checkpoint decisions remain outside differentiated code.
 
 `NCA/trainer_old` is a read-only historical fallback and must not be imported
 by active code.
-

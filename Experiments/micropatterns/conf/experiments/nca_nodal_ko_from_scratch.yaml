@@ -7,10 +7,10 @@ grid:
   initialization.model_id: [null]
   # run.repeat: [0, 1, 2, 3, 4]
   run.repeat: [0]
-  labels.gpu: [intel]
-  model.family: [gNCA_sycl]
+  labels.gpu: [nvidia]
+  model.family: [gNCA]
   model.channels: [48]
-  trainer.backend.type: [sycl]
+  trainer.backend.type: [nvidia]
   trainer.loop_autodiff: [lax]
   logging.wandb.project: [nca_micropattern_KO_finetune]
 

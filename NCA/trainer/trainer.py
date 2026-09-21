@@ -286,7 +286,7 @@ class NcaTrainer:
 		apply_intermediate_regs,
 		training_execution,
 	):
-		"""Reference one-step scan; SYCL trainers may override the rollout."""
+		"""Reference one-step NCA scan."""
 		state_shape = states[0].shape[0]
 
 		def nca_step(carry, j):
@@ -356,16 +356,11 @@ class NcaTrainer:
 def build_trainer(config, model, data, context: TrainerContext) -> NcaTrainer:
 	"""Construct the trainer selected by the typed backend configuration."""
 	backend_type = config.training.trainer.backend.type
-	is_sycl_model = config.model.family in {"NCA_sycl", "gNCA_sycl"}
-	if (backend_type == "sycl") != is_sycl_model:
-		raise ValueError(
-			"model.family in {'NCA_sycl', 'gNCA_sycl'} and trainer.backend.type='sycl' "
-			"must be selected together"
-		)
 	if backend_type == "sycl":
-		from NCA.trainer.backend.sycl.trainer import SyclNcaTrainer
-
-		return SyclNcaTrainer(config, model, data, context)
+		raise ValueError(
+			"The SYCL training backend has been archived. Use backend.type='nvidia' "
+			"with NCA_fast/gNCA, or load an old bundle portably for inference."
+		)
 	if backend_type not in {"none", "nvidia"}:
 		raise ValueError(f"Unsupported trainer backend {backend_type!r}")
 	return NcaTrainer(config, model, data, context)

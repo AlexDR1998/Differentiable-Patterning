@@ -227,7 +227,7 @@ class ModelBundle:
                 f"Checkpoint checksum mismatch for {self.id}: {actual} != {expected}"
             )
 
-    def load_model(self, key=None, *, implementation: str = "recorded"):
+    def load_model(self, key=None, *, implementation: str = "portable"):
         """Reconstruct the model and load its saved Equinox leaves.
 
         ``implementation="portable"`` replaces a backend-specific SYCL NCA
@@ -239,6 +239,14 @@ class ModelBundle:
             import jax.random as jr
 
             key = jr.PRNGKey(0)
+        if (
+            implementation == "recorded"
+            and self.config.model.family in PORTABLE_MODEL_FAMILIES
+        ):
+            raise ValueError(
+                "The recorded SYCL implementation is archived and unavailable; "
+                "use implementation='portable' for CPU/CUDA inference"
+            )
         if implementation == "recorded":
             model_config = self.config.model
         elif implementation == "portable":

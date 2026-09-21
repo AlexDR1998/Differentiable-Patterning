@@ -277,7 +277,9 @@ def test_load_model_portably_reconstructs_sycl_checkpoints(
         repository_root=tmp_path,
     )
 
-    loaded = bundle.load_model(key=jr.PRNGKey(9), implementation="portable")
+    # Portable loading is the default so archived Intel bundles work directly
+    # on CPU and CUDA without importing the retired backend.
+    loaded = bundle.load_model(key=jr.PRNGKey(9))
     source_arrays = [
         leaf for leaf in jax.tree_util.tree_leaves(source) if eqx.is_array(leaf)
     ]
@@ -296,6 +298,9 @@ def test_load_model_portably_reconstructs_sycl_checkpoints(
     updated = loaded(state, key=jr.PRNGKey(11))
     assert updated.shape == state.shape
     assert jnp.all(jnp.isfinite(updated))
+
+    with pytest.raises(ValueError, match="recorded SYCL implementation"):
+        bundle.load_model(key=jr.PRNGKey(12), implementation="recorded")
 
 
 def test_load_model_rejects_unknown_implementation(tmp_path):
