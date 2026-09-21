@@ -54,7 +54,8 @@ drawtext=fontfile=${font}:text='Cer1':x='(w/3+10)':y=10:fontsize=22:fontcolor=cy
 drawtext=fontfile=${font}:text='Lefty2':x='(w/3+10)':y=30:fontsize=22:fontcolor=magenta, \
 drawtext=fontfile=${font}:text='Nodal':x='(w/3+10)':y=50:fontsize=22:fontcolor=yellow, \
 drawtext=fontfile=${font}:text='FOXA2':x='(2*w/3+10)':y=10:fontsize=22:fontcolor=cyan, \
-drawtext=fontfile=${font}:text='LEF1':x='(2*w/3+10)':y=30:fontsize=22:fontcolor=magenta"
+drawtext=fontfile=${font}:text='LEF1':x='(2*w/3+10)':y=30:fontsize=22:fontcolor=magenta, \
+drawtext=fontfile=${font}:text='SMAD23':x='(2*w/3+10)':y=50:fontsize=22:fontcolor=yellow"
 
 # drawtext=fontfile=${font}:text='Nodal':x='(2*w/3+10)':y=30:fontsize=12:fontcolor=magenta
 

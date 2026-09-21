@@ -10,7 +10,7 @@
 # ]
 # ///
 
-"""A read-only marimo explorer for a local model registry.
+"""A marimo explorer for a local model registry.
 
 Run from the repository root with:
 
@@ -30,22 +30,27 @@ with app.setup:
     if str(_repository_root) not in sys.path:
         sys.path.insert(0, str(_repository_root))
     import os
+    import json
     import sqlite3
     from pathlib import Path
 
     import marimo as mo
     import pandas as pd
     from dotenv import load_dotenv
+    from omegaconf import OmegaConf
     load_dotenv(_repository_root / ".env", override=False)
         # try:
+    import jax
     import jax.numpy as jnp
     import jax.random as jr
     import matplotlib.pyplot as plt
     import numpy as np
 
-    from Common.model.boundary import hard_boundary, model_boundary, no_boundary
     from NCA.registry import ModelRegistry, verify_evaluation_input
-    from NCA.trainer.intervention import apply_model_with_blocked_channel
+    from NCA.trainer.intervention import (
+        rollout_model_sampled,
+        rollout_model_with_blocked_channel_sampled,
+    )
 
 
 @app.cell(hide_code=True)
@@ -53,10 +58,25 @@ def _():
     mo.md("""
     # Model registry explorer
 
-    Search the read-only SQLite catalogue, then select a model to inspect its
-    indexed metadata. Rebuild the index separately with
+    Search the SQLite catalogue, select models, and add persistent notes for
+    downstream labels and analysis. Rebuild the index separately with
     `python -m Experiments.model_registry reindex` when needed.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    _backend = jax.default_backend()
+    _devices = ", ".join(
+        f"{_device.platform}: {_device.device_kind}" for _device in jax.devices()
+    )
+    _kind = "success" if _backend == "gpu" else "warn"
+    mo.callout(
+        f"JAX backend: **{_backend}** · Devices: {_devices}. "
+        "The first rollout for each model architecture includes JIT compilation.",
+        kind=_kind,
+    )
     return
 
 
@@ -392,12 +412,151 @@ def _(results, selected_model_rows, set_selected_model_rows):
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md("""
+    ## Export a model list
+
+    Download the curated selection (which is retained while filters change) or
+    every model in the current results table. The YAML contains complete indexed
+    model metadata, annotations, and tags, ready for downstream loading.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    export_scope = mo.ui.dropdown(
+        {
+            "Selected models": "selected",
+            "Current filtered results": "filtered",
+        },
+        value="Selected models",
+        label="Models to export",
+    )
+    export_filename = mo.ui.text(
+        "model_registry_selection.yaml",
+        label="YAML filename",
+        full_width=True,
+    )
+    mo.hstack([export_scope, export_filename], widths=[1, 2])
+    return export_filename, export_scope
+
+
+@app.cell(hide_code=True)
+def _(
+    database_error,
+    database_path,
+    export_filename,
+    export_scope,
+    note_save_status,
+    results,
+    selected_model_rows,
+):
+    _ = note_save_status  # Rebuild export data after a note is saved.
+    if export_scope.value == "selected":
+        _model_ids = list(selected_model_rows())
+    else:
+        _model_ids = results["model_id"].tolist()
+
+    _requested_name = Path(export_filename.value.strip()).name
+    if not _requested_name:
+        _requested_name = "model_registry_selection.yaml"
+    if not _requested_name.lower().endswith((".yaml", ".yml")):
+        _requested_name += ".yaml"
+
+    if database_error or not _model_ids:
+        _yaml_bytes = b""
+    else:
+        _placeholders = ", ".join("?" for _ in _model_ids)
+        with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
+            _model_rows = pd.read_sql_query(
+                "SELECT m.*, a.alias, a.notes FROM models AS m "
+                "LEFT JOIN model_annotations AS a ON a.model_id = m.model_id "
+                f"WHERE m.model_id IN ({_placeholders})",
+                _connection,
+                params=_model_ids,
+            )
+            _annotation_tag_rows = pd.read_sql_query(
+                "SELECT model_id, tag FROM model_tags "
+                f"WHERE model_id IN ({_placeholders}) ORDER BY model_id, tag",
+                _connection,
+                params=_model_ids,
+            )
+            _wandb_tag_rows = pd.read_sql_query(
+                "SELECT model_id, tag FROM model_wandb_tags "
+                f"WHERE model_id IN ({_placeholders}) ORDER BY model_id, tag",
+                _connection,
+                params=_model_ids,
+            )
+
+        _records_by_id = {
+            _record["model_id"]: _record
+            for _record in json.loads(_model_rows.to_json(orient="records"))
+        }
+        _annotation_tags = (
+            _annotation_tag_rows.groupby("model_id")["tag"].apply(list).to_dict()
+            if not _annotation_tag_rows.empty
+            else {}
+        )
+        _wandb_tags = (
+            _wandb_tag_rows.groupby("model_id")["tag"].apply(list).to_dict()
+            if not _wandb_tag_rows.empty
+            else {}
+        )
+        _models = []
+        for _model_id in _model_ids:
+            _record = _records_by_id[_model_id]
+            _record["annotation_tags"] = _annotation_tags.get(_model_id, [])
+            _record["wandb_tags"] = _wandb_tags.get(_model_id, [])
+            _models.append(_record)
+        _document = {
+            "schema_version": 1,
+            "model_count": len(_models),
+            "models": _models,
+        }
+        _yaml_bytes = OmegaConf.to_yaml(
+            OmegaConf.create(_document), sort_keys=False
+        ).encode("utf-8")
+
+    _download = mo.download(
+        data=_yaml_bytes,
+        filename=_requested_name,
+        mimetype="application/yaml",
+        disabled=bool(database_error or not _model_ids),
+        label=f"Download YAML ({len(_model_ids)} models)",
+    )
+    if database_error:
+        _export_status = mo.callout(database_error, kind="danger")
+    elif not _model_ids:
+        _export_status = mo.md(
+            "Select at least one model, or export the current filtered results."
+        )
+    else:
+        _export_status = mo.md(
+            f"Export includes **{len(_model_ids)} models** in the displayed order."
+        )
+    mo.vstack([_download, _export_status])
+    return
+
+
+@app.cell(hide_code=True)
 def _(database_path, results_table):
     _selected = results_table.value
     if _selected is None or len(_selected) == 0:
+        selected_note_model_id = None
+        model_note = mo.ui.text_area(
+            disabled=True,
+            label="Model note",
+            placeholder="Select a model to add a note.",
+            full_width=True,
+        )
+        save_model_note = mo.ui.run_button(
+            disabled=True,
+            label="Save note",
+        )
         _detail = mo.md("Select a model to view its indexed metadata.")
     else:
-        _model_id = _selected.iloc[0]["model_id"]
+        selected_note_model_id = _selected.iloc[0]["model_id"]
         _sql = """
             WITH tags AS (
                 SELECT model_id, GROUP_CONCAT(tag, ', ') AS tags
@@ -417,14 +576,49 @@ def _(database_path, results_table):
             WHERE m.model_id = ?
         """
         with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
-            _metadata = pd.read_sql_query(_sql, _connection, params=[_model_id]).transpose()
+            _metadata_row = pd.read_sql_query(
+                _sql, _connection, params=[selected_note_model_id]
+            )
+        _saved_note = _metadata_row.iloc[0]["notes"]
+        if pd.isna(_saved_note):
+            _saved_note = ""
+        model_note = mo.ui.text_area(
+            str(_saved_note),
+            label="Model note",
+            placeholder="Figure label, comparison role, caveat, or other note",
+            rows=4,
+            full_width=True,
+        )
+        save_model_note = mo.ui.run_button(label="Save note")
+        _metadata = _metadata_row.transpose()
         _metadata.columns = ["Value"]
         _detail = mo.vstack([
             mo.md("## Selected model metadata"),
+            mo.md(f"Editing note for `{selected_note_model_id}`"),
+            model_note,
+            save_model_note,
             mo.ui.table(_metadata, selection=None),
         ])
     _detail
-    return
+    return model_note, save_model_note, selected_note_model_id
+
+
+@app.cell(hide_code=True)
+def _(model_note, save_model_note, selected_note_model_id, store_root):
+    if not save_model_note.value or selected_note_model_id is None:
+        note_save_status = None
+    else:
+        _registry = ModelRegistry(Path(store_root.value).expanduser())
+        _annotations_path = _registry.annotate(
+            selected_note_model_id,
+            notes=model_note.value,
+        )
+        note_save_status = mo.callout(
+            f"Saved note for `{selected_note_model_id}` to `{_annotations_path}`. ",
+            kind="success",
+        )
+    note_save_status
+    return (note_save_status,)
 
 
 @app.cell(hide_code=True)
@@ -471,7 +665,7 @@ def _():
             "NODAL KO at 0h": "ko_0h",
             "NODAL KO at 24h": "ko_24h",
         },
-        value="configured",
+        value="Configured data",
         label="One-shot condition",
     )
     initial_condition_path = mo.ui.text(
@@ -757,13 +951,14 @@ def _(
                 ((0, _channels - _initial.shape[0]), (0, 0), (0, 0)),
             )
             if _boundary is None:
-                _callback = no_boundary()
+                _boundary_state = jnp.zeros((1,), dtype=_state.dtype)
+                _boundary_mode = "none"
             else:
                 _boundary_state = jnp.asarray(_boundary)
                 if _bundle.config.trainer.get("boundary_mode", "soft") == "hard":
-                    _callback = hard_boundary(_boundary_state)
+                    _boundary_mode = "hard"
                 else:
-                    _callback = model_boundary(_boundary_state)
+                    _boundary_mode = "soft"
             if str(_bundle.config.data.dataset).startswith("micropatterns"):
                 _time_labels = tuple(
                     f"{int(_hour)}h"
@@ -777,13 +972,17 @@ def _(
                 for _time_index in range(len(_time_labels))
             )
             _total_steps = max(int(rollout_steps.value), _frame_indices[-1])
+            _observation_steps = jnp.asarray(_frame_indices, dtype=jnp.int32)
             _rollout_key = jr.PRNGKey(int(rollout_seed.value) + _index)
             if intervention_mode.value == "configured":
-                _trajectory = _model.run(
-                    _total_steps,
+                _selected_states = rollout_model_sampled(
+                    _model,
                     _state,
-                    callback=_callback,
-                    key=_rollout_key,
+                    _boundary_state,
+                    _boundary_mode,
+                    _rollout_key,
+                    _total_steps,
+                    _observation_steps,
                 )
             else:
                 if _nodal_channel is None:
@@ -795,29 +994,24 @@ def _(
                 _knockout_step = (
                     _knockout_hour // 12
                 ) * _steps_per_observation
-                _states = [_state]
-                for _step in range(_total_steps):
-                    _rollout_key = jr.fold_in(_rollout_key, _step)
-                    if _step >= _knockout_step:
-                        _state = apply_model_with_blocked_channel(
-                            _model,
-                            _state,
-                            _callback,
-                            _rollout_key,
-                            _nodal_channel,
-                            True,
-                        )
-                    else:
-                        _state = _model(_state, _callback, key=_rollout_key)
-                    _states.append(_state)
-                _trajectory = jnp.stack(_states)
+                _selected_states = rollout_model_with_blocked_channel_sampled(
+                    _model,
+                    _state,
+                    _boundary_state,
+                    _boundary_mode,
+                    _rollout_key,
+                    _total_steps,
+                    _nodal_channel,
+                    jnp.asarray(_knockout_step, dtype=jnp.int32),
+                    _observation_steps,
+                )
             _displayed_channels = len(_output_channels)
             _names = list(_channel_names[:_displayed_channels])
             _names.extend(
                 f"Channel {_channel_index + 1}"
                 for _channel_index in range(len(_names), _displayed_channels)
             )
-            _frames = np.asarray(_trajectory)[list(_frame_indices)][:, _output_channels]
+            _frames = np.asarray(_selected_states)[:, _output_channels]
             _rollouts.append(
                 (
                     _bundle,

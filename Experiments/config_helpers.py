@@ -472,6 +472,75 @@ def load_model_checkpoint(model_config, checkpoint_config, key=None, env=None):
     return model, model_cfg_str, checkpoint_path
 
 
+def load_model_registry_list(
+    export_path,
+    store_root=None,
+    key=None,
+    implementation="recorded",
+    env=None,
+):
+    """Load the NCA models named by a model-registry explorer YAML export.
+
+    Models are returned in export order. Each registry bundle verifies its
+    checkpoint checksum before reconstructing the recorded architecture and
+    loading its Equinox leaves. Set ``implementation="portable"`` to replace
+    a recorded SYCL implementation with its equivalent standard JAX model.
+
+    ``store_root`` defaults to ``MODEL_STORE_ROOT`` and then ``./models``,
+    matching the registry CLI and explorer defaults.
+    """
+
+    from omegaconf import OmegaConf
+
+    from NCA.registry import ModelRegistry
+
+    path = Path(export_path).expanduser().resolve()
+    if not path.is_file():
+        raise FileNotFoundError(f"Model registry export not found: {path}")
+
+    document = OmegaConf.to_container(OmegaConf.load(path), resolve=False)
+    if not isinstance(document, Mapping):
+        raise TypeError("Model registry export must contain a YAML mapping")
+    if document.get("schema_version") != 1:
+        raise ValueError(
+            "Unsupported model registry export schema version "
+            f"{document.get('schema_version')!r}; expected 1"
+        )
+
+    entries = document.get("models")
+    if not isinstance(entries, list):
+        raise TypeError("Model registry export 'models' must be a list")
+
+    model_ids = []
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, Mapping):
+            raise TypeError(f"Model registry export models[{index}] must be a mapping")
+        model_id = entry.get("model_id")
+        if not isinstance(model_id, str) or not model_id.strip():
+            raise ValueError(
+                f"Model registry export models[{index}] has no valid model_id"
+            )
+        model_ids.append(model_id)
+
+    declared_count = document.get("model_count")
+    if declared_count is not None and declared_count != len(model_ids):
+        raise ValueError(
+            f"Model registry export declares {declared_count} models but contains "
+            f"{len(model_ids)}"
+        )
+
+    environment = os.environ if env is None else env
+    resolved_store_root = store_root or environment.get("MODEL_STORE_ROOT") or "models"
+    registry = ModelRegistry(resolved_store_root)
+    return [
+        registry.get(model_id).load_model(
+            key=key,
+            implementation=implementation,
+        )
+        for model_id in model_ids
+    ]
+
+
 def build_tags(cfg, prefix="", max_length=MAX_WANDB_TAG_LENGTH):
     tags = []
     if isinstance(cfg, Mapping) or hasattr(cfg, "items"):

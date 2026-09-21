@@ -11,6 +11,7 @@ from Experiments.config_helpers import (
     build_registry_tags,
     build_tags,
     build_wandb_tags,
+    load_model_registry_list,
 )
 from Experiments.emoji.config_helpers import (
     build_data_augmenter,
@@ -35,6 +36,67 @@ class ConfigDict(dict):
 
     def __setattr__(self, key, value):
         self[key] = value
+
+
+def test_load_model_registry_list_preserves_export_order(tmp_path, monkeypatch):
+    pytest.importorskip("omegaconf")
+    export_path = tmp_path / "comparison.yaml"
+    export_path.write_text(
+        "schema_version: 1\n"
+        "model_count: 2\n"
+        "models:\n"
+        "- model_id: model-b\n"
+        "  display_name: second\n"
+        "- model_id: model-a\n"
+        "  display_name: first\n",
+        encoding="utf-8",
+    )
+    calls = []
+
+    class _Bundle:
+        def __init__(self, model_id):
+            self.model_id = model_id
+
+        def load_model(self, key=None, implementation="recorded"):
+            calls.append((self.model_id, key, implementation))
+            return f"loaded:{self.model_id}"
+
+    class _Registry:
+        def __init__(self, root):
+            assert root == tmp_path / "store"
+
+        def get(self, model_id):
+            return _Bundle(model_id)
+
+    monkeypatch.setattr("NCA.registry.ModelRegistry", _Registry)
+
+    models = load_model_registry_list(
+        export_path,
+        store_root=tmp_path / "store",
+        key="key",
+        implementation="portable",
+    )
+
+    assert models == ["loaded:model-b", "loaded:model-a"]
+    assert calls == [
+        ("model-b", "key", "portable"),
+        ("model-a", "key", "portable"),
+    ]
+
+
+def test_load_model_registry_list_validates_declared_count(tmp_path):
+    pytest.importorskip("omegaconf")
+    export_path = tmp_path / "comparison.yaml"
+    export_path.write_text(
+        "schema_version: 1\n"
+        "model_count: 2\n"
+        "models:\n"
+        "- model_id: only-model\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="declares 2 models but contains 1"):
+        load_model_registry_list(export_path, store_root=tmp_path / "store")
 
 
 def _cfg(value):
