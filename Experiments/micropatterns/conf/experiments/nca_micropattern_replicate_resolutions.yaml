@@ -1,6 +1,6 @@
-experiment_name: nca_micropattern_replicate_resolutions
+experiment_name: nca_micropattern_replicate_resolutions_v2
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_micropattern_replicate_resolutions
+output_subdir: generated/nca_micropattern_replicate_resolutions_high
 seed_mode: index
 
 # Resolution-transfer sweep for the established 14-channel replicate regime.
@@ -20,6 +20,7 @@ grid:
   model.channels: [48]
   # trainer.backend.type: [sycl]
   
+  system.precision: [bfloat16]
 
   logging.wandb.project: [nca_micropattern_replicate_resolutions]
 
@@ -103,13 +104,19 @@ branches:
       labels.scaling: convective
     groups:
       # t = 128 * (16 / downsample)
-      - data.downsample: [4, 8, 16, 32]
-        run.t: [512, 256, 128, 64]
-        trainer.loop_autodiff: [checkpointed,lax, lax, lax]
+      # - data.downsample: [4, 8, 16, 32]
+      #   run.t: [512, 256, 128, 64]
+      #   trainer.loop_autodiff: [checkpointed,lax, lax, lax]
+      - data.downsample: [4,]
+        run.t: [512,]
+        trainer.loop_autodiff: [lax]
   - when:
       labels.scaling: diffusive
     groups:
       # t = 128 * (16 / downsample)^2
-      - data.downsample: [4, 8, 16, 32]
-        run.t: [2048, 512, 128, 32]
-        trainer.loop_autodiff: [checkpointed,checkpointed, lax, lax]
+      # - data.downsample: [4, 8, 16, 32]
+      #   run.t: [2048, 512, 128, 32]
+      #   trainer.loop_autodiff: [checkpointed,checkpointed, lax, lax]
+      - data.downsample: [4,8]
+        run.t: [2048, 512]
+        trainer.loop_autodiff: [lax,lax]
