@@ -12,7 +12,7 @@ seed_mode: index
 # Total jobs: 2 held-out replicate splits * 10 repeats * 3 resolutions
 #             * 2 scaling laws = 120.
 grid:
-  run.repeat: [0, 1, 2, 3, 4]
+  run.repeat: [0, 1, 2]
 
   labels.gpu: [H200]
   labels.scaling: [convective, diffusive]
@@ -109,7 +109,7 @@ branches:
       #   trainer.loop_autodiff: [checkpointed,lax, lax, lax]
       - data.downsample: [4,]
         run.t: [512,]
-        trainer.loop_autodiff: [lax]
+        trainer.loop_autodiff: [checkpointed]
   - when:
       labels.scaling: diffusive
     groups:
@@ -119,4 +119,4 @@ branches:
       #   trainer.loop_autodiff: [checkpointed,checkpointed, lax, lax]
       - data.downsample: [4,8]
         run.t: [2048, 512]
-        trainer.loop_autodiff: [lax,lax]
+        trainer.loop_autodiff: [checkpointed,checkpointed]
