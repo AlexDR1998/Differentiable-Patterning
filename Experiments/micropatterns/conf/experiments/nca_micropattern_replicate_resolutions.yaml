@@ -15,7 +15,7 @@ grid:
   run.repeat: [0]
   run.write_images: [true]
 
-  labels.gpu: [H200]
+  labels.gpu: [H100]
   labels.scaling: [convective, diffusive]
   model.family: [gNCA]
   model.channels: [48]
@@ -113,9 +113,9 @@ branches:
       # - data.downsample: [4,]
       #   run.t: [512,]
       #   trainer.loop_autodiff: [checkpointed]
-      - data.downsample: [8, 16, 32]
-        run.t: [256, 128, 64]
-        trainer.loop_autodiff: [lax, lax, lax]
+      - data.downsample: [8, 32]
+        run.t: [256, 64]
+        trainer.loop_autodiff: [lax, lax]
   - when:
       labels.scaling: diffusive
     groups:
