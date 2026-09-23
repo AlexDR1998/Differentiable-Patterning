@@ -104,6 +104,7 @@ class TrainingLoopConfig(ConfigValue):
     t: int = 32
     iterations: int = 2000
     write_images: bool = True
+    write_videos: bool = True
     derive_t_from_fire_rate: bool = False
     fire_rate_step_numerator: int | None = None
     filename_mode: str = "typed"

@@ -21,7 +21,11 @@ LOG_BACKEND = os.environ.get("LOG_BACKEND", "wandb")
 #if LOG_BACKEND=="wandb":
 from Common.utils import get_jax_memory_stats
 from Common.trainer.abstract_wandb_log import Train_log
-from NCA.trainer.intervention import apply_model_with_blocked_channel
+from NCA.trainer.intervention import (
+	apply_model_with_blocked_channel,
+	rollout_model_sampled,
+	rollout_model_with_blocked_channel_sampled,
+)
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch
 #elif LOG_BACKEND=="tensorboard":
 #	from Common.trainer.abstract_tensorboard_log import Train_log
@@ -881,6 +885,9 @@ class NCA_Train_log(Train_log):
 								boundary_callback,
 								SAVE_TRAJECTORY=False,
 								write_images=True,
+								write_videos=True,
+								boundary_masks=None,
+								boundary_mode="soft",
 								key=None):
 		"""
 			Log trained NCA model trajectory after training
@@ -918,7 +925,49 @@ class NCA_Train_log(Train_log):
 		for b in tqdm(range(BATCHES)):
 			initial_state = nca.prepare_pool_state(x[b][0])
 			intervention_times = getattr(DATA_AUGMENTER, "intervention_times", None)
-			if intervention_times is None:
+			if not write_videos and intervention_times is None:
+				total_steps = t * NUMBER_OF_IMAGES
+				observation_steps = jnp.arange(0, total_steps + 1, t)
+				boundary_mask = (
+					jnp.empty((0,), dtype=initial_state.dtype)
+					if boundary_masks is None
+					else boundary_masks[b]
+				)
+				T = rollout_model_sampled(
+					nca,
+					initial_state,
+					boundary_mask,
+					"none" if boundary_masks is None else boundary_mode,
+					jr.fold_in(key, b),
+					total_steps,
+					observation_steps,
+				)
+			elif not write_videos:
+				total_steps = t * NUMBER_OF_IMAGES
+				observation_steps = jnp.arange(0, total_steps + 1, t)
+				boundary_mask = (
+					jnp.empty((0,), dtype=initial_state.dtype)
+					if boundary_masks is None
+					else boundary_masks[b]
+				)
+				knockout_time = intervention_times[b]
+				knockout_step = (
+					total_steps + 1
+					if knockout_time is None or knockout_time < 0
+					else (int(knockout_time) // 12) * t
+				)
+				T = rollout_model_with_blocked_channel_sampled(
+					nca,
+					initial_state,
+					boundary_mask,
+					"none" if boundary_masks is None else boundary_mode,
+					jr.fold_in(key, b),
+					total_steps,
+					DATA_AUGMENTER.nodal_channel,
+					knockout_step,
+					observation_steps,
+				)
+			elif intervention_times is None:
 				T = nca.run(t*NUMBER_OF_IMAGES, initial_state, boundary_callback[b])
 			else:
 				state = initial_state
@@ -938,9 +987,10 @@ class NCA_Train_log(Train_log):
 					)
 					trajectory.append(state)
 				T = jnp.stack(trajectory)
-			self.log_video(f"TrainingRollout/trajectory_batch_{b + 1}",T[:,:3],step=None)
+			if write_videos:
+				self.log_video(f"TrainingRollout/trajectory_batch_{b + 1}",T[:,:3],step=None)
 			T_snapshot = _trajectory_snapshot_channels(
-				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema
+				T, DATA_AUGMENTER, t if write_videos else 1, self.diagnostic_channel_schema
 			)
 			SNAPSHOTS.append(plot_channel_time_grid(
 				T_snapshot,
@@ -952,7 +1002,7 @@ class NCA_Train_log(Train_log):
 			if SAVE_TRAJECTORY:
 				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])  # type: ignore
 
-			if T.shape[1] > 3:
+			if write_videos and T.shape[1] > 3:
 				hidden = T[:, 3:]
 				extra_zeros = (-hidden.shape[1])%3
 				hidden = np.pad(hidden,((0,0),(0,extra_zeros),(0,0),(0,0)))
@@ -1007,6 +1057,9 @@ class NCA_knockout_Train_log(NCA_Train_log):
 								boundary_callback,
 								SAVE_TRAJECTORY=False,
 								write_images=True,
+								write_videos=True,
+								boundary_masks=None,
+								boundary_mode="soft",
 								key=None):
 		"""
 		
@@ -1047,24 +1100,43 @@ class NCA_knockout_Train_log(NCA_Train_log):
 		SNAPSHOTS = []
 		for b in tqdm(range(BATCHES)):
 
-			# T =nca.run(t*NUMBER_OF_IMAGES,x[b][0],boundary_callback[b]) # Shape T C x y
-			T = []
 			xb = x[b][0] # C x y
+			if not write_videos:
+				total_steps = t * NUMBER_OF_IMAGES
+				observation_steps = jnp.arange(0, total_steps + 1, t)
+				boundary_mask = (
+					jnp.empty((0,), dtype=xb.dtype)
+					if boundary_masks is None
+					else boundary_masks[b]
+				)
+				T = rollout_model_with_blocked_channel_sampled(
+					nca,
+					xb,
+					boundary_mask,
+					"none" if boundary_masks is None else boundary_mode,
+					jr.fold_in(key, b),
+					total_steps,
+					self.knockout_channel,
+					int(self.knockout_time * t),
+					observation_steps,
+				)
+			else:
+				T = []
+				for step in range(t*NUMBER_OF_IMAGES):
+					key = jr.fold_in(key,step)
+					if step/t >= self.knockout_time:
+						xb = xb.at[self.knockout_channel].set(0.0)
+					xb = nca(xb,boundary_callback[b],key)
+					T.append(xb)
+				T = np.array(T)
 			
-			for step in range(t*NUMBER_OF_IMAGES):
-				key = jr.fold_in(key,step)
-				if step/t >= self.knockout_time:
-					xb = xb.at[self.knockout_channel].set(0.0) # Set nodal channel to 0 at and after knockout time
-				xb = nca(xb,boundary_callback[b],key)
-				T.append(xb)
-			T = np.array(T) # Shape T C x y
-			
-			self.log_video(f"TrainingRollout/trajectory_comp_batch_{b + 1}",rearrange(T[:,:9],"T (cx cy) X Y -> T cx X (cy Y)",cx=3,cy=3),step=None) # type: ignore
-			_T_mono = rearrange(T[:,:9],"T (cx cy) X Y -> T () (cx X) (cy Y)",cx=3,cy=3)
-			_T_mono = repeat(_T_mono,"T () x y -> T 3 x y")
-			self.log_video(f"TrainingRollout/trajectory_monochrome_batch_{b + 1}",_T_mono,step=None) # type: ignore
+			if write_videos:
+				self.log_video(f"TrainingRollout/trajectory_comp_batch_{b + 1}",rearrange(T[:,:9],"T (cx cy) X Y -> T cx X (cy Y)",cx=3,cy=3),step=None) # type: ignore
+				_T_mono = rearrange(T[:,:9],"T (cx cy) X Y -> T () (cx X) (cy Y)",cx=3,cy=3)
+				_T_mono = repeat(_T_mono,"T () x y -> T 3 x y")
+				self.log_video(f"TrainingRollout/trajectory_monochrome_batch_{b + 1}",_T_mono,step=None) # type: ignore
 			T_snapshot = _trajectory_snapshot_channels(
-				T, DATA_AUGMENTER, t, self.diagnostic_channel_schema
+				T, DATA_AUGMENTER, t if write_videos else 1, self.diagnostic_channel_schema
 			)
 			SNAPSHOTS.append(plot_channel_time_grid(
 				T_snapshot,

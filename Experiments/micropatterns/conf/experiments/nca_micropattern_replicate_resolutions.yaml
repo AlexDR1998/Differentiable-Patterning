@@ -1,6 +1,6 @@
-experiment_name: nca_micropattern_replicate_resolutions_v2
+experiment_name: nca_micropattern_replicate_resolutions_v3
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_micropattern_replicate_resolutions_high
+output_subdir: generated/nca_micropattern_replicate_resolutions_low
 seed_mode: index
 
 # Resolution-transfer sweep for the established 14-channel replicate regime.
@@ -12,7 +12,8 @@ seed_mode: index
 # Total jobs: 2 held-out replicate splits * 10 repeats * 3 resolutions
 #             * 2 scaling laws = 120.
 grid:
-  run.repeat: [0, 1, 2]
+  run.repeat: [0]
+  run.write_images: [true]
 
   labels.gpu: [H200]
   labels.scaling: [convective, diffusive]
@@ -36,6 +37,8 @@ grid:
   knockout.curriculum: [null]
 
   run.iterations: [12000]
+  # Keep final labelled snapshots without retaining full high-resolution videos.
+  run.write_videos: [false]
   optimiser.learn_rate: [1e-4]
   optimiser.type: [nadam]
   optimiser.gradient_clip_norm: [1.0]
@@ -107,9 +110,12 @@ branches:
       # - data.downsample: [4, 8, 16, 32]
       #   run.t: [512, 256, 128, 64]
       #   trainer.loop_autodiff: [checkpointed,lax, lax, lax]
-      - data.downsample: [4,]
-        run.t: [512,]
-        trainer.loop_autodiff: [checkpointed]
+      # - data.downsample: [4,]
+      #   run.t: [512,]
+      #   trainer.loop_autodiff: [checkpointed]
+      - data.downsample: [8, 16, 32]
+        run.t: [256, 128, 64]
+        trainer.loop_autodiff: [lax, lax, lax]
   - when:
       labels.scaling: diffusive
     groups:
@@ -117,6 +123,9 @@ branches:
       # - data.downsample: [4, 8, 16, 32]
       #   run.t: [2048, 512, 128, 32]
       #   trainer.loop_autodiff: [checkpointed,checkpointed, lax, lax]
-      - data.downsample: [4,8]
-        run.t: [2048, 512]
-        trainer.loop_autodiff: [checkpointed,checkpointed]
+      # - data.downsample: [4,8]
+      #   run.t: [2048, 512]
+      #   trainer.loop_autodiff: [checkpointed,checkpointed]
+      - data.downsample: [16, 32]
+        run.t: [128, 32]
+        trainer.loop_autodiff: [lax, lax]

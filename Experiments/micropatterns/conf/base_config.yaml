@@ -102,6 +102,7 @@ run:
   iterations: 2000
   warmup: 64
   write_images: true
+  write_videos: true
 
 logging:
   backend: wandb

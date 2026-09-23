@@ -388,6 +388,9 @@ def run_training(
             t=setup.timesteps,
             boundary_callback=trainer.boundary_callbacks,
             SAVE_TRAJECTORY=False,
+            write_videos=setup.write_videos,
+            boundary_masks=trainer.diagnostic_boundary_mask,
+            boundary_mode=trainer.config.training.trainer.boundary_mode,
         )
     wandb_run_id = None
     if trainer.is_logging:

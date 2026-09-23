@@ -26,6 +26,7 @@ class PreparedTraining:
     checkpoint_warmup: int
     log_interval: int
     write_images: bool
+    write_videos: bool
     trace_enabled: bool
     learning_rate_schedule: Callable | None
     optimiser: Any
@@ -195,6 +196,7 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         ),
         log_interval=trainer_config.log_every,
         write_images=loop.write_images,
+        write_videos=loop.write_videos,
         trace_enabled=trainer_config.jax_trace,
         learning_rate_schedule=schedule,
         optimiser=optimiser,

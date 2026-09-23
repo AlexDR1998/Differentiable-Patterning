@@ -381,6 +381,291 @@ def _(
     return
 
 
+@app.cell(hide_code=True)
+def _(data, loaded, mo):
+    fate_threshold_fractions = mo.ui.dictionary({
+        _marker: mo.ui.slider(
+            0.05,
+            0.95,
+            value=0.3,
+            step=0.05,
+            label=f"{_marker} threshold fraction",
+            full_width=True,
+        )
+        for _marker in ("SOX17", "SOX2", "TBXT", "FOXA2")
+    })
+    fate_reference_percentiles = mo.ui.dictionary({
+        _marker: mo.ui.slider(
+            90.0,
+            100.0,
+            value=99.0,
+            step=0.5,
+            label=f"{_marker} reference percentile",
+            full_width=True,
+        )
+        for _marker in ("SOX17", "SOX2", "TBXT", "FOXA2")
+    })
+    _fate_aux = getattr(loaded, "aux", {})
+    _fate_conditions = tuple(_fate_aux.get("batch_conditions", ()))
+    _fate_replicates = tuple(_fate_aux.get("batch_replicates", ()))
+    _fate_batch_options = {
+        (
+            f"{_index}: {_fate_conditions[_index]}, "
+            f"replicate {_fate_replicates[_index]}"
+            if _index < len(_fate_conditions) and _index < len(_fate_replicates)
+            else f"Batch {_index}"
+        ): _index
+        for _index in range(data.shape[0])
+    }
+    fate_batch_indices = mo.ui.multiselect(
+        options=_fate_batch_options,
+        value=[next(iter(_fate_batch_options))],
+        label="Replicates to display",
+        full_width=True,
+    )
+    mo.vstack(
+        [
+            mo.md(
+                "## Final-timestep cell-fate threshold explorer\n\n"
+                "Each expression cutoff is the selected fraction of that marker's "
+                "reference percentile across available final-timestep replicates."
+            ),
+            fate_batch_indices,
+            mo.hstack(
+                [fate_threshold_fractions, fate_reference_percentiles],
+                widths="equal",
+            ),
+        ]
+    )
+    return fate_batch_indices, fate_reference_percentiles, fate_threshold_fractions
+
+
+@app.cell(hide_code=True)
+def _(
+    data,
+    fate_batch_indices,
+    fate_reference_percentiles,
+    fate_threshold_fractions,
+    loaded,
+    mo,
+    names,
+    np,
+    plt,
+):
+    _fate_markers = ("SOX17", "SOX2", "TBXT", "FOXA2")
+    _preferred_channels = {
+        "SOX17": "cell_fate_s2/SOX17",
+        "SOX2": "cell_fate_s1/SOX2",
+        "TBXT": "cell_fate_s2/TBXT",
+        "FOXA2": "cell_fate_s2/FOXA2",
+    }
+    _fate_channels = {
+        _marker: (
+            _preferred_channels[_marker]
+            if _preferred_channels[_marker] in names
+            else _marker if _marker in names else None
+        )
+        for _marker in _fate_markers
+    }
+    _missing_fate_markers = [
+        _marker for _marker, _channel in _fate_channels.items()
+        if _channel is None
+    ]
+    if _missing_fate_markers:
+        _fate_view = mo.callout(
+            "Cell-fate estimation requires channels: "
+            + ", ".join(_missing_fate_markers)
+            + ". Select the relevant cell-fate experiment groups and reload.",
+            kind="warn",
+        )
+    else:
+        _final_time = data.shape[1] - 1
+        _boundary = getattr(loaded, "boundary_mask", None)
+        _measurement_mask = getattr(loaded, "measurement_mask", None)
+        _absolute_thresholds = {}
+        for _marker in _fate_markers:
+            _channel_index = names.index(_fate_channels[_marker])
+            _reference_values = []
+            for _batch in range(data.shape[0]):
+                if (
+                    _measurement_mask is not None
+                    and not bool(np.asarray(_measurement_mask)[
+                        _batch, _final_time, _channel_index
+                    ])
+                ):
+                    continue
+                _batch_boundary = (
+                    np.asarray(_boundary)[_batch, 0].astype(bool)
+                    if _boundary is not None
+                    else np.ones(data.shape[-2:], dtype=bool)
+                )
+                _values = data[_batch, _final_time, _channel_index][_batch_boundary]
+                _reference_values.append(_values[np.isfinite(_values)])
+            _pooled_values = (
+                np.concatenate(_reference_values)
+                if _reference_values
+                else np.asarray([], dtype=float)
+            )
+            _reference_percentile = float(
+                fate_reference_percentiles.value[_marker]
+            )
+            _reference_intensity = (
+                float(np.nanmax(_pooled_values))
+                if _pooled_values.size and _reference_percentile == 100.0
+                else float(np.nanpercentile(_pooled_values, _reference_percentile))
+                if _pooled_values.size
+                else np.nan
+            )
+            _absolute_thresholds[_marker] = (
+                float(fate_threshold_fractions.value[_marker])
+                * _reference_intensity
+            )
+
+        _cell_colors = {
+            "Notochord": np.asarray([214, 39, 160], dtype=float) / 255.0,
+            "Endoderm": np.asarray([23, 190, 207], dtype=float) / 255.0,
+            "Mesoderm": np.asarray([44, 160, 44], dtype=float) / 255.0,
+            "Other": np.asarray([127, 127, 127], dtype=float) / 255.0,
+        }
+        _legend = " · ".join(
+            f"<span style='color: rgb({int(255 * _color[0])}, "
+            f"{int(255 * _color[1])}, {int(255 * _color[2])})'>■</span> "
+            f"{_cell_type}"
+            for _cell_type, _color in _cell_colors.items()
+        )
+        _selected_batches = [int(_value) for _value in fate_batch_indices.value]
+        if not _selected_batches:
+            _fate_view = mo.callout(
+                "Select at least one replicate to display.", kind="warn"
+            )
+        else:
+            _fate_figure, _fate_axes = plt.subplots(
+                len(_selected_batches),
+                5,
+                figsize=(17, 3.4 * len(_selected_batches)),
+                squeeze=False,
+            )
+            _prevalence_rows = []
+            _fate_aux = getattr(loaded, "aux", {})
+            _conditions = tuple(_fate_aux.get("batch_conditions", ()))
+            _replicates = tuple(_fate_aux.get("batch_replicates", ()))
+            for _row, _batch in enumerate(_selected_batches):
+                _selected_boundary = (
+                    np.asarray(_boundary)[_batch, 0].astype(bool)
+                    if _boundary is not None
+                    else np.ones(data.shape[-2:], dtype=bool)
+                )
+                _selected_images = {
+                    _marker: data[
+                        _batch,
+                        _final_time,
+                        names.index(_fate_channels[_marker]),
+                    ]
+                    for _marker in _fate_markers
+                }
+                _high = {
+                    _marker: (
+                        _selected_images[_marker] > _absolute_thresholds[_marker]
+                    )
+                    for _marker in _fate_markers
+                }
+                _cell_masks = {
+                    "Notochord": (
+                        _high["TBXT"] & ~_high["SOX17"]
+                        & ~_high["SOX2"] & _high["FOXA2"]
+                    ),
+                    "Endoderm": _high["SOX17"],
+                    "Mesoderm": (
+                        _high["TBXT"] & ~_high["SOX17"]
+                        & _high["SOX2"] & ~_high["FOXA2"]
+                    ),
+                }
+                _cell_masks["Other"] = ~np.logical_or.reduce(
+                    tuple(_cell_masks.values())
+                )
+                _cell_map = np.zeros((*_selected_boundary.shape, 3), dtype=float)
+                for _cell_type, _cell_mask in _cell_masks.items():
+                    _cell_map[_cell_mask & _selected_boundary] = _cell_colors[
+                        _cell_type
+                    ]
+
+                for _column, _marker in enumerate(_fate_markers):
+                    _axis = _fate_axes[_row, _column]
+                    _shown_image = np.where(
+                        _selected_boundary, _selected_images[_marker], np.nan
+                    )
+                    _axis.imshow(_shown_image, cmap="gray")
+                    _threshold_mask = _high[_marker] & _selected_boundary
+                    if np.any(_threshold_mask) and not np.all(_threshold_mask):
+                        _axis.contour(
+                            _threshold_mask,
+                            levels=[0.5],
+                            colors="cyan",
+                            linewidths=0.6,
+                        )
+                    if _row == 0:
+                        _axis.set_title(
+                            f"{_marker}\ncutoff={_absolute_thresholds[_marker]:.3g}"
+                        )
+                    _axis.set_axis_off()
+                _fate_axes[_row, 4].imshow(_cell_map, vmin=0.0, vmax=1.0)
+                if _row == 0:
+                    _fate_axes[_row, 4].set_title("Estimated cell type")
+                _fate_axes[_row, 4].set_axis_off()
+                _row_label = (
+                    f"Batch {_batch}: {_conditions[_batch]}, "
+                    f"replicate {_replicates[_batch]}"
+                    if _batch < len(_conditions) and _batch < len(_replicates)
+                    else f"Batch {_batch}"
+                )
+                _fate_axes[_row, 0].text(
+                    -0.08,
+                    0.5,
+                    _row_label,
+                    rotation=90,
+                    va="center",
+                    ha="right",
+                    transform=_fate_axes[_row, 0].transAxes,
+                )
+                _colony_pixels = int(np.sum(_selected_boundary))
+                for _cell_type, _cell_mask in _cell_masks.items():
+                    _prevalence_rows.append({
+                        "batch": _batch,
+                        "condition": (
+                            _conditions[_batch]
+                            if _batch < len(_conditions) else "—"
+                        ),
+                        "replicate": (
+                            _replicates[_batch]
+                            if _batch < len(_replicates) else "—"
+                        ),
+                        "cell type": _cell_type,
+                        "fraction of colony": (
+                            float(np.mean(_cell_mask[_selected_boundary]))
+                            if _colony_pixels else np.nan
+                        ),
+                    })
+            _fate_figure.suptitle(
+                f"Final timestep (index {_final_time})", y=1.0
+            )
+            _fate_figure.tight_layout()
+            _fate_view = mo.vstack(
+                [
+                    mo.md(_legend),
+                    _fate_figure,
+                    mo.ui.table(_prevalence_rows, selection=None),
+                    mo.md(
+                        "Rules match `nodal_ko_eval`: Notochord = TBXT high, "
+                        "SOX17 low, SOX2 low, FOXA2 high; Endoderm = SOX17 high; "
+                        "Mesoderm = TBXT high, SOX17 low, SOX2 high, FOXA2 low. "
+                        "Cyan contours mark pixels above each displayed cutoff."
+                    ),
+                ]
+            )
+    _fate_view
+    return
+
+
 @app.cell
 def _(data, mo, names, np, plt):
     _channel_values = data.transpose(2, 0, 1, 3, 4).reshape(data.shape[2], -1)
