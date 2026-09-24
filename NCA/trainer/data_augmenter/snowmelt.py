@@ -26,6 +26,14 @@ def snowmelt_advance(x, x_true, boundary, observable_channels, key, probability,
     return apply_boundary_channels(x, boundary, observable_channels)
 
 
+@eqx.filter_jit
+def snowmelt_initial_pool(x, boundary, observable_channels, key, noise_strength):
+    """Noise the observed start states in place; no propagation or reinjection."""
+    if noise_strength > 0:
+        x = add_noise(x, noise_strength, key, mode="observable", observable_channels=observable_channels)
+    return apply_boundary_channels(x, boundary, observable_channels)
+
+
 def apply_boundary_channels(x, boundary, observable_channels):
     """Zero observables outside the catchment and write the fixed final channels.
 
@@ -54,6 +62,13 @@ def build_snowmelt_augmenter(boundary_mask, reinjection_probability=0.5, noise_s
             self.save_data(data)
             return None
 
+        def initialize_pool(self, key):
+            # Slot k must start from image k. The base implementation calls
+            # advance_pool, which shifts the pool by one slot first.
+            x, y = self.split_x_y(1)
+            x = snowmelt_initial_pool(x, boundary, self.OBS_CHANNELS, key, noise_strength)
+            return x, y
+
         def advance_pool(self, x, y, i, key):
             x_true, _ = self.split_x_y(1)
             x = snowmelt_advance(
@@ -66,4 +81,9 @@ def build_snowmelt_augmenter(boundary_mask, reinjection_probability=0.5, noise_s
     return SnowmeltDataAugmenter
 
 
-__all__ = ["apply_boundary_channels", "build_snowmelt_augmenter", "snowmelt_advance"]
+__all__ = [
+    "apply_boundary_channels",
+    "build_snowmelt_augmenter",
+    "snowmelt_advance",
+    "snowmelt_initial_pool",
+]

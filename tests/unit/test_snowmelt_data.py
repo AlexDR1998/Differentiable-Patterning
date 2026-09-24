@@ -140,3 +140,26 @@ def test_apply_boundary_channels_is_idempotent():
     x = [jnp.full((2, 3, 2, 2), 0.3)]
     once = apply_boundary_channels(x, boundary, 1)
     assert jnp.array_equal(once[0], apply_boundary_channels(once, boundary, 1)[0])
+
+
+def test_initial_pool_starts_each_slot_from_its_own_image():
+    boundary = jnp.ones((1, 1, 2, 2))
+    # Distinct constant image per time point: value t at time t.
+    data = jnp.broadcast_to(jnp.arange(4.0)[None, :, None, None, None], (1, 4, 1, 2, 2))
+    augmenter = build_snowmelt_augmenter(boundary, noise_strength=0.0)(
+        data_true=data, hidden_channels=2
+    )
+    augmenter.data_init()
+
+    x, y = augmenter.initialize_pool(jr.PRNGKey(0))
+
+    assert jnp.array_equal(x[0][:, 0, 0, 0], jnp.array([0.0, 1.0, 2.0]))
+    assert jnp.array_equal(y[0][:, 0, 0, 0], jnp.array([1.0, 2.0, 3.0]))
+    # advance_pool still hands slot k's prediction to slot k+1 (reinjection off).
+    no_reinject = build_snowmelt_augmenter(
+        boundary, reinjection_probability=0.0, noise_strength=0.0
+    )(data_true=data, hidden_channels=2)
+    no_reinject.data_init()
+    predictions = [x[0].at[:, 0].add(10.0)]
+    advanced, _ = no_reinject.advance_pool(predictions, y, 1, jr.PRNGKey(1))
+    assert jnp.array_equal(advanced[0][:, 0, 0, 0], jnp.array([0.0, 10.0, 11.0]))
