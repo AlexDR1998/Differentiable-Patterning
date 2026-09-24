@@ -383,6 +383,26 @@ def _(
 
 @app.cell(hide_code=True)
 def _(data, loaded, mo):
+    _default_fate_rules = {
+        "Notochord": {
+            "SOX17": "low",
+            "SOX2": "low",
+            "TBXT": "high",
+            "FOXA2": "high",
+        },
+        "Endoderm": {
+            "SOX17": "high",
+            "SOX2": "any",
+            "TBXT": "any",
+            "FOXA2": "any",
+        },
+        "Mesoderm": {
+            "SOX17": "low",
+            "SOX2": "high",
+            "TBXT": "high",
+            "FOXA2": "low",
+        },
+    }
     fate_threshold_fractions = mo.ui.dictionary({
         _marker: mo.ui.slider(
             0.05,
@@ -423,29 +443,69 @@ def _(data, loaded, mo):
         label="Replicates to display",
         full_width=True,
     )
+    _fate_timesteps = tuple(_fate_aux.get("timesteps", ()))
+    _fate_time_options = {
+        (
+            f"{_fate_timesteps[_index]}h"
+            if _index < len(_fate_timesteps)
+            else f"Time index {_index}"
+        ): _index
+        for _index in range(data.shape[1])
+    }
+    fate_time_indices = mo.ui.multiselect(
+        options=_fate_time_options,
+        value=[next(reversed(_fate_time_options))],
+        label="Timepoints to display",
+        full_width=True,
+    )
+    fate_cell_type_rules = mo.ui.dictionary({
+        _cell_type: mo.ui.dictionary({
+            _marker: mo.ui.dropdown(
+                options={"High": "high", "Low": "low", "Indifferent": "any"},
+                value={"high": "High", "low": "Low", "any": "Indifferent"}[
+                    _default_fate_rules[_cell_type][_marker]
+                ],
+                label=_marker,
+                full_width=True,
+            )
+            for _marker in ("SOX17", "SOX2", "TBXT", "FOXA2")
+        })
+        for _cell_type in ("Notochord", "Endoderm", "Mesoderm")
+    })
     mo.vstack(
         [
             mo.md(
-                "## Final-timestep cell-fate threshold explorer\n\n"
+                "## Cell-fate threshold explorer\n\n"
                 "Each expression cutoff is the selected fraction of that marker's "
-                "reference percentile across available final-timestep replicates."
+                "reference percentile across available final-timestep replicates, "
+                "so the same absolute cutoffs are used at every displayed timepoint."
             ),
-            fate_batch_indices,
+            mo.hstack([fate_batch_indices, fate_time_indices], widths="equal"),
             mo.hstack(
                 [fate_threshold_fractions, fate_reference_percentiles],
                 widths="equal",
             ),
+            mo.md("### Cell-type lineage definitions"),
+            fate_cell_type_rules,
         ]
     )
-    return fate_batch_indices, fate_reference_percentiles, fate_threshold_fractions
+    return (
+        fate_batch_indices,
+        fate_cell_type_rules,
+        fate_reference_percentiles,
+        fate_threshold_fractions,
+        fate_time_indices,
+    )
 
 
 @app.cell(hide_code=True)
 def _(
     data,
     fate_batch_indices,
+    fate_cell_type_rules,
     fate_reference_percentiles,
     fate_threshold_fractions,
+    fate_time_indices,
     loaded,
     mo,
     names,
@@ -479,7 +539,7 @@ def _(
             kind="warn",
         )
     else:
-        _final_time = data.shape[1] - 1
+        _reference_time = data.shape[1] - 1
         _boundary = getattr(loaded, "boundary_mask", None)
         _measurement_mask = getattr(loaded, "measurement_mask", None)
         _absolute_thresholds = {}
@@ -490,7 +550,7 @@ def _(
                 if (
                     _measurement_mask is not None
                     and not bool(np.asarray(_measurement_mask)[
-                        _batch, _final_time, _channel_index
+                        _batch, _reference_time, _channel_index
                     ])
                 ):
                     continue
@@ -499,7 +559,9 @@ def _(
                     if _boundary is not None
                     else np.ones(data.shape[-2:], dtype=bool)
                 )
-                _values = data[_batch, _final_time, _channel_index][_batch_boundary]
+                _values = data[_batch, _reference_time, _channel_index][
+                    _batch_boundary
+                ]
                 _reference_values.append(_values[np.isfinite(_values)])
             _pooled_values = (
                 np.concatenate(_reference_values)
@@ -534,22 +596,31 @@ def _(
             for _cell_type, _color in _cell_colors.items()
         )
         _selected_batches = [int(_value) for _value in fate_batch_indices.value]
-        if not _selected_batches:
+        _selected_times = [int(_value) for _value in fate_time_indices.value]
+        _fate_rules = fate_cell_type_rules.value
+        if not _selected_batches or not _selected_times:
             _fate_view = mo.callout(
-                "Select at least one replicate to display.", kind="warn"
+                "Select at least one replicate and one timepoint to display.",
+                kind="warn",
             )
         else:
+            _row_specs = [
+                (_batch, _time)
+                for _batch in _selected_batches
+                for _time in _selected_times
+            ]
             _fate_figure, _fate_axes = plt.subplots(
-                len(_selected_batches),
+                len(_row_specs),
                 5,
-                figsize=(17, 3.4 * len(_selected_batches)),
+                figsize=(20, 5 * len(_row_specs)),
                 squeeze=False,
             )
             _prevalence_rows = []
             _fate_aux = getattr(loaded, "aux", {})
             _conditions = tuple(_fate_aux.get("batch_conditions", ()))
             _replicates = tuple(_fate_aux.get("batch_replicates", ()))
-            for _row, _batch in enumerate(_selected_batches):
+            _timesteps = tuple(_fate_aux.get("timesteps", ()))
+            for _row, (_batch, _time) in enumerate(_row_specs):
                 _selected_boundary = (
                     np.asarray(_boundary)[_batch, 0].astype(bool)
                     if _boundary is not None
@@ -558,7 +629,7 @@ def _(
                 _selected_images = {
                     _marker: data[
                         _batch,
-                        _final_time,
+                        _time,
                         names.index(_fate_channels[_marker]),
                     ]
                     for _marker in _fate_markers
@@ -569,17 +640,18 @@ def _(
                     )
                     for _marker in _fate_markers
                 }
-                _cell_masks = {
-                    "Notochord": (
-                        _high["TBXT"] & ~_high["SOX17"]
-                        & ~_high["SOX2"] & _high["FOXA2"]
-                    ),
-                    "Endoderm": _high["SOX17"],
-                    "Mesoderm": (
-                        _high["TBXT"] & ~_high["SOX17"]
-                        & _high["SOX2"] & ~_high["FOXA2"]
-                    ),
-                }
+                _cell_masks = {}
+                for _cell_type, _rule in _fate_rules.items():
+                    _rule_conditions = [
+                        _high[_marker] if _state == "high" else ~_high[_marker]
+                        for _marker, _state in _rule.items()
+                        if _state != "any"
+                    ]
+                    _cell_masks[_cell_type] = (
+                        np.logical_and.reduce(_rule_conditions)
+                        if _rule_conditions
+                        else np.ones_like(next(iter(_high.values())), dtype=bool)
+                    )
                 _cell_masks["Other"] = ~np.logical_or.reduce(
                     tuple(_cell_masks.values())
                 )
@@ -614,9 +686,18 @@ def _(
                 _fate_axes[_row, 4].set_axis_off()
                 _row_label = (
                     f"Batch {_batch}: {_conditions[_batch]}, "
-                    f"replicate {_replicates[_batch]}"
+                    f"replicate {_replicates[_batch]}, "
+                    + (
+                        f"{_timesteps[_time]}h"
+                        if _time < len(_timesteps)
+                        else f"time index {_time}"
+                    )
                     if _batch < len(_conditions) and _batch < len(_replicates)
-                    else f"Batch {_batch}"
+                    else (
+                        f"Batch {_batch}, {_timesteps[_time]}h"
+                        if _time < len(_timesteps)
+                        else f"Batch {_batch}, time index {_time}"
+                    )
                 )
                 _fate_axes[_row, 0].text(
                     -0.08,
@@ -639,6 +720,10 @@ def _(
                             _replicates[_batch]
                             if _batch < len(_replicates) else "—"
                         ),
+                        "time": (
+                            _timesteps[_time]
+                            if _time < len(_timesteps) else _time
+                        ),
                         "cell type": _cell_type,
                         "fraction of colony": (
                             float(np.mean(_cell_mask[_selected_boundary]))
@@ -646,19 +731,56 @@ def _(
                         ),
                     })
             _fate_figure.suptitle(
-                f"Final timestep (index {_final_time})", y=1.0
+                f"Selected timepoints; cutoffs referenced to time index "
+                f"{_reference_time}",
+                y=1.0,
             )
             _fate_figure.tight_layout()
+            _lineage_types = tuple(_fate_rules)
+            _overlapping_pairs = []
+            for _left_index, _left_type in enumerate(_lineage_types):
+                for _right_type in _lineage_types[_left_index + 1:]:
+                    _rules_conflict = any(
+                        _fate_rules[_left_type][_marker] != "any"
+                        and _fate_rules[_right_type][_marker] != "any"
+                        and _fate_rules[_left_type][_marker]
+                        != _fate_rules[_right_type][_marker]
+                        for _marker in _fate_markers
+                    )
+                    if not _rules_conflict:
+                        _overlapping_pairs.append(
+                            f"{_left_type} / {_right_type}"
+                        )
+            _overlap_view = (
+                mo.callout(
+                    "These lineage definitions can overlap: "
+                    + ", ".join(_overlapping_pairs)
+                    + ". Overlapping pixels use the colour of the later lineage.",
+                    kind="warn",
+                )
+                if _overlapping_pairs
+                else mo.callout(
+                    "The selected lineage definitions are mutually exclusive.",
+                    kind="success",
+                )
+            )
+            _rule_summary = "; ".join(
+                f"{_cell_type}: "
+                + ", ".join(
+                    f"{_marker}={_state}"
+                    for _marker, _state in _rule.items()
+                )
+                for _cell_type, _rule in _fate_rules.items()
+            )
             _fate_view = mo.vstack(
                 [
+                    _overlap_view,
                     mo.md(_legend),
                     _fate_figure,
                     mo.ui.table(_prevalence_rows, selection=None),
                     mo.md(
-                        "Rules match `nodal_ko_eval`: Notochord = TBXT high, "
-                        "SOX17 low, SOX2 low, FOXA2 high; Endoderm = SOX17 high; "
-                        "Mesoderm = TBXT high, SOX17 low, SOX2 high, FOXA2 low. "
-                        "Cyan contours mark pixels above each displayed cutoff."
+                        f"Current rules — {_rule_summary}. Cyan contours mark "
+                        "pixels above each displayed cutoff."
                     ),
                 ]
             )

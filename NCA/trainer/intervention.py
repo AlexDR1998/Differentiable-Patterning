@@ -7,11 +7,29 @@ import jax.numpy as jnp
 from Common.model.boundary import no_boundary
 
 
-def nodal_read_block_mask(intervention_time, state_count, *, time_offset=0):
-    """Select 12-hour developmental slots at or after an intervention."""
+def intervention_slot(intervention_time, observation_times=None):
+    """Index of the transition slot in which an intervention time falls.
+
+    Without ``observation_times`` this is the historical 12-hour convention
+    ``time // 12``. With them, it is the last slot starting at or before
+    ``time`` (identical on a uniform 12 h grid). Works on Python scalars and
+    traced arrays; negative times (no intervention) are handled by callers.
+    """
+    if observation_times is None:
+        return intervention_time // 12
+    times = jnp.asarray(observation_times, dtype=jnp.float32)
+    return jnp.searchsorted(times, intervention_time, side="right") - 1
+
+
+def nodal_read_block_mask(
+    intervention_time, state_count, *, time_offset=0, observation_times=None
+):
+    """Select developmental slots at or after an intervention."""
 
     time_indices = jnp.arange(state_count) + time_offset
-    return (intervention_time >= 0) & (time_indices >= intervention_time // 12)
+    return (intervention_time >= 0) & (
+        time_indices >= intervention_slot(intervention_time, observation_times)
+    )
 
 
 def apply_model_with_blocked_channel(
