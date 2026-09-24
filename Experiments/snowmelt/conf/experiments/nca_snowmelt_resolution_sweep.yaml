@@ -30,6 +30,7 @@ grid:
   labels.gpu: [H100]
   system.precision: [bfloat16]
   data.dataset: [snowmelt]
+  trainer.loop_autodiff: [lax]
 groups:
   # Target sets, each paired with a channel budget:
   # targets + hidden + 3 boundary channels (catchment, DEM, incidence).
