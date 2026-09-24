@@ -29,6 +29,8 @@ import numpy as np
 import scipy.ndimage as ndi
 import tifffile
 
+from Common.dataloader.tiff_lzw import read_tiff
+
 # Sentinel-2 MSI: central wavelength (nm), native resolution (m), name.
 # B10 (cirrus) is absent, as in L2A products.
 BAND_INFO = {
@@ -69,18 +71,13 @@ def resolve_snowmelt_root(root=None):
 def read_tif(path):
     """Read a single-band GeoTIFF as float32.
 
-    The raw bands are LZW-compressed; without ``imagecodecs`` installed tifffile
-    cannot decode them, so reading falls back to OpenCV's bundled libtiff.
+    The raw bands are LZW-compressed; without ``imagecodecs`` installed, tifffile
+    cannot decode them and :func:`Common.dataloader.tiff_lzw.read_tiff` falls
+    back to a built-in decoder.
     """
-    try:
-        arr = tifffile.imread(path)
-    except ValueError:  # compression codec needs imagecodecs
-        import cv2
-
-        arr = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
-        if arr is None:
-            raise IOError(f"Could not decode {path}")
-    return np.asarray(arr, dtype=np.float32)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # float32 files carry an uncastable GDAL_NODATA tag
+        return np.asarray(read_tiff(path), dtype=np.float32)
 
 
 def read_georef(path):
