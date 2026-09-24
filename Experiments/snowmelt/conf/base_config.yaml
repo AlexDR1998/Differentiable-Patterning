@@ -1,0 +1,127 @@
+schema_version: 1
+seed: 0
+
+experiment:
+  name: nca_snowmelt_template
+
+system:
+  precision: highest
+  xla_flags: null
+
+labels:
+  scaling: convective
+  gpu: null
+
+data:
+  dataset: snowmelt
+  batches: 1
+  # 517x514 at 10 m -> 129x128 at 40 m (plus the zero border below).
+  downsample: 4
+  snowmelt:
+    # Null falls back to $SNOWMELT_DATA_ROOT, then $DATA_PATH_BASE/snowmelt.
+    root: null
+    # Dynamic channels the NCA reproduces: any of B1..B12, B8A, NDSI, NDVI, SCA.
+    # Reflectance is clipped to [0, 1]; NDSI/NDVI are mapped from [-1, 1].
+    target_channels: [SCA]
+    # Fixed per-pixel inputs in the final state channels, after the catchment mask.
+    static_channels: [DEM, INCIDENCE]
+    pad: 4
+    mask_threshold: 0.5
+    noise_strength: 0.005
+    reinjection_probability: 0.5
+
+model:
+  family: NCA
+  # 1 target + hidden + 3 boundary channels (catchment, DEM, incidence).
+  channels: 16
+  kernel_str: [ID, LAP, DIFF]
+  fire_rate: 0.5
+  padding: CIRCULAR
+
+trainer:
+  # Soft boundary writes the catchment/terrain channels after every step.
+  boundary_mode: soft
+  grad_loss: false
+  sharding: null
+  backend:
+    type: none
+  log_directory: logs/
+  loss_time_channel_mask: null
+  loop_autodiff: checkpointed
+  log_every: 100
+  validation_every: null
+  validation_rollout: false
+  pool_admission_enabled: true
+  pool_admission_relative_threshold: 1.25
+  pool_admission_previous_relative_threshold: 1.10
+  pool_admission_absolute_threshold: null
+  pool_admission_ema_decay: 0.95
+  pool_admission_warmup: null
+
+optimiser:
+  type: nadam
+  blocknorm: true
+  sam: false
+  gradient_clip_norm: 1.0
+  apply_if_finite: true
+  max_consecutive_errors: 8
+  learn_rate: 0.001
+  warmup_steps: 64
+  decay_rate: 0.99
+  schedule:
+    type: exponential
+    warmup_init_lr: 1e-6
+    final_factor: 0.1
+    transition_fraction: 0.75
+
+loss:
+  terms:
+    - type: l2
+      weight: 1.0
+  regularisers:
+    intermediate_state: 1.0
+    boundary: 5.0
+    contiguous_growth: 0.0
+    localised_hidden: 0.0
+    update_sensitivity: 0.0
+    perturbation_conservation: 0.0
+    hidden_state_size: 0.0
+
+run:
+  mode: train
+  # Acquisitions are 20, 5, 20, 20 days apart. With interval_mode=steps, t is
+  # the step count of the median (20-day) interval: steps = (64, 16, 64, 64).
+  t: 64
+  interval_mode: steps
+  reference_interval: null
+  interval_steps: null
+  iterations: 4000
+  warmup: 64
+  write_images: true
+  write_videos: true
+
+logging:
+  backend: wandb
+  singular_values:
+    enabled: false
+    plot_spectra: true
+    epsilon: 1e-8
+  wandb:
+    project: NCA-snowmelt
+    group: base-config
+    tags: null
+
+model_store:
+  enabled: true
+  root: models
+  collection: ${logging.wandb.project}
+  model_factory: Experiments.config_helpers:build_model
+
+initialization:
+  model_id: null
+
+knockout:
+  mode: null
+  time: null
+  channel: null
+  curriculum: null

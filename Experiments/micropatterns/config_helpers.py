@@ -22,6 +22,7 @@ from Experiments.config_helpers import (
 from NCA.trainer.data_augmenter.colony_4ch import DataAugmenter as DataAugmenter4Ch
 from NCA.trainer.data_augmenter.colony_9ch import DataAugmenter as DataAugmenterGrouped
 from NCA.trainer.data_augmenter.micropattern import DataAugmenter as DataAugmenter260726
+from NCA.trainer.intervention import intervention_slot
 
 
 NODAL_CHANNEL = 7
@@ -117,6 +118,7 @@ def masked_reinject_callback_bit(
     probability,
     global_batch_indices=None,
     global_batch_count=None,
+    observation_times=None,
 ):
     if hasattr(x, "ndim"):
         B, T = x.shape[:2]
@@ -142,7 +144,7 @@ def masked_reinject_callback_bit(
             )
             x = x.at[:, 1:, :obs_channels].set(observed)
 
-        knockout_index = knockout_times // 12
+        knockout_index = intervention_slot(knockout_times, observation_times)
         zero_mask = (
             (knockout_times[:, None] >= 0)
             & (jnp.arange(T)[None] >= knockout_index[:, None])
@@ -185,7 +187,7 @@ def masked_reinject_callback_bit(
 
     for b in range(B):
         knockout_time = knockout_times[b]
-        knockout_index = knockout_time // 12
+        knockout_index = intervention_slot(knockout_time, observation_times)
         zero_mask = (knockout_time >= 0) & (jnp.arange(T) >= knockout_index)
         nodal = jnp.where(zero_mask[:, None, None], 0.0, x[b][:, NODAL_CHANNEL])
         x[b] = x[b].at[:, NODAL_CHANNEL].set(nodal)
@@ -198,7 +200,13 @@ def build_data_augmenter(
     channel_timestep_mask=None,
     channel_schema=None,
     intervention_times=None,
+    observation_times=None,
 ):
+    """Build the micropattern augmenter class.
+
+    ``observation_times`` (hours) map knockout times to transition slots for
+    non-uniform interval schedules; ``None`` keeps the 12-hour convention.
+    """
     from types import SimpleNamespace
 
     cfg = SimpleNamespace(
@@ -304,6 +312,7 @@ def build_data_augmenter(
                 self.reinjection_probability(i),
                 getattr(self, "_global_batch_indices", None),
                 getattr(self, "_global_batch_count", None),
+                None if observation_times is None else tuple(observation_times),
             )
             x = self.noise(x,cfg.data.micropattern.noise_strength,key=key)
             self.PREVIOUS_KEY = key

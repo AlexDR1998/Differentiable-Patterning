@@ -15,12 +15,13 @@ from NCA.trainer.loss_schedule import (
     build_loss_weight_schedule,
     final_transition_iteration,
 )
+from NCA.trainer.interval_schedule import IntervalSchedule, build_interval_schedule
 from NCA.trainer.optimizer import build_optimizer
 
 
 @dataclass(frozen=True)
 class PreparedTraining:
-    timesteps: int
+    interval_schedule: IntervalSchedule
     iterations: int
     warmup: int
     checkpoint_warmup: int
@@ -47,6 +48,28 @@ class PreparedTraining:
     targets: Any
     optimizer_state: Any
     key: Any
+
+    @property
+    def timesteps(self):
+        """Scan length of the training rollout (``t`` for uniform schedules)."""
+        return self.interval_schedule.scan_length
+
+
+def _interval_schedule(loop, context, n_slots, timesteps=None):
+    """Resolve per-slot timing; ``timesteps`` overrides ``loop.t`` (e.g. emoji fire-rate t)."""
+    if loop.interval_mode in ("fire_rate", "dt"):
+        raise NotImplementedError(
+            f"training.loop.interval_mode={loop.interval_mode!r} is not implemented yet; "
+            "use 'uniform' or 'steps'"
+        )
+    return build_interval_schedule(
+        loop.t if timesteps is None else timesteps,
+        n_slots,
+        mode=loop.interval_mode,
+        times=getattr(context, "observation_times", None),
+        reference_interval=loop.reference_interval,
+        explicit_steps=loop.interval_steps,
+    )
 
 
 def _singular_value_settings(config):
@@ -129,6 +152,13 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
 
     states, targets = trainer.data_augmenter.initialize_pool(key)
     states = jtu.tree_map(trainer.model.prepare_pool_state, states)
+    interval_schedule = _interval_schedule(
+        loop, trainer.context, jtu.tree_leaves(states)[0].shape[0], timesteps
+    )
+    # Rollout helpers (interventions, logging) read the schedule from the trainer.
+    trainer.interval_schedule = interval_schedule
+    if interval_schedule.mode != "uniform":
+        print(f"Interval schedule ({interval_schedule.mode}): steps per transition = {interval_schedule.steps}")
     loss_weight_schedule = build_loss_weight_schedule(
         config.training.loss, loop.iterations
     )
@@ -181,7 +211,7 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
     )
     trainer.model = model
     return PreparedTraining(
-        timesteps=loop.t if timesteps is None else timesteps,
+        interval_schedule=interval_schedule,
         iterations=loop.iterations,
         warmup=config.training.checkpoint.warmup,
         checkpoint_warmup=max(

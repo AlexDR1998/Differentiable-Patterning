@@ -42,6 +42,7 @@ from Experiments.impulse.config import (
     ImpulseRolloutConfig,
     OutputConfig,
 )
+from Experiments.snowmelt.config import SnowmeltDataConfig
 from Experiments.micropatterns.config import (
     KnockoutConfig,
     MicropatternDataConfig,
@@ -60,6 +61,7 @@ from NCA.trainer.config import (
     TrainerBackendConfig,
     TrainerConfig,
 )
+from NCA.trainer.interval_schedule import INTERVAL_MODES
 
 
 CONFIG_SCHEMA_VERSION = 1
@@ -109,10 +111,28 @@ class TrainingLoopConfig(ConfigValue):
     fire_rate_step_numerator: int | None = None
     filename_mode: str = "typed"
     repeat: int | None = None
+    # Per-transition timing (NCA/trainer/interval_schedule.py). With a non-uniform
+    # mode, t is the step count of the reference interval (median by default).
+    interval_mode: str = "uniform"
+    reference_interval: float | None = None
+    interval_steps: tuple[int, ...] | None = None
 
     def __post_init__(self):
         if self.iterations <= 0 or self.t <= 0:
             raise ValueError("training loop iterations and t must be positive")
+        if self.interval_mode not in INTERVAL_MODES:
+            raise ValueError(
+                f"training.loop.interval_mode must be one of {INTERVAL_MODES}"
+            )
+        if self.reference_interval is not None and self.reference_interval <= 0:
+            raise ValueError("training.loop.reference_interval must be positive")
+        if self.interval_steps is not None:
+            if self.interval_mode != "steps":
+                raise ValueError(
+                    "training.loop.interval_steps requires interval_mode='steps'"
+                )
+            if any(int(step) <= 0 for step in self.interval_steps):
+                raise ValueError("training.loop.interval_steps must be positive")
 
 
 @dataclass(frozen=True)
@@ -129,7 +149,7 @@ class DataConfig(ConfigValue):
     dataset: str
     batches: int
     preprocessing: PreprocessingConfig
-    augmentation: EmojiDataConfig | MicropatternDataConfig
+    augmentation: EmojiDataConfig | MicropatternDataConfig | SnowmeltDataConfig
     intervention: KnockoutConfig = field(default_factory=KnockoutConfig)
 
     @property
@@ -146,6 +166,12 @@ class DataConfig(ConfigValue):
     def micropattern(self) -> MicropatternDataConfig:
         if not isinstance(self.augmentation, MicropatternDataConfig):
             raise AttributeError("micropattern configuration requested for non-micropattern data")
+        return self.augmentation
+
+    @property
+    def snowmelt(self) -> SnowmeltDataConfig:
+        if not isinstance(self.augmentation, SnowmeltDataConfig):
+            raise AttributeError("snowmelt configuration requested for non-snowmelt data")
         return self.augmentation
 
 
@@ -373,7 +399,8 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
     stable_augmentation = data_node.pop("augmentation", None)
     stable_intervention = data_node.pop("intervention", None)
     emoji_node = data_node.pop("emoji", stable_augmentation if dataset == "emojis" else None)
-    micropattern_node = data_node.pop("micropattern", stable_augmentation if dataset != "emojis" else None)
+    micropattern_node = data_node.pop("micropattern", stable_augmentation if dataset in {"micropatterns", "micropatterns_260726"} else None)
+    snowmelt_node = data_node.pop("snowmelt", stable_augmentation if dataset == "snowmelt" else None)
     if data_node:
         raise ValueError(f"Unknown configuration fields under data: {sorted(data_node)}")
     if dataset == "emojis":
@@ -397,6 +424,14 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
                 raw[split_name] = tuple(int(value) for value in raw[split_name])
         raw["timesteps"] = _tuple(raw.get("timesteps", (0, 12, 24, 36, 48)))
         augmentation = _strict(MicropatternDataConfig, raw, "data.micropattern")
+    elif dataset == "snowmelt":
+        augmentation = _strict(
+            SnowmeltDataConfig,
+            snowmelt_node,
+            "data.snowmelt",
+            target_channels=_tuple,
+            static_channels=_tuple,
+        )
     else:
         raise ValueError(f"Unsupported data.dataset {dataset!r}")
     intervention_node = _mapping(
@@ -451,7 +486,13 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
         if optimizer_raw.get(key) is not None:
             optimizer_raw[key] = float(optimizer_raw[key])
     training = TrainingConfig(
-        loop=_strict(TrainingLoopConfig, run_node, "training.loop"),
+        loop=_strict(
+            TrainingLoopConfig,
+            run_node,
+            "training.loop",
+            interval_steps=lambda x: None if x is None else tuple(int(v) for v in x),
+            reference_interval=lambda x: None if x is None else float(x),
+        ),
         trainer=_strict(TrainerConfig, trainer_node, "training.trainer"),
         optimizer=_strict(OptimizerConfig, optimizer_raw, "training.optimizer"),
         loss=_loss_config(loss_node, "training.loss"),

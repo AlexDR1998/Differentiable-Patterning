@@ -29,3 +29,6 @@ class TrainerContext:
     validation_loss_time_channel_mask: Any = None
     training_intervention_times: Any = None
     validation_intervention_times: Any = None
+    # Observation time of each target image (any unit), used by non-uniform
+    # training.loop.interval_mode settings to size each transition.
+    observation_times: tuple[float, ...] | None = None

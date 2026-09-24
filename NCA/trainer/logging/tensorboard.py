@@ -23,9 +23,11 @@ from Common.utils import get_jax_memory_stats
 from Common.trainer.abstract_wandb_log import Train_log
 from NCA.trainer.intervention import (
 	apply_model_with_blocked_channel,
+	intervention_slot,
 	rollout_model_sampled,
 	rollout_model_with_blocked_channel_sampled,
 )
+from NCA.trainer.interval_schedule import IntervalSchedule, uniform_schedule
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch
 #elif LOG_BACKEND=="tensorboard":
 #	from Common.trainer.abstract_tensorboard_log import Train_log
@@ -43,13 +45,53 @@ def _is_grouped_9ch_colony_augmenter(data_augmenter):
 
 
 def _trajectory_snapshot_channels(T, data_augmenter, t, channel_schema=None):
-	T_snapshot = T[::t]
+	"""Select observed channels at observation frames.
+
+	``t`` is either a frame stride (historical) or a sequence of frame indices.
+	"""
+	T_snapshot = T[::t] if isinstance(t, int) else T[np.asarray(t)]
 	schema = channel_schema or getattr(data_augmenter, "schema", None)
 	if schema is not None:
 		return T_snapshot[:, np.asarray(schema.target_to_state)]
 	if _is_grouped_9ch_colony_augmenter(data_augmenter):
 		return duplicate_x_channels_9ch(T_snapshot[:,:9])
 	return T_snapshot[:,:data_augmenter.OBS_CHANNELS]
+
+
+def _rollout_schedule(t, number_of_images):
+	"""Interval schedule for a sequential rollout through ``number_of_images`` transitions."""
+	if isinstance(t, IntervalSchedule):
+		if t.is_uniform:
+			return uniform_schedule(t.scan_length, number_of_images, t.times)
+		if t.n_slots != number_of_images:
+			raise ValueError(
+				f"Interval schedule has {t.n_slots} slots for {number_of_images} logged transitions"
+			)
+		return t
+	return uniform_schedule(t, number_of_images)
+
+
+def _frame_indices(schedule, frame_count):
+	"""Frames of a dense rollout that correspond to observed images."""
+	return [step for step in schedule.observation_steps if step < frame_count]
+
+
+def _knockout_step(schedule, knockout_time):
+	"""First rollout step with the NODAL read blocked; past the end if never.
+
+	``knockout_time`` is in hours; uniform schedules keep the 12-hour slot rule.
+	"""
+	if knockout_time is None or knockout_time < 0:
+		return schedule.total_steps + 1
+	times = None if schedule.mode == "uniform" else schedule.times
+	slot = int(intervention_slot(int(knockout_time), times))
+	return schedule.observation_steps[min(slot, schedule.n_slots)]
+
+
+def _steps_at_image_index(schedule, index):
+	"""Rollout step at a (possibly fractional) image index; ``index * t`` when uniform."""
+	slot = min(int(index), schedule.n_slots - 1)
+	return schedule.observation_steps[slot] + (index - slot) * schedule.steps[slot]
 
 
 def _trajectory_condition_labels(data_augmenter, batch_count, default_knockout_time=None):
@@ -898,6 +940,9 @@ class NCA_Train_log(Train_log):
 		x,y = DATA_AUGMENTER.split_x_y(1)
 		x,y = DATA_AUGMENTER.advance_pool(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]
+		schedule = _rollout_schedule(t, NUMBER_OF_IMAGES)
+		total_steps = schedule.total_steps
+		observation_steps = jnp.asarray(schedule.observation_steps)
 		condition_labels = _trajectory_condition_labels(DATA_AUGMENTER, len(x))
 		# Log true data for side by side comparison
 		schema = self.diagnostic_channel_schema or getattr(DATA_AUGMENTER, "schema", None)
@@ -919,15 +964,13 @@ class NCA_Train_log(Train_log):
 		BATCHES = len(x)
 		CHANNELS = x[0].shape[1]
 
-		print("Running final trained model for "+str(t)+" steps")
+		print("Running final trained model for "+str(total_steps)+" steps")
 		
 		SNAPSHOTS = []
 		for b in tqdm(range(BATCHES)):
 			initial_state = nca.prepare_pool_state(x[b][0])
 			intervention_times = getattr(DATA_AUGMENTER, "intervention_times", None)
 			if not write_videos and intervention_times is None:
-				total_steps = t * NUMBER_OF_IMAGES
-				observation_steps = jnp.arange(0, total_steps + 1, t)
 				boundary_mask = (
 					jnp.empty((0,), dtype=initial_state.dtype)
 					if boundary_masks is None
@@ -943,19 +986,12 @@ class NCA_Train_log(Train_log):
 					observation_steps,
 				)
 			elif not write_videos:
-				total_steps = t * NUMBER_OF_IMAGES
-				observation_steps = jnp.arange(0, total_steps + 1, t)
 				boundary_mask = (
 					jnp.empty((0,), dtype=initial_state.dtype)
 					if boundary_masks is None
 					else boundary_masks[b]
 				)
-				knockout_time = intervention_times[b]
-				knockout_step = (
-					total_steps + 1
-					if knockout_time is None or knockout_time < 0
-					else (int(knockout_time) // 12) * t
-				)
+				knockout_step = _knockout_step(schedule, intervention_times[b])
 				T = rollout_model_with_blocked_channel_sampled(
 					nca,
 					initial_state,
@@ -968,13 +1004,13 @@ class NCA_Train_log(Train_log):
 					observation_steps,
 				)
 			elif intervention_times is None:
-				T = nca.run(t*NUMBER_OF_IMAGES, initial_state, boundary_callback[b])
+				T = nca.run(total_steps, initial_state, boundary_callback[b])
 			else:
 				state = initial_state
 				trajectory = [state]
 				rollout_key = jr.fold_in(key, b)
-				knockout_time = intervention_times[b]
-				for step in range(t * NUMBER_OF_IMAGES):
+				knockout_step = _knockout_step(schedule, intervention_times[b])
+				for step in range(total_steps):
 					rollout_key = jr.fold_in(rollout_key, step)
 					state = apply_model_with_blocked_channel(
 						nca,
@@ -982,15 +1018,15 @@ class NCA_Train_log(Train_log):
 						boundary_callback[b],
 						rollout_key,
 						DATA_AUGMENTER.nodal_channel,
-						(knockout_time >= 0)
-						and (step // t >= knockout_time // 12),
+						step >= knockout_step,
 					)
 					trajectory.append(state)
 				T = jnp.stack(trajectory)
 			if write_videos:
 				self.log_video(f"TrainingRollout/trajectory_batch_{b + 1}",T[:,:3],step=None)
+			frames = _frame_indices(schedule, T.shape[0]) if write_videos else 1
 			T_snapshot = _trajectory_snapshot_channels(
-				T, DATA_AUGMENTER, t if write_videos else 1, self.diagnostic_channel_schema
+				T, DATA_AUGMENTER, frames, self.diagnostic_channel_schema
 			)
 			SNAPSHOTS.append(plot_channel_time_grid(
 				T_snapshot,
@@ -1000,7 +1036,7 @@ class NCA_Train_log(Train_log):
 			))
 			
 			if SAVE_TRAJECTORY:
-				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3])  # type: ignore
+				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[frames if write_videos else slice(None),:3])  # type: ignore
 
 			if write_videos and T.shape[1] > 3:
 				hidden = T[:, 3:]
@@ -1072,6 +1108,11 @@ class NCA_knockout_Train_log(NCA_Train_log):
 		x,y = DATA_AUGMENTER.split_x_y(1)
 		x,y = DATA_AUGMENTER.advance_pool(x,y,0,key)
 		NUMBER_OF_IMAGES=x[0].shape[0]
+		schedule = _rollout_schedule(t, NUMBER_OF_IMAGES)
+		total_steps = schedule.total_steps
+		observation_steps = jnp.asarray(schedule.observation_steps)
+		# knockout_time is an image index here; index * t for uniform schedules.
+		knockout_step = _steps_at_image_index(schedule, self.knockout_time)
 		condition_labels = _trajectory_condition_labels(
 			DATA_AUGMENTER, len(x), default_knockout_time=self.knockout_time
 		)
@@ -1095,15 +1136,13 @@ class NCA_knockout_Train_log(NCA_Train_log):
 		BATCHES = len(x)
 		CHANNELS = x[0].shape[1]
 
-		print("Running final trained model for "+str(t)+" steps")
+		print("Running final trained model for "+str(total_steps)+" steps")
 		
 		SNAPSHOTS = []
 		for b in tqdm(range(BATCHES)):
 
 			xb = x[b][0] # C x y
 			if not write_videos:
-				total_steps = t * NUMBER_OF_IMAGES
-				observation_steps = jnp.arange(0, total_steps + 1, t)
 				boundary_mask = (
 					jnp.empty((0,), dtype=xb.dtype)
 					if boundary_masks is None
@@ -1117,14 +1156,14 @@ class NCA_knockout_Train_log(NCA_Train_log):
 					jr.fold_in(key, b),
 					total_steps,
 					self.knockout_channel,
-					int(self.knockout_time * t),
+					int(knockout_step),
 					observation_steps,
 				)
 			else:
 				T = []
-				for step in range(t*NUMBER_OF_IMAGES):
+				for step in range(total_steps):
 					key = jr.fold_in(key,step)
-					if step/t >= self.knockout_time:
+					if step >= knockout_step:
 						xb = xb.at[self.knockout_channel].set(0.0)
 					xb = nca(xb,boundary_callback[b],key)
 					T.append(xb)
@@ -1135,8 +1174,9 @@ class NCA_knockout_Train_log(NCA_Train_log):
 				_T_mono = rearrange(T[:,:9],"T (cx cy) X Y -> T () (cx X) (cy Y)",cx=3,cy=3)
 				_T_mono = repeat(_T_mono,"T () x y -> T 3 x y")
 				self.log_video(f"TrainingRollout/trajectory_monochrome_batch_{b + 1}",_T_mono,step=None) # type: ignore
+			frames = _frame_indices(schedule, T.shape[0]) if write_videos else 1
 			T_snapshot = _trajectory_snapshot_channels(
-				T, DATA_AUGMENTER, t if write_videos else 1, self.diagnostic_channel_schema
+				T, DATA_AUGMENTER, frames, self.diagnostic_channel_schema
 			)
 			SNAPSHOTS.append(plot_channel_time_grid(
 				T_snapshot,
@@ -1146,7 +1186,7 @@ class NCA_knockout_Train_log(NCA_Train_log):
 			))
 			
 			if SAVE_TRAJECTORY:
-				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[::t,:3]) # type: ignore
+				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[frames if write_videos else slice(None),:3]) # type: ignore
 
 		self.log_image(
 			'TrainingRollout/trajectory_snapshot',

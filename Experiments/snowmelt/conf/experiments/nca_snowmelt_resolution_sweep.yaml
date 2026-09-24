@@ -1,0 +1,43 @@
+experiment_name: nca_snowmelt_resolution_sweep
+entrypoint: Experiments.snowmelt.train:run
+output_subdir: generated/nca_snowmelt_resolution_sweep
+seed_mode: index
+
+# Exploratory snowmelt sweep over spatial resolution, temporal resolution,
+# target channels and timestep uniformity.
+#
+# Generate with:
+#   python Experiments/generate_configs.py Experiments/snowmelt \
+#       Experiments/snowmelt/conf/base_config.yaml Experiments/snowmelt/conf/generated
+#
+# Spatial resolution: data.downsample of the 10 m rasters (plus a 4 px zero border)
+#   2 -> 20 m, 258x257    4 -> 40 m, 129x128    8 -> 80 m, 64x64
+#
+# Temporal resolution: run.t is the NCA step count of the reference (median,
+# 20-day) interval, i.e. t/20 steps per day. The acquisitions are 20, 5, 20, 20
+# days apart:
+#   interval_mode=uniform -> every transition runs t steps
+#   interval_mode=steps   -> transitions run (t, t/4, t, t) steps
+# The downsample/t diagonal (8, 32), (4, 64), (2, 128) keeps t proportional to
+# 1/h (convective scaling), so each step spans the same fraction of a pixel.
+#
+# Total jobs: 3 downsample * 3 t * 2 interval modes * 4 target sets * 2 repeats = 144.
+grid:
+  model.family: [gNCA,NCA]
+  run.interval_mode: [uniform, steps]
+  run.repeat: [0, 1]
+  logging.wandb.project: [nca_snowmelt_resolution_sweep]
+  labels.gpu: [H100]
+  system.precision: [bfloat16]
+  data.dataset: [snowmelt]
+groups:
+  # Target sets, each paired with a channel budget:
+  # targets + hidden + 3 boundary channels (catchment, DEM, incidence).
+  - data.snowmelt.target_channels:
+      - [SCA]
+      - [NDSI]
+      - [NDSI, B3, B11]
+      - [B2, B3, B4, B8, B11, B12]
+    model.channels: [16, 16, 16, 24]
+  - data.downsample: [2, 4, 8]
+    run.t: [64, 128, 256]

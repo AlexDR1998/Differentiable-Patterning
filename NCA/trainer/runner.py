@@ -385,7 +385,7 @@ def run_training(
         trainer.logger.tb_training_end_log(
             trainer.model,
             trainer.data_augmenter,
-            t=setup.timesteps,
+            t=setup.interval_schedule,
             boundary_callback=trainer.boundary_callbacks,
             SAVE_TRAJECTORY=False,
             write_videos=setup.write_videos,

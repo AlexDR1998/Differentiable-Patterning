@@ -150,12 +150,18 @@ class ValidationEvaluator:
         def no_regularisers(totals, before, after, context, key, skip=()):
             return totals
 
+        schedule = self.setup.interval_schedule
+        if not schedule.is_uniform and schedule.n_slots != self.targets[0].shape[0]:
+            raise ValueError(
+                f"Validation data has {self.targets[0].shape[0]} transitions but the "
+                f"interval schedule has {schedule.n_slots}"
+            )
         _, states, _ = self.trainer._run_nca_steps(
             model,
             batched_model,
             self.states,
             {},
-            self.setup.timesteps,
+            schedule,
             self.key,
             self.trainer.config.training.trainer.loop_autodiff,
             no_regularisers,
@@ -176,7 +182,8 @@ class ValidationEvaluator:
                 rollout_model,
                 rollout_states,
                 {},
-                self.setup.timesteps,
+                # Sequential rollout: each transition runs its own step count.
+                schedule.for_slot(transition) if not schedule.is_uniform else schedule,
                 jr.fold_in(self.key, transition + 1),
                 self.trainer.config.training.trainer.loop_autodiff,
                 no_regularisers,

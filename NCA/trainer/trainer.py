@@ -22,6 +22,7 @@ from NCA.model.NCA_multi_scale import mNCA
 from NCA.model.NCA_multihead_attention import aNCA
 from NCA.trainer.training_execution import TrainingExecution
 from NCA.trainer.context import TrainerContext
+from NCA.trainer.interval_schedule import IntervalSchedule, uniform_schedule
 from NCA.trainer.intervention import (
 	apply_model_with_blocked_channel,
 	nodal_read_block_mask,
@@ -239,6 +240,7 @@ class NcaTrainer:
 		if self.nodal_channel is None:
 			raise ValueError("NODAL intervention requires a NODAL state channel")
 		intervention_times = tuple(self.intervention_times)
+		observation_times = self._intervention_observation_times()
 
 		def apply_interventions(x, callbacks, key_array):
 			if len(x) != len(intervention_times):
@@ -253,6 +255,7 @@ class NcaTrainer:
 					knockout_time,
 					states.shape[0],
 					time_offset=time_offset,
+					observation_times=observation_times,
 				)
 				outputs.append(jax.vmap(
 					lambda state, item_key, is_blocked: apply_model_with_blocked_channel(
@@ -271,6 +274,17 @@ class NcaTrainer:
 
 		return apply_interventions
 
+	def _intervention_observation_times(self):
+		"""Observation times for mapping intervention hours to slots.
+
+		``None`` keeps the historical 12-hour slot convention; uniform schedules
+		use it so existing runs are unchanged.
+		"""
+		schedule = getattr(self, "interval_schedule", None)
+		if schedule is None or schedule.mode == "uniform":
+			return None
+		return schedule.times
+
 	def _training_execution(self):
 		return TrainingExecution(self)
 
@@ -286,8 +300,30 @@ class NcaTrainer:
 		apply_intermediate_regs,
 		training_execution,
 	):
-		"""Reference one-step NCA scan."""
+		"""Reference one-step NCA scan.
+
+		``t`` is either an int (every slot runs ``t`` steps) or an
+		:class:`IntervalSchedule`. For a non-uniform schedule the scan runs to
+		the longest slot and each slot keeps its state once it has taken its own
+		step count, so slot ``i`` ends exactly where an unmasked ``steps[i]``-step
+		scan would. Regularisers are still evaluated on every scan iteration;
+		finished slots contribute their held state, and (non-uniform only)
+		``context["active_slots"]`` marks which slots actually updated.
+		"""
+		schedule = t if isinstance(t, IntervalSchedule) else uniform_schedule(t, 1)
 		state_shape = states[0].shape[0]
+		if schedule.is_uniform:
+			active_steps = None
+		elif schedule.n_slots != state_shape:
+			raise ValueError(
+				f"Interval schedule has {schedule.n_slots} slots but the rollout has {state_shape}"
+			)
+		else:
+			active_steps = jnp.asarray(schedule.steps, dtype=jnp.int32)
+
+		def hold_finished(new, old, active):
+			active = active.reshape(active.shape + (1,) * (new.ndim - 1))
+			return jnp.where(active, new, old)
 
 		def nca_step(carry, j):
 			step_key, state, reg_logs = carry
@@ -302,22 +338,25 @@ class NcaTrainer:
 			new_state = vv_nca(
 				state, training_execution.boundary_callbacks(), key_array
 			)
+			reg_context = {
+				"model": vv_nca,
+				"boundary_state_selector": nca.boundary_regulariser_state,
+			}
+			if active_steps is not None:
+				active = j < active_steps
+				new_state = jtu.tree_map(
+					lambda new, old: hold_finished(new, old, active), new_state, state
+				)
+				reg_context["active_slots"] = active
 			reg_logs = apply_intermediate_regs(
-				reg_logs,
-				state,
-				new_state,
-				{
-					"model": vv_nca,
-					"boundary_state_selector": nca.boundary_regulariser_state,
-				},
-				step_key,
+				reg_logs, state, new_state, reg_context, step_key
 			)
 			return (step_key, new_state, reg_logs), None
 
 		carry, _ = eqx.internal.scan(
 			nca_step,
 			(key, states, reg_logs_internal),
-			xs=jnp.arange(t),
+			xs=jnp.arange(schedule.scan_length),
 			kind=loop_autodiff,
 		)
 		return carry

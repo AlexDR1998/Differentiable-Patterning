@@ -48,6 +48,8 @@ def data_channel_count(cfg):
 
     if _cfg_get(cfg.data, "dataset") == "emojis":
         return cfg.data.emoji.data_channels
+    if _cfg_get(cfg.data, "dataset") == "snowmelt":
+        return len(cfg.data.snowmelt.target_channels)
     return cfg.data.micropattern.data_channels
 
 

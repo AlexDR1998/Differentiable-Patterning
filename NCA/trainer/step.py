@@ -100,7 +100,7 @@ def build_train_step(trainer, setup):
             batched_model,
             states,
             regulariser_totals,
-            setup.timesteps,
+            setup.interval_schedule,
             key,
             trainer.config.training.trainer.loop_autodiff,
             apply_regularisers,
@@ -162,6 +162,8 @@ def build_train_step(trainer, setup):
                     list(jr.split(key, trainer.batch_count)),
                 )
             )
+        # Regularisers accumulate once per scan iteration, so normalise by the
+        # scan length (``t`` for uniform schedules, the longest slot otherwise).
         regulariser_losses = {
             name: coefficient * jnp.mean(regulariser_totals[name]) / setup.timesteps
             for name, coefficient in setup.regulariser_coefficients.items()

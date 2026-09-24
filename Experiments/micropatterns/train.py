@@ -148,12 +148,18 @@ def run(cfg):
         return_schedule=True,
     )
     schema = aux.get("channel_schema")
+    observation_times = tuple(float(time) for time in cfg.data.micropattern.timesteps)
     augmenter, _ = build_data_augmenter(
         cfg.data,
         cfg.training.loop.iterations,
         mask,
         schema,
         aux.get("intervention_times"),
+        observation_times=(
+            None
+            if cfg.training.loop.get("interval_mode", "uniform") == "uniform"
+            else observation_times
+        ),
     )
     target_timepoints = [f"t{time}h" for time in list(cfg.data.micropattern.timesteps)[1:]]
     if cfg.data.micropattern.get("duplicate_final_timestep", False):
@@ -176,6 +182,7 @@ def run(cfg):
             data, boundary_mask=boundary
         ),
         training_intervention_times=aux.get("intervention_times"),
+        observation_times=observation_times,
         validation_data=None if validation_data is None else validation_data[0],
         validation_boundary_mask=(
             None if validation_data is None else validation_data[3]
