@@ -11,7 +11,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -72,6 +71,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -144,7 +144,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -256,7 +256,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -317,6 +316,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -501,7 +501,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -562,6 +561,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -746,7 +746,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -807,6 +806,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -879,7 +879,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -991,7 +991,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -1052,6 +1051,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -1236,7 +1236,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -1297,6 +1296,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -1481,7 +1481,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -1543,6 +1542,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -1616,7 +1616,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -1728,7 +1728,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -1790,6 +1789,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -1975,7 +1975,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -2037,6 +2036,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -2222,7 +2222,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -2284,6 +2283,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -2357,7 +2357,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -2469,7 +2469,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -2531,6 +2530,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -2716,7 +2716,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -2778,6 +2777,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -2963,7 +2963,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -3025,6 +3024,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -3098,7 +3098,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -3210,7 +3210,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -3272,6 +3271,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -3457,7 +3457,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -3519,6 +3518,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -3704,7 +3704,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -3767,6 +3766,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -3841,7 +3841,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -3953,7 +3953,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -4016,6 +4015,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -4202,7 +4202,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -4265,6 +4264,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -4451,7 +4451,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -4512,6 +4511,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -4584,7 +4584,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -4696,7 +4696,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -4757,6 +4756,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -4941,7 +4941,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -5002,6 +5001,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -5186,7 +5186,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -5247,6 +5246,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -5319,7 +5319,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -5431,7 +5431,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -5492,6 +5491,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -5676,7 +5676,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -5737,6 +5736,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -5921,7 +5921,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -5983,6 +5982,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -6056,7 +6056,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -6168,7 +6168,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -6230,6 +6229,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -6415,7 +6415,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -6477,6 +6476,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -6662,7 +6662,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -6724,6 +6723,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -6797,7 +6797,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -6909,7 +6909,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -6971,6 +6970,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -7156,7 +7156,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -7218,6 +7217,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -7403,7 +7403,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -7465,6 +7464,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -7538,7 +7538,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -7650,7 +7650,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -7712,6 +7711,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -7897,7 +7897,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -7959,6 +7958,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -8144,7 +8144,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -8207,6 +8206,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -8281,7 +8281,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -8393,7 +8393,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -8456,6 +8455,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -8642,7 +8642,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -8705,6 +8704,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -8891,7 +8891,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -8952,6 +8951,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -9024,7 +9024,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -9136,7 +9136,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -9197,6 +9196,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -9381,7 +9381,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -9442,6 +9441,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -9626,7 +9626,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -9687,6 +9686,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -9759,7 +9759,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -9871,7 +9871,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -9932,6 +9931,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -10116,7 +10116,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -10177,6 +10176,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -10361,7 +10361,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -10423,6 +10422,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -10496,7 +10496,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -10608,7 +10608,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -10670,6 +10669,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -10855,7 +10855,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -10917,6 +10916,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -11102,7 +11102,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -11164,6 +11163,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -11237,7 +11237,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -11349,7 +11349,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -11411,6 +11410,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -11596,7 +11596,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -11658,6 +11657,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -11843,7 +11843,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -11905,6 +11904,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -11978,7 +11978,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -12090,7 +12090,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -12152,6 +12151,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -12337,7 +12337,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -12399,6 +12398,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -12584,7 +12584,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -12647,6 +12646,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -12721,7 +12721,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -12833,7 +12833,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -12896,6 +12895,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -13082,7 +13082,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -13145,6 +13144,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -13331,7 +13331,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -13392,6 +13391,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -13464,7 +13464,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -13576,7 +13576,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -13637,6 +13636,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -13821,7 +13821,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -13882,6 +13881,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -14066,7 +14066,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -14127,6 +14126,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -14199,7 +14199,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -14311,7 +14311,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -14372,6 +14371,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -14556,7 +14556,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -14617,6 +14616,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -14801,7 +14801,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -14863,6 +14862,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -14936,7 +14936,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -15048,7 +15048,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -15110,6 +15109,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -15295,7 +15295,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -15357,6 +15356,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -15542,7 +15542,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -15604,6 +15603,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -15677,7 +15677,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -15789,7 +15789,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -15851,6 +15850,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -16036,7 +16036,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -16098,6 +16097,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -16283,7 +16283,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -16345,6 +16344,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -16418,7 +16418,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -16530,7 +16530,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -16592,6 +16591,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -16777,7 +16777,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -16839,6 +16838,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -17024,7 +17024,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -17087,6 +17086,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -17161,7 +17161,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -17273,7 +17273,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -17336,6 +17335,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -17522,7 +17522,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -17585,6 +17584,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -17771,7 +17771,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -17832,6 +17831,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -17904,7 +17904,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -18016,7 +18016,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -18077,6 +18076,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -18261,7 +18261,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -18322,6 +18321,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -18506,7 +18506,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -18567,6 +18566,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -18639,7 +18639,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -18751,7 +18751,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -18812,6 +18811,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -18996,7 +18996,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -19057,6 +19056,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -19241,7 +19241,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -19303,6 +19302,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -19376,7 +19376,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -19488,7 +19488,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -19550,6 +19549,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -19735,7 +19735,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -19797,6 +19796,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -19982,7 +19982,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -20044,6 +20043,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -20117,7 +20117,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -20229,7 +20229,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -20291,6 +20290,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -20476,7 +20476,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -20538,6 +20537,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -20723,7 +20723,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -20785,6 +20784,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -20858,7 +20858,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -20970,7 +20970,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -21032,6 +21031,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -21217,7 +21217,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -21279,6 +21278,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -21464,7 +21464,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -21527,6 +21526,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -21601,7 +21601,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -21713,7 +21713,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -21776,6 +21775,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -21962,7 +21962,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -22025,6 +22024,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -22211,7 +22211,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -22272,6 +22271,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -22344,7 +22344,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -22456,7 +22456,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -22517,6 +22516,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -22701,7 +22701,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -22762,6 +22761,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -22946,7 +22946,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -23007,6 +23006,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -23079,7 +23079,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -23191,7 +23191,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -23252,6 +23251,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -23436,7 +23436,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -23497,6 +23496,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -23681,7 +23681,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -23743,6 +23742,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -23816,7 +23816,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -23928,7 +23928,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -23990,6 +23989,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -24175,7 +24175,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -24237,6 +24236,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -24422,7 +24422,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -24484,6 +24483,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -24557,7 +24557,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -24669,7 +24669,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -24731,6 +24730,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -24916,7 +24916,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -24978,6 +24977,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -25163,7 +25163,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -25225,6 +25224,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -25298,7 +25298,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -25410,7 +25410,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -25472,6 +25471,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -25657,7 +25657,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -25719,6 +25718,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -25904,7 +25904,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -25967,6 +25966,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -26041,7 +26041,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -26153,7 +26153,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -26216,6 +26215,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -26402,7 +26402,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -26465,6 +26464,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -26651,7 +26651,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -26712,6 +26711,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -26784,7 +26784,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -26896,7 +26896,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -26957,6 +26956,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -27141,7 +27141,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -27202,6 +27201,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -27386,7 +27386,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -27447,6 +27446,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -27519,7 +27519,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -27631,7 +27631,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -27692,6 +27691,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -27876,7 +27876,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -27937,6 +27936,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -28121,7 +28121,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -28183,6 +28182,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -28256,7 +28256,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -28368,7 +28368,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -28430,6 +28429,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -28615,7 +28615,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -28677,6 +28676,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -28862,7 +28862,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -28924,6 +28923,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -28997,7 +28997,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -29109,7 +29109,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -29171,6 +29170,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -29356,7 +29356,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -29418,6 +29417,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -29603,7 +29603,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -29665,6 +29664,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -29738,7 +29738,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -29850,7 +29850,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -29912,6 +29911,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -30097,7 +30097,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -30159,6 +30158,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -30344,7 +30344,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -30407,6 +30406,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -30481,7 +30481,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -30593,7 +30593,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -30656,6 +30655,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -30842,7 +30842,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -30905,6 +30904,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -31091,7 +31091,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -31152,6 +31151,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -31224,7 +31224,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -31336,7 +31336,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -31397,6 +31396,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -31581,7 +31581,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -31642,6 +31641,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -31826,7 +31826,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -31887,6 +31886,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -31959,7 +31959,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -32071,7 +32071,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -32132,6 +32131,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -32316,7 +32316,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -32377,6 +32376,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -32561,7 +32561,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -32623,6 +32622,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -32696,7 +32696,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -32808,7 +32808,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -32870,6 +32869,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -33055,7 +33055,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -33117,6 +33116,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -33302,7 +33302,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -33364,6 +33363,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -33437,7 +33437,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -33549,7 +33549,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -33611,6 +33610,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -33796,7 +33796,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -33858,6 +33857,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -34043,7 +34043,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -34105,6 +34104,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -34178,7 +34178,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -34290,7 +34290,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -34352,6 +34351,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -34537,7 +34537,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -34599,6 +34598,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -34784,7 +34784,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -34847,6 +34846,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -34921,7 +34921,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -35033,7 +35033,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -35096,6 +35095,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -35282,7 +35282,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -35345,6 +35344,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -35531,7 +35531,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -35592,6 +35591,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -35664,7 +35664,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -35776,7 +35776,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -35837,6 +35836,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -36021,7 +36021,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -36082,6 +36081,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -36266,7 +36266,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -36327,6 +36326,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -36399,7 +36399,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -36511,7 +36511,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -36572,6 +36571,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -36756,7 +36756,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -36817,6 +36816,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -37001,7 +37001,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -37063,6 +37062,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -37136,7 +37136,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -37248,7 +37248,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -37310,6 +37309,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -37495,7 +37495,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -37557,6 +37556,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -37742,7 +37742,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -37804,6 +37803,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -37877,7 +37877,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -37989,7 +37989,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -38051,6 +38050,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -38236,7 +38236,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -38298,6 +38297,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -38483,7 +38483,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -38545,6 +38544,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -38618,7 +38618,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -38730,7 +38730,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -38792,6 +38791,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -38977,7 +38977,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -39039,6 +39038,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -39224,7 +39224,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -39287,6 +39286,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -39361,7 +39361,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -39473,7 +39473,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -39536,6 +39535,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -39722,7 +39722,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -39785,6 +39784,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -39971,7 +39971,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -40032,6 +40031,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -40104,7 +40104,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -40216,7 +40216,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -40277,6 +40276,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -40461,7 +40461,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -40522,6 +40521,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -40706,7 +40706,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -40767,6 +40766,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -40839,7 +40839,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -40951,7 +40951,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -41012,6 +41011,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -41196,7 +41196,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -41257,6 +41256,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -41441,7 +41441,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -41503,6 +41502,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -41576,7 +41576,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -41688,7 +41688,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -41750,6 +41749,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -41935,7 +41935,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -41997,6 +41996,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -42182,7 +42182,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -42244,6 +42243,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -42317,7 +42317,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -42429,7 +42429,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -42491,6 +42490,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -42676,7 +42676,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -42738,6 +42737,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -42923,7 +42923,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -42985,6 +42984,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -43058,7 +43058,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -43170,7 +43170,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -43232,6 +43231,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -43417,7 +43417,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -43479,6 +43478,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -43664,7 +43664,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -43727,6 +43726,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 512
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -43801,7 +43801,7 @@ configs:
       sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -43913,7 +43913,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -43976,6 +43975,7 @@ configs:
     data.batches: 2
     data.downsample: 32
     run.t: 64
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 3
     - 4
@@ -44162,7 +44162,6 @@ configs:
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
-    trainer.loop_autodiff: lax
     logging.wandb.project: nca_micropattern_KO_strategy_resolutions
     data.dataset: micropatterns_260726
     data.micropattern.data_channels: 14
@@ -44225,6 +44224,7 @@ configs:
     data.batches: 2
     data.downsample: 16
     run.t: 128
+    trainer.loop_autodiff: lax
     data.micropattern.train_replicates:
     - 1
     - 2
