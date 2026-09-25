@@ -6,14 +6,16 @@ import io
 from PIL import Image
 import os
 from dotenv import load_dotenv
-# wandb.login(key="c969e9166d4abf8c10db353deaa242e386db8b99")
 load_dotenv()
-wandb_api_key = os.getenv("WANDB_API_KEY")
 
-if wandb_api_key:
-    wandb.login(key=wandb_api_key)
-else:
-    print("Warning: WANDB_API_KEY not found in environment variables. Wandb login skipped.")
+
+def _login_to_wandb():
+    """Log in with WANDB_API_KEY from the environment (or .env), if set."""
+    wandb_api_key = os.getenv("WANDB_API_KEY")
+    if wandb_api_key:
+        wandb.login(key=wandb_api_key)
+    else:
+        print("Warning: WANDB_API_KEY not found in environment variables. Wandb login skipped.")
 
 
 def _to_uint8_rgb_image(image):
@@ -34,6 +36,7 @@ class Train_log(object):
         data,
         wandb_config=None,
     ):
+        _login_to_wandb()
         self.run = wandb.init(
             **wandb_config
         )

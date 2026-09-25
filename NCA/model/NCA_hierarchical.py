@@ -34,8 +34,6 @@ class HNCA(AbstractModel):
     channels.  Only the child is passed to ``boundary_callback``.
     """
 
-    BATCHED_BOUNDARY_MODE = "internal"
-
     child_nca: NCA
     parent_nca: NCA
     actuator: eqx.nn.Conv2d

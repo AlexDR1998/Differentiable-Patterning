@@ -16,9 +16,3 @@ class StepOutput(NamedTuple):
     state: TrainState
     loss: Any
     metrics: dict[str, Any]
-
-
-class RolloutResult(NamedTuple):
-    key: Any
-    states: Any
-    regulariser_totals: dict[str, Any]

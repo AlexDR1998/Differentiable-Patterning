@@ -45,270 +45,6 @@ from pprint import pprint
 # from tensorflow.core.util import event_pb2
 
 
-def load_micropattern_nodal_lefty_cer(
-    impath="../Data/Nodal_LEFTY_CER/**",
-    downsample=4,
-    BATCH_AVERAGE=False,
-    BACKGROUND_RADIUS=50,
-    TIMESTEPS=(0, 6, 12, 24, 36, 48),
-    VERBOSE=False,
-    HIST_EQS=(5, 95),
-    SHOW_HISTOGRAMS=False,
-    PROCESSING_MODES=(
-        "mean_0_std_1",
-        "map_to_0_1",
-        "align",
-        "pad_to_full_width",
-        "downsample",
-    ),
-    EXP_MODES=(1,),
-):
-    """
-    Experiment layout was as follows:
-    -------------------------------------------------
-    | 1         | 2         | 3         | 4         |
-    | 0µM CHIR  | 1µM CHIR  | 2µM CHIR  | 3µM CHIR  |
-    |           |           |           |           |
-    -------------------------------------------------
-    | 5         | 6         | 7         |           |
-    | 4µM CHIR  | SB/LDN    | SB/LDN    |           |
-    |           | @0h       | @24h      |           |
-
-    so we don't have the same subdirectories for each timepoint
-    Channel order is:
-        Dappi (like LMBR, measures if cells are present)
-        Cerberus
-        Lefty
-        Nodal
-    """
-
-    CHANNEL_NAMES = ["Dappi", "Cerberus", "Lefty", "Nodal"]
-    # TIMESTEPS = [0,6,12,24,36,48]  # 0h, 6h, 12h, 24h, 36h, 48h
-    filenames = glob.glob(impath, recursive=True)
-    filenames = list(sorted(filenames))
-    is_tif = lambda x: ".tif" in x
-    filenames = list(filter(is_tif, filenames))
-    if 60 in TIMESTEPS:
-        TIMESTEPS = [
-            t for t in TIMESTEPS if t != 60
-        ]  # Remove 60h as it is not present in the data
-    # where_func = lambda filenames,label:label in filenames
-    # filenames_0h = list(filter(lambda x:"/0h" in x,filenames))
-    # filenames_6h = list(filter(lambda x:"/6h" in x,filenames))
-    # filenames_12h = list(filter(lambda x:"/12h" in x,filenames))
-    # filenames_24h = list(filter(lambda x:"/24h" in x,filenames))
-    # filenames_36h = list(filter(lambda x:"/36h" in x,filenames))
-    # filenames_48h = list(filter(lambda x:"/48h" in x,filenames))
-    # filenames_ordered = [
-    #     filenames_0h,
-    #     filenames_6h,
-    #     filenames_12h,
-    #     filenames_24h,
-    #     filenames_36h,
-    #     filenames_48h
-    # ]
-    filenames_ordered_base = [
-        list(filter(lambda x: f"/{i}h/" in x, filenames)) for i in TIMESTEPS
-    ]
-    filenames_ordered = [
-        [list(filter(lambda x: f"/{i}/" in x, F)) for i in EXP_MODES]
-        for F in filenames_ordered_base
-    ]
-    filenames_ordered = [
-        [ft for ft in filename_times if ft] for filename_times in filenames_ordered
-    ]
-    if not filenames_ordered[0]:
-        exp1_filenames = list(filter(lambda x: "/1/" in x, filenames_ordered_base[0]))
-        if exp1_filenames:
-            filenames_ordered[0] = [exp1_filenames]
-
-    if VERBOSE:
-        pprint(filenames_ordered)
-
-    ims = []
-    for filename_times in tqdm(filenames_ordered):
-        # ims_timestep = []
-        for filename_conditions in filename_times:
-            if VERBOSE:
-                print(
-                    f"-------- Loading batch of {len(filename_conditions)} images ----------------"
-                )
-            ims_cond = []
-            for f_str in filename_conditions:
-                _im = skimage.io.imread(f_str)
-                ims_cond.append(_im)
-                if VERBOSE:
-                    print(f"File {f_str} loaded with shape {_im.shape}")
-
-            ims_cond = jnp.array(ims_cond, dtype="float32")
-
-            if VERBOSE:
-                print(ims_cond.shape)
-            ims.append(ims_cond)
-    if SHOW_HISTOGRAMS:
-        show_histograms(ims, CHANNEL_NAMES, title="Pre processing")
-
-    ims, aux = process_data(
-        ims,
-        LMBR_CHANNEL=0,
-        BATCH_AVERAGE=BATCH_AVERAGE,
-        DOWNSAMPLE=downsample,
-        mode=PROCESSING_MODES,
-        HIST_EQS=HIST_EQS,
-        VERBOSE=VERBOSE,
-        BACKGROUND_RADIUS=BACKGROUND_RADIUS,
-    )
-    if SHOW_HISTOGRAMS:
-        show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return MicropatternDataset(
-        data=ims,
-        aux=attach_channel_schema(aux, MICROPATTERN_NODAL_LEFTY_CER_SCHEMA),
-        channel_names=tuple(CHANNEL_NAMES),
-    )
-
-
-def load_micropattern_sox17_foxa2_tbxt_lmbr(
-    impath="../Data/Timecourse 60h June/S2 FOXA2_SOX17_TBXT_LMBR/Max Projections/*",
-    downsample=4,
-    BATCH_AVERAGE=False,
-    VERBOSE=False,
-    TIMESTEPS=(0, 12, 24, 36, 48, 60),
-    BACKGROUND_RADIUS=50,
-    SHOW_HISTOGRAMS=False,
-    HIST_EQS=(5, 95),
-    PROCESSING_MODES=("mean_0_std_1", "map_to_0_1"),
-):
-    """
-    Data is ordered as follows:
-    0h, 12h, 24h, 36h, 48h, 60h
-    Each timestep has 4 channels: Sox17, Foxa2, TbxT, Lmbr
-
-    Output is either a List of arrays of shape [BATCH, X, Y, CHANNELS] or a single array of shape [T, BATCH, C, X, Y]
-    """
-    CHANNEL_NAMES = ["Sox17", "Foxa2", "TbxT", "Lmbr"]
-    filenames = glob.glob(impath)
-    filenames = list(sorted(filenames))
-
-    where_func = lambda filenames, label: label in filenames
-    # filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
-    # filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
-    # filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
-    # filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
-    # filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
-    # filenames_60h = list(filter(lambda x:where_func(x,"_60h"),filenames))
-    filenames_ordered = [
-        list(filter(lambda x: where_func(x, f"_{i}h"), filenames)) for i in TIMESTEPS
-    ]
-    # filenames_ordered = [filenames_0h,filenames_12h,filenames_24h,filenames_36h,filenames_48h,filenames_60h]
-    # filenames_ordered = [
-    #   list(filter(lambda x:where_func(x,f"_{i}h"),filenames)) for i in times
-    # ]
-
-    ims = []
-    for filenames in tqdm(filenames_ordered):
-        if VERBOSE:
-            print(len(filenames))
-        ims_timestep = []
-        for f_str in filenames:
-            if VERBOSE:
-                print(f_str)
-            ims_timestep.append(skimage.io.imread(f_str))
-
-        ims_timestep = jnp.array(ims_timestep, dtype="float32")
-
-        ims.append(ims_timestep)
-        if VERBOSE:
-            print(ims_timestep.shape)
-    if SHOW_HISTOGRAMS:
-        show_histograms(ims, CHANNEL_NAMES, title="Pre processing")
-    ims, aux = process_data(
-        ims,
-        LMBR_CHANNEL=3,
-        BATCH_AVERAGE=BATCH_AVERAGE,
-        DOWNSAMPLE=downsample,
-        mode=PROCESSING_MODES,
-        HIST_EQS=HIST_EQS,
-        VERBOSE=VERBOSE,
-        BACKGROUND_RADIUS=BACKGROUND_RADIUS,
-    )
-    if SHOW_HISTOGRAMS:
-        show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return MicropatternDataset(
-        data=ims,
-        aux=attach_channel_schema(aux, MICROPATTERN_SOX17_FOXA2_TBXT_LMBR_SCHEMA),
-        channel_names=tuple(CHANNEL_NAMES),
-    )
-
-
-def load_micropattern_smad23_lef1(
-    impath="../Data/Timecourse 60h June/Smad23_LEF 48h/Max Projections/*",
-    downsample=4,
-    VERBOSE=False,
-    BATCH_AVERAGE=False,
-    TIMESTEPS=(0, 6, 12, 24, 36, 48),
-    BACKGROUND_RADIUS=50,
-    SHOW_HISTOGRAMS=False,
-    HIST_EQS=(5, 95),
-    PROCESSING_MODES=("mean_0_std_1", "map_to_0_1"),
-):
-    CHANNEL_NAMES = ["Lef1", "Lmbr", "Smad23"]
-    filenames = glob.glob(impath)
-    filenames = list(sorted(filenames))
-    where_func = lambda filenames, label: label in filenames
-    if 60 in TIMESTEPS:
-        TIMESTEPS = [
-            t for t in TIMESTEPS if t != 60
-        ]  # Remove 60h as it is not present in the data
-    # filenames_label = list(filter(lambda x:where_func(x,label),filenames))
-    # filenames_0h = list(filter(lambda x:where_func(x,"_0h"),filenames))
-    # filenames_6h = list(filter(lambda x:where_func(x,"_6h"),filenames))
-    # filenames_12h = list(filter(lambda x:where_func(x,"_12h"),filenames))
-    # filenames_24h = list(filter(lambda x:where_func(x,"_24h"),filenames))
-    # filenames_36h = list(filter(lambda x:where_func(x,"_36h"),filenames))
-    # filenames_48h = list(filter(lambda x:where_func(x,"_48h"),filenames))
-    # filenames_ordered = [filenames_0h,filenames_6h,filenames_12h,filenames_24h,filenames_36h,filenames_48h]
-    filenames_ordered = [
-        list(filter(lambda x: f"_{i}h" in x, filenames)) for i in TIMESTEPS
-    ]
-
-    ims = []
-    for filenames in tqdm(filenames_ordered):
-        if VERBOSE:
-            print(len(filenames))
-        ims_timestep = []
-        for f_str in filenames:
-            _im = skimage.io.imread(f_str)
-            ims_timestep.append(_im)
-            if VERBOSE:
-                print(_im.shape, f_str)
-
-        ims_timestep = jnp.array(ims_timestep, dtype="float32")
-        ims.append(ims_timestep)
-        if VERBOSE:
-            print(ims_timestep.shape)
-    if SHOW_HISTOGRAMS:
-        show_histograms(ims, CHANNEL_NAMES, title="Pre processing")
-
-    ims, aux = process_data(
-        ims,
-        LMBR_CHANNEL=1,
-        BATCH_AVERAGE=BATCH_AVERAGE,
-        DOWNSAMPLE=downsample,
-        mode=PROCESSING_MODES,
-        HIST_EQS=HIST_EQS,
-        VERBOSE=VERBOSE,
-        BACKGROUND_RADIUS=BACKGROUND_RADIUS,
-    )
-
-    if SHOW_HISTOGRAMS:
-        show_histograms(ims, CHANNEL_NAMES, title="Post processing")
-    return MicropatternDataset(
-        data=ims,
-        aux=attach_channel_schema(aux, MICROPATTERN_SMAD23_LEF1_SCHEMA),
-        channel_names=tuple(CHANNEL_NAMES),
-    )
-
-
 def show_histograms(data, channel_names, title="Pre processing histograms"):
     """
     Shows histograms of pixel intensities for each channel and timestep
@@ -590,128 +326,6 @@ def process_data(
     }
 
 
-def load_micropattern_circle_8ch(
-    DOWNSAMPLE,
-    BATCHES,
-    PVC_PATH="/mnt/ceph/ar-dp/",
-    BACKGROUND_RADIUS=50,
-    TIMESTEPS=(0, 12, 24, 36, 48, 60),
-    HIST_EQS={"sftl": (0.5, 99.95), "dcln": (0.5, 99.95), "lls": (0.5, 99.95)},
-    SHOW_HISTOGRAMS=False,
-    PROCESSING_MODES=("hist_eq", "batch_average", "map_to_0_1"),
-):
-    """
-    Loads circular micropatterns for channels: Sox17, Foxa2, TbxT, Lmbr, Cer, Lefty, Nodal, Lef1
-    """
-    impath_sftl = (
-        PVC_PATH + "Data/Timecourse 60h June/S2 FOXA2_SOX17_TBXT_LMBR/Max Projections/*"
-    )  # Sox17, Foxa2, TbxT, Lmbr
-    impath_dcln = PVC_PATH + "Data/Nodal_LEFTY_CER/**"  # Lmbr, Cer Lefty, Nodal
-    impath_lls = (
-        PVC_PATH + "Data/Timecourse 60h June/Smad23_LEF 48h/Max Projections/*"
-    )  # Lef1, Lmbr, Smad23
-    sftl = load_micropattern_sox17_foxa2_tbxt_lmbr(
-        impath_sftl,
-        downsample=DOWNSAMPLE,
-        VERBOSE=False,
-        BATCH_AVERAGE=True,
-        TIMESTEPS=TIMESTEPS,
-        PROCESSING_MODES=("downsample",) + tuple(PROCESSING_MODES),
-        HIST_EQS=HIST_EQS["sftl"],
-        SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
-        BACKGROUND_RADIUS=BACKGROUND_RADIUS,
-    )  # 0h, 12h, 24h, 36h, 48h, 60h
-    dcln = load_micropattern_nodal_lefty_cer(
-        impath_dcln,
-        downsample=DOWNSAMPLE,
-        VERBOSE=False,
-        BATCH_AVERAGE=True,
-        TIMESTEPS=TIMESTEPS,
-        PROCESSING_MODES=("pad_to_full_width", "downsample") + tuple(PROCESSING_MODES),
-        HIST_EQS=HIST_EQS["dcln"],
-        SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
-        BACKGROUND_RADIUS=BACKGROUND_RADIUS,
-    )  # 0h, 6h, 12h, 24h, 36h, 48h
-    lls = load_micropattern_smad23_lef1(
-        impath_lls,
-        downsample=DOWNSAMPLE,
-        VERBOSE=False,
-        BATCH_AVERAGE=True,
-        TIMESTEPS=TIMESTEPS,
-        PROCESSING_MODES=("downsample",) + tuple(PROCESSING_MODES),
-        HIST_EQS=HIST_EQS["lls"],
-        SHOW_HISTOGRAMS=SHOW_HISTOGRAMS,
-        BACKGROUND_RADIUS=BACKGROUND_RADIUS,
-    )  # 0h, 6h, 12h, 24h, 36h, 48h
-
-    aux = {
-        "sftl": sftl.aux,
-        "dcln": dcln.aux,
-        "lls": lls.aux,
-        "channel_schema": MICROPATTERN_AVERAGED_8CH_SCHEMA,
-    }
-    data_sftl = np.array(sftl.data)
-    data_dcln = np.array(dcln.data)  # select only condition 1 from data
-    data_lls = np.array(lls.data)
-    sftl_names = list(sftl.channel_names)
-    dcln_names = list(dcln.channel_names)
-    lls_names = list(lls.channel_names)
-
-    print("---- Before removing duplicate LMBR/Dappi ----")
-    print("--- (Time , batch, width, height, channels) ---")
-    print(f"{' '.join(sftl_names)} shape: {data_sftl.shape}")
-    print(f"{' '.join(dcln_names)} shape: {data_dcln.shape}")
-    print(f"{' '.join(lls_names)} shape: {data_lls.shape}")
-    # Data shape: (Time, batch, width, height, channels)
-
-    # Try without the 6h data first - it makes the timestepping a lot simpler
-    # data_dcln = np.concatenate([data_dcln[:1],data_dcln[2:],np.zeros((1,*data_dcln.shape[1:]))],axis=0)
-    # data_lls = np.concatenate([data_lls[:1],data_lls[2:],np.zeros((1,*data_lls.shape[1:]))],axis=0)
-
-    if 60 in TIMESTEPS:
-        # Add zeros on final timestep for Nodal_Lefty_Cerberus and Smad23_Lef1
-        data_dcln = np.concatenate(
-            [data_dcln, np.zeros((1, *data_dcln.shape[1:]))], axis=0
-        )
-        data_lls = np.concatenate(
-            [data_lls, np.zeros((1, *data_lls.shape[1:]))], axis=0
-        )
-    # Remove duplicates of LMBR channel
-    data_dcln = data_dcln[:, :, :, :, 1:]
-    dcln_names = dcln_names[1:]  # Remove LMBR channel name
-    data_lls = data_lls[
-        :, :, :, :, :1
-    ]  # Also remove smad23 channel as guillaume recommended
-    lls_names = lls_names[:1]  # Keep only Lef1 channel name
-
-    print("---- After removing 6h and duplicate LMBR ----")
-    print(f"{' '.join(sftl_names)} shape: {data_sftl.shape}")
-    print(f"{' '.join(dcln_names)} shape: {data_dcln.shape}")
-    print(f"{' '.join(lls_names)} shape: {data_lls.shape}")
-
-    # Combine the datasets along channels
-    data = np.concatenate([data_sftl, data_dcln, data_lls], axis=-1)
-    channel_names = sftl_names + dcln_names + lls_names
-    boundary_mask = adhesion_mask_convex_hull_circle(data_sftl[-1, 0])[
-        0
-    ]  # last timestep looks good
-
-    boundary_mask = repeat(boundary_mask, "X Y -> B () X Y", B=BATCHES)
-    data = repeat(data, "T () X Y C -> B T C X Y", B=BATCHES)
-    print("Boundary mask shape: ", boundary_mask.shape)
-
-    data = data * rearrange(boundary_mask, "B () X Y -> B () () X Y")
-
-    print("Channel order: " + " ".join(channel_names))
-    print(f"Total data shape: {data.shape}")
-    return MicropatternDataset(
-        data=data,
-        boundary_mask=boundary_mask,
-        channel_names=tuple(channel_names),
-        aux=aux,
-    )
-
-
 def load_micropattern_circle_8ch_individual(
     impath="../Data/Timecourse Individual Images/*",
     DOWNSAMPLE=1,
@@ -804,8 +418,6 @@ def load_micropattern_circle_8ch_individual(
     )
 
 
-
-
 def load_micropattern_circle_4ch_individual(
     impath="../Data/Timecourse Separate Colonies/A/*",
     DOWNSAMPLE=1,
@@ -895,8 +507,6 @@ def load_micropattern_circle_4ch_individual(
         boundary_mask=boundary_mask,
         measurement_mask=CHANNEL_TIMESTEP_MASK,
     )
-
-
 
 
 def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
@@ -1160,7 +770,6 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
     )
 
 
-
 def load_micropattern_circle_8ch_individual_explicit_colony(
     impath="../Data/Timecourse Seperate Colonies/",
     DOWNSAMPLE=1,
@@ -1288,52 +897,6 @@ def load_micropattern_circle_8ch_individual_explicit_colony(
     )
     
 
-def load_micropattern_radii(impath):
-    filenames = glob.glob(impath)
-    filenames = list(sorted(filenames))
-    # print(sorted(filenames))
-    ims = []
-    for f_str in filenames:
-        ims.append(skimage.io.imread(f_str))
-    # print(jax.tree_util.tree_structure(ims))
-
-    normalise = lambda arr: arr / np.max(arr, axis=(0, 1))
-    pad = lambda arr: np.pad(arr, ((10, 10), (10, 10), (0, 0)))
-    mask_out = lambda arr, mask: np.where(
-        np.repeat(mask[0][:, :, np.newaxis], 4, axis=-1), arr, np.zeros_like(arr)
-    )
-    reshape = lambda arr: np.einsum("xyc->cxy", arr)
-    just_mask = lambda mask: mask[0][np.newaxis]
-    shapes = lambda arr: arr.shape[-1]
-
-    def stack_x0(arr, mask):
-        x0 = np.zeros_like(arr).astype(float)
-        masked_arr = np.ma.array(
-            arr, mask=~np.repeat(mask[0][np.newaxis], 4, axis=0).astype(bool)
-        )
-        # print(masked_arr)
-        x0[1] = mask[0].astype(
-            x0.dtype
-        )  # *masked_arr[1].mean() # Set SOX2 channel to high, everything else is 0
-        x0[3] = mask[0].astype(
-            x0.dtype
-        )  # *masked_arr[3].mean() # Set LMBR channel to high, everything else is 0
-        x0[1] *= masked_arr[1].mean()
-        x0[3] *= masked_arr[3].mean()
-        return np.stack((x0, arr), axis=0)
-
-    ims = list(map(lambda x: pad(normalise(x)), ims))
-    masks = list(map(adhesion_mask_convex_hull_circle, tqdm(ims)))
-    ims = list(map(mask_out, ims, masks))
-    ims = list(map(reshape, ims))
-    ims = list(map(stack_x0, ims, masks))
-    masks = list(map(just_mask, masks))
-    shapes = list(map(shapes, ims))
-
-    # ims = jax.tree_util.treedef_tuple(ims)
-    # print(jnp.mean(ims))
-    return MicropatternShapeDataset(data=ims, masks=masks, spatial_shapes=shapes)
-
 
 def downsample_padder(arr, downsample):
     """Pads arrays with extra zeros if needed such that it can be properly downsampled by downsample
@@ -1411,70 +974,6 @@ def pad_to_biggest(ims):
         )
         padded.append(padded_im)
     return padded
-
-
-def load_micropattern_ellipse(impath, DOWNSAMPLE, BATCH_AVERAGE=False):
-    filenames = glob.glob(impath)
-    filenames = list(sorted(filenames))
-    # print(sorted(filenames))
-    ims = []
-    for f_str in filenames:
-        ims.append(skimage.io.imread(f_str))
-    # print(jax.tree_util.tree_structure(ims))
-
-    downsample = lambda arr: reduce(
-        downsample_padder(arr, DOWNSAMPLE),
-        "(X x) (Y y) C -> X Y C",
-        "mean",
-        x=DOWNSAMPLE,
-        y=DOWNSAMPLE,
-    )  # noqa: E731
-
-    normalise = lambda arr: arr / np.max(arr, axis=(0, 1))  # noqa: E731
-    mask_out = lambda arr, mask: np.where(
-        np.repeat(mask[0][:, :, np.newaxis], 4, axis=-1), arr, np.zeros_like(arr)
-    )  # noqa: E731
-    reshape = lambda arr: np.einsum("xyc->cxy", arr)  # noqa: E731
-    just_mask = lambda mask: mask[0][np.newaxis]  # noqa: E731
-    shapes = lambda arr: arr.shape[-1]  # noqa: E731
-
-    def stack_x0(arr, mask):
-        x0 = np.zeros_like(arr).astype(float)
-        masked_arr = np.ma.array(
-            arr, mask=~np.repeat(mask[0][np.newaxis], 4, axis=0).astype(bool)
-        )
-        # print(masked_arr)
-        x0[1] = mask[0].astype(
-            x0.dtype
-        )  # *masked_arr[1].mean() # Set SOX2 channel to high, everything else is 0
-        x0[3] = mask[0].astype(
-            x0.dtype
-        )  # *masked_arr[3].mean() # Set LMBR channel to high, everything else is 0
-        x0[1] *= masked_arr[1].mean()
-        x0[3] *= masked_arr[3].mean()
-        return np.stack((x0, arr), axis=0)
-
-    ims = list(map(normalise, ims))
-    ims = pad_to_biggest(ims)
-    # ims = np.array(ims)
-    ims = np.array([downsample_padder(im, DOWNSAMPLE) for im in ims])
-    if BATCH_AVERAGE:
-        ims = reduce(
-            ims, "B (X x) (Y y) C -> () X Y C", "mean", x=DOWNSAMPLE, y=DOWNSAMPLE
-        )
-    else:
-        ims = reduce(
-            ims, "B (X x) (Y y) C -> B X Y C", "mean", x=DOWNSAMPLE, y=DOWNSAMPLE
-        )
-    ims = list(ims)
-    masks = list(map(adhesion_mask_convex_hull_ellipse, tqdm(ims)))
-    ims = list(map(mask_out, ims, masks))
-    ims = list(map(reshape, ims))
-    ims = list(map(stack_x0, ims, masks))
-    masks = list(map(just_mask, masks))
-    shapes = list(map(shapes, ims))
-
-    return MicropatternShapeDataset(data=ims, masks=masks, spatial_shapes=shapes)
 
 
 def load_micropattern_shape_array(
@@ -1622,53 +1121,6 @@ def load_micropattern_shape_sequence(
     )
 
 
-def load_micropattern_triangle(impath):
-    filenames = glob.glob(impath)
-    filenames = list(sorted(filenames))
-    # print(sorted(filenames))
-    ims = []
-    for f_str in filenames:
-        ims.append(skimage.io.imread(f_str))
-    # print(jax.tree_util.tree_structure(ims))
-
-    normalise = lambda arr: arr / np.max(arr, axis=(0, 1))
-    pad = lambda arr: np.pad(arr, ((10, 10), (10, 10), (0, 0)))
-    mask_out = lambda arr, mask: np.where(
-        np.repeat(mask[:, :, np.newaxis], 4, axis=-1), arr, np.zeros_like(arr)
-    )
-    reshape = lambda arr: np.einsum("xyc->cxy", arr)
-    just_mask = lambda mask: mask[0][np.newaxis]
-    shapes = lambda arr: arr.shape[-1]
-
-    def stack_x0(arr, mask):
-        x0 = np.zeros_like(arr).astype(float)
-        masked_arr = np.ma.array(
-            arr, mask=~np.repeat(mask[np.newaxis], 4, axis=0).astype(bool)
-        )
-        # print(masked_arr)
-        x0[1] = mask.astype(
-            x0.dtype
-        )  # *masked_arr[1].mean() # Set SOX2 channel to high, everything else is 0
-        x0[3] = mask.astype(
-            x0.dtype
-        )  # *masked_arr[3].mean() # Set LMBR channel to high, everything else is 0
-        x0[1] *= masked_arr[1].mean()
-        x0[3] *= masked_arr[3].mean()
-        return np.stack((x0, arr), axis=0)
-
-    ims = list(map(lambda x: pad(normalise(x)), ims))
-    masks = list(map(adhesion_mask_convex_hull, tqdm(ims)))
-    ims = list(map(mask_out, ims, masks))
-    ims = list(map(reshape, ims))
-    ims = list(map(stack_x0, ims, masks))
-    masks = list(map(just_mask, masks))
-    shapes = list(map(shapes, ims))
-
-    # ims = jax.tree_util.treedef_tuple(ims)
-    # print(jnp.mean(ims))
-    return MicropatternShapeDataset(data=ims, masks=masks, spatial_shapes=shapes)
-
-
 def normalise_micropattern_radii(training_data, impath, percentile_thresh):
     """
         Loads the micropattern radii data, and normalises it such that the histogram of pixel values matches those from the training data at 48h
@@ -1720,11 +1172,6 @@ def normalise_micropattern_radii(training_data, impath, percentile_thresh):
         scaled_im = np.stack(scaled_channels, axis=-1)
         scaled_ims.append(scaled_im)
     return scaled_ims
-
-
-
-
-
 
 
 def shift_image(img, shift_val):

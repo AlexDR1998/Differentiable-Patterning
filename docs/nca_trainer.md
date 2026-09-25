@@ -34,6 +34,3 @@ Models, arrays and PRNG keys are runtime values and do not belong in config.
 The compiled numerical step performs rollout, objective differentiation and
 the optimizer update. Python-side logging, profiling, pool admission and
 checkpoint decisions remain outside differentiated code.
-
-`NCA/trainer_old` is a read-only historical fallback and must not be imported
-by active code.

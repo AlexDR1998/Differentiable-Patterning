@@ -11,10 +11,6 @@ reference perception function.  All requested linear spatial filters are
 evaluated by one grouped convolution.  The two 1x1 convolutions in the update
 MLP are expressed as matrix products, which gives XLA a direct opportunity to
 use the target's optimized GEMM implementation.
-
-Only the main ``__call__`` path uses the matrix-product implementation.  The
-inherited activation/SAE diagnostic methods still walk ``self.layers`` so that
-their intermediate activation semantics remain unchanged.
 """
 
 from collections.abc import Callable
@@ -84,36 +80,6 @@ def _pointwise_conv_as_dot(layer: eqx.nn.Conv2d, x: Array) -> Array:
         dimension_numbers=(((1,), (0,)), ((), ())),
     )
     y = y.reshape(weight.shape[0], height, width)
-    if layer.bias is not None:
-        y = y + layer.bias.astype(y.dtype)
-    return y
-
-
-def _batched_pointwise_conv_as_dot(layer: eqx.nn.Conv2d, x: Array) -> Array:
-    """Apply a shared 1x1 convolution to ``[B,C,H,W]`` as one GEMM."""
-    weight = layer.weight
-    if weight.shape[-2:] != (1, 1) or layer.groups != 1:
-        return jax.vmap(layer)(x)
-
-    batch, in_channels, height, width = x.shape
-    if weight.shape[1] != in_channels:
-        raise ValueError(
-            "Pointwise layer input does not match the batched feature array: "
-            f"expected {weight.shape[1]} channels, got {in_channels}"
-        )
-    # [O,I] @ [I,B*H*W] -> [O,B*H*W]. Keeping all cells on the right-hand
-    # side gives cuBLAS one large shared-weight matrix multiplication rather
-    # than a strided batch of small products.
-    x_2d = jnp.transpose(x, (1, 0, 2, 3)).reshape(
-        in_channels, batch * height * width
-    )
-    y = lax.dot_general(
-        weight[:, :, 0, 0].astype(x.dtype),
-        x_2d,
-        dimension_numbers=(((1,), (0,)), ((), ())),
-    )
-    y = y.reshape(weight.shape[0], batch, height, width)
-    y = jnp.transpose(y, (1, 0, 2, 3))
     if layer.bias is not None:
         y = y + layer.bias.astype(y.dtype)
     return y
@@ -220,76 +186,6 @@ class NCA(ReferenceNCA):
         if not features:
             raise ValueError("KERNEL_STR must contain at least one supported kernel")
         return jnp.concatenate(features, axis=0)
-
-    def _fast_perception_batched(self, x: Array) -> Array:
-        """Batched counterpart of :meth:`_fast_perception`."""
-        if x.ndim != 4 or x.shape[1] != self.N_CHANNELS:
-            raise ValueError(
-                "Batched NCA perception expects [B,C,H,W] with "
-                f"C={self.N_CHANNELS}, received {x.shape}"
-            )
-
-        filtered: dict[str, Array] = {}
-        filter_bank = self._linear_filter_bank()
-        if filter_bank is not None:
-            filter_names, kernels = filter_bank
-            filter_count = len(filter_names)
-            grouped_kernels = jnp.tile(
-                kernels.astype(x.dtype), (self.N_CHANNELS, 1, 1, 1)
-            )
-            padded = _same_pad_spatial(x, kernels.shape[-2:], self.op.PADDING)
-            conv = lax.conv_general_dilated(
-                padded,
-                grouped_kernels,
-                window_strides=(1, 1),
-                padding="VALID",
-                feature_group_count=self.N_CHANNELS,
-                dimension_numbers=("NCHW", "OIHW", "NCHW"),
-            )
-            conv = conv.reshape(
-                x.shape[0], self.N_CHANNELS, filter_count, x.shape[2], x.shape[3]
-            )
-            filtered = {
-                name: conv[:, :, index]
-                for index, name in enumerate(filter_names)
-            }
-
-        features: list[Array] = []
-        if "ID" in self.KERNEL_STR:
-            features.append(x)
-        if "DIFF" in self.KERNEL_STR:
-            gx = filtered["grad_x"]
-            gy = filtered["grad_y"]
-            features.append(safe_grad_norm(gx, gy))
-        if "GRAD" in self.KERNEL_STR:
-            features.extend((filtered["grad_x"], filtered["grad_y"]))
-        if "AV" in self.KERNEL_STR:
-            features.append(filtered["average"])
-        if "LAP" in self.KERNEL_STR:
-            features.append(filtered["laplacian"])
-        if not features:
-            raise ValueError("KERNEL_STR must contain at least one supported kernel")
-        return jnp.concatenate(features, axis=1)
-
-    def batched_call(self, x: Array, keys: Array) -> Array:
-        """Update a uniform ``[B,C,H,W]`` batch using consolidated GEMMs."""
-        if x.ndim != 4:
-            raise ValueError(f"batched_call expects [B,C,H,W], got {x.shape}")
-        if keys.shape[0] != x.shape[0]:
-            raise ValueError(f"Expected {x.shape[0]} keys, got {keys.shape}")
-
-        dx = self._fast_perception_batched(x)
-        for layer in self.layers:
-            if isinstance(layer, eqx.nn.Conv2d):
-                dx = _batched_pointwise_conv_as_dot(layer, dx)
-            else:
-                dx = layer(dx)
-        masks = jax.vmap(
-            lambda key: jax.random.bernoulli(
-                key, p=self.FIRE_RATE, shape=dx.shape[1:]
-            )
-        )(keys)
-        return x + masks * dx
 
     def __call__(
         self,

@@ -2,9 +2,8 @@
 
 Differentiable Patterning is a research codebase for learning and analysing
 self-organising spatiotemporal systems with differentiable programming. It
-contains neural cellular automata (NCA), differentiable partial differential
-equation (PDE) models, and experiment workflows for image-based and biological
-micropatterning tasks.
+contains neural cellular automata (NCA) and experiment workflows for
+image-based, biological micropatterning and geospatial (snowmelt) tasks.
 
 This is active research software rather than a polished general-purpose
 package. APIs, model families, and experiment configurations may change as the
@@ -17,28 +16,25 @@ The actively maintained workflows focus on:
 
 - Neural cellular automata for learning, generating, and analysing spatial
   patterns.
-- Differentiable PDE solvers and parameterised reaction--diffusion-style
-  models.
-- Config-driven experiments for emoji, micropattern, and impulse-optimisation
-  tasks.
+- Config-driven experiments for emoji, micropattern, snowmelt and
+  impulse-optimisation tasks.
 - Reproducible local model bundles and visualisation/export tooling.
 
-`ABM/` and `Experiments/archive/` contain exploratory or historical work. They
-may be useful as research references, but are not the best starting point for
-new development.
+Earlier work on differentiable PDEs, agent-based models and archived experiment
+scripts has been removed from the working tree. It remains available in the git
+history.
 
 ## Repository layout
 
 | Path | Purpose |
 | --- | --- |
 | `Common/` | Shared JAX/Equinox models, spatial operators, data utilities, losses, and configuration support. |
-| `NCA/` | Neural cellular automaton models, training components, analysis, and registry support. |
-| `PDE/` | Differentiable PDE solvers, fixed models, and PDE training utilities. |
-| `Experiments/` | Hydra-configured experiment entry points and definitions. |
+| `NCA/` | Neural cellular automaton models, training components, and registry support. |
+| `Experiments/` | YAML-configured experiment entry points and definitions. |
 | `demo/` | Small examples and walkthroughs for understanding the project. |
 | `docs/` | Maintained documentation for configuration, training, and model bundles. |
 | `WebDemo/` | Static WebGL visualisation and export tooling for compatible NCA models. |
-| `tests/` | Unit, integration, and hardware-specific checks. |
+| `tests/` | Unit tests, plus a GPU memory check in `tests/hardware/`. |
 
 Generated checkpoints, experiment outputs, W&B logs, figures, and videos are
 local research artifacts rather than source code.
@@ -75,14 +71,13 @@ For an overview of the current NCA workflow, begin with:
 - [NCA trainer architecture](docs/nca_trainer.md)
 - [Local model registry](docs/model_registry.md)
 
-The `demo/` directory also contains PDE demonstrations and notebooks. These
-are intended for exploration; do not treat a training script as a lightweight
-smoke test.
+The `demo/` notebooks are intended for exploration; do not treat a training
+script as a lightweight smoke test.
 
 ## Experiments and reproducibility
 
-Active experiments are defined in `Experiments/` using Hydra YAML
-configuration. Configurations are resolved and converted to typed, immutable
+Active experiments are defined in `Experiments/` using YAML configuration
+(read with OmegaConf). Configurations are resolved and converted to typed, immutable
 dataclasses before model construction. Experiment-specific data loading,
 cluster launch settings, and expected compute requirements are intentionally
 kept close to the relevant experiment configuration.
@@ -104,9 +99,8 @@ Run the lightweight unit test suite with:
 pytest tests/unit
 ```
 
-Integration and hardware tests may require a GPU, datasets, model assets,
-or cluster-specific configuration. They are not expected to run in every local
-development environment.
+`tests/hardware/jax_gpu_mem_test.py` is a standalone GPU check, not part of the
+unit suite.
 
 ## Web demo
 

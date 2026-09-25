@@ -60,23 +60,6 @@ def sam_optimizer(base_optimizer, rho=0.05, sync_period=2):
     return opt
 
 
-def reduce_on_plateau(optimizer,factor=0.8,patience=10,cooldown=5,accumulate_steps=1,rtol=1e-4,min_lr=1e-6):
-    """Wraps an existing optimizer with ReduceLROnPlateau schedule."""
-    scheduler = optax.contrib.reduce_on_plateau(
-        factor=factor,
-        patience=patience,
-        cooldown=cooldown,
-        accumulation_size=accumulate_steps,
-        min_scale=min_lr,
-        rtol=rtol,
-    )
-    opt = optax.chain(
-        optimizer,
-        scheduler
-    )
-    return opt
-
-
 def _schedule_config(optimizer_config):
     schedule_cfg = _cfg_get(optimizer_config, "schedule", None)
     if isinstance(schedule_cfg, str):

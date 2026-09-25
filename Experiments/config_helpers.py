@@ -209,18 +209,6 @@ def build_loss_args(loss_config, overrides=None):
     return loss_args
 
 
-def build_pool_admission_config(trainer_config):
-    pool = trainer_config.pool_admission
-    return {
-        "enabled": pool.enabled,
-        "relative_threshold": pool.relative_threshold,
-        "previous_relative_threshold": pool.previous_relative_threshold,
-        "absolute_threshold": pool.absolute_threshold,
-        "ema_decay": pool.ema_decay,
-        "warmup": pool.warmup,
-    }
-
-
 def set_matmul_precision(runtime_config):
     precision = runtime_config.precision
     if precision is None:

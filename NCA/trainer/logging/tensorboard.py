@@ -1,9 +1,5 @@
 from einops import rearrange,repeat
-from NCA.NCA_visualiser import (
-	plot_to_image,
-	plot_weight_matrices,
-	plot_weight_kernel_boxplot,
-)
+from NCA.NCA_visualiser import plot_to_image
 import numpy as np
 from Common.utils import squarish
 from tqdm import tqdm
@@ -16,9 +12,7 @@ import time
 from dotenv import load_dotenv
 load_dotenv()
 PVC_PATH = os.getenv("PVC_PATH")
-LOG_BACKEND = os.environ.get("LOG_BACKEND", "wandb")
 # PVC_PATH = "mnt/ceph/ar-dp/"  # Path to the PVC where the data is stored
-#if LOG_BACKEND=="wandb":
 from Common.utils import get_jax_memory_stats
 from Common.trainer.abstract_wandb_log import Train_log
 from NCA.trainer.intervention import (
@@ -29,8 +23,6 @@ from NCA.trainer.intervention import (
 )
 from NCA.trainer.interval_schedule import IntervalSchedule, uniform_schedule
 from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch
-#elif LOG_BACKEND=="tensorboard":
-#	from Common.trainer.abstract_tensorboard_log import Train_log
 
 
 def _is_grouped_9ch_colony_augmenter(data_augmenter):
@@ -1193,40 +1185,3 @@ class NCA_knockout_Train_log(NCA_Train_log):
 			np.concatenate(SNAPSHOTS, axis=0),
 			step=None
 		)
-
-
-
-class aNCA_Train_log(NCA_Train_log):
-	def log_model_parameters(self,nca,i):
-		#Log weights and biasses of model every 10 training epochs
-		
-		pass
-
-
-# class uNCA_Train_log(NCA_Train_log):
-# 	def log_model_parameters(self, nca, i):
-# 		# uNCA exposes additional trainable arrays; log all weights generically.
-# 		for idx, w in enumerate(nca.get_weights()):
-# 			self.log_histogram(f"Train/weight_{idx}", np.squeeze(w), step=i)
-
-
-
-
-class mNCA_Train_log(NCA_Train_log):
-	
-	def log_model_parameters(self,nca,i):
-		#Log weights and biasses of model every 10 training epochs
-		
-		for scale,W in enumerate(nca.get_weights()):
-			w1,w2,b2 = W
-			w1 = np.squeeze(w1)
-			w2 = np.squeeze(w1)
-			b2 = np.squeeze(b2)		
-			self.log_histogram(f'Input layer weights, scale {scale}',w1,step=i)
-			self.log_histogram(f'Output layer weights, scale {scale}',w2,step=i)
-			self.log_histogram(f'Output layer bias, scale {scale}',b2,step=i)				
-			weight_matrix_figs = plot_weight_matrices(nca.subNCAs[scale])
-			self.log_image(f"Weight matrices, scale {scale}",np.array(weight_matrix_figs)[:,0],step=i)
-					
-			kernel_weight_figs = plot_weight_kernel_boxplot(nca.subNCAs[scale])
-			self.log_image(f"Input weights per kernel, scale {scale}",np.array(kernel_weight_figs)[:,0],step=i)

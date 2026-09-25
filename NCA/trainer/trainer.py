@@ -9,17 +9,12 @@ import equinox as eqx
 import datetime
 from NCA.trainer.logging.tensorboard import (
 	NCA_Train_log,
-	mNCA_Train_log,
-	aNCA_Train_log,
 	NCA_knockout_Train_log,
 )
 from NCA.trainer.logging.kan_tensorboard import (
 	kaNCA_Train_log,
 	uses_fast_kan_diagnostics,
 )
-from NCA.model.NCA_KAN_model import kaNCA
-from NCA.model.NCA_multi_scale import mNCA
-from NCA.model.NCA_multihead_attention import aNCA
 from NCA.trainer.training_execution import TrainingExecution
 from NCA.trainer.context import TrainerContext
 from NCA.trainer.interval_schedule import IntervalSchedule, uniform_schedule
@@ -166,14 +161,8 @@ class NcaTrainer:
 				self.log_directory = str(
 					Path(self._log_root) / self.model_filename / "train"
 				)
-				if isinstance(self.model ,kaNCA) or uses_fast_kan_diagnostics(self.model):
+				if uses_fast_kan_diagnostics(self.model):
 					self.logger = kaNCA_Train_log(self.log_directory,logging_data)
-				elif isinstance(self.model , mNCA):
-					self.logger = mNCA_Train_log(self.log_directory,logging_data)
-				elif isinstance(self.model , aNCA):
-					self.logger = aNCA_Train_log(self.log_directory,logging_data)
-				# elif isinstance(self.model, uNCA):
-					# self.logger = uNCA_Train_log(self.log_directory, self._data_raw)
 				else:
 					self.logger = NCA_Train_log(
 						self.log_directory,

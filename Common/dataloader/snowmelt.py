@@ -18,8 +18,10 @@ boundary channels (catchment mask and static terrain covariates) and the
 acquisition times in days.
 """
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date
+import logging
 import os
 from pathlib import Path
 import re
@@ -68,6 +70,23 @@ def resolve_snowmelt_root(root=None):
     return root
 
 
+@contextmanager
+def _quiet_tifffile():
+    """Hide tifffile's log line about the float32 GDAL_NODATA tag.
+
+    The topography files store float32-min as a decimal string that tifffile
+    cannot cast back exactly, so it logs a parse error for the tag. The tag is
+    unused: no-data is identified by value in :func:`load_snowmelt`.
+    """
+    tifffile_logger = logging.getLogger("tifffile")
+    previous = tifffile_logger.level
+    tifffile_logger.setLevel(logging.ERROR)
+    try:
+        yield
+    finally:
+        tifffile_logger.setLevel(previous)
+
+
 def read_tif(path):
     """Read a single-band GeoTIFF as float32.
 
@@ -75,15 +94,13 @@ def read_tif(path):
     cannot decode them and :func:`Common.dataloader.tiff_lzw.read_tiff` falls
     back to a built-in decoder.
     """
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")  # float32 files carry an uncastable GDAL_NODATA tag
+    with _quiet_tifffile():
         return np.asarray(read_tiff(path), dtype=np.float32)
 
 
 def read_georef(path):
     """Return (x0, y0, dx, dy, crs_name) from the GeoTIFF tags."""
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")  # float32 files carry an uncastable GDAL_NODATA tag
+    with _quiet_tifffile():
         with tifffile.TiffFile(path) as tif:
             page = tif.pages[0]
             dx, dy, _ = page.tags["ModelPixelScaleTag"].value

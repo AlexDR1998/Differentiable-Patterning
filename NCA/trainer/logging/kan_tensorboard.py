@@ -579,8 +579,3 @@ class kaNCA_Train_log(NCA_Train_log):
 			self.log_channel_time_diagnostics(log_dict,i)
 			if write_images:
 				self.log_model_outputs(log_dict,i)
-
-
-class kaNCA_Train_pde_log(kaNCA_Train_log):
-	def log_model_outputs(self, x, i):
-		pass # Saving the trajectory outputs during training generates far too many images
