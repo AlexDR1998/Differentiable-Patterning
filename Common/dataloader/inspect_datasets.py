@@ -410,6 +410,318 @@ def _(data, fate_threshold_mode, loaded, mo):
     )
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    automatic_threshold_tolerance = mo.ui.slider(
+        0.0,
+        0.25,
+        value=0.02,
+        step=0.005,
+        label="Maximum active pixel fraction still considered low",
+        full_width=True,
+    )
+    automatic_threshold_grid_size = mo.ui.slider(
+        101,
+        2001,
+        value=501,
+        step=100,
+        label="Threshold search grid size",
+        full_width=True,
+    )
+    mo.vstack([
+        mo.md(
+            "## Automatic baseline threshold selection\n\n"
+            "Find shared absolute SOX17 and FOXA2 thresholds across baseline "
+            "replicates. SOX17 is expected low at 0, 12, and 24h and high at "
+            "36 and 48h. FOXA2 is expected low at 0 and 12h and high at 24, "
+            "36, and 48h. A timepoint is low at or below the tolerated active "
+            "pixel fraction and high above it. TBXT and SOX2 remain "
+            "user-defined above."
+        ),
+        mo.hstack(
+            [automatic_threshold_tolerance, automatic_threshold_grid_size],
+            widths="equal",
+        ),
+    ])
+    return automatic_threshold_grid_size, automatic_threshold_tolerance
+
+
+@app.cell(hide_code=True)
+def _(
+    automatic_threshold_grid_size,
+    automatic_threshold_tolerance,
+    data,
+    loaded,
+    mo,
+    names,
+    np,
+    plt,
+):
+    _auto_expectations = {
+        "SOX17": {0: "low", 12: "low", 24: "low", 36: "high", 48: "high"},
+        "FOXA2": {0: "low", 12: "low", 24: "high", 36: "high", 48: "high"},
+    }
+    _auto_preferred = {
+        "SOX17": "cell_fate_s2/SOX17",
+        "FOXA2": "cell_fate_s2/FOXA2",
+    }
+    _auto_channels = {
+        _marker: (
+            _auto_preferred[_marker]
+            if _auto_preferred[_marker] in names
+            else _marker if _marker in names else None
+        )
+        for _marker in _auto_expectations
+    }
+    _auto_aux = getattr(loaded, "aux", {})
+    _auto_times = tuple(_auto_aux.get("timesteps", range(data.shape[1])))
+    _auto_conditions = tuple(_auto_aux.get("batch_conditions", ()))
+    _auto_replicates = tuple(_auto_aux.get("batch_replicates", ()))
+    _auto_baseline_batches = [
+        _batch for _batch in range(data.shape[0])
+        if not _auto_conditions or _auto_conditions[_batch] == "ctrl"
+    ]
+    _auto_missing_markers = [
+        _marker for _marker, _channel in _auto_channels.items()
+        if _channel is None
+    ]
+    _auto_missing_times = sorted({0, 12, 24, 36, 48}.difference(_auto_times))
+    if _auto_missing_markers:
+        _auto_view = mo.callout(
+            "Automatic selection requires " + ", ".join(_auto_missing_markers),
+            kind="warn",
+        )
+    elif not _auto_baseline_batches:
+        _auto_view = mo.callout(
+            "No baseline (`ctrl`) replicates are loaded.", kind="warn"
+        )
+    elif _auto_missing_times:
+        _auto_view = mo.callout(
+            "Load all required timepoints: "
+            + ", ".join(f"{_time}h" for _time in _auto_missing_times),
+            kind="warn",
+        )
+    else:
+        _auto_boundary = getattr(loaded, "boundary_mask", None)
+        _auto_measurement_mask = getattr(loaded, "measurement_mask", None)
+        _auto_candidates = np.linspace(
+            0.0, 1.0, int(automatic_threshold_grid_size.value)
+        )
+        _auto_tolerance = float(automatic_threshold_tolerance.value)
+        _auto_records = {}
+        _auto_shared = {}
+        _auto_per_replicate = {}
+        _auto_threshold_rows = []
+        _auto_audit_rows = []
+
+        def _auto_curve(_values):
+            _values = np.sort(np.asarray(_values)[np.isfinite(_values)])
+            if not _values.size:
+                return np.full(_auto_candidates.shape, np.nan)
+            return 1.0 - np.searchsorted(
+                _values, _auto_candidates, side="right"
+            ) / _values.size
+
+        def _auto_choose(_records):
+            _margins = np.stack([
+                _auto_tolerance - _record["curve"]
+                if _record["expected"] == "low"
+                else _record["curve"] - _auto_tolerance
+                for _record in _records
+            ])
+            _violations = np.maximum(-_margins, 0.0)
+            _batches = sorted({_record["batch"] for _record in _records})
+            _batch_losses = np.stack([
+                np.nanmean(
+                    _violations[
+                        [_index for _index, _record in enumerate(_records)
+                         if _record["batch"] == _batch]
+                    ],
+                    axis=0,
+                )
+                for _batch in _batches
+            ])
+            # Balance overall fit with the worst-fitting replicate so a single
+            # trajectory cannot be hidden by the others.
+            _objective = np.nanmean(_violations, axis=0) + np.nanmax(
+                _batch_losses, axis=0
+            )
+            _best = np.nanmin(_objective)
+            _ties = np.flatnonzero(np.isclose(_objective, _best, atol=1e-12))
+            _tie_margins = np.nanmean(_margins[:, _ties], axis=0)
+            _index = int(_ties[np.nanargmax(_tie_margins)])
+            return _index, float(_objective[_index])
+
+        for _marker, _expectations in _auto_expectations.items():
+            _channel_index = names.index(_auto_channels[_marker])
+            _marker_records = []
+            for _batch in _auto_baseline_batches:
+                _boundary = (
+                    np.asarray(_auto_boundary)[_batch, 0].astype(bool)
+                    if _auto_boundary is not None
+                    else np.ones(data.shape[-2:], dtype=bool)
+                )
+                for _time_index, _time in enumerate(_auto_times):
+                    if _time not in _expectations:
+                        continue
+                    if (
+                        _auto_measurement_mask is not None
+                        and not bool(np.asarray(_auto_measurement_mask)[
+                            _batch, _time_index, _channel_index
+                        ])
+                    ):
+                        continue
+                    _values = np.asarray(
+                        data[_batch, _time_index, _channel_index]
+                    )[_boundary]
+                    _marker_records.append({
+                        "batch": _batch,
+                        "replicate": (
+                            _auto_replicates[_batch]
+                            if _batch < len(_auto_replicates) else _batch
+                        ),
+                        "time": _time,
+                        "expected": _expectations[_time],
+                        "values": _values[np.isfinite(_values)],
+                        "curve": _auto_curve(_values),
+                    })
+            _auto_records[_marker] = _marker_records
+            _shared_index, _shared_loss = _auto_choose(_marker_records)
+            _shared_threshold = float(_auto_candidates[_shared_index])
+            _auto_shared[_marker] = (_shared_threshold, _shared_index)
+            _auto_threshold_rows.append({
+                "marker": _marker,
+                "scope": "shared",
+                "replicate": "all baseline",
+                "threshold": _shared_threshold,
+                "objective": _shared_loss,
+            })
+            _auto_per_replicate[_marker] = {}
+            for _batch in _auto_baseline_batches:
+                _batch_records = [
+                    _record for _record in _marker_records
+                    if _record["batch"] == _batch
+                ]
+                _index, _loss = _auto_choose(_batch_records)
+                _threshold = float(_auto_candidates[_index])
+                _auto_per_replicate[_marker][_batch] = _threshold
+                _auto_threshold_rows.append({
+                    "marker": _marker,
+                    "scope": "replicate",
+                    "replicate": _batch_records[0]["replicate"],
+                    "threshold": _threshold,
+                    "objective": _loss,
+                })
+            for _record in _marker_records:
+                _fraction = float(_record["curve"][_shared_index])
+                _passes = (
+                    _fraction <= _auto_tolerance
+                    if _record["expected"] == "low"
+                    else _fraction > _auto_tolerance
+                )
+                _auto_audit_rows.append({
+                    "marker": _marker,
+                    "replicate": _record["replicate"],
+                    "time (h)": _record["time"],
+                    "expected": _record["expected"],
+                    "active fraction": _fraction,
+                    "passes": _passes,
+                })
+
+        _auto_hist_figure, _auto_hist_axes = plt.subplots(
+            1, 2, figsize=(14, 4.5), squeeze=False
+        )
+        _auto_curve_figure, _auto_curve_axes = plt.subplots(
+            1, 2, figsize=(14, 4.5), squeeze=False
+        )
+        for _column, _marker in enumerate(_auto_expectations):
+            _hist_axis = _auto_hist_axes[0, _column]
+            _curve_axis = _auto_curve_axes[0, _column]
+            for _expected, _color in (("low", "tab:blue"), ("high", "tab:orange")):
+                _values = [
+                    _record["values"] for _record in _auto_records[_marker]
+                    if _record["expected"] == _expected
+                ]
+                _hist_axis.hist(
+                    np.concatenate(_values),
+                    bins=np.linspace(0.0, 1.0, 81),
+                    density=True,
+                    histtype="step",
+                    linewidth=2.0,
+                    color=_color,
+                    label=f"Expected {_expected}",
+                )
+            _threshold, _threshold_index = _auto_shared[_marker]
+            _hist_axis.axvline(
+                _threshold, color="black", linewidth=2.0,
+                label=f"Shared {_threshold:.3f}"
+            )
+            for _replicate_threshold in _auto_per_replicate[_marker].values():
+                _hist_axis.axvline(
+                    _replicate_threshold,
+                    color="gray",
+                    linestyle="--",
+                    linewidth=0.8,
+                    alpha=0.6,
+                )
+            _hist_axis.set(
+                title=f"{_marker} intensity distributions",
+                xlabel="intensity",
+                ylabel="density",
+                xlim=(0.0, 1.0),
+            )
+            _hist_axis.legend(fontsize="small")
+            for _batch in _auto_baseline_batches:
+                _batch_records = sorted(
+                    (_record for _record in _auto_records[_marker]
+                     if _record["batch"] == _batch),
+                    key=lambda _record: _record["time"],
+                )
+                _curve_axis.plot(
+                    [_record["time"] for _record in _batch_records],
+                    [_record["curve"][_threshold_index]
+                     for _record in _batch_records],
+                    marker="o",
+                    label=f"Replicate {_batch_records[0]['replicate']}",
+                )
+            _curve_axis.axhline(
+                _auto_tolerance,
+                color="black",
+                linestyle="--",
+                label=f"Tolerance {_auto_tolerance:.3f}",
+            )
+            _curve_axis.set(
+                title=f"{_marker} above shared threshold",
+                xlabel="time (h)",
+                ylabel="active colony fraction",
+                ylim=(-0.01, 1.01),
+            )
+            _curve_axis.grid(alpha=0.2)
+            _curve_axis.legend(fontsize="small")
+        _auto_hist_figure.tight_layout()
+        _auto_curve_figure.tight_layout()
+        _auto_view = mo.vstack([
+            mo.callout(
+                "Solid histogram slices are shared optima; dashed gray slices "
+                "are replicate-specific optima. The objective combines average "
+                "constraint violation with the worst replicate's violation.",
+                kind="info",
+            ),
+            mo.ui.table(_auto_threshold_rows, selection=None),
+            _auto_hist_figure,
+            _auto_curve_figure,
+            mo.md("### Shared-threshold constraint audit"),
+            mo.ui.table(
+                _auto_audit_rows,
+                selection=None,
+                pagination=True,
+                page_size=20,
+            ),
+        ])
+    _auto_view
+    return
+
+
 @app.cell
 def _(data, mo, names, np, plt):
     _channel_values = data.transpose(2, 0, 1, 3, 4).reshape(data.shape[2], -1)

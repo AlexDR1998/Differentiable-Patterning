@@ -7,6 +7,23 @@ from Common.model.abstract_model import AbstractModel # Inherit model loading an
 from Common.model.spatial_operators import Ops # Spatial stuff like gradients or laplacians
 from einops import rearrange
 
+
+def zero_conv(layer):
+	"""Return a copy of a Conv2d layer with its weight (and bias) set to zero.
+
+	Used on the last layer of an update network, so that a freshly built
+	model starts by making no change to the state.
+	"""
+	layer = eqx.tree_at(lambda l: l.weight, layer, jnp.zeros_like(layer.weight))
+	if layer.bias is not None:
+		layer = eqx.tree_at(lambda l: l.bias, layer, jnp.zeros_like(layer.bias))
+	return layer
+
+
+def gated_linear_unit(x):
+	return jax.nn.glu(x, axis=0)
+
+
 class NCA(AbstractModel):
 	layers: list
 	KERNEL_STR: list
@@ -15,6 +32,11 @@ class NCA(AbstractModel):
 	FIRE_RATE: float
 	op: Ops
 	perception: callable # type: ignore
+	# Flags are static so they are not written to saved .eqx files. This keeps
+	# the saved layout identical to the old gNCA/nNCA/gnNCA classes.
+	GATED: bool = eqx.field(static=True)
+	PARAMETER_NOISE_LEVEL: float = eqx.field(static=True)
+
 	def __init__(self,
 			     N_CHANNELS,
 				 KERNEL_STR=["ID","LAP"],
@@ -22,7 +44,9 @@ class NCA(AbstractModel):
 					 PADDING="CIRCULAR",
 					 FIRE_RATE=1.0,
 					 KERNEL_SCALE = 1,
-					 key=None):
+					 key=None,
+					 GATED=False,
+					 PARAMETER_NOISE_LEVEL=0.0):
 		"""
 		
 
@@ -31,16 +55,24 @@ class NCA(AbstractModel):
 		N_CHANNELS : int
 			Number of channels for NCA.
 		KERNEL_STR : [STR], optional
-			List of strings corresponding to convolution kernels. Can include "ID","DIFF","LAP","AV", corresponding to
-			identity, derivatives, laplacian and average respectively. The default is ["ID","LAP"].
-		ACTIVATION_STR : str, optional
-			Decide which activation function to use. The default is "relu".
-		PERIODIC : Boolean, optional
-			Decide whether to have periodic or fixed boundaries. The default is True.
+			List of strings corresponding to convolution kernels. Can include "ID","DIFF","GRAD","LAP","AV", corresponding to
+			identity, gradient norm, gradient, laplacian and average respectively. The default is ["ID","LAP"].
+		ACTIVATION : callable, optional
+			Activation function of the hidden layer. The default is relu.
+		PADDING : str, optional
+			Boundary padding used by the spatial kernels. The default is "CIRCULAR".
 		FIRE_RATE : float, optional
-			Probability that each pixel updates at each timestep. Defuaults to 1, i.e. deterministic update
+			Probability that each pixel updates at each timestep. Defaults to 1, i.e. deterministic update
+		KERNEL_SCALE : int, optional
+			Radius of the spatial kernels. The default is 1.
 		key : jax.random.PRNGKey, optional
-			Jax random number key. The default is jax.random.PRNGKey(int(time.time())).
+			Jax random number key. Defaults to a key based on the current time.
+		GATED : bool, optional
+			If True, the last layer outputs 2*N_CHANNELS values and a gated linear unit
+			combines them into the update (previously the gNCA model). The default is False.
+		PARAMETER_NOISE_LEVEL : float, optional
+			Standard deviation of Gaussian noise added to the network weights at every
+			step (previously the nNCA model). 0 turns it off. The default is 0.
 
 		Returns
 		-------
@@ -55,6 +87,8 @@ class NCA(AbstractModel):
 		self.N_CHANNELS = N_CHANNELS
 		self.FIRE_RATE = FIRE_RATE
 		self.KERNEL_STR = KERNEL_STR
+		self.GATED = GATED
+		self.PARAMETER_NOISE_LEVEL = PARAMETER_NOISE_LEVEL
 		N_WIDTH = 1
 		self.op = Ops(PADDING=PADDING,dx=1,KERNEL_SCALE=KERNEL_SCALE,SMOOTHING=1)
 
@@ -65,7 +99,6 @@ class NCA(AbstractModel):
 			_kernel_length+=1
 		self.N_FEATURES = N_CHANNELS*_kernel_length*N_WIDTH
 		
-		#@eqx.filter_jit
 		def spatial_layer(X: Float[Array,"{self.N_CHANNELS} x y"])-> Float[Array, "H x y"]:
 			output = []
 			if "ID" in KERNEL_STR:
@@ -85,6 +118,8 @@ class NCA(AbstractModel):
 			return output
 		self.perception = lambda x:spatial_layer(x)
 		
+		# The last layer starts at zero, so a new model makes no update
+		out_channels = 2*self.N_CHANNELS if GATED else self.N_CHANNELS
 		self.layers = [
 			eqx.nn.Conv2d(in_channels=self.N_FEATURES,
 						  out_channels=self.N_FEATURES,
@@ -92,21 +127,14 @@ class NCA(AbstractModel):
 						  use_bias=False,
 						  key=key1),
 			ACTIVATION,
-			eqx.nn.Conv2d(in_channels=self.N_FEATURES, 
-						  out_channels=self.N_CHANNELS,
+			zero_conv(eqx.nn.Conv2d(in_channels=self.N_FEATURES,
+						  out_channels=out_channels,
 						  kernel_size=1,
 						  use_bias=True,
-						  key=key2)
+						  key=key2)),
 			]
-		
-		
-		# Initialise final layer to zero
-		w_zeros = jnp.zeros((self.N_CHANNELS,self.N_FEATURES,1,1))
-		b_zeros = jnp.zeros((self.N_CHANNELS,1,1))
-		w_where = lambda l: l.weight
-		b_where = lambda l: l.bias
-		self.layers[-1] = eqx.tree_at(w_where,self.layers[-1],w_zeros)
-		self.layers[-1] = eqx.tree_at(b_where,self.layers[-1],b_zeros)
+		if GATED:
+			self.layers.append(gated_linear_unit)
 
 	def get_config(self):
 		"""
@@ -118,15 +146,30 @@ class NCA(AbstractModel):
 			dictionary of model hyperparameters
 
 		"""
-		
-		return {
-			"MODEL":"NCA",
+		name = "NCA"
+		if self.PARAMETER_NOISE_LEVEL > 0:
+			name = "nNCA"
+		if self.GATED:
+			name = "g" + name
+		config = {
+			"MODEL":name,
 			"N_CHANNELS":self.N_CHANNELS,
 			"KERNEL_STR":self.KERNEL_STR,
 			"ACTIVATION":self.layers[1].__name__,
 			"PADDING":self.op.PADDING,
 			"FIRE_RATE":self.FIRE_RATE,
 		}
+		if self.PARAMETER_NOISE_LEVEL > 0:
+			config["PARAMETER_NOISE_LEVEL"] = self.PARAMETER_NOISE_LEVEL
+		return config
+
+	def _noisy_layers(self, key):
+		"""Return self.layers with Gaussian noise added to every weight and bias."""
+		weights, rest = eqx.partition(self.layers, eqx.is_inexact_array)
+		leaves, treedef = jax.tree_util.tree_flatten(weights)
+		keys = jax.random.split(key, len(leaves))
+		leaves = [w + self.PARAMETER_NOISE_LEVEL*jax.random.normal(k, w.shape, w.dtype) for w, k in zip(leaves, keys)]
+		return eqx.combine(jax.tree_util.tree_unflatten(treedef, leaves), rest)
 		
 	def __call__(self,
 				  	 x: Float[Array,"{self.N_CHANNELS} x y"],
@@ -142,7 +185,7 @@ class NCA(AbstractModel):
 		boundary_callback : callable (float32 [N_CHANNELS,_,_]) -> (float32 [N_CHANNELS,_,_]), optional
 			function to augment intermediate NCA states i.e. imposing complex boundary conditions or external structure. Defaults to None
 		key : jax.random.PRNGKey, optional
-			Jax random number key. The default is jax.random.PRNGKey(int(time.time())).
+			Jax random number key, used for the fire mask and parameter noise. Defaults to a key based on the current time.
 
 		Returns
 		-------
@@ -153,35 +196,17 @@ class NCA(AbstractModel):
 		
 		if key is None:
 			key = jax.random.PRNGKey(int(time.time()))
+		layers = self.layers
+		if self.PARAMETER_NOISE_LEVEL > 0:
+			# A separate key, so the noise is independent of the fire mask
+			layers = self._noisy_layers(jax.random.split(key)[1])
 		dx = self.perception(x)
-		for layer in self.layers:
+		for layer in layers:
 			dx = layer(dx)
 		sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
 		x_new = x + sigma*dx
 		return boundary_callback(x_new)
 
-	def set_weights(self,weights): # type: ignore
-		w0,w1,b1 = weights
-		w_where = lambda l: l.weight
-		b_where = lambda l: l.bias
-
-		self.layers[0] = eqx.tree_at(w_where,self.layers[0],w0)
-		self.layers[2] = eqx.tree_at(w_where,self.layers[2],w1)
-		self.layers[2] = eqx.tree_at(b_where,self.layers[2],b1)
-
-	def get_weights(self): # type: ignore
-		"""Returns list of arrays of weights, for plotting purposes, or for manually adjusting weights with
-		code that doesn't `just work' on PyTrees
-
-		Returns:
-			weights : list of arrays of trainable parameters 
-		"""
-		
-		
-		diff_self,_ = self.partition()
-		ws,tree_def = jax.tree_util.tree_flatten(diff_self)
-		return list(map(jnp.squeeze,ws))
-		#return ws,tree_def
 	def partition(self):
 		"""
 		Behaves like eqx.partition, but moves the hard coded kernels (a jax array) from the "trainable" pytree to the "static" pytree

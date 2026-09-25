@@ -82,6 +82,11 @@ directly on CPU or NVIDIA/CUDA. Passing `implementation="recorded"` for one of
 these bundles is unsupported because the recorded implementation is no longer
 present.
 
+The `gNCA`, `nNCA` and `gnNCA` families are not separate classes any more:
+the factory builds an `NCA` with `GATED=True` and/or `PARAMETER_NOISE_LEVEL`
+set. These options are static fields, so they are not written to `model.eqx`,
+and the saved layout matches the old classes exactly.
+
 ## Recording evaluations
 
 Evaluation summaries are immutable artifacts separate from model bundles:

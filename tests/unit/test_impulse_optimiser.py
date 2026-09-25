@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 import optax
 
-from NCA.model.NCA_perturbation import perturbation
+from NCA.trainer.impulse.perturbation import perturbation
 from NCA.trainer.impulse import (
     ExternalTargetPairSource,
     MaximalPreservativeObjective,

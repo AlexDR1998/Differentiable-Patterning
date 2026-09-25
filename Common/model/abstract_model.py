@@ -1,4 +1,5 @@
 import jax
+import jax.numpy as jnp
 import equinox as eqx
 from pathlib import Path
 from typing import Any, Union
@@ -44,43 +45,18 @@ class AbstractModel(eqx.Module):
 		"""
 		return state
 	
-	def combine(self,diff,static):
-		"""
-		Wrapper for eqx.combine
-
-		Parameters
-		----------
-		diff : PyTree
-			PyTree of same structure as AbstractModel, with all non trainable parameters set to None
-		static : PyTree
-			PyTree of same structure as AbstractModel, with all trainable parameters set to None
-
-		"""
-		self = eqx.combine(diff,static)
-	
 	def get_weights(self):
-		"""Returns list of arrays of weights, for plotting purposes, or for manually adjusting weights with
-		code that doesn't `just work' on PyTrees
+		"""Returns a flat list of the trainable arrays (squeezed), for plotting and logging.
 
 		Returns:
-			weights : list of arrays of trainable parameters 
+			weights : list of arrays of trainable parameters
 		"""
-		
-		
 		diff_self,_ = self.partition()
-		ws,tree_def = jax.tree_util.tree_flatten(diff_self)
-		#return #list(map(jnp.squeeze,ws))
-		return ws,tree_def
+		return [jnp.squeeze(w) for w in jax.tree_util.tree_leaves(diff_self)]
 	
-	
-	def set_weights(self,tree_def,weights):
-
-		#raise NotImplementedError
-		return jax.tree_util.tree_unflatten(tree_def,weights)
-	
-	def save(self, path: Union[str, Path], overwrite: bool = False, hyperparams: dict = {}):
+	def save(self, path: Union[str, Path], overwrite: bool = False):
 		"""
-		Wrapper for saving model via eqx.tree_serialise_leaves. Taken from https://github.com/google/jax/issues/2116
+		Save the model with eqx.tree_serialise_leaves. A ".eqx" suffix is added if missing.
 
 		Parameters
 		----------
@@ -94,26 +70,10 @@ class AbstractModel(eqx.Module):
 		RuntimeError
 			file already exists.
 
-		Returns
-		-------
-		None.
-
 		"""
-
-		# suffix = ".eqx"
-		# path = Path(path)
-		# if path.suffix != suffix:
-		# 	path = path.with_suffix(suffix)
-		# 	path.parent.mkdir(parents=True, exist_ok=True)
-		# if path.exists():
-		# 	if overwrite:
-		# 		path.unlink()
-		# 	else:
-		# 		raise RuntimeError(f'File {path} already exists.')
-		suffix = ".eqx"
 		path = Path(path)
-		if path.suffix != suffix:
-			path = path.with_suffix(suffix)
+		if path.suffix != ".eqx":
+			path = path.with_suffix(".eqx")
 		path.parent.mkdir(parents=True, exist_ok=True)
 		if path.exists() and not overwrite:
 			raise RuntimeError(f'File {path} already exists.')
@@ -122,7 +82,8 @@ class AbstractModel(eqx.Module):
 	
 	def load(self, path: Union[str, Path]):
 		"""
-		Wrapper for loading model via eqx.tree_deserialise_leaves
+		Load saved parameters into a model with the same structure as self,
+		with eqx.tree_deserialise_leaves. A ".eqx" suffix is added if missing.
 
 		Parameters
 		----------
@@ -132,26 +93,17 @@ class AbstractModel(eqx.Module):
 		Raises
 		------
 		ValueError
-			Not a file or incorrect file type.
+			Not a file.
 
 		Returns
 		-------
 		AbstractModel
-			AbstractModel loaded from pickle.
+			the loaded model.
 
 		"""
-		suffix = ".eqx"
 		path = Path(path)
-		if path.suffix != suffix:
-			#raise ValueError(f'Not a {suffix} file: {path}')
-			# path = path.with_suffix(suffix)
-			path = path + suffix # type: ignore
-		# with open(path, "rb") as f:
-		if not path.is_file(): # type: ignore
+		if path.suffix != ".eqx":
+			path = path.with_suffix(".eqx")
+		if not path.is_file():
 			raise ValueError(f'Not a file: {path}')
-		# 	hyperparams = json.loads(f.readline().decode())
-		# 	#func = F_rda(key=jr.PRNGKey(0), **hyperparams["pde"])
-		# 	#pde = PDE_solver(func,**hyperparams["solver"])
-		# 	model = self.__init__(**hyperparams)
-		# 	return eqx.tree_deserialise_leaves(f, model)
 		return eqx.tree_deserialise_leaves(path,self)

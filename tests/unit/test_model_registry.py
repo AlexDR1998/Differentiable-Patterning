@@ -250,7 +250,7 @@ def test_load_model_reconstructs_from_saved_factory(tmp_path, monkeypatch):
     [
         ("NCA_sycl", "NCA.model.NCA_model", "NCA"),
         ("NCA_fast", "NCA.model.NCA_model", "NCA"),
-        ("gNCA_sycl", "NCA.model.NCA_gated_model", "gNCA"),
+        ("gNCA_sycl", "NCA.model.NCA_model", "NCA"),
     ],
 )
 def test_load_model_portably_reconstructs_retired_families(

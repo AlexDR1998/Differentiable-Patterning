@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import optax
 
 from Experiments.emoji.config_helpers import load_data as load_emoji_data
-from NCA.model.NCA_perturbation import perturbation
+from NCA.trainer.impulse.perturbation import perturbation
 from NCA.trainer.impulse import (
     ExternalTargetPairSource,
     MaximalPreservativeObjective,

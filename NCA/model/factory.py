@@ -10,11 +10,8 @@ from dataclasses import asdict
 import jax
 
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
-from NCA.model.NCA_gated_model import gNCA
-from NCA.model.NCA_gated_noise_model import gnNCA
 from NCA.model.NCA_hierarchical import HNCA
 from NCA.model.NCA_model import NCA
-from NCA.model.NCA_noise_model import nNCA
 
 
 # Retired model families, and the family that now builds them. Their saved
@@ -43,8 +40,16 @@ def _no_extra_arguments(model_config):
     return {}
 
 
+def _gated_arguments(model_config):
+    return {"GATED": True}
+
+
 def _noise_arguments(model_config):
     return {"PARAMETER_NOISE_LEVEL": model_config.parameter_noise_level}
+
+
+def _gated_noise_arguments(model_config):
+    return {**_gated_arguments(model_config), **_noise_arguments(model_config)}
 
 
 def _kan_arguments(model_config):
@@ -65,12 +70,14 @@ def _hnca_arguments(model_config):
     }
 
 
-# family -> (model class, function giving its extra constructor arguments)
+# family -> (model class, function giving its extra constructor arguments).
+# gNCA, nNCA and gnNCA are the plain NCA with its GATED and/or
+# PARAMETER_NOISE_LEVEL options switched on.
 MODEL_FAMILIES = {
     "NCA": (NCA, _no_extra_arguments),
-    "gNCA": (gNCA, _no_extra_arguments),
-    "nNCA": (nNCA, _noise_arguments),
-    "gnNCA": (gnNCA, _noise_arguments),
+    "gNCA": (NCA, _gated_arguments),
+    "nNCA": (NCA, _noise_arguments),
+    "gnNCA": (NCA, _gated_noise_arguments),
     "FastKaNCA": (FastKaNCA, _kan_arguments),
     "HNCA": (HNCA, _hnca_arguments),
 }

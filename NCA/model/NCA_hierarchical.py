@@ -16,8 +16,7 @@ import jax.random as jr
 from jaxtyping import Array, Float, Int, Scalar
 
 from Common.model.abstract_model import AbstractModel
-from NCA.model.NCA_gated_model import gNCA
-from NCA.model.NCA_model import NCA
+from NCA.model.NCA_model import NCA, zero_conv
 
 
 class HNCA(AbstractModel):
@@ -110,10 +109,8 @@ class HNCA(AbstractModel):
             FIRE_RATE=FIRE_RATE,
             KERNEL_SCALE=KERNEL_SCALE,
         )
-        child_type = gNCA if CHILD_GATED else NCA
-        parent_type = gNCA if PARENT_GATED else NCA
-        self.child_nca = child_type(**block_kwargs, key=child_key)
-        self.parent_nca = parent_type(**block_kwargs, key=parent_key)
+        self.child_nca = NCA(**block_kwargs, GATED=CHILD_GATED, key=child_key)
+        self.parent_nca = NCA(**block_kwargs, GATED=PARENT_GATED, key=parent_key)
 
         hidden_channels = N_CHANNELS - OBS_CHANNELS
         self.actuator = eqx.nn.Conv2d(
@@ -127,14 +124,7 @@ class HNCA(AbstractModel):
         # recurrent cross-scale path must obey the same invariant; otherwise
         # a random actuator creates an unstable child-parent feedback loop
         # before the first optimiser step.
-        self.actuator = eqx.tree_at(
-            lambda layer: (layer.weight, layer.bias),
-            self.actuator,
-            (
-                jnp.zeros_like(self.actuator.weight),
-                jnp.zeros_like(self.actuator.bias),
-            ),
-        )
+        self.actuator = zero_conv(self.actuator)
 
     def get_config(self):
         return {
@@ -151,21 +141,6 @@ class HNCA(AbstractModel):
             "PADDING": self.child_nca.op.PADDING,
             "FIRE_RATE": self.FIRE_RATE,
         }
-
-    def get_weights(self):
-        """Return trainable arrays in the format expected by NCA loggers.
-
-        ``AbstractModel.get_weights`` returns a ``(leaves, tree_def)`` pair,
-        which is useful for generic reconstruction but is not the historical
-        NCA logging contract. The NCA loggers iterate directly over a flat
-        sequence of arrays.
-        """
-        differentiable, _ = self.partition()
-        return [
-            jnp.squeeze(value)
-            for value in jax.tree_util.tree_leaves(differentiable)
-            if eqx.is_array(value)
-        ]
 
     def _validate_state(self, x):
         if x.ndim != 3 or x.shape[0] != self.N_CHANNELS:

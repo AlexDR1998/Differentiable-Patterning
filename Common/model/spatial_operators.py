@@ -410,6 +410,3 @@ class Ops(eqx.Module):
         static = eqx.tree_at(where_av,static,av_weight,is_leaf=lambda x: x is None)
         #static = eqx.tree_at(where_lap_inv,static,lap_inv_weight,is_leaf=lambda x: x is None)
         return diff, static
-    
-    def combine(self,diff,static):
-        self = eqx.combine(diff,static)

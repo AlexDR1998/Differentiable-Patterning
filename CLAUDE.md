@@ -15,9 +15,9 @@ Research code for differentiable patterning: neural cellular automata (NCA), bui
 | Path | Contents |
 | --- | --- |
 | `Common/` | Shared code. `model/` has `AbstractModel` (eqx.Module base with save/load/partition), `spatial_operators.Ops` (ID/LAP/GRAD/DIFF/AV kernels, padding), boundaries and KAN layers. `dataloader/` has emoji, micropattern, snowmelt and texture loaders plus channel schemas. `trainer/` has losses (`loss*.py`), typed loss configs (`config.py`), abstract augmenters and loggers. |
-| `NCA/model/` | NCA variants: `NCA`, gated `gNCA`, noise `nNCA`/`gnNCA`, `FastKaNCA`, hierarchical `HNCA`, multiscale, attention, wavelet and others. |
+| `NCA/model/` | `NCA` (with `GATED` and `PARAMETER_NOISE_LEVEL` options; the families `gNCA`, `nNCA` and `gnNCA` are these options switched on), KAN-based `FastKaNCA` and hierarchical `HNCA`. |
 | `NCA/trainer/` | The active modular trainer (see below). |
-| `NCA/inverse_design/`, `NCA/trainer/impulse/` | Optimisation of trained NCAs for micropattern geometry and impulses/initial state. |
+| `NCA/inverse_design/`, `NCA/trainer/impulse/` | Optimisation of trained NCAs for micropattern geometry and impulses/initial state (the learned perturbation module is `impulse/perturbation.py`). |
 | `Experiments/` | Config-driven entrypoints for each domain: `emoji/`, `micropatterns/`, `snowmelt/`, `impulse/`. `model_registry.py` is the local model-bundle registry and its CLI (`ModelRegistry`, `create_model_id`, `record_evaluation`, `verify_evaluation_input`). |
 | `demo/`, `notebooks/`, `WebDemo/` | Walkthroughs (marimo), Jupyter notebooks and a static WebGL viewer with an exporter. |
 
@@ -40,7 +40,7 @@ Config rules (`docs/configuration.md`):
 - Current files have `schema_version: 3`. Older configs (old sweeps, manifests and older model bundles) are translated only in `Experiments/config.py:upgrade_legacy_config`. Don't add compatibility code anywhere else.
 - Conversion is strict: unknown keys and unknown model families fail early. A new option needs a field in the right dataclass. The main ones are in `Experiments/config.py`, `NCA/model/config.py`, `NCA/trainer/config.py` and `Common/trainer/config.py`.
 - Never pass OmegaConf objects into `Common/` or `NCA/`. Pass only typed configs.
-- Model families are built in `NCA/model/factory.py:build_model`. A new family goes into its `MODEL_FAMILIES` table and `build_model_config_string`. Retired families (`NCA_sycl`, `NCA_fast`, `gNCA_sycl`) map to current ones through `PORTABLE_MODEL_FAMILIES`. `Experiments.config_helpers` re-exports `build_model` only because old bundles record that path as their factory.
+- Model families are built in `NCA/model/factory.py:build_model`. A new family goes into its `MODEL_FAMILIES` table and `build_model_config_string`; a small variant of `NCA` should be a constructor option plus a table entry, not a new class. New model options must be `eqx.field(static=True)` (or arrays), because every Python int/float/bool field is written to saved `.eqx` files and changing that layout breaks old bundles. Retired families (`NCA_sycl`, `NCA_fast`, `gNCA_sycl`) map to current ones through `PORTABLE_MODEL_FAMILIES`. `Experiments.config_helpers` re-exports `build_model` only because old bundles record that path as their factory.
 - `NCA/` and `Common/` must not import from `Experiments/`. Values that come from the experiment config (e.g. W&B tags) are passed in through `TrainerContext`.
 
 ## NCA trainer architecture (`docs/nca_trainer.md`)
