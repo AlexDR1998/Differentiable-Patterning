@@ -4,7 +4,7 @@ output_subdir: generated/nvidia_baseline_nca_runtime
 seed_mode: fixed
 grid:
   run.mode: [benchmark]
-  model.family: [NCA_fast]
+  model.family: [NCA]
   trainer.backend.type: [nvidia]
   model.channels: [32]
   labels.scaling: [convective]
@@ -41,10 +41,6 @@ grid:
 branches:
   - when:
       model.family: NCA
-    grid:
-      system.precision: [highest,bfloat16]
-  - when:
-      model.family: NCA_fast
     grid:
       system.precision: [highest,bfloat16]
 

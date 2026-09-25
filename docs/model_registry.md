@@ -73,14 +73,14 @@ representation and must not be changed. `bundle.config` is typed, and model
 reconstruction receives only its saved `ModelConfig`.
 Notebook-specific rollout data and parameters should remain separate inputs.
 
-### Archived SYCL checkpoints
+### Retired model families
 
 `bundle.load_model()` uses portable reconstruction by default. Bundles whose
-saved family is `NCA_sycl` or `gNCA_sycl` are rebuilt as the PyTree-compatible
-`NCA_fast` or `gNCA` implementation, respectively. Their Equinox leaves can
-therefore be loaded for inference on CPU or NVIDIA/CUDA without the archived
-Intel runtime. Passing `implementation="recorded"` for one of these bundles is
-unsupported because the recorded SYCL implementation is no longer present.
+saved family is `NCA_sycl` or `NCA_fast` are rebuilt as `NCA`, and `gNCA_sycl`
+as `gNCA`. The parameters have the same layout, so their Equinox leaves load
+directly on CPU or NVIDIA/CUDA. Passing `implementation="recorded"` for one of
+these bundles is unsupported because the recorded implementation is no longer
+present.
 
 ## Recording evaluations
 

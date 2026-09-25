@@ -15,7 +15,7 @@ Research code for differentiable patterning: neural cellular automata (NCA), bui
 | Path | Contents |
 | --- | --- |
 | `Common/` | Shared code. `model/` has `AbstractModel` (eqx.Module base with save/load/partition), `spatial_operators.Ops` (ID/LAP/GRAD/DIFF/AV kernels, padding), boundaries and KAN layers. `dataloader/` has emoji, micropattern, snowmelt and texture loaders plus channel schemas. `trainer/` has losses (`loss*.py`), typed loss configs (`config.py`), abstract augmenters and loggers. |
-| `NCA/model/` | NCA variants: `NCA`, `NCA_fast`, gated `gNCA`, noise `nNCA`/`gnNCA`, `FastKaNCA`, hierarchical `HNCA`, multiscale, attention, wavelet and others. |
+| `NCA/model/` | NCA variants: `NCA`, gated `gNCA`, noise `nNCA`/`gnNCA`, `FastKaNCA`, hierarchical `HNCA`, multiscale, attention, wavelet and others. |
 | `NCA/trainer/` | The active modular trainer (see below). |
 | `NCA/inverse_design/`, `NCA/trainer/impulse/` | Optimisation of trained NCAs for micropattern geometry and impulses/initial state. |
 | `NCA/registry.py` | Local model-bundle registry (`ModelRegistry`, `create_model_id`, `record_evaluation`, `verify_evaluation_input`). |

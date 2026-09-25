@@ -387,7 +387,7 @@ def build_trainer(config, model, data, context: TrainerContext) -> NcaTrainer:
 	if backend_type == "sycl":
 		raise ValueError(
 			"The SYCL training backend has been archived. Use backend.type='nvidia' "
-			"with NCA_fast/gNCA, or load an old bundle portably for inference."
+			"with NCA/gNCA, or load an old bundle portably for inference."
 		)
 	if backend_type not in {"none", "nvidia"}:
 		raise ValueError(f"Unsupported trainer backend {backend_type!r}")

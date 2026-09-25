@@ -25,7 +25,7 @@ grid:
 
 # One entry per column: each block is zipped, not a Cartesian product.
 groups:
-  - model.family: [NCA, gNCA, NCA_fast, gnNCA]
+  - model.family: [NCA, gNCA, NCA, gnNCA]
     trainer.loop_autodiff: [checkpointed, lax, checkpointed, lax]
     loss.terms:
       - [l2]

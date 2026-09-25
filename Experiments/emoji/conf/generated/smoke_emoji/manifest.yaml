@@ -320,7 +320,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    model.family: NCA_fast
+    model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
     - l2
@@ -403,7 +403,7 @@ configs:
           initial_probability: 1.0
           final_probability: 1.0
     model:
-      family: NCA_fast
+      family: NCA
       channels: 16
       kernel_str:
       - ID

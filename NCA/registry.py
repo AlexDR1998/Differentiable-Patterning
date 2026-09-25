@@ -38,8 +38,11 @@ from Common.trainer.training_result import TrainingResult
 BUNDLE_SCHEMA_VERSION = 3
 DEFAULT_MODEL_FACTORY = "Experiments.config_helpers:build_model"
 CONFIG_ID_LENGTH = 12
+# Retired model families, and the family that now builds them. Their saved
+# parameters have the same layout, so old bundles still load.
 PORTABLE_MODEL_FAMILIES = {
-    "NCA_sycl": "NCA_fast",
+    "NCA_sycl": "NCA",
+    "NCA_fast": "NCA",
     "gNCA_sycl": "gNCA",
 }
 
@@ -230,8 +233,8 @@ class ModelBundle:
     def load_model(self, key=None, *, implementation: str = "portable"):
         """Reconstruct the model and load its saved Equinox leaves.
 
-        ``implementation="portable"`` replaces a backend-specific SYCL NCA
-        with its numerically equivalent standard JAX implementation. The
+        ``implementation="portable"`` replaces a retired model family (e.g.
+        NCA_sycl, NCA_fast) with its numerically equivalent current one. The
         bundle configuration and provenance remain unchanged.
         """
         self.verify()
@@ -244,8 +247,8 @@ class ModelBundle:
             and self.config.model.family in PORTABLE_MODEL_FAMILIES
         ):
             raise ValueError(
-                "The recorded SYCL implementation is archived and unavailable; "
-                "use implementation='portable' for CPU/CUDA inference"
+                f"The recorded {self.config.model.family} implementation has been "
+                "retired; use implementation='portable'"
             )
         if implementation == "recorded":
             model_config = self.config.model

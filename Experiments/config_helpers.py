@@ -12,13 +12,15 @@ from NCA.model.NCA_gated_model import gNCA
 from NCA.model.NCA_gated_noise_model import gnNCA
 from NCA.model.NCA_hierarchical import HNCA
 from NCA.model.NCA_model import NCA
-from NCA.model.NCA_model_fast import NCA as NCAFast
 from NCA.model.NCA_noise_model import nNCA
 
 
 MAX_WANDB_TAG_LENGTH = 64
+# Retired model families, and the family that now builds them. Their saved
+# parameters have the same layout, so old bundles still load.
 PORTABLE_MODEL_FAMILIES = {
-    "NCA_sycl": "NCA_fast",
+    "NCA_sycl": "NCA",
+    "NCA_fast": "NCA",
     "gNCA_sycl": "gNCA",
 }
 EXCLUDED_WANDB_TAG_KEYS = {
@@ -312,7 +314,7 @@ def build_model_config_string(model_config, family=None):
 
 
 def build_model(model_config, key=None):
-    """Construct a model from config, mapping archived SYCL families to JAX."""
+    """Construct a model from config, mapping retired families to current ones."""
     from types import SimpleNamespace
 
     family = PORTABLE_MODEL_FAMILIES.get(model_config.family, model_config.family)
@@ -321,16 +323,6 @@ def build_model(model_config, key=None):
     kernel_scale = _cfg_get(cfg.model, "kernel_scale", 1)
     if family == "NCA":
         model = NCA(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            key=key,
-        )
-    elif family == "NCA_fast":
-        model = NCAFast(
             N_CHANNELS=cfg.model.channels,
             KERNEL_STR=cfg.model.kernel_str,
             ACTIVATION=activation,

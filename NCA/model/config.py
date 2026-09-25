@@ -37,9 +37,11 @@ class ModelConfig(ConfigValue):
     parameter_noise_level: float = 0.01
 
     def __post_init__(self):
+        # NCA_fast, NCA_sycl and gNCA_sycl are retired, and are kept only so
+        # that old bundle configs still load (see PORTABLE_MODEL_FAMILIES).
         supported = {
-            "NCA", "NCA_fast", "NCA_sycl", "gNCA_sycl", "gNCA", "nNCA", "gnNCA",
-            "FastKaNCA", "HNCA",
+            "NCA", "gNCA", "nNCA", "gnNCA", "FastKaNCA", "HNCA",
+            "NCA_fast", "NCA_sycl", "gNCA_sycl",
         }
         if self.family not in supported:
             raise ValueError(f"Unsupported model family {self.family!r}")

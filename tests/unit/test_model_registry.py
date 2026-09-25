@@ -249,11 +249,12 @@ def test_load_model_reconstructs_from_saved_factory(tmp_path, monkeypatch):
 @pytest.mark.parametrize(
     ("recorded_family", "portable_module", "portable_class"),
     [
-        ("NCA_sycl", "NCA.model.NCA_model_fast", "NCA"),
+        ("NCA_sycl", "NCA.model.NCA_model", "NCA"),
+        ("NCA_fast", "NCA.model.NCA_model", "NCA"),
         ("gNCA_sycl", "NCA.model.NCA_gated_model", "gNCA"),
     ],
 )
-def test_load_model_portably_reconstructs_sycl_checkpoints(
+def test_load_model_portably_reconstructs_retired_families(
     tmp_path, recorded_family, portable_module, portable_class
 ):
     eqx = pytest.importorskip("equinox")
@@ -299,7 +300,7 @@ def test_load_model_portably_reconstructs_sycl_checkpoints(
     assert updated.shape == state.shape
     assert jnp.all(jnp.isfinite(updated))
 
-    with pytest.raises(ValueError, match="recorded SYCL implementation"):
+    with pytest.raises(ValueError, match="has been retired"):
         bundle.load_model(key=jr.PRNGKey(12), implementation="recorded")
 
 
