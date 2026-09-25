@@ -1,0 +1,55 @@
+# Pipeline smoke test: fine-tune an existing trained model on Nodal knockout
+# curricula for a few iterations.
+#
+# Set initialization.model_id to a trained 14-channel micropatterns_260726
+# bundle that exists in the model store both locally and on the cluster. Its
+# model settings and experiment groups must match the ones below (the run
+# checks this and stops if they differ), so adjust model.* to the parent.
+# Until the placeholder is replaced, pipeline_smoke_test.py skips this sweep.
+experiment_name: smoke_micropatterns_ko_finetune
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/smoke_micropatterns_ko_finetune
+seed_mode: fixed
+
+grid:
+  initialization.model_id: [20260923T134957Z-cfgd39864233e18-86c2c4d5]
+  logging.wandb.project: [pipeline-smoke]
+  model_store.collection: [pipeline-smoke]
+
+  # Must match the parent bundle.
+  data.dataset: [micropatterns_260726]
+  data.micropattern.data_channels: [14]
+  data.micropattern.experiment_groups:
+    - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+  data.downsample: [16]
+  data.batches: [2]
+  data.micropattern.train_replicates: [[1, 2]]
+  data.micropattern.validation_replicates: [[3, 4]]
+  knockout.channel: [Nodal]
+  model.family: [gNCA]
+  model.channels: [48]
+  model.kernel_str: [[ID, LAP, DIFF]]
+  model.fire_rate: [0.5]
+  model.padding: [CIRCULAR]
+
+  knockout.curriculum:
+    - [ko_24h]
+    - [baseline, ko_0h, ko_24h]
+
+  run.t: [32]
+  run.iterations: [40]
+  run.warmup: [5]
+  optimiser.learn_rate: [1e-4]
+  optimiser.warmup_steps: [10]
+  trainer.loop_autodiff: [lax]
+  trainer.log_every: [20]
+  trainer.validation_every: [20]
+  trainer.validation_rollout: [true]
+
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [1.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.random_channel_shuffle: [true]

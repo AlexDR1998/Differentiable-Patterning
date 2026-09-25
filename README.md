@@ -99,6 +99,21 @@ Run the lightweight unit test suite with:
 pytest tests/unit
 ```
 
+To check that full training still works end to end, run the smoke sweeps on a
+GPU machine (10 very short runs across emoji, micropatterns, Nodal knockout
+fine-tuning and snowmelt):
+
+```bash
+python Experiments/pipeline_smoke_test.py
+```
+
+Each run must finish and publish a model bundle, which goes to the normal
+model store under the `pipeline-smoke` collection. The sweeps are the
+`smoke_*.yaml` files in each `Experiments/<domain>/conf/experiments/` folder.
+The fine-tuning sweep needs the ID of an existing trained model set in its YAML
+file, and is skipped until then. `--dry-run` writes the manifests and prints
+the Kubernetes commands to run every smoke run as its own pod.
+
 `tests/hardware/jax_gpu_mem_test.py` is a standalone GPU check, not part of the
 unit suite.
 

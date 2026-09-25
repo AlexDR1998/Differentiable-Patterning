@@ -17,7 +17,11 @@ def _as_list(value):
 def load_initial_model(cfg, key, model_root):
     from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
     from Experiments.config import config_to_dict
-    from Experiments.config_helpers import build_model, build_model_config_string
+    from Experiments.config_helpers import (
+        PORTABLE_MODEL_FAMILIES,
+        build_model,
+        build_model_config_string,
+    )
 
     model_id = cfg.initialization.model_id
     if model_id is None:
@@ -25,8 +29,15 @@ def load_initial_model(cfg, key, model_root):
 
     from NCA.registry import ModelRegistry
 
+    def comparable(model_config):
+        # Archived SYCL families (e.g. gNCA_sycl) load as their portable
+        # equivalents (gNCA), so treat the two names as the same model.
+        values = config_to_dict(model_config)
+        values["family"] = PORTABLE_MODEL_FAMILIES.get(values["family"], values["family"])
+        return values
+
     bundle = ModelRegistry(model_root).get(model_id)
-    if config_to_dict(bundle.config.model) != config_to_dict(cfg.model):
+    if comparable(bundle.config.model) != comparable(cfg.model):
         raise ValueError(
             f"Pretrained model {model_id!r} has an incompatible model configuration"
         )

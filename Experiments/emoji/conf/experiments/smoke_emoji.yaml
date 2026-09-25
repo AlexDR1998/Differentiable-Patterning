@@ -1,0 +1,49 @@
+# Pipeline smoke test: a few very short emoji runs that together cover the main
+# code paths (model families, sequence vs multi-attractor data, terminal carry,
+# regularisers, both loop_autodiff modes, bundle publication).
+# The runs are far too short to learn anything; a run passes if it finishes
+# and publishes a bundle. Run all smoke tests with:
+#   python Experiments/pipeline_smoke_test.py
+experiment_name: smoke_emoji
+entrypoint: Experiments.emoji.train:run
+output_subdir: generated/smoke_emoji
+seed_mode: fixed
+
+grid:
+  logging.wandb.project: [pipeline-smoke]
+  model_store.collection: [pipeline-smoke]
+  model.channels: [16]
+  data.batches: [2]
+  data.downsample: [2]
+  run.t: [16]
+  run.iterations: [60]
+  # Checkpoint warmup: must be below run.iterations so a bundle is published.
+  run.warmup: [5]
+  run.write_images: [true]
+  trainer.log_every: [20]
+  optimiser.warmup_steps: [10]
+
+# One entry per column: each block is zipped, not a Cartesian product.
+groups:
+  - model.family: [NCA, gNCA, NCA_fast, gnNCA]
+    trainer.loop_autodiff: [checkpointed, lax, checkpointed, lax]
+    loss.terms:
+      - [l2]
+      - [l2]
+      - [l2]
+      - [{type: sliced_wasserstein_channel, samples: 16, epsilon: 0.1}]
+    data.emoji.task: [sequence, sequence, multi_attractor, sequence]
+    data.emoji.pairs:
+      - []
+      - []
+      - - initial: {image: crab.png, mode: patch, size: 12}
+          target: crab.png
+        - initial: {image: microbe.png, mode: patch, size: 12}
+          target: microbe.png
+      - []
+    data.emoji.terminal_carry.enabled: [false, true, true, false]
+    data.emoji.terminal_carry.start_iteration: [20, 20, 20, 20]
+    data.emoji.terminal_carry.schedule_iterations: [20, 20, 20, 20]
+    loss.regularisers.contiguous_growth: [1.0, 0.0, 0.0, 1.0]
+    loss.regularisers.update_sensitivity: [0.0, 0.0, 0.0, 0.1]
+    loss.regularisers.perturbation_conservation: [0.0, 0.0, 0.0, 0.1]

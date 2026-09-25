@@ -1,0 +1,31 @@
+# Pipeline smoke test: two very short snowmelt runs at 80 m resolution
+# (64x64), covering single and multi-band targets, uniform and step-scaled
+# time intervals, both loop_autodiff modes and bundle publication.
+# Run all smoke tests with:
+#   python Experiments/pipeline_smoke_test.py
+experiment_name: smoke_snowmelt
+entrypoint: Experiments.snowmelt.train:run
+output_subdir: generated/smoke_snowmelt
+seed_mode: fixed
+
+grid:
+  logging.wandb.project: [pipeline-smoke]
+  model_store.collection: [pipeline-smoke]
+  data.dataset: [snowmelt]
+  data.downsample: [8]
+  model.channels: [16]
+  run.t: [16]
+  run.iterations: [60]
+  # Checkpoint warmup: must be below run.iterations so a bundle is published.
+  run.warmup: [5]
+  optimiser.warmup_steps: [10]
+  trainer.log_every: [20]
+
+# One entry per column: each block is zipped, not a Cartesian product.
+groups:
+  - model.family: [NCA, gNCA]
+    data.snowmelt.target_channels:
+      - [SCA]
+      - [NDSI, B3, B11]
+    run.interval_mode: [steps, uniform]
+    trainer.loop_autodiff: [checkpointed, lax]

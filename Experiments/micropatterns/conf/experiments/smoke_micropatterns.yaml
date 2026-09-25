@@ -1,0 +1,52 @@
+# Pipeline smoke test: very short micropattern runs on the 14-channel 260726
+# data, covering the multi-target loss, validation rollouts, pool copies,
+# singular-value logging, and Nodal knockout training from scratch.
+# Nodal KO fine-tuning is tested separately by smoke_micropatterns_ko_finetune.
+# Run all smoke tests with:
+#   python Experiments/pipeline_smoke_test.py
+experiment_name: smoke_micropatterns
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/smoke_micropatterns
+seed_mode: fixed
+
+grid:
+  logging.wandb.project: [pipeline-smoke]
+  model_store.collection: [pipeline-smoke]
+
+  data.dataset: [micropatterns_260726]
+  data.micropattern.data_channels: [14]
+  data.micropattern.experiment_groups:
+    - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+  data.downsample: [16]
+  data.batches: [2]
+  data.micropattern.train_replicates: [[1, 2]]
+  data.micropattern.validation_replicates: [[3, 4]]
+  knockout.channel: [Nodal]
+
+  model.channels: [32]
+  run.t: [32]
+  run.iterations: [60]
+  # Checkpoint warmup: must be below run.iterations so a bundle is published.
+  run.warmup: [5]
+  optimiser.warmup_steps: [10]
+  trainer.log_every: [20]
+  trainer.validation_every: [20]
+  trainer.validation_rollout: [true]
+
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [1.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.1]
+  loss.terms.0.multi_target_weights.correlation: [0.1]
+  loss.terms.0.multi_target_weights.radial: [0.1]
+  loss.terms.0.random_channel_shuffle: [true]
+
+# One entry per column: each block is zipped, not a Cartesian product.
+groups:
+  - model.family: [NCA, gNCA]
+    trainer.loop_autodiff: [checkpointed, lax]
+    data.micropattern.pool_copies: [2, 1]
+    logging.singular_values.enabled: [true, false]
+    knockout.curriculum:
+      - null
+      - [baseline, ko_0h, ko_24h]
