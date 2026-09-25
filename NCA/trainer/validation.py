@@ -1,6 +1,4 @@
-"""Side-effect-free held-out replicate evaluation during NCA training."""
-
-from copy import copy
+"""Held-out replicate evaluation during NCA training; never changes training state."""
 
 import equinox as eqx
 import jax.numpy as jnp
@@ -9,11 +7,16 @@ from einops import rearrange
 
 from Common.model.boundary import hard_boundary, model_boundary
 from Common.trainer.variation_metrics import grouped_variation_metrics
-from NCA.trainer.step import _batch_loss
+from NCA.trainer.step import batch_loss, batch_model, multi_target_losses, run_nca_steps
 
 
 class ValidationEvaluator:
-    """Compile a conditional rollout loss that never updates training state."""
+    """Compiled rollout and loss on the validation replicates.
+
+    It uses the trainer only for settings shared with training (channel
+    counts, schema, loss options); the validation batches have their own
+    boundary callbacks, loss masks and knockout times.
+    """
 
     def __init__(self, trainer, setup, data, boundary_mask, loss_mask, key):
         if trainer.sharding not in (None, 1):
@@ -21,35 +24,30 @@ class ValidationEvaluator:
                 "Held-out validation currently requires trainer.sharding=null or 1"
             )
         data = jnp.asarray(data)
-        self.trainer = copy(trainer)
-        self.trainer.batch_count = data.shape[0]
-        self.trainer.intervention_times = context_times = (
-            trainer.context.validation_intervention_times
-        )
-        self.trainer.nodal_channel = (
-            None
-            if context_times is None
-            or trainer.channel_schema is None
-            or "NODAL" not in trainer.channel_schema.state_channels
-            else trainer.channel_schema.state_channels.index("NODAL")
-        )
-        self.trainer.diagnostic_boundary_mask = boundary_mask
-        callback_type = (
-            model_boundary
-            if trainer.config.trainer.boundary_mode == "soft"
-            else hard_boundary
-        )
-        self.trainer.boundary_callbacks = [
-            callback_type(boundary_mask[index]) for index in range(data.shape[0])
-        ]
-        self.trainer.loss_time_channel_mask = list(
-            rearrange(jnp.asarray(loss_mask), "b n c -> b n c () ()")
-        )
-        self.trainer.loss_cache = [None] * data.shape[0]
+        self.trainer = trainer
         self.setup = setup
         self.key = key
-
+        self.batch_count = data.shape[0]
+        self.boundary_mask = boundary_mask
+        callback_type = (
+            model_boundary
+            if trainer.trainer_config.boundary_mode == "soft"
+            else hard_boundary
+        )
+        self.boundary_callbacks = [
+            callback_type(boundary_mask[index]) for index in range(self.batch_count)
+        ]
+        self.loss_masks = list(rearrange(jnp.asarray(loss_mask), "b n c -> b n c () ()"))
         schema = trainer.channel_schema
+        self.intervention_times = trainer.context.validation_intervention_times
+        self.nodal_channel = (
+            None
+            if self.intervention_times is None
+            or schema is None
+            or "NODAL" not in schema.state_channels
+            else schema.state_channels.index("NODAL")
+        )
+
         if schema is None:
             observed = data[:, :-1, : trainer.observed_channels]
         else:
@@ -58,29 +56,23 @@ class ValidationEvaluator:
         states = jnp.pad(observed, ((0, 0), (0, 0), (0, padding), (0, 0), (0, 0)))
         self.states = [trainer.model.prepare_pool_state(value) for value in states]
         self.targets = [value for value in data[:, 1:]]
-        self.execution = self.trainer._training_execution()
         self._compiled = eqx.filter_jit(self._evaluate)
 
     def _loss_metrics(self, model, states, loss_weights, prefix):
-        prediction = jnp.stack(states)[:, :, : self.trainer.observed_channels]
-        target = jnp.stack(self.targets)[:, :, : self.trainer.data_channels]
+        trainer = self.trainer
+        prediction = jnp.stack(states)[:, :, : trainer.observed_channels]
+        target = jnp.stack(self.targets)[:, :, : trainer.data_channels]
         if self.setup.is_multi_target:
-            arguments = {
-                **self.setup.loss_arguments,
-                "multi_target_weights": loss_weights.multi_target,
-            }
-            losses, components = self.execution.multi_target_loss(
-                prediction,
-                target,
-                jnp.asarray(self.trainer.diagnostic_boundary_mask)[0, 0],
-                self.trainer.channel_schema,
-                self.setup.multi_target_params,
+            losses, components = multi_target_losses(
+                trainer,
+                self.setup,
+                states,
+                self.targets,
+                jnp.asarray(self.boundary_mask)[0, 0],
+                self.loss_masks,
+                self.intervention_times,
                 self.key,
-                arguments,
-                measurement_mask=jnp.stack(
-                    self.trainer.loss_time_channel_mask
-                )[..., 0, 0],
-                assignment_groups=self.trainer.intervention_times,
+                loss_weights,
             )
             metrics = {f"{prefix}/loss": jnp.mean(losses)}
             for name, value in components.items():
@@ -93,25 +85,21 @@ class ValidationEvaluator:
             metrics.update(self._variation_metrics(prediction, target, prefix))
             return metrics
 
-        keys = jr.split(self.key, self.trainer.batch_count)
+        keys = jr.split(self.key, self.batch_count)
         losses = jnp.asarray([
-            _batch_loss(
-                self.trainer,
+            batch_loss(
+                trainer,
                 self.setup,
                 model,
                 state,
-                target,
+                target_batch,
                 mask,
-                cache,
+                None,  # target features are only cached for the training data
                 loss_key,
                 loss_weights.terms,
             )
-            for state, target, mask, cache, loss_key in zip(
-                states,
-                self.targets,
-                self.trainer.loss_time_channel_mask,
-                self.trainer.loss_cache,
-                keys,
+            for state, target_batch, mask, loss_key in zip(
+                states, self.targets, self.loss_masks, keys
             )
         ])
         metrics = {f"{prefix}/loss": jnp.mean(losses)}
@@ -119,12 +107,12 @@ class ValidationEvaluator:
         return metrics
 
     def _variation_metrics(self, prediction, target, prefix):
-        if self.trainer.batch_count < 2 or self.trainer.channel_schema is None:
+        if self.batch_count < 2 or self.trainer.channel_schema is None:
             return {}
         values = grouped_variation_metrics(
             prediction,
             target,
-            jnp.asarray(self.trainer.diagnostic_boundary_mask)[0, 0],
+            jnp.asarray(self.boundary_mask)[0, 0],
             self.trainer.channel_schema,
             radial_bins=self.setup.loss_arguments.get("radial_bins", 16),
         )
@@ -144,55 +132,55 @@ class ValidationEvaluator:
             )
         return metrics
 
+    def _rollout(self, model, states, schedule, key, time_offset=0):
+        batched = batch_model(
+            model,
+            self.intervention_times,
+            self.nodal_channel,
+            self.setup.intervention_observation_times,
+            time_offset=time_offset,
+        )
+        _, states, _ = run_nca_steps(
+            model,
+            batched,
+            states,
+            {},
+            schedule,
+            key,
+            self.trainer.trainer_config.loop_autodiff,
+            lambda totals, before, after, context, step_key: totals,
+            self.boundary_callbacks,
+        )
+        return states
+
     def _evaluate(self, model, loss_weights):
-        batched_model = self.trainer._make_batched_nca(model)
-
-        def no_regularisers(totals, before, after, context, key, skip=()):
-            return totals
-
         schedule = self.setup.interval_schedule
         if not schedule.is_uniform and schedule.n_slots != self.targets[0].shape[0]:
             raise ValueError(
                 f"Validation data has {self.targets[0].shape[0]} transitions but the "
                 f"interval schedule has {schedule.n_slots}"
             )
-        _, states, _ = self.trainer._run_nca_steps(
-            model,
-            batched_model,
-            self.states,
-            {},
-            schedule,
-            self.key,
-            self.trainer.config.trainer.loop_autodiff,
-            no_regularisers,
-            self.execution,
-        )
+        states = self._rollout(model, self.states, schedule, self.key)
         metrics = self._loss_metrics(model, states, loss_weights, "validation")
-        if not self.trainer.config.trainer.validation_rollout:
+        if not self.trainer.trainer_config.validation_rollout:
             return metrics
 
+        # Sequential rollout from the first image: each transition starts where
+        # the previous one ended and runs its own step count.
         rollout_states = [state[:1] for state in self.states]
         snapshots = []
         for transition in range(self.targets[0].shape[0]):
-            rollout_model = self.trainer._make_batched_nca(
-                model, time_offset=transition
-            )
-            _, rollout_states, _ = self.trainer._run_nca_steps(
+            rollout_states = self._rollout(
                 model,
-                rollout_model,
                 rollout_states,
-                {},
-                # Sequential rollout: each transition runs its own step count.
                 schedule.for_slot(transition) if not schedule.is_uniform else schedule,
                 jr.fold_in(self.key, transition + 1),
-                self.trainer.config.trainer.loop_autodiff,
-                no_regularisers,
-                self.execution,
+                time_offset=transition,
             )
             snapshots.append(rollout_states)
         rollout_predictions = [
             jnp.concatenate([snapshot[batch] for snapshot in snapshots], axis=0)
-            for batch in range(self.trainer.batch_count)
+            for batch in range(self.batch_count)
         ]
         metrics.update(
             self._loss_metrics(

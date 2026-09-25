@@ -704,12 +704,26 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _():
-    _timepoint_options = ["0h", "12h", "24h", "36h", "48h"]
-    _channel_options = [
+def _(comparison_rollouts):
+    _default_timepoints = ["0h", "12h", "24h", "36h", "48h"]
+    _default_channels = [
         "DAPI", "LMBR", "TBXT", "SOX17", "SOX2", "FOXA2",
         "CER1", "LEFTY", "NODAL", "LEF1", "SMAD23",
     ]
+    if comparison_rollouts is None:
+        _timepoint_options = _default_timepoints
+        _channel_options = _default_channels
+    else:
+        _timepoint_options = list(dict.fromkeys(
+            _label
+            for _, _, _labels, _, _ in comparison_rollouts
+            for _label in _labels
+        ))
+        _channel_options = list(dict.fromkeys(
+            _name.rsplit("/", 1)[-1]
+            for _, _, _, _names, _ in comparison_rollouts
+            for _name in _names
+        ))
     timepoint_filter = mo.ui.multiselect(
         options=_timepoint_options,
         value=_timepoint_options,
@@ -1050,7 +1064,6 @@ def _(channel_filter, comparison_rollouts, timepoint_filter):
             "Select at least one timepoint and one channel.", kind="info"
         )
     else:
-        _figures = []
         _tag_maps = {}
         for _bundle, *_rest in comparison_rollouts:
             _tags = _bundle.manifest.provenance.wandb.get("tags", ())
@@ -1078,73 +1091,116 @@ def _(channel_filter, comparison_rollouts, timepoint_filter):
                     return _replacement + _key.removeprefix(_prefix)
             return _key
 
-        for (
-            _bundle,
-            _frames,
-            _time_labels,
-            _channel_names,
-            _true_frames,
-        ) in comparison_rollouts:
-            _time_indices = [
-                _index for _index, _label in enumerate(_time_labels)
-                if _label in timepoint_filter.value
-            ]
-            _channel_indices = [
-                _index for _index, _name in enumerate(_channel_names)
-                if _name.rsplit("/", 1)[-1] in channel_filter.value
-            ]
-            if not _time_indices or not _channel_indices:
-                continue
-            _selected_times = tuple(_time_labels[_index] for _index in _time_indices)
-            _selected_channels = tuple(
-                _channel_names[_index] for _index in _channel_indices
+        _selected_times = [
+            _label
+            for _label in timepoint_filter.value
+            if any(_label in _item[2] for _item in comparison_rollouts)
+        ]
+        _selected_channels = [
+            _name
+            for _name in channel_filter.value
+            if any(
+                _name in tuple(_item.rsplit("/", 1)[-1] for _item in _rollout[3])
+                for _rollout in comparison_rollouts
             )
-            _selected_frames = _frames[np.ix_(_time_indices, _channel_indices)]
-            _row_count = len(_selected_channels)
-            _column_count = len(_selected_times)
+        ]
+        if _selected_times and _selected_channels:
+            _column_count = len(comparison_rollouts)
+            _row_count = len(_selected_channels) * len(_selected_times)
             _figure, _axes = plt.subplots(
                 _row_count,
                 _column_count,
-                figsize=(2.2 * _column_count, 2.2 * _row_count),
+                figsize=(2.35 * _column_count, 2.15 * _row_count),
                 squeeze=False,
-                gridspec_kw={"wspace": 0.02, "hspace": 0.02},
+                gridspec_kw={"wspace": 0.03, "hspace": 0.03},
             )
-            for _channel_index, _channel_name in enumerate(_selected_channels):
-                _channel_frames = _selected_frames[:, _channel_index]
-                _vmin = float(np.nanmin(_channel_frames))
-                _vmax = float(np.nanmax(_channel_frames))
-                if _vmax <= _vmin:
-                    _vmax = _vmin + 1.0
-                for _time_index, _time_label in enumerate(_selected_times):
-                    _axis = _axes[_channel_index, _time_index]
-                    _axis.imshow(
-                        _channel_frames[_time_index],
-                        cmap="gray",
-                        vmin=_vmin,
-                        vmax=_vmax,
+
+            _channel_limits = {}
+            for _channel_name in _selected_channels:
+                _values = []
+                for _, _frames, _, _channel_names, _ in comparison_rollouts:
+                    _base_names = tuple(
+                        _name.rsplit("/", 1)[-1] for _name in _channel_names
                     )
-                    if _channel_index == 0:
-                        _axis.set_title(_time_label)
-                    if _time_index == 0:
-                        _axis.set_ylabel(_channel_name, rotation=0, ha="right", va="center")
-                    _axis.set_xticks([])
-                    _axis.set_yticks([])
-            _figure.tight_layout(pad=0.3, w_pad=0.1, h_pad=0.1)
-            _tag_map = _tag_maps[_bundle.id]
-            _differences = [
-                f"{_short_tag_key(_key)}={_tag_map.get(_key, '—')}"
-                for _key in _varying_tag_keys
-            ]
-            _title = " · ".join(_differences) or "Same W&B configuration"
-            _figures.append(mo.vstack([mo.md(f"**{_title}**"), _figure], gap=0.1))
-        if _figures:
-            _comparison = mo.hstack(
-                _figures,
-                justify="start",
-                align="start",
-                wrap=True,
-                gap=0.25,
-            )
+                    if _channel_name in _base_names:
+                        _values.append(_frames[:, _base_names.index(_channel_name)])
+                _vmin = min(float(np.nanmin(_value)) for _value in _values)
+                _vmax = max(float(np.nanmax(_value)) for _value in _values)
+                _channel_limits[_channel_name] = (
+                    _vmin,
+                    _vmax if _vmax > _vmin else _vmin + 1.0,
+                )
+
+            for _model_index, (
+                _bundle,
+                _frames,
+                _time_labels,
+                _channel_names,
+                _true_frames,
+            ) in enumerate(comparison_rollouts):
+                _tag_map = _tag_maps[_bundle.id]
+                _differences = [
+                    f"{_short_tag_key(_key)}={_tag_map.get(_key, '—')}"
+                    for _key in _varying_tag_keys
+                ]
+                _height, _width = _frames.shape[-2:]
+                _title = "\n".join(_differences) or _bundle.id
+                _axes[0, _model_index].set_title(
+                    f"{_title}\n{_width}×{_height}px",
+                    fontsize=9,
+                )
+                _base_names = tuple(
+                    _name.rsplit("/", 1)[-1] for _name in _channel_names
+                )
+                for _channel_index, _channel_name in enumerate(_selected_channels):
+                    for _time_index, _time_label in enumerate(_selected_times):
+                        _row_index = (
+                            _channel_index * len(_selected_times) + _time_index
+                        )
+                        _axis = _axes[_row_index, _model_index]
+                        if (
+                            _time_label in _time_labels
+                            and _channel_name in _base_names
+                        ):
+                            _axis.imshow(
+                                _frames[
+                                    _time_labels.index(_time_label),
+                                    _base_names.index(_channel_name),
+                                ],
+                                cmap="gray",
+                                vmin=_channel_limits[_channel_name][0],
+                                vmax=_channel_limits[_channel_name][1],
+                                interpolation="nearest",
+                            )
+                        else:
+                            _axis.set_facecolor("#eeeeee")
+                            _axis.text(
+                                0.5,
+                                0.5,
+                                "not available",
+                                ha="center",
+                                va="center",
+                                color="#777777",
+                                fontsize=8,
+                                transform=_axis.transAxes,
+                            )
+                        if _model_index == 0:
+                            _axis.set_ylabel(
+                                f"{_channel_name}\n{_time_label}",
+                                rotation=0,
+                                ha="right",
+                                va="center",
+                            )
+                        _axis.set_xticks([])
+                        _axis.set_yticks([])
+            _figure.tight_layout(pad=0.4, w_pad=0.15, h_pad=0.15)
+            _comparison = mo.vstack([
+                mo.md(
+                    "Columns are models; rows are shared channel/timepoint pairs. "
+                    "Each channel uses one intensity scale across every model."
+                ),
+                _figure,
+            ])
         else:
             _comparison = mo.callout(
                 "None of the selected models contain the chosen channels or timepoints.",

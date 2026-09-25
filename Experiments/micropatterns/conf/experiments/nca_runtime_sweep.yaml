@@ -5,7 +5,6 @@ seed_mode: fixed
 grid:
   run.mode: [benchmark]
   model.family: [NCA]
-  trainer.backend.type: [nvidia]
   model.channels: [32]
   labels.scaling: [convective]
   logging.wandb.project: [nca_micropattern_upscale]

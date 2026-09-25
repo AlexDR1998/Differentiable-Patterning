@@ -25,9 +25,9 @@ class PoolDecision:
 
 
 class PoolAdmissionController:
-    def __init__(self, config, default_warmup: int):
+    def __init__(self, config):
         self.config = config
-        self.warmup = default_warmup if config.warmup is None else config.warmup
+        self.warmup = config.warmup
         self.state = PoolAdmissionState()
 
     def reset_references(self) -> None:
@@ -108,15 +108,14 @@ class PoolAdmissionController:
 class TimePoolAdmissionController:
     """Apply the established admission policy independently per time slot."""
 
-    def __init__(self, config, default_warmup: int):
+    def __init__(self, config):
         self.config = config
-        self.default_warmup = default_warmup
         self.controllers: list[PoolAdmissionController] = []
 
     def _ensure_size(self, size: int) -> None:
         if not self.controllers:
             self.controllers = [
-                PoolAdmissionController(self.config, self.default_warmup)
+                PoolAdmissionController(self.config)
                 for _ in range(size)
             ]
         elif len(self.controllers) != size:

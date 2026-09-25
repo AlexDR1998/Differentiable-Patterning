@@ -1,11 +1,16 @@
+"""Public entry point of the NCA trainer.
+
+``NcaTrainer`` holds what is derived from the loaded data (augmenter, boundary
+callbacks, loss masks, channel counts) and the logger. ``train`` then runs:
+
+    preparation.prepare_training -> step.build_train_step -> runner.run_loop
+"""
+
 from pathlib import Path
 from dataclasses import asdict
 
-import jax
 import jax.numpy as jnp
-import jax.random as jr
 import jax.tree_util as jtu
-import equinox as eqx
 import datetime
 from NCA.trainer.logging.tensorboard import (
 	NCA_Train_log,
@@ -15,13 +20,7 @@ from NCA.trainer.logging.kan_tensorboard import (
 	kaNCA_Train_log,
 	uses_fast_kan_diagnostics,
 )
-from NCA.trainer.training_execution import TrainingExecution
 from NCA.trainer.context import TrainerContext
-from NCA.trainer.interval_schedule import IntervalSchedule, uniform_schedule
-from NCA.trainer.intervention import (
-	apply_model_with_blocked_channel,
-	nodal_read_block_mask,
-)
 from einops import repeat, rearrange
 from Common.model.boundary import model_boundary, hard_boundary, no_boundary
 
@@ -40,15 +39,20 @@ def select_wandb_train_logger_class(model, knockout_time=None):
 	return NCA_Train_log
 
 class NcaTrainer:
-	"""Config-driven NCA trainer with an explicit numerical lifecycle.
+	"""Config-driven NCA trainer.
 
-	Configuration is immutable and comes from one experiment config.  Values
-	derived from loaded data live in :class:`TrainerContext` instead of being
-	exposed as a second collection of trainer options.
+	User choices come from the experiment config; the trainer keeps only the
+	sections it uses. Values derived from loaded data come in through
+	:class:`TrainerContext`.
 	"""
 
 	def __init__(self, config, model, data, context: TrainerContext):
-		self.config = config
+		self.run_config = config.run
+		self.trainer_config = config.trainer
+		self.optimiser_config = config.optimiser
+		self.loss_config = config.loss
+		self.logging_config = config.logging
+		self.knockout_config = config.data.knockout
 		self.context = context
 		trainer_config = config.trainer
 		self.model = model
@@ -144,9 +148,26 @@ class NcaTrainer:
 		# Keep human-readable names in logging metadata. Checkpoint paths use a
 		# bounded, collision-resistant storage ID supplied by the entrypoint.
 		self.model_filename = context.storage_id or context.run_name
-		#print(jax.tree_util.tree_structure(self.boundary_callbacks))
 		
-	def setup_logging(self,logging_backend,wandb_args,knockout,singular_value_settings=None):
+	def setup_logging(self):
+		"""Create the logger chosen by logging.backend, and the checkpoint path."""
+		logging_backend = self.logging_config.backend
+		settings = self.logging_config.singular_values
+		singular_value_settings = {
+			"enabled": bool(settings.enabled),
+			"plot_spectra": bool(settings.plot_spectra),
+			"epsilon": float(settings.epsilon),
+		}
+		wandb_args = {
+			"project": self.logging_config.wandb.project,
+			"group": self.logging_config.wandb.group,
+			"tags": list(self.context.wandb_tags),
+			"name": self.context.run_name,
+		}
+		knockout = {
+			"time": self.knockout_config.time,
+			"channel": self.knockout_config.channel,
+		}
 		# Set logging behvaiour based on provided filename
 		print(f"Raw data shape(s): {describe_batch_shapes(self._data_raw)}")
 		logging_data = self.data_augmenter.return_observed_data()
@@ -177,10 +198,10 @@ class NcaTrainer:
 				)
 				wandb_args["config"] = {
 					"model": self.model.get_config(),
-					"run": asdict(self.config.run),
-					"trainer": asdict(self.config.trainer),
-					"optimiser": asdict(self.config.optimiser),
-					"loss": asdict(self.config.loss),
+					"run": asdict(self.run_config),
+					"trainer": asdict(self.trainer_config),
+					"optimiser": asdict(self.optimiser_config),
+					"loss": asdict(self.loss_config),
 				}
 				
 				if knockout["time"] is not None: # Nodal KO has differet logging behaviour
@@ -215,144 +236,6 @@ class NcaTrainer:
 		self.model_path = str(Path(self._model_root) / self.model_filename)
 		print("Saving model to: "+self.model_path)
 
-	def _make_batched_nca(self, nca, time_offset=0):
-		"""Build the established vmap/tree-map NCA application path.
-
-		Accelerator-specific trainers may override this hook without adding
-		backend flags or batching branches to the core training loop.
-		"""
-		if self.intervention_times is None:
-			apply_with_boundary = jax.vmap(
-				nca, in_axes=(0, None, 0), out_axes=0, axis_name="N"
-			)
-			return lambda x, callback, key_array: jtu.tree_map(
-				apply_with_boundary, x, callback, key_array
-			)
-
-		if self.nodal_channel is None:
-			raise ValueError("NODAL intervention requires a NODAL state channel")
-		intervention_times = tuple(self.intervention_times)
-		observation_times = self._intervention_observation_times()
-
-		def apply_interventions(x, callbacks, key_array):
-			if len(x) != len(intervention_times):
-				raise ValueError(
-					"Intervention times must match the outer training batch"
-				)
-			outputs = []
-			for states, callback, keys, knockout_time in zip(
-				x, callbacks, key_array, intervention_times
-			):
-				blocked = nodal_read_block_mask(
-					knockout_time,
-					states.shape[0],
-					time_offset=time_offset,
-					observation_times=observation_times,
-				)
-				outputs.append(jax.vmap(
-					lambda state, item_key, is_blocked: apply_model_with_blocked_channel(
-						nca,
-						state,
-						callback,
-						item_key,
-						self.nodal_channel,
-						is_blocked,
-					),
-					in_axes=(0, 0, 0),
-					out_axes=0,
-					axis_name="N",
-				)(states, keys, blocked))
-			return type(x)(outputs)
-
-		return apply_interventions
-
-	def _intervention_observation_times(self):
-		"""Observation times for mapping intervention hours to slots.
-
-		``None`` keeps the historical 12-hour slot convention; uniform schedules
-		use it so existing runs are unchanged.
-		"""
-		schedule = getattr(self, "interval_schedule", None)
-		if schedule is None or schedule.mode == "uniform":
-			return None
-		return schedule.times
-
-	def _training_execution(self):
-		return TrainingExecution(self)
-
-	def _run_nca_steps(
-		self,
-		nca,
-		vv_nca,
-		states,
-		reg_logs_internal,
-		t,
-		key,
-		loop_autodiff,
-		apply_intermediate_regs,
-		training_execution,
-	):
-		"""Reference one-step NCA scan.
-
-		``t`` is either an int (every slot runs ``t`` steps) or an
-		:class:`IntervalSchedule`. For a non-uniform schedule the scan runs to
-		the longest slot and each slot keeps its state once it has taken its own
-		step count, so slot ``i`` ends exactly where an unmasked ``steps[i]``-step
-		scan would. Regularisers are still evaluated on every scan iteration;
-		finished slots contribute their held state, and (non-uniform only)
-		``context["active_slots"]`` marks which slots actually updated.
-		"""
-		schedule = t if isinstance(t, IntervalSchedule) else uniform_schedule(t, 1)
-		state_shape = states[0].shape[0]
-		if schedule.is_uniform:
-			active_steps = None
-		elif schedule.n_slots != state_shape:
-			raise ValueError(
-				f"Interval schedule has {schedule.n_slots} slots but the rollout has {state_shape}"
-			)
-		else:
-			active_steps = jnp.asarray(schedule.steps, dtype=jnp.int32)
-
-		def hold_finished(new, old, active):
-			active = active.reshape(active.shape + (1,) * (new.ndim - 1))
-			return jnp.where(active, new, old)
-
-		def nca_step(carry, j):
-			step_key, state, reg_logs = carry
-			step_key = jr.fold_in(step_key, j)
-			key_array = list(jr.randint(
-				step_key,
-				shape=(self.batch_count, state_shape, 2),
-				minval=0,
-				maxval=2_147_483_647,
-				dtype=jnp.uint32,
-			))
-			new_state = vv_nca(
-				state, training_execution.boundary_callbacks(), key_array
-			)
-			reg_context = {
-				"model": vv_nca,
-				"boundary_state_selector": nca.boundary_regulariser_state,
-			}
-			if active_steps is not None:
-				active = j < active_steps
-				new_state = jtu.tree_map(
-					lambda new, old: hold_finished(new, old, active), new_state, state
-				)
-				reg_context["active_slots"] = active
-			reg_logs = apply_intermediate_regs(
-				reg_logs, state, new_state, reg_context, step_key
-			)
-			return (step_key, new_state, reg_logs), None
-
-		carry, _ = eqx.internal.scan(
-			nca_step,
-			(key, states, reg_logs_internal),
-			xs=jnp.arange(schedule.scan_length),
-			kind=loop_autodiff,
-		)
-		return carry
-	
 	def train(
 		self,
 		*,
@@ -363,7 +246,7 @@ class NcaTrainer:
 	):
 		"""Prepare, compile and execute one configured training run."""
 		from NCA.trainer.preparation import prepare_training
-		from NCA.trainer.runner import run_training
+		from NCA.trainer.runner import run_loop
 		from NCA.trainer.step import build_train_step
 		from NCA.trainer.validation import build_validation_evaluator
 
@@ -373,9 +256,10 @@ class NcaTrainer:
 			timesteps=timesteps,
 			loss_overrides=loss_overrides,
 		)
+		self.setup_logging()
 		step = build_train_step(self, setup)
 		validation_evaluator = build_validation_evaluator(self, setup)
-		return run_training(
+		return run_loop(
 			self,
 			setup,
 			step,
@@ -385,15 +269,7 @@ class NcaTrainer:
 
 
 def build_trainer(config, model, data, context: TrainerContext) -> NcaTrainer:
-	"""Construct the trainer selected by the typed backend configuration."""
-	backend_type = config.trainer.backend.type
-	if backend_type == "sycl":
-		raise ValueError(
-			"The SYCL training backend has been archived. Use backend.type='nvidia' "
-			"with NCA/gNCA, or load an old bundle portably for inference."
-		)
-	if backend_type not in {"none", "nvidia"}:
-		raise ValueError(f"Unsupported trainer backend {backend_type!r}")
+	"""Construct an NCA trainer from an experiment config."""
 	return NcaTrainer(config, model, data, context)
 
 

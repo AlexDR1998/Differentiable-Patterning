@@ -1,3 +1,4 @@
+import jax
 from types import SimpleNamespace
 
 import jax.numpy as jnp
@@ -9,7 +10,7 @@ from NCA.trainer.runner import (
     _merge_advanced_states,
     _update_training_pool,
 )
-from NCA.trainer.state import TrainState
+from NCA.trainer.step import TrainState
 
 
 def test_objective_is_resolved_from_typed_loss_config():
@@ -38,7 +39,7 @@ def test_pool_admission_state_is_explicit():
         ema_decay=0.5,
         warmup=0,
     )
-    controller = PoolAdmissionController(config, default_warmup=0)
+    controller = PoolAdmissionController(config)
 
     first = controller.decide(1.0, iteration=0)
     controller.update(first, 1.0)
@@ -59,7 +60,7 @@ def test_pool_admission_reference_reset_preserves_counts():
         ema_decay=0.5,
         warmup=0,
     )
-    controller = PoolAdmissionController(config, default_warmup=0)
+    controller = PoolAdmissionController(config)
     first = controller.decide(1.0, iteration=0)
     controller.update(first, 1.0)
 
@@ -80,7 +81,7 @@ def test_time_pool_admission_tracks_each_transition_independently():
         ema_decay=0.5,
         warmup=0,
     )
-    controller = TimePoolAdmissionController(config, default_warmup=0)
+    controller = TimePoolAdmissionController(config)
     initial = controller.decide((1.0, 10.0), iteration=0)
     controller.update(initial, (1.0, 10.0))
 
@@ -128,14 +129,8 @@ def test_scalar_rejection_restores_pool_without_running_augmentation():
         def prepare_pool_state(value):
             return value
 
-    class Execution:
-        @staticmethod
-        def split_key(key):
-            raise AssertionError("Rejected pool must not split an augmentation key")
-
-        @staticmethod
-        def apply_advance_pool(states, targets, iteration, key):
-            raise AssertionError("Rejected pool must not run augmentation")
+    def advance_pool(states, targets, iteration, key):
+        raise AssertionError("Rejected pool must not run augmentation")
 
     previous_states = [jnp.zeros((4, 1, 1, 1))]
     previous_targets = [jnp.zeros((4, 1, 1, 1))]
@@ -155,7 +150,7 @@ def test_scalar_rejection_restores_pool_without_running_augmentation():
         previous_targets,
         source_admitted=False,
         iteration=10,
-        execution=Execution(),
+        advance_pool=advance_pool,
     )
 
     assert result.states is previous_states
@@ -172,18 +167,11 @@ def test_scalar_acceptance_runs_augmentation_and_keeps_training_update():
         def prepare_pool_state(value):
             return value
 
-    class Execution:
-        calls = 0
+    calls = []
 
-        @staticmethod
-        def split_key(key):
-            return key + 1, key + 2
-
-        @classmethod
-        def apply_advance_pool(cls, states, targets, iteration, key):
-            cls.calls += 1
-            assert iteration == 10
-            return [states[0] + 1], [targets[0] + 1]
+    def advance_pool(states, targets, iteration, key):
+        calls.append(iteration)
+        return [states[0] + 1], [targets[0] + 1]
 
     previous_states = [jnp.zeros((4, 1, 1, 1))]
     previous_targets = [jnp.zeros((4, 1, 1, 1))]
@@ -202,12 +190,12 @@ def test_scalar_acceptance_runs_augmentation_and_keeps_training_update():
         previous_targets,
         source_admitted=True,
         iteration=10,
-        execution=Execution(),
+        advance_pool=advance_pool,
     )
 
-    assert Execution.calls == 1
+    assert calls == [10]
     assert jnp.all(result.states[0] == 2)
     assert jnp.all(result.targets[0] == 1)
     assert result.model is state.model
     assert result.optimizer_state == "updated optimizer"
-    assert jnp.array_equal(result.key, state.key + 1)
+    assert jnp.array_equal(result.key, jax.random.split(state.key)[0])

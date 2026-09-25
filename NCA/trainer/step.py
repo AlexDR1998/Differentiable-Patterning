@@ -1,4 +1,10 @@
-"""Pure differentiated NCA training step."""
+"""The compiled training step: roll the NCA out, compute the loss, update the model.
+
+Everything here is traced by JAX. Python-side decisions (pool admission,
+logging, checkpoints) live in ``runner.py``.
+"""
+
+from typing import Any, NamedTuple
 
 import equinox as eqx
 import jax
@@ -7,12 +13,163 @@ import jax.random as jr
 import jax.tree_util as jtu
 from einops import einsum, rearrange, repeat
 
+from Common.trainer.loss_multi_target import multi_target_loss
+from NCA.trainer.interval_schedule import IntervalSchedule, uniform_schedule
+from NCA.trainer.intervention import (
+    apply_model_with_blocked_channel,
+    nodal_read_block_mask,
+)
 from NCA.trainer.objective import combine_loss_components
-from NCA.trainer.state import StepOutput, TrainState
 
 
 LOSS_DTYPE = jnp.float32
 
+
+class TrainState(NamedTuple):
+    """Everything that changes from one training iteration to the next."""
+
+    model: Any
+    states: Any
+    targets: Any
+    optimizer_state: Any
+    key: Any
+    loss_weights: Any
+
+
+class StepOutput(NamedTuple):
+    state: TrainState
+    loss: Any
+    metrics: dict[str, Any]
+
+
+# ---------------------------------------------------------------------------
+# Rollout
+# ---------------------------------------------------------------------------
+
+def batch_model(
+    model,
+    intervention_times=None,
+    nodal_channel=None,
+    observation_times=None,
+    time_offset=0,
+):
+    """Apply ``model`` to a list of batches, each of shape [N, C, H, W].
+
+    With ``intervention_times`` (one per batch), the NODAL channel is blocked
+    from the knockout time onward. ``observation_times`` maps knockout hours to
+    time slots for non-uniform schedules (``None`` keeps 12-hour slots).
+    """
+    if intervention_times is None:
+        apply_with_boundary = jax.vmap(
+            model, in_axes=(0, None, 0), out_axes=0, axis_name="N"
+        )
+        return lambda x, callbacks, key_array: jtu.tree_map(
+            apply_with_boundary, x, callbacks, key_array
+        )
+
+    if nodal_channel is None:
+        raise ValueError("NODAL intervention requires a NODAL state channel")
+    intervention_times = tuple(intervention_times)
+
+    def apply_interventions(x, callbacks, key_array):
+        if len(x) != len(intervention_times):
+            raise ValueError("Intervention times must match the outer training batch")
+        outputs = []
+        for states, callback, keys, knockout_time in zip(
+            x, callbacks, key_array, intervention_times
+        ):
+            blocked = nodal_read_block_mask(
+                knockout_time,
+                states.shape[0],
+                time_offset=time_offset,
+                observation_times=observation_times,
+            )
+            outputs.append(jax.vmap(
+                lambda state, item_key, is_blocked: apply_model_with_blocked_channel(
+                    model, state, callback, item_key, nodal_channel, is_blocked,
+                ),
+                in_axes=(0, 0, 0),
+                out_axes=0,
+                axis_name="N",
+            )(states, keys, blocked))
+        return type(x)(outputs)
+
+    return apply_interventions
+
+
+def run_nca_steps(
+    model,
+    batched_model,
+    states,
+    regulariser_totals,
+    schedule,
+    key,
+    loop_autodiff,
+    apply_regularisers,
+    boundary_callbacks,
+):
+    """Run the NCA forward with ``eqx.internal.scan``; return (key, states, totals).
+
+    ``schedule`` is either an int (every time slot runs that many steps) or an
+    :class:`IntervalSchedule`. For a non-uniform schedule the scan runs to the
+    longest slot and each slot keeps its state once it has taken its own step
+    count, so slot ``i`` ends exactly where an unmasked ``steps[i]``-step scan
+    would. Regularisers are still evaluated on every scan iteration; finished
+    slots contribute their held state, and (non-uniform only)
+    ``context["active_slots"]`` marks which slots actually updated.
+    """
+    schedule = schedule if isinstance(schedule, IntervalSchedule) else uniform_schedule(schedule, 1)
+    batch_count = len(states)
+    slot_count = states[0].shape[0]
+    if schedule.is_uniform:
+        active_steps = None
+    elif schedule.n_slots != slot_count:
+        raise ValueError(
+            f"Interval schedule has {schedule.n_slots} slots but the rollout has {slot_count}"
+        )
+    else:
+        active_steps = jnp.asarray(schedule.steps, dtype=jnp.int32)
+
+    def hold_finished(new, old, active):
+        active = active.reshape(active.shape + (1,) * (new.ndim - 1))
+        return jnp.where(active, new, old)
+
+    def nca_step(carry, j):
+        step_key, state, totals = carry
+        step_key = jr.fold_in(step_key, j)
+        key_array = list(jr.randint(
+            step_key,
+            shape=(batch_count, slot_count, 2),
+            minval=0,
+            maxval=2_147_483_647,
+            dtype=jnp.uint32,
+        ))
+        new_state = batched_model(state, boundary_callbacks, key_array)
+        context = {
+            "model": batched_model,
+            "boundary_state_selector": model.boundary_regulariser_state,
+        }
+        if active_steps is not None:
+            active = j < active_steps
+            new_state = jtu.tree_map(
+                lambda new, old: hold_finished(new, old, active), new_state, state
+            )
+            context["active_slots"] = active
+        totals = apply_regularisers(totals, state, new_state, context, step_key)
+        return (step_key, new_state, totals), None
+
+    carry, _ = eqx.internal.scan(
+        nca_step,
+        (key, states, regulariser_totals),
+        xs=jnp.arange(schedule.scan_length),
+        kind=loop_autodiff,
+    )
+    return carry
+
+
+# ---------------------------------------------------------------------------
+# Loss
+# ---------------------------------------------------------------------------
 
 def _gradient_features(model, values):
     perception = jax.vmap(model.perception, in_axes=0, out_axes=0)
@@ -49,9 +206,10 @@ def _channel_mask(trainer, setup, component, time_mask):
     ).astype(jnp.bool_)
 
 
-def _batch_loss(
+def batch_loss(
     trainer, setup, model, states, targets, time_mask, cache, key, component_weights
 ):
+    """Weighted sum of the configured loss terms for one batch."""
     predicted = states[:, : trainer.observed_channels]
     expected = targets[:, : trainer.data_channels]
     if trainer.grad_loss:
@@ -72,79 +230,92 @@ def _batch_loss(
     return combine_loss_components(losses, component_weights)
 
 
+def multi_target_losses(trainer, setup, states, targets, boundary, measurement_masks,
+                        intervention_times, key, loss_weights):
+    """Multi-target loss per batch and its components, for all batches at once."""
+    loss_arguments = {
+        **setup.loss_arguments,
+        "multi_target_weights": loss_weights.multi_target,
+    }
+    return multi_target_loss(
+        jnp.stack(states)[:, :, : trainer.observed_channels],
+        jnp.stack(targets)[:, :, : trainer.data_channels],
+        boundary,
+        trainer.channel_schema,
+        setup.multi_target_params,
+        key,
+        loss_arguments,
+        measurement_mask=jnp.stack(measurement_masks)[..., 0, 0],
+        assignment_groups=intervention_times,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Training step
+# ---------------------------------------------------------------------------
+
 def build_train_step(trainer, setup):
-    """Build one explicit state-to-output function for JIT compilation."""
+    """Build the jitted function that maps one TrainState to a StepOutput."""
 
-    execution = setup.execution
-
-    def apply_regularisers(totals, before, after, context, key, skip=()):
+    def apply_regularisers(totals, before, after, context, key):
         aux = {
-            "boundary_callbacks": execution.boundary_callbacks(),
+            "boundary_callbacks": trainer.boundary_callbacks,
             "observed_channels": trainer.observed_channels,
             **context,
         }
         for name, function in setup.regulariser_functions.items():
-            if name not in skip:
-                totals[name] += function(before, after, aux, key)
+            totals[name] += function(before, after, aux, key)
         return totals
 
     def objective(differentiable, static, states, targets, key, loss_weights):
         model = eqx.combine(differentiable, static)
-        batched_model = trainer._make_batched_nca(model)
+        batched = batch_model(
+            model,
+            trainer.intervention_times,
+            trainer.nodal_channel,
+            setup.intervention_observation_times,
+        )
         regulariser_totals = {
             name: jnp.zeros(len(states), dtype=LOSS_DTYPE)
             for name in setup.regulariser_coefficients
         }
-        key, states, regulariser_totals = trainer._run_nca_steps(
+        key, states, regulariser_totals = run_nca_steps(
             model,
-            batched_model,
+            batched,
             states,
             regulariser_totals,
             setup.interval_schedule,
             key,
-            trainer.config.trainer.loop_autodiff,
+            trainer.trainer_config.loop_autodiff,
             apply_regularisers,
-            execution,
+            trainer.boundary_callbacks,
         )
         diagnostics = {}
         if setup.is_multi_target:
-            boundary = jnp.asarray(trainer.diagnostic_boundary_mask)[0, 0]
-            loss_arguments = {
-                **setup.loss_arguments,
-                "multi_target_weights": loss_weights.multi_target,
-            }
-            losses, components = execution.multi_target_loss(
-                jnp.stack(states)[:, :, : trainer.observed_channels],
-                jnp.stack(targets)[:, :, : trainer.data_channels],
-                boundary,
-                trainer.channel_schema,
-                setup.multi_target_params,
+            losses, components = multi_target_losses(
+                trainer,
+                setup,
+                states,
+                targets,
+                jnp.asarray(trainer.diagnostic_boundary_mask)[0, 0],
+                trainer.loss_time_channel_mask,
+                trainer.intervention_times,
                 key,
-                loss_arguments,
-                measurement_mask=jnp.stack(execution.loss_time_channel_mask())[
-                    ..., 0, 0
-                ],
-                assignment_groups=trainer.intervention_times,
+                loss_weights,
             )
-            diagnostics = {}
             for name, value in components.items():
                 if name.startswith("raw/"):
                     diagnostics[
                         f"loss_component_raw/{name.removeprefix('raw/')}"
                     ] = jnp.mean(value)
-                elif not name.startswith("group/"):
+                elif name.startswith("group/"):
+                    diagnostics[f"loss_detail/{name.removeprefix('group/')}"] = value
+                else:
                     diagnostics[f"loss_component/{name}"] = jnp.mean(value)
-            diagnostics.update(
-                {
-                    f"loss_detail/{name.removeprefix('group/')}": value
-                    for name, value in components.items()
-                    if name.startswith("group/")
-                }
-            )
         else:
             losses = jnp.asarray(
                 jtu.tree_map(
-                    lambda state, target, mask, cache, loss_key: _batch_loss(
+                    lambda state, target, mask, cache, loss_key: batch_loss(
                         trainer,
                         setup,
                         model,
@@ -157,8 +328,8 @@ def build_train_step(trainer, setup):
                     ),
                     states,
                     targets,
-                    execution.loss_time_channel_mask(),
-                    execution.loss_cache(),
+                    trainer.loss_time_channel_mask,
+                    setup.loss_cache,
                     list(jr.split(key, trainer.batch_count)),
                 )
             )
@@ -174,16 +345,12 @@ def build_train_step(trainer, setup):
             else jnp.array(0.0, dtype=LOSS_DTYPE)
         )
         mean_loss = jnp.mean(losses) + regulariser_total
-        mean_loss, regulariser_losses = execution.synchronise_loss(
-            mean_loss, regulariser_losses
-        )
         return mean_loss, (states, losses, regulariser_losses, diagnostics)
 
     def train_step(state: TrainState):
         differentiable, static = state.model.partition()
-        transformed_objective = execution.transform_loss(objective)
         (loss, auxiliary), gradients = eqx.filter_value_and_grad(
-            transformed_objective, has_aux=True
+            objective, has_aux=True
         )(
             differentiable,
             static,
@@ -229,4 +396,4 @@ def build_train_step(trainer, setup):
             metrics,
         )
 
-    return execution.transform_step(train_step)
+    return eqx.filter_jit(train_step)

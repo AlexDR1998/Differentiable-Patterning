@@ -4,7 +4,8 @@ from types import SimpleNamespace
 
 from Common.trainer.loss import build_loss_functions, l2_colony_grouped
 from Common.trainer.loss_vgg import grouped_vgg_triplet_weights
-from Experiments.config_helpers import build_loss_args, build_loss_filename
+from Experiments.config_helpers import build_loss_filename
+from NCA.trainer.objective import resolve_objective
 from Experiments.config_workflow import generate_manifest
 from NCA.trainer.objective import (
     combine_loss_components,
@@ -126,7 +127,7 @@ def test_loss_config_plumbing_and_filename_include_non_default_weights():
         )
     )
 
-    args = build_loss_args(cfg.loss)
+    args = resolve_objective(cfg.loss).arguments
     filename = build_loss_filename(cfg.loss)
 
     assert args["channel_importance"][3] == 4.0

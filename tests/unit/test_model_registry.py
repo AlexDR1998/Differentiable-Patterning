@@ -32,14 +32,13 @@ def _config():
     return experiment_config_from_mapping(value)
 
 
-def _sycl_config(family):
+def _retired_family_config(family):
     value = OmegaConf.to_container(
         OmegaConf.load("Experiments/emoji/conf/base_config.yaml"),
         resolve=True,
     )
     value["model"]["family"] = family
     value["model"]["channels"] = 4
-    value["trainer"]["backend"]["type"] = "sycl"
     return experiment_config_from_mapping(value)
 
 
@@ -263,7 +262,7 @@ def test_load_model_portably_reconstructs_retired_families(
     jr = pytest.importorskip("jax.random")
     from NCA.model.factory import build_model
 
-    cfg = _sycl_config(recorded_family)
+    cfg = _retired_family_config(recorded_family)
     source, _ = build_model(cfg.model, key=jr.PRNGKey(3))
     checkpoint = tmp_path / "source.eqx"
     source.save(checkpoint)

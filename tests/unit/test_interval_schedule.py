@@ -15,7 +15,7 @@ from NCA.trainer.interval_schedule import (
     build_interval_schedule,
     uniform_schedule,
 )
-from NCA.trainer.trainer import NcaTrainer
+from NCA.trainer.step import run_nca_steps
 
 
 SNOWMELT_DAYS = (0.0, 20.0, 25.0, 45.0, 65.0)
@@ -135,21 +135,20 @@ def _randomised_nca(key, channels=3):
 
 
 def _rollout(model, states, schedule, key):
-    trainer = SimpleNamespace(batch_count=len(states))
     vmapped = jax.vmap(model, in_axes=(0, None, 0))
 
     def vv_nca(x, callbacks, key_array):
         return jtu.tree_map(vmapped, x, callbacks, key_array)
 
-    execution = SimpleNamespace(boundary_callbacks=lambda: [no_boundary()] * len(states))
     contexts = []
 
     def record_regularisers(totals, before, after, context, reg_key):
         contexts.append(context)
         return totals
 
-    _, final, _ = NcaTrainer._run_nca_steps(
-        trainer, model, vv_nca, states, {}, schedule, key, "lax", record_regularisers, execution
+    _, final, _ = run_nca_steps(
+        model, vv_nca, states, {}, schedule, key, "lax", record_regularisers,
+        [no_boundary()] * len(states),
     )
     return final, contexts
 

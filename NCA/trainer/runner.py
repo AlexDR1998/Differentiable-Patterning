@@ -1,17 +1,22 @@
-"""Readable Python lifecycle around the compiled numerical step."""
+"""The Python training loop around the compiled step.
+
+Pool admission, logging, validation and checkpoint decisions happen here,
+outside differentiated code.
+"""
 
 import os
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import jax.random as jr
 import jax.tree_util as jtu
 from tqdm import tqdm
 
 from Common.trainer.training_result import TrainingResult
-from NCA.trainer.checkpointing import BestCheckpoint
 from NCA.trainer.instrumentation import (
     call_and_time,
     compile_and_time,
@@ -20,7 +25,26 @@ from NCA.trainer.instrumentation import (
     stop_trace,
 )
 from NCA.trainer.pool import PoolAdmissionController, TimePoolAdmissionController
-from NCA.trainer.state import TrainState
+from NCA.trainer.step import TrainState
+
+
+@dataclass
+class BestCheckpoint:
+    """Save the model whenever the loss improves, after a warmup."""
+
+    path: Path
+    warmup: int
+    best_loss: float | None = None
+    best_iteration: int | None = None
+
+    def should_save(self, iteration: int, loss: float) -> bool:
+        return iteration > self.warmup and (
+            self.best_loss is None or loss < self.best_loss
+        )
+
+    def record(self, iteration: int, loss: float) -> None:
+        self.best_iteration = iteration
+        self.best_loss = loss
 
 
 class RuntimeMetrics:
@@ -141,15 +165,28 @@ def _merge_advanced_states(advanced, previous, source_admitted):
     return jtu.tree_map(merge, advanced, previous)
 
 
+def _per_time_losses(losses):
+    """One loss per biological time slot, averaged over everything else."""
+    losses = jnp.asarray(losses)
+    if losses.ndim < 1:
+        raise ValueError("Per-time pool admission requires a loss vector")
+    if losses.ndim == 1:
+        return losses
+    return jnp.mean(losses, axis=tuple(range(losses.ndim - 1)))
+
+
 def _update_training_pool(
     state,
     states_before_step,
     targets_before_step,
     source_admitted,
     iteration,
-    execution,
+    advance_pool,
 ):
-    """Advance admitted transitions and discard every rejected rollout."""
+    """Advance admitted transitions and discard every rejected rollout.
+
+    ``advance_pool`` is the data augmenter's ``advance_pool(x, y, i, key)``.
+    """
     admission_mask = None
     if isinstance(source_admitted, bool):
         admitted = source_admitted
@@ -162,10 +199,8 @@ def _update_training_pool(
             targets=targets_before_step,
         )
 
-    next_key, augment_key = execution.split_key(state.key)
-    states, targets = execution.apply_advance_pool(
-        state.states, state.targets, iteration, augment_key
-    )
+    next_key, augment_key = jr.split(state.key)
+    states, targets = advance_pool(state.states, state.targets, iteration, augment_key)
     if admission_mask is not None and not all(admission_mask):
         states = _merge_advanced_states(
             states, states_before_step, admission_mask
@@ -215,7 +250,7 @@ def _report_divergence(output, state, iteration):
         print("  model parameters: all finite")
 
 
-def run_training(
+def run_loop(
     trainer,
     setup,
     train_step,
@@ -244,12 +279,13 @@ def run_training(
     checkpoint = BestCheckpoint(
         Path(trainer.model_path).with_suffix(".eqx"), setup.checkpoint_warmup
     )
-    admission_config = trainer.config.trainer.pool_admission
+    admission_config = trainer.trainer_config.pool_admission
     admission = (
-        TimePoolAdmissionController(admission_config, setup.warmup)
+        TimePoolAdmissionController(admission_config)
         if setup.is_multi_target
-        else PoolAdmissionController(admission_config, setup.warmup)
+        else PoolAdmissionController(admission_config)
     )
+    best_model = trainer.model
     trace_start = min(5, max(0, setup.iterations - 1))
     trace_stop = min(trace_start + 4, setup.iterations - 1)
     trace_active = False
@@ -270,7 +306,7 @@ def run_training(
         states_before_step = state.states
         targets_before_step = state.targets
         state = state._replace(
-            key=setup.execution.fold_in_key(state.key, iteration),
+            key=jr.fold_in(state.key, iteration),
             loss_weights=setup.loss_weight_schedule(iteration),
         )
         if setup.trace_enabled and iteration == trace_start:
@@ -288,7 +324,7 @@ def run_training(
         maybe_save_device_memory_profile(iteration)
         state = output.state
         loss_value = float(jax.device_get(output.loss))
-        metrics = setup.execution.prepare_log_dict(output.metrics)
+        metrics = output.metrics
         runtime.record_step(step_seconds)
         if setup.learning_rate_schedule is not None:
             metrics["learning_rate"] = float(
@@ -303,9 +339,7 @@ def run_training(
             break
 
         if setup.is_multi_target:
-            per_time_losses = jax.device_get(
-                setup.execution.prepare_admission_losses(output.metrics["losses"])
-            )
+            per_time_losses = jax.device_get(_per_time_losses(output.metrics["losses"]))
             # The final transition has no subsequent biological input slot.
             propagation_losses = tuple(
                 float(value) for value in per_time_losses[:-1]
@@ -321,7 +355,7 @@ def run_training(
             targets_before_step,
             source_admitted,
             iteration,
-            setup.execution,
+            trainer.data_augmenter.advance_pool,
         )
         if setup.is_multi_target:
             admission.update(decisions, propagation_losses)
@@ -331,9 +365,7 @@ def run_training(
             metrics.update(admission.metrics(decision))
         metrics["loss_schedule/stage"] = max(loss_stage, default=0)
         metrics["loss_schedule/stage_changed"] = int(loss_stage_changed)
-        validation_every = getattr(
-            trainer.config.trainer, "validation_every", None
-        )
+        validation_every = trainer.trainer_config.validation_every
         should_validate = (
             validation_evaluator is not None
             and validation_every is not None
@@ -346,9 +378,7 @@ def run_training(
             validation_metrics = validation_evaluator(
                 state.model, state.loss_weights
             )
-            metrics.update(
-                jax.device_get(setup.execution.prepare_log_dict(validation_metrics))
-            )
+            metrics.update(jax.device_get(validation_metrics))
         runtime.record_iteration(iteration, time.perf_counter() - iteration_start)
         metrics.update(runtime.as_log_dict())
 
@@ -364,8 +394,8 @@ def run_training(
             }
         )
         if checkpoint.should_save(iteration, loss_value):
-            trainer.model = state.model
-            trainer.model.save(checkpoint.path, overwrite=True)
+            best_model = state.model
+            best_model.save(checkpoint.path, overwrite=True)
             checkpoint.record(iteration, loss_value)
             saved = True
         if trainer.is_logging:
@@ -383,14 +413,14 @@ def run_training(
         print("Training completed successfully")
     if trainer.is_logging and saved and setup.write_images:
         trainer.logger.tb_training_end_log(
-            trainer.model,
+            best_model,
             trainer.data_augmenter,
             t=setup.interval_schedule,
             boundary_callback=trainer.boundary_callbacks,
             SAVE_TRAJECTORY=False,
             write_videos=setup.write_videos,
             boundary_masks=trainer.diagnostic_boundary_mask,
-            boundary_mode=trainer.config.trainer.boundary_mode,
+            boundary_mode=trainer.trainer_config.boundary_mode,
         )
     wandb_run_id = None
     if trainer.is_logging:

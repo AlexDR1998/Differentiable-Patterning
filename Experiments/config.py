@@ -5,9 +5,9 @@ immutable dataclasses defined here, whose section and field names match the
 YAML files (``system``, ``data``, ``model``, ``run``, ``trainer``,
 ``optimiser``, ``loss``, ...).
 
-Older configs (schema version 1: earlier sweep files, manifests and every model
-bundle saved before the change) are translated by ``upgrade_legacy_config`` as
-they are read. That function is the only place old spellings are handled.
+Older configs (earlier schema versions, found in old sweep files, manifests
+and model bundles) are translated by ``upgrade_legacy_config`` as they are
+read. That function is the only place old spellings are handled.
 """
 
 from __future__ import annotations
@@ -60,17 +60,11 @@ from NCA.model.config import (
     KANModelConfig,
     ModelConfig,
 )
-from NCA.trainer.config import (
-    ArchivedSyclTrainerBackendConfig,
-    NvidiaTrainerBackendConfig,
-    PoolAdmissionConfig,
-    TrainerBackendConfig,
-    TrainerConfig,
-)
+from NCA.trainer.config import PoolAdmissionConfig, TrainerConfig
 from NCA.trainer.interval_schedule import INTERVAL_MODES
 
 
-CONFIG_SCHEMA_VERSION = 2
+CONFIG_SCHEMA_VERSION = 3
 
 # data.dataset -> the data section that holds its settings
 DATA_SECTIONS = {
@@ -234,7 +228,27 @@ class ImpulseExperimentConfig(ConfigValue):
 # ---------------------------------------------------------------------------
 
 def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
-    """Translate a schema-version-1 config into the current layout.
+    """Translate a config with an older ``schema_version`` into the current layout.
+
+    * Version 1 used different names; see ``_upgrade_from_version_1``.
+    * Version 2 had a ``trainer.backend`` option, removed in version 3 because
+      only one trainer implementation remains.
+
+    Saved bundles are never edited; they are upgraded each time they are read.
+    Keys that are already in the current layout pass through unchanged.
+    """
+    root = copy.deepcopy(dict(value))
+    if int(root.get("schema_version", 1)) == 1:
+        root = _upgrade_from_version_1(root)
+    if isinstance(root.get("trainer"), Mapping):
+        root["trainer"] = dict(root["trainer"])
+        root["trainer"].pop("backend", None)
+    root["schema_version"] = CONFIG_SCHEMA_VERSION
+    return root
+
+
+def _upgrade_from_version_1(root: dict[str, Any]) -> dict[str, Any]:
+    """Translate the schema-version-1 names into the version-2 layout.
 
     Version 1 was written in two spellings, and both are still found in files:
 
@@ -244,12 +258,7 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
     * saved model bundles used ``runtime``,
       ``training.{loop, trainer, optimizer, loss, checkpoint}``,
       ``data.preprocessing`` and ``data.{augmentation, intervention}``.
-
-    Saved bundles are never edited; they are upgraded each time they are read.
-    Keys that are already in the current layout pass through unchanged.
     """
-    root = copy.deepcopy(dict(value))
-    root["schema_version"] = CONFIG_SCHEMA_VERSION
 
     def move(source, old, target, new):
         if old in source:
@@ -502,21 +511,6 @@ def _model_config(value: Any) -> ModelConfig:
     return _strict(ModelConfig, node, "model")
 
 
-def _trainer_backend(value: Any) -> TrainerBackendConfig:
-    node = _mapping(value, "trainer.backend")
-    backend_type = str(node.get("type", "none"))
-    classes = {
-        "none": TrainerBackendConfig,
-        "nvidia": NvidiaTrainerBackendConfig,
-        "sycl": ArchivedSyclTrainerBackendConfig,
-    }
-    if backend_type not in classes:
-        raise ValueError(
-            f"trainer.backend.type must be one of {sorted(classes)}, got {backend_type!r}"
-        )
-    return _strict(classes[backend_type], node, "trainer.backend")
-
-
 def _trainer_config(value: Any, checkpoint_warmup: int) -> TrainerConfig:
     node = _mapping(value, "trainer")
     pool = _mapping(node.get("pool_admission"), "trainer.pool_admission")
@@ -524,7 +518,6 @@ def _trainer_config(value: Any, checkpoint_warmup: int) -> TrainerConfig:
     if pool.get("warmup") is None:
         pool["warmup"] = checkpoint_warmup
     node["pool_admission"] = _strict(PoolAdmissionConfig, pool, "trainer.pool_admission")
-    node["backend"] = _trainer_backend(node.get("backend"))
     return _strict(TrainerConfig, node, "trainer")
 
 
@@ -555,7 +548,7 @@ def _logging_config(value: Any) -> LoggingConfig:
 def _current_layout(value: Mapping[str, Any]) -> dict[str, Any]:
     root = dict(value)
     schema_version = int(root.get("schema_version", 1))
-    if schema_version == 1:
+    if schema_version < CONFIG_SCHEMA_VERSION:
         root = upgrade_legacy_config(root)
     elif schema_version != CONFIG_SCHEMA_VERSION:
         raise ValueError(f"Unsupported experiment config schema version {schema_version}")

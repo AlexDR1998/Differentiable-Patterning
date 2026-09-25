@@ -41,9 +41,10 @@ as `run.checkpoint_warmup`.
 
 ## Older configs
 
-Current files have `schema_version: 2`. Configs with `schema_version: 1` are
+Current files have `schema_version: 3`. Configs with an older version are
 translated as they are read by `upgrade_legacy_config`, the only place old
-spellings are handled. Version 1 came in two layouts:
+spellings are handled. Version 2 only differs by an unused `trainer.backend`
+option, which is dropped. Version 1 came in two layouts:
 
 - sweep files and manifests: top-level `knockout`, `run.warmup`, flat
   `trainer.pool_admission_*` keys, `run.filename_mode` and

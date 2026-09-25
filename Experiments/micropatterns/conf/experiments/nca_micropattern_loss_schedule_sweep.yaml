@@ -7,7 +7,6 @@ grid:
   
   labels.gpu: [nvidia]
   model.family: [gNCA]
-  trainer.backend.type: [nvidia]
 
   # labels.gpu: [H200]
   # model.family: [gNCA]

@@ -138,48 +138,29 @@ def test_augmentation_schedule_is_owned_by_data_config():
     assert config.data.micropattern.intermediate_reinjection_probability_end == 0.8
 
 
-def test_trainer_backend_defaults_to_unconstrained_jax():
-    value = yaml.safe_load(
-        Path("Experiments/emoji/conf/base_config.yaml").read_text()
-    )
-
-    config = experiment_config_from_mapping(value)
-
-    assert config.trainer.backend.type == "none"
-
-
-def test_archived_sycl_settings_remain_deserializable_for_old_bundles():
+@pytest.mark.parametrize(
+    "backend", [{"type": "nvidia"}, {"type": "sycl", "fused_steps": 4}]
+)
+def test_older_configs_with_a_trainer_backend_still_load(backend):
     value = yaml.safe_load(
         Path("Experiments/micropatterns/conf/base_config.yaml").read_text()
     )
-    value["trainer"]["backend"] = {"type": "sycl", "fused_steps": 4}
-    value["model"]["family"] = "NCA_sycl"
+    value["schema_version"] = 2
+    value["trainer"]["backend"] = backend
 
     config = experiment_config_from_mapping(value)
 
-    assert config.trainer.backend.type == "sycl"
-    assert config.trainer.backend.fused_steps == 4
+    assert not hasattr(config.trainer, "backend")
 
 
-def test_default_backend_rejects_sycl_only_settings():
+def test_current_configs_reject_a_trainer_backend():
     value = yaml.safe_load(
         Path("Experiments/micropatterns/conf/base_config.yaml").read_text()
-    )
-    value["trainer"]["backend"] = {"type": "none", "fused_steps": 4}
-
-    with pytest.raises(ValueError, match="trainer.backend.*fused_steps"):
-        experiment_config_from_mapping(value)
-
-
-def test_nvidia_backend_uses_the_standard_jax_trainer_configuration():
-    value = yaml.safe_load(
-        Path("Experiments/emoji/conf/base_config.yaml").read_text()
     )
     value["trainer"]["backend"] = {"type": "nvidia"}
 
-    config = experiment_config_from_mapping(value)
-
-    assert config.trainer.backend.type == "nvidia"
+    with pytest.raises(ValueError, match="trainer.*backend"):
+        experiment_config_from_mapping(value)
 
 
 def test_impulse_workflow_has_a_separate_typed_root():

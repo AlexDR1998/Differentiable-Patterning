@@ -1,4 +1,8 @@
-"""Resolve immutable experiment configuration into one executable training setup."""
+"""Turn the trainer's configuration into everything the training loop needs.
+
+``prepare_training`` only reads the trainer; it returns a frozen
+:class:`PreparedTraining` that the step, loop and validation code share.
+"""
 
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -22,7 +26,6 @@ from NCA.trainer.optimizer import build_optimizer
 class PreparedTraining:
     interval_schedule: IntervalSchedule
     iterations: int
-    warmup: int
     checkpoint_warmup: int
     log_interval: int
     write_images: bool
@@ -30,7 +33,6 @@ class PreparedTraining:
     trace_enabled: bool
     learning_rate_schedule: Callable | None
     optimiser: Any
-    execution: Any
     loss_names: tuple[str, ...]
     loss_arguments: dict[str, Any]
     loss_functions: tuple[Callable, ...]
@@ -53,12 +55,22 @@ class PreparedTraining:
         """Scan length of the training rollout (``t`` for uniform schedules)."""
         return self.interval_schedule.scan_length
 
+    @property
+    def intervention_observation_times(self):
+        """Times used to map knockout hours to slots.
+
+        ``None`` keeps the historical 12-hour slots, which uniform schedules use.
+        """
+        if self.interval_schedule.mode == "uniform":
+            return None
+        return self.interval_schedule.times
+
 
 def _interval_schedule(loop, context, n_slots, timesteps=None):
     """Resolve per-slot timing; ``timesteps`` overrides ``loop.t`` (e.g. emoji fire-rate t)."""
     if loop.interval_mode in ("fire_rate", "dt"):
         raise NotImplementedError(
-            f"training.loop.interval_mode={loop.interval_mode!r} is not implemented yet; "
+            f"run.interval_mode={loop.interval_mode!r} is not implemented yet; "
             "use 'uniform' or 'steps'"
         )
     return build_interval_schedule(
@@ -69,15 +81,6 @@ def _interval_schedule(loop, context, n_slots, timesteps=None):
         reference_interval=loop.reference_interval,
         explicit_steps=loop.interval_steps,
     )
-
-
-def _singular_value_settings(config):
-    settings = config.logging.singular_values
-    return {
-        "enabled": bool(settings.enabled),
-        "plot_spectra": bool(settings.plot_spectra),
-        "epsilon": float(settings.epsilon),
-    }
 
 
 def _regularisers(coefficients):
@@ -121,10 +124,9 @@ def _prepare_loss_cache(trainer, names, arguments, targets, key, is_multi_target
 
 
 def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
-    config = trainer.config
-    loop = config.run
-    trainer_config = config.trainer
-    objective = resolve_objective(config.loss, loss_overrides)
+    loop = trainer.run_config
+    loss_config = trainer.loss_config
+    objective = resolve_objective(loss_config, loss_overrides)
     names = tuple(objective.names)
     arguments = dict(objective.arguments)
     is_multi_target = names == ("multi_target",)
@@ -134,7 +136,7 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         raise ValueError("multi_target requires trainer.grad_loss=False")
 
     optimiser, _, schedule = build_optimizer(
-        config.optimiser, loop.iterations, return_schedule=True
+        trainer.optimiser_config, loop.iterations, return_schedule=True
     )
     loss_channels = arguments.get("channels")
     if loss_channels is None:
@@ -149,13 +151,9 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
     interval_schedule = _interval_schedule(
         loop, trainer.context, jtu.tree_leaves(states)[0].shape[0], timesteps
     )
-    # Rollout helpers (interventions, logging) read the schedule from the trainer.
-    trainer.interval_schedule = interval_schedule
     if interval_schedule.mode != "uniform":
         print(f"Interval schedule ({interval_schedule.mode}): steps per transition = {interval_schedule.steps}")
-    loss_weight_schedule = build_loss_weight_schedule(
-        config.loss, loop.iterations
-    )
+    loss_weight_schedule = build_loss_weight_schedule(loss_config, loop.iterations)
     initial_loss_weights = loss_weight_schedule(0)
     multi_target_params = None
     texture_enabled = bool(
@@ -173,58 +171,26 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
     arguments, loss_cache = _prepare_loss_cache(
         trainer, names, arguments, targets, key, is_multi_target
     )
-    trainer.loss_cache = loss_cache
     loss_functions = () if is_multi_target else tuple(
         build_loss_functions(names, arguments)
     )
     regulariser_functions, coefficients = _regularisers(
         objective.regulariser_coefficients
     )
-    execution = trainer._training_execution()
-    model, states, targets, optimizer_state, key = execution.prepare_inputs(
-        trainer.model,
-        states,
-        targets,
-        optimiser.init(trainer.model.partition()[0]),
-        key,
-    )
-
-    trainer.setup_logging(
-        config.logging.backend,
-        wandb_args={
-            "project": config.logging.wandb.project,
-            "group": config.logging.wandb.group,
-            "tags": list(trainer.context.wandb_tags),
-            "name": trainer.context.run_name,
-        },
-        knockout={
-            "time": config.data.knockout.time,
-            "channel": config.data.knockout.channel,
-        },
-        singular_value_settings=_singular_value_settings(config),
-    )
-    trainer.model = model
     return PreparedTraining(
         interval_schedule=interval_schedule,
         iterations=loop.iterations,
-        warmup=config.run.checkpoint_warmup,
+        # Only compare losses once the loss weights have stopped changing.
         checkpoint_warmup=max(
-            config.run.checkpoint_warmup,
-            max(
-                0,
-                final_transition_iteration(
-                    config.loss, loop.iterations
-                )
-                - 1,
-            ),
+            loop.checkpoint_warmup,
+            final_transition_iteration(loss_config, loop.iterations) - 1,
         ),
-        log_interval=trainer_config.log_every,
+        log_interval=trainer.trainer_config.log_every,
         write_images=loop.write_images,
         write_videos=loop.write_videos,
-        trace_enabled=trainer_config.jax_trace,
+        trace_enabled=trainer.trainer_config.jax_trace,
         learning_rate_schedule=schedule,
         optimiser=optimiser,
-        execution=execution,
         loss_names=names,
         loss_arguments=arguments,
         loss_functions=loss_functions,
@@ -241,6 +207,6 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         regulariser_coefficients=coefficients,
         initial_states=states,
         targets=targets,
-        optimizer_state=optimizer_state,
+        optimizer_state=optimiser.init(trainer.model.partition()[0]),
         key=key,
     )

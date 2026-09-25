@@ -9,8 +9,6 @@ grid:
   
   
   labels.gpu: [nvidia]
-
-  trainer.backend.type: [nvidia]
   trainer.loop_autodiff: [lax]
 
   logging.wandb.project: [nca_micropattern_KO_finetune]

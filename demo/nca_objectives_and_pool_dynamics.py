@@ -412,7 +412,7 @@ def _(
             ema_decay=0.5,
             warmup=0,
         )
-        _controller_pool_lab = PoolAdmissionController(_admission_config_pool_lab, default_warmup=0)
+        _controller_pool_lab = PoolAdmissionController(_admission_config_pool_lab)
         _decisions_pool_lab = []
         for _iteration_pool_lab, _loss_pool_lab in enumerate(_losses_admission_pool_lab):
             _decision_pool_lab = _controller_pool_lab.decide(_loss_pool_lab, _iteration_pool_lab)

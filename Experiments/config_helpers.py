@@ -165,30 +165,6 @@ def build_loss_filename(loss_config, include_loss_args=False):
     return loss_str
 
 
-def build_loss_args(loss_config, overrides=None):
-    terms = loss_terms(loss_config)
-    loss_args = {
-        "component_weights": loss_weights(loss_config),
-    }
-    ignored = {"type", "weight", "layer"}
-    for term in terms:
-        for key, value in ((item.name, getattr(term, item.name)) for item in fields(term)):
-            if key in ignored or value is None:
-                continue
-            runtime_key = "internal_loss_func" if key == "metric" else key
-            if key == "metric" and "vgg" in term.type:
-                runtime_key = "metric"
-            previous = loss_args.get(runtime_key, value)
-            if previous != value:
-                raise ValueError(f"Loss terms require conflicting shared runtime value for {runtime_key!r}")
-            loss_args[runtime_key] = value
-    loss_args.setdefault("channels", None)
-    loss_args.setdefault("experiment_groups", None)
-    if overrides is not None:
-        loss_args.update(overrides)
-    return loss_args
-
-
 def set_matmul_precision(runtime_config):
     precision = runtime_config.precision
     if precision is None:

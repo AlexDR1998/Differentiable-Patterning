@@ -10,7 +10,6 @@ grid:
   labels.gpu: [nvidia]
   model.family: [gNCA]
   model.channels: [48]
-  trainer.backend.type: [nvidia]
   trainer.loop_autodiff: [lax]
   logging.wandb.project: [nca_micropattern_KO_finetune]
 

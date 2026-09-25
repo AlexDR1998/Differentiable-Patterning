@@ -6,7 +6,6 @@ seed_mode: index
 grid:
   labels.gpu: [nvidia]
   model.family: [gNCA]
-  trainer.backend.type: [nvidia]
   labels.scaling: [convective]
   system.precision: [highest]
 

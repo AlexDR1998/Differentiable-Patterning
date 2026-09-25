@@ -155,6 +155,6 @@ def resolve_output_directory(output_cfg, env=None):
 
 def loss_args_from_config(loss_config):
     """Return plain loss arguments accepted by ``build_loss_functions``."""
-    from Experiments.config_helpers import build_loss_args
+    from NCA.trainer.objective import resolve_objective
 
-    return build_loss_args(loss_config)
+    return resolve_objective(loss_config).arguments

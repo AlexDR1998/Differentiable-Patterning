@@ -26,7 +26,7 @@ configs:
     logging.wandb.group: smoke_snowmelt
     seed: 0
   config:
-    schema_version: 2
+    schema_version: 3
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -64,8 +64,6 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
-      backend:
-        type: none
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -156,7 +154,7 @@ configs:
     logging.wandb.group: smoke_snowmelt
     seed: 0
   config:
-    schema_version: 2
+    schema_version: 3
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -196,8 +194,6 @@ configs:
       boundary_mode: soft
       grad_loss: false
       sharding: null
-      backend:
-        type: none
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
