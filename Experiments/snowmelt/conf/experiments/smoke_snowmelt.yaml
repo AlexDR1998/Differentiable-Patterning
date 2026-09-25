@@ -17,7 +17,7 @@ grid:
   run.t: [16]
   run.iterations: [60]
   # Checkpoint warmup: must be below run.iterations so a bundle is published.
-  run.warmup: [5]
+  run.checkpoint_warmup: [5]
   optimiser.warmup_steps: [10]
   trainer.log_every: [20]
 

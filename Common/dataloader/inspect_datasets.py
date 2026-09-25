@@ -7,10 +7,10 @@ Run with:
 import marimo
 
 __generated_with = "0.23.10"
-app = marimo.App(width="full")
+app = marimo.App(width="columns")
 
 
-@app.cell
+@app.cell(column=0)
 def _():
     from pathlib import Path as _Path
     import sys as _sys
@@ -264,59 +264,176 @@ def _(loaded, mo, np):
 
 
 @app.cell(hide_code=True)
-def _(batch_index, loaded, mo, np, plt):
-    _mask = getattr(loaded, "measurement_mask", None)
-    _aux = getattr(loaded, "aux", {})
-    _groups = tuple(_aux.get("selected_experiment_groups", ()))
-    _group_mask = _aux.get("group_mask")
-    _source_conditions = _aux.get("source_conditions")
-    _substituted = _aux.get("is_substituted")
-    _source_files = _aux.get("source_files")
-    _times = tuple(_aux.get("timesteps", ()))
+def _(mo):
+    fate_threshold_mode = mo.ui.dropdown(
+        options={
+            "Relative to reference percentile": "relative",
+            "Absolute value (0–1)": "absolute",
+        },
+        value="Relative to reference percentile",
+        label="Threshold mode",
+        full_width=True,
+    )
+    return (fate_threshold_mode,)
 
-    if _mask is None or not _groups:
-        _provenance_view = mo.md(
-            "## Measurement availability and provenance\n\n"
-            "This dataset does not expose modern micropattern provenance metadata."
+
+@app.cell(hide_code=True)
+def _(data, fate_threshold_mode, loaded, mo):
+    _default_fate_rules = {
+        "Notochord": {
+            "SOX17": "low",
+            "SOX2": "low",
+            "TBXT": "high",
+            "FOXA2": "high",
+        },
+        "Endoderm": {
+            "SOX17": "high",
+            "SOX2": "any",
+            "TBXT": "any",
+            "FOXA2": "any",
+        },
+        "Mesoderm": {
+            "SOX17": "low",
+            "SOX2": "high",
+            "TBXT": "high",
+            "FOXA2": "low",
+        },
+    }
+    fate_threshold_fractions = mo.ui.dictionary({
+        _marker: mo.ui.slider(
+            0.0 if fate_threshold_mode.value == "absolute" else 0.05,
+            1.0 if fate_threshold_mode.value == "absolute" else 0.95,
+            value=0.3,
+            step=0.01 if fate_threshold_mode.value == "absolute" else 0.05,
+            label=(
+                f"{_marker} absolute threshold"
+                if fate_threshold_mode.value == "absolute"
+                else f"{_marker} threshold fraction"
+            ),
+            full_width=True,
         )
-    else:
-        _mask_array = np.asarray(_mask)[batch_index.value]
-        _group_mask_array = np.asarray(_group_mask)[batch_index.value]
-        _rows = []
-        for _time_index, _time in enumerate(_times):
-            for _group_index, _group in enumerate(_groups):
-                _available = bool(_group_mask_array[_time_index, _group_index])
-                _rows.append(
-                    {
-                        "time (h)": _time,
-                        "experiment group": _group,
-                        "available": _available,
-                        "source condition": str(_source_conditions[batch_index.value, _time_index, _group_index]) if _available else "—",
-                        "control substituted": bool(_substituted[batch_index.value, _time_index, _group_index]) if _available else False,
-                        "source file": str(_source_files[batch_index.value, _time_index, _group_index]) if _available else "—",
-                    }
-                )
-        _availability_figure, _availability_axis = plt.subplots(
-            figsize=(max(7, _mask_array.shape[1] * 0.55), 3.5)
+        for _marker in ("SOX17", "SOX2", "TBXT", "FOXA2")
+    })
+    fate_reference_percentiles = mo.ui.dictionary({
+        _marker: mo.ui.slider(
+            90.0,
+            100.0,
+            value=99.0,
+            step=0.5,
+            label=f"{_marker} reference percentile",
+            full_width=True,
         )
-        _availability_axis.imshow(_mask_array, aspect="auto", cmap="Greens", vmin=0, vmax=1)
-        _availability_axis.set_yticks(range(len(_times)), [f"{time}h" for time in _times])
-        _availability_axis.set_xlabel("measurement channel")
-        _availability_axis.set_ylabel("time")
-        _availability_axis.set_title("Available measurements for selected condition/replicate")
-        _availability_figure.tight_layout()
-        _provenance_view = mo.vstack(
-            [
-                mo.md("## Measurement availability and knockout provenance"),
-                _availability_figure,
-                mo.ui.table(_rows, selection=None, pagination=True, page_size=12),
-            ]
+        for _marker in ("SOX17", "SOX2", "TBXT", "FOXA2")
+    })
+    _fate_aux = getattr(loaded, "aux", {})
+    _fate_conditions = tuple(_fate_aux.get("batch_conditions", ()))
+    _fate_replicates = tuple(_fate_aux.get("batch_replicates", ()))
+    _fate_batch_options = {
+        (
+            f"{_index}: {_fate_conditions[_index]}, "
+            f"replicate {_fate_replicates[_index]}"
+            if _index < len(_fate_conditions) and _index < len(_fate_replicates)
+            else f"Batch {_index}"
+        ): _index
+        for _index in range(data.shape[0])
+    }
+    fate_batch_indices = mo.ui.multiselect(
+        options=_fate_batch_options,
+        value=[next(iter(_fate_batch_options))],
+        label="Replicates to display",
+        full_width=True,
+    )
+    _fate_timesteps = tuple(_fate_aux.get("timesteps", ()))
+    _fate_time_options = {
+        (
+            f"{_fate_timesteps[_index]}h"
+            if _index < len(_fate_timesteps)
+            else f"Time index {_index}"
+        ): _index
+        for _index in range(data.shape[1])
+    }
+    fate_time_indices = mo.ui.multiselect(
+        options=_fate_time_options,
+        value=[next(reversed(_fate_time_options))],
+        label="Timepoints to display",
+        full_width=True,
+    )
+    fate_cell_type_rules = mo.ui.dictionary({
+        _cell_type: mo.ui.dictionary({
+            _marker: mo.ui.dropdown(
+                options={"High": "high", "Low": "low", "Indifferent": "any"},
+                value={"high": "High", "low": "Low", "any": "Indifferent"}[
+                    _default_fate_rules[_cell_type][_marker]
+                ],
+                label=_marker,
+                full_width=True,
+            )
+            for _marker in ("SOX17", "SOX2", "TBXT", "FOXA2")
+        })
+        for _cell_type in ("Notochord", "Endoderm", "Mesoderm")
+    })
+    _threshold_explanation = (
+        "Each marker is classified directly against its selected absolute "
+        "0–1 intensity threshold."
+        if fate_threshold_mode.value == "absolute"
+        else "Each expression cutoff is the selected fraction of that marker's "
+        "reference percentile across available final-timestep replicates, so "
+        "the same absolute cutoffs are used at every displayed timepoint."
+    )
+    _threshold_controls = (
+        fate_threshold_fractions
+        if fate_threshold_mode.value == "absolute"
+        else mo.hstack(
+            [fate_threshold_fractions, fate_reference_percentiles],
+            widths="equal",
         )
-    _provenance_view
-    return
+    )
+    mo.vstack(
+        [
+            mo.md(
+                "## Cell-fate threshold explorer\n\n"
+                + _threshold_explanation
+            ),
+            fate_threshold_mode,
+            mo.hstack([fate_batch_indices, fate_time_indices], widths="equal"),
+            _threshold_controls,
+            mo.md("### Cell-type lineage definitions"),
+            fate_cell_type_rules,
+        ]
+    )
+    return (
+        fate_batch_indices,
+        fate_cell_type_rules,
+        fate_reference_percentiles,
+        fate_threshold_fractions,
+        fate_time_indices,
+    )
 
 
 @app.cell
+def _(data, mo, names, np, plt):
+    _channel_values = data.transpose(2, 0, 1, 3, 4).reshape(data.shape[2], -1)
+    _stats = [
+        {
+            "channel": name,
+            "mean": float(np.nanmean(values)),
+            "std": float(np.nanstd(values)),
+            "p01": float(np.nanpercentile(values, 1)),
+            "p50": float(np.nanpercentile(values, 50)),
+            "p99": float(np.nanpercentile(values, 99)),
+        }
+        for name, values in zip(names, _channel_values)
+    ]
+    _figure, _axis = plt.subplots(figsize=(max(7, len(names) * 0.6), 3.5))
+    _axis.boxplot([values[np.isfinite(values)] for values in _channel_values], showfliers=False)
+    _axis.set_xticks(range(1, len(names) + 1), names, rotation=60, ha="right")
+    _axis.set_ylabel("value")
+    _figure.tight_layout()
+    mo.vstack([mo.md("## Channel statistics"), mo.ui.table(_stats), _figure])
+    return
+
+
+@app.cell(column=1, hide_code=True)
 def _(
     batch_index,
     channel_indices,
@@ -381,121 +498,62 @@ def _(
     return
 
 
+@app.cell
+def _():
+    return
+
+
 @app.cell(hide_code=True)
-def _(data, loaded, mo):
-    _default_fate_rules = {
-        "Notochord": {
-            "SOX17": "low",
-            "SOX2": "low",
-            "TBXT": "high",
-            "FOXA2": "high",
-        },
-        "Endoderm": {
-            "SOX17": "high",
-            "SOX2": "any",
-            "TBXT": "any",
-            "FOXA2": "any",
-        },
-        "Mesoderm": {
-            "SOX17": "low",
-            "SOX2": "high",
-            "TBXT": "high",
-            "FOXA2": "low",
-        },
-    }
-    fate_threshold_fractions = mo.ui.dictionary({
-        _marker: mo.ui.slider(
-            0.05,
-            0.95,
-            value=0.3,
-            step=0.05,
-            label=f"{_marker} threshold fraction",
-            full_width=True,
+def _(batch_index, loaded, mo, np, plt):
+    _mask = getattr(loaded, "measurement_mask", None)
+    _aux = getattr(loaded, "aux", {})
+    _groups = tuple(_aux.get("selected_experiment_groups", ()))
+    _group_mask = _aux.get("group_mask")
+    _source_conditions = _aux.get("source_conditions")
+    _substituted = _aux.get("is_substituted")
+    _source_files = _aux.get("source_files")
+    _times = tuple(_aux.get("timesteps", ()))
+
+    if _mask is None or not _groups:
+        _provenance_view = mo.md(
+            "## Measurement availability and provenance\n\n"
+            "This dataset does not expose modern micropattern provenance metadata."
         )
-        for _marker in ("SOX17", "SOX2", "TBXT", "FOXA2")
-    })
-    fate_reference_percentiles = mo.ui.dictionary({
-        _marker: mo.ui.slider(
-            90.0,
-            100.0,
-            value=99.0,
-            step=0.5,
-            label=f"{_marker} reference percentile",
-            full_width=True,
+    else:
+        _mask_array = np.asarray(_mask)[batch_index.value]
+        _group_mask_array = np.asarray(_group_mask)[batch_index.value]
+        _rows = []
+        for _time_index, _time in enumerate(_times):
+            for _group_index, _group in enumerate(_groups):
+                _available = bool(_group_mask_array[_time_index, _group_index])
+                _rows.append(
+                    {
+                        "time (h)": _time,
+                        "experiment group": _group,
+                        "available": _available,
+                        "source condition": str(_source_conditions[batch_index.value, _time_index, _group_index]) if _available else "—",
+                        "control substituted": bool(_substituted[batch_index.value, _time_index, _group_index]) if _available else False,
+                        "source file": str(_source_files[batch_index.value, _time_index, _group_index]) if _available else "—",
+                    }
+                )
+        _availability_figure, _availability_axis = plt.subplots(
+            figsize=(max(7, _mask_array.shape[1] * 0.55), 3.5)
         )
-        for _marker in ("SOX17", "SOX2", "TBXT", "FOXA2")
-    })
-    _fate_aux = getattr(loaded, "aux", {})
-    _fate_conditions = tuple(_fate_aux.get("batch_conditions", ()))
-    _fate_replicates = tuple(_fate_aux.get("batch_replicates", ()))
-    _fate_batch_options = {
-        (
-            f"{_index}: {_fate_conditions[_index]}, "
-            f"replicate {_fate_replicates[_index]}"
-            if _index < len(_fate_conditions) and _index < len(_fate_replicates)
-            else f"Batch {_index}"
-        ): _index
-        for _index in range(data.shape[0])
-    }
-    fate_batch_indices = mo.ui.multiselect(
-        options=_fate_batch_options,
-        value=[next(iter(_fate_batch_options))],
-        label="Replicates to display",
-        full_width=True,
-    )
-    _fate_timesteps = tuple(_fate_aux.get("timesteps", ()))
-    _fate_time_options = {
-        (
-            f"{_fate_timesteps[_index]}h"
-            if _index < len(_fate_timesteps)
-            else f"Time index {_index}"
-        ): _index
-        for _index in range(data.shape[1])
-    }
-    fate_time_indices = mo.ui.multiselect(
-        options=_fate_time_options,
-        value=[next(reversed(_fate_time_options))],
-        label="Timepoints to display",
-        full_width=True,
-    )
-    fate_cell_type_rules = mo.ui.dictionary({
-        _cell_type: mo.ui.dictionary({
-            _marker: mo.ui.dropdown(
-                options={"High": "high", "Low": "low", "Indifferent": "any"},
-                value={"high": "High", "low": "Low", "any": "Indifferent"}[
-                    _default_fate_rules[_cell_type][_marker]
-                ],
-                label=_marker,
-                full_width=True,
-            )
-            for _marker in ("SOX17", "SOX2", "TBXT", "FOXA2")
-        })
-        for _cell_type in ("Notochord", "Endoderm", "Mesoderm")
-    })
-    mo.vstack(
-        [
-            mo.md(
-                "## Cell-fate threshold explorer\n\n"
-                "Each expression cutoff is the selected fraction of that marker's "
-                "reference percentile across available final-timestep replicates, "
-                "so the same absolute cutoffs are used at every displayed timepoint."
-            ),
-            mo.hstack([fate_batch_indices, fate_time_indices], widths="equal"),
-            mo.hstack(
-                [fate_threshold_fractions, fate_reference_percentiles],
-                widths="equal",
-            ),
-            mo.md("### Cell-type lineage definitions"),
-            fate_cell_type_rules,
-        ]
-    )
-    return (
-        fate_batch_indices,
-        fate_cell_type_rules,
-        fate_reference_percentiles,
-        fate_threshold_fractions,
-        fate_time_indices,
-    )
+        _availability_axis.imshow(_mask_array, aspect="auto", cmap="Greens", vmin=0, vmax=1)
+        _availability_axis.set_yticks(range(len(_times)), [f"{time}h" for time in _times])
+        _availability_axis.set_xlabel("measurement channel")
+        _availability_axis.set_ylabel("time")
+        _availability_axis.set_title("Available measurements for selected condition/replicate")
+        _availability_figure.tight_layout()
+        _provenance_view = mo.vstack(
+            [
+                mo.md("## Measurement availability and knockout provenance"),
+                _availability_figure,
+                mo.ui.table(_rows, selection=None, pagination=True, page_size=12),
+            ]
+        )
+    _provenance_view
+    return
 
 
 @app.cell(hide_code=True)
@@ -505,6 +563,7 @@ def _(
     fate_cell_type_rules,
     fate_reference_percentiles,
     fate_threshold_fractions,
+    fate_threshold_mode,
     fate_time_indices,
     loaded,
     mo,
@@ -544,6 +603,11 @@ def _(
         _measurement_mask = getattr(loaded, "measurement_mask", None)
         _absolute_thresholds = {}
         for _marker in _fate_markers:
+            if fate_threshold_mode.value == "absolute":
+                _absolute_thresholds[_marker] = float(
+                    fate_threshold_fractions.value[_marker]
+                )
+                continue
             _channel_index = names.index(_fate_channels[_marker])
             _reference_values = []
             for _batch in range(data.shape[0]):
@@ -663,18 +727,11 @@ def _(
 
                 for _column, _marker in enumerate(_fate_markers):
                     _axis = _fate_axes[_row, _column]
-                    _shown_image = np.where(
-                        _selected_boundary, _selected_images[_marker], np.nan
-                    )
-                    _axis.imshow(_shown_image, cmap="gray")
                     _threshold_mask = _high[_marker] & _selected_boundary
-                    if np.any(_threshold_mask) and not np.all(_threshold_mask):
-                        _axis.contour(
-                            _threshold_mask,
-                            levels=[0.5],
-                            colors="cyan",
-                            linewidths=0.6,
-                        )
+                    _shown_image = np.where(
+                        _threshold_mask, _selected_images[_marker], 0.0
+                    )
+                    _axis.imshow(_shown_image, cmap="gray", vmin=0.0, vmax=1.0)
                     if _row == 0:
                         _axis.set_title(
                             f"{_marker}\ncutoff={_absolute_thresholds[_marker]:.3g}"
@@ -730,10 +787,13 @@ def _(
                             if _colony_pixels else np.nan
                         ),
                     })
+            _threshold_basis = (
+                "absolute 0–1 cutoffs"
+                if fate_threshold_mode.value == "absolute"
+                else f"cutoffs referenced to time index {_reference_time}"
+            )
             _fate_figure.suptitle(
-                f"Selected timepoints; cutoffs referenced to time index "
-                f"{_reference_time}",
-                y=1.0,
+                f"Selected timepoints; {_threshold_basis}", y=1.0
             )
             _fate_figure.tight_layout()
             _lineage_types = tuple(_fate_rules)
@@ -779,35 +839,14 @@ def _(
                     _fate_figure,
                     mo.ui.table(_prevalence_rows, selection=None),
                     mo.md(
-                        f"Current rules — {_rule_summary}. Cyan contours mark "
-                        "pixels above each displayed cutoff."
+                        f"Current rules — {_rule_summary}. Marker panels show "
+                        "only above-threshold intensity; all other pixels are zero."
                     ),
                 ]
             )
     _fate_view
-    return
+    # plt.show()
 
-
-@app.cell
-def _(data, mo, names, np, plt):
-    _channel_values = data.transpose(2, 0, 1, 3, 4).reshape(data.shape[2], -1)
-    _stats = [
-        {
-            "channel": name,
-            "mean": float(np.nanmean(values)),
-            "std": float(np.nanstd(values)),
-            "p01": float(np.nanpercentile(values, 1)),
-            "p50": float(np.nanpercentile(values, 50)),
-            "p99": float(np.nanpercentile(values, 99)),
-        }
-        for name, values in zip(names, _channel_values)
-    ]
-    _figure, _axis = plt.subplots(figsize=(max(7, len(names) * 0.6), 3.5))
-    _axis.boxplot([values[np.isfinite(values)] for values in _channel_values], showfliers=False)
-    _axis.set_xticks(range(1, len(names) + 1), names, rotation=60, ha="right")
-    _axis.set_ylabel("value")
-    _figure.tight_layout()
-    mo.vstack([mo.md("## Channel statistics"), mo.ui.table(_stats), _figure])
     return
 
 

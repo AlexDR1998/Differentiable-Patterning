@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 seed: 0
 
 experiment:
@@ -32,7 +32,8 @@ data:
     data_channels: 4
     crop_square: false
     pad: [10, 10, 10, 10]
-    regenerate: false
+    regeneration:
+      enabled: false
 
 model:
   family: NCA

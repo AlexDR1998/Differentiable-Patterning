@@ -8,7 +8,7 @@ import jax.tree_util as jtu
 import pytest
 
 from Common.model.boundary import no_boundary
-from Experiments.config import TrainingLoopConfig
+from Experiments.config import RunConfig
 from NCA.model.NCA_model import NCA
 from NCA.trainer.interval_schedule import (
     IntervalSchedule,
@@ -112,14 +112,14 @@ def test_for_slot_is_single_uniform_rollout():
 
 
 def test_loop_config_validates_interval_fields():
-    assert TrainingLoopConfig().interval_mode == "uniform"
-    TrainingLoopConfig(interval_mode="steps", interval_steps=(3, 1))
+    assert RunConfig().interval_mode == "uniform"
+    RunConfig(interval_mode="steps", interval_steps=(3, 1))
     with pytest.raises(ValueError):
-        TrainingLoopConfig(interval_mode="sometimes")
+        RunConfig(interval_mode="sometimes")
     with pytest.raises(ValueError):
-        TrainingLoopConfig(interval_steps=(3, 1))
+        RunConfig(interval_steps=(3, 1))
     with pytest.raises(ValueError):
-        TrainingLoopConfig(interval_mode="steps", reference_interval=0.0)
+        RunConfig(interval_mode="steps", reference_interval=0.0)
 
 
 # --- masked rollout ------------------------------------------------------------
@@ -246,7 +246,7 @@ def test_schedule_from_old_config_is_uniform():
     from NCA.trainer.interval_schedule import interval_schedule_from_config
 
     old_loop = SimpleNamespace(t=32)  # saved before interval fields existed
-    config = SimpleNamespace(training=SimpleNamespace(loop=old_loop))
+    config = SimpleNamespace(run=old_loop)
 
     assert interval_schedule_from_config(config, 4) == uniform_schedule(32, 4)
 

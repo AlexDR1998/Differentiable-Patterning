@@ -1,6 +1,6 @@
 """Resolve typed loss configuration into the existing JAX loss primitives."""
 
-from dataclasses import dataclass
+from dataclasses import fields, dataclass
 from typing import Any
 
 import jax.numpy as jnp
@@ -47,7 +47,7 @@ def resolve_objective(loss_config, overrides=None) -> ResolvedObjective:
     }
     ignored = {"type", "weight", "schedule", "multi_target_schedules"}
     for term in terms:
-        for name, value in term.items():
+        for name, value in ((item.name, getattr(term, item.name)) for item in fields(term)):
             if name in ignored or value is None:
                 continue
             runtime_name = "internal_loss_func" if name == "metric" else name

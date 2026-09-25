@@ -25,20 +25,20 @@ grid:
   data.batches: [2]
   data.micropattern.train_replicates: [[1, 2]]
   data.micropattern.validation_replicates: [[3, 4]]
-  knockout.channel: [Nodal]
+  data.knockout.channel: [Nodal]
   model.family: [gNCA]
   model.channels: [48]
   model.kernel_str: [[ID, LAP, DIFF]]
   model.fire_rate: [0.5]
   model.padding: [CIRCULAR]
 
-  knockout.curriculum:
+  data.knockout.curriculum:
     - [ko_24h]
     - [baseline, ko_0h, ko_24h]
 
   run.t: [32]
   run.iterations: [40]
-  run.warmup: [5]
+  run.checkpoint_warmup: [5]
   optimiser.learn_rate: [1e-4]
   optimiser.warmup_steps: [10]
   trainer.loop_autodiff: [lax]

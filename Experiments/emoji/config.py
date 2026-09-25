@@ -39,6 +39,5 @@ class EmojiDataConfig(ConfigValue):
     shift_amount: int = 2
     noise_strength: float = 0.005
     noise_mode: str = "full"
-    regenerate: bool = True
     terminal_carry: ProbabilityScheduleConfig = field(default_factory=ProbabilityScheduleConfig)
     regeneration: ProbabilityScheduleConfig = field(default_factory=ProbabilityScheduleConfig)

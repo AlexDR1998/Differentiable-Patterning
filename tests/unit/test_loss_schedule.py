@@ -193,14 +193,14 @@ def test_typed_micropattern_config_parses_nested_loss_schedules():
     value["loss"]["schedule_label"] = "cos_macro"
 
     config = experiment_config_from_mapping(value)
-    term = config.training.loss.terms[0]
+    term = config.loss.terms[0]
 
     assert term.schedule.type == "linear"
     assert term.multi_target_schedules["texture"].type == "cosine"
-    assert config.training.loss.schedule_label == "cos_macro"
+    assert config.loss.schedule_label == "cos_macro"
     assert final_transition_iteration(
-        config.training.loss, config.training.loop.iterations
-    ) == round(0.75 * (config.training.loop.iterations - 1))
+        config.loss, config.run.iterations
+    ) == round(0.75 * (config.run.iterations - 1))
     assert experiment_config_from_mapping(config_to_dict(config)) == config
 
 

@@ -21,7 +21,7 @@ from NCA.trainer.impulse import NCAImpulseOptimiser
 def run(cfg):
     """Load a trained NCA, optimise an intervention, and save float outputs."""
 
-    set_matmul_precision(cfg.runtime)
+    set_matmul_precision(cfg.system)
     key = jax.random.PRNGKey(cfg.seed)
     model_key, intervention_key, train_key = jax.random.split(key, 3)
     model, _, checkpoint_path = load_model_checkpoint(

@@ -6,8 +6,6 @@ import numpy as np
 
 from Common.dataloader.emoji import load_emoji_sequence
 from Experiments.config_helpers import (
-    _as_list,
-    _cfg_get,
     _sequence_alias,
     build_loss_filename as _shared_build_loss_filename,
 )
@@ -30,87 +28,68 @@ def build_loss_filename(cfg):
 
 
 def build_data_config_string(data_config):
-    from types import SimpleNamespace
-
-    cfg = SimpleNamespace(data=data_config)
-    terminal_cfg = _cfg_get(cfg.data.emoji, "terminal_carry", None)
-    regeneration_cfg = _cfg_get(cfg.data.emoji, "regeneration", None)
+    emoji = data_config.emoji
+    terminal = emoji.terminal_carry
+    regeneration = emoji.regeneration
     terminal_str = ""
-    if _cfg_get(terminal_cfg, "enabled", False):
-        terminal_str = (
-            f"_tc{_cfg_get(terminal_cfg, 'initial_probability', 0.0)}"
-            f"-{_cfg_get(terminal_cfg, 'final_probability', 0.0)}"
-        )
+    if terminal.enabled:
+        terminal_str = f"_tc{terminal.initial_probability}-{terminal.final_probability}"
+    # Only a non-default regeneration schedule is spelled out in the name.
     regeneration_str = ""
-    regeneration_enabled = _cfg_get(
-        regeneration_cfg, "enabled", _cfg_get(cfg.data.emoji, "regenerate", False)
+    default_regeneration = (
+        regeneration.initial_probability == 1.0
+        and regeneration.final_probability == 1.0
+        and regeneration.start_iteration == 0
+        and regeneration.schedule_iterations == 0
     )
-    regeneration_initial = _cfg_get(regeneration_cfg, "initial_probability", 1.0)
-    regeneration_final = _cfg_get(regeneration_cfg, "final_probability", regeneration_initial)
-    legacy_regeneration = (
-        _cfg_get(cfg.data.emoji, "regenerate", False)
-        and regeneration_initial == 1.0
-        and regeneration_final == 1.0
-        and _cfg_get(regeneration_cfg, "start_iteration", 0) == 0
-        and _cfg_get(regeneration_cfg, "schedule_iterations", 0) == 0
-    )
-    if regeneration_enabled and not legacy_regeneration:
-        regeneration_str = f"_rg{regeneration_initial}-{regeneration_final}"
-    task = _cfg_get(cfg.data.emoji, "task", "sequence")
-    if task == "multi_attractor":
-        pairs = _as_list(_cfg_get(cfg.data.emoji, "pairs", None))
-        aliases = []
-        for pair in pairs:
-            initial = _cfg_get(pair, "initial", None)
-            initial_image = (
-                initial if isinstance(initial, str) else _cfg_get(initial, "image", None)
-            )
-            target = _cfg_get(pair, "target", None)
-            aliases.append(
-                f"{_sequence_alias([initial_image])}2{_sequence_alias([target])}"
-            )
-        pair_alias = "-".join(aliases)
-        return (
-            f"data_multi_{pair_alias}"
-            f"_b{cfg.data.batches}"
-            f"_ds{cfg.data.downsample}"
-            f"_regen{cfg.data.emoji.regenerate}{terminal_str}{regeneration_str}"
+    if regeneration.enabled and not default_regeneration:
+        regeneration_str = (
+            f"_rg{regeneration.initial_probability}-{regeneration.final_probability}"
         )
-    if task != "sequence":
-        raise ValueError(f"Unknown data.emoji.task {task!r}")
-    return (
-        f"data_{_sequence_alias(cfg.data.emoji.sequence)}"
-        f"_b{cfg.data.batches}"
-        f"_ds{cfg.data.downsample}"
-        f"_regen{cfg.data.emoji.regenerate}{terminal_str}{regeneration_str}"
+    suffix = (
+        f"_b{data_config.batches}"
+        f"_ds{data_config.downsample}"
+        f"_regen{regeneration.enabled}{terminal_str}{regeneration_str}"
     )
+    if emoji.task == "multi_attractor":
+        aliases = []
+        for pair in emoji.pairs:
+            initial = pair.initial
+            initial_image = initial if isinstance(initial, str) else initial.get("image")
+            aliases.append(
+                f"{_sequence_alias([initial_image])}2{_sequence_alias([pair.target])}"
+            )
+        return f"data_multi_{'-'.join(aliases)}{suffix}"
+    if emoji.task != "sequence":
+        raise ValueError(f"Unknown data.emoji.task {emoji.task!r}")
+    return f"data_{_sequence_alias(emoji.sequence)}{suffix}"
 
 
-def _load_single_emoji(filename, cfg, impath):
+def _load_single_emoji(filename, data_config, impath):
     if not filename:
         raise ValueError("Every multi-attractor initial condition and target needs an image filename")
     loaded = load_emoji_sequence(
         [filename],
         impath_emojis=impath,
-        downsample=cfg.data.downsample,
-        crop_square=_cfg_get(cfg.data.emoji, "crop_square", False),
+        downsample=data_config.downsample,
+        crop_square=data_config.emoji.crop_square,
     )
     data = loaded.data if hasattr(loaded, "data") else loaded
     return data[0, 0]
 
 
-def _build_initial_condition(initial_cfg, cfg, impath):
+def _build_initial_condition(initial_cfg, data_config, impath):
     if isinstance(initial_cfg, str):
         initial_cfg = {"image": initial_cfg, "mode": "full"}
     if initial_cfg is None or not hasattr(initial_cfg, "get"):
         raise ValueError("multi-attractor pair.initial must be a filename or a mapping")
 
-    image = _load_single_emoji(_cfg_get(initial_cfg, "image", None), cfg, impath)
-    mode = _cfg_get(initial_cfg, "mode", "full")
+    image = _load_single_emoji(initial_cfg.get("image"), data_config, impath)
+    mode = initial_cfg.get("mode", "full")
     if mode == "full":
         return image
     if mode == "patch":
-        patch_size = int(_cfg_get(initial_cfg, "size", 12))
+        patch_size = int(initial_cfg.get("size", 12))
         height, width = image.shape[-2:]
         if patch_size <= 0 or patch_size > min(height, width):
             raise ValueError(
@@ -124,8 +103,8 @@ def _build_initial_condition(initial_cfg, cfg, impath):
         ]
         return initial
     if mode == "pixel":
-        channel = int(_cfg_get(initial_cfg, "channel", 0))
-        value = float(_cfg_get(initial_cfg, "value", 1.0))
+        channel = int(initial_cfg.get("channel", 0))
+        value = float(initial_cfg.get("value", 1.0))
         if not 0 <= channel < image.shape[0]:
             raise ValueError(
                 f"initial pixel channel must be in [0, {image.shape[0] - 1}], got {channel}"
@@ -136,21 +115,19 @@ def _build_initial_condition(initial_cfg, cfg, impath):
     raise ValueError(f"Unknown multi-attractor initial mode {mode!r}")
 
 
-def _load_multi_attractor_data(cfg, impath):
-    pairs = _as_list(_cfg_get(cfg.data.emoji, "pairs", None))
+def _load_multi_attractor_data(data_config, impath):
+    pairs = data_config.emoji.pairs
     if not pairs:
         raise ValueError("data.emoji.pairs must contain at least one pair for data.emoji.task=multi_attractor")
-    target_repeats = int(_cfg_get(cfg.data.emoji, "target_repeats", 2))
+    target_repeats = data_config.emoji.target_repeats
     if target_repeats < 1:
         raise ValueError("data.emoji.target_repeats must be at least 1")
 
     trajectories = []
     expected_shape = None
     for index, pair in enumerate(pairs):
-        if not hasattr(pair, "get"):
-            raise ValueError(f"data.emoji.pairs[{index}] must be a mapping")
-        initial = _build_initial_condition(_cfg_get(pair, "initial", None), cfg, impath)
-        target = _load_single_emoji(_cfg_get(pair, "target", None), cfg, impath)
+        initial = _build_initial_condition(pair.initial, data_config, impath)
+        target = _load_single_emoji(pair.target, data_config, impath)
         if initial.shape != target.shape:
             raise ValueError(
                 f"data.emoji.pairs[{index}] initial and target shapes differ: "
@@ -167,26 +144,23 @@ def _load_multi_attractor_data(cfg, impath):
 
 
 def load_data(data_config, impath=None):
-    from types import SimpleNamespace
-
-    cfg = SimpleNamespace(data=data_config)
     custom_impath = impath is not None
     if impath is None:
         data_path_base = os.getenv("DATA_PATH_BASE")
         if data_path_base is None:
             raise ValueError("DATA_PATH_BASE must be set when load_data is called without impath.")
         impath = os.path.join(data_path_base, "Emojis", "")
-    task = _cfg_get(cfg.data.emoji, "task", "sequence")
+    task = data_config.emoji.task
     if task == "sequence":
         dataset = load_emoji_sequence(
-            _as_list(cfg.data.emoji.sequence),
+            list(data_config.emoji.sequence),
             impath_emojis=impath,
-            downsample=cfg.data.downsample,
-            crop_square=_cfg_get(cfg.data.emoji, "crop_square", False),
+            downsample=data_config.downsample,
+            crop_square=data_config.emoji.crop_square,
         )
         data = dataset.data
     elif task == "multi_attractor":
-        data = _load_multi_attractor_data(cfg, impath)
+        data = _load_multi_attractor_data(data_config, impath)
     else:
         raise ValueError(f"Unknown data.emoji.task {task!r}")
     cfg_str = build_data_config_string(data_config)
@@ -196,36 +170,21 @@ def load_data(data_config, impath=None):
 
 
 def build_data_augmenter(data_config):
-    from types import SimpleNamespace
-
-    cfg = SimpleNamespace(data=data_config)
-    pad = _pad_tuple(cfg.data.emoji.pad)
-    batches = cfg.data.batches
-    shift_amount = cfg.data.emoji.shift_amount
-    noise_strength = cfg.data.emoji.noise_strength
-    regenerate = cfg.data.emoji.regenerate
-    noise_mode = _cfg_get(cfg.data.emoji, "noise_mode", "full")
-    terminal_cfg = _cfg_get(cfg.data.emoji, "terminal_carry", None)
-    regeneration_cfg = _cfg_get(cfg.data.emoji, "regeneration", None)
-
-    terminal_enabled = _cfg_get(terminal_cfg, "enabled", False)
-    terminal_start = _cfg_get(terminal_cfg, "start_iteration", 0)
-    terminal_schedule = _cfg_get(terminal_cfg, "schedule_iterations", 0)
-    terminal_initial = _cfg_get(terminal_cfg, "initial_probability", 0.0)
-    terminal_final = _cfg_get(terminal_cfg, "final_probability", terminal_initial)
-
-    regeneration_enabled = _cfg_get(regeneration_cfg, "enabled", regenerate)
-    regeneration_start = _cfg_get(regeneration_cfg, "start_iteration", 0)
-    regeneration_schedule = _cfg_get(regeneration_cfg, "schedule_iterations", 0)
-    regeneration_initial = _cfg_get(regeneration_cfg, "initial_probability", 1.0)
-    regeneration_final = _cfg_get(regeneration_cfg, "final_probability", regeneration_initial)
+    emoji = data_config.emoji
+    pad = _pad_tuple(emoji.pad)
+    batches = data_config.batches
+    shift_amount = emoji.shift_amount
+    noise_strength = emoji.noise_strength
+    noise_mode = emoji.noise_mode
+    terminal = emoji.terminal_carry
+    regeneration = emoji.regeneration
 
     class EmojiDataAugmenter(TerminalCarryDataAugmenter):
-        TERMINAL_CARRY_ENABLED = terminal_enabled
-        TERMINAL_CARRY_START = terminal_start
-        TERMINAL_CARRY_SCHEDULE = terminal_schedule
-        TERMINAL_CARRY_INITIAL = terminal_initial
-        TERMINAL_CARRY_FINAL = terminal_final
+        TERMINAL_CARRY_ENABLED = terminal.enabled
+        TERMINAL_CARRY_START = terminal.start_iteration
+        TERMINAL_CARRY_SCHEDULE = terminal.schedule_iterations
+        TERMINAL_CARRY_INITIAL = terminal.initial_probability
+        TERMINAL_CARRY_FINAL = terminal.final_probability
 
         def data_init(self, SHARDING=None):
             data = self.return_saved_data()
@@ -246,13 +205,13 @@ def build_data_augmenter(data_config):
             if shift_amount:
                 x = self.shift(x, shift_amount, key=key)
                 y = self.shift(y, shift_amount, key=key)
-            if regeneration_enabled:
+            if regeneration.enabled:
                 probability = self.scheduled_probability(
                     i,
-                    regeneration_start,
-                    regeneration_schedule,
-                    regeneration_initial,
-                    regeneration_final,
+                    regeneration.start_iteration,
+                    regeneration.schedule_iterations,
+                    regeneration.initial_probability,
+                    regeneration.final_probability,
                 )
                 damaged = self.zero_random_circle(x, key=key)
                 damage_mask = jax.random.bernoulli(
@@ -278,43 +237,19 @@ def build_data_augmenter(data_config):
 
 
 def resolve_run_t(cfg):
-    if not _cfg_get(cfg.run, "derive_t_from_fire_rate", False):
+    if not cfg.run.derive_t_from_fire_rate:
         return cfg.run.t
-    numerator = _cfg_get(cfg.run, "fire_rate_step_numerator", None)
+    numerator = cfg.run.fire_rate_step_numerator
     if numerator is None:
         numerator = 32 if cfg.model.channels == 32 else 64
     return int(numerator / cfg.model.fire_rate)
 
 
 def build_filename(cfg, model_cfg_str, data_cfg_str, data_augmenter_cfg_str):
-    filename_mode = _cfg_get(cfg.run, "filename_mode", "hydra")
-    if filename_mode == "legacy_train":
-        return build_legacy_training_filename(cfg)
-    if filename_mode != "hydra":
-        raise ValueError(f"Unknown filename_mode {filename_mode}")
-
     loss_str = build_loss_filename(cfg)
     train_str = (
         f"_t{resolve_run_t(cfg)}"
-        # f"_iters{cfg.run.iterations}"
         f"_lr{cfg.optimiser.learn_rate}"
         f"_dr{cfg.optimiser.decay_rate}"
     )
     return "_".join([model_cfg_str, data_cfg_str, loss_str, train_str])
-
-
-def build_legacy_training_filename(cfg):
-    sequence_alias = _sequence_alias(cfg.data.emoji.sequence)
-    regen_str = "regenerate_" if cfg.data.emoji.regenerate else ""
-    loss_mode = "_".join(term.type for term in cfg.loss.terms).lower()
-    return (
-        f"emoji_{sequence_alias}_{loss_mode}_{cfg.model.family}_{regen_str}"
-        f"ch{cfg.model.channels}_ds{cfg.data.downsample}"
-        f"_steps{resolve_run_t(cfg)}"
-        f"_iters{cfg.run.iterations}"
-        f"_igc{cfg.loss.regularisers.intermediate_state}"
-        f"_brc{cfg.loss.regularisers.boundary}"
-        f"_cgc{cfg.loss.regularisers.contiguous_growth}"
-        f"_pcc{cfg.loss.regularisers.perturbation_conservation}"
-        f"_usc{cfg.loss.regularisers.update_sensitivity}"
-    )

@@ -18,8 +18,7 @@ Research code for differentiable patterning: neural cellular automata (NCA), bui
 | `NCA/model/` | NCA variants: `NCA`, gated `gNCA`, noise `nNCA`/`gnNCA`, `FastKaNCA`, hierarchical `HNCA`, multiscale, attention, wavelet and others. |
 | `NCA/trainer/` | The active modular trainer (see below). |
 | `NCA/inverse_design/`, `NCA/trainer/impulse/` | Optimisation of trained NCAs for micropattern geometry and impulses/initial state. |
-| `NCA/registry.py` | Local model-bundle registry (`ModelRegistry`, `create_model_id`, `record_evaluation`, `verify_evaluation_input`). |
-| `Experiments/` | Config-driven entrypoints for each domain: `emoji/`, `micropatterns/`, `snowmelt/`, `impulse/`. |
+| `Experiments/` | Config-driven entrypoints for each domain: `emoji/`, `micropatterns/`, `snowmelt/`, `impulse/`. `model_registry.py` is the local model-bundle registry and its CLI (`ModelRegistry`, `create_model_id`, `record_evaluation`, `verify_evaluation_input`). |
 | `demo/`, `notebooks/`, `WebDemo/` | Walkthroughs (marimo), Jupyter notebooks and a static WebGL viewer with an exporter. |
 
 ## Experiment workflow
@@ -37,10 +36,12 @@ Research code for differentiable patterning: neural cellular automata (NCA), bui
    - `launch_local_sweep.py` runs entries one after another on one GPU.
 
 Config rules (`docs/configuration.md`):
-- Legacy top-level YAML sections `run`, `trainer`, `optimiser` and `loss` map into `training.loop`, `training.trainer`, `training.optimizer` and `training.loss`. So grid keys like `run.t` and `optimiser.learn_rate` are valid. `ExperimentConfig` exposes `.run` and `.optimiser` aliases.
+- The typed config uses the same names as the YAML files: `cfg.system`, `cfg.data` (with `data.emoji|micropattern|snowmelt` and `data.knockout`), `cfg.model`, `cfg.run`, `cfg.trainer`, `cfg.optimiser`, `cfg.loss`, ... So the grid key `run.t` is `cfg.run.t`. Read fields as attributes; configs have no `.get()`.
+- Current files have `schema_version: 2`. Version-1 configs (old sweeps, manifests and all older model bundles) are translated only in `Experiments/config.py:upgrade_legacy_config`. Don't add compatibility code anywhere else.
 - Conversion is strict: unknown keys and unknown model families fail early. A new option needs a field in the right dataclass. The main ones are in `Experiments/config.py`, `NCA/model/config.py`, `NCA/trainer/config.py` and `Common/trainer/config.py`.
 - Never pass OmegaConf objects into `Common/` or `NCA/`. Pass only typed configs.
-- Model families are built in `Experiments/config_helpers.py:build_model`. A new family goes there and into `build_model_config_string`. Archived `*_sycl` families map to portable ones through `PORTABLE_MODEL_FAMILIES`.
+- Model families are built in `NCA/model/factory.py:build_model`. A new family goes into its `MODEL_FAMILIES` table and `build_model_config_string`. Retired families (`NCA_sycl`, `NCA_fast`, `gNCA_sycl`) map to current ones through `PORTABLE_MODEL_FAMILIES`. `Experiments.config_helpers` re-exports `build_model` only because old bundles record that path as their factory.
+- `NCA/` and `Common/` must not import from `Experiments/`. Values that come from the experiment config (e.g. W&B tags) are passed in through `TrainerContext`.
 
 ## NCA trainer architecture (`docs/nca_trainer.md`)
 

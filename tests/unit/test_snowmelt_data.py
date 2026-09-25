@@ -109,10 +109,9 @@ def test_snowmelt_base_config_converts_and_round_trips():
     assert config.data.dataset == "snowmelt"
     assert config.data.snowmelt.target_channels == ("SCA",)
     assert config.data.snowmelt.static_channels == ("DEM", "INCIDENCE")
-    assert config.training.loop.interval_mode == "steps"
+    assert config.run.interval_mode == "steps"
     assert experiment_config_from_mapping(config_to_dict(config)) == config
-    with pytest.raises(AttributeError):
-        config.data.micropattern
+    assert config.data.micropattern is None
 
 
 def test_augmenter_writes_boundary_channels_and_masks_observables():

@@ -9,18 +9,6 @@ import jax.tree_util as jtu
 
 
 
-def _cfg_get(cfg, key, default=None):
-    """Read an optional config value without requiring all configs to define it."""
-    if cfg is None:
-        return default
-    if hasattr(cfg, "get"):
-        return cfg.get(key, default)
-    try:
-        return getattr(cfg, key)
-    except (AttributeError, KeyError):
-        return default
-
-
 def build_muon_dnums(params):
     return jtu.tree_map(
         lambda x: optax.contrib.MuonDimensionNumbers(
@@ -60,13 +48,6 @@ def sam_optimizer(base_optimizer, rho=0.05, sync_period=2):
     return opt
 
 
-def _schedule_config(optimizer_config):
-    schedule_cfg = _cfg_get(optimizer_config, "schedule", None)
-    if isinstance(schedule_cfg, str):
-        return schedule_cfg, None
-    return _cfg_get(schedule_cfg, "type", "exponential"), schedule_cfg
-
-
 def build_learning_rate_schedule(optimizer_config, total_steps):
     """Build the configured Optax learning-rate schedule and its name.
 
@@ -84,16 +65,15 @@ def build_learning_rate_schedule(optimizer_config, total_steps):
             "optimiser.warmup_steps must be non-negative and smaller than run.iterations"
         )
 
-    schedule_type, schedule_cfg = _schedule_config(optimizer_config)
-    schedule_type = str(schedule_type).lower()
+    schedule_cfg = optimizer_config.schedule
+    schedule_type = schedule_cfg.type.lower()
     decay_steps = total_steps - warmup_steps
 
     if schedule_type == "exponential":
-        configured_decay_rate = _cfg_get(schedule_cfg, "decay_rate", None)
         decay_rate = float(
             optimizer_config.decay_rate
-            if configured_decay_rate is None
-            else configured_decay_rate
+            if schedule_cfg.decay_rate is None
+            else schedule_cfg.decay_rate
         )
         if decay_rate <= 0:
             raise ValueError("optimiser decay_rate must be positive")
@@ -107,7 +87,7 @@ def build_learning_rate_schedule(optimizer_config, total_steps):
         post_warmup_schedule = optax.constant_schedule(peak_lr)
         schedule_name = "const"
     elif schedule_type == "cosine":
-        final_factor = float(_cfg_get(schedule_cfg, "final_factor", 0.1))
+        final_factor = float(schedule_cfg.final_factor)
         if not 0 <= final_factor <= 1:
             raise ValueError("optimiser.schedule.final_factor must be in [0, 1]")
         post_warmup_schedule = optax.cosine_decay_schedule(
@@ -117,10 +97,8 @@ def build_learning_rate_schedule(optimizer_config, total_steps):
         )
         schedule_name = f"cos{final_factor:g}"
     elif schedule_type == "late_step":
-        transition_fraction = float(
-            _cfg_get(schedule_cfg, "transition_fraction", 0.75)
-        )
-        final_factor = float(_cfg_get(schedule_cfg, "final_factor", 0.2))
+        transition_fraction = float(schedule_cfg.transition_fraction)
+        final_factor = float(schedule_cfg.final_factor)
         if not 0 < transition_fraction < 1:
             raise ValueError(
                 "optimiser.schedule.transition_fraction must be strictly between 0 and 1"
@@ -145,9 +123,7 @@ def build_learning_rate_schedule(optimizer_config, total_steps):
     if warmup_steps == 0:
         return post_warmup_schedule, schedule_name
 
-    warmup_init_lr = float(
-        _cfg_get(schedule_cfg, "warmup_init_lr", 1e-6)
-    )
+    warmup_init_lr = float(schedule_cfg.warmup_init_lr)
     if warmup_init_lr < 0:
         raise ValueError("optimiser.schedule.warmup_init_lr cannot be negative")
     warmup_schedule = optax.linear_schedule(
@@ -185,7 +161,7 @@ def build_optimizer(optimizer_config, total_steps, return_schedule=False):
 
     preprocessors = []
 
-    gradient_clip_norm = _cfg_get(optimizer_config, "gradient_clip_norm", None)
+    gradient_clip_norm = optimizer_config.gradient_clip_norm
     if gradient_clip_norm is not None:
         preprocessors.append(optax.clip_by_global_norm(gradient_clip_norm))
         opt_name += f"_clip{gradient_clip_norm:g}"
@@ -200,9 +176,8 @@ def build_optimizer(optimizer_config, total_steps, return_schedule=False):
         optimizer = sam_optimizer(optimizer, rho=optimizer_config.sam_rho, sync_period=optimizer_config.sam_sync_period)
         opt_name += "_sam"
 
-    apply_if_finite = _cfg_get(optimizer_config, "apply_if_finite", False)
-    if apply_if_finite:
-        max_consecutive_errors = _cfg_get(optimizer_config, "max_consecutive_errors", 8)
+    if optimizer_config.apply_if_finite:
+        max_consecutive_errors = optimizer_config.max_consecutive_errors
         optimizer = optax.apply_if_finite(
             optimizer,
             max_consecutive_errors=max_consecutive_errors,

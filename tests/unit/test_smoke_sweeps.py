@@ -25,10 +25,10 @@ def test_smoke_sweep_is_short_and_publishes(domain, sweep_name, tmp_path):
     configs = _typed_configs(domain, sweep_name, tmp_path)
     assert configs
     for cfg in configs:
-        loop = cfg.training.loop
+        loop = cfg.run
         assert loop.iterations <= 100
         # A checkpoint is only saved after the warmup, and bundles need one.
-        assert cfg.training.checkpoint.warmup < loop.iterations
+        assert cfg.run.checkpoint_warmup < loop.iterations
         assert cfg.model_store.enabled
         assert cfg.model_store.collection == SMOKE_COLLECTION
 
@@ -36,4 +36,4 @@ def test_smoke_sweep_is_short_and_publishes(domain, sweep_name, tmp_path):
 def test_finetune_sweep_starts_from_a_parent(tmp_path):
     for cfg in _typed_configs("micropatterns", "smoke_micropatterns_ko_finetune", tmp_path):
         assert cfg.initialization.model_id is not None
-        assert cfg.data.intervention.curriculum is not None
+        assert cfg.data.knockout.curriculum is not None

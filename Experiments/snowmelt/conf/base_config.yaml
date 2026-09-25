@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 seed: 0
 
 experiment:
@@ -51,12 +51,15 @@ trainer:
   log_every: 100
   validation_every: null
   validation_rollout: false
-  pool_admission_enabled: true
-  pool_admission_relative_threshold: 1.25
-  pool_admission_previous_relative_threshold: 1.10
-  pool_admission_absolute_threshold: null
-  pool_admission_ema_decay: 0.95
-  pool_admission_warmup: null
+  # Which rollouts are written back into the training pool.
+  pool_admission:
+    enabled: true
+    relative_threshold: 1.25
+    previous_relative_threshold: 1.10
+    absolute_threshold: null
+    ema_decay: 0.95
+    # null means the same as run.checkpoint_warmup.
+    warmup: null
 
 optimiser:
   type: nadam
@@ -96,7 +99,8 @@ run:
   reference_interval: null
   interval_steps: null
   iterations: 4000
-  warmup: 64
+  # The best checkpoint is only saved after this many iterations.
+  checkpoint_warmup: 64
   write_images: true
   write_videos: true
 
@@ -115,13 +119,8 @@ model_store:
   enabled: true
   root: models
   collection: ${logging.wandb.project}
-  model_factory: Experiments.config_helpers:build_model
+  model_factory: NCA.model.factory:build_model
 
 initialization:
   model_id: null
 
-knockout:
-  mode: null
-  time: null
-  channel: null
-  curriculum: null

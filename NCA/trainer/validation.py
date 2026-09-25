@@ -36,7 +36,7 @@ class ValidationEvaluator:
         self.trainer.diagnostic_boundary_mask = boundary_mask
         callback_type = (
             model_boundary
-            if trainer.config.training.trainer.boundary_mode == "soft"
+            if trainer.config.trainer.boundary_mode == "soft"
             else hard_boundary
         )
         self.trainer.boundary_callbacks = [
@@ -163,12 +163,12 @@ class ValidationEvaluator:
             {},
             schedule,
             self.key,
-            self.trainer.config.training.trainer.loop_autodiff,
+            self.trainer.config.trainer.loop_autodiff,
             no_regularisers,
             self.execution,
         )
         metrics = self._loss_metrics(model, states, loss_weights, "validation")
-        if not self.trainer.config.training.trainer.validation_rollout:
+        if not self.trainer.config.trainer.validation_rollout:
             return metrics
 
         rollout_states = [state[:1] for state in self.states]
@@ -185,7 +185,7 @@ class ValidationEvaluator:
                 # Sequential rollout: each transition runs its own step count.
                 schedule.for_slot(transition) if not schedule.is_uniform else schedule,
                 jr.fold_in(self.key, transition + 1),
-                self.trainer.config.training.trainer.loop_autodiff,
+                self.trainer.config.trainer.loop_autodiff,
                 no_regularisers,
                 self.execution,
             )

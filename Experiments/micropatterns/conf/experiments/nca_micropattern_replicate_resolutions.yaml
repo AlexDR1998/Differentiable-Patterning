@@ -32,9 +32,9 @@ grid:
     - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
   data.micropattern.pool_copies: [1]
 
-  knockout.mode: [null]
-  knockout.time: [null]
-  knockout.curriculum: [null]
+  data.knockout.mode: [null]
+  data.knockout.time: [null]
+  data.knockout.curriculum: [null]
 
   run.iterations: [12000]
   # Keep final labelled snapshots without retaining full high-resolution videos.

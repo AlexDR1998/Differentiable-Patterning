@@ -25,8 +25,8 @@ grid:
   data.micropattern.pool_copies: [1]
   data.downsample: [16]
 
-  knockout.channel: [Nodal]
-  knockout.curriculum:
+  data.knockout.channel: [Nodal]
+  data.knockout.curriculum:
     - [ko_0h]
     - [ko_24h]
     - [ko_0h, ko_24h]

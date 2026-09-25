@@ -43,7 +43,7 @@ The registry exposes ordinary pandas dataframes suitable for marimo tables,
 filters, and SQL-backed analysis:
 
 ```python
-from NCA.registry import ModelRegistry
+from Experiments.model_registry import ModelRegistry
 
 registry = ModelRegistry.from_env()
 models = registry.models_df()
@@ -87,7 +87,7 @@ present.
 Evaluation summaries are immutable artifacts separate from model bundles:
 
 ```python
-from NCA.registry import record_evaluation
+from Experiments.model_registry import record_evaluation
 
 record_evaluation(
     store_root=registry.root,
@@ -121,7 +121,7 @@ reloading the source data. A local evaluator must rebuild that data and verify
 it before running:
 
 ```python
-from NCA.registry import verify_evaluation_input
+from Experiments.model_registry import verify_evaluation_input
 
 bundle = registry.get(model_id)
 # Reload with the domain loader selected by bundle.config.

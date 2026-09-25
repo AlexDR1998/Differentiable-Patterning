@@ -17,7 +17,6 @@ from Common.dataloader.results import MicropatternDataset
 from Experiments.config_helpers import (
     _compact_value,
     build_loss_filename,
-    build_model,
 )
 from NCA.trainer.data_augmenter.colony_4ch import DataAugmenter as DataAugmenter4Ch
 from NCA.trainer.data_augmenter.colony_9ch import DataAugmenter as DataAugmenterGrouped
@@ -207,15 +206,8 @@ def build_data_augmenter(
     ``observation_times`` (hours) map knockout times to transition slots for
     non-uniform interval schedules; ``None`` keeps the 12-hour convention.
     """
-    from types import SimpleNamespace
-
-    cfg = SimpleNamespace(
-        data=data_config,
-        knockout=data_config.intervention,
-        run=SimpleNamespace(iterations=total_iterations),
-    )
-    data_channels = cfg.data.micropattern.data_channels
-    if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
+    data_channels = data_config.micropattern.data_channels
+    if data_config.dataset == "micropatterns_260726":
         if (
             intervention_times is not None
             and "NODAL" not in channel_schema.state_channels
@@ -225,7 +217,7 @@ def build_data_augmenter(
             )
 
         class DA_subclass(DataAugmenter260726):
-            noise_strength = cfg.data.micropattern.noise_strength
+            noise_strength = data_config.micropattern.noise_strength
 
             def __init__(self, *args, **kwargs):
                 kwargs["schema"] = channel_schema
@@ -236,22 +228,17 @@ def build_data_augmenter(
                     if intervention_times is not None
                     else None
                 )
-                kwargs["intermediate_reinjection_probability"] = cfg.data.micropattern.intermediate_reinjection_probability
-                kwargs["intermediate_reinjection_probability_end"] = cfg.data.micropattern.get(
-                    "intermediate_reinjection_probability_end",
-                    kwargs["intermediate_reinjection_probability"],
-                )
-                kwargs["intermediate_reinjection_decay_start_fraction"] = cfg.data.micropattern.get(
-                    "intermediate_reinjection_decay_start_fraction", 0.25
-                )
-                kwargs["intermediate_reinjection_total_iterations"] = cfg.run.iterations
+                kwargs["intermediate_reinjection_probability"] = data_config.micropattern.intermediate_reinjection_probability
+                kwargs["intermediate_reinjection_probability_end"] = data_config.micropattern.intermediate_reinjection_probability_end
+                kwargs["intermediate_reinjection_decay_start_fraction"] = data_config.micropattern.intermediate_reinjection_decay_start_fraction
+                kwargs["intermediate_reinjection_total_iterations"] = total_iterations
                 super().__init__(*args, **kwargs)
 
         return DA_subclass, (
-            f"da_snapshot_noise{cfg.data.micropattern.noise_strength}"
-            f"_irp{cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5)}"
+            f"da_snapshot_noise{data_config.micropattern.noise_strength}"
+            f"_irp{data_config.micropattern.intermediate_reinjection_probability}"
         )
-    if data_channels == 4 and cfg.knockout.mode is not None:
+    if data_channels == 4 and data_config.knockout.mode is not None:
         raise ValueError("data.micropattern.data_channels=4 is only supported for no-knockout group-A data.")
     if data_channels == 4:
         data_augmenter_base = DataAugmenter4Ch
@@ -260,22 +247,17 @@ def build_data_augmenter(
     else:
         raise ValueError(f"Unsupported data.micropattern.data_channels={data_channels}. Expected 4 or 12.")
 
-    if cfg.knockout.mode is not None:
-        build_knockout_times(cfg.knockout.mode, cfg.knockout.time, cfg.data.batches)
+    if data_config.knockout.mode is not None:
+        build_knockout_times(data_config.knockout.mode, data_config.knockout.time, data_config.batches)
     
     class DA_subclass(data_augmenter_base):
         supports_global_reinjection_mask = True
 
         def __init__(self, *args, **kwargs):
-            kwargs["intermediate_reinjection_probability"] = cfg.data.micropattern.intermediate_reinjection_probability
-            kwargs["intermediate_reinjection_probability_end"] = cfg.data.micropattern.get(
-                "intermediate_reinjection_probability_end",
-                kwargs["intermediate_reinjection_probability"],
-            )
-            kwargs["intermediate_reinjection_decay_start_fraction"] = cfg.data.micropattern.get(
-                "intermediate_reinjection_decay_start_fraction", 0.25
-            )
-            kwargs["intermediate_reinjection_total_iterations"] = cfg.run.iterations
+            kwargs["intermediate_reinjection_probability"] = data_config.micropattern.intermediate_reinjection_probability
+            kwargs["intermediate_reinjection_probability_end"] = data_config.micropattern.intermediate_reinjection_probability_end
+            kwargs["intermediate_reinjection_decay_start_fraction"] = data_config.micropattern.intermediate_reinjection_decay_start_fraction
+            kwargs["intermediate_reinjection_total_iterations"] = total_iterations
             super().__init__(*args, **kwargs)
             if channel_timestep_mask is None:
                 mask = jnp.ones(
@@ -290,8 +272,8 @@ def build_data_augmenter(
                 mask = jnp.asarray(channel_timestep_mask, dtype=jnp.float32)
             self.channel_timestep_mask = mask
             knockout_times = build_knockout_times(
-                cfg.knockout.mode,
-                cfg.knockout.time,
+                data_config.knockout.mode,
+                data_config.knockout.time,
                 len(self.data_true),
             )
             self.knockout_times = jnp.array(
@@ -314,15 +296,15 @@ def build_data_augmenter(
                 getattr(self, "_global_batch_count", None),
                 None if observation_times is None else tuple(observation_times),
             )
-            x = self.noise(x,cfg.data.micropattern.noise_strength,key=key)
+            x = self.noise(x,data_config.micropattern.noise_strength,key=key)
             self.PREVIOUS_KEY = key
             return x,y
     cfg_str = (
-        f"da_ko{_compact_value(cfg.knockout.mode)}"
-        f"_kot{_compact_value(cfg.knockout.time)}"
-        f"_noise{cfg.data.micropattern.noise_strength}"
-        f"_irp{cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5)}"
-        f"-{cfg.data.micropattern.get('intermediate_reinjection_probability_end', cfg.data.micropattern.get('intermediate_reinjection_probability', 0.5))}"
+        f"da_ko{_compact_value(data_config.knockout.mode)}"
+        f"_kot{_compact_value(data_config.knockout.time)}"
+        f"_noise{data_config.micropattern.noise_strength}"
+        f"_irp{data_config.micropattern.intermediate_reinjection_probability}"
+        f"-{data_config.micropattern.intermediate_reinjection_probability_end}"
     )
     return DA_subclass, cfg_str
 
@@ -330,10 +312,8 @@ def build_data_augmenter(
 def load_train_validation_data(data_config, impath=None):
     """Load disjoint physical-replicate splits with train-fitted scaling."""
 
-    configured_train = data_config.micropattern.get("train_replicates", None)
-    configured_validation = data_config.micropattern.get(
-        "validation_replicates", None
-    )
+    configured_train = data_config.micropattern.train_replicates
+    configured_validation = data_config.micropattern.validation_replicates
     train_replicates = (
         tuple(range(1, data_config.batches + 1))
         if configured_train is None
@@ -364,11 +344,11 @@ def load_train_validation_data(data_config, impath=None):
         )
 
     histogram_bins = None
-    curriculum = resolve_knockout_curriculum(data_config.intervention)
+    curriculum = resolve_knockout_curriculum(data_config.knockout)
     if data_config.dataset == "micropatterns_260726" and curriculum != ("baseline",):
         baseline_config = replace(
             data_config,
-            intervention=replace(data_config.intervention, curriculum=("baseline",)),
+            knockout=replace(data_config.knockout, curriculum=("baseline",)),
         )
         baseline = load_data(
             baseline_config,
@@ -404,21 +384,18 @@ def load_data(
     histogram_bins=None,
     pool_copies_override=None,
 ):
-    from types import SimpleNamespace
-
-    cfg = SimpleNamespace(data=data_config, knockout=data_config.intervention)
     custom_impath = impath is not None
-    data_channels = cfg.data.micropattern.data_channels
+    data_channels = data_config.micropattern.data_channels
     pool_copies = (
-        cfg.data.micropattern.get("pool_copies", 1)
+        data_config.micropattern.pool_copies
         if pool_copies_override is None
         else pool_copies_override
     )
     if pool_copies <= 0 or int(pool_copies) != pool_copies:
         raise ValueError("data.micropattern.pool_copies must be a positive integer")
     pool_copies = int(pool_copies)
-    if cfg.data.get("dataset", "micropatterns") == "micropatterns_260726":
-        curriculum = resolve_knockout_curriculum(cfg.knockout)
+    if data_config.dataset == "micropatterns_260726":
+        curriculum = resolve_knockout_curriculum(data_config.knockout)
         if curriculum != ("baseline",) and data_channels != 14:
             raise ValueError("Knockout curricula require the full 14-channel schema")
         if impath is None:
@@ -432,13 +409,13 @@ def load_data(
         dataset = _coerce_dataset_result(load_micropattern_260726(
             impath,
             conditions=conditions,
-            timesteps=tuple(cfg.data.micropattern.timesteps),
-            downsample=cfg.data.downsample,
-            replicate_count=cfg.data.batches,
+            timesteps=tuple(data_config.micropattern.timesteps),
+            downsample=data_config.downsample,
+            replicate_count=data_config.batches,
             replicate_indices=replicate_indices,
             histogram_bins=histogram_bins,
             pool_copies=1,
-            experiment_groups=cfg.data.micropattern.get("experiment_groups", None),
+            experiment_groups=data_config.micropattern.experiment_groups,
         ))
         data = dataset.data
         aux = dataset.aux
@@ -520,12 +497,12 @@ def load_data(
             list(getattr(selected_schema, "group_names", ()))
         )
         cfg_str = (
-            f"data_b{cfg.data.batches}"
+            f"data_b{data_config.batches}"
             f"_c{selected_channel_count}"
             f"_pc{pool_copies}"
             f"_g{group_str}"
-            f"_ds{cfg.data.downsample}"
-            f"_ts{_compact_value(list(cfg.data.micropattern.timesteps))}"
+            f"_ds{data_config.downsample}"
+            f"_ts{_compact_value(list(data_config.micropattern.timesteps))}"
             f"_cur{_compact_value(curriculum)}"
         )
         if custom_impath:
@@ -533,7 +510,7 @@ def load_data(
         return data, aux, names, boundary, mask[:, 1:], cfg_str
     if data_channels not in {4, 12}:
         raise ValueError(f"Unsupported data.micropattern.data_channels={data_channels}. Expected 4 or 12.")
-    if data_channels == 4 and cfg.knockout.mode is not None:
+    if data_channels == 4 and data_config.knockout.mode is not None:
         raise ValueError("data.micropattern.data_channels=4 is only supported for no-knockout group-A data.")
 
     if impath is None:
@@ -542,12 +519,12 @@ def load_data(
             raise ValueError("DATA_PATH_BASE must be set when load_data is called without impath.")
         impath = data_path_base + "Timecourse_seperate_colonies/"
 
-    if cfg.knockout.mode is None and data_channels == 4:
+    if data_config.knockout.mode is None and data_channels == 4:
         dataset = _coerce_dataset_result(load_micropattern_circle_4ch_individual(
             impath=os.path.join(impath, "A/*"),
-            BATCHES=cfg.data.batches,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            BATCHES=data_config.batches,
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -566,15 +543,15 @@ def load_data(
             CHANNEL_TIMESTEP_MASK = repeat(
                 CHANNEL_TIMESTEP_MASK,
                 "t c -> b t c",
-                b=cfg.data.batches,
+                b=data_config.batches,
             )
-    elif cfg.knockout.mode is None:
+    elif data_config.knockout.mode is None:
         dataset = _coerce_dataset_result(load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
-            FILTER_KN_TIME=cfg.knockout.time,
-            BATCHES=cfg.data.batches,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            FILTER_KN_TIME=data_config.knockout.time,
+            BATCHES=data_config.batches,
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -585,13 +562,13 @@ def load_data(
         CHANNEL_NAMES = list(dataset.channel_names)
         boundary_mask = dataset.boundary_mask
         CHANNEL_TIMESTEP_MASK = dataset.measurement_mask
-    elif cfg.knockout.mode=="only_one_ko":
+    elif data_config.knockout.mode=="only_one_ko":
         dataset = _coerce_dataset_result(load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
-            FILTER_KN_TIME=cfg.knockout.time,
-            BATCHES=cfg.data.batches,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            FILTER_KN_TIME=data_config.knockout.time,
+            BATCHES=data_config.batches,
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -603,14 +580,14 @@ def load_data(
         boundary_mask = dataset.boundary_mask
         CHANNEL_TIMESTEP_MASK = dataset.measurement_mask
     
-    elif cfg.knockout.mode=="one_ko_and_baseline":
+    elif data_config.knockout.mode=="one_ko_and_baseline":
         
         dataset_ko = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
-            FILTER_KN_TIME=cfg.knockout.time,
+            FILTER_KN_TIME=data_config.knockout.time,
             BATCHES=1,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -620,8 +597,8 @@ def load_data(
             impath=impath,
             FILTER_KN_TIME=None, # type: ignore
             BATCHES=1,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -640,18 +617,18 @@ def load_data(
         data = jnp.concatenate([data_ko,data_base],axis=0)
         boundary_mask = jnp.concatenate([boundary_mask_ko,boundary_mask_base],axis=0)
         CHANNEL_TIMESTEP_MASK = jnp.concatenate([CHANNEL_TIMESTEP_MASK_KO,CHANNEL_TIMESTEP_MASK_BASE],axis=0)
-        if cfg.data.batches>2:
-            data = repeat(data,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/2))[:cfg.data.batches]
-            boundary_mask = repeat(boundary_mask,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/2))[:cfg.data.batches]
-            CHANNEL_TIMESTEP_MASK = repeat(CHANNEL_TIMESTEP_MASK,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/2))[:cfg.data.batches]
+        if data_config.batches>2:
+            data = repeat(data,"b ... -> (nb b) ...",nb=math.ceil(data_config.batches/2))[:data_config.batches]
+            boundary_mask = repeat(boundary_mask,"b ... -> (nb b) ...",nb=math.ceil(data_config.batches/2))[:data_config.batches]
+            CHANNEL_TIMESTEP_MASK = repeat(CHANNEL_TIMESTEP_MASK,"b ... -> (nb b) ...",nb=math.ceil(data_config.batches/2))[:data_config.batches]
 
-    elif cfg.knockout.mode=="both_ko_and_baseline":
+    elif data_config.knockout.mode=="both_ko_and_baseline":
         dataset_ko_0 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=0,
             BATCHES=1,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -662,8 +639,8 @@ def load_data(
             impath=impath,
             FILTER_KN_TIME=24,
             BATCHES=1,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -673,8 +650,8 @@ def load_data(
             impath=impath,
             FILTER_KN_TIME=None, # pyright: ignore[reportArgumentType]
             BATCHES=1,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -700,18 +677,18 @@ def load_data(
         data = jnp.concatenate([data_ko_0,data_ko_24,data_base],axis=0)
         boundary_mask = jnp.concatenate([boundary_mask_ko_0,boundary_mask_ko_24,boundary_mask_base],axis=0)
         CHANNEL_TIMESTEP_MASK = jnp.concatenate([CHANNEL_TIMESTEP_MASK_KO_0,CHANNEL_TIMESTEP_MASK_KO_24,CHANNEL_TIMESTEP_MASK_BASE],axis=0)
-        if cfg.data.batches>3:
-            data = repeat(data,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/3))[:cfg.data.batches]
-            boundary_mask = repeat(boundary_mask,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/3))[:cfg.data.batches]
-            CHANNEL_TIMESTEP_MASK = repeat(CHANNEL_TIMESTEP_MASK,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/3))[:cfg.data.batches]
+        if data_config.batches>3:
+            data = repeat(data,"b ... -> (nb b) ...",nb=math.ceil(data_config.batches/3))[:data_config.batches]
+            boundary_mask = repeat(boundary_mask,"b ... -> (nb b) ...",nb=math.ceil(data_config.batches/3))[:data_config.batches]
+            CHANNEL_TIMESTEP_MASK = repeat(CHANNEL_TIMESTEP_MASK,"b ... -> (nb b) ...",nb=math.ceil(data_config.batches/3))[:data_config.batches]
 
-    elif cfg.knockout.mode=="only_both_ko":
+    elif data_config.knockout.mode=="only_both_ko":
         dataset_ko_0 = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath=impath,
             FILTER_KN_TIME=0,
             BATCHES=1,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -722,8 +699,8 @@ def load_data(
             impath=impath,
             FILTER_KN_TIME=24,
             BATCHES=1,
-            DOWNSAMPLE=cfg.data.downsample,
-            TIMESTEPS=list(cfg.data.micropattern.timesteps),
+            DOWNSAMPLE=data_config.downsample,
+            TIMESTEPS=list(data_config.micropattern.timesteps),
             PROCESSING_MODES=(
                 "map_to_0_1",
                 "downsample"
@@ -744,17 +721,17 @@ def load_data(
         data = jnp.concatenate([data_ko_0,data_ko_24],axis=0)
         boundary_mask = jnp.concatenate([boundary_mask_ko_0,boundary_mask_ko_24],axis=0)
         CHANNEL_TIMESTEP_MASK = jnp.concatenate([CHANNEL_TIMESTEP_MASK_KO_0,CHANNEL_TIMESTEP_MASK_KO_24],axis=0)
-        if cfg.data.batches>2:
-            data = repeat(data,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/2))[:cfg.data.batches]
-            boundary_mask = repeat(boundary_mask,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/2))[:cfg.data.batches]
-            CHANNEL_TIMESTEP_MASK = repeat(CHANNEL_TIMESTEP_MASK,"b ... -> (nb b) ...",nb=math.ceil(cfg.data.batches/2))[:cfg.data.batches]
+        if data_config.batches>2:
+            data = repeat(data,"b ... -> (nb b) ...",nb=math.ceil(data_config.batches/2))[:data_config.batches]
+            boundary_mask = repeat(boundary_mask,"b ... -> (nb b) ...",nb=math.ceil(data_config.batches/2))[:data_config.batches]
+            CHANNEL_TIMESTEP_MASK = repeat(CHANNEL_TIMESTEP_MASK,"b ... -> (nb b) ...",nb=math.ceil(data_config.batches/2))[:data_config.batches]
     else:
-        raise ValueError(f"Unknown knockout mode {cfg.knockout.mode}")
+        raise ValueError(f"Unknown knockout mode {data_config.knockout.mode}")
     # if H["knockout"] is not None and H["knockout_mode"]=="both":
     
         # NCA_hyperparameters["FIRE_RATE"]=1.0 # For fine tuning on both WT and KO data, we want to use all the data and not drop any updates randomly, as the dataset is already small.
     
-    if cfg.data.micropattern.get("duplicate_final_timestep", False):
+    if data_config.micropattern.duplicate_final_timestep:
         data = jnp.concatenate([data, data[:, -1:]], axis=1)
         if len(CHANNEL_TIMESTEP_MASK.shape) == 2:
             CHANNEL_TIMESTEP_MASK = jnp.concatenate(
@@ -785,7 +762,7 @@ def load_data(
     # Data and boundary_mask are [B,T,C,H,W] and [B,1,H,W]. Keep the
     # historical six-pixel border unless a benchmark/experiment explicitly
     # requests aligned spatial dimensions.
-    pad_multiple = cfg.data.micropattern.get("pad_multiple", None)
+    pad_multiple = data_config.micropattern.pad_multiple
     if pad_multiple is None:
         height_padding = (6, 6)
         width_padding = (6, 6)
@@ -812,13 +789,13 @@ def load_data(
     
 
     cfg_str = (
-        f"data_b{cfg.data.batches}"
+        f"data_b{data_config.batches}"
         f"_c{data_channels}"
         f"_pc{pool_copies}"
-        f"_ds{cfg.data.downsample}"
-        f"_ts{_compact_value(list(cfg.data.micropattern.timesteps))}"
-        f"_ko{_compact_value(cfg.knockout.mode)}"
-        f"_kot{_compact_value(cfg.knockout.time)}"
+        f"_ds{data_config.downsample}"
+        f"_ts{_compact_value(list(data_config.micropattern.timesteps))}"
+        f"_ko{_compact_value(data_config.knockout.mode)}"
+        f"_kot{_compact_value(data_config.knockout.time)}"
     )
     if custom_impath:
         cfg_str += "_custompath"

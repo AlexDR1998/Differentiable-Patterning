@@ -5,7 +5,6 @@ import jax
 import jax.numpy as jnp
 import optax
 
-from Experiments.config_helpers import _cfg_get
 from Experiments.emoji.config_helpers import load_data as load_emoji_data
 from NCA.model.NCA_perturbation import perturbation
 from NCA.trainer.impulse import (
@@ -133,7 +132,7 @@ def build_impulse_optimizer(optimiser_cfg):
     if optimiser_cfg.type not in constructors:
         raise ValueError(f"Unknown impulse optimiser {optimiser_cfg.type!r}")
     optimiser = constructors[optimiser_cfg.type](optimiser_cfg.learn_rate)
-    clip_norm = _cfg_get(optimiser_cfg, "gradient_clip_norm", None)
+    clip_norm = optimiser_cfg.gradient_clip_norm
     if clip_norm is not None:
         optimiser = optax.chain(optax.clip_by_global_norm(clip_norm), optimiser)
     return optimiser
@@ -145,7 +144,7 @@ def resolve_output_directory(output_cfg, env=None):
     directory = Path(str(output_cfg.directory)).expanduser()
     environment = os.environ if env is None else env
     if not directory.is_absolute():
-        base_env = _cfg_get(output_cfg, "base_env", "IMPULSE_OUTPUT_PATH")
+        base_env = output_cfg.base_env
         base = environment.get(str(base_env)) if base_env else None
         if base:
             directory = Path(base).expanduser() / directory

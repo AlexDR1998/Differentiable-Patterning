@@ -102,7 +102,7 @@ def build_train_step(trainer, setup):
             regulariser_totals,
             setup.interval_schedule,
             key,
-            trainer.config.training.trainer.loop_autodiff,
+            trainer.config.trainer.loop_autodiff,
             apply_regularisers,
             execution,
         )

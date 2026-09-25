@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 OmegaConf = pytest.importorskip("omegaconf").OmegaConf
 
-from NCA.registry import (
+from Experiments.model_registry import (
     ModelRegistry,
     create_model_id,
     evaluation_input_provenance,
@@ -233,7 +233,7 @@ def test_load_model_reconstructs_from_saved_factory(tmp_path, monkeypatch):
         return FakeModel(), "description"
 
     monkeypatch.setattr(
-        "NCA.registry.importlib.import_module",
+        "Experiments.model_registry.importlib.import_module",
         lambda name: SimpleNamespace(build=build),
     )
     key = object()
@@ -261,7 +261,7 @@ def test_load_model_portably_reconstructs_retired_families(
     jax = pytest.importorskip("jax")
     jnp = pytest.importorskip("jax.numpy")
     jr = pytest.importorskip("jax.random")
-    from Experiments.config_helpers import build_model
+    from NCA.model.factory import build_model
 
     cfg = _sycl_config(recorded_family)
     source, _ = build_model(cfg.model, key=jr.PRNGKey(3))

@@ -8,7 +8,6 @@ import jax.tree_util as jtu
 
 from Common.trainer.loss import build_loss_functions, build_loss_initialiser
 from Common.trainer.loss_multi_target import init_texture_params
-from Experiments.config_helpers import build_wandb_tags
 import NCA.trainer.NCA_regulariser as regularisers
 from NCA.trainer.objective import resolve_loss_component_weights, resolve_objective
 from NCA.trainer.loss_schedule import (
@@ -73,17 +72,12 @@ def _interval_schedule(loop, context, n_slots, timesteps=None):
 
 
 def _singular_value_settings(config):
-    defaults = {"enabled": False, "plot_spectra": True, "epsilon": 1e-8}
-    configured = config.logging.singular_values
-    if configured is not None:
-        for name in defaults:
-            value = configured.get(name)
-            if value is not None:
-                defaults[name] = value
-    defaults["enabled"] = bool(defaults["enabled"])
-    defaults["plot_spectra"] = bool(defaults["plot_spectra"])
-    defaults["epsilon"] = float(defaults["epsilon"])
-    return defaults
+    settings = config.logging.singular_values
+    return {
+        "enabled": bool(settings.enabled),
+        "plot_spectra": bool(settings.plot_spectra),
+        "epsilon": float(settings.epsilon),
+    }
 
 
 def _regularisers(coefficients):
@@ -128,9 +122,9 @@ def _prepare_loss_cache(trainer, names, arguments, targets, key, is_multi_target
 
 def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
     config = trainer.config
-    loop = config.training.loop
-    trainer_config = config.training.trainer
-    objective = resolve_objective(config.training.loss, loss_overrides)
+    loop = config.run
+    trainer_config = config.trainer
+    objective = resolve_objective(config.loss, loss_overrides)
     names = tuple(objective.names)
     arguments = dict(objective.arguments)
     is_multi_target = names == ("multi_target",)
@@ -140,7 +134,7 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         raise ValueError("multi_target requires trainer.grad_loss=False")
 
     optimiser, _, schedule = build_optimizer(
-        config.training.optimizer, loop.iterations, return_schedule=True
+        config.optimiser, loop.iterations, return_schedule=True
     )
     loss_channels = arguments.get("channels")
     if loss_channels is None:
@@ -160,7 +154,7 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
     if interval_schedule.mode != "uniform":
         print(f"Interval schedule ({interval_schedule.mode}): steps per transition = {interval_schedule.steps}")
     loss_weight_schedule = build_loss_weight_schedule(
-        config.training.loss, loop.iterations
+        config.loss, loop.iterations
     )
     initial_loss_weights = loss_weight_schedule(0)
     multi_target_params = None
@@ -200,12 +194,12 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         wandb_args={
             "project": config.logging.wandb.project,
             "group": config.logging.wandb.group,
-            "tags": build_wandb_tags(config),
+            "tags": list(trainer.context.wandb_tags),
             "name": trainer.context.run_name,
         },
         knockout={
-            "time": config.data.intervention.time,
-            "channel": config.data.intervention.channel,
+            "time": config.data.knockout.time,
+            "channel": config.data.knockout.channel,
         },
         singular_value_settings=_singular_value_settings(config),
     )
@@ -213,13 +207,13 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
     return PreparedTraining(
         interval_schedule=interval_schedule,
         iterations=loop.iterations,
-        warmup=config.training.checkpoint.warmup,
+        warmup=config.run.checkpoint_warmup,
         checkpoint_warmup=max(
-            config.training.checkpoint.warmup,
+            config.run.checkpoint_warmup,
             max(
                 0,
                 final_transition_iteration(
-                    config.training.loss, loop.iterations
+                    config.loss, loop.iterations
                 )
                 - 1,
             ),

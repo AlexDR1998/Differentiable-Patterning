@@ -14,7 +14,7 @@ configs:
     data.downsample: 2
     run.t: 16
     run.iterations: 60
-    run.warmup: 5
+    run.checkpoint_warmup: 5
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
@@ -34,7 +34,7 @@ configs:
     logging.wandb.group: smoke_emoji
     seed: 0
   config:
-    schema_version: 1
+    schema_version: 2
     seed: 0
     experiment:
       name: smoke_emoji
@@ -67,7 +67,6 @@ configs:
         shift_amount: 2
         noise_strength: 0.005
         noise_mode: full
-        regenerate: true
         terminal_carry:
           enabled: false
           start_iteration: 20
@@ -102,12 +101,13 @@ configs:
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
       log_every: 20
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -139,9 +139,8 @@ configs:
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
       iterations: 60
-      warmup: 5
+      checkpoint_warmup: 5
       write_images: true
-      filename_mode: hydra
     logging:
       backend: wandb
       wandb:
@@ -152,10 +151,7 @@ configs:
       enabled: true
       root: models
       collection: pipeline-smoke
-      model_factory: Experiments.config_helpers:build_model
-    knockout:
-      time: null
-      channel: null
+      model_factory: NCA.model.factory:build_model
 - index: 1
   overrides:
     logging.wandb.project: pipeline-smoke
@@ -165,7 +161,7 @@ configs:
     data.downsample: 2
     run.t: 16
     run.iterations: 60
-    run.warmup: 5
+    run.checkpoint_warmup: 5
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
@@ -185,7 +181,7 @@ configs:
     logging.wandb.group: smoke_emoji
     seed: 0
   config:
-    schema_version: 1
+    schema_version: 2
     seed: 0
     experiment:
       name: smoke_emoji
@@ -218,7 +214,6 @@ configs:
         shift_amount: 2
         noise_strength: 0.005
         noise_mode: full
-        regenerate: true
         terminal_carry:
           enabled: true
           start_iteration: 20
@@ -253,12 +248,13 @@ configs:
       loss_time_channel_mask: null
       loop_autodiff: lax
       log_every: 20
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -290,9 +286,8 @@ configs:
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
       iterations: 60
-      warmup: 5
+      checkpoint_warmup: 5
       write_images: true
-      filename_mode: hydra
     logging:
       backend: wandb
       wandb:
@@ -303,10 +298,7 @@ configs:
       enabled: true
       root: models
       collection: pipeline-smoke
-      model_factory: Experiments.config_helpers:build_model
-    knockout:
-      time: null
-      channel: null
+      model_factory: NCA.model.factory:build_model
 - index: 2
   overrides:
     logging.wandb.project: pipeline-smoke
@@ -316,7 +308,7 @@ configs:
     data.downsample: 2
     run.t: 16
     run.iterations: 60
-    run.warmup: 5
+    run.checkpoint_warmup: 5
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
@@ -346,7 +338,7 @@ configs:
     logging.wandb.group: smoke_emoji
     seed: 0
   config:
-    schema_version: 1
+    schema_version: 2
     seed: 0
     experiment:
       name: smoke_emoji
@@ -389,7 +381,6 @@ configs:
         shift_amount: 2
         noise_strength: 0.005
         noise_mode: full
-        regenerate: true
         terminal_carry:
           enabled: true
           start_iteration: 20
@@ -424,12 +415,13 @@ configs:
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
       log_every: 20
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -461,9 +453,8 @@ configs:
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
       iterations: 60
-      warmup: 5
+      checkpoint_warmup: 5
       write_images: true
-      filename_mode: hydra
     logging:
       backend: wandb
       wandb:
@@ -474,10 +465,7 @@ configs:
       enabled: true
       root: models
       collection: pipeline-smoke
-      model_factory: Experiments.config_helpers:build_model
-    knockout:
-      time: null
-      channel: null
+      model_factory: NCA.model.factory:build_model
 - index: 3
   overrides:
     logging.wandb.project: pipeline-smoke
@@ -487,7 +475,7 @@ configs:
     data.downsample: 2
     run.t: 16
     run.iterations: 60
-    run.warmup: 5
+    run.checkpoint_warmup: 5
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
@@ -509,7 +497,7 @@ configs:
     logging.wandb.group: smoke_emoji
     seed: 0
   config:
-    schema_version: 1
+    schema_version: 2
     seed: 0
     experiment:
       name: smoke_emoji
@@ -542,7 +530,6 @@ configs:
         shift_amount: 2
         noise_strength: 0.005
         noise_mode: full
-        regenerate: true
         terminal_carry:
           enabled: false
           start_iteration: 20
@@ -577,12 +564,13 @@ configs:
       loss_time_channel_mask: null
       loop_autodiff: lax
       log_every: 20
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -616,9 +604,8 @@ configs:
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
       iterations: 60
-      warmup: 5
+      checkpoint_warmup: 5
       write_images: true
-      filename_mode: hydra
     logging:
       backend: wandb
       wandb:
@@ -629,8 +616,5 @@ configs:
       enabled: true
       root: models
       collection: pipeline-smoke
-      model_factory: Experiments.config_helpers:build_model
-    knockout:
-      time: null
-      channel: null
+      model_factory: NCA.model.factory:build_model
 emit_files: false

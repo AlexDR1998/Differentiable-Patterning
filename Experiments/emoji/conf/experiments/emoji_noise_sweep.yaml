@@ -12,7 +12,7 @@ grid:
   model.parameter_noise_level: [0.0, 0.001, 0.005, 0.01, 0.05, 0.1]
   data.downsample: [1]
   data.emoji.noise_strength: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-  data.emoji.regenerate: [true]
+  data.emoji.regeneration.enabled: [true]
   run.t: [128]
   run.iterations: [8000]
   loss.terms: [[l2]]

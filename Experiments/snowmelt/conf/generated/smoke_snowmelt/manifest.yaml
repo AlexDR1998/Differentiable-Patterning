@@ -14,7 +14,7 @@ configs:
     model.channels: 16
     run.t: 16
     run.iterations: 60
-    run.warmup: 5
+    run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
     model.family: NCA
@@ -26,7 +26,7 @@ configs:
     logging.wandb.group: smoke_snowmelt
     seed: 0
   config:
-    schema_version: 1
+    schema_version: 2
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -72,12 +72,13 @@ configs:
       log_every: 20
       validation_every: null
       validation_rollout: false
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -112,7 +113,7 @@ configs:
       reference_interval: null
       interval_steps: null
       iterations: 60
-      warmup: 5
+      checkpoint_warmup: 5
       write_images: true
       write_videos: true
     logging:
@@ -129,14 +130,9 @@ configs:
       enabled: true
       root: models
       collection: pipeline-smoke
-      model_factory: Experiments.config_helpers:build_model
+      model_factory: NCA.model.factory:build_model
     initialization:
       model_id: null
-    knockout:
-      mode: null
-      time: null
-      channel: null
-      curriculum: null
 - index: 1
   overrides:
     logging.wandb.project: pipeline-smoke
@@ -146,7 +142,7 @@ configs:
     model.channels: 16
     run.t: 16
     run.iterations: 60
-    run.warmup: 5
+    run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
     model.family: gNCA
@@ -160,7 +156,7 @@ configs:
     logging.wandb.group: smoke_snowmelt
     seed: 0
   config:
-    schema_version: 1
+    schema_version: 2
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -208,12 +204,13 @@ configs:
       log_every: 20
       validation_every: null
       validation_rollout: false
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -248,7 +245,7 @@ configs:
       reference_interval: null
       interval_steps: null
       iterations: 60
-      warmup: 5
+      checkpoint_warmup: 5
       write_images: true
       write_videos: true
     logging:
@@ -265,12 +262,7 @@ configs:
       enabled: true
       root: models
       collection: pipeline-smoke
-      model_factory: Experiments.config_helpers:build_model
+      model_factory: NCA.model.factory:build_model
     initialization:
       model_id: null
-    knockout:
-      mode: null
-      time: null
-      channel: null
-      curriculum: null
 emit_files: false

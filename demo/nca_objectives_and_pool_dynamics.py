@@ -50,7 +50,8 @@ with app.setup:
         WandbConfig,
         config_to_dict,
     )
-    from Experiments.config_helpers import build_model, set_matmul_precision
+    from Experiments.config_helpers import set_matmul_precision
+    from NCA.model.factory import build_model
     from Experiments.emoji.config import EmojiDataConfig, ProbabilityScheduleConfig
     from Experiments.emoji.config_helpers import build_data_augmenter, load_data
     from NCA.model.config import ModelConfig
@@ -580,7 +581,7 @@ def _(
                     _experiment_pool_lab, pool_lab_model, pool_lab_data, _context_pool_lab
                 )
                 _history_pool_lab = {"loss": [], "admit": [], "reject": []}
-                for _regulariser_pool_lab in _experiment_pool_lab.training.loss.regularisers:
+                for _regulariser_pool_lab in _experiment_pool_lab.loss.regularisers:
                     _history_pool_lab[_regulariser_pool_lab] = []
 
                 def _make_training_plot_pool_lab(iteration=None):
@@ -590,7 +591,7 @@ def _(
                         np.maximum(_history_pool_lab["loss"], _plot_floor_pool_lab),
                         label="total loss",
                     )
-                    for _regulariser_pool_lab in _experiment_pool_lab.training.loss.regularisers:
+                    for _regulariser_pool_lab in _experiment_pool_lab.loss.regularisers:
                         _axis_pool_lab.plot(
                             np.maximum(
                                 _history_pool_lab[_regulariser_pool_lab],
@@ -616,7 +617,7 @@ def _(
                     _history_pool_lab["loss"].append(float(_loss_pool_lab))
                     _history_pool_lab["admit"].append(float(_metrics_pool_lab["pool/admit"]))
                     _history_pool_lab["reject"].append(float(_metrics_pool_lab["pool/reject"]))
-                    for _regulariser_pool_lab in _experiment_pool_lab.training.loss.regularisers:
+                    for _regulariser_pool_lab in _experiment_pool_lab.loss.regularisers:
                         _history_pool_lab[_regulariser_pool_lab].append(
                             float(_metrics_pool_lab[_regulariser_pool_lab])
                         )
@@ -628,7 +629,7 @@ def _(
 
                 os.environ["WANDB_MODE"] = "offline"
                 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-                set_matmul_precision(_experiment_pool_lab.runtime)
+                set_matmul_precision(_experiment_pool_lab.system)
                 _result_pool_lab = _trainer_pool_lab.train(
                     key=pool_lab_train_key, progress_callback=_record_pool_lab
                 )

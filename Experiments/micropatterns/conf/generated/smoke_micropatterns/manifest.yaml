@@ -24,11 +24,11 @@ configs:
     data.micropattern.validation_replicates:
     - 3
     - 4
-    knockout.channel: Nodal
+    data.knockout.channel: Nodal
     model.channels: 32
     run.t: 32
     run.iterations: 60
-    run.warmup: 5
+    run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
     trainer.validation_every: 20
@@ -44,12 +44,12 @@ configs:
     trainer.loop_autodiff: checkpointed
     data.micropattern.pool_copies: 2
     logging.singular_values.enabled: true
-    knockout.curriculum: null
+    data.knockout.curriculum: null
     experiment.name: smoke_micropatterns
     logging.wandb.group: smoke_micropatterns
     seed: 0
   config:
-    schema_version: 1
+    schema_version: 2
     seed: 0
     experiment:
       name: smoke_micropatterns
@@ -89,6 +89,11 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         duplicate_final_timestep: false
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
     model:
       family: NCA
       channels: 32
@@ -110,12 +115,13 @@ configs:
       log_every: 20
       validation_every: 20
       validation_rollout: true
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -153,7 +159,7 @@ configs:
       mode: train
       t: 32
       iterations: 60
-      warmup: 5
+      checkpoint_warmup: 5
       write_images: true
       write_videos: true
     logging:
@@ -170,14 +176,9 @@ configs:
       enabled: true
       root: models
       collection: pipeline-smoke
-      model_factory: Experiments.config_helpers:build_model
+      model_factory: NCA.model.factory:build_model
     initialization:
       model_id: null
-    knockout:
-      mode: null
-      time: null
-      channel: Nodal
-      curriculum: null
 - index: 1
   overrides:
     logging.wandb.project: pipeline-smoke
@@ -197,11 +198,11 @@ configs:
     data.micropattern.validation_replicates:
     - 3
     - 4
-    knockout.channel: Nodal
+    data.knockout.channel: Nodal
     model.channels: 32
     run.t: 32
     run.iterations: 60
-    run.warmup: 5
+    run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
     trainer.validation_every: 20
@@ -217,7 +218,7 @@ configs:
     trainer.loop_autodiff: lax
     data.micropattern.pool_copies: 1
     logging.singular_values.enabled: false
-    knockout.curriculum:
+    data.knockout.curriculum:
     - baseline
     - ko_0h
     - ko_24h
@@ -225,7 +226,7 @@ configs:
     logging.wandb.group: smoke_micropatterns
     seed: 0
   config:
-    schema_version: 1
+    schema_version: 2
     seed: 0
     experiment:
       name: smoke_micropatterns
@@ -265,6 +266,14 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         duplicate_final_timestep: false
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum:
+        - baseline
+        - ko_0h
+        - ko_24h
     model:
       family: gNCA
       channels: 32
@@ -286,12 +295,13 @@ configs:
       log_every: 20
       validation_every: 20
       validation_rollout: true
-      pool_admission_enabled: true
-      pool_admission_relative_threshold: 1.25
-      pool_admission_previous_relative_threshold: 1.1
-      pool_admission_absolute_threshold: null
-      pool_admission_ema_decay: 0.95
-      pool_admission_warmup: null
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -329,7 +339,7 @@ configs:
       mode: train
       t: 32
       iterations: 60
-      warmup: 5
+      checkpoint_warmup: 5
       write_images: true
       write_videos: true
     logging:
@@ -346,15 +356,7 @@ configs:
       enabled: true
       root: models
       collection: pipeline-smoke
-      model_factory: Experiments.config_helpers:build_model
+      model_factory: NCA.model.factory:build_model
     initialization:
       model_id: null
-    knockout:
-      mode: null
-      time: null
-      channel: Nodal
-      curriculum:
-      - baseline
-      - ko_0h
-      - ko_24h
 emit_files: false

@@ -50,7 +50,7 @@ class NcaTrainer:
 	def __init__(self, config, model, data, context: TrainerContext):
 		self.config = config
 		self.context = context
-		trainer_config = config.training.trainer
+		trainer_config = config.trainer
 		self.model = model
 		data_augmenter = context.data_augmenter
 		channel_schema = context.channel_schema or getattr(data_augmenter, "schema", None)
@@ -177,7 +177,10 @@ class NcaTrainer:
 				)
 				wandb_args["config"] = {
 					"model": self.model.get_config(),
-					"training": asdict(self.config.training),
+					"run": asdict(self.config.run),
+					"trainer": asdict(self.config.trainer),
+					"optimiser": asdict(self.config.optimiser),
+					"loss": asdict(self.config.loss),
 				}
 				
 				if knockout["time"] is not None: # Nodal KO has differet logging behaviour
@@ -383,7 +386,7 @@ class NcaTrainer:
 
 def build_trainer(config, model, data, context: TrainerContext) -> NcaTrainer:
 	"""Construct the trainer selected by the typed backend configuration."""
-	backend_type = config.training.trainer.backend.type
+	backend_type = config.trainer.backend.type
 	if backend_type == "sycl":
 		raise ValueError(
 			"The SYCL training backend has been archived. Use backend.type='nvidia' "

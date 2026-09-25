@@ -42,7 +42,7 @@ with app.setup:
     from omegaconf import OmegaConf
 
     from Common.dataloader.micropattern_260726 import load_micropattern_260726
-    from NCA.registry import ModelRegistry
+    from Experiments.model_registry import ModelRegistry
     from NCA.trainer.intervention import rollout_model_sampled
 
     FATE_MARKERS = ("TBXT", "SOX17", "SOX2", "FOXA2")
@@ -2238,7 +2238,7 @@ def _(
             if reference_channels.shape[-2:] != selected_mask.shape:
                 raise ValueError("Circular and synthetic spatial shapes do not match")
 
-            _boundary_mode = _bundle.config.trainer.get("boundary_mode", "soft")
+            _boundary_mode = _bundle.config.trainer.boundary_mode
             _circle_boundary = np.asarray(reference_support, np.float32)[None]
             _shape_boundary = np.asarray(selected_mask, np.float32)[None]
             _circle_biology = (

@@ -31,12 +31,12 @@ def test_micropattern_initialization_and_curriculum_are_typed():
         Path("Experiments/micropatterns/conf/base_config.yaml").read_text()
     )
     value["initialization"]["model_id"] = "baseline-model"
-    value["knockout"]["curriculum"] = ["baseline", "ko_24h"]
+    value["data"]["knockout"]["curriculum"] = ["baseline", "ko_24h"]
 
     config = experiment_config_from_mapping(value)
 
     assert config.initialization.model_id == "baseline-model"
-    assert config.data.intervention.curriculum == ("baseline", "ko_24h")
+    assert config.data.knockout.curriculum == ("baseline", "ko_24h")
 
 
 def test_unknown_fields_are_rejected_with_their_section():
@@ -145,7 +145,7 @@ def test_trainer_backend_defaults_to_unconstrained_jax():
 
     config = experiment_config_from_mapping(value)
 
-    assert config.training.trainer.backend.type == "none"
+    assert config.trainer.backend.type == "none"
 
 
 def test_archived_sycl_settings_remain_deserializable_for_old_bundles():
@@ -157,8 +157,8 @@ def test_archived_sycl_settings_remain_deserializable_for_old_bundles():
 
     config = experiment_config_from_mapping(value)
 
-    assert config.training.trainer.backend.type == "sycl"
-    assert config.training.trainer.backend.fused_steps == 4
+    assert config.trainer.backend.type == "sycl"
+    assert config.trainer.backend.fused_steps == 4
 
 
 def test_default_backend_rejects_sycl_only_settings():
@@ -167,7 +167,7 @@ def test_default_backend_rejects_sycl_only_settings():
     )
     value["trainer"]["backend"] = {"type": "none", "fused_steps": 4}
 
-    with pytest.raises(ValueError, match="training.trainer.backend.*fused_steps"):
+    with pytest.raises(ValueError, match="trainer.backend.*fused_steps"):
         experiment_config_from_mapping(value)
 
 
@@ -179,7 +179,7 @@ def test_nvidia_backend_uses_the_standard_jax_trainer_configuration():
 
     config = experiment_config_from_mapping(value)
 
-    assert config.training.trainer.backend.type == "nvidia"
+    assert config.trainer.backend.type == "nvidia"
 
 
 def test_impulse_workflow_has_a_separate_typed_root():

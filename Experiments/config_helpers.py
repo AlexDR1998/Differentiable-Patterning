@@ -7,22 +7,12 @@ from dataclasses import fields, is_dataclass
 from enum import Enum
 from pathlib import Path
 
-from NCA.model.NCA_fast_KAN_model import FastKaNCA
-from NCA.model.NCA_gated_model import gNCA
-from NCA.model.NCA_gated_noise_model import gnNCA
-from NCA.model.NCA_hierarchical import HNCA
-from NCA.model.NCA_model import NCA
-from NCA.model.NCA_noise_model import nNCA
+# build_model is re-exported here because saved model bundles record
+# "Experiments.config_helpers:build_model" as their model factory.
+from NCA.model.factory import build_model, build_model_config_string  # noqa: F401
 
 
 MAX_WANDB_TAG_LENGTH = 64
-# Retired model families, and the family that now builds them. Their saved
-# parameters have the same layout, so old bundles still load.
-PORTABLE_MODEL_FAMILIES = {
-    "NCA_sycl": "NCA",
-    "NCA_fast": "NCA",
-    "gNCA_sycl": "gNCA",
-}
 EXCLUDED_WANDB_TAG_KEYS = {
     "logging.wandb.project",
     "logging.wandb.group",
@@ -32,25 +22,17 @@ EXCLUDED_WANDB_TAG_KEYS = {
     "model_store.model_factory",
 }
 WANDB_TAG_KEY_ALIASES = {
-    "training.loss.terms.0.multi_target_schedules": "loss_schedule",
-    "training.loss.terms.0.multi_target_weights": "loss_weight",
+    "loss.terms.0.multi_target_schedules": "loss_schedule",
+    "loss.terms.0.multi_target_weights": "loss_weight",
 }
-
-
-def _cfg_get(cfg, key, default=None):
-    if cfg is None:
-        return default
-    if hasattr(cfg, "get"):
-        return cfg.get(key, default)
-    return getattr(cfg, key, default)
 
 
 def data_channel_count(cfg):
     """Return the measurement channel count for the configured data domain."""
 
-    if _cfg_get(cfg.data, "dataset") == "emojis":
+    if cfg.data.dataset == "emojis":
         return cfg.data.emoji.data_channels
-    if _cfg_get(cfg.data, "dataset") == "snowmelt":
+    if cfg.data.dataset == "snowmelt":
         return len(cfg.data.snowmelt.target_channels)
     return cfg.data.micropattern.data_channels
 
@@ -115,15 +97,15 @@ def compact_nonzero_config_string(values, aliases=None):
 
 
 def loss_terms(loss_config):
-    return list(_cfg_get(loss_config, "terms", ()))
+    return list(loss_config.terms)
 
 
 def loss_names(loss_config):
-    return [str(_cfg_get(term, "type")) for term in loss_terms(loss_config)]
+    return [term.type for term in loss_config.terms]
 
 
 def loss_weights(loss_config):
-    return [float(_cfg_get(term, "weight", 1.0)) for term in loss_terms(loss_config)]
+    return [float(term.weight) for term in loss_config.terms]
 
 
 def build_loss_filename(loss_config, include_loss_args=False):
@@ -131,46 +113,43 @@ def build_loss_filename(loss_config, include_loss_args=False):
     names = loss_names(loss_config)
     loss_str = "_".join(names).lower()
     for term in terms:
-        name = str(_cfg_get(term, "type"))
+        # Loss term classes have different fields, so optional ones use getattr.
+        name = term.type
         if "vgg" in name:
-            loss_str += f"_vgg{str(_cfg_get(term, 'metric', 'l2')).lower()}"
-            if _cfg_get(term, "random_crop", False): loss_str += "_rc"
-            if _cfg_get(term, "random_channel_shuffle", False): loss_str += "_chshuffle"
-        channel_importance = _cfg_get(term, "channel_importance", None)
+            loss_str += f"_vgg{str(term.metric).lower()}"
+            if term.random_crop: loss_str += "_rc"
+            if term.random_channel_shuffle: loss_str += "_chshuffle"
+        channel_importance = getattr(term, "channel_importance", None)
         if channel_importance is not None:
             non_default = [f"{i + 1}x{_compact_value(w)}" for i, w in enumerate(channel_importance) if float(w) != 1.0]
             if non_default: loss_str += "_ci" + "-".join(non_default)
-        if name == "multi_target":
-            multi_target_weights = _cfg_get(term, "multi_target_weights", None)
-        else:
-            multi_target_weights = None
+        multi_target_weights = term.multi_target_weights if name == "multi_target" else None
         if multi_target_weights is not None:
             loss_str += (
-                f"_mtw_tex{_cfg_get(multi_target_weights, 'texture', 1.0):g}"
-                f"_cm{_cfg_get(multi_target_weights, 'channel_mean', 0.0):g}"
-                f"_corr{_cfg_get(multi_target_weights, 'correlation', 0.0):g}"
-                f"_rad{_cfg_get(multi_target_weights, 'radial', 0.0):g}"
-                f"_rchsh{int(bool(_cfg_get(term, 'random_channel_shuffle', False)))}"
-                f"_rcr{int(bool(_cfg_get(term, 'random_crop', False)))}"
+                f"_mtw_tex{multi_target_weights.get('texture', 1.0):g}"
+                f"_cm{multi_target_weights.get('channel_mean', 0.0):g}"
+                f"_corr{multi_target_weights.get('correlation', 0.0):g}"
+                f"_rad{multi_target_weights.get('radial', 0.0):g}"
+                f"_rchsh{int(bool(term.random_channel_shuffle))}"
+                f"_rcr{int(bool(term.random_crop))}"
             )
-            l2_weight = _cfg_get(multi_target_weights, "l2", 0.0)
+            l2_weight = multi_target_weights.get("l2", 0.0)
             if float(l2_weight) != 0.0:
                 loss_str += f"_l2{l2_weight:g}"
         if include_loss_args:
             keys = ("S", "K", "D", "epsilon", "sharpen", "samples", "tau", "normalize", "amplitude_penalty")
-            arg_str = compact_nonzero_config_string({key: _cfg_get(term, key, None) for key in keys})
+            arg_str = compact_nonzero_config_string({key: getattr(term, key, None) for key in keys})
             if arg_str: loss_str += f"_{arg_str}"
 
     weights = loss_weights(loss_config)
     if any(weight != 1.0 for weight in weights):
         loss_str += "_cw" + "-".join(_compact_value(weight) for weight in weights)
 
-    schedule_label = _cfg_get(loss_config, "schedule_label", None)
-    if schedule_label:
-        loss_str += f"_ls{schedule_label}"
+    if loss_config.schedule_label:
+        loss_str += f"_ls{loss_config.schedule_label}"
 
     reg_str = compact_nonzero_config_string(
-        _cfg_get(loss_config, "regularisers", {}),
+        loss_config.regularisers,
         aliases={
             "boundary": "bd",
             "contiguous_growth": "cg",
@@ -193,12 +172,11 @@ def build_loss_args(loss_config, overrides=None):
     }
     ignored = {"type", "weight", "layer"}
     for term in terms:
-        values = dict(term.items()) if hasattr(term, "items") else vars(term)
-        for key, value in values.items():
+        for key, value in ((item.name, getattr(term, item.name)) for item in fields(term)):
             if key in ignored or value is None:
                 continue
             runtime_key = "internal_loss_func" if key == "metric" else key
-            if key == "metric" and "vgg" in str(_cfg_get(term, "type")):
+            if key == "metric" and "vgg" in term.type:
                 runtime_key = "metric"
             previous = loss_args.get(runtime_key, value)
             if previous != value:
@@ -218,181 +196,6 @@ def set_matmul_precision(runtime_config):
     import jax
 
     jax.config.update("jax_default_matmul_precision", precision)
-
-
-def _build_kan_aux(model_config):
-    kan_cfg = _cfg_get(model_config, "kan", None)
-    hidden_features = _cfg_get(kan_cfg, "hidden_features", None)
-    kan_aux = {
-        "basis": _cfg_get(kan_cfg, "basis", "rbf"),
-        "num_basis": _cfg_get(kan_cfg, "num_basis", 8),
-        "grid_min": _cfg_get(kan_cfg, "grid_min", -2.0),
-        "grid_max": _cfg_get(kan_cfg, "grid_max", 2.0),
-        "rbf_width": _cfg_get(kan_cfg, "rbf_width", None),
-        "trainable_width": _cfg_get(kan_cfg, "trainable_width", True),
-        "extrapolation": _cfg_get(kan_cfg, "extrapolation", "constant"),
-        "use_base_branch": _cfg_get(kan_cfg, "use_base_branch", True),
-        "base_activation": _cfg_get(kan_cfg, "base_activation", "identity"),
-        "use_layernorm": _cfg_get(kan_cfg, "use_layernorm", True),
-        "spline_init_scale": _cfg_get(kan_cfg, "spline_init_scale", 0.1),
-        "base_init_scale": _cfg_get(kan_cfg, "base_init_scale", 0.1),
-        "final_zero_init": _cfg_get(kan_cfg, "final_zero_init", True),
-    }
-    if hidden_features is not None:
-        kan_aux["hidden_features"] = hidden_features
-    return kan_aux
-
-
-def _build_activation(model_config):
-    import jax
-
-    activation_name = _cfg_get(model_config, "activation", "relu")
-    if activation_name in {None, "relu"}:
-        return jax.nn.relu
-    if activation_name == "tanh":
-        return jax.nn.tanh
-    if activation_name == "swish":
-        return jax.nn.swish
-    if activation_name == "gelu":
-        return jax.nn.gelu
-    if activation_name == "linear":
-        return lambda x: x
-    raise ValueError(f"Unsupported activation {activation_name}")
-
-
-def build_model_config_string(model_config, family=None):
-    from types import SimpleNamespace
-
-    cfg = SimpleNamespace(model=model_config)
-    family = cfg.model.family if family is None else family
-    cfg_str = (
-        f"{family}"
-        f"_c{cfg.model.channels}"
-        # f"_k{_compact_value(list(cfg.model.kernel_str))}"
-        # f"_fr{cfg.model.fire_rate}"
-    )
-    activation = _cfg_get(cfg.model, "activation", None)
-    if activation not in {None, "relu"}:
-        cfg_str += f"_act{activation}"
-    kernel_scale = _cfg_get(cfg.model, "kernel_scale", 1)
-    if kernel_scale != 1:
-        cfg_str += f"_ks{kernel_scale}"
-    if family in {"nNCA", "gnNCA"}:
-        cfg_str += f"_pn{_cfg_get(cfg.model, 'parameter_noise_level', 0.01)}"
-    if family == "FastKaNCA":
-        kan_cfg = _cfg_get(cfg.model, "kan", None)
-        cfg_str += f"_kb{_cfg_get(kan_cfg, 'num_basis', 8)}"
-        basis = _cfg_get(kan_cfg, "basis", "rbf")
-        if basis == "linear_spline":
-            cfg_str += "_klin"
-        elif basis != "rbf":
-            cfg_str += f"_k{basis}"
-        extrapolation = _cfg_get(kan_cfg, "extrapolation", "constant")
-        if extrapolation != "constant":
-            cfg_str += f"_kex{extrapolation}"
-        hidden_features = _cfg_get(kan_cfg, "hidden_features", None)
-        if hidden_features is not None:
-            cfg_str += f"_kh{hidden_features}"
-        base_activation = _cfg_get(kan_cfg, "base_activation", "identity")
-        if base_activation != "identity":
-            cfg_str += f"_kbase{base_activation}"
-        if not _cfg_get(kan_cfg, "use_layernorm", True):
-            cfg_str += "_noln"
-        if not _cfg_get(kan_cfg, "final_zero_init", True):
-            cfg_str += "_nozero"
-    if family == "HNCA":
-        cfg_str += f"_s{cfg.model.scale}"
-        if cfg.model.parent_learnable_kernels:
-            cfg_str += "_plk"
-        if cfg.model.child_gated:
-            cfg_str += "_cg"
-        if cfg.model.parent_gated:
-            cfg_str += "_pg"
-        if cfg.model.actuator_gated:
-            cfg_str += "_ag"
-    return cfg_str
-
-
-def build_model(model_config, key=None):
-    """Construct a model from config, mapping retired families to current ones."""
-    from types import SimpleNamespace
-
-    family = PORTABLE_MODEL_FAMILIES.get(model_config.family, model_config.family)
-    cfg = SimpleNamespace(model=model_config)
-    activation = _build_activation(model_config)
-    kernel_scale = _cfg_get(cfg.model, "kernel_scale", 1)
-    if family == "NCA":
-        model = NCA(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            key=key,
-        )
-    elif family == "gNCA":
-        model = gNCA(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            key=key,
-        )
-    elif family == "nNCA":
-        model = nNCA(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            PARAMETER_NOISE_LEVEL=_cfg_get(cfg.model, "parameter_noise_level", 0.01),
-            key=key,
-        )
-    elif family == "gnNCA":
-        model = gnNCA(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            PARAMETER_NOISE_LEVEL=_cfg_get(cfg.model, "parameter_noise_level", 0.01),
-            key=key,
-        )
-    elif family == "FastKaNCA":
-        model = FastKaNCA(
-            N_CHANNELS=cfg.model.channels,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            KAN_AUX=_build_kan_aux(model_config),
-            key=key,
-        )
-    elif family == "HNCA":
-        model = HNCA(
-            N_CHANNELS=cfg.model.channels,
-            SCALE=cfg.model.scale,
-            OBS_CHANNELS=cfg.model.obs_channels,
-            PARENT_LEARNABLE_KERNELS=cfg.model.parent_learnable_kernels,
-            CHILD_GATED=cfg.model.child_gated,
-            PARENT_GATED=cfg.model.parent_gated,
-            ACTUATOR_GATED=cfg.model.actuator_gated,
-            KERNEL_STR=cfg.model.kernel_str,
-            ACTIVATION=activation,
-            FIRE_RATE=cfg.model.fire_rate,
-            PADDING=cfg.model.padding,
-            KERNEL_SCALE=kernel_scale,
-            key=key,
-        )
-    else:
-        raise ValueError(f"Unknown model family {family}")
-    return model, build_model_config_string(model_config, family=family)
 
 
 def resolve_checkpoint_path(checkpoint_config, env=None):
@@ -459,7 +262,7 @@ def load_model_registry_list(
 
     from omegaconf import OmegaConf
 
-    from NCA.registry import ModelRegistry
+    from Experiments.model_registry import ModelRegistry
 
     path = Path(export_path).expanduser().resolve()
     if not path.is_file():
@@ -578,17 +381,17 @@ def build_wandb_tags(cfg):
     """Build automatic configuration tags and retain user-supplied tags."""
 
     automatic_tags = build_tags(cfg)
-    logging = _cfg_get(cfg, "logging", None)
-    wandb = _cfg_get(logging, "wandb", None)
-    explicit_tags = _cfg_get(wandb, "tags", None) or ()
-    return list(dict.fromkeys((*automatic_tags, *map(str, explicit_tags))))
+    return list(dict.fromkeys((*automatic_tags, *_explicit_tags(cfg))))
 
 
 def build_registry_tags(cfg):
     """Build readable, untruncated tags for the local model registry."""
 
     automatic_tags = build_tags(cfg, max_length=None)
-    logging = _cfg_get(cfg, "logging", None)
-    wandb = _cfg_get(logging, "wandb", None)
-    explicit_tags = _cfg_get(wandb, "tags", None) or ()
-    return list(dict.fromkeys((*automatic_tags, *map(str, explicit_tags))))
+    return list(dict.fromkeys((*automatic_tags, *_explicit_tags(cfg))))
+
+
+def _explicit_tags(cfg):
+    """Tags written by hand in logging.wandb.tags."""
+    wandb = getattr(getattr(cfg, "logging", None), "wandb", None)
+    return [str(tag) for tag in (getattr(wandb, "tags", None) or ())]

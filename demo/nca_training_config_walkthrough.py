@@ -52,7 +52,8 @@ with app.setup:
         WandbConfig,
         config_to_dict,
     )
-    from Experiments.config_helpers import build_model, set_matmul_precision
+    from Experiments.config_helpers import set_matmul_precision
+    from NCA.model.factory import build_model
     from Experiments.emoji.config import (
         EmojiDataConfig,
         EmojiPairConfig,
@@ -60,7 +61,7 @@ with app.setup:
     )
     from Experiments.emoji.config_helpers import build_data_augmenter, load_data
     from NCA.model.config import ModelConfig
-    from NCA.registry import (
+    from Experiments.model_registry import (
         ModelRegistry,
         create_model_id,
         evaluation_input_provenance,
@@ -604,7 +605,7 @@ def _(
                 observed_channels=experiment_config.data.emoji.observed_channels,
                 data_channels=experiment_config.data.emoji.data_channels,
                 loss_time_channel_mask=(
-                    experiment_config.training.trainer.loss_time_channel_mask
+                    experiment_config.trainer.loss_time_channel_mask
                 ),
                 evaluation_input=evaluation_input_provenance(data),
             )
@@ -698,7 +699,7 @@ def _(
                 ylabel="Loss",
                 title=(
                     f"Training loss — iteration {iteration + 1}/"
-                    f"{experiment_config.training.loop.iterations}"
+                    f"{experiment_config.run.iterations}"
                 ),
             )
             if all(_loss > 0 for _loss in _loss_history):
@@ -930,7 +931,7 @@ def _(
                 hidden_channels=_input_hidden_channels,
             )
             _inference_augmenter.data_init(
-                _bundle.config.training.trainer.sharding
+                _bundle.config.trainer.sharding
             )
             _initial_state = _inference_augmenter.return_saved_data()[0][0]
             _trajectory = np.asarray(

@@ -14,21 +14,21 @@ grid:
   trainer.loop_autodiff: [lax]
   # trainer.loop_autodiff: [lax]
   data.downsample: [4]
-  knockout.mode: [null]
-  knockout.time: [null]
-  knockout.channel: [Nodal]
+  data.knockout.mode: [null]
+  data.knockout.time: [null]
+  data.knockout.channel: [Nodal]
   loss.regularisers.boundary: [0.0]
   loss.regularisers.contiguous_growth: [0.0]
   loss.regularisers.hidden_state_size: [0.0]
   loss.regularisers.intermediate_state: [0.0]
   run.t: [64]
   system.precision: [tensorfloat32]
-  trainer.pool_admission_enabled: [true,false]
-  trainer.pool_admission_relative_threshold: [null]
-  trainer.pool_admission_previous_relative_threshold: [null]
-  trainer.pool_admission_absolute_threshold: [null]
-  trainer.pool_admission_ema_decay: [0.95]
-  trainer.pool_admission_warmup: [null]
+  trainer.pool_admission.enabled: [true,false]
+  trainer.pool_admission.relative_threshold: [null]
+  trainer.pool_admission.previous_relative_threshold: [null]
+  trainer.pool_admission.absolute_threshold: [null]
+  trainer.pool_admission.ema_decay: [0.95]
+  trainer.pool_admission.warmup: [null]
   # optimiser.type: [muon]
   trainer.log_every: [10]
   optimiser.type: [nadam,muon]
@@ -43,13 +43,13 @@ grid:
     # run.t : [16,32,64,128]
 branches:
   - when:
-      trainer.pool_admission_enabled: true
+      trainer.pool_admission.enabled: true
     grid:
-      trainer.pool_admission_relative_threshold: [1.1]
-      trainer.pool_admission_previous_relative_threshold: [1.0,1.1,1.2,1.3,1.4,1.5]
-      trainer.pool_admission_absolute_threshold: [null]
-      trainer.pool_admission_ema_decay: [0.95]
-      trainer.pool_admission_warmup: [null]
+      trainer.pool_admission.relative_threshold: [1.1]
+      trainer.pool_admission.previous_relative_threshold: [1.0,1.1,1.2,1.3,1.4,1.5]
+      trainer.pool_admission.absolute_threshold: [null]
+      trainer.pool_admission.ema_decay: [0.95]
+      trainer.pool_admission.warmup: [null]
 
 #   - when:
 #     grid:

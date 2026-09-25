@@ -25,7 +25,7 @@ grid:
   run.t: [128]
 
   trainer.loop_autodiff: [lax]
-  trainer.pool_admission_previous_relative_threshold: [1.0]
+  trainer.pool_admission.previous_relative_threshold: [1.0]
   trainer.log_every: [200]
 
   logging.wandb.project: [hnca_micropatterns]
@@ -61,9 +61,9 @@ grid:
   data.dataset: [micropatterns_260726]
   data.micropattern.duplicate_final_timestep: [false]
 
-  knockout.mode: [null]
-  knockout.time: [null]
-  knockout.channel: [Nodal]
+  data.knockout.mode: [null]
+  data.knockout.time: [null]
+  data.knockout.channel: [Nodal]
 
   optimiser.type: [nadam]
   optimiser.learn_rate: [1e-3]

@@ -32,3 +32,5 @@ class TrainerContext:
     # Observation time of each target image (any unit), used by non-uniform
     # training.loop.interval_mode settings to size each transition.
     observation_times: tuple[float, ...] | None = None
+    # W&B tags for the run, built from the experiment config by the caller.
+    wandb_tags: tuple[str, ...] = ()

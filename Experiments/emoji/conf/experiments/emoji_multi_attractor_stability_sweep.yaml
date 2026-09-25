@@ -19,7 +19,6 @@ grid:
   data.batches: [4]
   data.emoji.shift_amount: [10]
   data.emoji.pad: [[10,10,10,10]]
-  data.emoji.regenerate: [false]
   data.emoji.terminal_carry.start_iteration: [1000]
   data.emoji.terminal_carry.schedule_iterations: [4000]
   data.emoji.terminal_carry.initial_probability: [0.2]

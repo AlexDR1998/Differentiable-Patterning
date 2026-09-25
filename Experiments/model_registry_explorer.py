@@ -46,7 +46,7 @@ with app.setup:
     import matplotlib.pyplot as plt
     import numpy as np
 
-    from NCA.registry import ModelRegistry, verify_evaluation_input
+    from Experiments.model_registry import ModelRegistry, verify_evaluation_input
     from NCA.trainer.intervention import (
         rollout_model_sampled,
         rollout_model_with_blocked_channel_sampled,
@@ -763,8 +763,8 @@ def _(
                     )
                 _data_config = replace(
                     _cfg.data,
-                    intervention=replace(
-                        _cfg.data.intervention,
+                    knockout=replace(
+                        _cfg.data.knockout,
                         curriculum=(intervention_mode.value,),
                     ),
                 )
@@ -816,7 +816,7 @@ def _(
                     _replicate = int(data_replicate.value)
                     if evaluation_mode.value == "Configured validation replicate":
                         _validation_replicates = tuple(
-                            _data_config.micropattern.get("validation_replicates", ())
+                            _data_config.micropattern.validation_replicates
                         )
                         if _replicate not in _validation_replicates:
                             raise ValueError(
@@ -955,7 +955,7 @@ def _(
                 _boundary_mode = "none"
             else:
                 _boundary_state = jnp.asarray(_boundary)
-                if _bundle.config.trainer.get("boundary_mode", "soft") == "hard":
+                if _bundle.config.trainer.boundary_mode == "hard":
                     _boundary_mode = "hard"
                 else:
                     _boundary_mode = "soft"
@@ -1069,12 +1069,10 @@ def _(channel_filter, comparison_rollouts, timepoint_filter):
 
         def _short_tag_key(_key):
             for _prefix, _replacement in (
-                ("training.optimizer.", "optimizer."),
-                ("training.loss.terms.0.", "loss."),
-                ("training.loss.", "loss."),
-                ("training.trainer.", "trainer."),
-                ("training.loop.", "run."),
-                ("data.augmentation.", "data."),
+                ("loss.terms.0.", "loss."),
+                ("data.emoji.", "data."),
+                ("data.micropattern.", "data."),
+                ("data.snowmelt.", "data."),
             ):
                 if _key.startswith(_prefix):
                     return _replacement + _key.removeprefix(_prefix)

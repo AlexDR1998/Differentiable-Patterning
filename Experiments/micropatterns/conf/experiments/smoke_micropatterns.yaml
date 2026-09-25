@@ -21,13 +21,13 @@ grid:
   data.batches: [2]
   data.micropattern.train_replicates: [[1, 2]]
   data.micropattern.validation_replicates: [[3, 4]]
-  knockout.channel: [Nodal]
+  data.knockout.channel: [Nodal]
 
   model.channels: [32]
   run.t: [32]
   run.iterations: [60]
   # Checkpoint warmup: must be below run.iterations so a bundle is published.
-  run.warmup: [5]
+  run.checkpoint_warmup: [5]
   optimiser.warmup_steps: [10]
   trainer.log_every: [20]
   trainer.validation_every: [20]
@@ -47,6 +47,6 @@ groups:
     trainer.loop_autodiff: [checkpointed, lax]
     data.micropattern.pool_copies: [2, 1]
     logging.singular_values.enabled: [true, false]
-    knockout.curriculum:
+    data.knockout.curriculum:
       - null
       - [baseline, ko_0h, ko_24h]

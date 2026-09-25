@@ -30,18 +30,18 @@ from Experiments.config_helpers import _compact_value, build_loss_filename
 
 def build_run_name(cfg, model_name, optimiser_name):
     snowmelt = cfg.data.snowmelt
-    loop = cfg.training.loop
+    loop = cfg.run
     details = (
         f"snowmelt_{'-'.join(snowmelt.target_channels)}"
         f"_static{_compact_value(snowmelt.static_channels or None)}"
         f"_ds{cfg.data.downsample}"
         f"_t{loop.t}_{loop.interval_mode}"
-        f"_lr{cfg.training.optimizer.learn_rate}"
+        f"_lr{cfg.optimiser.learn_rate}"
         f"_irp{snowmelt.reinjection_probability}"
     )
     if loop.repeat is not None:
         details += f"_rep{loop.repeat}"
-    return f"{model_name}_{build_loss_filename(cfg.training.loss)}_{details}_{optimiser_name}"
+    return f"{model_name}_{build_loss_filename(cfg.loss)}_{details}_{optimiser_name}"
 
 
 def load_snowmelt_training_data(cfg):
@@ -66,9 +66,9 @@ def run(cfg):
     import jax.numpy as jnp
     from dotenv import load_dotenv
 
-    from Experiments.config_helpers import build_model
+    from NCA.model.factory import build_model
     from Experiments.nca_training import run_training
-    from NCA.registry import create_model_id, evaluation_input_provenance
+    from Experiments.model_registry import create_model_id, evaluation_input_provenance
     from NCA.trainer.context import TrainerContext
     from NCA.trainer.data_augmenter.snowmelt import build_snowmelt_augmenter
     from NCA.trainer.optimizer import build_optimizer
@@ -77,7 +77,7 @@ def run(cfg):
     model_root = cfg.model_store.root
     if not model_root:
         raise ValueError("model_store.root must be set for snowmelt training.")
-    if cfg.training.trainer.boundary_mode != "soft":
+    if cfg.trainer.boundary_mode != "soft":
         raise ValueError(
             "Snowmelt training writes the catchment and terrain into fixed state "
             "channels, which requires trainer.boundary_mode='soft'"
@@ -102,7 +102,7 @@ def run(cfg):
     boundary = jnp.asarray(sequence.boundary_mask)
     model, model_name = build_model(cfg.model, key=model_key)
     _, optimiser_name, _ = build_optimizer(
-        cfg.training.optimizer, cfg.training.loop.iterations, return_schedule=True
+        cfg.optimiser, cfg.run.iterations, return_schedule=True
     )
     snowmelt = cfg.data.snowmelt
     augmenter = build_snowmelt_augmenter(

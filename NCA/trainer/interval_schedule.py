@@ -181,7 +181,7 @@ def interval_schedule_from_config(config, n_slots, observation_times=None):
     Configs saved before interval modes existed resolve to ``uniform``, so
     evaluation code reproduces historical ``k * t`` indexing.
     """
-    loop = config.training.loop
+    loop = config.run
     return build_interval_schedule(
         loop.t,
         n_slots,

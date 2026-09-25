@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import jax.numpy as jnp
 import pytest
 
+from Common.trainer.config import OptimizerConfig, ScheduleConfig
 from NCA.trainer.optimizer import build_learning_rate_schedule, build_optimizer
 
 
@@ -15,13 +16,12 @@ def _cfg(schedule_type="exponential", **schedule_overrides):
         **schedule_overrides,
     }
     return SimpleNamespace(
-        run=SimpleNamespace(iterations=100),
-        optimiser=SimpleNamespace(
+        optimiser=OptimizerConfig(
             type="nadam",
             learn_rate=1e-3,
             warmup_steps=20,
             decay_rate=0.5,
-            schedule=SimpleNamespace(**schedule),
+            schedule=ScheduleConfig(**schedule),
             gradient_clip_norm=None,
             blocknorm=False,
             sam=False,

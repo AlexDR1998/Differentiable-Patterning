@@ -3,11 +3,18 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from Common.dataloader.preprocessing import PreprocessingConfig, ProcessingStep
-from Common.trainer.config import MultiTargetLossConfig
+from types import SimpleNamespace
+
+from Common.trainer.config import (
+    LossConfig,
+    MultiTargetLossConfig,
+    OptimizerConfig,
+    PointwiseLossConfig,
+)
+from Experiments.config import DataConfig, RunConfig
+from Experiments.emoji.config import EmojiDataConfig, EmojiPairConfig, ProbabilityScheduleConfig
+from Experiments.micropatterns.config import KnockoutConfig, MicropatternDataConfig
 from Experiments.config_helpers import (
-    build_model,
-    build_model_config_string,
     build_registry_tags,
     build_tags,
     build_wandb_tags,
@@ -19,8 +26,6 @@ from Experiments.emoji.config_helpers import (
     build_filename,
     load_data as load_emoji_data,
 )
-from NCA.model.NCA_fast_KAN_model import FastKaNCA
-from NCA.model.NCA_model import NCA
 from NCA.trainer.data_augmenter.colony_4ch import DataAugmenter as DataAugmenter4Ch
 from NCA.trainer.data_augmenter.colony_9ch import DataAugmenter as DataAugmenterGrouped
 
@@ -66,7 +71,7 @@ def test_load_model_registry_list_preserves_export_order(tmp_path, monkeypatch):
         def get(self, model_id):
             return _Bundle(model_id)
 
-    monkeypatch.setattr("NCA.registry.ModelRegistry", _Registry)
+    monkeypatch.setattr("Experiments.model_registry.ModelRegistry", _Registry)
 
     models = load_model_registry_list(
         export_path,
@@ -105,97 +110,6 @@ def _cfg(value):
     return value
 
 
-def _base_cfg(family):
-    return _cfg(
-        {
-            "data": {"dataset": "emojis", "emoji": {"data_channels": 4}},
-            "model": {
-                "family": family,
-                "channels": 4,
-                "kernel_str": ["ID", "LAP"],
-                "fire_rate": 1.0,
-                "padding": "CIRCULAR",
-            },
-        }
-    )
-
-
-def test_build_model_constructs_nca():
-    cfg = _base_cfg("NCA")
-    model, cfg_str = build_model(cfg.model, key=jax.random.PRNGKey(0))
-
-    assert isinstance(model, NCA)
-    assert cfg_str.startswith("NCA")
-
-
-@pytest.mark.parametrize("family", ["NCA_sycl", "NCA_fast"])
-def test_build_model_maps_retired_families_to_nca(family):
-    cfg = _base_cfg(family)
-    model, cfg_str = build_model(cfg.model, key=jax.random.PRNGKey(0))
-
-    assert type(model) is NCA
-    assert cfg_str.startswith("NCA_c4")
-
-
-def test_build_model_constructs_fast_kan_nca_with_defaults():
-    cfg = _base_cfg("FastKaNCA")
-    model, cfg_str = build_model(cfg.model, key=jax.random.PRNGKey(1))
-    x = jnp.ones((4, 6, 7))
-    y = model(x, key=jax.random.PRNGKey(2))
-
-    assert isinstance(model, FastKaNCA)
-    assert y.shape == x.shape
-    assert jnp.allclose(y, x)
-    assert model.get_config()["KAN_AUX"]["base_activation"] == "identity"
-    assert "FastKaNCA" in cfg_str
-
-
-def test_build_model_constructs_fast_kan_nca_with_kan_overrides():
-    cfg = _base_cfg("FastKaNCA")
-    cfg.model.kan = {
-        "basis": "linear_spline",
-        "hidden_features": 6,
-        "num_basis": 4,
-        "base_activation": "none",
-        "extrapolation": "linear",
-        "use_layernorm": False,
-    }
-    model, _ = build_model(cfg.model, key=jax.random.PRNGKey(3))
-
-    assert model.KAN_AUX["basis"] == "linear_spline"
-    assert model.KAN_AUX["hidden_features"] == 6
-    assert model.KAN_AUX["num_basis"] == 4
-    assert model.KAN_AUX["base_activation"] == "none"
-    assert model.KAN_AUX["extrapolation"] == "linear"
-    assert model.KAN_AUX["use_layernorm"] is False
-    assert model.get_config()["KAN_AUX"]["basis"] == "linear_spline"
-    assert model.get_config()["KAN_AUX"]["extrapolation"] == "linear"
-
-
-def test_build_model_config_string_handles_missing_kan_section():
-    cfg = _base_cfg("FastKaNCA")
-    cfg_str = build_model_config_string(cfg.model)
-
-    assert "kb8" in cfg_str
-    assert "pad" not in cfg_str
-    assert "kbaseidentity" not in cfg_str
-
-
-def test_build_model_config_string_marks_linear_spline_kan():
-    cfg = _base_cfg("FastKaNCA")
-    cfg.model.kan = {
-        "basis": "linear_spline",
-        "num_basis": 12,
-        "extrapolation": "zero",
-    }
-
-    cfg_str = build_model_config_string(cfg.model)
-
-    assert "kb12" in cfg_str
-    assert "klin" in cfg_str
-    assert "kexzero" in cfg_str
-
-
 def test_build_tags_truncates_long_values_for_wandb():
     cfg = _cfg(
         {
@@ -219,12 +133,12 @@ def test_build_registry_tags_preserves_long_values():
     experiment_groups = [
         "cell_fate_s1", "cell_fate_s2", "cell_fate_s3", "cell_fate_s4"
     ]
-    cfg = _cfg({"data": {"augmentation": {"experiment_groups": experiment_groups}}})
+    cfg = _cfg({"data": {"micropattern": {"experiment_groups": experiment_groups}}})
 
     tags = build_registry_tags(cfg)
 
     assert (
-        "data.augmentation.experiment_groups:cell_fate_s1-cell_fate_s2-"
+        "data.micropattern.experiment_groups:cell_fate_s1-cell_fate_s2-"
         "cell_fate_s3-cell_fate_s4"
     ) in tags
     assert not any("~" in tag for tag in tags)
@@ -274,7 +188,7 @@ def test_build_wandb_tags_combines_automatic_and_explicit_tags():
     cfg = _cfg(
         {
             "model": {"family": "NCA", "channels": 8},
-            "training": {"loop": {"iterations": 1000}},
+            "run": {"iterations": 1000},
             "logging": {
                 "wandb": {
                     "project": "NCA-test",
@@ -289,18 +203,30 @@ def test_build_wandb_tags_combines_automatic_and_explicit_tags():
 
     assert "model.family:NCA" in tags
     assert "model.channels:8" in tags
-    assert "training.loop.iterations:1000" in tags
+    assert "run.iterations:1000" in tags
     assert "paper" in tags
     assert tags.count("model.family:NCA") == 1
 
 
-def test_build_tags_recurses_into_typed_preprocessing_config():
+def test_build_tags_recurses_into_typed_config():
+    cfg = _cfg({"run": RunConfig(t=16, iterations=100)})
+
+    tags = build_tags(cfg)
+
+    assert "run.t:16" in tags
+    assert "run.iterations:100" in tags
+    assert not any(tag.startswith("run:RunConfig") for tag in tags)
+
+
+def test_build_tags_recurses_into_config_collections():
     cfg = _cfg(
         {
-            "data": {
-                "preprocessing": PreprocessingConfig(
-                    steps=(ProcessingStep.DOWNSAMPLE,),
-                    downsample=8,
+            "loss": {
+                "terms": (
+                    MultiTargetLossConfig(
+                        type="multi_target",
+                        assignment="hard",
+                    ),
                 )
             }
         }
@@ -308,53 +234,26 @@ def test_build_tags_recurses_into_typed_preprocessing_config():
 
     tags = build_tags(cfg)
 
-    assert "data.preprocessing.steps:downsample" in tags
-    assert "data.preprocessing.downsample:8" in tags
+    assert "loss.terms.0.type:multi_target" in tags
+    assert "loss.terms.0.assignment:hard" in tags
     assert not any(
-        tag.startswith("data.preprocessing:PreprocessingConfig") for tag in tags
-    )
-
-
-def test_build_tags_recurses_into_config_collections():
-    cfg = _cfg(
-        {
-            "training": {
-                "loss": {
-                    "terms": (
-                        MultiTargetLossConfig(
-                            type="multi_target",
-                            assignment="hard",
-                        ),
-                    )
-                }
-            }
-        }
-    )
-
-    tags = build_tags(cfg)
-
-    assert "training.loss.terms.0.type:multi_target" in tags
-    assert "training.loss.terms.0.assignment:hard" in tags
-    assert not any(
-        tag.startswith("training.loss.terms:MultiTargetLossConfig") for tag in tags
+        tag.startswith("loss.terms:MultiTargetLossConfig") for tag in tags
     )
 
 
 def test_build_tags_aliases_multi_target_schedule_paths_before_truncation():
     cfg = _cfg(
         {
-            "training": {
-                "loss": {
-                    "terms": ({
-                        "type": "multi_target",
-                        "multi_target_schedules": {
-                            "correlation": {
-                                "initial_factor": 1.0,
-                                "final_factor": 0.25,
-                            }
-                        },
-                    },)
-                }
+            "loss": {
+                "terms": ({
+                    "type": "multi_target",
+                    "multi_target_schedules": {
+                        "correlation": {
+                            "initial_factor": 1.0,
+                            "final_factor": 0.25,
+                        }
+                    },
+                },)
             }
         }
     )
@@ -367,59 +266,40 @@ def test_build_tags_aliases_multi_target_schedule_paths_before_truncation():
 
 
 def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
-    cfg = _cfg(
-        {
-            "data": {
-                "batches": 2,
-                "downsample": 1,
-                "emoji": {
-                "data_channels": 4,
-                "sequence": [
-                    "avocado.png",
-                    "mushroom.png",
-                    "lizard.png",
-                    "lizard.png",
-                ],
-                "pad": [10, 10, 10, 10],
-                "regenerate": True,
-                "shift_amount": 10,
-                "noise_strength": 0.005,
-                },
+    cfg = SimpleNamespace(
+        data=DataConfig(
+            dataset="emojis",
+            batches=2,
+            downsample=1,
+            emoji=EmojiDataConfig(
+                sequence=("avocado.png", "mushroom.png", "lizard.png", "lizard.png"),
+                pad=(10, 10, 10, 10),
+                shift_amount=10,
+                noise_strength=0.005,
+                regeneration=ProbabilityScheduleConfig(
+                    enabled=True, initial_probability=1.0, final_probability=1.0
+                ),
+            ),
+        ),
+        model=SimpleNamespace(channels=12, fire_rate=0.5),
+        loss=LossConfig(
+            terms=(PointwiseLossConfig(type="l2"),),
+            regularisers={
+                "intermediate_state": 0.0,
+                "boundary": 0.0,
+                "contiguous_growth": 0.0,
+                "update_sensitivity": 0.0,
+                "perturbation_conservation": 0.0,
             },
-            "model": {
-                "family": "FastKaNCA",
-                "channels": 12,
-                "kernel_str": ["ID", "LAP", "GRAD"],
-                "fire_rate": 0.5,
-                "padding": "REPLICATE",
-                "activation": "relu",
-                "kan": {
-                    "num_basis": 16,
-                    "hidden_features": None,
-                    "base_activation": "identity",
-                    "use_layernorm": True,
-                    "final_zero_init": True,
-                },
-            },
-            "loss": {
-                "terms": [{"type": "l2", "layer": "decoded"}],
-                "regularisers": {
-                    "intermediate_state": 0.0,
-                    "boundary": 0.0,
-                    "contiguous_growth": 0.0,
-                    "update_sensitivity": 0.0,
-                    "perturbation_conservation": 0.0,
-                },
-            },
-            "run": {"filename_mode": "hydra", "t": 64, "iterations": 1000},
-            "optimiser": {"learn_rate": 0.0003, "decay_rate": 0.99},
-        }
+        ),
+        run=RunConfig(t=64, iterations=1000),
+        optimiser=OptimizerConfig(learn_rate=0.0003, decay_rate=0.99),
     )
     data_cfg_str = build_data_config_string(cfg.data)
     data_augmenter, data_augmenter_cfg_str = build_data_augmenter(cfg.data)
     filename = build_filename(
         cfg,
-        build_model_config_string(cfg.model),
+        "FastKaNCA_c12_kb16",
         data_cfg_str,
         data_augmenter_cfg_str,
     )
@@ -427,7 +307,6 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
     assert data_augmenter is not None
     assert "data_av_mu_li" in filename
     assert "avocado" not in filename
-    assert "layersdecoded" not in filename
     assert "pad" not in filename
     assert "shift" not in filename
     assert "noise" not in filename
@@ -436,20 +315,18 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
 
 
 def _multi_attractor_cfg(pairs, target_repeats=2):
-    return _cfg(
-        {
-            "data": {
-                "emoji": {
-                    "task": "multi_attractor",
-                    "pairs": pairs,
-                    "target_repeats": target_repeats,
-                    "crop_square": False,
-                    "regenerate": False,
-                },
-                "batches": 2,
-                "downsample": 1,
-            }
-        }
+    return SimpleNamespace(
+        data=DataConfig(
+            dataset="emojis",
+            batches=2,
+            downsample=1,
+            emoji=EmojiDataConfig(
+                task="multi_attractor",
+                pairs=tuple(EmojiPairConfig(**pair) for pair in pairs),
+                target_repeats=target_repeats,
+                regeneration=ProbabilityScheduleConfig(enabled=False),
+            ),
+        )
     )
 
 
@@ -513,30 +390,28 @@ def _micropattern_cfg(
     knockout_mode=None,
     pool_copies=1,
     curriculum=None,
+    dataset="micropatterns",
+    batches=2,
+    **micropattern_overrides,
 ):
-    cfg = _cfg(
-        {
-            "data": {
-                "dataset": "micropatterns",
-                "batches": 2,
-                "downsample": 1,
-                "micropattern": {
-                    "data_channels": data_channels,
-                    "timesteps": [0, 12, 24, 36, 48],
-                    "noise_strength": 0.005,
-                    "pool_copies": pool_copies,
-                },
-            },
-            "knockout": {
-                "mode": knockout_mode,
-                "time": None if knockout_mode is None else 0,
-                "channel": "Nodal",
-                "curriculum": curriculum,
-            },
-        }
+    return DataConfig(
+        dataset=dataset,
+        batches=batches,
+        downsample=1,
+        micropattern=MicropatternDataConfig(
+            data_channels=data_channels,
+            timesteps=(0, 12, 24, 36, 48),
+            noise_strength=0.005,
+            pool_copies=pool_copies,
+            **micropattern_overrides,
+        ),
+        knockout=KnockoutConfig(
+            mode=knockout_mode,
+            time=None if knockout_mode is None else 0,
+            channel="Nodal",
+            curriculum=None if curriculum is None else tuple(curriculum),
+        ),
     )
-    cfg.data.intervention = cfg.knockout
-    return cfg.data
 
 
 def _patch_micropattern_loader(monkeypatch):
@@ -678,9 +553,9 @@ def test_260726_loader_uses_configured_even_replicate_count(monkeypatch, batch_c
         return data, {"channel_schema": object()}, ["marker"] * 14, boundary, mask
 
     monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
-    cfg = _micropattern_cfg(data_channels=14)
-    cfg.dataset = "micropatterns_260726"
-    cfg.batches = batch_count
+    cfg = _micropattern_cfg(
+        data_channels=14, dataset="micropatterns_260726", batches=batch_count
+    )
 
     data, _, _, _, mask, cfg_str = micropattern_helpers.load_data(
         cfg, impath="/tmp/micropatterns/"
@@ -709,11 +584,13 @@ def test_260726_train_validation_split_reuses_training_histogram_bins(monkeypatc
         return data, {"channel_schema": object(), "histogram_bins": bins}, ["marker"] * 14, boundary, mask
 
     monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
-    cfg = _micropattern_cfg(data_channels=14, pool_copies=2)
-    cfg.dataset = "micropatterns_260726"
-    cfg.batches = 2
-    cfg.micropattern.train_replicates = (1, 2)
-    cfg.micropattern.validation_replicates = (3, 4)
+    cfg = _micropattern_cfg(
+        data_channels=14,
+        pool_copies=2,
+        dataset="micropatterns_260726",
+        train_replicates=(1, 2),
+        validation_replicates=(3, 4),
+    )
 
     training, validation = micropattern_helpers.load_train_validation_data(
         cfg, impath="/tmp/micropatterns/"
@@ -760,8 +637,8 @@ def test_260726_knockout_curriculum_uses_standard_conditions_and_schema(monkeypa
     cfg = _micropattern_cfg(
         data_channels=14,
         curriculum=("baseline", "baseline", "ko_0h", "ko_24h"),
+        dataset="micropatterns_260726",
     )
-    cfg.dataset = "micropatterns_260726"
 
     data, aux, _, _, mask, cfg_str = micropattern_helpers.load_data(
         cfg, impath="/tmp/micropatterns/"
@@ -784,8 +661,9 @@ def test_260726_knockout_curriculum_uses_standard_conditions_and_schema(monkeypa
 def test_260726_knockout_requires_full_schema():
     import Experiments.micropatterns.config_helpers as micropattern_helpers
 
-    cfg = _micropattern_cfg(data_channels=11, curriculum=("ko_0h",))
-    cfg.dataset = "micropatterns_260726"
+    cfg = _micropattern_cfg(
+        data_channels=11, curriculum=("ko_0h",), dataset="micropatterns_260726"
+    )
 
     with pytest.raises(ValueError, match="full 14-channel schema"):
         micropattern_helpers.load_data(cfg, impath="/tmp/micropatterns/")

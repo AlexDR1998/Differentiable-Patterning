@@ -44,7 +44,7 @@ grid:
   loss.terms.0.random_channel_shuffle: [False, True]
 
   # trainer.loop_autodiff: [lax]
-  trainer.pool_admission_previous_relative_threshold: [1.0]
+  trainer.pool_admission.previous_relative_threshold: [1.0]
   trainer.log_every: [200]
 
   # data.downsample: [8,16]
@@ -60,9 +60,9 @@ grid:
   data.dataset: [micropatterns_260726]
   data.micropattern.duplicate_final_timestep: [true]
   # data.batches: [4]
-  knockout.mode: [null]
-  knockout.time: [null]
-  knockout.channel: [Nodal]
+  data.knockout.mode: [null]
+  data.knockout.time: [null]
+  data.knockout.channel: [Nodal]
   # loss.regularisers.radial_profile: [0.0]
   # loss.regularisers.channel_correlation: [1.0]
 

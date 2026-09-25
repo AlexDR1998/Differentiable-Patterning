@@ -1,41 +1,61 @@
 # Typed experiment configuration
 
-Supported workflows resolve YAML interpolation and sweep overrides in
-`Experiments/`, then immediately convert the result to frozen dataclasses in
-`Experiments.config`. OmegaConf objects must not be passed into `Common/` or
-`NCA/` builders.
+Experiment YAML files are composed with OmegaConf in `Experiments/` (base
+config plus sweep overrides) and then converted straight away into frozen
+dataclasses by `Experiments.config.load_experiment_config`. OmegaConf objects
+must not be passed into `Common/` or `NCA/`.
 
-The stable training schema is:
+The dataclasses use the same section and field names as the YAML files, so
+`run.t` in a sweep file is `cfg.run.t` in code:
 
 ```text
-ExperimentConfig
-├── RuntimeConfig
-├── DataConfig
-│   ├── PreprocessingConfig
-│   ├── EmojiDataConfig | MicropatternDataConfig
-│   └── KnockoutConfig
-├── ModelConfig
-├── TrainingConfig
-│   ├── TrainingLoopConfig
-│   ├── TrainerConfig
-│   ├── OptimizerConfig
-│   ├── LossConfig
-│   └── CheckpointConfig
-├── LoggingConfig
-└── ModelStoreConfig
+ExperimentConfig                 (Experiments/config.py)
+├── experiment                   name, stability_mode
+├── system: SystemConfig         precision, gpu, xla_flags
+├── data: DataConfig             dataset, batches, downsample
+│   ├── emoji | micropattern | snowmelt   (whichever matches data.dataset)
+│   └── knockout: KnockoutConfig          curriculum, channel, mode, time
+├── model: ModelConfig           (NCA/model/config.py)
+├── run: RunConfig               t, iterations, checkpoint_warmup, ...
+├── trainer: TrainerConfig       (NCA/trainer/config.py), incl. pool_admission
+├── optimiser: OptimizerConfig   (Common/trainer/config.py)
+├── loss: LossConfig             terms, regularisers, schedule_label
+├── logging: LoggingConfig
+├── model_store: ModelStoreConfig
+├── initialization               model_id (fine-tuning parent)
+└── labels                       descriptive W&B metadata only
 ```
 
-Impulse optimisation has its own `ImpulseExperimentConfig`, while reusing the
-same runtime, data, and reconstructable model types.
+Impulse optimisation has its own `ImpulseExperimentConfig`, which reuses the
+same `system`, `data` and `model` sections.
 
-Configuration conversion is strict: unknown fields and unsupported model
-families fail before JAX is initialised. Augmentation schedules are data-owned
-configuration. Their current iteration is supplied by the training loop, and
-fractional schedules receive the configured total iteration count explicitly.
+Conversion is strict: unknown fields and unsupported model families fail
+before JAX starts. Every field has a value after conversion, so read fields as
+attributes (`cfg.run.t`), never with `.get(key, default)`. To add an option,
+add a field (with a default) to the right dataclass.
 
-Model bundles contain the resolved dataclass representation with
-`schema_version`. This is a clean-break schema; regenerate manifests and retrain
-models created before this configuration system.
+Two warmups exist: `run.checkpoint_warmup` (the best checkpoint is only saved
+after this many iterations) and `trainer.pool_admission.warmup` (pool
+admission starts after this many). A null pool admission warmup means the same
+as `run.checkpoint_warmup`.
+
+## Older configs
+
+Current files have `schema_version: 2`. Configs with `schema_version: 1` are
+translated as they are read by `upgrade_legacy_config`, the only place old
+spellings are handled. Version 1 came in two layouts:
+
+- sweep files and manifests: top-level `knockout`, `run.warmup`, flat
+  `trainer.pool_admission_*` keys, `run.filename_mode` and
+  `data.emoji.regenerate`;
+- saved model bundles: `runtime`, `training.{loop, trainer, optimizer, loss,
+  checkpoint}`, `data.preprocessing` and `data.{augmentation, intervention}`.
+
+Saved bundles are never edited, so they keep loading through this function.
+Old manifests also still run. Note that `data.emoji.regenerate` in old sweep
+files never actually switched regeneration off (the base config's
+`regeneration.enabled` always took precedence); old manifests reproduce that,
+and current sweep files set `data.emoji.regeneration.enabled` directly.
 
 ## Loss weight schedules
 

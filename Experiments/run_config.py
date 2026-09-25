@@ -42,15 +42,6 @@ def synchronize_jax(jax_module: Any) -> None:
     jax_module.block_until_ready(jax_module.device_put(0))
 
 
-def optional_cfg_value(cfg: Any, path: str, default: Any = None) -> Any:
-    value = cfg
-    for part in path.split("."):
-        value = getattr(value, part, default)
-        if value is default:
-            break
-    return value
-
-
 def apply_runtime_overrides(cfg: Any) -> None:
     """Apply deployment-specific paths without embedding them in manifests."""
     model_store_root = os.getenv("MODEL_STORE_ROOT")
@@ -80,7 +71,7 @@ def configure_xla_flags(cfg: Any) -> None:
         "command_buffer": "--xla_gpu_enable_command_buffer=FUSION",
     }
 
-    xla_flags = optional_cfg_value(cfg, "system.xla_flags")
+    xla_flags = cfg.system.xla_flags
     if xla_flags:
         flag_parts: list[str] = []
         for flag in xla_flags:
@@ -97,7 +88,7 @@ def configure_jax_runtime(cfg: Any) -> Any:
 
     import jax
 
-    precision = optional_cfg_value(cfg, "system.precision", default="highest")
+    precision = cfg.system.precision
     jax.config.update("jax_default_matmul_precision", str(precision))
     print(f"jax_default_matmul_precision={precision}")
 

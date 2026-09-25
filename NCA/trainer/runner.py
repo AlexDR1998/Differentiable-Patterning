@@ -244,7 +244,7 @@ def run_training(
     checkpoint = BestCheckpoint(
         Path(trainer.model_path).with_suffix(".eqx"), setup.checkpoint_warmup
     )
-    admission_config = trainer.config.training.trainer.pool_admission
+    admission_config = trainer.config.trainer.pool_admission
     admission = (
         TimePoolAdmissionController(admission_config, setup.warmup)
         if setup.is_multi_target
@@ -332,7 +332,7 @@ def run_training(
         metrics["loss_schedule/stage"] = max(loss_stage, default=0)
         metrics["loss_schedule/stage_changed"] = int(loss_stage_changed)
         validation_every = getattr(
-            trainer.config.training.trainer, "validation_every", None
+            trainer.config.trainer, "validation_every", None
         )
         should_validate = (
             validation_evaluator is not None
@@ -390,7 +390,7 @@ def run_training(
             SAVE_TRAJECTORY=False,
             write_videos=setup.write_videos,
             boundary_masks=trainer.diagnostic_boundary_mask,
-            boundary_mode=trainer.config.training.trainer.boundary_mode,
+            boundary_mode=trainer.config.trainer.boundary_mode,
         )
     wandb_run_id = None
     if trainer.is_logging:

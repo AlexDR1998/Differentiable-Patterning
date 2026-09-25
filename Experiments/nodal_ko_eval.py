@@ -48,7 +48,7 @@ with app.setup(hide_code=True):
     from omegaconf import OmegaConf
     from tqdm.auto import tqdm
 
-    from NCA.registry import ModelRegistry
+    from Experiments.model_registry import ModelRegistry
     from NCA.trainer.intervention import (
         rollout_model,
         rollout_model_sampled,
@@ -116,14 +116,12 @@ with app.setup(hide_code=True):
 
         baseline_config = replace(
             bundle.config.data,
-            intervention=replace(
-                bundle.config.data.intervention,
+            knockout=replace(
+                bundle.config.data.knockout,
                 curriculum=("baseline",),
             ),
         )
-        train_replicates = baseline_config.micropattern.get(
-            "train_replicates", None
-        )
+        train_replicates = baseline_config.micropattern.train_replicates
         if train_replicates is None:
             train_replicates = tuple(range(1, baseline_config.batches + 1))
         baseline_data = load_data(
@@ -147,8 +145,8 @@ with app.setup(hide_code=True):
 
         data_config = replace(
             bundle.config.data,
-            intervention=replace(
-                bundle.config.data.intervention,
+            knockout=replace(
+                bundle.config.data.knockout,
                 curriculum=(condition,),
             ),
         )
@@ -211,7 +209,7 @@ with app.setup(hide_code=True):
         )
 
         boundary_state = jnp.asarray(condition_data["boundary"])
-        boundary_mode = bundle.config.trainer.get("boundary_mode", "soft")
+        boundary_mode = bundle.config.trainer.boundary_mode
 
         time_labels = tuple(
             f"{int(hour)}h" for hour in bundle.config.data.micropattern.timesteps
@@ -578,8 +576,8 @@ def _(
             ):
                 _effective_data_config = replace(
                     _bundle.config.data,
-                    intervention=replace(
-                        _bundle.config.data.intervention,
+                    knockout=replace(
+                        _bundle.config.data.knockout,
                         curriculum=(_condition,),
                     ),
                 )
@@ -594,8 +592,8 @@ def _(
                 if not _data_cache_hit:
                     _baseline_data_config = replace(
                         _bundle.config.data,
-                        intervention=replace(
-                            _bundle.config.data.intervention,
+                        knockout=replace(
+                            _bundle.config.data.knockout,
                             curriculum=("baseline",),
                         ),
                     )
@@ -1150,9 +1148,9 @@ def _(
                 float(fine_ko_endpoint.value) * _fine_steps_per_12h / 12.0
             ))
             _fine_observation_steps = jnp.asarray([_fine_total_steps], dtype=jnp.int32)
-            _fine_boundary_mode = _fine_bundle.config.trainer.get("boundary_mode", "soft")
+            _fine_boundary_mode = _fine_bundle.config.trainer.boundary_mode
             _fine_curriculum = tuple(
-                _fine_bundle.config.data.intervention.curriculum or ("baseline",)
+                _fine_bundle.config.data.knockout.curriculum or ("baseline",)
             )
             _fine_label = str(
                 _fine_record.get("notes")
@@ -2309,7 +2307,7 @@ def _(
                         _dynamics_model,
                         _dynamics_state,
                         jnp.asarray(_dynamics_data["boundary"]),
-                        _dynamics_bundle.config.trainer.get("boundary_mode", "soft"),
+                        _dynamics_bundle.config.trainer.boundary_mode,
                         jr.PRNGKey(int(dynamics_seed.value)),
                         _dynamics_total_steps,
                         _dynamics_data["nodal_channel"],
@@ -2664,9 +2662,7 @@ def _(
         _composite_total_steps = (
             (len(_composite_hours) - 1) * _composite_steps_per_observation
         )
-        _composite_boundary_mode = _composite_bundle.config.trainer.get(
-            "boundary_mode", "soft"
-        )
+        _composite_boundary_mode = _composite_bundle.config.trainer.boundary_mode
         if _composite_boundary_mode == "soft":
             _composite_boundary_callback = model_boundary(_composite_boundary)
         elif _composite_boundary_mode == "hard":
@@ -2876,9 +2872,7 @@ def _(
         _generative_observation_steps = jnp.asarray(
             [_generative_total_steps], dtype=jnp.int32
         )
-        _generative_boundary_mode = _generative_bundle.config.trainer.get(
-            "boundary_mode", "soft"
-        )
+        _generative_boundary_mode = _generative_bundle.config.trainer.boundary_mode
         _generative_data_cache = {}
         _generative_images = []
         _generative_trajectories = []

@@ -108,18 +108,21 @@ def test_channel_importance_validation_rejects_bad_grouped_configuration():
 
 
 def test_loss_config_plumbing_and_filename_include_non_default_weights():
+    from Common.trainer.config import (
+        GroupedPointwiseLossConfig,
+        LossConfig,
+        VggLossConfig,
+    )
+
     cfg = SimpleNamespace(
-        loss=SimpleNamespace(
-            terms=[
-                SimpleNamespace(
+        loss=LossConfig(
+            terms=(
+                VggLossConfig(
                     type="vgg_grouped", weight=1.0,
-                    metric="l2", random_crop=False,
-                    random_channel_shuffle=False,
-                    channel_importance=[1.0, 1.0, 1.0, 4.0] + [1.0] * 8,
+                    channel_importance=(1.0, 1.0, 1.0, 4.0) + (1.0,) * 8,
                 ),
-                SimpleNamespace(type="l2_grouped", weight=2.0),
-            ],
-            regularisers={},
+                GroupedPointwiseLossConfig(type="l2_grouped", weight=2.0),
+            ),
         )
     )
 
