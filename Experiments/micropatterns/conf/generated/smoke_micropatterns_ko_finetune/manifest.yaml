@@ -1,0 +1,374 @@
+experiment_name: smoke_micropatterns_ko_finetune
+entrypoint: Experiments.micropatterns.train:run
+base_config: null
+sweep_file: null
+output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/smoke_micropatterns_ko_finetune
+count: 2
+configs:
+- index: 0
+  overrides:
+    initialization.model_id: 20260923T134957Z-cfgd39864233e18-86c2c4d5
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    data.dataset: micropatterns_260726
+    data.micropattern.data_channels: 14
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    - cell_fate_s2
+    - rna_expression
+    - protein_response
+    data.downsample: 16
+    data.batches: 2
+    data.micropattern.train_replicates:
+    - 1
+    - 2
+    data.micropattern.validation_replicates:
+    - 3
+    - 4
+    knockout.channel: Nodal
+    model.family: gNCA
+    model.channels: 48
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    knockout.curriculum:
+    - ko_24h
+    run.t: 32
+    run.iterations: 40
+    run.warmup: 5
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 10
+    trainer.loop_autodiff: lax
+    trainer.log_every: 20
+    trainer.validation_every: 20
+    trainer.validation_rollout: true
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 1.0
+    loss.terms.0.random_channel_shuffle: true
+    experiment.name: smoke_micropatterns_ko_finetune
+    logging.wandb.group: smoke_micropatterns_ko_finetune
+    seed: 0
+  config:
+    schema_version: 1
+    seed: 0
+    experiment:
+      name: smoke_micropatterns_ko_finetune
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: null
+    data:
+      dataset: micropatterns_260726
+      batches: 2
+      downsample: 16
+      micropattern:
+        pool_copies: 1
+        train_replicates:
+        - 1
+        - 2
+        validation_replicates:
+        - 3
+        - 4
+        experiment_groups:
+        - cell_fate_s1
+        - cell_fate_s2
+        - rna_expression
+        - protein_response
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 14
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 0.5
+        intermediate_reinjection_probability_end: 0.5
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: false
+    model:
+      family: gNCA
+      channels: 48
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      backend:
+        type: none
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 20
+      validation_every: 20
+      validation_rollout: true
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 10
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 1.0
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 32
+      iterations: 40
+      warmup: 5
+      write_images: true
+      write_videos: true
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: pipeline-smoke
+        group: smoke_micropatterns_ko_finetune
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: Experiments.config_helpers:build_model
+    initialization:
+      model_id: 20260923T134957Z-cfgd39864233e18-86c2c4d5
+    knockout:
+      mode: null
+      time: null
+      channel: Nodal
+      curriculum:
+      - ko_24h
+- index: 1
+  overrides:
+    initialization.model_id: 20260923T134957Z-cfgd39864233e18-86c2c4d5
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    data.dataset: micropatterns_260726
+    data.micropattern.data_channels: 14
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    - cell_fate_s2
+    - rna_expression
+    - protein_response
+    data.downsample: 16
+    data.batches: 2
+    data.micropattern.train_replicates:
+    - 1
+    - 2
+    data.micropattern.validation_replicates:
+    - 3
+    - 4
+    knockout.channel: Nodal
+    model.family: gNCA
+    model.channels: 48
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    knockout.curriculum:
+    - baseline
+    - ko_0h
+    - ko_24h
+    run.t: 32
+    run.iterations: 40
+    run.warmup: 5
+    optimiser.learn_rate: 0.0001
+    optimiser.warmup_steps: 10
+    trainer.loop_autodiff: lax
+    trainer.log_every: 20
+    trainer.validation_every: 20
+    trainer.validation_rollout: true
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 1.0
+    loss.terms.0.random_channel_shuffle: true
+    experiment.name: smoke_micropatterns_ko_finetune
+    logging.wandb.group: smoke_micropatterns_ko_finetune
+    seed: 0
+  config:
+    schema_version: 1
+    seed: 0
+    experiment:
+      name: smoke_micropatterns_ko_finetune
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: null
+    data:
+      dataset: micropatterns_260726
+      batches: 2
+      downsample: 16
+      micropattern:
+        pool_copies: 1
+        train_replicates:
+        - 1
+        - 2
+        validation_replicates:
+        - 3
+        - 4
+        experiment_groups:
+        - cell_fate_s1
+        - cell_fate_s2
+        - rna_expression
+        - protein_response
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 14
+        pad_multiple: null
+        noise_strength: 0.005
+        intermediate_reinjection_probability: 0.5
+        intermediate_reinjection_probability_end: 0.5
+        intermediate_reinjection_decay_start_fraction: 0.25
+        duplicate_final_timestep: false
+    model:
+      family: gNCA
+      channels: 48
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      backend:
+        type: none
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 20
+      validation_every: 20
+      validation_rollout: true
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.0001
+      warmup_steps: 10
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 1.0
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 32
+      iterations: 40
+      warmup: 5
+      write_images: true
+      write_videos: true
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: pipeline-smoke
+        group: smoke_micropatterns_ko_finetune
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: Experiments.config_helpers:build_model
+    initialization:
+      model_id: 20260923T134957Z-cfgd39864233e18-86c2c4d5
+    knockout:
+      mode: null
+      time: null
+      channel: Nodal
+      curriculum:
+      - baseline
+      - ko_0h
+      - ko_24h
+emit_files: false

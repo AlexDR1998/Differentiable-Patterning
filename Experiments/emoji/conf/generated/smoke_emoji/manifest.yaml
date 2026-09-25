@@ -1,0 +1,636 @@
+experiment_name: smoke_emoji
+entrypoint: Experiments.emoji.train:run
+base_config: null
+sweep_file: null
+output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/generated/smoke_emoji
+count: 4
+configs:
+- index: 0
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    model.channels: 16
+    data.batches: 2
+    data.downsample: 2
+    run.t: 16
+    run.iterations: 60
+    run.warmup: 5
+    run.write_images: true
+    trainer.log_every: 20
+    optimiser.warmup_steps: 10
+    model.family: NCA
+    trainer.loop_autodiff: checkpointed
+    loss.terms:
+    - l2
+    data.emoji.task: sequence
+    data.emoji.pairs: []
+    data.emoji.terminal_carry.enabled: false
+    data.emoji.terminal_carry.start_iteration: 20
+    data.emoji.terminal_carry.schedule_iterations: 20
+    loss.regularisers.contiguous_growth: 1.0
+    loss.regularisers.update_sensitivity: 0.0
+    loss.regularisers.perturbation_conservation: 0.0
+    experiment.name: smoke_emoji
+    logging.wandb.group: smoke_emoji
+    seed: 0
+  config:
+    schema_version: 1
+    seed: 0
+    experiment:
+      name: smoke_emoji
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs: []
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        regenerate: true
+        terminal_carry:
+          enabled: false
+          start_iteration: 20
+          schedule_iterations: 20
+          initial_probability: 0.5
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_iteration: 0
+          schedule_iterations: 0
+          initial_probability: 1.0
+          final_probability: 1.0
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      backend:
+        type: none
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 20
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 10
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      t: 16
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 60
+      warmup: 5
+      write_images: true
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_emoji
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: Experiments.config_helpers:build_model
+    knockout:
+      time: null
+      channel: null
+- index: 1
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    model.channels: 16
+    data.batches: 2
+    data.downsample: 2
+    run.t: 16
+    run.iterations: 60
+    run.warmup: 5
+    run.write_images: true
+    trainer.log_every: 20
+    optimiser.warmup_steps: 10
+    model.family: gNCA
+    trainer.loop_autodiff: lax
+    loss.terms:
+    - l2
+    data.emoji.task: sequence
+    data.emoji.pairs: []
+    data.emoji.terminal_carry.enabled: true
+    data.emoji.terminal_carry.start_iteration: 20
+    data.emoji.terminal_carry.schedule_iterations: 20
+    loss.regularisers.contiguous_growth: 0.0
+    loss.regularisers.update_sensitivity: 0.0
+    loss.regularisers.perturbation_conservation: 0.0
+    experiment.name: smoke_emoji
+    logging.wandb.group: smoke_emoji
+    seed: 0
+  config:
+    schema_version: 1
+    seed: 0
+    experiment:
+      name: smoke_emoji
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs: []
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        regenerate: true
+        terminal_carry:
+          enabled: true
+          start_iteration: 20
+          schedule_iterations: 20
+          initial_probability: 0.5
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_iteration: 0
+          schedule_iterations: 0
+          initial_probability: 1.0
+          final_probability: 1.0
+    model:
+      family: gNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      backend:
+        type: none
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 20
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 10
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      t: 16
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 60
+      warmup: 5
+      write_images: true
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_emoji
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: Experiments.config_helpers:build_model
+    knockout:
+      time: null
+      channel: null
+- index: 2
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    model.channels: 16
+    data.batches: 2
+    data.downsample: 2
+    run.t: 16
+    run.iterations: 60
+    run.warmup: 5
+    run.write_images: true
+    trainer.log_every: 20
+    optimiser.warmup_steps: 10
+    model.family: NCA_fast
+    trainer.loop_autodiff: checkpointed
+    loss.terms:
+    - l2
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 12
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 12
+      target: microbe.png
+    data.emoji.terminal_carry.enabled: true
+    data.emoji.terminal_carry.start_iteration: 20
+    data.emoji.terminal_carry.schedule_iterations: 20
+    loss.regularisers.contiguous_growth: 0.0
+    loss.regularisers.update_sensitivity: 0.0
+    loss.regularisers.perturbation_conservation: 0.0
+    experiment.name: smoke_emoji
+    logging.wandb.group: smoke_emoji
+    seed: 0
+  config:
+    schema_version: 1
+    seed: 0
+    experiment:
+      name: smoke_emoji
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 12
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 12
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        regenerate: true
+        terminal_carry:
+          enabled: true
+          start_iteration: 20
+          schedule_iterations: 20
+          initial_probability: 0.5
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_iteration: 0
+          schedule_iterations: 0
+          initial_probability: 1.0
+          final_probability: 1.0
+    model:
+      family: NCA_fast
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      backend:
+        type: none
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 20
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 10
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      t: 16
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 60
+      warmup: 5
+      write_images: true
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_emoji
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: Experiments.config_helpers:build_model
+    knockout:
+      time: null
+      channel: null
+- index: 3
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    model.channels: 16
+    data.batches: 2
+    data.downsample: 2
+    run.t: 16
+    run.iterations: 60
+    run.warmup: 5
+    run.write_images: true
+    trainer.log_every: 20
+    optimiser.warmup_steps: 10
+    model.family: gnNCA
+    trainer.loop_autodiff: lax
+    loss.terms:
+    - type: sliced_wasserstein_channel
+      samples: 16
+      epsilon: 0.1
+    data.emoji.task: sequence
+    data.emoji.pairs: []
+    data.emoji.terminal_carry.enabled: false
+    data.emoji.terminal_carry.start_iteration: 20
+    data.emoji.terminal_carry.schedule_iterations: 20
+    loss.regularisers.contiguous_growth: 1.0
+    loss.regularisers.update_sensitivity: 0.1
+    loss.regularisers.perturbation_conservation: 0.1
+    experiment.name: smoke_emoji
+    logging.wandb.group: smoke_emoji
+    seed: 0
+  config:
+    schema_version: 1
+    seed: 0
+    experiment:
+      name: smoke_emoji
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs: []
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        regenerate: true
+        terminal_carry:
+          enabled: false
+          start_iteration: 20
+          schedule_iterations: 20
+          initial_probability: 0.5
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_iteration: 0
+          schedule_iterations: 0
+          initial_probability: 1.0
+          final_probability: 1.0
+    model:
+      family: gnNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      sharding: null
+      backend:
+        type: none
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 20
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 10
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: sliced_wasserstein_channel
+        samples: 16
+        epsilon: 0.1
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.1
+        perturbation_conservation: 0.1
+        hidden_state_size: 0.0
+    run:
+      t: 16
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 60
+      warmup: 5
+      write_images: true
+      filename_mode: hydra
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_emoji
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: Experiments.config_helpers:build_model
+    knockout:
+      time: null
+      channel: null
+emit_files: false

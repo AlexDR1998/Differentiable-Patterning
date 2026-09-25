@@ -17,7 +17,9 @@ Usage (from the repository root, on a GPU machine):
     python Experiments/pipeline_smoke_test.py --dry-run    # manifests + Kubernetes commands
 
 Manifests and logs go into one timestamped folder, by default
-``logs/smoke/<time>/``. Bundles are published to the normal model store
+``logs/smoke/<time>/``. A dry run instead writes each manifest to the tracked
+``Experiments/<domain>/conf/generated/<sweep>/`` folder, so the manifests can
+be committed and pulled onto the cluster like any other sweep. Bundles are published to the normal model store
 (``MODEL_STORE_ROOT``, e.g. from ``.env``) under the ``pipeline-smoke``
 collection, which is also where the fine-tuning parent is looked up.
 """
@@ -79,7 +81,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--out", type=Path, default=None,
-        help="Folder for manifests and logs (default: logs/smoke/<UTC time>)",
+        help="Folder for manifests and logs (default: logs/smoke/<UTC time>, "
+        "or each domain's conf/generated/ folder with --dry-run)",
     )
     parser.add_argument(
         "--model-store-root", type=Path, default=None,
@@ -107,7 +110,8 @@ def main() -> int:
         args.model_store_root or Path(os.environ.get("MODEL_STORE_ROOT", REPO_ROOT / "models"))
     ).resolve()
     stages = [stage for stage in STAGES if args.only is None or stage[0] in args.only]
-    print(f"Output: {out_dir}")
+    if not (args.dry_run and args.out is None):
+        print(f"Output: {out_dir}")
     print(f"Model store: {model_root} (collection '{SMOKE_COLLECTION}')")
 
     env = os.environ.copy()
@@ -124,8 +128,12 @@ def main() -> int:
             results.append((sweep_name, -1, "skipped: parent model ID not set", 0.0))
             continue
 
-        manifest = generate_manifest(base_cfg, sweep_cfg, out_dir / sweep_name)
-        manifest_path = out_dir / sweep_name / "manifest.yaml"
+        if args.dry_run and args.out is None:
+            manifest_dir = REPO_ROOT / "Experiments" / domain / "conf" / "generated" / sweep_name
+        else:
+            manifest_dir = out_dir / sweep_name
+        manifest = generate_manifest(base_cfg, sweep_cfg, manifest_dir)
+        manifest_path = manifest_dir / "manifest.yaml"
         count = int(manifest["count"])
         print(f"{sweep_name}: {count} runs")
         if args.dry_run:

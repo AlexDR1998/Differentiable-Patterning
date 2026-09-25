@@ -1,0 +1,276 @@
+experiment_name: smoke_snowmelt
+entrypoint: Experiments.snowmelt.train:run
+base_config: null
+sweep_file: null
+output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/snowmelt/conf/generated/smoke_snowmelt
+count: 2
+configs:
+- index: 0
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    data.dataset: snowmelt
+    data.downsample: 8
+    model.channels: 16
+    run.t: 16
+    run.iterations: 60
+    run.warmup: 5
+    optimiser.warmup_steps: 10
+    trainer.log_every: 20
+    model.family: NCA
+    data.snowmelt.target_channels:
+    - SCA
+    run.interval_mode: steps
+    trainer.loop_autodiff: checkpointed
+    experiment.name: smoke_snowmelt
+    logging.wandb.group: smoke_snowmelt
+    seed: 0
+  config:
+    schema_version: 1
+    seed: 0
+    experiment:
+      name: smoke_snowmelt
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: null
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 8
+      snowmelt:
+        root: null
+        target_channels:
+        - SCA
+        static_channels:
+        - DEM
+        - INCIDENCE
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      backend:
+        type: none
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 20
+      validation_every: null
+      validation_rollout: false
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 10
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 16
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 60
+      warmup: 5
+      write_images: true
+      write_videos: true
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: pipeline-smoke
+        group: smoke_snowmelt
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: Experiments.config_helpers:build_model
+    initialization:
+      model_id: null
+    knockout:
+      mode: null
+      time: null
+      channel: null
+      curriculum: null
+- index: 1
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    data.dataset: snowmelt
+    data.downsample: 8
+    model.channels: 16
+    run.t: 16
+    run.iterations: 60
+    run.warmup: 5
+    optimiser.warmup_steps: 10
+    trainer.log_every: 20
+    model.family: gNCA
+    data.snowmelt.target_channels:
+    - NDSI
+    - B3
+    - B11
+    run.interval_mode: uniform
+    trainer.loop_autodiff: lax
+    experiment.name: smoke_snowmelt
+    logging.wandb.group: smoke_snowmelt
+    seed: 0
+  config:
+    schema_version: 1
+    seed: 0
+    experiment:
+      name: smoke_snowmelt
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: null
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 8
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        - B3
+        - B11
+        static_channels:
+        - DEM
+        - INCIDENCE
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      sharding: null
+      backend:
+        type: none
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 20
+      validation_every: null
+      validation_rollout: false
+      pool_admission_enabled: true
+      pool_admission_relative_threshold: 1.25
+      pool_admission_previous_relative_threshold: 1.1
+      pool_admission_absolute_threshold: null
+      pool_admission_ema_decay: 0.95
+      pool_admission_warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 10
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 16
+      interval_mode: uniform
+      reference_interval: null
+      interval_steps: null
+      iterations: 60
+      warmup: 5
+      write_images: true
+      write_videos: true
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: pipeline-smoke
+        group: smoke_snowmelt
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: Experiments.config_helpers:build_model
+    initialization:
+      model_id: null
+    knockout:
+      mode: null
+      time: null
+      channel: null
+      curriculum: null
+emit_files: false
