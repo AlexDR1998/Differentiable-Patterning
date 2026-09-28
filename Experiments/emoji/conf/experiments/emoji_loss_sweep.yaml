@@ -22,6 +22,5 @@ grid:
 groups:
   - loss.terms:
       - [{type: l2}]
-      - [{type: sliced_wasserstein_channel, samples: 64, epsilon: 0.1}]
+      - [{type: sliced_wasserstein_channel, samples: 64}]
       - [{type: ott, S: 128, epsilon: 0.1, metric: l2}]
-      - [{type: emd_loss, samples: 64, epsilon: 0.1, normalize: true, tau: 1.0, amplitude_penalty: true, metric: l2}]

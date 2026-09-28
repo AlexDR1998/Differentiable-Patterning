@@ -5,7 +5,7 @@ import jax
 import jax.numpy as jnp
 import optax
 
-from Common.trainer.loss import build_loss_functions
+from Common.trainer.loss_table import build_loss_functions
 from NCA.trainer.impulse.regularisers import intervention_metrics, weighted_regulariser
 from NCA.trainer.impulse.rollout import identity_boundary, run_nca_batch
 from NCA.trainer.impulse.types import ImpulseBatch, ImpulseResult

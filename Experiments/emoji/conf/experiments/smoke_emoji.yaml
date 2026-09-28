@@ -31,7 +31,7 @@ groups:
       - [l2]
       - [l2]
       - [l2]
-      - [{type: sliced_wasserstein_channel, samples: 16, epsilon: 0.1}]
+      - [{type: sliced_wasserstein_channel, samples: 16}]
     data.emoji.task: [sequence, sequence, multi_attractor, sequence]
     data.emoji.pairs:
       - []

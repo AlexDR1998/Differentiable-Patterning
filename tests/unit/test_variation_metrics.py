@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import pytest
 
-from Common.trainer.variation_metrics import replicate_variation_metrics
+from NCA.trainer.variation_metrics import replicate_variation_metrics
 
 
 def _replicates():

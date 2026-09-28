@@ -3,8 +3,8 @@ import jax.numpy as jnp
 import pytest
 
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
-from Common.trainer import loss_multi_target
-from Common.trainer.loss_multi_target import multi_target_loss
+from NCA.trainer import loss_multi_target
+from NCA.trainer.loss_multi_target import multi_target_loss
 from NCA.trainer.data_augmenter.micropattern import DataAugmenter
 
 COMPONENT_NAMES = ("l2", "texture", "channel_mean", "radial", "correlation")

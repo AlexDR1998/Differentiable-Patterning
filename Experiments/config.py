@@ -20,18 +20,12 @@ from typing import Any, Mapping
 
 from Common.config import ConfigValue
 from Common.trainer.config import (
-    GroupedPointwiseLossConfig,
+    LOSS_TERM_CONFIGS,
     LossConfig,
     LossTermConfig,
     LossWeightScheduleConfig,
-    MultiTargetLossConfig,
     OptimizerConfig,
-    OttLossConfig,
-    PointwiseLossConfig,
     ScheduleConfig,
-    SummaryLossConfig,
-    VggLossConfig,
-    WassersteinLossConfig,
 )
 from Experiments.emoji.config import (
     EmojiDataConfig,
@@ -210,6 +204,20 @@ class ExperimentConfig(ConfigValue):
     )
     labels: LabelsConfig = field(default_factory=LabelsConfig)
 
+    def __post_init__(self):
+        # The VGG losses compare against target features computed once, before
+        # training, from the raw targets. grad_loss compares image gradients
+        # instead, which those cached features ignore.
+        if self.trainer.grad_loss:
+            vgg_terms = [
+                term.type for term in self.loss.terms
+                if "vgg" in term.type or term.type == "multi_target"
+            ]
+            if vgg_terms:
+                raise ValueError(
+                    f"trainer.grad_loss cannot be used with the VGG-based losses {vgg_terms}"
+                )
+
 
 @dataclass(frozen=True)
 class ImpulseExperimentConfig(ConfigValue):
@@ -366,45 +374,14 @@ def _optional_tuple(value: Any) -> tuple[Any, ...] | None:
     return None if value is None else _tuple(value)
 
 
-_POINTWISE_LOSSES = {
-    "l1", "l2", "euclidean", "cosine", "spectral",
-    "spectral_no_phase", "spectral_phase", "bhattacharyya", "kl_divergence",
-    "hellinger", "average_amplitude",
-}
-_VGG_LOSSES = {"vgg", "vgg_grouped", "vgg_grouped_and_l2"}
-_OTT_LOSSES = {"ott", "ott_chstack", "ott_grouped", "ott_grouped_and_l2"}
-_WASSERSTEIN_LOSSES = {
-    "sliced_wasserstein_spatial", "sliced_wasserstein_channel",
-    "sliced_wasserstein_full", "sliced_wasserstein_rotational",
-    "spectral_wasserstein_full", "emd_loss",
-}
-_SUMMARY_LOSSES = {
-    "radial_profile", "radial_profile_grouped", "channel_correlation",
-    "channel_correlation_grouped",
-}
-
-
 def _loss_term(value: Any, path: str) -> LossTermConfig:
     if isinstance(value, str):
         value = {"type": value}
     node = _mapping(value, path)
     loss_type = str(node.get("type", "l2"))
-    if loss_type in _POINTWISE_LOSSES:
-        cls = PointwiseLossConfig
-    elif loss_type == "l2_grouped":
-        cls = GroupedPointwiseLossConfig
-    elif loss_type in _VGG_LOSSES:
-        cls = VggLossConfig
-    elif loss_type in _OTT_LOSSES:
-        cls = OttLossConfig
-    elif loss_type in _WASSERSTEIN_LOSSES:
-        cls = WassersteinLossConfig
-    elif loss_type in _SUMMARY_LOSSES:
-        cls = SummaryLossConfig
-    elif loss_type == "multi_target":
-        cls = MultiTargetLossConfig
-    else:
+    if loss_type not in LOSS_TERM_CONFIGS:
         raise ValueError(f"Unsupported loss type at {path}: {loss_type!r}")
+    cls = LOSS_TERM_CONFIGS[loss_type]
     converters = {
         "channels": lambda x: x if x is None or isinstance(x, str) else _tuple(x),
         "experiment_groups": _optional_tuple,

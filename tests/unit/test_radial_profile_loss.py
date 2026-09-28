@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 from Common.dataloader.micropattern_schemas import MICROPATTERN_GROUPED_12CH_SCHEMA
-from Common.trainer.loss import radial_profile_grouped_loss
+from Common.trainer.loss_micropattern import radial_profile_grouped_loss
 
 
 def radial_profile_grouped(prediction, target, mask, boundary=None, radial_bins=16):

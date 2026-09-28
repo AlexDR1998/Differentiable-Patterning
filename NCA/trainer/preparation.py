@@ -10,8 +10,8 @@ from typing import Any, Callable
 import jax.numpy as jnp
 import jax.tree_util as jtu
 
-from Common.trainer.loss import build_loss_functions, build_loss_initialiser
-from Common.trainer.loss_multi_target import init_texture_params
+from Common.trainer.loss_table import build_loss_functions, build_loss_initialiser
+from NCA.trainer.loss_multi_target import init_texture_params
 import NCA.trainer.NCA_regulariser as regularisers
 from NCA.trainer.objective import resolve_loss_component_weights, resolve_objective
 from NCA.trainer.loss_schedule import (

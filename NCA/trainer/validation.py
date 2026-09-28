@@ -6,7 +6,7 @@ import jax.random as jr
 from einops import rearrange
 
 from Common.model.boundary import hard_boundary, model_boundary
-from Common.trainer.variation_metrics import grouped_variation_metrics
+from NCA.trainer.variation_metrics import grouped_variation_metrics
 from NCA.trainer.step import batch_loss, batch_model, multi_target_losses, run_nca_steps
 
 

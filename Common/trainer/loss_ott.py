@@ -1,15 +1,18 @@
+"""Optimal transport texture losses.
+
+Random patches are sampled from each image at several scales, and the
+entropy-regularised optimal transport cost between the patch sets of the
+prediction and the target is the loss. The micropattern version, which keeps
+channels from the same experiment together, is in ``loss_micropattern.py``.
+"""
+
 import jax.numpy as np
 import jax
 import numpy as onp
-#from ott.geometry import pointcloud
-#from ott.tools import sinkhorn_divergence
-#from ott.problems.linear import linear_problem
-#from ott.solvers.linear import sinkhorn
 import equinox as eqx
 import ott
-from einops import rearrange,reduce,einsum,repeat
+from einops import rearrange,reduce,repeat
 import jax.random as jr
-from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch,split_and_pad_by_experiment_groups_12ch,pad_to_multiple_of_3_channels
 
 
 def _make_gaussian_kernel(sigma, nstds):
@@ -309,169 +312,3 @@ def ott_channel_stack_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen
     keys = jr.split(key,N)
     losses = vv_ot_loss(x,y,keys) # N
     return losses
-
-
-
-
-
-
-
-
-def ott_grouped_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen":True,"epsilon":0.1,"internal_loss_func":"l2"}):
-    """
-        Computes OT loss between images x and y by grouping channels based on experiment and ott_loss on each group.
-        Parameters
-        ----------
-        x : float32 [N C=8 H W]
-            predictions
-        y : float32 [N C=11 H W]
-            true data - with some duplicate channels from different experiment groups
-        key: jax.random.PRNGKey
-            Jax random number key.
-        where : boolean array [N C 1 1]
-            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
-        aux : dict
-            Additional parameters for the loss function. Includes D, S, K, Sharpen
-                S : int - number of patches to sample
-                K : int - size of patches (KxK)
-                D : int - number of downsampling steps
-                Sharpen: bool - whether to sharpen images before computing loss
-        Returns
-        -------
-        loss : float32 [N]
-            loss reduced over channel and spatial axes
-    """
-    
-    N = x.shape[0]
-    C = x.shape[1]
-    S = aux["S"]
-    K = aux["K"]
-    D = aux["D"]
-    # ep = aux["epsilon"]
-    ott_kwargs = {
-        "epsilon": aux["epsilon"],
-        "internal_loss_func": aux["internal_loss_func"],
-    }
-    if aux["sharpen"]:
-        x = _sharpen(x,2)
-        y = _sharpen(y,2)
-    x = duplicate_x_channels_9ch(x)
-    # where = rearrange(where,"n c -> n c 1 1")
-    if where is not None:
-        where = duplicate_x_channels_9ch(where)
-        x = x*where.astype(x.dtype)
-        y = y*where.astype(y.dtype)
-    
-    def v_ot_loss(x,y,key):
-        """
-            OT loss for a single timestep
-            Parameters:
-                x: float32 [C H W]
-                y: float32 [C H W]
-                k: jax.random.PRNGKey
-            Returns:
-                loss: float32
-        """
-        keys = jr.split(key,2)
-        v_ch_downsample_and_patch = jax.vmap(_downsample_and_patch, in_axes=(0,None,None,None,None),out_axes=0) # vectorized over channels. Don't vectorize over keys - we want to select the same patches across channels in each group
-        px = v_ch_downsample_and_patch(x,S,K,D,keys[0]) # C D S K*K
-        py = v_ch_downsample_and_patch(y,S,K,D,keys[1]) # C D S K*K
-        px = rearrange(px,"C D S Kk -> D S (C Kk)")
-        py = rearrange(py,"C D S Kk -> D S (C Kk)")
-        
-        vscale_ot_loss = jax.vmap(_ott_patch_loss,in_axes=(0,0,None),out_axes=(0))(px,py,ott_kwargs) # vectorized over scales which is then averaged over
-        return np.mean(vscale_ot_loss)
-    
-    vv_ot_loss = jax.vmap(v_ot_loss,in_axes=(0,0,0),out_axes=0) # Vectorized over N
-    keys = jr.split(key,(N,4))
-    
-    # Each group of channels from the same experiment will have identically located patches selected.
-    
-    # losses = np.stack([
-    #     vv_ot_loss(x[:,0:4,:,:],y[:,0:4,:,:],keys[:,0]),
-    #     vv_ot_loss(x[:,0:3,:,:],y[:,4:7,:,:],keys[:,1]),
-    #     vv_ot_loss(x[:,4:8,:,:],y[:,7:11,:,:],keys[:,2]),
-    #     vv_ot_loss(x[:,8:9,:,:],y[:,11:12,:,:],keys[:,3])
-    # ],axis=1)
-    losses = np.stack([
-        vv_ot_loss(x[:,0:4,:,:],y[:,0:4,:,:],keys[:,0]),
-        vv_ot_loss(x[:,4:7,:,:],y[:,4:7,:,:],keys[:,1]),
-        vv_ot_loss(x[:,7:11,:,:],y[:,7:11,:,:],keys[:,2]),
-        vv_ot_loss(x[:,11:12,:,:],y[:,11:12,:,:],keys[:,3])
-    ],axis=1)
-    losses = np.mean(losses,axis=1) # N
-    # losses = vv_ot_loss(x,y,keys) # N
-    return losses
-
-
-
-def ott_grouped_and_l2_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen":True,"epsilon":0.1,"internal_loss_func":"l2"}):
-    """
-        Computes OT loss between images x and y by grouping channels based on experiment and ott_loss on each group.
-        Parameters
-        ----------
-        x : float32 [N C=8 H W]
-            predictions
-        y : float32 [N C=11 H W]
-            true data - with some duplicate channels from different experiment groups
-        key: jax.random.PRNGKey
-            Jax random number key.
-        where : boolean array [N C]
-            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
-        aux : dict
-            Additional parameters for the loss function. Includes D, S, K
-                S : int - number of patches to sample
-                K : int - size of patches (KxK)
-                D : int - number of downsampling steps
-                Sharpen: bool - whether to sharpen images before computing loss
-        Returns
-        -------
-        loss : float32 [N]
-            loss reduced over channel and spatial axes
-    """
-    loss_ott = ott_grouped_loss(x,y,key,where,aux)
-    x_full = duplicate_x_channels_9ch(x)
-    _l2 = (x_full-y)**2
-    weighting = np.array([0.5,0.5,0.5,1.0,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0]) # Account for duplicate channels
-    _l2 = einsum(_l2,weighting,"n c x y , c -> n c x y")
-    where_full = duplicate_x_channels_9ch(where).astype(where.dtype)
-    l2_loss = np.nan_to_num(np.mean(_l2,axis=[-1,-2,-3],where=where_full))
-    return loss_ott + l2_loss
-
-
-
-def emd_loss(x,y,key,where,aux={"epsilon":0.01,"internal_loss_func":"l2","normalize":True,"tau":1.0}):
-
-    def oti_loss(X,Y,aux):
-        """
-            Computes linear OT loss between two single channel images X and Y
-            Parameters
-                X: np.ndarray of shape [H W], source image
-                Y: np.ndarray of shape [H W], target image
-            Returns
-                OT loss: float
-
-        """
-        metric = {
-            "l2": [ott.geometry.costs.Euclidean()]*2,
-            "l2_squared": [ott.geometry.costs.SqEuclidean()]*2,
-            "l1": [ott.geometry.costs.PNormP(1)]*2,
-        }
-        geom = ott.geometry.grid.Grid(grid_size=X.shape,epsilon=aux['epsilon'],cost_fns=metric[aux["internal_loss_func"]])
-        if aux["normalize"]:
-            X = X/ (X.sum()+1e-8)
-            Y = Y/ (Y.sum()+1e-8)
-        problem = ott.problems.linear.linear_problem.LinearProblem(geom,a=X.ravel(),b=Y.ravel(),tau_a=aux["tau"],tau_b=aux["tau"])
-        
-        solver = ott.solvers.linear.sinkhorn.Sinkhorn(min_iterations=64,max_iterations=64)
-        out = solver(problem)
-        
-        return out.reg_ot_cost
-    v_oti_loss = jax.vmap(oti_loss, in_axes=(0,0,None),out_axes=0)
-    vv_oti_loss = jax.vmap(v_oti_loss, in_axes=(0,0,None),out_axes=0)
-    losses = vv_oti_loss(x,y,aux) # Shape N C
-    losses_avg_intensity = (reduce(x,"n c x y -> n c", 'mean') - reduce(y,"n c x y -> n c", 'mean'))**2
-    if aux["amplitude_penalty"]:
-        losses = losses + losses_avg_intensity
-    where = where[:,:,0,0] # Shape N C
-    return np.nan_to_num(np.mean(losses,axis=1,where=where)) # N

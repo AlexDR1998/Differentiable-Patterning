@@ -13,7 +13,7 @@ import jax.random as jr
 import jax.tree_util as jtu
 from einops import einsum, rearrange, repeat
 
-from Common.trainer.loss_multi_target import multi_target_loss
+from NCA.trainer.loss_multi_target import multi_target_loss
 from NCA.trainer.interval_schedule import IntervalSchedule, uniform_schedule
 from NCA.trainer.intervention import (
     apply_model_with_blocked_channel,

@@ -478,7 +478,6 @@ configs:
     loss.terms:
     - type: sliced_wasserstein_channel
       samples: 16
-      epsilon: 0.1
     data.emoji.task: sequence
     data.emoji.pairs: []
     data.emoji.terminal_carry.enabled: false
@@ -582,7 +581,6 @@ configs:
       terms:
       - type: sliced_wasserstein_channel
         samples: 16
-        epsilon: 0.1
       regularisers:
         intermediate_state: 1.0
         boundary: 0.0

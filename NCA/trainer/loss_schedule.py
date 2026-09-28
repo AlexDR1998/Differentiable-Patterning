@@ -6,7 +6,7 @@ from typing import NamedTuple
 
 import jax.numpy as jnp
 
-from Common.trainer.loss_components import MULTI_TARGET_WEIGHT_DEFAULTS
+from NCA.trainer.loss_multi_target import MULTI_TARGET_WEIGHT_DEFAULTS
 
 
 class ScheduledLossWeights(NamedTuple):

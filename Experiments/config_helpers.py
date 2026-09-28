@@ -137,7 +137,7 @@ def build_loss_filename(loss_config, include_loss_args=False):
             if float(l2_weight) != 0.0:
                 loss_str += f"_l2{l2_weight:g}"
         if include_loss_args:
-            keys = ("S", "K", "D", "epsilon", "sharpen", "samples", "tau", "normalize", "amplitude_penalty")
+            keys = ("S", "K", "D", "epsilon", "sharpen", "samples")
             arg_str = compact_nonzero_config_string({key: getattr(term, key, None) for key in keys})
             if arg_str: loss_str += f"_{arg_str}"
 

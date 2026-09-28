@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 from Common.dataloader.micropattern_schemas import MICROPATTERN_GROUPED_12CH_SCHEMA
-from Common.trainer.loss import channel_correlation_grouped_loss
+from Common.trainer.loss_micropattern import channel_correlation_grouped_loss
 
 
 def _target_layout(unique_channels):

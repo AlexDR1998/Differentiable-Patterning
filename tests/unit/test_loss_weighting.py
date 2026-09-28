@@ -2,8 +2,9 @@ import jax.numpy as jnp
 import pytest
 from types import SimpleNamespace
 
-from Common.trainer.loss import build_loss_functions, l2_colony_grouped
-from Common.trainer.loss_vgg import grouped_vgg_triplet_weights
+from Common.trainer.loss_micropattern import l2_colony_grouped
+from Common.trainer.loss_table import build_loss_functions
+from Common.trainer.loss_micropattern import grouped_vgg_triplet_weights
 from Experiments.config_helpers import build_loss_filename
 from NCA.trainer.objective import resolve_objective
 from Experiments.config_workflow import generate_manifest

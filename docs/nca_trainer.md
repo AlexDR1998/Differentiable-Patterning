@@ -28,6 +28,7 @@ Experiments/<domain>/train.py:run(cfg)
 | `objective.py` | `resolve_objective`: turns the typed loss config into loss names, shared loss arguments and regulariser weights. |
 | `pool.py` | Pool admission decisions (whether a rollout is written back into the training pool). |
 | `loss_schedule.py`, `interval_schedule.py` | Loss-weight schedules, and steps per time slot for non-uniform observation times. |
+| `loss_multi_target.py`, `variation_metrics.py` | The multi-target (permutation-invariant snapshot) loss, and the replicate-variation metrics logged during validation. The other losses are in `Common/trainer/` (`loss_table.py` maps names to functions). |
 | `optimizer.py`, `NCA_regulariser.py`, `intervention.py`, `instrumentation.py` | Optimiser and learning-rate schedule, regularisers, NODAL knockout helpers, optional profiling. |
 
 ## Rules

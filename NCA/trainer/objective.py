@@ -50,9 +50,11 @@ def resolve_objective(loss_config, overrides=None) -> ResolvedObjective:
         for name, value in ((item.name, getattr(term, item.name)) for item in fields(term)):
             if name in ignored or value is None:
                 continue
-            runtime_name = "internal_loss_func" if name == "metric" else name
-            if name == "metric" and "vgg" in term.type:
-                runtime_name = "metric"
+            # "metric" chooses the VGG variant for the VGG-based losses, and
+            # the patch distance (internal_loss_func) for the OT losses.
+            runtime_name = name
+            if name == "metric" and not ("vgg" in term.type or term.type == "multi_target"):
+                runtime_name = "internal_loss_func"
             if runtime_name in arguments and arguments[runtime_name] != value:
                 raise ValueError(
                     "Loss terms require conflicting values for "

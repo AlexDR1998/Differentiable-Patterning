@@ -7,7 +7,16 @@ import jax.numpy as jnp
 from einops import rearrange
 
 from Common.trainer.loss import masked_channel_correlations, radial_profiles
-from Common.trainer.loss_components import MULTI_TARGET_WEIGHT_DEFAULTS
+
+
+# Default weight of each part of the multi-target loss
+MULTI_TARGET_WEIGHT_DEFAULTS = {
+    "l2": 0.0,
+    "texture": 1.0,
+    "channel_mean": 1.0,
+    "radial": 1.0,
+    "correlation": 1.0,
+}
 
 
 def init_texture_params(key, spatial_shape, metric="l2", samples=128):
@@ -78,8 +87,8 @@ def _texture_cost(
         # Crop every prediction-target/RGB-triplet comparison with the same
         # offset for x and y, as required for a meaningful perceptual cost.
         crop_key = jax.random.fold_in(key, 1)
-        x = loss_vgg._random_crop_to_vgg_input(x[:, None], crop_key)[:, 0]
-        y = loss_vgg._random_crop_to_vgg_input(y[:, None], crop_key)[:, 0]
+        x = loss_vgg.random_crop_to_vgg_input(x[:, None], crop_key)[:, 0]
+        y = loss_vgg.random_crop_to_vgg_input(y[:, None], crop_key)[:, 0]
     loss = loss_vgg.lpips_variants[metric].apply(
         params, x, y, key, aux={"samples": samples}
     )
