@@ -12,12 +12,9 @@ from dataclasses import asdict
 import jax.numpy as jnp
 import jax.tree_util as jtu
 import datetime
-from NCA.trainer.logging.tensorboard import (
-	NCA_Train_log,
-	NCA_knockout_Train_log,
-)
-from NCA.trainer.logging.kan_tensorboard import (
-	kaNCA_Train_log,
+from NCA.trainer.logging.wandb_log import NCALogger
+from NCA.trainer.logging.kan_wandb_log import (
+	FastKANLogger,
 	uses_fast_kan_diagnostics,
 )
 from NCA.trainer.context import TrainerContext
@@ -31,12 +28,10 @@ def describe_batch_shapes(value):
 	return str([leaf.shape for leaf in jtu.tree_leaves(value)])
 
 
-def select_wandb_train_logger_class(model, knockout_time=None):
-	if knockout_time is not None:
-		return NCA_knockout_Train_log
+def select_wandb_train_logger_class(model):
 	if uses_fast_kan_diagnostics(model):
-		return kaNCA_Train_log
-	return NCA_Train_log
+		return FastKANLogger
+	return NCALogger
 
 class NcaTrainer:
 	"""Config-driven NCA trainer.
@@ -164,20 +159,6 @@ class NcaTrainer:
 		else:
 			if logging_backend == "none":
 				self.is_logging = False
-			elif logging_backend=="tensorboard":
-				self.is_logging = True
-				self.log_directory = str(
-					Path(self._log_root) / self.model_filename / "train"
-				)
-				if uses_fast_kan_diagnostics(self.model):
-					self.logger = kaNCA_Train_log(self.log_directory,logging_data)
-				else:
-					self.logger = NCA_Train_log(
-						self.log_directory,
-						logging_data,
-						singular_value_config=singular_value_settings,
-					)
-				print("Logging training to: "+self.log_directory)
 			elif logging_backend=="wandb":
 				self.is_logging = True
 				self.log_directory = str(
@@ -191,35 +172,23 @@ class NcaTrainer:
 					"loss": asdict(self.loss_config),
 				}
 				
-				if knockout["time"] is not None: # Nodal KO has differet logging behaviour
-					self.logger = NCA_knockout_Train_log(
-						data=logging_data,
-						wandb_config=wandb_args,
-						boundary_mask=self.diagnostic_boundary_mask,
-						channel_names=self.channel_names,
-						channel_schema=self.channel_schema,
-						timepoint_names=self.timepoint_names,
-						data_augmenter=self.data_augmenter,
-						knockout_time=knockout["time"],
-						knockout_channel=knockout["channel"],
-						singular_value_config=singular_value_settings)
-				else:
-					logger_class = select_wandb_train_logger_class(self.model)
-					self.logger = logger_class(
-						data=logging_data,
-						wandb_config=wandb_args,
-						boundary_mask=self.diagnostic_boundary_mask,
-						channel_names=self.channel_names,
-						channel_schema=self.channel_schema,
-						timepoint_names=self.timepoint_names,
-						data_augmenter=self.data_augmenter,
-						singular_value_config=singular_value_settings,
-					)
+				logger_class = select_wandb_train_logger_class(self.model)
+				self.logger = logger_class(
+					data=logging_data,
+					wandb_config=wandb_args,
+					boundary_mask=self.diagnostic_boundary_mask,
+					channel_names=self.channel_names,
+					channel_schema=self.channel_schema,
+					timepoint_names=self.timepoint_names,
+					data_augmenter=self.data_augmenter,
+					singular_value_config=singular_value_settings,
+					# Older colony knockout runs (data.knockout.time as an image index)
+					knockout_time=knockout["time"],
+					knockout_channel=knockout["channel"] if knockout["time"] is not None else None,
+				)
 				print("Logging training to: "+self.log_directory)
 			else:
-					raise ValueError(
-					"logging.backend must be 'none', 'wandb' or 'tensorboard'"
-				)
+				raise ValueError("logging.backend must be 'none' or 'wandb'")
 		self.model_path = str(Path(self._model_root) / self.model_filename)
 		print("Saving model to: "+self.model_path)
 

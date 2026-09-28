@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from Common.trainer.config import (
     LossConfig,
     MultiTargetLossConfig,
-    OptimizerConfig,
+    OptimiserConfig,
     PointwiseLossConfig,
 )
 from Experiments.config import DataConfig, RunConfig
@@ -297,7 +297,7 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
             },
         ),
         run=RunConfig(t=64, iterations=1000),
-        optimiser=OptimizerConfig(learn_rate=0.0003, decay_rate=0.99),
+        optimiser=OptimiserConfig(learn_rate=0.0003, decay_rate=0.99),
     )
     data_cfg_str = build_data_config_string(cfg.data)
     data = jnp.zeros((1, 3, 4, 8, 8))

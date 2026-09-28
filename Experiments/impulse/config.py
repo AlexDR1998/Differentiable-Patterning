@@ -48,7 +48,7 @@ class ImpulseObjectiveConfig(ConfigValue):
 
 
 @dataclass(frozen=True)
-class ImpulseOptimizerConfig(ConfigValue):
+class ImpulseOptimiserConfig(ConfigValue):
     type: str = "adam"
     learn_rate: float = 1e-3
     gradient_clip_norm: float | None = 1.0
@@ -71,5 +71,5 @@ class ImpulseConfig(ConfigValue):
     intervention: ImpulseInterventionConfig
     objective: ImpulseObjectiveConfig
     loss: LossConfig
-    optimiser: ImpulseOptimizerConfig
+    optimiser: ImpulseOptimiserConfig
     output: OutputConfig

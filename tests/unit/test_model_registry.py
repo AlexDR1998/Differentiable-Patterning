@@ -346,3 +346,20 @@ def test_annotations_are_separate_and_queryable(tmp_path):
     assert annotation["alias"] == "baseline"
     assert annotation["notes"] == "Useful"
     assert not (bundle.path / "annotations.yaml").exists()
+
+
+def test_selection_round_trips_through_yaml(tmp_path):
+    from omegaconf import OmegaConf
+
+    from Experiments.model_registry import load_selection, selection_document
+
+    path = tmp_path / "selection.yaml"
+    OmegaConf.save(OmegaConf.create(selection_document([{"model_id": "a"}, {"model_id": "b"}])), path)
+
+    assert [record["model_id"] for record in load_selection(path)] == ["a", "b"]
+
+    OmegaConf.save(OmegaConf.create({"schema_version": 1, "models": [{"alias": "x"}]}), path)
+    with pytest.raises(ValueError, match="model_id"):
+        load_selection(path)
+    with pytest.raises(FileNotFoundError):
+        load_selection(tmp_path / "missing.yaml")

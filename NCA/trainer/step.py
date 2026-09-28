@@ -31,7 +31,7 @@ class TrainState(NamedTuple):
     model: Any
     states: Any
     targets: Any
-    optimizer_state: Any
+    optimiser_state: Any
     key: Any
     loss_weights: Any
 
@@ -360,8 +360,8 @@ def build_train_step(trainer, setup):
             state.loss_weights,
         )
         states, losses, regulariser_losses, diagnostics = auxiliary
-        updates, optimizer_state = setup.optimiser.update(
-            gradients, state.optimizer_state, differentiable
+        updates, optimiser_state = setup.optimiser.update(
+            gradients, state.optimiser_state, differentiable
         )
         model = eqx.apply_updates(state.model, updates)
         metrics = {
@@ -388,7 +388,7 @@ def build_train_step(trainer, setup):
                 model,
                 states,
                 state.targets,
-                optimizer_state,
+                optimiser_state,
                 state.key,
                 state.loss_weights,
             ),

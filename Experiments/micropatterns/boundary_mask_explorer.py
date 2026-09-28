@@ -30,9 +30,6 @@ app = marimo.App(width="columns")
 with app.setup:
     import os
     from pathlib import Path
-    from pathlib import Path as _Path
-    import sys as _sys
-    _sys.path.append('/home/alex/PhD/Differentiable-Patterning/')
     import marimo as mo
     import jax.numpy as jnp
     import jax.random as jr
@@ -42,7 +39,7 @@ with app.setup:
     from omegaconf import OmegaConf
 
     from Common.dataloader.micropattern_260726 import load_micropattern_260726
-    from Experiments.model_registry import ModelRegistry
+    from Experiments.model_registry import ModelRegistry, load_selection
     from NCA.trainer.intervention import rollout_model_sampled
 
     FATE_MARKERS = ("TBXT", "SOX17", "SOX2", "FOXA2")
@@ -2045,18 +2042,9 @@ def _(model_selection_path):
         )
     else:
         try:
-            _document = OmegaConf.to_container(
-                OmegaConf.load(Path(_path_text).expanduser()), resolve=False
-            )
-            if not isinstance(_document, dict) or _document.get("schema_version") != 1:
-                raise ValueError(
-                    "Expected a model registry export with schema_version: 1"
-                )
-            model_selection_records = tuple(_document.get("models", ()))
+            model_selection_records = load_selection(_path_text)
             if not model_selection_records:
                 raise ValueError("The model selection contains no models")
-            if any("model_id" not in _record for _record in model_selection_records):
-                raise ValueError("Every selected model must contain model_id")
             _status = mo.callout(
                 f"Loaded {len(model_selection_records)} model selection(s).",
                 kind="success",

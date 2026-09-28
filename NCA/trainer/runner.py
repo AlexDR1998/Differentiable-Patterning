@@ -270,7 +270,7 @@ def run_loop(
         trainer.model,
         setup.initial_states,
         setup.targets,
-        setup.optimizer_state,
+        setup.optimiser_state,
         setup.key,
         setup.initial_loss_weights,
     )
@@ -399,7 +399,7 @@ def run_loop(
             checkpoint.record(iteration, loss_value)
             saved = True
         if trainer.is_logging:
-            trainer.logger.tb_training_loop_log_sequence(
+            trainer.logger.log_training_step(
                 metrics,
                 iteration,
                 state.model,
@@ -412,7 +412,7 @@ def run_loop(
     else:
         print("Training completed successfully")
     if trainer.is_logging and saved and setup.write_images:
-        trainer.logger.tb_training_end_log(
+        trainer.logger.log_training_end(
             best_model,
             trainer.data_augmenter,
             t=setup.interval_schedule,

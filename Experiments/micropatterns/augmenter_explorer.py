@@ -1,7 +1,7 @@
 """Interactively inspect the 260726 micropattern data augmenter.
 
 Run with:
-    marimo edit NCA/trainer/inspect_micropattern_augmenter.py
+    marimo edit Experiments/micropatterns/augmenter_explorer.py
 """
 
 import marimo
@@ -12,12 +12,6 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
-    from pathlib import Path as _Path
-    import sys as _sys
-
-    _repo_root = str(_Path(__file__).resolve().parents[2])
-    if _repo_root not in _sys.path:
-        _sys.path.insert(0, _repo_root)
     import jax
     import jax.numpy as jnp
     import marimo as mo

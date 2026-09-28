@@ -49,6 +49,8 @@ export SLURM_ARRAY_LOG_DIR="$ARRAY_LOG_DIR"
 export RUN_CONFIG_PROFILE_DIR="${RUN_CONFIG_PROFILE_DIR:-$ARRAY_LOG_DIR/${SLURM_ARRAY_TASK_ID}.profile}"
 export PROFILE_GPU_DIR="${PROFILE_GPU_DIR:-$RUN_CONFIG_PROFILE_DIR}"
 
+# Make Common, NCA and Experiments importable without installing the repository
+export PYTHONPATH="$CODE_ROOT${PYTHONPATH:+:$PYTHONPATH}"
 PVC_PATH="${PVC_PATH:-$CODE_ROOT/}"
 [[ "$PVC_PATH" == */ ]] || PVC_PATH="$PVC_PATH/"
 export PVC_PATH

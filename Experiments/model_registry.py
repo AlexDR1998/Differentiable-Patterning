@@ -611,6 +611,44 @@ class ModelRegistry:
         return self.get(identifier).load_model(key=key)
 
 
+# ---------------------------------------------------------------------------
+# Model selections: lists of models exported by Experiments/model_registry_explorer.py
+# ---------------------------------------------------------------------------
+
+SELECTION_SCHEMA_VERSION = 1
+
+
+def selection_document(models: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
+    """The YAML document for a list of model records (each has ``model_id``)."""
+    models = [dict(model) for model in models]
+    return {
+        "schema_version": SELECTION_SCHEMA_VERSION,
+        "model_count": len(models),
+        "models": models,
+    }
+
+
+def load_selection(path: Union[str, Path]) -> tuple:
+    """Read an exported model selection and return its model records.
+
+    Each record is a dict with at least ``model_id`` (plus the indexed
+    metadata, annotations and tags). Load a model with
+    ``ModelRegistry(root).get(record["model_id"]).load_model()``.
+    """
+    path = Path(path).expanduser()
+    if not path.is_file():
+        raise FileNotFoundError(f"Selection file not found: {path}")
+    document = OmegaConf.to_container(OmegaConf.load(path), resolve=False)
+    if not isinstance(document, dict) or document.get("schema_version") != SELECTION_SCHEMA_VERSION:
+        raise ValueError(
+            f"Expected a model registry export with schema_version: {SELECTION_SCHEMA_VERSION}"
+        )
+    models = tuple(document.get("models") or ())
+    if any("model_id" not in model for model in models):
+        raise ValueError("Every selected model must contain model_id")
+    return models
+
+
 def record_evaluation(
     *,
     store_root: Union[str, Path],

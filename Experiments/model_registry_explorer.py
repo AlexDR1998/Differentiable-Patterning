@@ -27,8 +27,6 @@ with app.setup:
     import sys
     from pathlib import Path
     _repository_root = Path(__file__).resolve().parents[1]
-    if str(_repository_root) not in sys.path:
-        sys.path.insert(0, str(_repository_root))
     import os
     import json
     import sqlite3
@@ -46,7 +44,11 @@ with app.setup:
     import matplotlib.pyplot as plt
     import numpy as np
 
-    from Experiments.model_registry import ModelRegistry, verify_evaluation_input
+    from Experiments.model_registry import (
+        ModelRegistry,
+        selection_document,
+        verify_evaluation_input,
+    )
     from NCA.trainer.intervention import (
         rollout_model_sampled,
         rollout_model_with_blocked_channel_sampled,
@@ -509,13 +511,8 @@ def _(
             _record["annotation_tags"] = _annotation_tags.get(_model_id, [])
             _record["wandb_tags"] = _wandb_tags.get(_model_id, [])
             _models.append(_record)
-        _document = {
-            "schema_version": 1,
-            "model_count": len(_models),
-            "models": _models,
-        }
         _yaml_bytes = OmegaConf.to_yaml(
-            OmegaConf.create(_document), sort_keys=False
+            OmegaConf.create(selection_document(_models)), sort_keys=False
         ).encode("utf-8")
 
     _download = mo.download(

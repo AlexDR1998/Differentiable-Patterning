@@ -156,7 +156,7 @@ def test_scalar_rejection_restores_pool_without_running_augmentation():
     assert result.states is previous_states
     assert result.targets is previous_targets
     assert result.model is state.model
-    assert result.optimizer_state == "updated optimizer"
+    assert result.optimiser_state == "updated optimizer"
     assert jnp.array_equal(result.key, state.key)
     assert result.loss_weights == "weights"
 
@@ -197,5 +197,5 @@ def test_scalar_acceptance_runs_augmentation_and_keeps_training_update():
     assert jnp.all(result.states[0] == 2)
     assert jnp.all(result.targets[0] == 1)
     assert result.model is state.model
-    assert result.optimizer_state == "updated optimizer"
+    assert result.optimiser_state == "updated optimizer"
     assert jnp.array_equal(result.key, jax.random.split(state.key)[0])

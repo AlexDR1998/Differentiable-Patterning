@@ -20,9 +20,6 @@ with app.setup:
     import sys
     from pathlib import Path
 
-    _repository_root = Path(__file__).resolve().parents[1]
-    if str(_repository_root) not in sys.path:
-        sys.path.insert(0, str(_repository_root))
 
     import jax
     import jax.numpy as jnp
@@ -33,7 +30,7 @@ with app.setup:
     from Common.dataloader.preprocessing import PreprocessingConfig
     from Common.trainer.config import (
         LossConfig,
-        OptimizerConfig,
+        OptimiserConfig,
         PointwiseLossConfig,
         ScheduleConfig,
     )
@@ -50,7 +47,6 @@ with app.setup:
         WandbConfig,
         config_to_dict,
     )
-    from Experiments.config_helpers import set_matmul_precision
     from NCA.model.factory import build_model
     from Experiments.emoji.config import EmojiDataConfig, ProbabilityScheduleConfig
     from Experiments.emoji.config_helpers import build_data_augmenter, load_data
@@ -515,7 +511,7 @@ def _(
                 warmup=10,
             ),
         ),
-        optimizer=OptimizerConfig(
+        optimizer=OptimiserConfig(
             learn_rate=0.001,
             warmup_steps=0,
             schedule=ScheduleConfig(type="cosine", final_factor=0.2),
@@ -631,7 +627,7 @@ def _(
 
                 os.environ["WANDB_MODE"] = "offline"
                 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-                set_matmul_precision(_experiment_pool_lab.system)
+                jax.config.update("jax_default_matmul_precision", _experiment_pool_lab.system.precision)
                 _result_pool_lab = _trainer_pool_lab.train(
                     key=pool_lab_train_key, progress_callback=_record_pool_lab
                 )

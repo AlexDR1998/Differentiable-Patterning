@@ -18,7 +18,7 @@
 
 Run from the repository root with:
 
-    marimo run Experiments/nodal_ko_eval.py
+    marimo run Experiments/micropatterns/nodal_ko_eval.py
 """
 
 import marimo
@@ -33,9 +33,7 @@ with app.setup(hide_code=True):
     import time
     from pathlib import Path
 
-    repository_root = Path(__file__).resolve().parents[1]
-    if str(repository_root) not in sys.path:
-        sys.path.insert(0, str(repository_root))
+    repository_root = Path(__file__).resolve().parents[2]
 
     import jax
     import jax.numpy as jnp
@@ -45,10 +43,9 @@ with app.setup(hide_code=True):
     import numpy as np
     import pandas as pd
     from dotenv import load_dotenv
-    from omegaconf import OmegaConf
     from tqdm.auto import tqdm
 
-    from Experiments.model_registry import ModelRegistry
+    from Experiments.model_registry import ModelRegistry, load_selection
     from NCA.trainer.intervention import (
         rollout_model,
         rollout_model_sampled,
@@ -458,10 +455,7 @@ def _(selection_path):
         selection_records = ()
         _preview = mo.callout(f"Selection file not found: `{_path}`", kind="danger")
     else:
-        _document = OmegaConf.to_container(OmegaConf.load(_path), resolve=False)
-        if not isinstance(_document, dict) or _document.get("schema_version") != 1:
-            raise ValueError("Expected a model registry export with schema_version: 1")
-        selection_records = tuple(_document.get("models", ()))
+        selection_records = load_selection(_path)
         _columns = [
             "model_id", "alias", "display_name", "notes", "family",
             "experiment", "best_loss", "seed",

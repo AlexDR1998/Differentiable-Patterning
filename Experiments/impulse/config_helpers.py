@@ -120,7 +120,7 @@ def build_intervention(intervention_cfg, observed_channels, model, trajectories,
     )
 
 
-def build_impulse_optimizer(optimiser_cfg):
+def build_impulse_optimiser(optimiser_cfg):
     """Build the lightweight Optax optimiser used for intervention parameters."""
 
     constructors = {

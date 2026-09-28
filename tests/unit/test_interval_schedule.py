@@ -288,7 +288,7 @@ def test_legacy_nodal_zeroing_follows_observation_times():
 
 
 def test_logging_rollout_helpers_reproduce_uniform_indexing():
-    from NCA.trainer.logging.tensorboard import (
+    from NCA.trainer.logging.wandb_log import (
         _frame_indices,
         _knockout_step,
         _rollout_schedule,
@@ -316,7 +316,7 @@ def test_logging_rollout_helpers_reproduce_uniform_indexing():
 
 
 def test_logging_rollout_helpers_follow_non_uniform_schedule():
-    from NCA.trainer.logging.tensorboard import (
+    from NCA.trainer.logging.wandb_log import (
         _frame_indices,
         _knockout_step,
         _rollout_schedule,

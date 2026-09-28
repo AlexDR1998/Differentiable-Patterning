@@ -3,7 +3,7 @@ import optax
 import jax.tree_util as jtu
 
 """
-    Collection of helper functions for defining optimizers for training NCA models.
+    Collection of helper functions for defining optimisers for training NCA models.
 """
 
 
@@ -18,7 +18,7 @@ def build_muon_dnums(params):
         params
     )
 
-def muon_optimizer(schedule):
+def muon_optimiser(schedule):
     optimiser = optax.contrib.muon(
         schedule,
         muon_weight_dimension_numbers=build_muon_dnums
@@ -29,10 +29,10 @@ def muon_optimizer(schedule):
     #     optax.scale_by_param_block_norm(),
     # )
 
-def sam_optimizer(base_optimizer, rho=0.05, sync_period=2):
-    """Wraps an existing optimizer with SAM (Sharpness-Aware Minimization)."""
+def sam_optimiser(base_optimiser, rho=0.05, sync_period=2):
+    """Wraps an existing optimiser with SAM (Sharpness-Aware Minimization)."""
     # return optax.chain(
-        # optax.sam(rho=rho, base_optimizer=base_optimizer),
+        # optax.sam(rho=rho, base_optimiser=base_optimiser),
         # optax.scale_by_param_block_norm(),
     # )
     adv_opt = optax.chain(
@@ -40,23 +40,23 @@ def sam_optimizer(base_optimizer, rho=0.05, sync_period=2):
         optax.adam(rho),
     )
     opt = optax.contrib.sam(
-        optimizer=base_optimizer,
-        adv_optimizer=adv_opt,
+        optimizer=base_optimiser,  # optax keyword
+        adv_optimizer=adv_opt,  # optax keyword
         sync_period=sync_period,
         opaque_mode=False
     )
     return opt
 
 
-def build_learning_rate_schedule(optimizer_config, total_steps):
+def build_learning_rate_schedule(optimiser_config, total_steps):
     """Build the configured Optax learning-rate schedule and its name.
 
     All schedules share the existing linear warmup. Schedule-specific time is
     counted after warmup, except for the legacy exponential schedule whose
     transition length remains ``run.iterations`` for backward compatibility.
     """
-    peak_lr = float(optimizer_config.learn_rate)
-    warmup_steps = int(optimizer_config.warmup_steps)
+    peak_lr = float(optimiser_config.learn_rate)
+    warmup_steps = int(optimiser_config.warmup_steps)
     total_steps = int(total_steps)
     if peak_lr <= 0:
         raise ValueError("optimiser.learn_rate must be positive")
@@ -65,13 +65,13 @@ def build_learning_rate_schedule(optimizer_config, total_steps):
             "optimiser.warmup_steps must be non-negative and smaller than run.iterations"
         )
 
-    schedule_cfg = optimizer_config.schedule
+    schedule_cfg = optimiser_config.schedule
     schedule_type = schedule_cfg.type.lower()
     decay_steps = total_steps - warmup_steps
 
     if schedule_type == "exponential":
         decay_rate = float(
-            optimizer_config.decay_rate
+            optimiser_config.decay_rate
             if schedule_cfg.decay_rate is None
             else schedule_cfg.decay_rate
         )
@@ -142,48 +142,48 @@ def build_learning_rate_schedule(optimizer_config, total_steps):
 
 
 
-def build_optimizer(optimizer_config, total_steps, return_schedule=False):
+def build_optimiser(optimiser_config, total_steps, return_schedule=False):
     """
-        Construct an optimizer from its focused typed configuration.
+        Construct an optimiser from its focused typed configuration.
     """
-    schedule, schedule_name = build_learning_rate_schedule(optimizer_config, total_steps)
-    if optimizer_config.type == "nadam":
-        base_optimizer = optax.nadam(schedule)
+    schedule, schedule_name = build_learning_rate_schedule(optimiser_config, total_steps)
+    if optimiser_config.type == "nadam":
+        base_optimiser = optax.nadam(schedule)
         opt_name = f"nadam_sched{schedule_name}"
-    elif optimizer_config.type == "muon":
-        base_optimizer = muon_optimizer(schedule)
+    elif optimiser_config.type == "muon":
+        base_optimiser = muon_optimiser(schedule)
         opt_name = f"muon_sched{schedule_name}"
-    elif optimizer_config.type == "adamw":
-        base_optimizer = optax.adamw(schedule)
+    elif optimiser_config.type == "adamw":
+        base_optimiser = optax.adamw(schedule)
         opt_name = f"adamw_sched{schedule_name}"
     else:
-        raise ValueError(f"Unsupported optimizer type: {optimizer_config.type}")
+        raise ValueError(f"Unsupported optimiser type: {optimiser_config.type}")
 
     preprocessors = []
 
-    gradient_clip_norm = optimizer_config.gradient_clip_norm
+    gradient_clip_norm = optimiser_config.gradient_clip_norm
     if gradient_clip_norm is not None:
         preprocessors.append(optax.clip_by_global_norm(gradient_clip_norm))
         opt_name += f"_clip{gradient_clip_norm:g}"
 
-    if optimizer_config.blocknorm:
+    if optimiser_config.blocknorm:
         preprocessors.append(optax.scale_by_param_block_norm())
         opt_name += "_blocknorm"
 
-    optimizer = optax.chain(*preprocessors, base_optimizer)
+    optimiser = optax.chain(*preprocessors, base_optimiser)
 
-    if optimizer_config.sam:
-        optimizer = sam_optimizer(optimizer, rho=optimizer_config.sam_rho, sync_period=optimizer_config.sam_sync_period)
+    if optimiser_config.sam:
+        optimiser = sam_optimiser(optimiser, rho=optimiser_config.sam_rho, sync_period=optimiser_config.sam_sync_period)
         opt_name += "_sam"
 
-    if optimizer_config.apply_if_finite:
-        max_consecutive_errors = optimizer_config.max_consecutive_errors
-        optimizer = optax.apply_if_finite(
-            optimizer,
+    if optimiser_config.apply_if_finite:
+        max_consecutive_errors = optimiser_config.max_consecutive_errors
+        optimiser = optax.apply_if_finite(
+            optimiser,
             max_consecutive_errors=max_consecutive_errors,
         )
         opt_name += f"_finite{max_consecutive_errors}"
 
     if return_schedule:
-        return optimizer, opt_name, schedule
-    return optimizer, opt_name
+        return optimiser, opt_name, schedule
+    return optimiser, opt_name

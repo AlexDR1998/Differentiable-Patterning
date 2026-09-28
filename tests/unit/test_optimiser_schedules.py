@@ -3,8 +3,8 @@ from types import SimpleNamespace
 import jax.numpy as jnp
 import pytest
 
-from Common.trainer.config import OptimizerConfig, ScheduleConfig
-from NCA.trainer.optimizer import build_learning_rate_schedule, build_optimizer
+from Common.trainer.config import OptimiserConfig, ScheduleConfig
+from NCA.trainer.optimiser import build_learning_rate_schedule, build_optimiser
 
 
 def _cfg(schedule_type="exponential", **schedule_overrides):
@@ -16,7 +16,7 @@ def _cfg(schedule_type="exponential", **schedule_overrides):
         **schedule_overrides,
     }
     return SimpleNamespace(
-        optimiser=OptimizerConfig(
+        optimiser=OptimiserConfig(
             type="nadam",
             learn_rate=1e-3,
             warmup_steps=20,
@@ -71,13 +71,13 @@ def test_exponential_schedule_preserves_legacy_transition_length():
 
 
 def test_optimizer_name_identifies_schedule():
-    _, name = build_optimizer(_cfg("cosine", final_factor=0.1).optimiser, 100)
+    _, name = build_optimiser(_cfg("cosine", final_factor=0.1).optimiser, 100)
 
     assert name.startswith("nadam_schedcos0.1")
 
 
 def test_optimizer_can_return_the_exact_schedule_used_for_updates():
-    _, name, schedule = build_optimizer(
+    _, name, schedule = build_optimiser(
         _cfg("cosine", final_factor=0.1).optimiser,
         100,
         return_schedule=True,

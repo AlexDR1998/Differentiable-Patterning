@@ -2,7 +2,7 @@ experiment_name: smoke_emoji
 entrypoint: Experiments.emoji.train:run
 base_config: null
 sweep_file: null
-output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/generated/smoke_emoji
+output_dir: Experiments/emoji/conf/generated/smoke_emoji
 count: 4
 configs:
 - index: 0
@@ -18,7 +18,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_emoji-refactor-phase6c-7-logging-packaging
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -142,7 +142,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-refactor-phase6b-augmenters
+        group: smoke_emoji-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true
@@ -162,7 +162,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_emoji-refactor-phase6c-7-logging-packaging
     model.family: gNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -286,7 +286,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-refactor-phase6b-augmenters
+        group: smoke_emoji-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true
@@ -306,7 +306,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_emoji-refactor-phase6c-7-logging-packaging
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -450,7 +450,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-refactor-phase6b-augmenters
+        group: smoke_emoji-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true
@@ -470,7 +470,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_emoji-refactor-phase6c-7-logging-packaging
     model.family: gnNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -596,7 +596,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-refactor-phase6b-augmenters
+        group: smoke_emoji-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true

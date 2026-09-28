@@ -19,7 +19,7 @@ from NCA.trainer.loss_schedule import (
     final_transition_iteration,
 )
 from NCA.trainer.interval_schedule import IntervalSchedule, build_interval_schedule
-from NCA.trainer.optimizer import build_optimizer
+from NCA.trainer.optimiser import build_optimiser
 
 
 @dataclass(frozen=True)
@@ -47,7 +47,7 @@ class PreparedTraining:
     regulariser_coefficients: dict[str, float]
     initial_states: Any
     targets: Any
-    optimizer_state: Any
+    optimiser_state: Any
     key: Any
 
     @property
@@ -135,7 +135,7 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
     if is_multi_target and trainer.grad_loss:
         raise ValueError("multi_target requires trainer.grad_loss=False")
 
-    optimiser, _, schedule = build_optimizer(
+    optimiser, _, schedule = build_optimiser(
         trainer.optimiser_config, loop.iterations, return_schedule=True
     )
     loss_channels = arguments.get("channels")
@@ -207,6 +207,6 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         regulariser_coefficients=coefficients,
         initial_states=states,
         targets=targets,
-        optimizer_state=optimiser.init(trainer.model.partition()[0]),
+        optimiser_state=optimiser.init(trainer.model.partition()[0]),
         key=key,
     )

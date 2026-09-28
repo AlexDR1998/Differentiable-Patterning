@@ -30,7 +30,9 @@ def _to_uint8_rgb_image(image):
     return image
 
 
-class Train_log(object):
+class WandbLogger:
+    """Thin wrapper around a W&B run: images, videos, histograms and scalars."""
+
     def __init__(
         self,
         data,
@@ -175,7 +177,7 @@ class Train_log(object):
     def finish(self):
         wandb.finish()
 
-    def tb_training_end_log(self,model,x,t,*args):
+    def log_training_end(self,model,x,t,*args):
         self.finish()
     
     def log_model_parameters(self,model,i):

@@ -2,7 +2,7 @@ experiment_name: smoke_micropatterns_ko_finetune
 entrypoint: Experiments.micropatterns.train:run
 base_config: null
 sweep_file: null
-output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/smoke_micropatterns_ko_finetune
+output_dir: Experiments/micropatterns/conf/generated/smoke_micropatterns_ko_finetune
 count: 2
 configs:
 - index: 0
@@ -52,7 +52,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_micropatterns_ko_finetune-refactor-phase6c-7-logging-packaging
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
   config:
@@ -175,7 +175,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-refactor-phase6b-augmenters
+        group: smoke_micropatterns_ko_finetune-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true
@@ -233,7 +233,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_micropatterns_ko_finetune-refactor-phase6c-7-logging-packaging
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
   config:
@@ -358,7 +358,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-refactor-phase6b-augmenters
+        group: smoke_micropatterns_ko_finetune-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true

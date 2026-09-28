@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run entries from an experiment manifest sequentially on one local GPU.
 
-This is intentionally a scheduler-free companion to ``launch_batch_slurm.sh``:
+This is intentionally a scheduler-free companion to ``launch/launch_batch_slurm.sh``:
 the manifest remains the experiment contract, while each entry runs in a fresh
 Python process through ``Experiments.run_config``.
 """
@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def utc_now() -> str:

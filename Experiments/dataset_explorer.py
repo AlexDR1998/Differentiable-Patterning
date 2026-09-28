@@ -1,7 +1,7 @@
 """Interactive visual and statistical inspection of repository datasets.
 
 Run with:
-    marimo edit Common/dataloader/inspect_datasets.py
+    marimo edit Experiments/dataset_explorer.py
 """
 
 import marimo
@@ -12,9 +12,6 @@ app = marimo.App(width="columns")
 
 @app.cell(column=0)
 def _():
-    from pathlib import Path as _Path
-    import sys as _sys
-    _sys.path.append('/home/alex/PhD/Differentiable-Patterning/')
     import marimo as mo
     import matplotlib.pyplot as plt
     import numpy as np

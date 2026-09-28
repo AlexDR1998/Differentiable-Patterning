@@ -18,7 +18,7 @@ ExperimentConfig                 (Experiments/config.py)
 ├── model: ModelConfig           (NCA/model/config.py)
 ├── run: RunConfig               t, iterations, checkpoint_warmup, ...
 ├── trainer: TrainerConfig       (NCA/trainer/config.py), incl. pool_admission
-├── optimiser: OptimizerConfig   (Common/trainer/config.py)
+├── optimiser: OptimiserConfig   (Common/trainer/config.py)
 ├── loss: LossConfig             terms, regularisers, schedule_label
 ├── logging: LoggingConfig
 ├── model_store: ModelStoreConfig

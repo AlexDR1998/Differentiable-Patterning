@@ -11,28 +11,13 @@ MANIFEST="$(realpath "$2")"
 [[ -f "$PY_SCRIPT" ]] || { echo "Python script not found: $PY_SCRIPT"; exit 1; }
 [[ -f "$MANIFEST" ]] || { echo "Manifest not found: $MANIFEST"; exit 1; }
 
-extract_yaml_scalar() {
-    local key="$1"
-    local path="$2"
-    local line value
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/manifest.sh"
 
-    line="$(grep -m1 -E "^[[:space:]]*$key[[:space:]]*:" "$path" || true)"
-    [[ -n "$line" ]] || return 1
-
-    value="${line#*:}"
-    value="$(printf '%s' "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
-    [[ -n "$value" ]] || return 1
-    printf '%s\n' "$value"
-}
-
-EXPERIMENT_NAME="$(extract_yaml_scalar experiment_name "$MANIFEST" || true)"
-[[ -n "$EXPERIMENT_NAME" ]] || EXPERIMENT_NAME="$(basename "$(dirname "$MANIFEST")")"
+EXPERIMENT_NAME="$(manifest_experiment_name "$MANIFEST")"
 [[ -n "$EXPERIMENT_NAME" ]] || { echo "Could not derive experiment name from manifest: $MANIFEST"; exit 1; }
 
-N_JOBS="$(extract_yaml_scalar count "$MANIFEST" || true)"
-if [[ -z "$N_JOBS" ]]; then
-    N_JOBS="$(grep -E '^[[:space:]]*-+[[:space:]]*index:[[:space:]]*[0-9][0-9]*' "$MANIFEST" | wc -l | tr -d ' ')"
-fi
+N_JOBS="$(manifest_count "$MANIFEST")"
 [[ "$N_JOBS" =~ ^[0-9]+$ ]] || { echo "Manifest count is not an integer: $N_JOBS"; exit 1; }
 [[ "$N_JOBS" -gt 0 ]] || { echo "Manifest contains no runnable lines"; exit 1; }
 
@@ -61,7 +46,6 @@ PROFILE_GPU="${PROFILE_GPU:-0}"
 
 mkdir -p "$LOG_DIR"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ARRAY_SCRIPT="$SCRIPT_DIR/launch_slurm.sh"
 
 [[ -f "$ARRAY_SCRIPT" ]] || { echo "Missing array script: $ARRAY_SCRIPT"; exit 1; }

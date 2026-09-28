@@ -1,4 +1,9 @@
 #!/bin/bash
+# Submit a sweep manifest as indexed Kubernetes jobs (one pod per run),
+# split across JOB_WORKER_COUNT jobs. Run from the repository root:
+#   bash launch/launch_batch_multi_job.sh Experiments/run_config.py <manifest> <workers> <gpu> [start_index]
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/manifest.sh"
 
 if [ $# -lt 4 ]; then
   echo "Usage: $0 <path_to_python_script> <path_to_experiment_config> <number_of_workers> <gpu_type> [start_index]"
@@ -30,7 +35,7 @@ else
   exit 1
 fi
 
-TOTAL_CONFIGS=$(grep -c '^-[[:space:]]*index:' "$CONFIGS")
+TOTAL_CONFIGS=$(manifest_count "$CONFIGS")
 if (( START_INDEX >= TOTAL_CONFIGS )); then
   echo "Start index $START_INDEX is outside manifest range 0-$((TOTAL_CONFIGS - 1))"
   exit 1
@@ -41,7 +46,8 @@ REMAINDER=$((REMAINING_CONFIGS % JOB_WORKER_COUNT))
 
 
 
-export WORKING_DIR=/user/$USER/Differentiable-Patterning/
+# Repository checkout on the NFS share, mounted in each pod at /workspace
+export WORKING_DIR="${WORKING_DIR:-/user/$USER/Differentiable-Patterning/}"
 export PATH_TO_PYTHON_SCRIPT=$FILE
 # export COMPLETION_INDEX=$CONFIGS
 export PATH_TO_EXPERIMENT_CONFIG=$CONFIGS
@@ -61,6 +67,6 @@ for ((i=0; i<JOB_WORKER_COUNT; i++)); do
     echo "Skipping worker $i because there are no configs left for it"
     continue
   fi
-  envsubst < run.tpl.yml > run_$i.yml
+  envsubst < "$SCRIPT_DIR/run.tpl.yml" > run_$i.yml
   kubectl create -f run_$i.yml
 done

@@ -2,7 +2,7 @@ experiment_name: smoke_snowmelt
 entrypoint: Experiments.snowmelt.train:run
 base_config: null
 sweep_file: null
-output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/snowmelt/conf/generated/smoke_snowmelt
+output_dir: Experiments/snowmelt/conf/generated/smoke_snowmelt
 count: 2
 configs:
 - index: 0
@@ -17,7 +17,7 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_snowmelt-refactor-phase6c-7-logging-packaging
     model.family: NCA
     data.snowmelt.target_channels:
     - SCA
@@ -121,7 +121,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-refactor-phase6b-augmenters
+        group: smoke_snowmelt-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true
@@ -142,7 +142,7 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_snowmelt-refactor-phase6c-7-logging-packaging
     model.family: gNCA
     data.snowmelt.target_channels:
     - NDSI
@@ -250,7 +250,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-refactor-phase6b-augmenters
+        group: smoke_snowmelt-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true

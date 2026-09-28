@@ -4,7 +4,6 @@
 #   "matplotlib",
 #   "numpy",
 #   "tifffile",
-#   "opencv-python",
 # ]
 # ///
 
@@ -22,8 +21,8 @@ Data layout (``SNOWMELT_DATA_ROOT``, default ``~/PhD/Data/snowmelt``):
     S2_topographic_attributes/{DEM,INCIDENCEANGLE}_10mTinitaly_NivoletMask.tif
 
 All rasters share one 517 x 514 grid at 10 m in ED50 / UTM 32N (EPSG:23032).
-The raw bands are LZW-compressed; without ``imagecodecs`` installed tifffile cannot
-decode them, so reading falls back to OpenCV's bundled libtiff.
+Reading the rasters uses ``Common/dataloader/snowmelt.py``, the same code as the
+training loader.
 """
 
 import marimo
@@ -33,18 +32,17 @@ app = marimo.App(width="full")
 
 with app.setup(hide_code=True):
     import os
-    import re
-    import warnings
     from pathlib import Path
 
-    import cv2
     import marimo as mo
     import matplotlib.pyplot as plt
     import numpy as np
-    import tifffile
     import matplotlib
     from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, ListedColormap
     from matplotlib.ticker import MaxNLocator
+
+    # The same reading code the training loader uses
+    from Common.dataloader.snowmelt import BAND_INFO, BANDS, block_mean, load_snowmelt
 
     # Light figures regardless of the marimo theme, so annotation ink stays legible.
     plt.style.use("default")
@@ -52,24 +50,6 @@ with app.setup(hide_code=True):
     DATA_ROOT = Path(
         os.environ.get("SNOWMELT_DATA_ROOT", Path.home() / "PhD" / "Data" / "snowmelt")
     )
-
-    # Sentinel-2 MSI: central wavelength (nm) and native resolution (m).
-    # B10 (cirrus) is absent, as in L2A products.
-    BAND_INFO = {
-        "B1": (443, 60, "Coastal aerosol"),
-        "B2": (490, 10, "Blue"),
-        "B3": (560, 10, "Green"),
-        "B4": (665, 10, "Red"),
-        "B5": (705, 20, "Red edge 1"),
-        "B6": (740, 20, "Red edge 2"),
-        "B7": (783, 20, "Red edge 3"),
-        "B8": (842, 10, "NIR"),
-        "B8A": (865, 20, "Narrow NIR"),
-        "B9": (945, 60, "Water vapour"),
-        "B11": (1610, 20, "SWIR 1"),
-        "B12": (2190, 20, "SWIR 2"),
-    }
-    BANDS = tuple(BAND_INFO)
 
     RGB_PRESETS = {
         "True colour (B4, B3, B2)": ("B4", "B3", "B2"),
@@ -94,76 +74,6 @@ with app.setup(hide_code=True):
         "Incidence angle": ("Purples", False, None, "incidence angle (°)"),
     }
     CMAPS = ("auto", "snow", "Greys_r", "Blues", "Oranges", "Purples", "RdBu", "BrBG", "cividis", "viridis")
-
-    def read_tif(path):
-        """Read a single-band GeoTIFF as float32, falling back to OpenCV for LZW."""
-        try:
-            arr = tifffile.imread(path)
-        except ValueError:  # compression codec needs imagecodecs
-            arr = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
-            if arr is None:
-                raise IOError(f"Could not decode {path}")
-        return np.asarray(arr, dtype=np.float32)
-
-    def read_georef(path):
-        """Return (x0, y0, dx, dy, crs_name) from the GeoTIFF tags."""
-        with tifffile.TiffFile(path) as tif:
-            page = tif.pages[0]
-            dx, dy, _ = page.tags["ModelPixelScaleTag"].value
-            _, _, _, x0, y0, _ = page.tags["ModelTiepointTag"].value
-            crs = (tif.geotiff_metadata or {}).get("GTCitationGeoKey", "unknown CRS")
-        return x0, y0, dx, dy, crs
-
-    def load_snowmelt(root):
-        """Load every raster into stacked arrays, NaN outside the catchment and at no-data pixels.
-
-        The catchment mask comes from the DEM (exactly 0 outside the catchment). Each layer
-        additionally carries its own sparse no-data (-9999 in the raw bands, NaN in NDVI,
-        -3.4e38 in the incidence angle), which is kept per layer rather than merged into the mask.
-
-        Returns a dict with ``raw`` (T, B, H, W), ``ndsi``/``ndvi``/``sca`` (T, H, W),
-        ``dem``/``incidence``/``mask`` (H, W), ``dates``, ``bands`` and georeferencing.
-        """
-        root = Path(root)
-        raw_files = sorted((root / "S2_rawbands").glob("DoraNivolet_*_*.tif"))
-        dates = sorted({re.match(r"DoraNivolet_(\w+?)_(\d{4}-\d{2}-\d{2})", f.stem).group(2) for f in raw_files})
-
-        topo = root / "S2_topographic_attributes"
-        dem = read_tif(topo / "DEM_10mTinitaly_NivoletMask.tif")
-        mask = dem != 0
-
-        def _clean(a):
-            a[(a < -9000) | ~mask] = np.nan  # covers both -9999 and float32-min no-data values
-            return a
-
-        raw = _clean(np.stack([
-            np.stack([read_tif(root / "S2_rawbands" / f"DoraNivolet_{b}_{d}.tif") for b in BANDS])
-            for d in dates
-        ]))
-
-        def _stack(prefix):
-            return _clean(np.stack([read_tif(root / "S2_derived_indexes" / f"{prefix}_{d}.tif") for d in dates]))
-
-        dem = _clean(dem)
-        incidence = _clean(read_tif(topo / "INCIDENCEANGLE_10mTinitaly_NivoletMask.tif"))
-
-        x0, y0, dx, dy, crs = read_georef(raw_files[0])
-        H, W = mask.shape
-        return {
-            "dates": dates,
-            "bands": BANDS,
-            "raw": raw,
-            "ndsi": _stack("NDSI_Nivolet"),
-            "ndvi": _stack("NDVI_Nivolet"),
-            "sca": _stack("SCA_Nivolet_NDSIgt04"),
-            "dem": dem,
-            "incidence": incidence,
-            "mask": mask,
-            "crs": crs,
-            "pixel_size": (dx, dy),
-            # imshow extent in km: (left, right, bottom, top)
-            "extent_km": (x0 / 1e3, (x0 + W * dx) / 1e3, (y0 - H * dy) / 1e3, y0 / 1e3),
-        }
 
     def get_layer(data, layer, band, t):
         """Return the (H, W) array for a layer at date index t (static layers ignore t)."""
@@ -245,18 +155,6 @@ with app.setup(hide_code=True):
     def date_colors(n):
         """Ordered dates get an ordered (sequential, single-hue) ramp."""
         return plt.cm.Blues(np.linspace(0.35, 1.0, n))
-
-    def block_mean(arr, factor):
-        """Downsample the trailing two axes by nan-aware block averaging."""
-        if factor == 1:
-            return arr
-        H, W = arr.shape[-2:]
-        h, w = H // factor, W // factor
-        a = arr[..., : h * factor, : w * factor]
-        a = a.reshape(*arr.shape[:-2], h, factor, w, factor)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)  # all-NaN blocks outside the mask
-            return np.nanmean(a, axis=(-3, -1))
 
 
 @app.cell(hide_code=True)

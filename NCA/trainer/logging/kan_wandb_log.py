@@ -4,8 +4,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from NCA.NCA_visualiser import plot_to_image
-from NCA.trainer.logging.tensorboard import NCA_Train_log
+from NCA.trainer.logging.diagnostics import plot_to_image
+from NCA.trainer.logging.wandb_log import NCALogger
 
 
 def uses_fast_kan_diagnostics(model):
@@ -54,7 +54,7 @@ def _fraction_abs_below(x, eps):
 	return float(np.mean(np.abs(x) < eps))
 
 
-class kaNCA_Train_log(NCA_Train_log):
+class FastKANLogger(NCALogger):
 	def _log_legacy_kan_parameters(self,nca,i):
 		#Log weights and biasses of model every 10 training epochs
 		weights = nca.get_weights()
@@ -549,33 +549,10 @@ class kaNCA_Train_log(NCA_Train_log):
 		else:
 			self._log_legacy_kan_parameters(nca,i)
 
-	def tb_training_loop_log_sequence(self,log_dict,i,model,write_images=True,LOG_EVERY=10):
-		for name in log_dict.keys():
-			if name != "states":
-				if name.startswith("pool/"):
-					self.log_scalar(f"StatePool/{name.removeprefix('pool/')}",log_dict[name],step=i)
-				elif name.startswith("validation/"):
-					self.log_scalar(f"Validation/{name.removeprefix('validation/')}",log_dict[name],step=i)
-				elif name.startswith("validation_rollout/"):
-					self.log_scalar(f"ValidationRollout/{name.removeprefix('validation_rollout/')}",log_dict[name],step=i)
-				elif name == "learning_rate":
-					self.log_scalar("Training/learning_rate", log_dict[name], step=i)
-				else:
-					self.log_scalar(f"Train/{name}",log_dict[name],step=i)
-		if i%LOG_EVERY==0 and i>0:
-			if uses_fast_kan_diagnostics(model):
-				has_rollout = "states" in log_dict and hasattr(
-					model,
-					"get_kan_layer_inputs_outputs",
-				)
-				self.log_fast_kan_diagnostics(
-					model,
-					i,
-					log_static_top_edges=not has_rollout,
-				)
-				self.log_fast_kan_rollout_diagnostics(model,log_dict,i)
-			else:
-				self.log_model_parameters(model,i)
-			self.log_channel_time_diagnostics(log_dict,i)
-			if write_images:
-				self.log_model_outputs(log_dict,i)
+	def log_model_diagnostics(self,model,log_dict,i):
+		if not uses_fast_kan_diagnostics(model):
+			self.log_model_parameters(model,i)
+			return
+		has_rollout = "states" in log_dict and hasattr(model, "get_kan_layer_inputs_outputs")
+		self.log_fast_kan_diagnostics(model, i, log_static_top_edges=not has_rollout)
+		self.log_fast_kan_rollout_diagnostics(model,log_dict,i)

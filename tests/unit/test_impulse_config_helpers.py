@@ -4,7 +4,7 @@ import jax.numpy as jnp
 
 from Experiments.config_helpers import load_model_checkpoint, resolve_checkpoint_path
 from Experiments.impulse.config_helpers import (
-    build_impulse_optimizer,
+    build_impulse_optimiser,
     build_intervention,
     build_objective,
     build_pair_source,
@@ -130,7 +130,7 @@ def test_impulse_builders_construct_configured_components(tmp_path):
         trajectories,
         jax.random.PRNGKey(3),
     )
-    optimiser = build_impulse_optimizer(cfg.impulse.optimiser)
+    optimiser = build_impulse_optimiser(cfg.impulse.optimiser)
     output = resolve_output_directory(
         cfg.impulse.output,
         env={"IMPULSE_OUTPUT_PATH": str(tmp_path)},

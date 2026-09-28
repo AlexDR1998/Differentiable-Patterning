@@ -24,12 +24,13 @@ Experiments/<domain>/train.py:run(cfg)
 | `preparation.py` | `prepare_training` reads the trainer and returns a frozen `PreparedTraining`: optimiser, interval schedule, loss functions and cached target features, regularisers, initial pool. It does not change the trainer. |
 | `step.py` | Everything traced by JAX: `batch_model` (applies the model to every batch, blocking NODAL for knockouts), `run_nca_steps` (the rollout scan), `batch_loss`, `multi_target_losses`, and `build_train_step` (rollout, loss, gradient, optimiser update). Also `TrainState` and `StepOutput`. |
 | `runner.py` | `run_loop`: the Python loop around the compiled step. Pool admission, validation, logging and best-checkpoint saving (`BestCheckpoint`). |
+| `logging/` | `wandb_log.NCALogger` (and `kan_wandb_log.FastKANLogger` for KAN models): `log_training_step` every step and `log_training_end` for the final rollout. The plots are made in `diagnostics.py`. |
 | `validation.py` | `ValidationEvaluator`: rollout and loss on held-out replicates, with their own boundary callbacks and masks. |
 | `objective.py` | `resolve_objective`: turns the typed loss config into loss names, shared loss arguments and regulariser weights. |
 | `pool.py` | Pool admission decisions (whether a rollout is written back into the training pool). |
 | `loss_schedule.py`, `interval_schedule.py` | Loss-weight schedules, and steps per time slot for non-uniform observation times. |
 | `loss_multi_target.py`, `variation_metrics.py` | The multi-target (permutation-invariant snapshot) loss, and the replicate-variation metrics logged during validation. The other losses are in `Common/trainer/` (`loss_table.py` maps names to functions). |
-| `optimizer.py`, `NCA_regulariser.py`, `intervention.py`, `instrumentation.py` | Optimiser and learning-rate schedule, regularisers, NODAL knockout helpers, optional profiling. |
+| `optimiser.py`, `NCA_regulariser.py`, `intervention.py`, `instrumentation.py` | Optimiser and learning-rate schedule, regularisers, NODAL knockout helpers, optional profiling. |
 
 ## Rules
 

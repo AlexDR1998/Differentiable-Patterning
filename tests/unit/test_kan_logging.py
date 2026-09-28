@@ -11,13 +11,15 @@ from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_model import NCA
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from NCA.trainer.trainer import select_wandb_train_logger_class
-from NCA.trainer.logging.tensorboard import (
-    NCA_Train_log,
-    NCA_knockout_Train_log,
-    _biomarker_name,
-    _target_aligned_diagnostic_channels,
+from Common.dataloader.micropattern_schemas import MICROPATTERN_GROUPED_12CH_SCHEMA
+from NCA.trainer.logging.wandb_log import (
+    NCALogger,
     _trajectory_condition_labels,
     _trajectory_snapshot_channels,
+)
+from NCA.trainer.logging.diagnostics import (
+    biomarker_name as _biomarker_name,
+    target_aligned_diagnostic_channels as _target_aligned_diagnostic_channels,
     compute_channel_correlation_diagnostics,
     compute_channel_time_diagnostics,
     plot_channel_correlation_diagnostics,
@@ -26,14 +28,14 @@ from NCA.trainer.logging.tensorboard import (
     plot_radial_intensity_line_diagnostics,
     plot_total_intensity_diagnostics,
 )
-from NCA.trainer.logging.kan_tensorboard import (
-    kaNCA_Train_log,
+from NCA.trainer.logging.kan_wandb_log import (
+    FastKANLogger,
     uses_fast_kan_diagnostics,
 )
 
 
 def _logger_without_wandb():
-    logger = object.__new__(kaNCA_Train_log)
+    logger = object.__new__(FastKANLogger)
     logger.diagnostic_targets = None
     return logger
 
@@ -62,22 +64,18 @@ def test_fast_kan_logger_selection_uses_kan_logger():
     nca = NCA(4, KERNEL_STR=["ID", "LAP"], key=key)
 
     assert uses_fast_kan_diagnostics(fast_kan_nca)
-    assert select_wandb_train_logger_class(fast_kan_nca) is kaNCA_Train_log
-    assert select_wandb_train_logger_class(nca) is NCA_Train_log
-    assert (
-        select_wandb_train_logger_class(fast_kan_nca, knockout_time=0)
-        is NCA_knockout_Train_log
-    )
+    assert select_wandb_train_logger_class(fast_kan_nca) is FastKANLogger
+    assert select_wandb_train_logger_class(nca) is NCALogger
 
 
 def test_learning_rate_uses_training_wandb_category():
-    logger = object.__new__(NCA_Train_log)
+    logger = object.__new__(NCALogger)
     logged = []
     logger.log_scalar = lambda tag, value, step=None: logged.append(
         (tag, value, step)
     )
 
-    logger.tb_training_loop_log_sequence(
+    logger.log_training_step(
         {"learning_rate": 5e-4},
         i=1,
         model=None,
@@ -191,7 +189,7 @@ def test_fast_kan_training_loop_logs_rollout_top_edges():
     logger.log_scalar = lambda tag, value, step=None: logged["scalars"].append(tag)
     logger.log_image = lambda tag, image, step=None: logged["images"].append(tag)
 
-    logger.tb_training_loop_log_sequence(
+    logger.log_training_step(
         log_dict,
         i=10,
         model=model,
@@ -273,7 +271,9 @@ def test_radial_profile_line_plot_contains_one_line_per_timestep_and_channel():
 def test_grouped_diagnostic_outputs_are_aligned_to_12_target_channels():
     outputs = np.arange(9, dtype=np.float32).reshape(1, 1, 9, 1, 1)
 
-    aligned = _target_aligned_diagnostic_channels(outputs, grouped_channels=True)
+    aligned = _target_aligned_diagnostic_channels(
+        outputs, channel_schema=MICROPATTERN_GROUPED_12CH_SCHEMA
+    )
 
     assert aligned.shape == (1, 1, 12, 1, 1)
     assert aligned[0, 0, :, 0, 0].tolist() == [
@@ -391,7 +391,7 @@ def test_channel_time_grid_and_true_logging_retain_batch_labels():
     image = plot_channel_time_grid(values, ["a", "b", "c"], ["t0", "t1"])
     assert image.ndim == 4
 
-    logger = object.__new__(NCA_Train_log)
+    logger = object.__new__(NCALogger)
     logger.channel_names = ["a", "b", "c"]
     logger.timepoint_names = ["t1"]
     logged = {}
@@ -402,10 +402,10 @@ def test_channel_time_grid_and_true_logging_retain_batch_labels():
 
 
 def test_training_logger_emits_channel_time_diagnostics_without_wandb():
-    logger = object.__new__(NCA_Train_log)
+    logger = object.__new__(NCALogger)
     logger.diagnostic_targets = np.ones((1, 2, 12, 5, 5), dtype=np.float32)
     logger.diagnostic_boundary_mask = np.ones((1, 1, 5, 5), dtype=np.float32)
-    logger.diagnostic_grouped_channels = True
+    logger.diagnostic_channel_schema = MICROPATTERN_GROUPED_12CH_SCHEMA
     logger.radial_bins = 4
     logger.radial_extent = 1.5
     logger.channel_names = [f"channel_{index + 1}" for index in range(12)]
@@ -431,14 +431,14 @@ def test_training_logger_emits_channel_time_diagnostics_without_wandb():
 
 
 def test_training_snapshots_include_every_batch_in_one_composite():
-    logger = object.__new__(NCA_Train_log)
+    logger = object.__new__(NCALogger)
     logger.normalise_images = lambda values: values
     logged = {}
     logger.log_image = lambda tag, image, step=None: logged.update({tag: image})
     logger.log_scalar = lambda *args, **kwargs: None
     values = [np.ones((2, 4, 3, 5), dtype=np.float32) * batch for batch in range(3)]
 
-    with patch("NCA.trainer.logging.tensorboard.get_jax_memory_stats", return_value={}):
+    with patch("NCA.trainer.logging.wandb_log.get_jax_memory_stats", return_value={}):
         logger.log_model_outputs({"states": values}, 1)
 
     assert logged["Train/visible_batches"].shape == (9, 10, 3)
@@ -446,7 +446,7 @@ def test_training_snapshots_include_every_batch_in_one_composite():
 
 
 def test_group_timestep_losses_log_one_histogram_at_diagnostic_interval():
-    logger = object.__new__(NCA_Train_log)
+    logger = object.__new__(NCALogger)
     logger.timepoint_names = ["t12h", "t24h"]
     logger.log_model_parameters = lambda *args: None
     logger.log_channel_time_diagnostics = lambda *args: None
@@ -461,9 +461,9 @@ def test_group_timestep_losses_log_one_histogram_at_diagnostic_interval():
         "loss_detail/rna_expression/radial": np.array([10.0, 20.0]),
     }
 
-    logger.tb_training_loop_log_sequence(details, 9, None, False, 10)
+    logger.log_training_step(details, 9, None, False, 10)
     assert logged == []
-    logger.tb_training_loop_log_sequence(details, 10, None, False, 10)
+    logger.log_training_step(details, 10, None, False, 10)
     assert len(logged) == 1
     assert logged[0][0] == "Train/loss_detail/group_timestep"
     np.testing.assert_array_equal(logged[0][1], [1.0, 2.0, 3.0, 4.0])

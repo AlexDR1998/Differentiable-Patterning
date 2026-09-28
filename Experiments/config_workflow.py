@@ -8,6 +8,17 @@ from typing import Any, cast
 
 from omegaconf import OmegaConf
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _display_path(path: Path) -> str:
+    """``path`` relative to the repository if it is inside it, so manifests hold no machine paths."""
+    path = Path(path).resolve()
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
     return OmegaConf.to_container(OmegaConf.load(path), resolve=True)  # type: ignore[return-value]
@@ -165,7 +176,7 @@ def generate_manifest(base_cfg: dict[str, Any], sweep_cfg: dict[str, Any], outpu
         "entrypoint": sweep_cfg.get("entrypoint"),
         "base_config": sweep_cfg.get("base_config"),
         "sweep_file": sweep_cfg.get("sweep_file"),
-        "output_dir": str(output_dir),
+        "output_dir": _display_path(output_dir),
         "count": len(generated_entries),
         "configs": generated_entries,
         "emit_files": bool(emit_files),

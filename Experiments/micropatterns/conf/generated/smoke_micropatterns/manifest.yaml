@@ -2,7 +2,7 @@ experiment_name: smoke_micropatterns
 entrypoint: Experiments.micropatterns.train:run
 base_config: null
 sweep_file: null
-output_dir: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/generated/smoke_micropatterns
+output_dir: Experiments/micropatterns/conf/generated/smoke_micropatterns
 count: 2
 configs:
 - index: 0
@@ -40,7 +40,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_micropatterns-refactor-phase6c-7-logging-packaging
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     data.micropattern.pool_copies: 2
@@ -167,7 +167,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-refactor-phase6b-augmenters
+        group: smoke_micropatterns-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true
@@ -211,7 +211,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-refactor-phase6b-augmenters
+    logging.wandb.group: smoke_micropatterns-refactor-phase6c-7-logging-packaging
     model.family: gNCA
     trainer.loop_autodiff: lax
     data.micropattern.pool_copies: 1
@@ -344,7 +344,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-refactor-phase6b-augmenters
+        group: smoke_micropatterns-refactor-phase6c-7-logging-packaging
         tags: null
     model_store:
       enabled: true

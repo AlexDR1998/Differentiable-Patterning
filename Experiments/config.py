@@ -24,7 +24,7 @@ from Common.trainer.config import (
     LossConfig,
     LossTermConfig,
     LossWeightScheduleConfig,
-    OptimizerConfig,
+    OptimiserConfig,
     ScheduleConfig,
 )
 from Experiments.emoji.config import (
@@ -37,7 +37,7 @@ from Experiments.impulse.config import (
     ImpulseConfig,
     ImpulseInterventionConfig,
     ImpulseObjectiveConfig,
-    ImpulseOptimizerConfig,
+    ImpulseOptimiserConfig,
     ImpulsePairSourceConfig,
     ImpulseRolloutConfig,
     OutputConfig,
@@ -165,10 +165,8 @@ class LoggingConfig(ConfigValue):
     )
 
     def __post_init__(self):
-        if self.backend not in {"none", "wandb", "tensorboard"}:
-            raise ValueError(
-                "logging.backend must be 'none', 'wandb' or 'tensorboard'"
-            )
+        if self.backend not in {"none", "wandb"}:
+            raise ValueError("logging.backend must be 'none' or 'wandb'")
 
 
 @dataclass(frozen=True)
@@ -195,7 +193,7 @@ class ExperimentConfig(ConfigValue):
     model: ModelConfig
     run: RunConfig
     trainer: TrainerConfig
-    optimiser: OptimizerConfig
+    optimiser: OptimiserConfig
     loss: LossConfig
     logging: LoggingConfig
     model_store: ModelStoreConfig
@@ -501,7 +499,7 @@ def _trainer_config(value: Any, checkpoint_warmup: int) -> TrainerConfig:
     return _strict(TrainerConfig, node, "trainer")
 
 
-def _optimiser_config(value: Any) -> OptimizerConfig:
+def _optimiser_config(value: Any) -> OptimiserConfig:
     node = _mapping(value, "optimiser")
     schedule = _mapping(node.get("schedule"), "optimiser.schedule")
     for key in ("warmup_init_lr", "final_factor", "transition_fraction", "decay_rate"):
@@ -511,7 +509,7 @@ def _optimiser_config(value: Any) -> OptimizerConfig:
     for key in ("learn_rate", "decay_rate", "sam_rho", "gradient_clip_norm"):
         if node.get(key) is not None:
             node[key] = float(node[key])
-    return _strict(OptimizerConfig, node, "optimiser")
+    return _strict(OptimiserConfig, node, "optimiser")
 
 
 def _logging_config(value: Any) -> LoggingConfig:
@@ -597,7 +595,7 @@ def impulse_experiment_config_from_mapping(
     impulse_node["intervention"] = _strict(ImpulseInterventionConfig, impulse_node.get("intervention"), "impulse.intervention")
     impulse_node["objective"] = _strict(ImpulseObjectiveConfig, impulse_node.get("objective"), "impulse.objective")
     impulse_node["loss"] = _loss_config(impulse_node.get("loss"), "impulse.loss")
-    impulse_node["optimiser"] = _strict(ImpulseOptimizerConfig, impulse_node.get("optimiser"), "impulse.optimiser")
+    impulse_node["optimiser"] = _strict(ImpulseOptimiserConfig, impulse_node.get("optimiser"), "impulse.optimiser")
     impulse_node["output"] = _strict(OutputConfig, impulse_node.get("output"), "impulse.output")
     return ImpulseExperimentConfig(
         schema_version=CONFIG_SCHEMA_VERSION,

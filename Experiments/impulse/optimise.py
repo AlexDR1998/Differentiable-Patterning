@@ -4,10 +4,10 @@ import equinox as eqx
 import jax
 import numpy as np
 
-from Experiments.config_helpers import load_model_checkpoint, set_matmul_precision
+from Experiments.config_helpers import load_model_checkpoint
 from Experiments.config_helpers import loss_names, loss_weights
 from Experiments.impulse.config_helpers import (
-    build_impulse_optimizer,
+    build_impulse_optimiser,
     build_intervention,
     build_objective,
     build_pair_source,
@@ -21,7 +21,6 @@ from NCA.trainer.impulse import NCAImpulseOptimiser
 def run(cfg):
     """Load a trained NCA, optimise an intervention, and save float outputs."""
 
-    set_matmul_precision(cfg.system)
     key = jax.random.PRNGKey(cfg.seed)
     model_key, intervention_key, train_key = jax.random.split(key, 3)
     model, _, checkpoint_path = load_model_checkpoint(
@@ -45,7 +44,7 @@ def run(cfg):
         pair_source=pair_source,
         intervention=intervention,
         objective=build_objective(cfg.impulse.objective),
-        optimiser=build_impulse_optimizer(cfg.impulse.optimiser),
+        optimiser=build_impulse_optimiser(cfg.impulse.optimiser),
         observed_channels=cfg.data.emoji.observed_channels,
         rollout_steps=impulse_cfg.rollout.steps,
         loss_names=loss_names(impulse_cfg.loss),

@@ -21,9 +21,6 @@ with app.setup:
     import tempfile
     from pathlib import Path
 
-    _repository_root = Path(__file__).resolve().parents[1]
-    if str(_repository_root) not in sys.path:
-        sys.path.insert(0, str(_repository_root))
 
     import jax
     import jax.numpy as jnp
@@ -35,7 +32,7 @@ with app.setup:
     from Common.dataloader.preprocessing import PreprocessingConfig
     from Common.trainer.config import (
         LossConfig,
-        OptimizerConfig,
+        OptimiserConfig,
         PointwiseLossConfig,
         ScheduleConfig,
     )
@@ -52,7 +49,6 @@ with app.setup:
         WandbConfig,
         config_to_dict,
     )
-    from Experiments.config_helpers import set_matmul_precision
     from NCA.model.factory import build_model
     from Experiments.emoji.config import (
         EmojiDataConfig,
@@ -474,7 +470,7 @@ def _():
         0.01,
         value=0.001,
         step=0.0001,
-        label="OptimizerConfig.learn_rate",
+        label="OptimiserConfig.learn_rate",
     )
     mo.vstack([rollout_steps, iteration_count, learning_rate_value])
     return iteration_count, learning_rate_value, rollout_steps
@@ -493,7 +489,7 @@ def _(iteration_count, learning_rate_value, rollout_steps):
         log_every=max(1, int(iteration_count.value) // 2),
         pool_admission=PoolAdmissionConfig(enabled=False),
     )
-    optimizer_config = OptimizerConfig(
+    optimiser_config = OptimiserConfig(
         learn_rate=float(learning_rate_value.value),
         warmup_steps=0,
         schedule=ScheduleConfig(type="cosine",final_factor=0.2)
@@ -506,7 +502,7 @@ def _(iteration_count, learning_rate_value, rollout_steps):
     training_config = TrainingConfig(
         loop=training_loop_config,
         trainer=trainer_config,
-        optimizer=optimizer_config,
+        optimizer=optimiser_config,
         loss=loss_config,
         checkpoint=checkpoint_config,
     )
@@ -679,7 +675,7 @@ def _(
         os.environ["MODEL_STORE_ROOT"] = experiment_config.model_store.root
         os.environ["WANDB_MODE"] = "offline"
         os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-        set_matmul_precision(experiment_config.runtime)
+        jax.config.update("jax_default_matmul_precision", experiment_config.system.precision)
 
         _loss_history = []
 

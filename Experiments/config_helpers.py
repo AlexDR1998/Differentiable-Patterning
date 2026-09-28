@@ -165,15 +165,6 @@ def build_loss_filename(loss_config, include_loss_args=False):
     return loss_str
 
 
-def set_matmul_precision(runtime_config):
-    precision = runtime_config.precision
-    if precision is None:
-        return
-    import jax
-
-    jax.config.update("jax_default_matmul_precision", precision)
-
-
 def resolve_checkpoint_path(checkpoint_config, env=None):
     """Resolve a configured checkpoint path and require an existing ``.eqx`` file.
 

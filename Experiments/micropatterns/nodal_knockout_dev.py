@@ -7,8 +7,6 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-    import sys
-    sys.path.append('/home/alex/PhD/Differentiable-Patterning/')
     import jax 
     import jax.numpy as np
     import numpy as onp

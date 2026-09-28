@@ -134,7 +134,7 @@ def run(cfg):
     )
     from Experiments.nca_training import run_training
     from NCA.trainer.context import TrainerContext
-    from NCA.trainer.optimizer import build_optimizer
+    from NCA.trainer.optimiser import build_optimiser
 
     load_dotenv()
     model_root = cfg.model_store.root
@@ -146,7 +146,7 @@ def run(cfg):
     training_data, validation_data = load_train_validation_data(cfg.data)
     data, aux, channel_names, boundary, mask, _ = training_data
     model, model_name = load_initial_model(cfg, model_key, model_root)
-    _, optimiser_name, _ = build_optimizer(
+    _, optimiser_name, _ = build_optimiser(
         cfg.optimiser,
         cfg.run.iterations,
         return_schedule=True,

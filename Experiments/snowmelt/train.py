@@ -71,7 +71,7 @@ def run(cfg):
     from Experiments.model_registry import create_model_id, evaluation_input_provenance
     from NCA.trainer.context import TrainerContext
     from NCA.trainer.data_augmenter.snowmelt import SnowmeltAugmenter
-    from NCA.trainer.optimizer import build_optimizer
+    from NCA.trainer.optimiser import build_optimiser
 
     load_dotenv()
     model_root = cfg.model_store.root
@@ -101,7 +101,7 @@ def run(cfg):
     data = jnp.asarray(sequence.data)
     boundary = jnp.asarray(sequence.boundary_mask)
     model, model_name = build_model(cfg.model, key=model_key)
-    _, optimiser_name, _ = build_optimizer(
+    _, optimiser_name, _ = build_optimiser(
         cfg.optimiser, cfg.run.iterations, return_schedule=True
     )
     snowmelt = cfg.data.snowmelt

@@ -1,0 +1,24 @@
+# Makes Common, NCA and Experiments importable from anywhere after
+#     pip install -e .
+# Dependencies are managed by the files in requirements/ (pip or conda),
+# so none are listed here.
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "differentiable-patterning"
+version = "0.1.0"
+description = "Neural cellular automata for biological patterning, in JAX and Equinox"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["Common*", "NCA*", "Experiments*"]
+namespaces = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+# Lets the tests import the repository without installing it first
+pythonpath = ["."]

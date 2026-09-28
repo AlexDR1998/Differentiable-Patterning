@@ -42,7 +42,6 @@ from dotenv import load_dotenv
 from omegaconf import OmegaConf
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT))
 
 from Experiments.config_workflow import generate_manifest, load_yaml
 
@@ -54,7 +53,7 @@ STAGES = [
     ("snowmelt", "smoke_snowmelt"),
 ]
 # Label for the code version being tested; used in the W&B group of every run.
-SMOKE_VERSION = "refactor-phase6b-augmenters"
+SMOKE_VERSION = "refactor-phase6c-7-logging-packaging"
 PARENT_PLACEHOLDER = "REPLACE_WITH_PARENT_MODEL_ID"
 SMOKE_COLLECTION = "pipeline-smoke"
 
@@ -149,7 +148,7 @@ def main() -> int:
             except ValueError:
                 relative = manifest_path  # outside the repo, so not visible to pods
             launch_commands.append(
-                f"bash launch_batch_multi_job.sh Experiments/run_config.py {relative} {count} {args.gpu}"
+                f"bash launch/launch_batch_multi_job.sh Experiments/run_config.py {relative} {count} {args.gpu}"
             )
             continue
 

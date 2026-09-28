@@ -27,7 +27,7 @@ spec:
               # command: ["python", "${JOB_PATH_TO_PYTHON_SCRIPT}"]
               command: ["/bin/bash", "-lc"]
               args:
-                - "bash /workspace/launch_inside_pod.sh /workspace/$PATH_TO_PYTHON_SCRIPT /workspace/$PATH_TO_EXPERIMENT_CONFIG"
+                - "bash /workspace/launch/launch_inside_pod.sh /workspace/$PATH_TO_PYTHON_SCRIPT /workspace/$PATH_TO_EXPERIMENT_CONFIG"
               env:
               # - name: MY_USERNAME
                 # value: $USER
@@ -38,6 +38,9 @@ spec:
               - name: MANIFEST_START_INDEX
                 value: "$MANIFEST_START_INDEX"
               - name: PVC_PATH
+                value: /workspace
+              # Makes Common, NCA and Experiments importable from the mounted checkout
+              - name: PYTHONPATH
                 value: /workspace
               - name: DATA_PATH_BASE
                 value: /workspace/writeable/Data/
