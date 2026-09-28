@@ -26,8 +26,12 @@ from Experiments.emoji.config_helpers import (
     build_filename,
     load_data as load_emoji_data,
 )
-from NCA.trainer.data_augmenter.colony_4ch import DataAugmenter as DataAugmenter4Ch
-from NCA.trainer.data_augmenter.colony_9ch import DataAugmenter as DataAugmenterGrouped
+from Common.dataloader.micropattern_schemas import (
+    MICROPATTERN_4CH_SCHEMA,
+    MICROPATTERN_GROUPED_12CH_SCHEMA,
+)
+from NCA.trainer.data_augmenter.emoji import EmojiAugmenter
+from NCA.trainer.data_augmenter.micropattern import MicropatternAugmenter, masked_reinject
 
 
 class ConfigDict(dict):
@@ -296,7 +300,8 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
         optimiser=OptimizerConfig(learn_rate=0.0003, decay_rate=0.99),
     )
     data_cfg_str = build_data_config_string(cfg.data)
-    data_augmenter, data_augmenter_cfg_str = build_data_augmenter(cfg.data)
+    data = jnp.zeros((1, 3, 4, 8, 8))
+    data_augmenter, data_augmenter_cfg_str = build_data_augmenter(cfg.data, data, 12)
     filename = build_filename(
         cfg,
         "FastKaNCA_c12_kb16",
@@ -304,7 +309,7 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
         data_augmenter_cfg_str,
     )
 
-    assert data_augmenter is not None
+    assert isinstance(data_augmenter, EmojiAugmenter)
     assert "data_av_mu_li" in filename
     assert "avocado" not in filename
     assert "pad" not in filename
@@ -669,20 +674,19 @@ def test_260726_knockout_requires_full_schema():
         micropattern_helpers.load_data(cfg, impath="/tmp/micropatterns/")
 
 
-def test_micropattern_build_data_augmenter_selects_channel_specific_class():
+def test_micropattern_build_data_augmenter_selects_channel_schema():
     import Experiments.micropatterns.config_helpers as micropattern_helpers
 
     augmenter_12, _ = micropattern_helpers.build_data_augmenter(
-        _micropattern_cfg(data_channels=12), 2000
+        _micropattern_cfg(data_channels=12), 2000, jnp.zeros((2, 3, 12, 4, 4)), 12
     )
     augmenter_4, _ = micropattern_helpers.build_data_augmenter(
-        _micropattern_cfg(data_channels=4), 2000
+        _micropattern_cfg(data_channels=4), 2000, jnp.zeros((2, 3, 4, 4, 4)), 6
     )
 
-    assert issubclass(augmenter_12, DataAugmenterGrouped)
-    assert issubclass(augmenter_12, DataAugmenter4Ch)
-    assert augmenter_12 is not augmenter_4
-    assert issubclass(augmenter_4, DataAugmenter4Ch)
+    assert augmenter_12.schema is MICROPATTERN_GROUPED_12CH_SCHEMA
+    assert augmenter_4.schema is MICROPATTERN_4CH_SCHEMA
+    assert augmenter_12.reinjection == augmenter_4.reinjection == "masked"
 
 
 def test_micropattern_knockout_role_patterns_repeat_by_batch():
@@ -733,7 +737,7 @@ def test_micropattern_masked_reinject_only_uses_measured_channels():
     selected = int(jnp.argsort(jax.random.uniform(key, shape=(2,)))[0])
     mask = jnp.zeros((1, 2, 9), dtype=jnp.float32).at[0, selected, 0].set(1.0)
 
-    out = micropattern_helpers.masked_reinject_callback_bit(
+    out = masked_reinject(
         x,
         x_true,
         9,
@@ -777,7 +781,7 @@ def test_micropattern_nodal_zeroing_wins_after_reinject_for_ko_batches():
     x_true = [100.0 * (i + 1) * jnp.ones((4, 9, 1, 1), dtype=jnp.float32) for i in range(3)]
     mask = jnp.ones((3, 3, 9), dtype=jnp.float32)
 
-    out = micropattern_helpers.masked_reinject_callback_bit(
+    out = masked_reinject(
         x,
         x_true,
         9,
@@ -827,7 +831,9 @@ def test_micropattern_rejects_unsupported_channel_count():
     import Experiments.micropatterns.config_helpers as micropattern_helpers
 
     with pytest.raises(ValueError, match="Expected 4 or 12"):
-        micropattern_helpers.build_data_augmenter(_micropattern_cfg(data_channels=5), 2000)
+        micropattern_helpers.build_data_augmenter(
+            _micropattern_cfg(data_channels=5), 2000, jnp.zeros((1, 3, 5, 4, 4)), 8
+        )
 
     with pytest.raises(ValueError, match="Expected 4 or 12"):
         micropattern_helpers.load_data(
@@ -842,7 +848,7 @@ def test_micropattern_rejects_4_channel_knockout_data():
     cfg = _micropattern_cfg(data_channels=4, knockout_mode="only_one_ko")
 
     with pytest.raises(ValueError, match="no-knockout group-A data"):
-        micropattern_helpers.build_data_augmenter(cfg, 2000)
+        micropattern_helpers.build_data_augmenter(cfg, 2000, jnp.zeros((1, 3, 4, 4, 4)), 6)
 
     with pytest.raises(ValueError, match="no-knockout group-A data"):
         micropattern_helpers.load_data(cfg, impath="/tmp/micropatterns/")
@@ -850,11 +856,11 @@ def test_micropattern_rejects_4_channel_knockout_data():
 
 def test_data_augmenter_4ch_colony_keeps_observable_channels():
     data = jnp.arange(1 * 5 * 4 * 2 * 3, dtype=jnp.float32).reshape(1, 5, 4, 2, 3)
-    augmenter = DataAugmenter4Ch(data_true=data, hidden_channels=2)
+    augmenter = MicropatternAugmenter(data, MICROPATTERN_4CH_SCHEMA, 6, reinjection="masked")
 
     x, y = augmenter.split_x_y(1)
 
     assert x[0].shape == (4, 6, 2, 3)
-    assert y[0].shape == (4, 6, 2, 3)
+    assert y[0].shape == (4, 4, 2, 3)
     assert jnp.array_equal(x[0][:, :4], data[0, :-1])
     assert jnp.array_equal(y[0][:, :4], data[0, 1:])

@@ -548,7 +548,9 @@ def _(
             pool_lab_training_output = mo.callout(pool_lab_data_error, kind="danger")
         else:
             try:
-                _augmenter_class_pool_lab, _augmenter_name_pool_lab = build_data_augmenter(pool_lab_data_config)
+                _augmenter_pool_lab, _augmenter_name_pool_lab = build_data_augmenter(
+                    pool_lab_data_config, pool_lab_data, pool_lab_model.N_CHANNELS
+                )
                 _experiment_pool_lab = ExperimentConfig(
                     schema_version=1,
                     seed=0,
@@ -573,7 +575,7 @@ def _(
                 _context_pool_lab = TrainerContext(
                     run_name="objectives_pool_diagnostic",
                     model_directory=_experiment_pool_lab.model_store.root,
-                    data_augmenter=_augmenter_class_pool_lab,
+                    data_augmenter=_augmenter_pool_lab,
                     observed_channels=_experiment_pool_lab.data.emoji.observed_channels,
                     data_channels=_experiment_pool_lab.data.emoji.data_channels,
                 )

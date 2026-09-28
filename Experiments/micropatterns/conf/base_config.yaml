@@ -1,4 +1,4 @@
-schema_version: 3
+schema_version: 4
 seed: 0
 
 experiment:
@@ -55,7 +55,6 @@ model:
 trainer:
   boundary_mode: soft
   grad_loss: false
-  sharding: null
   log_directory: logs/
   loss_time_channel_mask: null
   loop_autodiff: checkpointed

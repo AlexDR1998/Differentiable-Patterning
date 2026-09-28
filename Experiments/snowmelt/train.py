@@ -70,7 +70,7 @@ def run(cfg):
     from Experiments.nca_training import run_training
     from Experiments.model_registry import create_model_id, evaluation_input_provenance
     from NCA.trainer.context import TrainerContext
-    from NCA.trainer.data_augmenter.snowmelt import build_snowmelt_augmenter
+    from NCA.trainer.data_augmenter.snowmelt import SnowmeltAugmenter
     from NCA.trainer.optimizer import build_optimizer
 
     load_dotenv()
@@ -105,7 +105,9 @@ def run(cfg):
         cfg.optimiser, cfg.run.iterations, return_schedule=True
     )
     snowmelt = cfg.data.snowmelt
-    augmenter = build_snowmelt_augmenter(
+    augmenter = SnowmeltAugmenter(
+        data,
+        model.N_CHANNELS - data.shape[2],
         boundary,
         reinjection_probability=snowmelt.reinjection_probability,
         noise_strength=snowmelt.noise_strength,

@@ -17,7 +17,7 @@ from Experiments.config import config_to_dict, experiment_config_from_mapping
 from Experiments.snowmelt.config import SnowmeltDataConfig
 from NCA.trainer.data_augmenter.snowmelt import (
     apply_boundary_channels,
-    build_snowmelt_augmenter,
+    SnowmeltAugmenter,
 )
 
 
@@ -120,10 +120,7 @@ def test_augmenter_writes_boundary_channels_and_masks_observables():
         jnp.array([[0.5, 0.0], [0.2, 0.9]]),
     ])[None]  # [B=1, m=2, H, W]
     data = jnp.ones((1, 3, 2, 2, 2))  # [B, T, C_obs=2, H, W]
-    augmenter = build_snowmelt_augmenter(boundary, noise_strength=0.0)(
-        data_true=data, hidden_channels=3
-    )
-    augmenter.data_init()
+    augmenter = SnowmeltAugmenter(data, 3, boundary, noise_strength=0.0)
     saved = augmenter.return_saved_data()[0]  # [T, 5, H, W]
 
     assert jnp.array_equal(saved[:, -2:], jnp.broadcast_to(boundary[0], (3, 2, 2, 2)))
@@ -145,20 +142,16 @@ def test_initial_pool_starts_each_slot_from_its_own_image():
     boundary = jnp.ones((1, 1, 2, 2))
     # Distinct constant image per time point: value t at time t.
     data = jnp.broadcast_to(jnp.arange(4.0)[None, :, None, None, None], (1, 4, 1, 2, 2))
-    augmenter = build_snowmelt_augmenter(boundary, noise_strength=0.0)(
-        data_true=data, hidden_channels=2
-    )
-    augmenter.data_init()
+    augmenter = SnowmeltAugmenter(data, 2, boundary, noise_strength=0.0)
 
     x, y = augmenter.initialize_pool(jr.PRNGKey(0))
 
     assert jnp.array_equal(x[0][:, 0, 0, 0], jnp.array([0.0, 1.0, 2.0]))
     assert jnp.array_equal(y[0][:, 0, 0, 0], jnp.array([1.0, 2.0, 3.0]))
     # advance_pool still hands slot k's prediction to slot k+1 (reinjection off).
-    no_reinject = build_snowmelt_augmenter(
-        boundary, reinjection_probability=0.0, noise_strength=0.0
-    )(data_true=data, hidden_channels=2)
-    no_reinject.data_init()
+    no_reinject = SnowmeltAugmenter(
+        data, 2, boundary, reinjection_probability=0.0, noise_strength=0.0
+    )
     predictions = [x[0].at[:, 0].add(10.0)]
     advanced, _ = no_reinject.advance_pool(predictions, y, 1, jr.PRNGKey(1))
     assert jnp.array_equal(advanced[0][:, 0, 0, 0], jnp.array([0.0, 10.0, 11.0]))

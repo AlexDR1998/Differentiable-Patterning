@@ -22,6 +22,10 @@ Manifests and logs go into one timestamped folder, by default
 be committed and pulled onto the cluster like any other sweep. Bundles are published to the normal model store
 (``MODEL_STORE_ROOT``, e.g. from ``.env``) under the ``pipeline-smoke``
 collection, which is also where the fine-tuning parent is looked up.
+
+Every run's W&B group is ``<sweep name>-<SMOKE_VERSION>``. Change
+``SMOKE_VERSION`` whenever the code changes and the smoke tests are rerun, so
+W&B shows which version of the code each set of runs tested.
 """
 
 from __future__ import annotations
@@ -49,6 +53,8 @@ STAGES = [
     ("micropatterns", "smoke_micropatterns_ko_finetune"),
     ("snowmelt", "smoke_snowmelt"),
 ]
+# Label for the code version being tested; used in the W&B group of every run.
+SMOKE_VERSION = "refactor-phase6b-augmenters"
 PARENT_PLACEHOLDER = "REPLACE_WITH_PARENT_MODEL_ID"
 SMOKE_COLLECTION = "pipeline-smoke"
 
@@ -132,6 +138,7 @@ def main() -> int:
             manifest_dir = REPO_ROOT / "Experiments" / domain / "conf" / "generated" / sweep_name
         else:
             manifest_dir = out_dir / sweep_name
+        sweep_cfg["grid"]["logging.wandb.group"] = [f"{sweep_name}-{SMOKE_VERSION}"]
         manifest = generate_manifest(base_cfg, sweep_cfg, manifest_dir)
         manifest_path = manifest_dir / "manifest.yaml"
         count = int(manifest["count"])

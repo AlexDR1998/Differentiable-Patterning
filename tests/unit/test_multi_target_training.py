@@ -5,7 +5,13 @@ import pytest
 from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
 from NCA.trainer import loss_multi_target
 from NCA.trainer.loss_multi_target import multi_target_loss
-from NCA.trainer.data_augmenter.micropattern import DataAugmenter
+from NCA.trainer.data_augmenter.micropattern import MicropatternAugmenter
+
+
+def _snapshot_augmenter(data, schema=MICROPATTERN_260726_SCHEMA, channels=None, **kwargs):
+    """Snapshot (group reinjection) augmenter with no noise."""
+    channels = schema.n_state_channels if channels is None else channels
+    return MicropatternAugmenter(data, schema, channels, noise_strength=0.0, **kwargs)
 
 COMPONENT_NAMES = ("l2", "texture", "channel_mean", "radial", "correlation")
 
@@ -161,13 +167,12 @@ def test_snapshot_reinjection_skips_unmeasured_channels():
     schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
     data = jnp.ones((2, 3, schema.n_measurement_channels, 2, 2))
     measurement_mask = jnp.zeros((2, 2, schema.n_measurement_channels), dtype=bool)
-    augmenter = DataAugmenter(
+    augmenter = _snapshot_augmenter(
         data,
         schema=schema,
         measurement_mask=measurement_mask,
-        intermediate_reinjection_probability=1.0,
+        reinjection_probability=1.0,
     )
-    augmenter.noise_strength = 0.0
     states = [
         jnp.zeros((2, schema.n_state_channels, 2, 2)) for _ in range(2)
     ]
@@ -181,14 +186,14 @@ def test_snapshot_reinjection_skips_unmeasured_channels():
 
 
 def test_snapshot_reinjection_donors_preserve_intervention_condition():
-    augmenter = object.__new__(DataAugmenter)
-    augmenter.intervention_times = (-1, -1, 0, 0, 24, 24)
-    labels = jnp.asarray(augmenter.intervention_times)
+    intervention_times = (-1, -1, 0, 0, 24, 24)
+    augmenter = _snapshot_augmenter(
+        jnp.zeros((6, 2, 14, 2, 2)), intervention_times=intervention_times
+    )
+    labels = jnp.asarray(intervention_times)
 
     for seed in range(10):
-        donors = augmenter._matched_donors(
-            jax.random.PRNGKey(seed), 6, jnp.arange(6)
-        )
+        donors = augmenter._matched_donors(jax.random.PRNGKey(seed), 6)
         assert jnp.array_equal(labels[donors], labels)
 
 
@@ -249,16 +254,14 @@ def test_soft_assignment_components_reconstruct_loss():
 
 def test_snapshot_augmenter_outputs_unique_state_and_measurement_targets():
     data = jax.random.uniform(jax.random.PRNGKey(2), (3, 5, 14, 8, 8))
-    augmenter = DataAugmenter(data, hidden_channels=2)
-    augmenter.noise_strength = 0.0
+    augmenter = _snapshot_augmenter(data, channels=12)
 
     x, y = augmenter.initialize_pool(jax.random.PRNGKey(3))
 
     assert len(x) == len(y) == 3
     assert x[0].shape == (4, 12, 8, 8)
-    assert y[0].shape == (4, 16, 8, 8)
+    assert y[0].shape == (4, 14, 8, 8)
     assert augmenter.OBS_CHANNELS == 10
-    assert DataAugmenter.schema is MICROPATTERN_260726_SCHEMA
 
 
 def test_reinjection_preserves_group_specific_duplicate_measurements():
@@ -268,8 +271,7 @@ def test_reinjection_preserves_group_specific_duplicate_measurements():
     )
     data = (1000 * batch + 100 * time + channel)[..., None, None].astype(jnp.float32)
     data = jnp.broadcast_to(data, (3, 5, 14, 2, 2))
-    augmenter = DataAugmenter(data)
-    augmenter.noise_strength = 0.0
+    augmenter = _snapshot_augmenter(data)
     zeros = [jnp.zeros((4, 10, 2, 2)) for _ in range(3)]
     targets = [value[1:] for value in data]
     observed = {"cell_fate_s2": False, "protein_response": False}
@@ -295,37 +297,6 @@ def test_reinjection_preserves_group_specific_duplicate_measurements():
     assert all(observed.values())
 
 
-def test_sharded_reinjection_matches_global_two_and_four_batch_permutations():
-    for batch_count in (2, 4):
-        data = jax.random.uniform(
-            jax.random.fold_in(jax.random.PRNGKey(20), batch_count),
-            (batch_count, 5, 14, 2, 2),
-        )
-        key = jax.random.fold_in(jax.random.PRNGKey(21), batch_count)
-        global_augmenter = DataAugmenter(data)
-        global_augmenter.noise_strength = 0.0
-        zeros = [jnp.zeros((4, 10, 2, 2)) for _ in range(batch_count)]
-        targets = [value[1:] for value in data]
-        expected, _ = global_augmenter.advance_pool(zeros, targets, 0, key)
-
-        split = batch_count // 2
-        actual = []
-        for indices in (jnp.arange(split), jnp.arange(split, batch_count)):
-            local = DataAugmenter(data)
-            local.noise_strength = 0.0
-            local._global_batch_indices = indices
-            local._sharded_global_key = key
-            result, _ = local.advance_pool(
-                [zeros[int(index)] for index in indices],
-                [targets[int(index)] for index in indices],
-                0,
-                jax.random.fold_in(key, int(indices[0]) + 1),
-            )
-            actual.extend(result)
-
-        assert jnp.allclose(jnp.stack(actual), jnp.stack(expected))
-
-
 def test_snapshot_reinjection_resets_initial_state_and_honours_decay_start():
     batch, time, channel = jnp.meshgrid(
         jnp.arange(3), jnp.arange(5), jnp.arange(14), indexing="ij"
@@ -334,14 +305,13 @@ def test_snapshot_reinjection_resets_initial_state_and_honours_decay_start():
         jnp.float32
     )
     data = jnp.broadcast_to(data, (3, 5, 14, 2, 2))
-    augmenter = DataAugmenter(
+    augmenter = _snapshot_augmenter(
         data,
-        intermediate_reinjection_probability=0.0,
-        intermediate_reinjection_probability_end=1.0,
-        intermediate_reinjection_decay_start_fraction=0.5,
-        intermediate_reinjection_total_iterations=100,
+        reinjection_probability=0.0,
+        reinjection_probability_end=1.0,
+        reinjection_decay_start_fraction=0.5,
+        total_iterations=100,
     )
-    augmenter.noise_strength = 0.0
     stale = [jnp.zeros((4, 10, 2, 2)) for _ in range(3)]
     targets = [value[1:] for value in data]
 
@@ -362,12 +332,12 @@ def test_snapshot_reinjection_resets_initial_state_and_honours_decay_start():
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"intermediate_reinjection_probability": -0.1},
-        {"intermediate_reinjection_probability_end": 1.1},
-        {"intermediate_reinjection_decay_start_fraction": 1.0},
+        {"reinjection_probability": -0.1},
+        {"reinjection_probability_end": 1.1},
+        {"reinjection_decay_start_fraction": 1.0},
     ],
 )
 def test_snapshot_reinjection_rejects_invalid_schedule(kwargs):
     data = jnp.zeros((2, 5, 14, 2, 2))
     with pytest.raises(ValueError):
-        DataAugmenter(data, **kwargs)
+        _snapshot_augmenter(data, **kwargs)

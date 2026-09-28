@@ -33,8 +33,8 @@ def test_training_loop_runs_and_saves_a_checkpoint(tmp_path, loop_autodiff):
     config = _tiny_emoji_config()
     config = replace(config, trainer=replace(config.trainer, loop_autodiff=loop_autodiff))
     data = jax.random.uniform(jax.random.PRNGKey(0), (1, 3, 4, 8, 8))
-    augmenter, _ = build_data_augmenter(config.data)
     model, _ = build_model(config.model, key=jax.random.PRNGKey(1))
+    augmenter, _ = build_data_augmenter(config.data, data, model.N_CHANNELS)
     context = TrainerContext(
         run_name="tiny",
         model_directory=str(tmp_path),

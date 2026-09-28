@@ -40,7 +40,11 @@ Experiments/<domain>/train.py:run(cfg)
 - The compiled step covers the rollout, loss, gradient and optimiser update.
   Logging, pool admission and checkpoint decisions stay in Python.
 - Data augmenters follow `data_augmenter/protocols.py:NCAAugmenterProtocol`.
-  All randomness must come from the supplied key.
+  The entrypoint builds one from the loaded data and puts the instance in
+  `TrainerContext.data_augmenter`. `EmojiAugmenter`, `MicropatternAugmenter`
+  and `SnowmeltAugmenter` build on `base.PoolAugmenter`, and use the pure
+  functions in `transforms.py` and `trajectory.py`. All randomness must come
+  from the supplied key.
 
 `tests/unit/test_trainer_runs.py` runs the whole loop for a few iterations on a
 tiny synthetic problem, so a broken trainer shows up in `pytest tests/unit`.

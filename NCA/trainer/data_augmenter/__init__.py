@@ -1,9 +1,13 @@
-"""JAX-compatible building blocks and active NCA data augmenters.
+"""Data augmenters: they hold the training data and update the pool of states.
 
-The low-level transforms remain exported here, while task-specific augmenters
-live in this package as separate modules.
+* ``base.PoolAugmenter`` holds the data; the domain augmenters build on it:
+  ``emoji.EmojiAugmenter``, ``micropattern.MicropatternAugmenter`` and
+  ``snowmelt.SnowmeltAugmenter``.
+* ``transforms.py`` and ``trajectory.py`` hold the pure functions they use
+  (reinjection, noise, shifts, damage, padding). Each takes an explicit key.
 """
 
+from .base import PoolAugmenter
 from .protocols import AugmenterBatch, NCAAugmenterProtocol
 from .transforms import (
     add_noise,
@@ -18,6 +22,7 @@ from .trajectory import split_trajectory
 __all__ = [
     "AugmenterBatch",
     "NCAAugmenterProtocol",
+    "PoolAugmenter",
     "add_noise",
     "bernoulli_reinject_observations",
     "propagate_pool",

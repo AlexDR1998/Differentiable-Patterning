@@ -588,7 +588,9 @@ def _(
         trainer_setup_error = "Load the selected data before constructing the trainer."
     if trainer_setup_error is None:
         try:
-            augmenter, augmenter_name = build_data_augmenter(experiment_config.data)
+            augmenter, augmenter_name = build_data_augmenter(
+                experiment_config.data, data, model.N_CHANNELS
+            )
             run_name = (
                 f"{experiment_config.experiment.name}_{model_name}_"
                 f"{data_name}_{augmenter_name}"
@@ -925,13 +927,10 @@ def _(
                     "Model has fewer channels than its configured input data."
                 )
 
-            _augmenter_class, _ = build_data_augmenter(_bundle.config.data)
-            _inference_augmenter = _augmenter_class(
-                data_true=_inference_data,
-                hidden_channels=_input_hidden_channels,
-            )
-            _inference_augmenter.data_init(
-                _bundle.config.trainer.sharding
+            _inference_augmenter, _ = build_data_augmenter(
+                _bundle.config.data,
+                _inference_data,
+                int(_inference_model.N_CHANNELS),
             )
             _initial_state = _inference_augmenter.return_saved_data()[0][0]
             _trajectory = np.asarray(

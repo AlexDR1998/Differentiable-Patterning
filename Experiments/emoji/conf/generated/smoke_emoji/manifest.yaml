@@ -18,6 +18,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
+    logging.wandb.group: smoke_emoji-refactor-phase6b-augmenters
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -31,10 +32,9 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     experiment.name: smoke_emoji
-    logging.wandb.group: smoke_emoji
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_emoji
@@ -94,7 +94,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: true
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -143,7 +142,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji
+        group: smoke_emoji-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true
@@ -163,6 +162,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
+    logging.wandb.group: smoke_emoji-refactor-phase6b-augmenters
     model.family: gNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -176,10 +176,9 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     experiment.name: smoke_emoji
-    logging.wandb.group: smoke_emoji
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_emoji
@@ -239,7 +238,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: true
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -288,7 +286,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji
+        group: smoke_emoji-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true
@@ -308,6 +306,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
+    logging.wandb.group: smoke_emoji-refactor-phase6b-augmenters
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -331,10 +330,9 @@ configs:
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
     experiment.name: smoke_emoji
-    logging.wandb.group: smoke_emoji
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_emoji
@@ -404,7 +402,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: true
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -453,7 +450,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji
+        group: smoke_emoji-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true
@@ -473,6 +470,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
+    logging.wandb.group: smoke_emoji-refactor-phase6b-augmenters
     model.family: gnNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -487,10 +485,9 @@ configs:
     loss.regularisers.update_sensitivity: 0.1
     loss.regularisers.perturbation_conservation: 0.1
     experiment.name: smoke_emoji
-    logging.wandb.group: smoke_emoji
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_emoji
@@ -550,7 +547,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: true
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -600,7 +596,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji
+        group: smoke_emoji-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true

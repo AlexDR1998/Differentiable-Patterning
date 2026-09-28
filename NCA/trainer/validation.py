@@ -19,10 +19,6 @@ class ValidationEvaluator:
     """
 
     def __init__(self, trainer, setup, data, boundary_mask, loss_mask, key):
-        if trainer.sharding not in (None, 1):
-            raise ValueError(
-                "Held-out validation currently requires trainer.sharding=null or 1"
-            )
         data = jnp.asarray(data)
         self.trainer = trainer
         self.setup = setup

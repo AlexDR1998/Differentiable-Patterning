@@ -25,9 +25,9 @@ def _():
     import numpy as np
 
     from Common.dataloader.micropattern import load_micropattern_260726
-    from NCA.trainer.data_augmenter.micropattern import DataAugmenter
+    from NCA.trainer.data_augmenter.micropattern import MicropatternAugmenter
 
-    return DataAugmenter, jax, jnp, load_micropattern_260726, mo, np, plt
+    return MicropatternAugmenter, jax, jnp, load_micropattern_260726, mo, np, plt
 
 
 @app.cell
@@ -314,7 +314,7 @@ def _(mo):
 
 
 @app.cell
-def _(DataAugmenter, jax, jnp):
+def _(MicropatternAugmenter, jax, jnp):
     def run_augmentation_preview(
         data,
         schema,
@@ -333,17 +333,16 @@ def _(DataAugmenter, jax, jnp):
                 "Total NCA state channels cannot be smaller than the schema state count"
             )
 
-        _augmenter = DataAugmenter(
-            data_true=jnp.asarray(data),
-            hidden_channels=0,
-            schema=schema,
-            intermediate_reinjection_probability=float(probability_start),
-            intermediate_reinjection_probability_end=float(probability_end),
-            intermediate_reinjection_decay_start_fraction=float(decay_start_fraction),
-            intermediate_reinjection_total_iterations=int(total_iterations),
+        _augmenter = MicropatternAugmenter(
+            jnp.asarray(data),
+            schema,
+            int(state_channels),
+            noise_strength=float(noise_strength),
+            reinjection_probability=float(probability_start),
+            reinjection_probability_end=float(probability_end),
+            reinjection_decay_start_fraction=float(decay_start_fraction),
+            total_iterations=int(total_iterations),
         )
-        _augmenter.noise_strength = float(noise_strength)
-        _augmenter.data_init()
         _x_initial, _y_before = _augmenter.split_x_y(1)
         if input_mode == "perfect_rollout":
             # A perfect NCA rollout maps each transition slot onto its target
@@ -361,7 +360,7 @@ def _(DataAugmenter, jax, jnp):
         _key = jax.random.PRNGKey(int(seed))
 
         # Reproduce advance_pool's random decisions for exact diagnostics. This
-        # follows MicropatternDataAugmenter._group_reinject without changing it.
+        # follows MicropatternAugmenter._group_reinject without changing it.
         _donor_count = len(_x_before)
         _time_count = _x_before[0].shape[0]
         _global_key, _reset_key = jax.random.split(_key)

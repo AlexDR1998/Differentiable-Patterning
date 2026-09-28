@@ -17,16 +17,16 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
+    logging.wandb.group: smoke_snowmelt-refactor-phase6b-augmenters
     model.family: NCA
     data.snowmelt.target_channels:
     - SCA
     run.interval_mode: steps
     trainer.loop_autodiff: checkpointed
     experiment.name: smoke_snowmelt
-    logging.wandb.group: smoke_snowmelt
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -63,7 +63,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: false
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -122,7 +121,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt
+        group: smoke_snowmelt-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true
@@ -143,6 +142,7 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
+    logging.wandb.group: smoke_snowmelt-refactor-phase6b-augmenters
     model.family: gNCA
     data.snowmelt.target_channels:
     - NDSI
@@ -151,10 +151,9 @@ configs:
     run.interval_mode: uniform
     trainer.loop_autodiff: lax
     experiment.name: smoke_snowmelt
-    logging.wandb.group: smoke_snowmelt
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -193,7 +192,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: false
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -252,7 +250,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt
+        group: smoke_snowmelt-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true

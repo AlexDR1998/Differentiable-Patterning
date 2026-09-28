@@ -14,7 +14,8 @@ class TrainerContext:
 
     run_name: str
     model_directory: str
-    data_augmenter: type
+    # Built by the entrypoint from the loaded data (see NCA/trainer/data_augmenter)
+    data_augmenter: Any
     storage_id: str | None = None
     boundary_mask: Any = None
     channel_schema: Any = None

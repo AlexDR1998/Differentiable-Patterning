@@ -34,7 +34,7 @@ def run(cfg):
         cfg.run.iterations,
         return_schedule=True,
     )
-    augmenter, augmenter_name = build_data_augmenter(cfg.data)
+    augmenter, augmenter_name = build_data_augmenter(cfg.data, data, model.N_CHANNELS)
     run_name = f"{build_filename(cfg, model_name, data_name, augmenter_name)}_{optimiser_name}"
 
     context = TrainerContext(

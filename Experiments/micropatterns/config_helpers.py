@@ -2,8 +2,6 @@ import math
 import os
 from dataclasses import replace
 
-import equinox as eqx
-import jax
 import jax.numpy as jnp
 import numpy as np
 from einops import repeat
@@ -18,13 +16,13 @@ from Experiments.config_helpers import (
     _compact_value,
     build_loss_filename,
 )
-from NCA.trainer.data_augmenter.colony_4ch import DataAugmenter as DataAugmenter4Ch
-from NCA.trainer.data_augmenter.colony_9ch import DataAugmenter as DataAugmenterGrouped
-from NCA.trainer.data_augmenter.micropattern import DataAugmenter as DataAugmenter260726
-from NCA.trainer.intervention import intervention_slot
+from Common.dataloader.micropattern_schemas import (
+    MICROPATTERN_4CH_SCHEMA,
+    MICROPATTERN_GROUPED_12CH_SCHEMA,
+)
+from NCA.trainer.data_augmenter.micropattern import MicropatternAugmenter
 
 
-NODAL_CHANNEL = 7
 CURRICULUM_CONDITIONS = {
     "baseline": ("ctrl", -1),
     "ko_0h": ("sl0", 0),
@@ -76,15 +74,6 @@ def build_knockout_times(mode, knockout_time, batches):
     return [pattern[i % len(pattern)] for i in range(batches)]
 
 
-def _as_tree(data):
-    if isinstance(data, list):
-        return data
-    try:
-        return [data[i] for i in range(data.shape[0])]
-    except AttributeError:
-        return list(data)
-
-
 def expand_channel_timestep_mask_for_loss(
     data_config, channel_timestep_mask, channel_schema=None
 ):
@@ -106,107 +95,30 @@ def expand_channel_timestep_mask_for_loss(
     return mask
 
 
-@eqx.filter_jit
-def masked_reinject_callback_bit(
-    x,
-    x_true,
-    obs_channels,
-    key,
-    channel_timestep_mask,
-    knockout_times,
-    probability,
-    global_batch_indices=None,
-    global_batch_count=None,
-    observation_times=None,
-):
-    if hasattr(x, "ndim"):
-        B, T = x.shape[:2]
-        x = x.at[:, 1:].set(x[:, :-1])
-        x = x.at[:, 0].set(x_true[:, 0])
-        global_B = B if global_batch_count is None else global_batch_count
-        indices = jnp.arange(B) if global_batch_indices is None else global_batch_indices
-        inject = jax.random.bernoulli(
-            key, probability, shape=(global_B, T - 1)
-        )[indices, :, None]
-        if T > 1:
-            measured = channel_timestep_mask[:, : T - 1]
-            if measured.shape[2] < obs_channels:
-                measured = jnp.pad(
-                    measured,
-                    ((0, 0), (0, 0), (0, obs_channels - measured.shape[2])),
-                )
-            mask = (inject & measured[:, :, :obs_channels].astype(bool))[..., None, None]
-            observed = jnp.where(
-                mask,
-                x_true[:, 1:, :obs_channels],
-                x[:, 1:, :obs_channels],
-            )
-            x = x.at[:, 1:, :obs_channels].set(observed)
-
-        knockout_index = intervention_slot(knockout_times, observation_times)
-        zero_mask = (
-            (knockout_times[:, None] >= 0)
-            & (jnp.arange(T)[None] >= knockout_index[:, None])
-        )
-        nodal = jnp.where(zero_mask[..., None, None], 0.0, x[:, :, NODAL_CHANNEL])
-        return x.at[:, :, NODAL_CHANNEL].set(nodal)
-
-    propagate_xn = lambda xi: xi.at[1:].set(xi[:-1])
-    reset_x0 = lambda xi, xi_true: xi.at[0].set(xi_true[0])
-
-    x = jax.tree_util.tree_map(propagate_xn, x)
-    x = jax.tree_util.tree_map(reset_x0, x, x_true)
-
-    B = len(x)
-    T = x[0].shape[0]
-    global_B = B if global_batch_count is None else global_batch_count
-    indices = jnp.arange(B) if global_batch_indices is None else global_batch_indices
-    inject_mask = jax.random.bernoulli(
-        key, probability, shape=(global_B, T - 1)
-    )[indices]
-
-    if T > 1:
-        for b in range(B):
-            measured = channel_timestep_mask[b, : T - 1]
-            if measured.shape[1] < obs_channels:
-                measured = jnp.pad(
-                    measured,
-                    ((0, 0), (0, obs_channels - measured.shape[1])),
-                    constant_values=0,
-                )
-            measured = measured[:, :obs_channels]
-            mask = inject_mask[b, :, None] & measured.astype(bool)
-            mask = mask[:, :, None, None]
-            x_obs = jnp.where(
-                mask,
-                x_true[b][1:, :obs_channels],
-                x[b][1:, :obs_channels],
-            )
-            x[b] = x[b].at[1:, :obs_channels].set(x_obs)
-
-    for b in range(B):
-        knockout_time = knockout_times[b]
-        knockout_index = intervention_slot(knockout_time, observation_times)
-        zero_mask = (knockout_time >= 0) & (jnp.arange(T) >= knockout_index)
-        nodal = jnp.where(zero_mask[:, None, None], 0.0, x[b][:, NODAL_CHANNEL])
-        x[b] = x[b].at[:, NODAL_CHANNEL].set(nodal)
-    return x
-
-
 def build_data_augmenter(
     data_config,
     total_iterations,
+    data,
+    model_channels,
     channel_timestep_mask=None,
     channel_schema=None,
     intervention_times=None,
     observation_times=None,
 ):
-    """Build the micropattern augmenter class.
+    """Build the micropattern augmenter for ``data`` [batch, time, measurement, H, W].
 
     ``observation_times`` (hours) map knockout times to transition slots for
     non-uniform interval schedules; ``None`` keeps the 12-hour convention.
+    Returns the augmenter and its short run-name string.
     """
-    data_channels = data_config.micropattern.data_channels
+    micropattern = data_config.micropattern
+    reinjection_options = dict(
+        noise_strength=micropattern.noise_strength,
+        reinjection_probability=micropattern.intermediate_reinjection_probability,
+        reinjection_probability_end=micropattern.intermediate_reinjection_probability_end,
+        reinjection_decay_start_fraction=micropattern.intermediate_reinjection_decay_start_fraction,
+        total_iterations=total_iterations,
+    )
     if data_config.dataset == "micropatterns_260726":
         if (
             intervention_times is not None
@@ -215,98 +127,52 @@ def build_data_augmenter(
             raise ValueError(
                 "Knockout curricula require NODAL in the selected state schema"
             )
-
-        class DA_subclass(DataAugmenter260726):
-            noise_strength = data_config.micropattern.noise_strength
-
-            def __init__(self, *args, **kwargs):
-                kwargs["schema"] = channel_schema
-                kwargs["measurement_mask"] = channel_timestep_mask
-                self.intervention_times = intervention_times
-                self.nodal_channel = (
-                    channel_schema.state_channels.index("NODAL")
-                    if intervention_times is not None
-                    else None
-                )
-                kwargs["intermediate_reinjection_probability"] = data_config.micropattern.intermediate_reinjection_probability
-                kwargs["intermediate_reinjection_probability_end"] = data_config.micropattern.intermediate_reinjection_probability_end
-                kwargs["intermediate_reinjection_decay_start_fraction"] = data_config.micropattern.intermediate_reinjection_decay_start_fraction
-                kwargs["intermediate_reinjection_total_iterations"] = total_iterations
-                super().__init__(*args, **kwargs)
-
-        return DA_subclass, (
-            f"da_snapshot_noise{data_config.micropattern.noise_strength}"
-            f"_irp{data_config.micropattern.intermediate_reinjection_probability}"
+        augmenter = MicropatternAugmenter(
+            data,
+            channel_schema,
+            model_channels,
+            reinjection="group",
+            measurement_mask=channel_timestep_mask,
+            intervention_times=intervention_times,
+            **reinjection_options,
         )
+        return augmenter, (
+            f"da_snapshot_noise{micropattern.noise_strength}"
+            f"_irp{micropattern.intermediate_reinjection_probability}"
+        )
+
+    # Older colony datasets: reinjection masked by measured channels, with
+    # the NODAL knockouts set by data.knockout.mode / data.knockout.time.
+    data_channels = micropattern.data_channels
     if data_channels == 4 and data_config.knockout.mode is not None:
         raise ValueError("data.micropattern.data_channels=4 is only supported for no-knockout group-A data.")
     if data_channels == 4:
-        data_augmenter_base = DataAugmenter4Ch
+        schema = MICROPATTERN_4CH_SCHEMA
     elif data_channels == 12:
-        data_augmenter_base = DataAugmenterGrouped
+        schema = MICROPATTERN_GROUPED_12CH_SCHEMA
     else:
         raise ValueError(f"Unsupported data.micropattern.data_channels={data_channels}. Expected 4 or 12.")
-
-    if data_config.knockout.mode is not None:
-        build_knockout_times(data_config.knockout.mode, data_config.knockout.time, data_config.batches)
-    
-    class DA_subclass(data_augmenter_base):
-        supports_global_reinjection_mask = True
-
-        def __init__(self, *args, **kwargs):
-            kwargs["intermediate_reinjection_probability"] = data_config.micropattern.intermediate_reinjection_probability
-            kwargs["intermediate_reinjection_probability_end"] = data_config.micropattern.intermediate_reinjection_probability_end
-            kwargs["intermediate_reinjection_decay_start_fraction"] = data_config.micropattern.intermediate_reinjection_decay_start_fraction
-            kwargs["intermediate_reinjection_total_iterations"] = total_iterations
-            super().__init__(*args, **kwargs)
-            if channel_timestep_mask is None:
-                mask = jnp.ones(
-                    (
-                        len(self.data_true),
-                        self.data_true[0].shape[0] - 1,
-                        self.OBS_CHANNELS,
-                    ),
-                    dtype=jnp.float32,
-                )
-            else:
-                mask = jnp.asarray(channel_timestep_mask, dtype=jnp.float32)
-            self.channel_timestep_mask = mask
-            knockout_times = build_knockout_times(
-                data_config.knockout.mode,
-                data_config.knockout.time,
-                len(self.data_true),
-            )
-            self.knockout_times = jnp.array(
-                [-1 if knockout_time is None else knockout_time for knockout_time in knockout_times],
-                dtype=jnp.int32,
-            )
-
-        def advance_pool(self,x,y,i,key):
-            x_true,_ =self.split_x_y(1)	
-            reinjection_key = getattr(self, "_sharded_global_key", key)
-            x = masked_reinject_callback_bit(
-                x,
-                x_true,
-                self.OBS_CHANNELS,
-                jax.random.fold_in(reinjection_key, 0),
-                self.channel_timestep_mask,
-                self.knockout_times,
-                self.reinjection_probability(i),
-                getattr(self, "_global_batch_indices", None),
-                getattr(self, "_global_batch_count", None),
-                None if observation_times is None else tuple(observation_times),
-            )
-            x = self.noise(x,data_config.micropattern.noise_strength,key=key)
-            self.PREVIOUS_KEY = key
-            return x,y
+    batch_count = len(data)
+    augmenter = MicropatternAugmenter(
+        data,
+        schema,
+        model_channels,
+        reinjection="masked",
+        measurement_mask=channel_timestep_mask,
+        knockout_times=build_knockout_times(
+            data_config.knockout.mode, data_config.knockout.time, batch_count
+        ),
+        observation_times=observation_times,
+        **reinjection_options,
+    )
     cfg_str = (
         f"da_ko{_compact_value(data_config.knockout.mode)}"
         f"_kot{_compact_value(data_config.knockout.time)}"
-        f"_noise{data_config.micropattern.noise_strength}"
-        f"_irp{data_config.micropattern.intermediate_reinjection_probability}"
-        f"-{data_config.micropattern.intermediate_reinjection_probability_end}"
+        f"_noise{micropattern.noise_strength}"
+        f"_irp{micropattern.intermediate_reinjection_probability}"
+        f"-{micropattern.intermediate_reinjection_probability_end}"
     )
-    return DA_subclass, cfg_str
+    return augmenter, cfg_str
 
 
 def load_train_validation_data(data_config, impath=None):

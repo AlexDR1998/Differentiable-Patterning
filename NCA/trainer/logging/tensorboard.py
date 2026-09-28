@@ -22,18 +22,6 @@ from NCA.trainer.intervention import (
 	rollout_model_with_blocked_channel_sampled,
 )
 from NCA.trainer.interval_schedule import IntervalSchedule, uniform_schedule
-from Common.trainer.experiment_channel_grouping import duplicate_x_channels_9ch
-
-
-def _is_grouped_9ch_colony_augmenter(data_augmenter):
-	return (
-		getattr(data_augmenter, "OBS_CHANNELS", None) == 12
-		and any(
-			cls.__module__ == "NCA.trainer.data_augmenter.colony_9ch"
-			and cls.__name__ == "DataAugmenter"
-			for cls in type(data_augmenter).__mro__
-		)
-	)
 
 
 def _trajectory_snapshot_channels(T, data_augmenter, t, channel_schema=None):
@@ -45,8 +33,6 @@ def _trajectory_snapshot_channels(T, data_augmenter, t, channel_schema=None):
 	schema = channel_schema or getattr(data_augmenter, "schema", None)
 	if schema is not None:
 		return T_snapshot[:, np.asarray(schema.target_to_state)]
-	if _is_grouped_9ch_colony_augmenter(data_augmenter):
-		return duplicate_x_channels_9ch(T_snapshot[:,:9])
 	return T_snapshot[:,:data_augmenter.OBS_CHANNELS]
 
 
@@ -670,9 +656,8 @@ class NCA_Train_log(Train_log):
 			np.stack(data_values)[:, 1:] if uniform_data else None
 		)
 		self.diagnostic_boundary_mask = None if boundary_mask is None else np.array(boundary_mask)
-		self.diagnostic_grouped_channels = (
-			False if data_augmenter is None else _is_grouped_9ch_colony_augmenter(data_augmenter)
-		)
+		# The micropattern augmenters carry a channel schema, which is used instead
+		self.diagnostic_grouped_channels = False
 		self.diagnostic_channel_schema = channel_schema or getattr(data_augmenter, "schema", None)
 		self.diagnostic_group_sizes = (
 			self.diagnostic_channel_schema.group_sizes

@@ -56,8 +56,8 @@ class NcaTrainer:
 		self.context = context
 		trainer_config = config.trainer
 		self.model = model
-		data_augmenter = context.data_augmenter
-		channel_schema = context.channel_schema or getattr(data_augmenter, "schema", None)
+		self.data_augmenter = context.data_augmenter
+		channel_schema = context.channel_schema or getattr(self.data_augmenter, "schema", None)
 		self.channel_schema = channel_schema
 		self.channel_names = context.channel_names
 		self.timepoint_names = context.timepoint_names
@@ -89,22 +89,9 @@ class NcaTrainer:
 			self.data_channels = context.data_channels
 		
 		
-		self.sharding = trainer_config.sharding
-		if self.intervention_times is not None and self.sharding not in (None, 1):
-			raise ValueError(
-				"NODAL read-block interventions currently require trainer.sharding=null or 1"
-			)
 		self.grad_loss = trainer_config.grad_loss
 		self.loss_time_channel_mask = context.loss_time_channel_mask
-		# Set up data and data augmenter class
 		self._data_raw = data
-		augmenter_kwargs = dict(
-			data_true=data,
-			hidden_channels=0 if channel_schema is not None else self.channels-self.data_channels,
-			nca_model=self.model,
-			)
-		self.data_augmenter = data_augmenter(**augmenter_kwargs)
-		self.data_augmenter.data_init(self.sharding)
 		self.data = self.data_augmenter.return_saved_data()
 		self.batch_count = len(self.data)
 		print("Batches = "+str(self.batch_count))

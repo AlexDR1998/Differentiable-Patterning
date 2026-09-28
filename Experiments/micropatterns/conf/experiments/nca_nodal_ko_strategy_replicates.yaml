@@ -1,4 +1,4 @@
-experiment_name: nca_nodal_ko_strategy_replicates
+experiment_name: nca_nodal_ko_strategy_replicates_v2
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_nodal_ko_strategy_replicates
 seed_mode: index
@@ -8,21 +8,21 @@ seed_mode: index
 # it is then crossed with six intervention curricula and ten stochastic repeats.
 # Total jobs: 4 initialization/split cases * 6 curricula * 10 repeats = 240.
 grid:
-  run.repeat: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  run.repeat: [0, 1, 2, 3, 4,]
 
   labels.gpu: [nvidia]
   model.family: [gNCA]
   model.channels: [48]
-  trainer.loop_autodiff: [lax]
+  system.precision: [bfloat16]
 
-  logging.wandb.project: [nca_micropattern_KO_strategy_replicates]
+  logging.wandb.project: [nca_micropattern_KO_strategy_resolutions]
 
   data.dataset: [micropatterns_260726]
   data.micropattern.data_channels: [14]
   data.micropattern.experiment_groups:
     - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
   data.micropattern.pool_copies: [1]
-  data.downsample: [16]
+  # data.downsample: [16]
 
   data.knockout.channel: [Nodal]
   data.knockout.curriculum:
@@ -34,7 +34,8 @@ grid:
     - [baseline, ko_0h, ko_24h]
 
   # run.iterations: [12000]
-  run.t: [128]
+  run.write_videos: [false]
+  
   optimiser.learn_rate: [1e-4]
   optimiser.type: [nadam]
   optimiser.gradient_clip_norm: [1.0]
@@ -91,20 +92,40 @@ grid:
 groups:
   # Fresh 12->34, fresh 34->12, fine-tuned 12->34, fine-tuned 34->12.
   # The pretrained IDs are the matching WT models used by the corrected KO sweep.
+  # - initialization.model_id:
+  #     - null
+  #     - null
+  #     - 20260831T213902Z-cfgce945394bb51-4e99cc6b
+  #     - 20260831T202033Z-cfg85e412b71d3d-448a4033
+  #   data.batches: [2, 2, 2, 2]
+  #   data.micropattern.train_replicates:
+  #     - [1, 2]
+  #     - [3, 4]
+  #     - [1, 2]
+  #     - [3, 4]
+  #   data.micropattern.validation_replicates:
+  #     - [3, 4]
+  #     - [1, 2]
+  #     - [3, 4]
+  #     - [1, 2]
+  #   run.iterations: [16000,16000,4000,4000]
+
   - initialization.model_id:
-      - null
-      - null
-      - 20260831T213902Z-cfgce945394bb51-4e99cc6b
-      - 20260831T202033Z-cfg85e412b71d3d-448a4033
-    data.batches: [2, 2, 2, 2]
+      - 20260923T095528Z-cfg6fd8d1a17072-2d7b5623
+      - 20260923T144617Z-cfg9210825878b2-3053451c
+      - 20260923T161819Z-cfg891eb364e8b4-bfcf27cc
+    data.batches: [2, 2, 2]
+    data.downsample: [8,32,16]
+    run.t: [512,64,128]
+    trainer.loop_autodiff: [checkpointed,lax,lax]
     data.micropattern.train_replicates:
       - [1, 2]
       - [3, 4]
       - [1, 2]
-      - [3, 4]
+      
     data.micropattern.validation_replicates:
       - [3, 4]
       - [1, 2]
       - [3, 4]
-      - [1, 2]
-    run.iterations: [16000,16000,4000,4000]
+      
+    run.iterations: [4000,4000,4000]

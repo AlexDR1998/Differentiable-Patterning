@@ -52,11 +52,11 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
+    logging.wandb.group: smoke_micropatterns_ko_finetune-refactor-phase6b-augmenters
     experiment.name: smoke_micropatterns_ko_finetune
-    logging.wandb.group: smoke_micropatterns_ko_finetune
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_micropatterns_ko_finetune
@@ -114,7 +114,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: false
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -176,7 +175,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune
+        group: smoke_micropatterns_ko_finetune-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true
@@ -234,11 +233,11 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
+    logging.wandb.group: smoke_micropatterns_ko_finetune-refactor-phase6b-augmenters
     experiment.name: smoke_micropatterns_ko_finetune
-    logging.wandb.group: smoke_micropatterns_ko_finetune
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_micropatterns_ko_finetune
@@ -298,7 +297,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: false
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -360,7 +358,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune
+        group: smoke_micropatterns_ko_finetune-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true

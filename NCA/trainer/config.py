@@ -30,7 +30,6 @@ class PoolAdmissionConfig(ConfigValue):
 class TrainerConfig(ConfigValue):
     boundary_mode: str = "soft"
     grad_loss: bool = False
-    sharding: int | None = None
     log_directory: str = "logs/"
     loss_time_channel_mask: Any = None
     loop_autodiff: str = "checkpointed"
@@ -45,8 +44,6 @@ class TrainerConfig(ConfigValue):
             raise ValueError("trainer.boundary_mode must be 'soft' or 'hard'")
         if self.loop_autodiff not in {"checkpointed", "lax"}:
             raise ValueError("trainer.loop_autodiff must be 'checkpointed' or 'lax'")
-        if self.sharding is not None and self.sharding < 1:
-            raise ValueError("trainer.sharding must be positive or None")
         if self.log_every < 1:
             raise ValueError("trainer.log_every must be positive")
         if self.validation_every is not None and self.validation_every < 1:

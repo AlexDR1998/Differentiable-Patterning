@@ -114,6 +114,26 @@ def test_current_layout_rejects_old_keys():
         experiment_config_from_mapping(value)
 
 
+@pytest.mark.parametrize("version", [2, 3])
+def test_removed_trainer_options_are_dropped_from_older_versions(version):
+    value = _current_micropattern_config()
+    value["schema_version"] = version
+    value["trainer"]["sharding"] = None
+    value["trainer"]["backend"] = "modular"
+
+    upgraded = experiment_config_from_mapping(value)
+
+    assert upgraded == experiment_config_from_mapping(_current_micropattern_config())
+
+
+def test_current_version_rejects_sharding():
+    value = _current_micropattern_config()
+    value["trainer"]["sharding"] = None
+
+    with pytest.raises(ValueError, match="sharding"):
+        experiment_config_from_mapping(value)
+
+
 def test_current_config_round_trips():
     config = experiment_config_from_mapping(_current_micropattern_config())
 

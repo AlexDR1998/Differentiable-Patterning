@@ -12,7 +12,7 @@ import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
 
-from Common.trainer.abstract_data_augmenter_tree import DataAugmenterAbstract
+from NCA.trainer.data_augmenter.base import PoolAugmenter
 from NCA.trainer.data_augmenter.transforms import add_noise, bernoulli_reinject_observations
 
 
@@ -50,40 +50,35 @@ def apply_boundary_channels(x, boundary, observable_channels):
     return jtu.tree_map(_apply, x, list(boundary))
 
 
-def build_snowmelt_augmenter(boundary_mask, reinjection_probability=0.5, noise_strength=0.005):
-    """Return an augmenter class bound to one ``[B, m, H, W]`` boundary array."""
-    boundary = [jnp.asarray(mask, dtype=jnp.float32) for mask in boundary_mask]
+class SnowmeltAugmenter(PoolAugmenter):
+    """Pool for snowmelt training, bound to one ``[B, m, H, W]`` boundary array."""
 
-    class SnowmeltDataAugmenter(DataAugmenterAbstract):
-        def data_init(self, SHARDING=None):
-            if SHARDING not in (None, 1):
-                raise ValueError("The snowmelt augmenter does not support sharding")
-            data = apply_boundary_channels(self.return_saved_data(), boundary, self.OBS_CHANNELS)
-            self.save_data(data)
-            return None
+    def __init__(self, data, hidden_channels, boundary, reinjection_probability=0.5, noise_strength=0.005):
+        super().__init__(data, hidden_channels)
+        self.boundary = [jnp.asarray(mask, dtype=jnp.float32) for mask in boundary]
+        self.reinjection_probability = reinjection_probability
+        self.noise_strength = noise_strength
+        self.data_saved = apply_boundary_channels(self.data_saved, self.boundary, self.OBS_CHANNELS)
 
-        def initialize_pool(self, key):
-            # Slot k must start from image k. The base implementation calls
-            # advance_pool, which shifts the pool by one slot first.
-            x, y = self.split_x_y(1)
-            x = snowmelt_initial_pool(x, boundary, self.OBS_CHANNELS, key, noise_strength)
-            return x, y
+    def initialize_pool(self, key):
+        # Slot k must start from image k. The base implementation calls
+        # advance_pool, which shifts the pool by one slot first.
+        x, y = self.split_x_y(1)
+        x = snowmelt_initial_pool(x, self.boundary, self.OBS_CHANNELS, key, self.noise_strength)
+        return x, y
 
-        def advance_pool(self, x, y, i, key):
-            x_true, _ = self.split_x_y(1)
-            x = snowmelt_advance(
-                x, x_true, boundary, self.OBS_CHANNELS, key,
-                reinjection_probability, noise_strength,
-            )
-            self.PREVIOUS_KEY = key
-            return x, y
-
-    return SnowmeltDataAugmenter
+    def advance_pool(self, x, y, i, key):
+        x_true, _ = self.split_x_y(1)
+        x = snowmelt_advance(
+            x, x_true, self.boundary, self.OBS_CHANNELS, key,
+            self.reinjection_probability, self.noise_strength,
+        )
+        return x, y
 
 
 __all__ = [
+    "SnowmeltAugmenter",
     "apply_boundary_channels",
-    "build_snowmelt_augmenter",
     "snowmelt_advance",
     "snowmelt_initial_pool",
 ]

@@ -112,30 +112,16 @@ def reinject_observations(x, x_true, observable_channels: int, key, fraction: fl
     return jtu.tree_unflatten(xdef, result)
 
 
-def bernoulli_reinject_observations(
-    x,
-    x_true,
-    observable_channels: int,
-    key,
-    probability,
-    global_batch_indices=None,
-    global_batch_count=None,
-):
+def bernoulli_reinject_observations(x, x_true, observable_channels: int, key, probability):
     """Propagate a pool and independently reinject each eligible slot."""
 
     x = propagate_pool(x)
     if hasattr(x, "ndim"):
         batch_count, time_count = x.shape[:2]
         x = x.at[:, 0].set(x_true[:, 0])
-        global_count = batch_count if global_batch_count is None else global_batch_count
-        indices = (
-            jnp.arange(batch_count)
-            if global_batch_indices is None
-            else global_batch_indices
-        )
         mask = jax.random.bernoulli(
-            key, probability, (global_count, time_count - 1)
-        )[indices, :, None, None, None]
+            key, probability, (batch_count, time_count - 1)
+        )[:, :, None, None, None]
         observed = jnp.where(
             mask,
             x_true[:, 1:, :observable_channels],
@@ -151,15 +137,7 @@ def bernoulli_reinject_observations(
     time_count = leaves[0].shape[0]
     if any(value.shape[0] != time_count for value in leaves):
         raise ValueError("Bernoulli reinjection requires a common trajectory length")
-    global_count = batch_count if global_batch_count is None else global_batch_count
-    indices = (
-        jnp.arange(batch_count)
-        if global_batch_indices is None
-        else global_batch_indices
-    )
-    masks = jax.random.bernoulli(
-        key, probability, (global_count, time_count - 1)
-    )[indices]
+    masks = jax.random.bernoulli(key, probability, (batch_count, time_count - 1))
     result = []
     for value, truth, mask in zip(leaves, true_leaves, masks):
         value = value.at[0].set(truth[0])
@@ -200,3 +178,37 @@ def scheduled_probability(i, start, schedule, initial, final):
 
     progress = jnp.clip((i - start) / max(schedule, 1), 0.0, 1.0)
     return jnp.where(i < start, 0.0, initial + progress * (final - initial))
+
+
+def shift_trajectories(data, amount: int, key, undo: bool = False):
+    """Roll each trajectory by a random spatial offset in ``[-amount, amount)``.
+
+    With ``undo=True`` and the same key, the shift is reversed.
+    """
+
+    leaves, treedef = jtu.tree_flatten(data)
+    shifts = jax.random.randint(key, minval=-amount, maxval=amount, shape=(len(leaves), 2))
+    sign = -1 if undo else 1
+    shifted = [jnp.roll(value, sign * shifts[index], axis=(-1, -2)) for index, value in enumerate(leaves)]
+    return jtu.tree_unflatten(treedef, shifted)
+
+
+def zero_random_circles(data, key):
+    """Set one random circle of each trajectory to zero (damage for regeneration training)."""
+
+    def zero_circle(image, circle_key):
+        height = image.shape[-2]
+        width = image.shape[-1]
+        _, key_x, key_y, key_radius = jax.random.split(circle_key, 4)
+        centre_x = jax.random.randint(key_x, (), 0, width)
+        centre_y = jax.random.randint(key_y, (), 0, height)
+        max_radius = jnp.minimum(centre_x, width - centre_x)
+        max_radius = jnp.minimum(max_radius, jnp.minimum(centre_y, height - centre_y))
+        radius = jax.random.randint(key_radius, (), 1, jnp.maximum(2, max_radius + 1)) / 2
+        grid_y, grid_x = jnp.meshgrid(jnp.arange(height), jnp.arange(width), indexing="ij")
+        mask = (grid_x - centre_x) ** 2 + (grid_y - centre_y) ** 2 <= radius**2
+        return jnp.where(mask[None, None], 0, image)
+
+    leaves, treedef = jtu.tree_flatten(data)
+    keys = jax.random.split(key, len(leaves))
+    return jtu.tree_unflatten(treedef, [zero_circle(value, k) for value, k in zip(leaves, keys)])

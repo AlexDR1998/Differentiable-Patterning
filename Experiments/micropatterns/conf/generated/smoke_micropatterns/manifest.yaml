@@ -40,16 +40,16 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
+    logging.wandb.group: smoke_micropatterns-refactor-phase6b-augmenters
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     data.micropattern.pool_copies: 2
     logging.singular_values.enabled: true
     data.knockout.curriculum: null
     experiment.name: smoke_micropatterns
-    logging.wandb.group: smoke_micropatterns
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_micropatterns
@@ -106,7 +106,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: false
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
@@ -168,7 +167,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns
+        group: smoke_micropatterns-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true
@@ -212,6 +211,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
+    logging.wandb.group: smoke_micropatterns-refactor-phase6b-augmenters
     model.family: gNCA
     trainer.loop_autodiff: lax
     data.micropattern.pool_copies: 1
@@ -221,10 +221,9 @@ configs:
     - ko_0h
     - ko_24h
     experiment.name: smoke_micropatterns
-    logging.wandb.group: smoke_micropatterns
     seed: 0
   config:
-    schema_version: 3
+    schema_version: 4
     seed: 0
     experiment:
       name: smoke_micropatterns
@@ -284,7 +283,6 @@ configs:
     trainer:
       boundary_mode: soft
       grad_loss: false
-      sharding: null
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
@@ -346,7 +344,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns
+        group: smoke_micropatterns-refactor-phase6b-augmenters
         tags: null
     model_store:
       enabled: true

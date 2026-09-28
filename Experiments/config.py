@@ -58,7 +58,7 @@ from NCA.trainer.config import PoolAdmissionConfig, TrainerConfig
 from NCA.trainer.interval_schedule import INTERVAL_MODES
 
 
-CONFIG_SCHEMA_VERSION = 3
+CONFIG_SCHEMA_VERSION = 4
 
 # data.dataset -> the data section that holds its settings
 DATA_SECTIONS = {
@@ -241,6 +241,8 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
     * Version 1 used different names; see ``_upgrade_from_version_1``.
     * Version 2 had a ``trainer.backend`` option, removed in version 3 because
       only one trainer implementation remains.
+    * Version 3 had a ``trainer.sharding`` option, removed in version 4
+      because it never split the data across devices.
 
     Saved bundles are never edited; they are upgraded each time they are read.
     Keys that are already in the current layout pass through unchanged.
@@ -251,6 +253,7 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
     if isinstance(root.get("trainer"), Mapping):
         root["trainer"] = dict(root["trainer"])
         root["trainer"].pop("backend", None)
+        root["trainer"].pop("sharding", None)
     root["schema_version"] = CONFIG_SCHEMA_VERSION
     return root
 

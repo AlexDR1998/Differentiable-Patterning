@@ -269,18 +269,18 @@ def test_intervention_slot_matches_12h_rule_and_follows_observation_times():
 
 
 def test_legacy_nodal_zeroing_follows_observation_times():
-    import Experiments.micropatterns.config_helpers as micropattern_helpers
+    from NCA.trainer.data_augmenter.micropattern import masked_reinject
 
     x = [jnp.ones((5, 9, 1, 1), dtype=jnp.float32)]
     x_true = [100.0 * jnp.ones((5, 9, 1, 1), dtype=jnp.float32)]
     mask = jnp.zeros((1, 4, 9), dtype=jnp.float32)
     args = (x, x_true, 9, jr.PRNGKey(0), mask, jnp.array([24], dtype=jnp.int32), 1.0)
 
-    default = micropattern_helpers.masked_reinject_callback_bit(*args)[0]
-    on_12h = micropattern_helpers.masked_reinject_callback_bit(
+    default = masked_reinject(*args)[0]
+    on_12h = masked_reinject(
         *args, observation_times=MICROPATTERN_HOURS + (60.0,)
     )[0]
-    on_6h = micropattern_helpers.masked_reinject_callback_bit(*args, observation_times=HOURS_6H)[0]
+    on_6h = masked_reinject(*args, observation_times=HOURS_6H)[0]
 
     assert jnp.array_equal(default, on_12h)
     assert jnp.all(on_6h[:3, 7] != 0.0) and jnp.all(on_6h[3:, 7] == 0.0)

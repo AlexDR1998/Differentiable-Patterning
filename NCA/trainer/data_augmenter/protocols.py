@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Protocol, Tuple, TypeAlias
+from typing import Protocol, Tuple, TypeAlias
 
 import jax
 from jaxtyping import PyTree
@@ -20,9 +20,6 @@ class NCAAugmenterProtocol(Protocol):
 
     OBS_CHANNELS: int
 
-    def data_init(self, SHARDING: Any = None) -> None:
-        ...
-
     def initialize_pool(self, key: jax.Array) -> AugmenterBatch:
         ...
 
@@ -36,4 +33,7 @@ class NCAAugmenterProtocol(Protocol):
         ...
 
     def return_saved_data(self) -> PyTree[jax.Array]:
+        ...
+
+    def return_observed_data(self) -> PyTree[jax.Array]:
         ...

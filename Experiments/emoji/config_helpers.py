@@ -1,7 +1,5 @@
 import os
 
-import jax
-import jax.numpy as jnp
 import numpy as np
 
 from Common.dataloader.emoji import load_emoji_sequence
@@ -9,7 +7,7 @@ from Experiments.config_helpers import (
     _sequence_alias,
     build_loss_filename as _shared_build_loss_filename,
 )
-from NCA.trainer.data_augmenter.nca_terminal import TerminalCarryDataAugmenter
+from NCA.trainer.data_augmenter.emoji import EmojiAugmenter
 
 
 def _pad_tuple(value):
@@ -169,71 +167,24 @@ def load_data(data_config, impath=None):
     return data, cfg_str
 
 
-def build_data_augmenter(data_config):
+def build_data_augmenter(data_config, data, model_channels):
+    """Build the emoji augmenter for ``data`` [batch, time, channels, H, W].
+
+    The data is zero-padded to ``model_channels`` NCA channels.
+    """
     emoji = data_config.emoji
-    pad = _pad_tuple(emoji.pad)
-    batches = data_config.batches
-    shift_amount = emoji.shift_amount
-    noise_strength = emoji.noise_strength
-    noise_mode = emoji.noise_mode
-    terminal = emoji.terminal_carry
-    regeneration = emoji.regeneration
-
-    class EmojiDataAugmenter(TerminalCarryDataAugmenter):
-        TERMINAL_CARRY_ENABLED = terminal.enabled
-        TERMINAL_CARRY_START = terminal.start_iteration
-        TERMINAL_CARRY_SCHEDULE = terminal.schedule_iterations
-        TERMINAL_CARRY_INITIAL = terminal.initial_probability
-        TERMINAL_CARRY_FINAL = terminal.final_probability
-
-        def data_init(self, SHARDING=None):
-            data = self.return_saved_data()
-            data = self.duplicate_batches(data, batches)
-            if pad is not None:
-                data = self.pad(data, pad)
-            self.save_data(data)
-            return None
-
-        def advance_pool(self, x, y, i, key):
-            if shift_amount and hasattr(self, "PREVIOUS_KEY"):
-                x = self.unshift(x, shift_amount, self.PREVIOUS_KEY)
-                y = self.unshift(y, shift_amount, self.PREVIOUS_KEY)
-
-            x_true, _ = self.split_x_y(1)
-            x = self.propagate_with_terminal_carry(x, x_true, i, key)
-
-            if shift_amount:
-                x = self.shift(x, shift_amount, key=key)
-                y = self.shift(y, shift_amount, key=key)
-            if regeneration.enabled:
-                probability = self.scheduled_probability(
-                    i,
-                    regeneration.start_iteration,
-                    regeneration.schedule_iterations,
-                    regeneration.initial_probability,
-                    regeneration.final_probability,
-                )
-                damaged = self.zero_random_circle(x, key=key)
-                damage_mask = jax.random.bernoulli(
-                    jax.random.fold_in(key, 2), probability, (len(x),)
-                )
-                if hasattr(x, "ndim"):
-                    x = jnp.where(
-                        damage_mask[:, None, None, None, None], damaged, x
-                    )
-                else:
-                    for batch_index in range(len(x)):
-                        x[batch_index] = jnp.where(
-                            damage_mask[batch_index], damaged[batch_index], x[batch_index]
-                        )
-            if noise_strength:
-                x = self.noise(x, noise_strength, mode=noise_mode, key=key)
-
-            self.PREVIOUS_KEY = key
-            return x, y
-
-    cfg_str = "da"
-    return EmojiDataAugmenter, cfg_str
+    augmenter = EmojiAugmenter(
+        data,
+        hidden_channels=model_channels - emoji.data_channels,
+        batches=data_config.batches,
+        pad=_pad_tuple(emoji.pad),
+        shift_amount=emoji.shift_amount,
+        noise_strength=emoji.noise_strength,
+        noise_mode=emoji.noise_mode,
+        terminal_carry=emoji.terminal_carry,
+        regeneration=emoji.regeneration,
+    )
+    return augmenter, "da"
 
 
 def resolve_run_t(cfg):

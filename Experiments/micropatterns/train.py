@@ -66,8 +66,6 @@ def build_run_name(cfg, model_name, optimiser_name):
             f"_loop{cfg.trainer.loop_autodiff}"
             f"_gpu{cfg.labels.gpu}"
         )
-        if cfg.trainer.sharding is not None:
-            details += f"_shard{cfg.trainer.sharding}"
         if cfg.trainer.pool_admission.enabled:
             details += (
                 f"_pool_ema{cfg.trainer.pool_admission.relative_threshold}"
@@ -158,6 +156,8 @@ def run(cfg):
     augmenter, _ = build_data_augmenter(
         cfg.data,
         cfg.run.iterations,
+        data,
+        model.N_CHANNELS,
         mask,
         schema,
         aux.get("intervention_times"),
