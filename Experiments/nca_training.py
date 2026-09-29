@@ -8,8 +8,12 @@ from NCA.trainer.trainer import build_trainer
 
 
 def run_training(config, *, model, data, context: TrainerContext, key,
-                 timesteps=None, loss_overrides=None):
-    """Train and, when configured, publish the resulting model bundle."""
+                 timesteps=None, loss_overrides=None, progress_callback=None):
+    """Train and, when configured, publish the resulting model bundle.
+
+    ``progress_callback(iteration, loss, metrics)`` is passed on to
+    ``NcaTrainer.train`` (the demo notebooks use it for live plots).
+    """
 
     context = replace(context, wandb_tags=tuple(build_wandb_tags(config)))
     trainer = build_trainer(config, model, data, context)
@@ -17,6 +21,7 @@ def run_training(config, *, model, data, context: TrainerContext, key,
         key=key,
         timesteps=timesteps,
         loss_overrides=loss_overrides,
+        progress_callback=progress_callback,
     )
     model_store = config.model_store
     if model_store.enabled and result.checkpoint_path is not None:

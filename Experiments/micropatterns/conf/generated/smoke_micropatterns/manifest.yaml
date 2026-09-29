@@ -40,7 +40,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-refactor-phase6c-7-logging-packaging
+    logging.wandb.group: smoke_micropatterns-micropattern-260726-intensity-scaling
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     data.micropattern.pool_copies: 2
@@ -49,7 +49,7 @@ configs:
     experiment.name: smoke_micropatterns
     seed: 0
   config:
-    schema_version: 4
+    schema_version: 5
     seed: 0
     experiment:
       name: smoke_micropatterns
@@ -88,6 +88,13 @@ configs:
         intermediate_reinjection_probability: 0.5
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
+        histogram_percentiles:
+        - 20.0
+        - 99.5
+        initial_intensity_scales:
+          cell_fate_s1/SOX17: 0.3
+          cell_fate_s2/SOX17: 0.3
+          cell_fate_s2/FOXA2: 0.02
         duplicate_final_timestep: false
       knockout:
         mode: null
@@ -167,7 +174,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-refactor-phase6c-7-logging-packaging
+        group: smoke_micropatterns-micropattern-260726-intensity-scaling
         tags: null
     model_store:
       enabled: true
@@ -211,7 +218,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-refactor-phase6c-7-logging-packaging
+    logging.wandb.group: smoke_micropatterns-micropattern-260726-intensity-scaling
     model.family: gNCA
     trainer.loop_autodiff: lax
     data.micropattern.pool_copies: 1
@@ -223,7 +230,7 @@ configs:
     experiment.name: smoke_micropatterns
     seed: 0
   config:
-    schema_version: 4
+    schema_version: 5
     seed: 0
     experiment:
       name: smoke_micropatterns
@@ -262,6 +269,13 @@ configs:
         intermediate_reinjection_probability: 0.5
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
+        histogram_percentiles:
+        - 20.0
+        - 99.5
+        initial_intensity_scales:
+          cell_fate_s1/SOX17: 0.3
+          cell_fate_s2/SOX17: 0.3
+          cell_fate_s2/FOXA2: 0.02
         duplicate_final_timestep: false
       knockout:
         mode: null
@@ -344,7 +358,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-refactor-phase6c-7-logging-packaging
+        group: smoke_micropatterns-micropattern-260726-intensity-scaling
         tags: null
     model_store:
       enabled: true

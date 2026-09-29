@@ -22,10 +22,18 @@ def _():
         load_micropattern_circle_4ch_individual,
         load_micropattern_circle_nodal_knockout_9ch_explicit_colony,
     )
+    from Common.dataloader.micropattern_schemas import (
+        DEFAULT_260726_HISTOGRAM_PERCENTILES,
+        DEFAULT_260726_INITIAL_INTENSITY_SCALES,
+        MICROPATTERN_260726_SCHEMA,
+    )
     from Common.dataloader.preprocessing import ProcessingStep
     from Common.dataloader.texture import load_textures
 
     return (
+        DEFAULT_260726_HISTOGRAM_PERCENTILES,
+        DEFAULT_260726_INITIAL_INTENSITY_SCALES,
+        MICROPATTERN_260726_SCHEMA,
         ProcessingStep,
         load_emoji_sequence,
         load_micropattern_260726,
@@ -39,7 +47,7 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(ProcessingStep, mo):
+def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, ProcessingStep, mo):
     dataset_kind = mo.ui.dropdown(
         options={
             "260726 multichannel micropattern": "micropattern_260726",
@@ -99,8 +107,15 @@ def _(ProcessingStep, mo):
         label="Ordered preprocessing steps (legacy loaders)",
     )
     align = mo.ui.checkbox(value=True, label="Align 260726 images")
-    percentile_low = mo.ui.number(0.0, 99.0, value=0.5, step=0.1, label="Histogram low percentile")
-    percentile_high = mo.ui.number(1.0, 100.0, value=99.95, step=0.05, label="Histogram high percentile")
+    # Defaults match micropattern training (data.micropattern.histogram_percentiles).
+    percentile_low = mo.ui.number(
+        0.0, 99.0, value=DEFAULT_260726_HISTOGRAM_PERCENTILES[0], step=0.1,
+        label="Histogram low percentile",
+    )
+    percentile_high = mo.ui.number(
+        1.0, 100.0, value=DEFAULT_260726_HISTOGRAM_PERCENTILES[1], step=0.05,
+        label="Histogram high percentile",
+    )
     load_button = mo.ui.run_button(label="Load dataset")
     _controls = mo.vstack(
         [
@@ -135,6 +150,39 @@ def _(ProcessingStep, mo):
 
 
 @app.cell(hide_code=True)
+def _(DEFAULT_260726_INITIAL_INTENSITY_SCALES, MICROPATTERN_260726_SCHEMA, mo):
+    initial_intensity_scales = mo.ui.dictionary(
+        {
+            _name: mo.ui.number(
+                0.0,
+                5.0,
+                value=DEFAULT_260726_INITIAL_INTENSITY_SCALES.get(_name, 1.0),
+                step=0.005,
+                label=_name,
+            )
+            for _name in MICROPATTERN_260726_SCHEMA.measurement_names
+        }
+    )
+    mo.vstack(
+        [
+            mo.md(
+                "### 0h intensity corrections (260726 only)\n\n"
+                "Some 0h images are brighter than later timepoints because of "
+                "imaging artifacts, before cells express the marker. Each factor "
+                "multiplies the raw 0h intensities of that channel, for every "
+                "condition, before the shared per-channel normalisation. A value "
+                "of 1 leaves the channel unchanged. The corrected 0h images also "
+                "count towards the percentile bins, so changing one factor can "
+                "shift that channel's later timepoints slightly. Compare the "
+                "result in **0h intensity check** below."
+            ),
+            initial_intensity_scales,
+        ]
+    )
+    return (initial_intensity_scales,)
+
+
+@app.cell(hide_code=True)
 def _(
     align,
     batches,
@@ -143,6 +191,7 @@ def _(
     downsample,
     experiment_groups,
     filenames,
+    initial_intensity_scales,
     knockout,
     load_button,
     load_emoji_sequence,
@@ -175,6 +224,11 @@ def _(
             substitute_preperturbation=substitute_preperturbation.value,
             align=align.value,
             hist_eqs=(percentile_low.value, percentile_high.value),
+            initial_intensity_scales={
+                _name: _value
+                for _name, _value in initial_intensity_scales.value.items()
+                if _value != 1.0
+            },
         )
     elif dataset_kind.value == "micropattern_grouped":
         _ko_time = {"baseline": None, "ko0": 0, "ko24": 24}[knockout.value]
@@ -204,60 +258,94 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(loaded, mo, np):
-    data = np.asarray(loaded.data)
-    names = tuple(getattr(loaded, "channel_names", ()))
-    if not names:
-        names = tuple(f"channel {index}" for index in range(data.shape[2]))
-    _summary = {
-        "shape [B,T,C,X,Y]": tuple(data.shape),
-        "dtype": str(data.dtype),
-        "minimum": float(np.nanmin(data)),
-        "maximum": float(np.nanmax(data)),
-        "mean": float(np.nanmean(data)),
-        "standard deviation": float(np.nanstd(data)),
-        "finite fraction": float(np.isfinite(data).mean()),
-    }
+def _(data, loaded, mo, names, np, plt):
+    # Mean normalised intensity inside the colony boundary, averaged over the
+    # measured replicates, so each channel's 0h level can be compared with
+    # its later timepoints on the same scale.
     _aux = getattr(loaded, "aux", {})
-    _batch_conditions = tuple(_aux.get("batch_conditions", ()))
-    _batch_replicates = tuple(_aux.get("batch_replicates", ()))
-    _batch_options = {
-        (
-            f"{index}: {condition}, replicate {replicate}"
-            if index < len(_batch_conditions) and index < len(_batch_replicates)
-            else f"Batch {index}"
-        ): index
-        for index, (condition, replicate) in enumerate(
-            zip(
-                _batch_conditions or ("",) * data.shape[0],
-                _batch_replicates or ("",) * data.shape[0],
-            )
+    _hours = tuple(_aux.get("timesteps", ()))
+    _measured = _aux.get("measurement_mask")
+    _boundary = getattr(loaded, "boundary_mask", None)
+    if not _hours or _measured is None or _boundary is None or len(_hours) < 2:
+        _intensity_view = mo.md(
+            "### 0h intensity check\n\n"
+            "Needs a 260726 micropattern dataset with at least two timesteps."
         )
-    }
-    batch_index = mo.ui.dropdown(
-        options=_batch_options,
-        value=next(iter(_batch_options)),
-        label="Batch / condition",
-    )
-    time_indices = mo.ui.multiselect(
-        options={str(index): index for index in range(data.shape[1])},
-        value=["0"],
-        label="Timesteps to tile",
-    )
-    channel_indices = mo.ui.multiselect(
-        options={name: index for index, name in enumerate(names)},
-        value=[names[0]],
-        label="Channels to tile",
-    )
-    zero_to_nan = mo.ui.checkbox(value=True, label="Discard zero values (set to NaN)")
-    mo.vstack(
-        [
-            mo.md("## Loaded data"),
-            mo.ui.table([_summary]),
-            mo.hstack([batch_index, time_indices, channel_indices, zero_to_nan]),
-        ]
-    )
-    return batch_index, channel_indices, data, names, time_indices, zero_to_nan
+    else:
+        _measured = np.asarray(_measured)
+        _inside = np.asarray(_boundary)[:, 0]
+        _pixel_sums = (data * _inside[:, None, None]).sum(axis=(-2, -1))
+        _pixel_means = _pixel_sums / np.maximum(_inside.sum(axis=(-2, -1)), 1)[:, None, None]
+        _pixel_means = np.where(_measured, _pixel_means, np.nan)
+        _replicate_counts = _measured.sum(axis=0)
+        _channel_means = np.where(
+            _replicate_counts > 0,
+            np.nansum(_pixel_means, axis=0) / np.maximum(_replicate_counts, 1),
+            np.nan,
+        )
+        _applied = _aux.get("initial_intensity_scales", {})
+        _rows = []
+        for _channel, _name in enumerate(names):
+            _start, _next = _channel_means[0, _channel], _channel_means[1, _channel]
+            _rows.append(
+                {
+                    "channel": _name,
+                    "0h scale": _applied.get(_name, 1.0),
+                    "0h mean": round(float(_start), 4),
+                    f"{_hours[1]}h mean": round(float(_next), 4),
+                    f"0h / {_hours[1]}h": (
+                        round(float(_start / _next), 3) if _next > 0 else None
+                    ),
+                    f"0h brighter than {_hours[1]}h": bool(_start > _next),
+                }
+            )
+        _columns = min(4, len(names))
+        _plot_rows = int(np.ceil(len(names) / _columns))
+        _figure, _axes = plt.subplots(
+            _plot_rows,
+            _columns,
+            figsize=(3.2 * _columns, 2.4 * _plot_rows),
+            sharex=True,
+            sharey=True,
+            squeeze=False,
+        )
+        for _channel, _axis in enumerate(_axes.flat):
+            if _channel >= len(names):
+                _axis.axis("off")
+                continue
+            _axis.plot(_hours, _channel_means[:, _channel], color="black", marker="o")
+            for _replicate in range(_pixel_means.shape[0]):
+                _axis.plot(
+                    _hours,
+                    _pixel_means[_replicate, :, _channel],
+                    color="grey",
+                    alpha=0.4,
+                    linewidth=0.8,
+                )
+            _axis.set_title(names[_channel], fontsize=8)
+            _axis.set_xticks(_hours)
+        for _axis in _axes[-1]:
+            _axis.set_xlabel("hours")
+        for _axis in _axes[:, 0]:
+            _axis.set_ylabel("mean intensity")
+        _figure.tight_layout()
+        _intensity_view = mo.vstack(
+            [
+                mo.md(
+                    "### 0h intensity check\n\n"
+                    "Mean normalised intensity inside the boundary mask for each "
+                    "channel. Black is the mean over measured replicates and grey "
+                    "lines are single replicates. Unlike the tiled images, these "
+                    "values are on one fixed scale per channel. Tune the 0h "
+                    "corrections above until 0h sits where the experimentalists "
+                    "expect it. Copy the final values from the `0h scale` column."
+                ),
+                mo.ui.table(_rows, selection=None),
+                _figure,
+            ]
+        )
+    _intensity_view
+    return
 
 
 @app.cell(hide_code=True)
@@ -743,6 +831,63 @@ def _(data, mo, names, np, plt):
 
 
 @app.cell(column=1, hide_code=True)
+def _(loaded, mo, np):
+    data = np.asarray(loaded.data)
+    names = tuple(getattr(loaded, "channel_names", ()))
+    if not names:
+        names = tuple(f"channel {index}" for index in range(data.shape[2]))
+    _summary = {
+        "shape [B,T,C,X,Y]": tuple(data.shape),
+        "dtype": str(data.dtype),
+        "minimum": float(np.nanmin(data)),
+        "maximum": float(np.nanmax(data)),
+        "mean": float(np.nanmean(data)),
+        "standard deviation": float(np.nanstd(data)),
+        "finite fraction": float(np.isfinite(data).mean()),
+    }
+    _aux = getattr(loaded, "aux", {})
+    _batch_conditions = tuple(_aux.get("batch_conditions", ()))
+    _batch_replicates = tuple(_aux.get("batch_replicates", ()))
+    _batch_options = {
+        (
+            f"{index}: {condition}, replicate {replicate}"
+            if index < len(_batch_conditions) and index < len(_batch_replicates)
+            else f"Batch {index}"
+        ): index
+        for index, (condition, replicate) in enumerate(
+            zip(
+                _batch_conditions or ("",) * data.shape[0],
+                _batch_replicates or ("",) * data.shape[0],
+            )
+        )
+    }
+    batch_index = mo.ui.dropdown(
+        options=_batch_options,
+        value=next(iter(_batch_options)),
+        label="Batch / condition",
+    )
+    time_indices = mo.ui.multiselect(
+        options={str(index): index for index in range(data.shape[1])},
+        value=["0","1","2","3","4"],
+        label="Timesteps to tile",
+    )
+    channel_indices = mo.ui.multiselect(
+        options={name: index for index, name in enumerate(names)},
+        value=[names[0],names[1],names[2],names[3]],
+        label="Channels to tile",
+    )
+    zero_to_nan = mo.ui.checkbox(value=False, label="Discard zero values (set to NaN)")
+    mo.vstack(
+        [
+            mo.md("## Loaded data"),
+            mo.ui.table([_summary]),
+            mo.hstack([batch_index, time_indices, channel_indices, zero_to_nan]),
+        ]
+    )
+    return batch_index, channel_indices, data, names, time_indices, zero_to_nan
+
+
+@app.cell(hide_code=True)
 def _(
     batch_index,
     channel_indices,
@@ -770,15 +915,34 @@ def _(
         len(_selected_times),
         figsize=(3.2 * len(_selected_times), 3.0 * len(_selected_channels)),
         squeeze=False,
+        layout="constrained",
     )
     _histogram_figure, _histogram_axis = plt.subplots(figsize=(8, 4))
+    # One colour range per channel, taken over every batch and timestep, so
+    # brightness can be compared across time (and batches) within a row.
+    _ranges = {}
+    for _channel in _selected_channels:
+        _values = data[:, :, _channel]
+        _values = _values[np.isfinite(_values)]
+        if zero_to_nan.value:
+            _values = _values[_values != 0]
+        _ranges[_channel] = (
+            (float(_values.min()), float(_values.max())) if _values.size else (0.0, 1.0)
+        )
     for _column, _time in enumerate(_selected_times):
         for _row, _channel in enumerate(_selected_channels):
             _image = data[batch_index.value, _time, _channel]
             if zero_to_nan.value:
                 _image = np.where(_image == 0, np.nan, _image)
             _finite = _image[np.isfinite(_image)]
-            _axes[_row, _column].imshow(_image, cmap="viridis")
+            _shown = _axes[_row, _column].imshow(
+                _image,
+                cmap="viridis",
+                vmin=_ranges[_channel][0],
+                vmax=_ranges[_channel][1],
+            )
+            if _column == len(_selected_times) - 1:
+                _figure.colorbar(_shown, ax=_axes[_row, :].tolist(), shrink=0.8)
             _axes[_row, _column].set_title(f"t={_time}, {names[_channel]}")
             _axes[_row, _column].axis("off")
             if _finite.size:
@@ -801,9 +965,18 @@ def _(
     if _n_tiles > 1:
         _histogram_axis.legend(fontsize="small", ncol=2)
     _histogram_axis.grid(alpha=0.2)
-    _figure.tight_layout()
     _histogram_figure.tight_layout()
-    mo.vstack([mo.md("## Tiled monochrome images"), _figure, _histogram_figure])
+    mo.vstack(
+        [
+            mo.md(
+                "## Tiled monochrome images\n\n"
+                "Each row (channel) uses one colour range, set by that channel's "
+                "minimum and maximum over all batches and timesteps."
+            ),
+            _figure,
+            _histogram_figure,
+        ]
+    )
     return
 
 
@@ -1155,7 +1328,6 @@ def _(
             )
     _fate_view
     # plt.show()
-
     return
 
 

@@ -282,6 +282,8 @@ def load_data(
             histogram_bins=histogram_bins,
             pool_copies=1,
             experiment_groups=data_config.micropattern.experiment_groups,
+            hist_eqs=data_config.micropattern.histogram_percentiles,
+            initial_intensity_scales=data_config.micropattern.initial_intensity_scales,
         ))
         data = dataset.data
         aux = dataset.aux

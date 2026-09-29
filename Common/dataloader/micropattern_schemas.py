@@ -267,6 +267,20 @@ MICROPATTERN_260726_SCHEMA = ChannelSchema(
 )
 
 
+# Default intensity scaling for the 260726 dataset. Each channel is clipped to
+# these percentiles (pooled over all loaded images) and rescaled to [0, 1].
+DEFAULT_260726_HISTOGRAM_PERCENTILES = (20.0, 99.5)
+# Multiplicative corrections applied to raw 0h intensities, keyed by
+# measurement name. Some 0h images are brighter than later timepoints because
+# of imaging artifacts, before cells express the marker at all. Values below
+# one dim the 0h image. The corrected values also feed the percentile bins.
+DEFAULT_260726_INITIAL_INTENSITY_SCALES = {
+    "cell_fate_s1/SOX17": 0.3,
+    "cell_fate_s2/SOX17": 0.3,
+    "cell_fate_s2/FOXA2": 0.02,
+}
+
+
 def attach_channel_schema(aux, schema):
     """Attach schema metadata without changing an established return signature."""
 

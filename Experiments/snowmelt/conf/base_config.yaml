@@ -1,4 +1,4 @@
-schema_version: 4
+schema_version: 5
 seed: 0
 
 experiment:
@@ -69,7 +69,7 @@ optimiser:
   warmup_steps: 64
   decay_rate: 0.99
   schedule:
-    type: exponential
+    type: cosine
     warmup_init_lr: 1e-6
     final_factor: 0.1
     transition_fraction: 0.75

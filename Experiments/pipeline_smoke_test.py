@@ -53,7 +53,7 @@ STAGES = [
     ("snowmelt", "smoke_snowmelt"),
 ]
 # Label for the code version being tested; used in the W&B group of every run.
-SMOKE_VERSION = "refactor-phase6c-7-logging-packaging"
+SMOKE_VERSION = "micropattern-260726-intensity-scaling"
 PARENT_PLACEHOLDER = "REPLACE_WITH_PARENT_MODEL_ID"
 SMOKE_COLLECTION = "pipeline-smoke"
 

@@ -17,7 +17,7 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-refactor-phase6c-7-logging-packaging
+    logging.wandb.group: smoke_snowmelt-micropattern-260726-intensity-scaling
     model.family: NCA
     data.snowmelt.target_channels:
     - SCA
@@ -26,7 +26,7 @@ configs:
     experiment.name: smoke_snowmelt
     seed: 0
   config:
-    schema_version: 4
+    schema_version: 5
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -87,7 +87,7 @@ configs:
       warmup_steps: 10
       decay_rate: 0.99
       schedule:
-        type: exponential
+        type: cosine
         warmup_init_lr: 1.0e-06
         final_factor: 0.1
         transition_fraction: 0.75
@@ -121,7 +121,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-refactor-phase6c-7-logging-packaging
+        group: smoke_snowmelt-micropattern-260726-intensity-scaling
         tags: null
     model_store:
       enabled: true
@@ -142,7 +142,7 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-refactor-phase6c-7-logging-packaging
+    logging.wandb.group: smoke_snowmelt-micropattern-260726-intensity-scaling
     model.family: gNCA
     data.snowmelt.target_channels:
     - NDSI
@@ -153,7 +153,7 @@ configs:
     experiment.name: smoke_snowmelt
     seed: 0
   config:
-    schema_version: 4
+    schema_version: 5
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -216,7 +216,7 @@ configs:
       warmup_steps: 10
       decay_rate: 0.99
       schedule:
-        type: exponential
+        type: cosine
         warmup_init_lr: 1.0e-06
         final_factor: 0.1
         transition_fraction: 0.75
@@ -250,7 +250,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-refactor-phase6c-7-logging-packaging
+        group: smoke_snowmelt-micropattern-260726-intensity-scaling
         tags: null
     model_store:
       enabled: true

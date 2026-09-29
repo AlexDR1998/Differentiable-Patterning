@@ -12,7 +12,11 @@ import scipy.ndimage as ndi
 import skimage.io
 from skimage import morphology
 
-from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
+from Common.dataloader.micropattern_schemas import (
+    DEFAULT_260726_HISTOGRAM_PERCENTILES,
+    DEFAULT_260726_INITIAL_INTENSITY_SCALES,
+    MICROPATTERN_260726_SCHEMA,
+)
 from Common.dataloader.results import MicropatternDataset
 
 
@@ -263,16 +267,23 @@ def _read_multichannel_image(path, group):
     )
 
 
-def _channel_values(image, record, source_index):
-    values = image[..., source_index].astype(np.float32)
-    if (
-        record.group == "cell_fate_s2"
-        and record.condition == "ctrl"
-        and record.timestep == 0
-        and source_index == 1
-    ):
-        values = values * 0.075
+def _channel_values(image, record, channel, initial_intensity_scales):
+    values = image[..., channel.source_index].astype(np.float32)
+    if record.timestep == 0:
+        values = values * initial_intensity_scales.get(channel.name, 1.0)
     return values
+
+
+def _coerce_initial_intensity_scales(initial_intensity_scales):
+    if initial_intensity_scales is None:
+        return dict(DEFAULT_260726_INITIAL_INTENSITY_SCALES)
+    scales = {name: float(value) for name, value in initial_intensity_scales.items()}
+    unknown = sorted(set(scales) - set(MICROPATTERN_260726_SCHEMA.measurement_names))
+    if unknown:
+        raise ValueError("Unknown initial intensity channels: " + ", ".join(unknown))
+    if any(not np.isfinite(value) or value < 0 for value in scales.values()):
+        raise ValueError("initial intensity scales must be finite and non-negative")
+    return scales
 
 
 def _percentile_from_histogram(histogram, percentile):
@@ -282,7 +293,7 @@ def _percentile_from_histogram(histogram, percentile):
     return float(np.searchsorted(np.cumsum(histogram), threshold, side="left"))
 
 
-def _compute_histogram_bins(records, hist_eqs, schema):
+def _compute_histogram_bins(records, hist_eqs, schema, initial_intensity_scales):
     histograms = np.zeros((schema.n_measurement_channels, 65536), dtype=np.uint64)
     group_target_indices = {
         group.name: target_indices
@@ -298,7 +309,9 @@ def _compute_histogram_bins(records, hist_eqs, schema):
         for target_index, channel in zip(
             group_target_indices[record.group], schema_group.channels
         ):
-            values = _channel_values(image, record, channel.source_index)
+            values = _channel_values(
+                image, record, channel, initial_intensity_scales
+            )
             if np.min(values) < 0 or np.max(values) > 65535:
                 raise ValueError(
                     "Automatic histogram calculation expects intensities in [0, 65535]; "
@@ -453,12 +466,13 @@ def load_micropattern_260726(
     experiment_groups=None,
     substitute_preperturbation=True,
     histogram_bins=None,
-    hist_eqs=(0.5, 99.95),
+    hist_eqs=DEFAULT_260726_HISTOGRAM_PERCENTILES,
     align=True,
     strict_replicates=False,
     boundary_radius_quantile=0.98,
     boundary_radius_scale=1.0,
     pool_copies=1,
+    initial_intensity_scales=None,
 ):
     """Load physical replicates of the multichannel 260726 NCA dataset.
 
@@ -469,6 +483,11 @@ def load_micropattern_260726(
     training batch while retaining the original replicate provenance.
     ``replicate_indices`` selects zero-based physical replicate slots; its
     order determines their order on the returned batch axis.
+    ``initial_intensity_scales`` maps measurement names (e.g.
+    ``"cell_fate_s2/FOXA2"``) to factors that multiply the raw 0h intensities
+    of every condition before normalisation, to correct 0h imaging artifacts.
+    Unlisted channels are left unchanged. ``None`` uses
+    ``DEFAULT_260726_INITIAL_INTENSITY_SCALES``; pass ``{}`` for no correction.
 
     Returns
     -------
@@ -499,6 +518,9 @@ def load_micropattern_260726(
     if pool_copies <= 0 or int(pool_copies) != pool_copies:
         raise ValueError("pool_copies must be a positive integer")
     pool_copies = int(pool_copies)
+    initial_intensity_scales = _coerce_initial_intensity_scales(
+        initial_intensity_scales
+    )
     conditions = tuple(conditions)
     timesteps = tuple(int(timestep) for timestep in timesteps)
     schema = MICROPATTERN_260726_SCHEMA.select_groups(experiment_groups)
@@ -534,7 +556,9 @@ def load_micropattern_260726(
 
     records = inventory["records"]
     if histogram_bins is None:
-        histogram_bins = _compute_histogram_bins(records, hist_eqs, schema)
+        histogram_bins = _compute_histogram_bins(
+            records, hist_eqs, schema, initial_intensity_scales
+        )
     else:
         histogram_bins = _coerce_histogram_bins(histogram_bins, schema)
     group_target_indices = {
@@ -568,7 +592,9 @@ def load_micropattern_260726(
         for target_index, channel in zip(
             group_target_indices[group], schema_group.channels
         ):
-            values = _channel_values(raw, record, channel.source_index)
+            values = _channel_values(
+                raw, record, channel, initial_intensity_scales
+            )
             lower, upper = histogram_bins[target_index]
             channels.append(np.clip((values - lower) / (upper - lower), 0.0, 1.0))
         image = np.stack(channels, axis=-1).astype(np.float32)
@@ -720,6 +746,7 @@ def load_micropattern_260726(
         "manifest": records,
         "unselected_files": inventory["unselected_files"],
         "histogram_bins": histogram_bins,
+        "initial_intensity_scales": initial_intensity_scales,
         "group_boundary_masks": group_masks,
         "group_mask": group_mask,
         "source_conditions": source_conditions,

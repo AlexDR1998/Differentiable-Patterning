@@ -1,4 +1,4 @@
-schema_version: 4
+schema_version: 5
 seed: 0
 
 experiment:
@@ -37,6 +37,15 @@ data:
     intermediate_reinjection_probability: 0.5
     intermediate_reinjection_probability_end: 0.5
     intermediate_reinjection_decay_start_fraction: 0.25
+  # 260726 only. Each channel is clipped to these percentiles, pooled over
+  # all loaded timesteps, then rescaled to [0, 1].
+    histogram_percentiles: [20.0, 99.5]
+  # 260726 only. Factors multiplying raw 0h intensities, to correct 0h
+  # imaging artifacts before cells express these markers.
+    initial_intensity_scales:
+      cell_fate_s1/SOX17: 0.3
+      cell_fate_s2/SOX17: 0.3
+      cell_fate_s2/FOXA2: 0.02
     duplicate_final_timestep: false
   # Nodal knockout settings; they choose which knockout data is loaded.
   knockout:

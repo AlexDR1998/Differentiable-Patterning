@@ -138,3 +138,40 @@ def test_current_config_round_trips():
     config = experiment_config_from_mapping(_current_micropattern_config())
 
     assert experiment_config_from_mapping(config_to_dict(config)) == config
+
+
+def test_current_micropattern_config_uses_new_260726_normalisation():
+    micropattern = experiment_config_from_mapping(
+        _current_micropattern_config()
+    ).data.micropattern
+
+    assert micropattern.histogram_percentiles == (20.0, 99.5)
+    assert micropattern.initial_intensity_scales == {
+        "cell_fate_s1/SOX17": 0.3,
+        "cell_fate_s2/SOX17": 0.3,
+        "cell_fate_s2/FOXA2": 0.02,
+    }
+
+
+@pytest.mark.parametrize("version", [2, 3, 4])
+def test_older_micropattern_configs_keep_their_260726_normalisation(version):
+    value = _current_micropattern_config()
+    value["schema_version"] = version
+    del value["data"]["micropattern"]["histogram_percentiles"]
+    del value["data"]["micropattern"]["initial_intensity_scales"]
+
+    micropattern = experiment_config_from_mapping(value).data.micropattern
+
+    assert micropattern.histogram_percentiles == (0.5, 99.95)
+    assert micropattern.initial_intensity_scales == {"cell_fate_s2/FOXA2": 0.075}
+
+
+def test_version_1_bundle_keeps_its_260726_normalisation():
+    value = _old_bundle_layout()
+    del value["data"]["augmentation"]["histogram_percentiles"]
+    del value["data"]["augmentation"]["initial_intensity_scales"]
+
+    micropattern = experiment_config_from_mapping(value).data.micropattern
+
+    assert micropattern.histogram_percentiles == (0.5, 99.95)
+    assert micropattern.initial_intensity_scales == {"cell_fate_s2/FOXA2": 0.075}

@@ -19,6 +19,7 @@ matplotlib
 ipykernel
 ipywidgets
 ffmpeg-python
+imageio-ffmpeg
 nbformat
 flax
 orbax-checkpoint

@@ -58,7 +58,7 @@ from NCA.trainer.config import PoolAdmissionConfig, TrainerConfig
 from NCA.trainer.interval_schedule import INTERVAL_MODES
 
 
-CONFIG_SCHEMA_VERSION = 4
+CONFIG_SCHEMA_VERSION = 5
 
 # data.dataset -> the data section that holds its settings
 DATA_SECTIONS = {
@@ -241,13 +241,27 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
       only one trainer implementation remains.
     * Version 3 had a ``trainer.sharding`` option, removed in version 4
       because it never split the data across devices.
+    * Version 4 and earlier had no ``data.micropattern.histogram_percentiles``
+      or ``initial_intensity_scales``; the 260726 loader then always used
+      percentiles (0.5, 99.95) and scaled 0h FOXA2 (stain 2) by 0.075. Those
+      values are filled in so old runs load the data they were trained on.
 
     Saved bundles are never edited; they are upgraded each time they are read.
     Keys that are already in the current layout pass through unchanged.
     """
     root = copy.deepcopy(dict(value))
-    if int(root.get("schema_version", 1)) == 1:
+    version = int(root.get("schema_version", 1))
+    if version == 1:
         root = _upgrade_from_version_1(root)
+    data = root.get("data")
+    if version <= 4 and isinstance(data, Mapping):
+        if isinstance(data.get("micropattern"), Mapping):
+            root["data"] = data = dict(data)
+            data["micropattern"] = dict(data["micropattern"])
+            data["micropattern"].setdefault("histogram_percentiles", [0.5, 99.95])
+            data["micropattern"].setdefault(
+                "initial_intensity_scales", {"cell_fate_s2/FOXA2": 0.075}
+            )
     if isinstance(root.get("trainer"), Mapping):
         root["trainer"] = dict(root["trainer"])
         root["trainer"].pop("backend", None)
@@ -448,6 +462,14 @@ def _micropattern_config(value: Any) -> MicropatternDataConfig:
         if raw.get(split_name) is not None:
             raw[split_name] = tuple(int(value) for value in raw[split_name])
     raw["timesteps"] = _tuple(raw.get("timesteps", (0, 12, 24, 36, 48)))
+    if "histogram_percentiles" in raw:
+        low, high = raw["histogram_percentiles"]
+        raw["histogram_percentiles"] = (float(low), float(high))
+    if "initial_intensity_scales" in raw:
+        raw["initial_intensity_scales"] = {
+            str(name): float(value)
+            for name, value in (raw["initial_intensity_scales"] or {}).items()
+        }
     return _strict(MicropatternDataConfig, raw, "data.micropattern")
 
 

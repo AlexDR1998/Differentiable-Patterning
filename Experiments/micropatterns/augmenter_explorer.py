@@ -58,10 +58,10 @@ def _(mo):
     dataset_pool_copies = mo.ui.slider(1, 16, value=1, label="Pool copies")
     dataset_align = mo.ui.checkbox(value=True, label="Align images")
     dataset_percentile_low = mo.ui.number(
-        0.0, 99.0, value=0.5, step=0.1, label="Histogram low percentile"
+        0.0, 99.0, value=20.0, step=0.1, label="Histogram low percentile"
     )
     dataset_percentile_high = mo.ui.number(
-        1.0, 100.0, value=99.95, step=0.05, label="Histogram high percentile"
+        1.0, 100.0, value=99.5, step=0.05, label="Histogram high percentile"
     )
     dataset_load = mo.ui.run_button(label="Load dataset")
     mo.vstack(

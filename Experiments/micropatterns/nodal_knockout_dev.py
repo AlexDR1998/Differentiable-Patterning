@@ -30,10 +30,10 @@ def _():
 
 @app.cell
 def _(data_14ch, plt, rearrange):
-    print(data_14ch[0].shape)
+    print(data_14ch.data.shape)
     C = 0
     plt.figure(figsize=(12,12))
-    plt.imshow(rearrange(data_14ch[0][:,-1],"B C x y -> (C x) (B y)"))
+    plt.imshow(rearrange(data_14ch.data[:,-1],"B C x y -> (C x) (B y)"))
     # plt.imshow(data_14ch[0][1,-1,9])
     return
 
@@ -173,16 +173,22 @@ def _(
     # for l in data_2:
         # print(l.shape)
     print(data_2.shape)
-    mask_full = duplicate_x_channels_9ch(CHANNEL_TIMESTEP_MASK)
+    # The measurement mask is [batch, target time, 9 input channels]; duplicate
+    # its channel axis (the last one) to match the 12 data channels
+    mask_full = rearrange(
+        duplicate_x_channels_9ch(rearrange(CHANNEL_TIMESTEP_MASK, "B T C -> (B T) C")),
+        "(B T) C -> B T C",
+        B=CHANNEL_TIMESTEP_MASK.shape[0],
+    )
     print(mask_full.shape)
     # print(data_2[_b].shape)
     pprint(chnames)
 
     plt.imshow(rearrange(data_2,"() T C X Y -> (C X) (T Y)"))
     plt.show()
-    data_masked = data_2[:,1:]*mask_full[None,:,:,None,None]
+    data_masked = data_2[:,1:]*mask_full[:,:,:,None,None]
     # plt.imshow(rearrange(data_masked,"() T C X Y -> (C X) (T Y)"))
-    plt.imshow(mask_full.T)
+    plt.imshow(mask_full[0].T)
     plt.colorbar()
     plt.show()
     return

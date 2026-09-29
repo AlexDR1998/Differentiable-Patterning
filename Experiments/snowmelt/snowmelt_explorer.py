@@ -3,6 +3,7 @@
 #   "marimo",
 #   "matplotlib",
 #   "numpy",
+#   "pandas",
 #   "tifffile",
 # ]
 # ///
@@ -23,6 +24,10 @@ Data layout (``SNOWMELT_DATA_ROOT``, default ``~/PhD/Data/snowmelt``):
 All rasters share one 517 x 514 grid at 10 m in ED50 / UTM 32N (EPSG:23032).
 Reading the rasters uses ``Common/dataloader/snowmelt.py``, the same code as the
 training loader.
+
+The last section evaluates trained snowmelt NCA models from the model registry
+(``MODEL_STORE_ROOT``, default ``models/``) using ``Experiments/snowmelt/evaluation.py``.
+It needs JAX and the rest of the repository environment.
 """
 
 import marimo
@@ -138,8 +143,8 @@ with app.setup(hide_code=True):
 
     def style_map_axes(ax, title=None):
         ax.set_facecolor("#e6e6e6")
-        ax.set_xlabel("Easting (km)")
-        ax.set_ylabel("Northing (km)")
+        # ax.set_xlabel("Easting (km)")
+        # ax.set_ylabel("Northing (km)")
         ax.tick_params(labelsize=8)
         for s in ax.spines.values():
             s.set_visible(False)
@@ -369,7 +374,7 @@ def _(
     _vmin, _vmax = color_limits(_arr, _layer, pct_range.value)
 
     _fig, (_ax_map, _ax_hist) = plt.subplots(
-        1, 2, figsize=(13, 5.5), gridspec_kw={"width_ratios": [2.2, 1]}, constrained_layout=True
+        1, 2, figsize=(22, 10.5), gridspec_kw={"width_ratios": [2.2, 1]}, constrained_layout=True,dpi=300
     )
     if shade_toggle.value:
         _hs = np.where(data["mask"], hillshade(data["dem"]), np.nan)
@@ -395,6 +400,7 @@ def _(
     )
     _ax_hist.spines[["top", "right"]].set_visible(False)
     _fig
+    # plt.show()
     return
 
 
@@ -967,6 +973,750 @@ def _(change_norm, data, dt_days):
     _fig.colorbar(_im, ax=list(_axes), shrink=0.8, label="ΔNDSI per day" if _per_day else "ΔNDSI")
     _fig.suptitle("NDSI change between consecutive acquisitions (red = loss of snow signal)", fontsize=10)
     _fig
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # Trained NCA models: inference evaluation
+
+    Select snowmelt NCA models from the local model registry and roll them out from the
+    first acquisition. Each model gets **its own input**, rebuilt from its saved training
+    config: the same target channels, static terrain channels, downsampling and catchment
+    mask it was trained on. The input is checked against the fingerprint stored in the
+    bundle, so a changed dataset or loader fails loudly instead of being scored silently.
+
+    - **Free run**: one rollout from the first date through all later dates. Only the first
+      image is used, so this is the forecasting test.
+    - **One interval ahead**: every interval restarts from the observed image at its start,
+      as in training. This isolates the error made within one interval.
+
+    Scores are in physical units (reflectance, NDSI/NDVI in [−1, 1], snow cover fraction)
+    over catchment pixels, and are compared with **persistence**: the starting image
+    repeated. *Skill* is the MSE skill score 1 − MSE / MSE<sub>persistence</sub> (1 is
+    perfect, 0 is no better than persistence). For SCA and NDSI the maps are also classified
+    as snow / no snow (SCA > 0.5, NDSI > 0.4), giving the snow-covered area and the critical
+    success index, CSI = hits / (hits + misses + false alarms). Rollouts are stochastic, so
+    several are run per model and their mean is scored. *10 m grid* scoring blows each
+    prediction back up to the original raster, so models trained at different resolutions
+    are scored against the same pixels.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    import jax
+    import jax.random as jr
+    import pandas as pd
+
+    from Experiments.model_registry import ModelRegistry, open_model_bundle
+    from Experiments.snowmelt import evaluation as snowmelt_eval
+
+    # Categorical hues in fixed order (one per level of the "colour by" factor)
+    EVAL_COLOURS = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948")
+    EVAL_SNOW_CHANNELS = tuple(snowmelt_eval.SNOW_THRESHOLDS)
+
+    def eval_grid_extent(data, factor, shape):
+        """imshow extent (km) of a downsampled grid with its border removed."""
+        _x0, _, _, _y1 = data["extent_km"]
+        _dx, _dy = data["pixel_size"]
+        _h, _w = shape
+        return (_x0, _x0 + _w * factor * _dx / 1e3, _y1 - _h * factor * _dy / 1e3, _y1)
+
+    def eval_level_colours(levels):
+        """Map factor levels to fixed categorical hues; None if there are too many."""
+        levels = sorted(set(levels), key=str)
+        if len(levels) > len(EVAL_COLOURS):
+            return None
+        return dict(zip(levels, EVAL_COLOURS))
+
+    _backend = jax.default_backend()
+    mo.callout(
+        f"JAX backend: **{_backend}** ({', '.join(d.device_kind for d in jax.devices())}). "
+        "The first rollout of each model shape includes JIT compilation."
+        + ("" if _backend == "gpu" else " Full-resolution (20 m) models are slow on CPU."),
+        kind="success" if _backend == "gpu" else "warn",
+    )
+    return (
+        EVAL_SNOW_CHANNELS,
+        ModelRegistry,
+        eval_grid_extent,
+        eval_level_colours,
+        jr,
+        open_model_bundle,
+        pd,
+        snowmelt_eval,
+    )
+
+
+@app.cell(hide_code=True)
+def _():
+    _default_store = os.environ.get("MODEL_STORE_ROOT", str(Path(__file__).resolve().parents[2] / "models"))
+    eval_store_root = mo.ui.text(_default_store, label="Model store", full_width=True)
+    eval_store_root
+    return (eval_store_root,)
+
+
+@app.cell(hide_code=True)
+def _(ModelRegistry, eval_store_root, open_model_bundle, pd, snowmelt_eval):
+    # One row per completed snowmelt bundle, with the config values that tell models apart
+    eval_registry = ModelRegistry(Path(eval_store_root.value).expanduser())
+    _models = eval_registry.models_df()
+    _models = _models[(_models.dataset == "snowmelt") & (_models.status == "complete")]
+    _aliases = eval_registry.annotations_df().set_index("model_id")["alias"]
+    eval_bundles = {}
+    _rows = []
+    for _record in _models.itertuples():
+        _bundle = open_model_bundle(_record.path)
+        _cfg = _bundle.config
+        eval_bundles[_bundle.id] = _bundle
+        _rows.append({
+            "model_id": _bundle.id,
+            "alias": _aliases.get(_bundle.id),
+            "label": snowmelt_eval.model_label(_cfg),
+            "experiment": _record.experiment,
+            "family": _cfg.model.family,
+            "targets": "+".join(_cfg.data.snowmelt.target_channels),
+            "static": "+".join(_cfg.data.snowmelt.static_channels),
+            "resolution_m": 10 * _cfg.data.downsample,
+            "t": _cfg.run.t,
+            "interval_mode": _cfg.run.interval_mode,
+            "repeat": _cfg.run.repeat,
+            "channels": _cfg.model.channels,
+            "best_loss": _record.best_loss,
+            "created_at": _record.created_at,
+        })
+    eval_catalogue = pd.DataFrame(_rows)
+    eval_experiment = mo.ui.dropdown(
+        ["All experiments"] + sorted(eval_catalogue["experiment"].dropna().unique()) if _rows else ["All experiments"],
+        value="All experiments",
+        label="Experiment",
+    )
+    mo.vstack([
+        mo.md(f"**{len(eval_catalogue)}** completed snowmelt models in `{eval_registry.root}`. "
+              "Rebuild the index with `python -m Experiments.model_registry reindex` after copying new bundles."),
+        eval_experiment,
+    ])
+    return eval_bundles, eval_catalogue, eval_experiment
+
+
+@app.cell(hide_code=True)
+def _(eval_catalogue, eval_experiment):
+    _shown = eval_catalogue
+    if eval_experiment.value != "All experiments":
+        _shown = _shown[_shown["experiment"] == eval_experiment.value]
+    eval_model_table = mo.ui.table(
+        _shown.reset_index(drop=True), selection="multi", page_size=12,
+        label="Select models to evaluate (column headers filter and sort)",
+    )
+    eval_model_table
+    return (eval_model_table,)
+
+
+@app.cell(hide_code=True)
+def _():
+    eval_mode = mo.ui.radio(
+        {"Free run from first date": "free", "One interval ahead": "interval"},
+        value="Free run from first date", label="Rollout", inline=True,
+    )
+    eval_rollouts = mo.ui.number(1, 32, value=4, step=1, label="Rollouts per model")
+    eval_seed = mo.ui.number(0, 2**31 - 1, value=0, step=1, label="Seed")
+    eval_grid = mo.ui.radio(
+        {"Model grid": "model", "10 m grid": "full"}, value="10 m grid", label="Score on", inline=True,
+    )
+    eval_verify = mo.ui.checkbox(value=True, label="Require input to match the bundle fingerprint")
+    eval_run = mo.ui.run_button(label="Evaluate selected models")
+    mo.hstack([eval_mode, eval_rollouts, eval_seed, eval_grid, eval_verify, eval_run], justify="start", gap=1.5, wrap=True)
+    return (
+        eval_grid,
+        eval_mode,
+        eval_rollouts,
+        eval_run,
+        eval_seed,
+        eval_verify,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    data,
+    eval_bundles,
+    eval_catalogue,
+    eval_grid,
+    eval_mode,
+    eval_model_table,
+    eval_rollouts,
+    eval_run,
+    eval_seed,
+    eval_verify,
+    jr,
+    pd,
+    snowmelt_eval,
+):
+    _selected = eval_model_table.value
+    eval_results = []
+    eval_metrics = pd.DataFrame()
+    if not eval_run.value:
+        _status = mo.md("Select models above, then click **Evaluate selected models**.")
+    elif _selected is None or len(_selected) == 0:
+        _status = mo.callout("Select at least one model.", kind="warn")
+    else:
+        _sequences = {}
+        _references = {}
+        _metric_rows = []
+        _info = eval_catalogue.set_index("model_id")
+        for _index, _model_id in enumerate(mo.status.progress_bar(
+            list(_selected["model_id"]), title="Evaluating models", remove_on_exit=True,
+        )):
+            _bundle = eval_bundles[_model_id]
+            _cfg = _bundle.config
+            _recipe = snowmelt_eval.input_recipe(_cfg)
+            _names = _recipe["target_channels"]
+            _factor, _pad = _recipe["downsample"], _recipe["pad"]
+            _sequence = snowmelt_eval.load_bundle_sequence(_bundle, data, cache=_sequences, verify=eval_verify.value)
+            _model = _bundle.load_model()
+            _raw_prediction = snowmelt_eval.predict(
+                _model, _cfg, _sequence, jr.fold_in(jr.PRNGKey(int(eval_seed.value)), _index),
+                n_rollouts=int(eval_rollouts.value), mode=eval_mode.value,
+            )
+            # Physical units on the model grid, with the zero border removed
+            _prediction = snowmelt_eval.to_physical(snowmelt_eval.strip_border(_raw_prediction, _pad), _names)
+            _observed = snowmelt_eval.to_physical(snowmelt_eval.strip_border(_sequence.data[0], _pad), _names)
+            _catchment = snowmelt_eval.strip_border(_sequence.boundary_mask[0, 0], _pad) > 0.5
+
+            if eval_grid.value == "full":
+                _key = (_names, _factor)
+                if _key not in _references:
+                    _full, _full_mask = snowmelt_eval.full_resolution_reference(data, _names, _factor)
+                    _references[_key] = (snowmelt_eval.to_physical(_full, _names), _full_mask)
+                _score_observed, _score_mask = _references[_key]
+                _score_prediction = snowmelt_eval.upsample_blocks(_prediction, _factor)
+            else:
+                _score_observed, _score_mask, _score_prediction = _observed, _catchment, _prediction
+            _scores = snowmelt_eval.score(
+                _score_prediction, _score_observed, _score_mask, _names,
+                _sequence.dates, _sequence.observation_times, mode=eval_mode.value,
+            )
+            _meta = {"model_id": _model_id, **_info.loc[_model_id, [
+                "alias", "label", "family", "targets", "resolution_m", "t", "interval_mode", "repeat",
+            ]].to_dict()}
+            _metric_rows += [{**_meta, **_row} for _row in _scores]
+            eval_results.append({
+                **_meta,
+                "channel_names": _names,
+                "factor": _factor,
+                "dates": _sequence.dates,
+                "days": _sequence.observation_times,
+                "prediction": _prediction,   # [rollouts, T, C, h, w]
+                "observed": _observed,       # [T, C, h, w]
+                "catchment": _catchment,     # [h, w]
+                "steps": snowmelt_eval.rollout_schedule(_cfg, _sequence).steps,
+            })
+        eval_metrics = pd.DataFrame(_metric_rows)
+        _status = mo.md(
+            f"Evaluated **{len(eval_results)}** model(s): "
+            f"{ {'free': 'free run', 'interval': 'one interval ahead'}[eval_mode.value]}, "
+            f"{int(eval_rollouts.value)} rollout(s) each, scored on the "
+            f"{ {'model': 'model grid', 'full': '10 m grid'}[eval_grid.value]}"
+            + ("" if eval_verify.value else " (**input fingerprints not checked**)") + "."
+        )
+    _status
+    return eval_metrics, eval_results
+
+
+@app.cell(hide_code=True)
+def _(eval_grid, eval_metrics, eval_mode, pd):
+    if eval_metrics.empty:
+        eval_summary = pd.DataFrame()
+        _out = mo.md("")
+    else:
+        # One row per model and channel: averages over the predicted dates, plus the last date
+        _keys = ["model_id", "alias", "label", "family", "targets", "resolution_m", "t", "interval_mode", "repeat", "channel"]
+        # (rows are in date order, so "last" is the final date)
+        _columns = {
+            "mean_skill": ("skill", "mean"), "mean_rmse": ("rmse", "mean"), "mean_bias": ("bias", "mean"),
+            "mean_persistence_rmse": ("persistence_rmse", "mean"),
+            "final_date": ("date", "last"), "final_rmse": ("rmse", "last"),
+        }
+        if "snow_csi" in eval_metrics:
+            _columns |= {
+                "mean_snow_csi": ("snow_csi", "mean"), "final_snow_csi": ("snow_csi", "last"),
+                "final_observed_snow_fraction": ("observed_snow_fraction", "last"),
+                "final_predicted_snow_fraction": ("predicted_snow_fraction", "last"),
+            }
+        eval_summary = (
+            eval_metrics.groupby(_keys, dropna=False, sort=False).agg(**_columns)
+            .reset_index().sort_values(["channel", "mean_skill"], ascending=[True, False])
+        )
+        _tag = f"{eval_mode.value}_{eval_grid.value}"
+        _out = mo.vstack([
+            mo.md("### Summary (one row per model and channel)"),
+            mo.ui.table(eval_summary.round(4), selection=None, page_size=15),
+            mo.hstack([
+                mo.download(eval_summary.to_csv(index=False).encode(), filename=f"snowmelt_nca_summary_{_tag}.csv",
+                            mimetype="text/csv", label="Summary CSV"),
+                mo.download(eval_metrics.to_csv(index=False).encode(), filename=f"snowmelt_nca_scores_by_date_{_tag}.csv",
+                            mimetype="text/csv", label="Scores by date CSV"),
+            ], justify="start"),
+        ])
+    _out
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    eval_colour_by = mo.ui.dropdown(
+        ["targets", "resolution_m", "interval_mode", "family", "t", "label"], value="resolution_m", label="Colour by",
+    )
+    eval_colour_by
+    return (eval_colour_by,)
+
+
+@app.cell(hide_code=True)
+def _(data, eval_colour_by, eval_level_colours, eval_metrics):
+    if eval_metrics.empty:
+        _out = mo.md("")
+    else:
+        _colours = eval_level_colours(eval_metrics[eval_colour_by.value])
+        _channels = [c for c in CHANNELS if c in set(eval_metrics["channel"])]
+        if _colours is None:
+            _out = mo.callout(f"More than 8 values of {eval_colour_by.value}: colour by a coarser factor.", kind="warn")
+        else:
+            _ncols = min(len(_channels), 4)
+            _nrows = -(-len(_channels) // _ncols)
+            _fig, _axes = plt.subplots(
+                _nrows, _ncols, figsize=(4.2 * _ncols, 3.4 * _nrows), constrained_layout=True, squeeze=False, sharey=True,
+            )
+            for _ax in _axes.ravel()[len(_channels):]:
+                _ax.axis("off")
+            for _ax, _channel in zip(_axes.ravel(), _channels):
+                for _, _rows in eval_metrics[eval_metrics["channel"] == _channel].groupby("model_id", sort=False):
+                    _ax.plot(_rows["days"], _rows["skill"], lw=2, marker="o", ms=5, alpha=0.8,
+                             color=_colours[_rows[eval_colour_by.value].iloc[0]])
+                _ax.axhline(0, color="#777", lw=1, ls="--")
+                _ax.set_title(_channel, fontsize=10)
+                _ax.set_xlabel(f"days since {data['dates'][0]}")
+                _ax.grid(color="#eeeeee")
+                _ax.spines[["top", "right"]].set_visible(False)
+            for _ax in _axes[:, 0]:
+                _ax.set_ylabel("MSE skill vs persistence")
+            _handles = [plt.Line2D([], [], color=_c, lw=2, marker="o", ms=5) for _c in _colours.values()]
+            _fig.legend(_handles, [str(_level) for _level in _colours], title=eval_colour_by.value,
+                        loc="outside right upper", frameon=False, fontsize=8)
+            _fig.suptitle("Skill by date: one line per model (0 = no better than persistence)", fontsize=10)
+            _out = _fig
+    _out
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    EVAL_SNOW_CHANNELS,
+    data,
+    eval_colour_by,
+    eval_grid,
+    eval_level_colours,
+    eval_metrics,
+    snowmelt_eval,
+):
+    _snow = eval_metrics[eval_metrics["channel"].isin(EVAL_SNOW_CHANNELS)] if not eval_metrics.empty else eval_metrics
+    if _snow.empty:
+        _out = mo.md("")
+    else:
+        _colours = eval_level_colours(_snow[eval_colour_by.value])
+        _channels = [c for c in EVAL_SNOW_CHANNELS if c in set(_snow["channel"])]
+        if _colours is None:
+            _out = mo.callout(f"More than 8 values of {eval_colour_by.value}: colour by a coarser factor.", kind="warn")
+        else:
+            _fig, _axes = plt.subplots(
+                1, len(_channels), figsize=(5.5 * len(_channels), 4), constrained_layout=True, squeeze=False, sharey=True,
+            )
+            for _ax, _channel in zip(_axes[0], _channels):
+                _rows = _snow[_snow["channel"] == _channel]
+                # The observed curve depends only on the scoring grid (one per resolution on the model grid)
+                _observed_by = ["resolution_m"] if eval_grid.value == "model" else []
+                for _group, _obs in (_rows.groupby(_observed_by) if _observed_by else [((), _rows)]):
+                    _obs = _obs.drop_duplicates("date")
+                    _ax.plot(_obs["days"], 100 * _obs["observed_snow_fraction"], color="#222", lw=2.5, marker="o", ms=7,
+                             label="observed" + (f" ({_group[0]} m)" if _observed_by else ""), zorder=3)
+                for _, _model_rows in _rows.groupby("model_id", sort=False):
+                    _colour = _colours[_model_rows[eval_colour_by.value].iloc[0]]
+                    _mean = 100 * _model_rows["predicted_snow_fraction"]
+                    _spread = 100 * _model_rows["snow_fraction_spread"]
+                    _ax.plot(_model_rows["days"], _mean, color=_colour, lw=2, alpha=0.8)
+                    _ax.fill_between(_model_rows["days"], _mean - _spread, _mean + _spread, color=_colour, alpha=0.12, lw=0)
+                _ax.set_title(f"{_channel} > {snowmelt_eval.SNOW_THRESHOLDS[_channel]}", fontsize=10)
+                _ax.set_xlabel(f"days since {data['dates'][0]}")
+                _ax.set_ylim(0, 105)
+                _ax.grid(color="#eeeeee")
+                _ax.spines[["top", "right"]].set_visible(False)
+                _ax.legend(frameon=False, fontsize=8, loc="upper right")
+            _axes[0, 0].set_ylabel("snow-covered area (% of catchment)")
+            _handles = [plt.Line2D([], [], color=_c, lw=2) for _c in _colours.values()]
+            _fig.legend(_handles, [str(_level) for _level in _colours], title=eval_colour_by.value,
+                        loc="outside right upper", frameon=False, fontsize=8)
+            _fig.suptitle("Snow-covered area: observed vs predicted (band = ±1 std across rollouts)", fontsize=10)
+            _out = _fig
+    _out
+    return
+
+
+@app.cell(hide_code=True)
+def _(eval_results):
+    eval_view_model = mo.ui.dropdown(
+        {(_r["alias"] or _r["label"]) + f" [{_r['model_id'][-8:]}]": _i for _i, _r in enumerate(eval_results)},
+        label="Model",
+    )
+    eval_view_model if eval_results else mo.md("")
+    return (eval_view_model,)
+
+
+@app.cell(hide_code=True)
+def _(eval_results, eval_view_model):
+    _names = eval_results[eval_view_model.value]["channel_names"] if eval_view_model.value is not None else ()
+    eval_view_channel = mo.ui.dropdown(_names, value=_names[0] if _names else None, label="Channel")
+    eval_view_spread = mo.ui.checkbox(value=False, label="Show spread across rollouts")
+    mo.hstack([eval_view_channel, eval_view_spread], justify="start", gap=1.5) if _names else mo.md("")
+    return eval_view_channel, eval_view_spread
+
+
+@app.cell(hide_code=True)
+def _(
+    data,
+    eval_grid_extent,
+    eval_results,
+    eval_view_channel,
+    eval_view_model,
+    eval_view_spread,
+):
+    if eval_view_model.value is None or eval_view_channel.value is None:
+        _out = mo.md("Choose an evaluated model to compare maps." if eval_results else "")
+    else:
+        _r = eval_results[eval_view_model.value]
+        _c = _r["channel_names"].index(eval_view_channel.value)
+        _inside = _r["catchment"]
+        _observed = np.where(_inside, _r["observed"][:, _c], np.nan)
+        _rollouts = np.where(_inside, _r["prediction"][:, :, _c], np.nan)
+        _mean = _rollouts.mean(axis=0)
+        _error = _mean - _observed
+        _, _, _style, _units = channel_stack(data, eval_view_channel.value)
+        _cmap = LAYER_STYLE[_style][0]
+        _vmin, _vmax = color_limits(_observed, _style, (2, 98))
+        _emax = np.nanpercentile(np.abs(_error[1:]), 98) or 1.0
+        _extent = eval_grid_extent(data, _r["factor"], _inside.shape)
+        _panels = [("observed", _observed, _cmap, _vmin, _vmax, _units),
+                   ("predicted (mean)", _mean, _cmap, _vmin, _vmax, _units),
+                   ("predicted − observed", _error, "RdBu_r", -_emax, _emax, f"Δ {_units}")]
+        if eval_view_spread.value:
+            _spread = _rollouts.std(axis=0)
+            _panels.append(("rollout std", _spread, "Purples", 0, np.nanpercentile(_spread, 99) or 1.0, f"std {_units}"))
+
+        _T = len(_r["dates"])
+        _fig, _axes = plt.subplots(len(_panels), _T, figsize=(3.3 * _T, 3.0 * len(_panels)),
+                                   constrained_layout=True, squeeze=False, sharex=True, sharey=True)
+        for _row, (_name, _stack, _cm, _lo, _hi, _label) in enumerate(_panels):
+            for _t in range(_T):
+                _ax = _axes[_row, _t]
+                if _row > 1 and _t == 0:  # error and spread are zero at the starting image
+                    _ax.axis("off")
+                    continue
+                _im = _ax.imshow(_stack[_t], cmap=_cm, vmin=_lo, vmax=_hi, extent=_extent, interpolation="nearest")
+                draw_outline(_ax, _inside, _extent)
+                style_map_axes(_ax, f"{_r['dates'][_t]}" if _row == 0 else None)
+                if _t > 0:
+                    _ax.set_ylabel("")
+                if _row < len(_panels) - 1:
+                    _ax.set_xlabel("")
+            # _axes[_row, 0 if _row < 2 else 1].set_ylabel(f"{_name}\nNorthing (km)")
+            _axes[_row, 0 if _row < 2 else 1].set_ylabel(f"{_name}")
+            _fig.colorbar(_im, ax=list(_axes[_row]), shrink=0.9, pad=0.01, label=_label)
+        # _fig.suptitle(
+        #     f"{_r['alias'] or _r['label']} · {eval_view_channel.value} at {10 * _r['factor']} m · "
+        #     f"NCA steps per interval {_r['steps']}", fontsize=10,
+        # )
+        _out = _fig
+    _out
+    return
+
+
+@app.cell(hide_code=True)
+def _(EVAL_SNOW_CHANNELS, data, eval_results, eval_view_model, snowmelt_eval):
+    # Snow cover by elevation band for the chosen model: where the modelled snowline sits
+    _r = eval_results[eval_view_model.value] if eval_view_model.value is not None else None
+    _snow = [c for c in EVAL_SNOW_CHANNELS if _r is not None and c in _r["channel_names"]]
+    if not _snow:
+        _out = mo.md("")
+    else:
+        _channel = _snow[0]
+        _c = _r["channel_names"].index(_channel)
+        _threshold = snowmelt_eval.SNOW_THRESHOLDS[_channel]
+        # Compare on the 10 m grid so the elevation bands are the same for every model
+        _full, _mask = snowmelt_eval.full_resolution_reference(data, (_channel,), _r["factor"])
+        _observed = snowmelt_eval.to_physical(_full, (_channel,))[:, 0][:, _mask] > _threshold
+        _mean = snowmelt_eval.upsample_blocks(_r["prediction"][:, :, _c].mean(axis=0), _r["factor"])
+        _predicted = _mean[:, _mask] > _threshold
+        _dem = data["dem"][: _mask.shape[0], : _mask.shape[1]][_mask]
+        _edges = np.arange(np.floor(np.nanmin(_dem) / 100) * 100, np.nanmax(_dem) + 100, 100)
+        _band = np.digitize(_dem, _edges) - 1
+        _count = np.bincount(_band, minlength=len(_edges) - 1)
+        _mid = 0.5 * (_edges[1:] + _edges[:-1])
+
+        def _profile(snow):
+            _frac = np.bincount(_band, weights=snow.astype(float), minlength=len(_edges) - 1) / np.maximum(_count, 1)
+            return np.where(_count >= 20, _frac, np.nan)  # hide sparsely populated bands
+
+        _dates = _r["dates"]
+        _cols = date_colors(len(_dates))
+        _fig, _ax = plt.subplots(figsize=(7, 5), constrained_layout=True)
+        for _t in range(1, len(_dates)):
+            _ax.plot(_profile(_observed[_t]), _mid, color=_cols[_t], lw=2.5, label=f"{_dates[_t]} observed")
+            _ax.plot(_profile(_predicted[_t]), _mid, color=_cols[_t], lw=2, ls="--", label=f"{_dates[_t]} predicted")
+        _ax.set_xlabel(f"snow-covered fraction ({_channel} > {_threshold})")
+        _ax.set_ylabel("elevation (m)")
+        _ax.set_xlim(-0.02, 1.02)
+        _ax.grid(color="#eeeeee")
+        _ax.spines[["top", "right"]].set_visible(False)
+        _ax.legend(frameon=False, fontsize=7, loc="lower right", ncols=2)
+        _ax.set_title(f"Snow cover by elevation (100 m bands): {_r['alias'] or _r['label']}", fontsize=10)
+        _out = _fig
+    _out
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Trajectory video
+
+    Render a free run of one model, from the first acquisition to the last, as an mp4
+    (H.264, which plays in browsers and slides). Channels can be shown one per panel with a
+    colormap, or up to three mixed into one colour image:
+
+    - **RGB composite**: the channels drive red, green and blue, e.g. B4, B3, B2 for true colour.
+    - **CMY composite**: the channels drive cyan, magenta and yellow on white, so overlapping
+      signals mix like inks.
+
+    Composite stretch limits are percentiles over all acquisitions (hidden channels: over the
+    rollout), so brightness changes over time are real. Hidden channels can be shown too. With
+    *latest observation* on, a second row shows the most recent acquisition at each frame.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(eval_catalogue, pd):
+    video_model = mo.ui.dropdown(
+        {
+            f"{_r.alias if pd.notna(_r.alias) else _r.label} [{_r.model_id[-8:]}]": _r.model_id
+            for _r in eval_catalogue.itertuples()
+        },
+        label="Model", searchable=True,
+    )
+    video_colour = mo.ui.radio(
+        {"Colormap per channel": "single", "RGB composite": "rgb", "CMY composite": "cmy"},
+        value="Colormap per channel", label="Colour", inline=True,
+    )
+    video_observed = mo.ui.checkbox(value=True, label="Show latest observation alongside")
+    mo.hstack([video_model, video_colour, video_observed], justify="start", gap=1.5, wrap=True)
+    return video_colour, video_model, video_observed
+
+
+@app.cell(hide_code=True)
+def _(data, eval_bundles, snowmelt_eval, video_colour, video_model):
+    from Common.dataloader.snowmelt import days_since_first as _days_since_first
+    from NCA.trainer.interval_schedule import interval_schedule_from_config as _schedule_from_config
+
+    # Every state channel the chosen model has, except the fixed boundary channels
+    video_channel_names = ()
+    video_total_steps = 1
+    if video_model.value is not None:
+        _cfg = eval_bundles[video_model.value].config
+        _targets = snowmelt_eval.input_recipe(_cfg)["target_channels"]
+        _hidden = _cfg.model.channels - len(_targets) - 1 - len(_cfg.data.snowmelt.static_channels)
+        video_channel_names = _targets + tuple(f"hidden {_i + 1}" for _i in range(_hidden))
+        video_total_steps = _schedule_from_config(_cfg, len(data["dates"]) - 1, _days_since_first(data["dates"])).total_steps
+    _names = list(video_channel_names)
+    _default_rgb = [_c for _c in ("B4", "B3", "B2") if _c in _names]
+    _default = _default_rgb if len(_default_rgb) == 3 and video_colour.value == "rgb" else _names[:3]
+    _default += ["none"] * (3 - len(_default))
+
+    video_channels = mo.ui.multiselect(_names, value=_names[:1], label="Channels")
+    video_cmap = mo.ui.dropdown(CMAPS, value="auto", label="Colormap")
+    _slots = ("Red", "Green", "Blue") if video_colour.value == "rgb" else ("Cyan", "Magenta", "Yellow")
+    video_mix = mo.ui.array([
+        mo.ui.dropdown(["none"] + _names, value=_value, label=_slot) for _slot, _value in zip(_slots, _default)
+    ])
+    video_pct = mo.ui.range_slider(0, 100, step=0.5, value=[1, 99], label="Stretch percentiles", show_value=True)
+    video_gamma = mo.ui.slider(0.5, 3.0, step=0.1, value=1.4 if video_colour.value == "rgb" else 1.0, label="Gamma", show_value=True)
+    video_stride = mo.ui.number(1, max(1, video_total_steps), value=max(1, video_total_steps // 240), step=1, label="NCA steps per frame")
+    video_fps = mo.ui.slider(4, 60, step=1, value=24, label="Frames per second", show_value=True)
+    video_seed = mo.ui.number(0, 2**31 - 1, value=0, step=1, label="Seed")
+    video_dir = mo.ui.text("Videos/snowmelt", label="Save to")
+    video_render = mo.ui.run_button(label="Render video")
+
+    if not _names:
+        _out = mo.md("Choose a model to render.")
+    else:
+        _colour_controls = [video_channels, video_cmap] if video_colour.value == "single" else [*video_mix, video_pct, video_gamma]
+        _out = mo.vstack([
+            mo.hstack(_colour_controls, justify="start", gap=1.5, wrap=True),
+            mo.hstack([video_stride, video_fps, video_seed, video_dir, video_render], justify="start", gap=1.5, wrap=True),
+        ])
+    _out
+    return (
+        video_channel_names,
+        video_channels,
+        video_cmap,
+        video_dir,
+        video_fps,
+        video_gamma,
+        video_mix,
+        video_pct,
+        video_render,
+        video_seed,
+        video_stride,
+        video_total_steps,
+    )
+
+
+@app.cell(hide_code=True)
+def _(video_channel_names, video_fps, video_stride, video_total_steps):
+    _frames = video_total_steps // max(1, int(video_stride.value)) + 1
+    mo.md(
+        f"The run lasts {video_total_steps} NCA steps: {_frames} frames, "
+        f"{_frames / int(video_fps.value):.1f} s at {int(video_fps.value)} fps."
+    ) if video_channel_names else mo.md("")
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    data,
+    eval_bundles,
+    eval_grid_extent,
+    eval_verify,
+    jr,
+    snowmelt_eval,
+    video_channel_names,
+    video_channels,
+    video_cmap,
+    video_colour,
+    video_dir,
+    video_fps,
+    video_gamma,
+    video_mix,
+    video_model,
+    video_observed,
+    video_pct,
+    video_render,
+    video_seed,
+    video_stride,
+):
+    from Experiments.snowmelt import video as _video
+
+    _mode = video_colour.value
+    _chosen = (
+        [_c for _c in video_channel_names if _c in video_channels.value] if _mode == "single"
+        else [_c for _c in video_mix.value if _c != "none"]
+    )
+    if not video_render.value:
+        _out = mo.md("")
+    elif not _chosen:
+        _out = mo.callout("Choose at least one channel.", kind="warn")
+    else:
+        _bundle = eval_bundles[video_model.value]
+        _cfg = _bundle.config
+        _recipe = snowmelt_eval.input_recipe(_cfg)
+        _targets, _pad, _factor = _recipe["target_channels"], _recipe["pad"], _recipe["downsample"]
+        _sequence = snowmelt_eval.load_bundle_sequence(_bundle, data, verify=eval_verify.value)
+        _names = list(dict.fromkeys(_chosen))  # unique, in order
+        _frames, _steps = snowmelt_eval.trajectory(
+            _bundle.load_model(), _cfg, _sequence, jr.PRNGKey(int(video_seed.value)),
+            stride=int(video_stride.value), channels=[video_channel_names.index(_c) for _c in _names],
+        )
+        _frames = snowmelt_eval.to_physical(snowmelt_eval.strip_border(_frames, _pad), _names)
+        _observed = snowmelt_eval.to_physical(snowmelt_eval.strip_border(_sequence.data[0], _pad), _targets)
+        _mask = snowmelt_eval.strip_border(_sequence.boundary_mask[0, 0], _pad) > 0.5
+
+        # Time of each frame, and the latest acquisition at or before it
+        _schedule = snowmelt_eval.rollout_schedule(_cfg, _sequence)
+        _days = [_schedule.time_at_step(_s) for _s in _steps]
+        _latest = np.searchsorted(_schedule.observation_steps, _steps, side="right") - 1
+        _start = np.datetime64(_sequence.dates[0])
+        _titles = [
+            f"day {_d:5.1f} ({_start + np.timedelta64(int(round(_d)), 'D')}) · NCA step {_s}"
+            for _d, _s in zip(_days, _steps)
+        ]
+
+        def _model_values(name):
+            return _frames[:, _names.index(name)]
+
+        def _observed_values(name):
+            return _observed[_latest, _targets.index(name)] if name in _targets else None
+
+        def _limits(name, pct):
+            """Colour limits from the observations (all dates); hidden channels from the rollout."""
+            if name in _targets:
+                _values = _observed[:, _targets.index(name)][:, _mask]
+            else:
+                _values = _model_values(name)[:, _mask]
+            return np.nanpercentile(_values, pct)
+
+        _panels_model, _panels_observed = [], []
+        if _mode == "single":
+            for _c in _names:
+                if _c in _targets:
+                    _, _, _style, _units = channel_stack(data, _c)
+                    _cmap = LAYER_STYLE[_style][0]
+                    _lo, _hi = color_limits(_observed[:, _targets.index(_c)][:, _mask], _style, (2, 98))
+                else:  # hidden channels are signed
+                    _units, _cmap = "hidden state", "RdBu"
+                    _hi = float(np.nanpercentile(np.abs(_model_values(_c)[:, _mask]), 99)) or 1.0
+                    _lo = -_hi
+                _cmap = _cmap if video_cmap.value == "auto" else video_cmap.value
+                _style_args = dict(mask=_mask, cmap=_cmap, vmin=_lo, vmax=_hi, units=_units)
+                _panels_model.append(_video.Panel(f"NCA · {_c}", _model_values(_c), **_style_args))
+                _obs = _observed_values(_c)
+                _panels_observed.append(None if _obs is None else _video.Panel(f"Observed · {_c}", _obs, **_style_args))
+        else:
+            _slots = ("R", "G", "B") if _mode == "rgb" else ("C", "M", "Y")
+            _mix = video_mix.value
+            _label = " ".join(f"{_s}={_c}" for _s, _c in zip(_slots, _mix) if _c != "none")
+
+            def _mixed(values_of):
+                _layers = []
+                for _c in _mix:
+                    _values = None if _c == "none" else values_of(_c)
+                    if _c != "none" and _values is None:
+                        return None  # a hidden channel has no observation
+                    _layers.append(None if _values is None else _video.stretch(_values, *_limits(_c, video_pct.value), video_gamma.value))
+                return _video.composite(_layers, _mode)
+
+            _panels_model.append(_video.Panel(f"NCA · {_label}", _mixed(_model_values), mask=_mask))
+            _obs = _mixed(_observed_values)
+            _panels_observed.append(None if _obs is None else _video.Panel(f"Observed · {_label}", _obs, mask=_mask))
+
+        _show_observed = video_observed.value and any(_p is not None for _p in _panels_observed)
+        _panels = (_panels_observed + _panels_model) if _show_observed else _panels_model
+        _path = Path(video_dir.value).expanduser() / (
+            f"{_bundle.id[-8:]}_{_mode}_{'-'.join(_c.replace(' ', '') for _c in _names)}_seed{int(video_seed.value)}.mp4"
+        )
+        _path.parent.mkdir(parents=True, exist_ok=True)
+        _video.render_mp4(
+            _path, _panels, _titles, eval_grid_extent(data, _factor, _mask.shape), fps=int(video_fps.value),
+            ncols=len(_panels_model), draw_outline=draw_outline,
+            progress=lambda _it: mo.status.progress_bar(_it, title="Rendering frames", remove_on_exit=True),
+        )
+        _bytes = _path.read_bytes()
+        _out = mo.vstack([
+            mo.md(f"Saved `{_path}`: {len(_titles)} frames, {len(_titles) / int(video_fps.value):.1f} s, "
+                  f"{len(_bytes) / 1e6:.1f} MB."),
+            mo.video(_bytes, controls=True, loop=True),
+            mo.download(_bytes, filename=_path.name, mimetype="video/mp4", label="Download mp4"),
+        ])
+    _out
     return
 
 
