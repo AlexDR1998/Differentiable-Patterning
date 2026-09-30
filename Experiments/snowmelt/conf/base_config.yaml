@@ -34,7 +34,7 @@ model:
   family: NCA
   # 1 target + hidden + 3 boundary channels (catchment, DEM, incidence).
   channels: 16
-  kernel_str: [ID, LAP, DIFF]
+  kernel_str: [ID, LAP, GRAD] # Direction matters for geospatial data
   fire_rate: 0.5
   padding: CIRCULAR
 
