@@ -3,12 +3,14 @@
 set -euo pipefail
 
 usage() {
-    echo "Usage: $0 --cluster {eidf|dawn} [--port PORT]"
+    echo "Usage: $0 --cluster {eidf|dawn} [--port PORT] [--no-reindex]"
     echo "  --port is required when --cluster eidf is selected."
+    echo "  --no-reindex skips rebuilding models/registry.sqlite after the copy."
 }
 
 cluster=""
 port=""
+reindex=true
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -21,6 +23,10 @@ while [[ $# -gt 0 ]]; do
             [[ $# -ge 2 ]] || { usage >&2; exit 1; }
             port="$2"
             shift 2
+            ;;
+        --no-reindex)
+            reindex=false
+            shift
             ;;
         -h|--help)
             usage
@@ -58,4 +64,6 @@ case "$cluster" in
         ;;
 esac
 
-python -m Experiments.model_registry --root ./models reindex
+if [[ "$reindex" == true ]]; then
+    python -m Experiments.model_registry --root ./models reindex
+fi

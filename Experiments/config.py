@@ -245,6 +245,9 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
       or ``initial_intensity_scales``; the 260726 loader then always used
       percentiles (0.5, 99.95) and scaled 0h FOXA2 (stain 2) by 0.075. Those
       values are filled in so old runs load the data they were trained on.
+    * Loss terms once had ``epsilon``, ``metric``, ``normalize``, ``tau`` and
+      ``amplitude_penalty`` options that no loss uses now. They are dropped when
+      they hold their old default values.
 
     Saved bundles are never edited; they are upgraded each time they are read.
     Keys that are already in the current layout pass through unchanged.
@@ -266,8 +269,31 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
         root["trainer"] = dict(root["trainer"])
         root["trainer"].pop("backend", None)
         root["trainer"].pop("sharding", None)
+    loss = root.get("loss")
+    if isinstance(loss, Mapping) and isinstance(loss.get("terms"), (list, tuple)):
+        root["loss"] = loss = dict(loss)
+        loss["terms"] = [_drop_removed_loss_options(term) for term in loss["terms"]]
     root["schema_version"] = CONFIG_SCHEMA_VERSION
     return root
+
+
+_REMOVED_LOSS_OPTIONS = {
+    "epsilon": 0.1,
+    "metric": "l2",
+    "normalize": None,
+    "tau": None,
+    "amplitude_penalty": None,
+}
+
+
+def _drop_removed_loss_options(term: Any) -> Any:
+    if not isinstance(term, Mapping):
+        return term
+    return {
+        key: item
+        for key, item in term.items()
+        if not (key in _REMOVED_LOSS_OPTIONS and item == _REMOVED_LOSS_OPTIONS[key])
+    }
 
 
 def _upgrade_from_version_1(root: dict[str, Any]) -> dict[str, Any]:

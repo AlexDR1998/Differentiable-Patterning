@@ -1,4 +1,4 @@
-experiment_name: nca_nodal_ko_strategy_replicates_v2
+experiment_name: nca_nodal_ko_strategy_replicates_v4
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_nodal_ko_strategy_replicates
 seed_mode: index
@@ -8,7 +8,7 @@ seed_mode: index
 # it is then crossed with six intervention curricula and ten stochastic repeats.
 # Total jobs: 4 initialization/split cases * 6 curricula * 10 repeats = 240.
 grid:
-  run.repeat: [0, 1, 2, 3, 4,]
+  run.repeat: [0, 1, 2, 3]
 
   labels.gpu: [nvidia]
   model.family: [gNCA]
@@ -26,11 +26,11 @@ grid:
 
   data.knockout.channel: [Nodal]
   data.knockout.curriculum:
-    - [ko_0h]
-    - [ko_24h]
+    # - [ko_0h]
+    # - [ko_24h]
     - [ko_0h, ko_24h]
-    - [baseline, ko_0h]
-    - [baseline, ko_24h]
+    # - [baseline, ko_0h]
+    # - [baseline, ko_24h]
     - [baseline, ko_0h, ko_24h]
 
   # run.iterations: [12000]
@@ -110,22 +110,22 @@ groups:
   #     - [1, 2]
   #   run.iterations: [16000,16000,4000,4000]
 
+  # WT baselines from models/baseline_downsample_sweep_v2.yaml
+  # (nca_micropattern_replicate_resolutions_v4, convective scaling).
   - initialization.model_id:
-      - 20260923T095528Z-cfg6fd8d1a17072-2d7b5623
-      - 20260923T144617Z-cfg9210825878b2-3053451c
-      - 20260923T161819Z-cfg891eb364e8b4-bfcf27cc
+      - 20260930T083744Z-cfg79e94017ae4e-0a073065  # ds8
+      - 20260929T192736Z-cfg6523b16256b6-0b3f3c47  # ds32
+      - 20260929T182242Z-cfg71bb64e9a300-d1d80ff9  # ds16
     data.batches: [2, 2, 2]
-    data.downsample: [8,32,16]
-    run.t: [512,64,128]
-    trainer.loop_autodiff: [checkpointed,lax,lax]
+    data.downsample: [8, 32, 16]
+    run.t: [256, 64, 128]
+    trainer.loop_autodiff: [lax, lax, lax]
     data.micropattern.train_replicates:
       - [1, 2]
       - [3, 4]
       - [1, 2]
-      
     data.micropattern.validation_replicates:
       - [3, 4]
       - [1, 2]
       - [3, 4]
-      
-    run.iterations: [4000,4000,4000]
+    run.iterations: [4000, 4000, 4000]
