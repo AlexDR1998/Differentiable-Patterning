@@ -1,0 +1,48 @@
+experiment_name: nca_snowmelt_architecture_sweep
+entrypoint: Experiments.snowmelt.train:run
+output_subdir: generated/nca_snowmelt_architecture_sweep
+seed_mode: index
+
+# NCA architecture for snowmelt: gated vs plain update, perception kernels and
+# channel count. Target NDSI, static DEM.
+#
+# Generate with:
+#   python Experiments/generate_configs.py \
+#       Experiments/snowmelt/conf/experiments/nca_snowmelt_architecture_sweep.yaml \
+#       Experiments/snowmelt/conf/base_config.yaml Experiments/snowmelt/conf/generated
+#
+# Resolution is fixed at 40 m (downsample 4, t=128); see
+# nca_snowmelt_resolution_sweep.yaml.
+#
+# Kernels: DIFF is the gradient norm (slope magnitude only, isotropic), GRAD is
+# the full x/y gradient (magnitude and direction). Comparing DIFF with GRAD,
+# with and without LAP, tests whether the gradient direction (e.g. downhill,
+# aspect) helps beyond its magnitude. [ID, LAP] has no gradient at all.
+# GRAD gives 2 features per channel and DIFF 1, so GRAD models are slightly larger.
+#
+# Channels 16 / 32 / 64 leave 13 / 29 / 61 hidden channels
+# (1 target + catchment + DEM are fixed).
+#
+# Total jobs: 2 families * 5 kernel sets * 3 channel counts * 2 repeats = 60.
+grid:
+  model.family: [NCA, gNCA]
+  model.kernel_str:
+    - [ID, LAP]
+    - [ID, DIFF]
+    - [ID, GRAD]
+    - [ID, LAP, DIFF]
+    - [ID, LAP, GRAD]
+  model.channels: [16, 32, 64]
+  model.fire_rate: [0.5]
+  run.interval_mode: [steps]
+  run.repeat: [0, 1]
+  logging.wandb.project: [nca_snowmelt_hyperparameter_sweep]
+  labels.gpu: [H200]
+  system.precision: [bfloat16]
+  data.dataset: [snowmelt]
+  data.snowmelt.target_channels: [[NDSI]]
+  data.snowmelt.static_channels: [[DEM]]
+  # Baseline resolution: 40 m.
+  data.downsample: [4]
+  run.t: [128]
+  trainer.loop_autodiff: [lax]

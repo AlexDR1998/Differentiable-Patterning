@@ -1,0 +1,3626 @@
+experiment_name: nca_snowmelt_update_rule_sweep
+entrypoint: Experiments.snowmelt.train:run
+base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/snowmelt/conf/base_config.yaml
+sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/snowmelt/conf/experiments/nca_snowmelt_update_rule_sweep.yaml
+output_dir: Experiments/snowmelt/conf/generated/nca_snowmelt_update_rule_sweep
+count: 27
+configs:
+- index: 0
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: relu
+    run.interval_mode: steps
+    run.repeat: 0
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.25
+    run.t: 256
+    trainer.loop_autodiff: checkpointed
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 0
+  config:
+    schema_version: 5
+    seed: 0
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.25
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: relu
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 256
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 1
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: relu
+    run.interval_mode: steps
+    run.repeat: 0
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.5
+    run.t: 128
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 1
+  config:
+    schema_version: 5
+    seed: 1
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: relu
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 128
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 2
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: relu
+    run.interval_mode: steps
+    run.repeat: 0
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 2
+  config:
+    schema_version: 5
+    seed: 2
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: relu
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 3
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: relu
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.25
+    run.t: 256
+    trainer.loop_autodiff: checkpointed
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 3
+  config:
+    schema_version: 5
+    seed: 3
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.25
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: relu
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 256
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 4
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: relu
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.5
+    run.t: 128
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 4
+  config:
+    schema_version: 5
+    seed: 4
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: relu
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 128
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 5
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: relu
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 5
+  config:
+    schema_version: 5
+    seed: 5
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: relu
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 6
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: relu
+    run.interval_mode: steps
+    run.repeat: 2
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.25
+    run.t: 256
+    trainer.loop_autodiff: checkpointed
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 6
+  config:
+    schema_version: 5
+    seed: 6
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.25
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: relu
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 256
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 2
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 7
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: relu
+    run.interval_mode: steps
+    run.repeat: 2
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.5
+    run.t: 128
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 7
+  config:
+    schema_version: 5
+    seed: 7
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: relu
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 128
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 2
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 8
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: relu
+    run.interval_mode: steps
+    run.repeat: 2
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 8
+  config:
+    schema_version: 5
+    seed: 8
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: relu
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 2
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 9
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: swish
+    run.interval_mode: steps
+    run.repeat: 0
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.25
+    run.t: 256
+    trainer.loop_autodiff: checkpointed
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 9
+  config:
+    schema_version: 5
+    seed: 9
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.25
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: swish
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 256
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 10
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: swish
+    run.interval_mode: steps
+    run.repeat: 0
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.5
+    run.t: 128
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 10
+  config:
+    schema_version: 5
+    seed: 10
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: swish
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 128
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 11
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: swish
+    run.interval_mode: steps
+    run.repeat: 0
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 11
+  config:
+    schema_version: 5
+    seed: 11
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: swish
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 12
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: swish
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.25
+    run.t: 256
+    trainer.loop_autodiff: checkpointed
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 12
+  config:
+    schema_version: 5
+    seed: 12
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.25
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: swish
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 256
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 13
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: swish
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.5
+    run.t: 128
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 13
+  config:
+    schema_version: 5
+    seed: 13
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: swish
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 128
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 14
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: swish
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 14
+  config:
+    schema_version: 5
+    seed: 14
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: swish
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 15
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: swish
+    run.interval_mode: steps
+    run.repeat: 2
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.25
+    run.t: 256
+    trainer.loop_autodiff: checkpointed
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 15
+  config:
+    schema_version: 5
+    seed: 15
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.25
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: swish
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 256
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 2
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 16
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: swish
+    run.interval_mode: steps
+    run.repeat: 2
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.5
+    run.t: 128
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 16
+  config:
+    schema_version: 5
+    seed: 16
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: swish
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 128
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 2
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 17
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: swish
+    run.interval_mode: steps
+    run.repeat: 2
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 17
+  config:
+    schema_version: 5
+    seed: 17
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: swish
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 2
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 18
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 0
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.25
+    run.t: 256
+    trainer.loop_autodiff: checkpointed
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 18
+  config:
+    schema_version: 5
+    seed: 18
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.25
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 256
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 19
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 0
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.5
+    run.t: 128
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 19
+  config:
+    schema_version: 5
+    seed: 19
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 128
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 20
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 0
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 20
+  config:
+    schema_version: 5
+    seed: 20
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 21
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.25
+    run.t: 256
+    trainer.loop_autodiff: checkpointed
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 21
+  config:
+    schema_version: 5
+    seed: 21
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.25
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 256
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 22
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.5
+    run.t: 128
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 22
+  config:
+    schema_version: 5
+    seed: 22
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 128
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 23
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 23
+  config:
+    schema_version: 5
+    seed: 23
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 24
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 2
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.25
+    run.t: 256
+    trainer.loop_autodiff: checkpointed
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 24
+  config:
+    schema_version: 5
+    seed: 24
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.25
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 256
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 2
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 25
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 2
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 0.5
+    run.t: 128
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 25
+  config:
+    schema_version: 5
+    seed: 25
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 0.5
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 128
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 2
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 26
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 2
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 26
+  config:
+    schema_version: 5
+    seed: 26
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        pad: 4
+        mask_threshold: 0.5
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: null
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 2
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+emit_files: false

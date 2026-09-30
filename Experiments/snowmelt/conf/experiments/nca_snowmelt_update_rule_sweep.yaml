@@ -1,0 +1,43 @@
+experiment_name: nca_snowmelt_update_rule_sweep
+entrypoint: Experiments.snowmelt.train:run
+output_subdir: generated/nca_snowmelt_update_rule_sweep
+seed_mode: index
+
+# NCA update rule for snowmelt: stochastic vs deterministic updates, and the
+# activation function. gNCA, 32 channels, [ID, LAP, GRAD], target NDSI,
+# static DEM.
+#
+# Generate with:
+#   python Experiments/generate_configs.py \
+#       Experiments/snowmelt/conf/experiments/nca_snowmelt_update_rule_sweep.yaml \
+#       Experiments/snowmelt/conf/base_config.yaml Experiments/snowmelt/conf/generated
+#
+# Resolution is fixed at 40 m (downsample 4); see nca_snowmelt_resolution_sweep.yaml.
+#
+# Fire rate and step count are paired so that fire_rate * t = 64: every run
+# makes the same expected number of updates per pixel, and only the randomness
+# of the update changes. (0.5, 128) is the baseline used in the other sweeps.
+#
+# Three repeats, because stochastic updates add run-to-run noise.
+#
+# Total jobs: 3 fire rates * 3 activations * 3 repeats = 27.
+grid:
+  model.family: [gNCA]
+  model.channels: [32]
+  model.kernel_str: [[ID, LAP, GRAD]]
+  model.kernel_scale: [1]
+  model.activation: [relu, swish, tanh]
+  run.interval_mode: [steps]
+  run.repeat: [0, 1, 2]
+  logging.wandb.project: [nca_snowmelt_hyperparameter_sweep]
+  labels.gpu: [H200]
+  system.precision: [bfloat16]
+  data.dataset: [snowmelt]
+  data.snowmelt.target_channels: [[NDSI]]
+  data.snowmelt.static_channels: [[DEM]]
+  # Baseline resolution: 40 m.
+  data.downsample: [4]
+groups:
+  - model.fire_rate: [0.25, 0.5, 1.0]
+    run.t: [256, 128, 64]
+    trainer.loop_autodiff: [checkpointed, lax, lax]

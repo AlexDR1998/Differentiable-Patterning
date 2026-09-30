@@ -3,25 +3,29 @@ entrypoint: Experiments.snowmelt.train:run
 output_subdir: generated/nca_snowmelt_resolution_sweep
 seed_mode: index
 
-# Exploratory snowmelt sweep over spatial resolution, temporal resolution,
-# target channels and timestep uniformity.
+# Snowmelt sweep over spatial and temporal resolution together, along the
+# convective diagonal (t proportional to 1/h). Target NDSI, static DEM.
+# Target/static channels are swept in nca_snowmelt_input_sweep.yaml and model
+# hyperparameters in nca_snowmelt_architecture_sweep.yaml and
+# nca_snowmelt_update_rule_sweep.yaml.
 #
 # Generate with:
 #   python Experiments/generate_configs.py Experiments/snowmelt \
 #       Experiments/snowmelt/conf/base_config.yaml Experiments/snowmelt/conf/generated
 #
 # Spatial resolution: data.downsample of the 10 m rasters (plus a 4 px zero border)
-#   2 -> 20 m, 258x257    4 -> 40 m, 129x128    8 -> 80 m, 64x64
+#   1 -> 10 m, 517x514    2 -> 20 m, 258x257    4 -> 40 m, 129x128
+#   8 -> 80 m, 64x64      16 -> 160 m, 32x32
 #
 # Temporal resolution: run.t is the NCA step count of the reference (median,
 # 20-day) interval, i.e. t/20 steps per day. The acquisitions are 20, 5, 20, 20
 # days apart:
 #   interval_mode=uniform -> every transition runs t steps
 #   interval_mode=steps   -> transitions run (t, t/4, t, t) steps
-# The downsample/t diagonal (8, 32), (4, 64), (2, 128) keeps t proportional to
-# 1/h (convective scaling), so each step spans the same fraction of a pixel.
+# The (downsample, t) pairs below keep t proportional to 1/h (convective
+# scaling), so each step spans the same fraction of a pixel.
 #
-# Total jobs: 3 downsample * 3 t * 2 interval modes * 4 target sets * 2 repeats = 144.
+# Total jobs: 5 (downsample, t) pairs * 3 repeats = 15.
 grid:
   model.family: [gNCA]
   run.interval_mode: [steps]
