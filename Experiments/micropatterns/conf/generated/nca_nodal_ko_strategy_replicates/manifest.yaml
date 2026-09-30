@@ -74,7 +74,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 256
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -154,7 +154,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -840,7 +840,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 256
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -921,7 +921,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -1610,7 +1610,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 256
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -1690,7 +1690,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -2376,7 +2376,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 256
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -2457,7 +2457,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -3146,7 +3146,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 256
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -3226,7 +3226,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -3912,7 +3912,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 256
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -3993,7 +3993,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -4682,7 +4682,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 256
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -4762,7 +4762,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
@@ -5448,7 +5448,7 @@ configs:
     data.batches: 2
     data.downsample: 8
     run.t: 256
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
     - 1
     - 2
@@ -5529,7 +5529,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkpointed
       log_every: 200
       validation_every: 500
       validation_rollout: true
