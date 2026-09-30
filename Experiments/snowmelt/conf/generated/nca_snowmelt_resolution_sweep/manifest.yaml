@@ -10,7 +10,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 0
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -120,7 +120,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -135,7 +135,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 0
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -245,7 +245,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -260,7 +260,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 0
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -370,7 +370,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -385,7 +385,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 0
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -495,7 +495,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -510,7 +510,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 0
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -620,7 +620,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -635,7 +635,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 1
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -745,7 +745,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -760,7 +760,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 1
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -870,7 +870,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -885,7 +885,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 1
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -995,7 +995,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -1010,7 +1010,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 1
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -1120,7 +1120,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -1135,7 +1135,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 1
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -1245,7 +1245,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -1260,7 +1260,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 2
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -1370,7 +1370,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -1385,7 +1385,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 2
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -1495,7 +1495,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -1510,7 +1510,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 2
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -1620,7 +1620,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -1635,7 +1635,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 2
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -1745,7 +1745,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:
@@ -1760,7 +1760,7 @@ configs:
     model.family: gNCA
     run.interval_mode: steps
     run.repeat: 2
-    logging.wandb.project: nca_snowmelt_resolution_sweep
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
@@ -1870,7 +1870,7 @@ configs:
         plot_spectra: true
         epsilon: 1.0e-08
       wandb:
-        project: nca_snowmelt_resolution_sweep
+        project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
     model_store:

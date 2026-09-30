@@ -26,12 +26,12 @@ grid:
   model.family: [gNCA]
   run.interval_mode: [steps]
   run.repeat: [0, 1, 2]
-  logging.wandb.project: [nca_snowmelt_resolution_sweep]
-  labels.gpu: [H100]
+  logging.wandb.project: [nca_snowmelt_hyperparameter_sweep]
+  labels.gpu: [H200]
   system.precision: [bfloat16]
   data.dataset: [snowmelt]
-  data.snowmelt.static_channels: [[DEM, INCIDENCE]]
-  data.snowmelt.target_channels: [NDSI]
+  data.snowmelt.static_channels: [[DEM]]
+  data.snowmelt.target_channels: [[NDSI]]
   model.channels: [32]
 groups:
   # Target sets, each paired with a channel budget:
