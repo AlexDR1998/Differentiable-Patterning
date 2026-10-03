@@ -140,7 +140,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -454,7 +454,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -768,7 +768,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -1082,7 +1082,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -1396,7 +1396,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -1710,7 +1710,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -2024,7 +2024,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -2338,7 +2338,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -2652,7 +2652,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -2966,7 +2966,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -3280,7 +3280,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -3594,7 +3594,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -3908,7 +3908,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -4222,7 +4222,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -4536,7 +4536,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
@@ -4850,7 +4850,7 @@ configs:
           cell_fate_s1/SOX17:
             0: 0.3
           cell_fate_s2/SOX17:
-            0: 0.3
+            0: 0.15
             12: 0.5
           cell_fate_s2/FOXA2:
             0: 0.02

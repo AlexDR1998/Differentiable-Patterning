@@ -119,7 +119,7 @@ groups:
     data.batches: [2, 2, 2]
     data.downsample: [8, 32, 16]
     run.t: [256, 64, 128]
-    trainer.loop_autodiff: [lax, lax, lax]
+    trainer.loop_autodiff: [checkpointed, lax, lax]
     data.micropattern.train_replicates:
       - [1, 2]
       - [3, 4]
