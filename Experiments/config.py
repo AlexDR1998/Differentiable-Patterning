@@ -42,6 +42,7 @@ from Experiments.impulse.config import (
     ImpulseRolloutConfig,
     OutputConfig,
 )
+from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
 from Experiments.snowmelt.config import SnowmeltDataConfig
 from Experiments.micropatterns.config import (
     KnockoutConfig,
@@ -58,7 +59,7 @@ from NCA.trainer.config import PoolAdmissionConfig, TrainerConfig
 from NCA.trainer.interval_schedule import INTERVAL_MODES
 
 
-CONFIG_SCHEMA_VERSION = 5
+CONFIG_SCHEMA_VERSION = 6
 
 # data.dataset -> the data section that holds its settings
 DATA_SECTIONS = {
@@ -147,6 +148,10 @@ class WandbConfig(ConfigValue):
     project: str
     group: str
     tags: tuple[str, ...] | None = None
+    # Config keys whose values become automatic tags (a key also covers
+    # everything below it). Experiments/generate_configs.py sets them to the
+    # keys a sweep varies; None tags every setting.
+    tag_keys: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -245,6 +250,11 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
       or ``initial_intensity_scales``; the 260726 loader then always used
       percentiles (0.5, 99.95) and scaled 0h FOXA2 (stain 2) by 0.075. Those
       values are filled in so old runs load the data they were trained on.
+    * Version 5 and earlier had ``data.micropattern.initial_intensity_scales``
+      (factors for 0h only); version 6 has ``intensity_factors`` per channel
+      and timestep, and the image cleaning section ``cleaning``. The 0h
+      factors are moved over, and ``cleaning`` stays off, so old runs load
+      the data they were trained on.
     * Loss terms once had ``epsilon``, ``metric``, ``normalize``, ``tau`` and
       ``amplitude_penalty`` options that no loss uses now. They are dropped when
       they hold their old default values.
@@ -265,6 +275,16 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
             data["micropattern"].setdefault(
                 "initial_intensity_scales", {"cell_fate_s2/FOXA2": 0.075}
             )
+    if version <= 5 and isinstance(data, Mapping):
+        if isinstance(data.get("micropattern"), Mapping):
+            root["data"] = data = dict(data)
+            data["micropattern"] = dict(data["micropattern"])
+            if "initial_intensity_scales" in data["micropattern"]:
+                scales = data["micropattern"].pop("initial_intensity_scales") or {}
+                data["micropattern"].setdefault(
+                    "intensity_factors",
+                    {name: {0: value} for name, value in scales.items()},
+                )
     if isinstance(root.get("trainer"), Mapping):
         root["trainer"] = dict(root["trainer"])
         root["trainer"].pop("backend", None)
@@ -491,11 +511,32 @@ def _micropattern_config(value: Any) -> MicropatternDataConfig:
     if "histogram_percentiles" in raw:
         low, high = raw["histogram_percentiles"]
         raw["histogram_percentiles"] = (float(low), float(high))
-    if "initial_intensity_scales" in raw:
-        raw["initial_intensity_scales"] = {
-            str(name): float(value)
-            for name, value in (raw["initial_intensity_scales"] or {}).items()
+    if "intensity_factors" in raw:
+        raw["intensity_factors"] = {
+            str(name): {int(hour): float(value) for hour, value in (by_hour or {}).items()}
+            for name, by_hour in (raw["intensity_factors"] or {}).items()
         }
+    if raw.get("quality_flags_file") is not None:
+        raw["quality_flags_file"] = str(raw["quality_flags_file"])
+    if "cleaning" in raw:
+        raw["cleaning"] = _strict(
+            MicropatternCleaningConfig,
+            raw["cleaning"],
+            "data.micropattern.cleaning",
+            enabled=bool,
+            hot_pixel_thresholds=lambda x: {str(k): float(v) for k, v in (x or {}).items()},
+            hot_pixel_window=int,
+            background_radii=lambda x: {str(k): int(v) for k, v in (x or {}).items()},
+            background_shrink=int,
+            alignment_file=lambda x: None if x is None else str(x),
+            mask_radius_scale=float,
+            normalisation=str,
+            channel_percentiles=lambda x: {
+                str(k): (float(v[0]), float(v[1])) for k, v in (x or {}).items()
+            },
+            percentiles_inside_mask=bool,
+            knockouts_use_control_bounds=bool,
+        )
     return _strict(MicropatternDataConfig, raw, "data.micropattern")
 
 
@@ -563,7 +604,8 @@ def _optimiser_config(value: Any) -> OptimiserConfig:
 def _logging_config(value: Any) -> LoggingConfig:
     node = _mapping(value, "logging")
     node["wandb"] = _strict(
-        WandbConfig, node.get("wandb"), "logging.wandb", tags=_optional_tuple
+        WandbConfig, node.get("wandb"), "logging.wandb", tags=_optional_tuple,
+        tag_keys=_optional_tuple,
     )
     node["singular_values"] = _strict(
         SingularValueLoggingConfig, node.get("singular_values"), "logging.singular_values"

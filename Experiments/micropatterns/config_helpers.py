@@ -1,6 +1,7 @@
 import math
 import os
 from dataclasses import replace
+from pathlib import Path
 
 import jax.numpy as jnp
 import numpy as np
@@ -11,6 +12,7 @@ from Common.dataloader.micropattern import (
     load_micropattern_circle_4ch_individual,
     load_micropattern_circle_nodal_knockout_9ch_explicit_colony,
 )
+from Common.dataloader.quality_flags import load_quality_flags
 from Common.dataloader.results import MicropatternDataset
 from Experiments.config_helpers import (
     _compact_value,
@@ -21,6 +23,43 @@ from Common.dataloader.micropattern_schemas import (
     MICROPATTERN_GROUPED_12CH_SCHEMA,
 )
 from NCA.trainer.data_augmenter.micropattern import MicropatternAugmenter
+
+
+# Relative alignment files in data.micropattern.cleaning are relative to here.
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _repository_path(path):
+    path = Path(path).expanduser()
+    return path if path.is_absolute() else REPOSITORY_ROOT / path
+
+
+def _cleaning_for_loader(cleaning):
+    """The cleaning config with its alignment file resolved, or None when off."""
+    if not cleaning.enabled:
+        return None
+    return replace(cleaning, alignment_file=str(_repository_path(cleaning.alignment_file)))
+
+
+def _excluded_images(micropattern):
+    """Image paths flagged as low quality, from ``quality_flags_file`` (none if unset)."""
+    if micropattern.quality_flags_file is None:
+        return ()
+    return tuple(load_quality_flags(_repository_path(micropattern.quality_flags_file)))
+
+
+def _reuses_control_bounds(data_config):
+    """Whether knockout loads take their clipping bounds from the control data.
+
+    Without cleaning this has always been so. With cleaning, only when
+    ``knockouts_use_control_bounds`` is set and the bounds are shared; with
+    per-replicate bounds the loader pairs each knockout replicate with its
+    control replicate itself.
+    """
+    cleaning = data_config.micropattern.cleaning
+    if not cleaning.enabled:
+        return True
+    return cleaning.knockouts_use_control_bounds and cleaning.shares_bounds
 
 
 CURRICULUM_CONDITIONS = {
@@ -211,7 +250,11 @@ def load_train_validation_data(data_config, impath=None):
 
     histogram_bins = None
     curriculum = resolve_knockout_curriculum(data_config.knockout)
-    if data_config.dataset == "micropatterns_260726" and curriculum != ("baseline",):
+    if (
+        data_config.dataset == "micropatterns_260726"
+        and curriculum != ("baseline",)
+        and _reuses_control_bounds(data_config)
+    ):
         baseline_config = replace(
             data_config,
             knockout=replace(data_config.knockout, curriculum=("baseline",)),
@@ -283,7 +326,9 @@ def load_data(
             pool_copies=1,
             experiment_groups=data_config.micropattern.experiment_groups,
             hist_eqs=data_config.micropattern.histogram_percentiles,
-            initial_intensity_scales=data_config.micropattern.initial_intensity_scales,
+            intensity_factors=data_config.micropattern.intensity_factors,
+            cleaning=_cleaning_for_loader(data_config.micropattern.cleaning),
+            excluded_images=_excluded_images(data_config.micropattern),
         ))
         data = dataset.data
         aux = dataset.aux

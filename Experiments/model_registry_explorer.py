@@ -22,7 +22,7 @@ import marimo
 __generated_with = "0.23.10"
 app = marimo.App(width="full")
 
-with app.setup:
+with app.setup(hide_code=True):
     from dataclasses import replace
     import sys
     from pathlib import Path
@@ -46,6 +46,7 @@ with app.setup:
 
     from Experiments.model_registry import (
         ModelRegistry,
+        parse_selection,
         selection_document,
         verify_evaluation_input,
     )
@@ -177,6 +178,54 @@ def _(database_error, database_path):
 
 
 @app.cell(hide_code=True)
+def _():
+    saved_selection_file = mo.ui.file(
+        filetypes=[".yaml", ".yml"],
+        multiple=True,
+        kind="area",
+        label="Load saved model lists (YAML exported below; match any)",
+    )
+    saved_selection_file
+    return (saved_selection_file,)
+
+
+@app.cell(hide_code=True)
+def _(database_error, database_path, saved_selection_file):
+    # Model IDs from the uploaded lists, in file order, without duplicates.
+    saved_model_ids = []
+    _messages = []
+    for _upload in saved_selection_file.value:
+        try:
+            _models = parse_selection(_upload.contents.decode("utf-8"))
+        except (ValueError, UnicodeDecodeError) as _error:
+            _messages.append(mo.callout(f"{_upload.name}: {_error}", kind="danger"))
+            continue
+        saved_model_ids.extend(
+            _model["model_id"] for _model in _models
+            if _model["model_id"] not in saved_model_ids
+        )
+    if saved_model_ids and not database_error:
+        _placeholders = ", ".join("?" for _ in saved_model_ids)
+        with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
+            _found = {
+                _row[0] for _row in _connection.execute(
+                    f"SELECT model_id FROM models WHERE model_id IN ({_placeholders})",
+                    saved_model_ids,
+                )
+            }
+        _missing = [_model_id for _model_id in saved_model_ids if _model_id not in _found]
+        _summary = f"Showing **{len(_found)} models** from the saved lists."
+        if _missing:
+            _summary += (
+                f" {len(_missing)} are not in this registry: "
+                + ", ".join(f"`{_model_id}`" for _model_id in _missing)
+            )
+        _messages.append(mo.md(_summary))
+    mo.vstack(_messages)
+    return (saved_model_ids,)
+
+
+@app.cell(hide_code=True)
 def _(database_error, database_path, wandb_group_filter):
     if database_error:
         _wandb_tag_options = []
@@ -245,6 +294,7 @@ def _(
     family_filter,
     numeric_tag_sort,
     numeric_tag_sort_direction,
+    saved_model_ids,
     search_text,
     wandb_group_filter,
     wandb_tag_filter,
@@ -283,6 +333,10 @@ def _(
             _group_placeholders = ", ".join("?" for _ in wandb_group_filter.value)
             _clauses.append(f"m.wandb_group IN ({_group_placeholders})")
             _parameters.extend(wandb_group_filter.value)
+        if saved_model_ids:
+            _id_placeholders = ", ".join("?" for _ in saved_model_ids)
+            _clauses.append(f"m.model_id IN ({_id_placeholders})")
+            _parameters.extend(saved_model_ids)
         for _wandb_tag in wandb_tag_filter.value:
             _clauses.append(
                 "EXISTS (SELECT 1 FROM model_wandb_tags AS wf "

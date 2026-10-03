@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import itertools
+import json
 import os
 from pathlib import Path
 from typing import Any, cast
@@ -126,13 +127,39 @@ def _matches_condition(values: dict[str, Any], condition: dict[str, Any]) -> boo
     return all(comparable(key, values.get(key)) == expected_value for key, expected_value in condition.items())
 
 
+# Overrides that are the same kind for every run, or only identify it, and so
+# never distinguish one run of a sweep from another.
+_IDENTITY_KEYS = {"seed", "experiment.name", "logging.wandb.group", "logging.wandb.tag_keys"}
+
+
+def distinguishing_keys(override_sets: list[dict[str, Any]]) -> list[str]:
+    """Override keys whose values differ between the runs of a sweep.
+
+    A key that some runs set and others do not (e.g. from a branch) also
+    counts. These become the runs' W&B tags (``logging.wandb.tag_keys``).
+    """
+    keys = dict.fromkeys(key for overrides in override_sets for key in overrides)
+    missing = object()
+
+    def comparable(value: Any) -> str:
+        return "<missing>" if value is missing else json.dumps(value, sort_keys=True, default=str)
+
+    return [
+        key
+        for key in keys
+        if key not in _IDENTITY_KEYS
+        and len({comparable(overrides.get(key, missing)) for overrides in override_sets}) > 1
+    ]
+
+
 def generate_manifest(base_cfg: dict[str, Any], sweep_cfg: dict[str, Any], output_dir: Path, emit_files: bool = False) -> dict[str, Any]:
     combos = _expand_section(sweep_cfg)
     branches = cast(list[dict[str, Any]], sweep_cfg.get("branches", []))
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    generated_entries: list[dict[str, Any]] = []
 
+    # First every run's overrides, so the keys that distinguish runs are known.
+    override_sets: list[dict[str, Any]] = []
     for combo in combos:
         base_overrides = dict(combo)
         matching_branches = [branch for branch in branches if _matches_condition(base_overrides, cast(dict[str, Any], branch.get("when", {})))]
@@ -151,25 +178,31 @@ def generate_manifest(base_cfg: dict[str, Any], sweep_cfg: dict[str, Any], outpu
                 if experiment_name:
                     override_values["experiment.name"] = experiment_name
                     override_values.setdefault("logging.wandb.group", experiment_name)
-                generated_index = len(generated_entries)
                 override_values["seed"] = (
-                    generated_index if sweep_cfg.get("seed_mode", "index") == "index" else base_cfg.get("seed", 0)
+                    len(override_sets) if sweep_cfg.get("seed_mode", "index") == "index" else base_cfg.get("seed", 0)
                 )
+                override_sets.append(override_values)
 
-                generated_cfg = OmegaConf.merge(base_cfg, OmegaConf.create(build_nested_override(override_values)))
+    tag_keys = distinguishing_keys(override_sets)
+    generated_entries: list[dict[str, Any]] = []
+    for generated_index, override_values in enumerate(override_sets):
+        # W&B tags show only what distinguishes this run within the sweep,
+        # unless the sweep file chooses the tag keys itself.
+        override_values.setdefault("logging.wandb.tag_keys", list(tag_keys))
+        generated_cfg = OmegaConf.merge(base_cfg, OmegaConf.create(build_nested_override(override_values)))
 
-                entry: dict[str, Any] = {
-                    "index": generated_index,
-                    "overrides": override_values,
-                    "config": OmegaConf.to_container(generated_cfg, resolve=True),
-                }
+        entry: dict[str, Any] = {
+            "index": generated_index,
+            "overrides": override_values,
+            "config": OmegaConf.to_container(generated_cfg, resolve=True),
+        }
 
-                if emit_files:
-                    config_path = output_dir / f"config_{entry['index']:04d}.yaml"
-                    OmegaConf.save(generated_cfg, config_path)
-                    entry["config_path"] = str(config_path)
+        if emit_files:
+            config_path = output_dir / f"config_{entry['index']:04d}.yaml"
+            OmegaConf.save(generated_cfg, config_path)
+            entry["config_path"] = str(config_path)
 
-                generated_entries.append(entry)
+        generated_entries.append(entry)
 
     manifest = {
         "experiment_name": sweep_cfg.get("experiment_name"),

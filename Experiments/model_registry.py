@@ -638,7 +638,12 @@ def load_selection(path: Union[str, Path]) -> tuple:
     path = Path(path).expanduser()
     if not path.is_file():
         raise FileNotFoundError(f"Selection file not found: {path}")
-    document = OmegaConf.to_container(OmegaConf.load(path), resolve=False)
+    return parse_selection(path.read_text(encoding="utf-8"))
+
+
+def parse_selection(text: str) -> tuple:
+    """Like ``load_selection``, but reads the YAML text of an exported selection."""
+    document = OmegaConf.to_container(OmegaConf.create(text), resolve=False)
     if not isinstance(document, dict) or document.get("schema_version") != SELECTION_SCHEMA_VERSION:
         raise ValueError(
             f"Expected a model registry export with schema_version: {SELECTION_SCHEMA_VERSION}"

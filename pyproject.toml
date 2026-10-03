@@ -22,3 +22,6 @@ namespaces = true
 testpaths = ["tests/unit"]
 # Lets the tests import the repository without installing it first
 pythonpath = ["."]
+
+[tool.marimo.runtime]
+output_max_bytes = 50_000_000

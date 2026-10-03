@@ -30,3 +30,4 @@ pyparsing
 PyYAML
 pytest
 marimo
+anywidget

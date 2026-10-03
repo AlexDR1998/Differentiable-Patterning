@@ -1277,22 +1277,11 @@ def _(fine_ko_results):
     )
     fine_channel_thresholds = mo.ui.dictionary({
         _marker: mo.ui.slider(
-            0.05,
-            0.95,
+            0.0,
+            1.0,
             value=0.3,
-            step=0.05,
-            label=f"{_marker} threshold fraction",
-            full_width=True,
-        )
-        for _marker in ("TBXT", "SOX17", "SOX2", "FOXA2")
-    })
-    fine_channel_percentiles = mo.ui.dictionary({
-        _marker: mo.ui.slider(
-            90.0,
-            100.0,
-            value=99.0,
-            step=0.5,
-            label=f"{_marker} reference percentile",
+            step=0.01,
+            label=f"{_marker} absolute threshold",
             full_width=True,
         )
         for _marker in ("TBXT", "SOX17", "SOX2", "FOXA2")
@@ -1348,10 +1337,8 @@ def _(fine_ko_results):
     )
     mo.vstack([
         mo.hstack([fine_snapshot_channels, fine_snapshot_stride]),
-        mo.md("### Per-marker expression thresholds"),
+        mo.md("### Per-marker absolute expression thresholds (0–1)"),
         fine_channel_thresholds,
-        mo.md("### Per-marker reference percentiles"),
-        fine_channel_percentiles,
         mo.md("### Cell-type marker selections"),
         fine_cell_type_rules,
         fine_display_cell_types,
@@ -1359,9 +1346,8 @@ def _(fine_ko_results):
         mo.hstack([fine_group_by, fine_uncertainty]),
     ])
     return (
-        fine_channel_percentiles,
-        fine_channel_thresholds,
         fine_cell_type_rules,
+        fine_channel_thresholds,
         fine_display_cell_types,
         fine_group_by,
         fine_scale_cell_maps_by_lmbr,
@@ -1384,7 +1370,6 @@ def _(fine_cell_type_rules):
 @app.cell(hide_code=True)
 def _(
     fine_cell_type_rules,
-    fine_channel_percentiles,
     fine_channel_thresholds,
     fine_display_cell_types,
     fine_display_groups,
@@ -1425,44 +1410,10 @@ def _(
             _result for _result in fine_ko_results
             if _result["true_snapshots"] is not None
         ]
-        _fine_true_reference_names = {
-            "TBXT": "cell_fate_s2/TBXT",
-            "SOX17": "cell_fate_s2/SOX17",
-            "SOX2": "cell_fate_s1/SOX2",
-            "FOXA2": "cell_fate_s2/FOXA2",
+        _fine_thresholds = {
+            _marker: float(fine_channel_thresholds.value[_marker])
+            for _marker in _fine_required_markers
         }
-        _fine_thresholds = {}
-        for _marker in _fine_required_markers:
-            if _fine_true_sources:
-                _fine_reference_values = np.concatenate([
-                    _source["true_snapshots"][_source["snapshot_hour"]][
-                        _source["true_channel_names"].index(
-                            _fine_true_reference_names[_marker]
-                        )
-                    ][_source["boundary"]]
-                    for _source in _fine_true_sources
-                ])
-            else:
-                _fine_reference_values = np.concatenate([
-                    _result["snapshots"][
-                        :,
-                        _result["channel_names"].index(_marker),
-                        _result["boundary"],
-                    ].reshape(-1)
-                    for _result in fine_ko_results
-                ])
-            _fine_reference_intensity = (
-                float(np.nanmax(_fine_reference_values))
-                if fine_channel_percentiles.value[_marker] == 100.0
-                else float(np.nanpercentile(
-                    _fine_reference_values,
-                    fine_channel_percentiles.value[_marker],
-                ))
-            )
-            _fine_thresholds[_marker] = (
-                float(fine_channel_thresholds.value[_marker])
-                * _fine_reference_intensity
-            )
         _fine_prevalence_rows = []
         _fine_map_results = []
         for _fine_result in fine_ko_results:
@@ -1552,28 +1503,6 @@ def _(
         )
         _fine_true_rows = []
         if _fine_true_sources:
-            _fine_true_s1_thresholds = {}
-            for _fine_true_s1_marker in ("TBXT", "SOX2", "SOX17"):
-                _fine_true_s1_values = np.concatenate([
-                    _source["true_snapshots"][_source["snapshot_hour"]][
-                        _source["true_channel_names"].index(
-                            f"cell_fate_s1/{_fine_true_s1_marker}"
-                        )
-                    ][_source["boundary"]]
-                    for _source in _fine_true_sources
-                ])
-                _fine_true_s1_reference = (
-                    float(np.nanmax(_fine_true_s1_values))
-                    if fine_channel_percentiles.value[_fine_true_s1_marker] == 100.0
-                    else float(np.nanpercentile(
-                        _fine_true_s1_values,
-                        fine_channel_percentiles.value[_fine_true_s1_marker],
-                    ))
-                )
-                _fine_true_s1_thresholds[_fine_true_s1_marker] = (
-                    float(fine_channel_thresholds.value[_fine_true_s1_marker])
-                    * _fine_true_s1_reference
-                )
             for _fine_true_source in _fine_true_sources:
                 _fine_true_names = _fine_true_source["true_channel_names"]
                 _fine_true_colony = _fine_true_source["boundary"]
@@ -1594,7 +1523,7 @@ def _(
                     _fine_true_s1_high = {
                         _marker: _fine_true_image[
                             _fine_true_names.index(f"cell_fate_s1/{_marker}")
-                        ] > _fine_true_s1_thresholds[_marker]
+                        ] > _fine_thresholds[_marker]
                         for _marker in ("TBXT", "SOX2", "SOX17")
                     }
                     # Never combine pixels from the separately stained S1 and S2
@@ -1925,8 +1854,12 @@ def _(
                     f"KO {_fine_map_result['requested_ko_hours'][_fine_map_index]:g}h"
                 )
                 _fine_cell_map_axis.set_axis_off()
+            # _fine_cell_map_figure.suptitle(
+            #     f"{_fine_map_result['label']} · cell identity at "
+            #     f"{fine_ko_results[0]['snapshot_hour']:g}h"
+            # )
             _fine_cell_map_figure.suptitle(
-                f"{_fine_map_result['label']} · cell identity at "
+                f"cell identity at "
                 f"{fine_ko_results[0]['snapshot_hour']:g}h"
             )
             _fine_cell_map_figure.tight_layout()
@@ -2025,8 +1958,12 @@ def _(fine_ko_results, fine_snapshot_channels, fine_snapshot_stride):
                 (np.arange(_fine_rows) + 0.5) * _fine_tile_height - 0.5,
                 [_fine_names[_index] for _index in _fine_indices],
             )
+            # _fine_axis.set_title(
+            #     f"{_fine_result['label']} · predicted at "
+            #     f"{_fine_result['snapshot_hour']:g}h"
+            # )
             _fine_axis.set_title(
-                f"{_fine_result['label']} · predicted at "
+                f"predicted at "
                 f"{_fine_result['snapshot_hour']:g}h"
             )
             _fine_axis.tick_params(length=0)
@@ -2088,22 +2025,11 @@ def _(selection_records):
     )
     dynamics_channel_thresholds = mo.ui.dictionary({
         _marker: mo.ui.slider(
-            0.05,
-            0.95,
+            0.0,
+            1.0,
             value=0.3,
-            step=0.05,
-            label=f"{_marker} threshold fraction",
-            full_width=True,
-        )
-        for _marker in ("TBXT", "SOX17", "SOX2", "FOXA2")
-    })
-    dynamics_channel_percentiles = mo.ui.dictionary({
-        _marker: mo.ui.slider(
-            90.0,
-            100.0,
-            value=99.0,
-            step=0.5,
-            label=f"{_marker} reference percentile",
+            step=0.01,
+            label=f"{_marker} absolute threshold",
             full_width=True,
         )
         for _marker in ("TBXT", "SOX17", "SOX2", "FOXA2")
@@ -2132,17 +2058,14 @@ def _(selection_records):
             dynamics_endpoint,
         ]),
         mo.hstack([dynamics_replicate, dynamics_seed, run_dynamics_sweep]),
-        mo.md("### Per-marker expression thresholds"),
+        mo.md("### Per-marker absolute expression thresholds (0–1)"),
         dynamics_channel_thresholds,
-        mo.md("### Per-marker reference percentiles"),
-        dynamics_channel_percentiles,
         mo.md("### Cell-type marker selections"),
         dynamics_cell_type_rules,
     ])
     return (
-        dynamics_channel_percentiles,
-        dynamics_channel_thresholds,
         dynamics_cell_type_rules,
+        dynamics_channel_thresholds,
         dynamics_endpoint,
         dynamics_ko_interval,
         dynamics_ko_start,
@@ -2167,9 +2090,8 @@ def _(dynamics_cell_type_rules):
 @app.cell(hide_code=True)
 def _(
     data_root,
-    dynamics_channel_percentiles,
-    dynamics_channel_thresholds,
     dynamics_cell_type_rules,
+    dynamics_channel_thresholds,
     dynamics_endpoint,
     dynamics_ko_interval,
     dynamics_ko_start,
@@ -2207,12 +2129,6 @@ def _(
         )
         _dynamics_cell_types = (*CELL_TYPES, "Other")
         _dynamics_fate_rules = fate_rule_matrix(dynamics_cell_type_rules.value)
-        _dynamics_reference_names = {
-            "TBXT": "cell_fate_s2/TBXT",
-            "SOX17": "cell_fate_s2/SOX17",
-            "SOX2": "cell_fate_s1/SOX2",
-            "FOXA2": "cell_fate_s2/FOXA2",
-        }
         _dynamics_results = []
         for _dynamics_model_id in tqdm(
             dynamics_models.value,
@@ -2235,38 +2151,11 @@ def _(
                 int(dynamics_replicate.value),
                 _dynamics_bins,
             )
-            _dynamics_hours = tuple(
-                float(_hour)
-                for _hour in _dynamics_bundle.config.data.micropattern.timesteps
-            )
-            if float(dynamics_endpoint.value) not in _dynamics_hours:
-                raise ValueError(
-                    f"No true baseline reference is available at "
-                    f"{dynamics_endpoint.value:g}h for {_dynamics_bundle.id}."
-                )
-            _dynamics_reference = _dynamics_data["target"][
-                _dynamics_hours.index(float(dynamics_endpoint.value))
-            ]
             _dynamics_marker_order = ("TBXT", "SOX17", "SOX2", "FOXA2")
-            _dynamics_thresholds = []
-            for _dynamics_marker in _dynamics_marker_order:
-                _dynamics_values = _dynamics_reference[
-                    _dynamics_data["channel_names"].index(
-                        _dynamics_reference_names[_dynamics_marker]
-                    )
-                ][np.asarray(_dynamics_data["boundary"]).squeeze().astype(bool)]
-                _dynamics_reference_intensity = (
-                    float(np.nanmax(_dynamics_values))
-                    if dynamics_channel_percentiles.value[_dynamics_marker] == 100.0
-                    else float(np.nanpercentile(
-                        _dynamics_values,
-                        dynamics_channel_percentiles.value[_dynamics_marker],
-                    ))
-                )
-                _dynamics_thresholds.append(
-                    float(dynamics_channel_thresholds.value[_dynamics_marker])
-                    * _dynamics_reference_intensity
-                )
+            _dynamics_thresholds = [
+                float(dynamics_channel_thresholds.value[_dynamics_marker])
+                for _dynamics_marker in _dynamics_marker_order
+            ]
             _dynamics_initial = _dynamics_data["initial_state"]
             _dynamics_model_channels = int(_dynamics_model.N_CHANNELS)
             _dynamics_state = jnp.pad(
@@ -2401,7 +2290,7 @@ def _(temporal_prevalence_results):
         ),
         _dynamics_download,
     ])
-    return (dynamics_prevalence_export,)
+    return
 
 
 @app.cell(hide_code=True)

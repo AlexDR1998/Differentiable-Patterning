@@ -66,7 +66,7 @@ def test_loader_places_physical_replicates_on_batch_axis(tmp_path):
         downsample=1,
         histogram_bins=histogram_bins,
         align=False,
-        initial_intensity_scales={},
+        intensity_factors={},
     )
     data = np.asarray(data)
 
@@ -89,41 +89,45 @@ def test_loader_places_physical_replicates_on_batch_axis(tmp_path):
     assert np.allclose(data[:, 0, 8, 3, 3], [0.102, 0.202, 0.302])
 
 
-def test_initial_intensity_scales_multiply_raw_0h_values(tmp_path):
+def test_intensity_factors_multiply_raw_values_per_timestep(tmp_path):
     _make_control_dataset(tmp_path)
     histogram_bins = np.tile(
         np.array([[0.0, 1000.0]], dtype=np.float32), (14, 1)
     )
-    load = lambda scales: load_micropattern_260726(
+    load = lambda factors: load_micropattern_260726(
         tmp_path,
         conditions=("ctrl",),
         timesteps=(0,),
         downsample=1,
         histogram_bins=histogram_bins,
         align=False,
-        initial_intensity_scales=scales,
+        intensity_factors=factors,
     )
 
     default_data, default_aux, names, _, _ = load(None)
     foxa2 = names.index("cell_fate_s2/FOXA2")
     sox17 = names.index("cell_fate_s2/SOX17")
-    assert default_aux["initial_intensity_scales"] == {
-        "cell_fate_s1/SOX17": 0.3,
-        "cell_fate_s2/SOX17": 0.3,
-        "cell_fate_s2/FOXA2": 0.02,
+    assert default_aux["intensity_factors"] == {
+        "cell_fate_s1/SOX17": {0: 0.3},
+        "cell_fate_s2/SOX17": {0: 0.3},
+        "cell_fate_s2/FOXA2": {0: 0.02},
     }
     # FOXA2 is source page 1, so the raw value of replicate 1 is 102.
     assert np.isclose(np.asarray(default_data)[0, 0, foxa2, 3, 3], 0.102 * 0.02)
     assert np.isclose(np.asarray(default_data)[0, 0, sox17, 3, 3], 0.101 * 0.3)
 
-    data, aux, _, _, _ = load({"cell_fate_s2/SOX17": 0.5})
+    data, aux, _, _, _ = load({"cell_fate_s2/SOX17": {0: 0.5}})
     data = np.asarray(data)
-    assert aux["initial_intensity_scales"] == {"cell_fate_s2/SOX17": 0.5}
+    assert aux["intensity_factors"] == {"cell_fate_s2/SOX17": {0: 0.5}}
     assert np.isclose(data[0, 0, sox17, 3, 3], 0.101 * 0.5)
     assert np.isclose(data[0, 0, foxa2, 3, 3], 0.102)
 
-    with pytest.raises(ValueError, match="Unknown initial intensity"):
-        load({"FOXA2": 0.5})
+    # A factor for another timestep leaves the 0h image unchanged.
+    data, _, _, _, _ = load({"cell_fate_s2/SOX17": {24: 0.5}})
+    assert np.isclose(np.asarray(data)[0, 0, sox17, 3, 3], 0.101)
+
+    with pytest.raises(ValueError, match="Unknown intensity factor"):
+        load({"FOXA2": {0: 0.5}})
 
 
 def test_manifest_records_extra_images_without_silently_using_them(tmp_path):
@@ -193,7 +197,7 @@ def test_loader_selects_explicit_physical_replicates(tmp_path):
         experiment_groups=("cell_fate_s1",),
         histogram_bins=histogram_bins,
         align=False,
-        initial_intensity_scales={},
+        intensity_factors={},
     )
 
     assert aux["batch_replicates"] == (3, 1)

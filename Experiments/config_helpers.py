@@ -17,6 +17,7 @@ EXCLUDED_WANDB_TAG_KEYS = {
     "logging.wandb.project",
     "logging.wandb.group",
     "logging.wandb.tags",
+    "logging.wandb.tag_keys",
     "model_store.root",
     "model_store.collection",
     "model_store.model_factory",
@@ -278,7 +279,13 @@ def load_model_registry_list(
     ]
 
 
-def build_tags(cfg, prefix="", max_length=MAX_WANDB_TAG_LENGTH):
+def _selected(tag_key, keys):
+    """Whether ``tag_key`` is one of ``keys`` or lies below one (None selects all)."""
+    return keys is None or any(tag_key == key or tag_key.startswith(f"{key}.") for key in keys)
+
+
+def build_tags(cfg, prefix="", max_length=MAX_WANDB_TAG_LENGTH, keys=None):
+    """One ``key:value`` tag per setting; with ``keys``, only for those settings."""
     tags = []
     if isinstance(cfg, Mapping) or hasattr(cfg, "items"):
         items = cfg.items()
@@ -303,7 +310,7 @@ def build_tags(cfg, prefix="", max_length=MAX_WANDB_TAG_LENGTH):
             or is_dataclass(value)
         ):
             tags.extend(
-                build_tags(value, prefix=f"{tag_key}.", max_length=max_length)
+                build_tags(value, prefix=f"{tag_key}.", max_length=max_length, keys=keys)
             )
         elif isinstance(value, (list, tuple)) and any(
             isinstance(item, Mapping)
@@ -322,16 +329,17 @@ def build_tags(cfg, prefix="", max_length=MAX_WANDB_TAG_LENGTH):
                             item,
                             prefix=f"{tag_key}.{index}.",
                             max_length=max_length,
+                            keys=keys,
                         )
                     )
-                else:
+                elif _selected(f"{tag_key}.{index}", keys):
                     tags.append(
                         _safe_wandb_tag(
                             f"{_wandb_tag_key(f'{tag_key}.{index}')}:{_compact_value(item)}",
                             max_length=max_length,
                         )
                     )
-        else:
+        elif _selected(tag_key, keys):
             if tag_key == "data.emoji.sequence":
                 value = _sequence_alias(value)
             else:
@@ -345,9 +353,16 @@ def build_tags(cfg, prefix="", max_length=MAX_WANDB_TAG_LENGTH):
 
 
 def build_wandb_tags(cfg):
-    """Build automatic configuration tags and retain user-supplied tags."""
+    """Automatic tags for the settings in ``logging.wandb.tag_keys``, plus hand-written tags.
 
-    automatic_tags = build_tags(cfg)
+    Sweep manifests set ``tag_keys`` to the settings that differ between
+    their runs, so the W&B tags show only what distinguishes a run. Without
+    ``tag_keys`` (e.g. a single config run by hand) every setting is tagged.
+    """
+
+    wandb = getattr(getattr(cfg, "logging", None), "wandb", None)
+    keys = getattr(wandb, "tag_keys", None)
+    automatic_tags = build_tags(cfg, keys=None if keys is None else tuple(keys))
     return list(dict.fromkeys((*automatic_tags, *_explicit_tags(cfg))))
 
 

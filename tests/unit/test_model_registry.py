@@ -363,3 +363,14 @@ def test_selection_round_trips_through_yaml(tmp_path):
         load_selection(path)
     with pytest.raises(FileNotFoundError):
         load_selection(tmp_path / "missing.yaml")
+
+
+def test_selection_parses_from_yaml_text():
+    from omegaconf import OmegaConf
+
+    from Experiments.model_registry import parse_selection, selection_document
+
+    text = OmegaConf.to_yaml(OmegaConf.create(selection_document([{"model_id": "a"}])))
+    assert [record["model_id"] for record in parse_selection(text)] == ["a"]
+    with pytest.raises(ValueError, match="schema_version"):
+        parse_selection("models: []")

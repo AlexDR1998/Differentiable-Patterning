@@ -224,8 +224,8 @@ def _(
             substitute_preperturbation=substitute_preperturbation.value,
             align=align.value,
             hist_eqs=(percentile_low.value, percentile_high.value),
-            initial_intensity_scales={
-                _name: _value
+            intensity_factors={
+                _name: {0: _value}
                 for _name, _value in initial_intensity_scales.value.items()
                 if _value != 1.0
             },
@@ -283,14 +283,14 @@ def _(data, loaded, mo, names, np, plt):
             np.nansum(_pixel_means, axis=0) / np.maximum(_replicate_counts, 1),
             np.nan,
         )
-        _applied = _aux.get("initial_intensity_scales", {})
+        _applied = _aux.get("intensity_factors", {})
         _rows = []
         for _channel, _name in enumerate(names):
             _start, _next = _channel_means[0, _channel], _channel_means[1, _channel]
             _rows.append(
                 {
                     "channel": _name,
-                    "0h scale": _applied.get(_name, 1.0),
+                    "0h scale": _applied.get(_name, {}).get(0, 1.0),
                     "0h mean": round(float(_start), 4),
                     f"{_hours[1]}h mean": round(float(_next), 4),
                     f"0h / {_hours[1]}h": (
@@ -893,7 +893,6 @@ def _(
     channel_indices,
     data,
     loaded,
-    mo,
     names,
     np,
     plt,
@@ -937,7 +936,7 @@ def _(
             _finite = _image[np.isfinite(_image)]
             _shown = _axes[_row, _column].imshow(
                 _image,
-                cmap="viridis",
+                cmap="grey",
                 vmin=_ranges[_channel][0],
                 vmax=_ranges[_channel][1],
             )
@@ -966,17 +965,18 @@ def _(
         _histogram_axis.legend(fontsize="small", ncol=2)
     _histogram_axis.grid(alpha=0.2)
     _histogram_figure.tight_layout()
-    mo.vstack(
-        [
-            mo.md(
-                "## Tiled monochrome images\n\n"
-                "Each row (channel) uses one colour range, set by that channel's "
-                "minimum and maximum over all batches and timesteps."
-            ),
-            _figure,
-            _histogram_figure,
-        ]
-    )
+    # mo.vstack(
+    #     [
+    #         mo.md(
+    #             "## Tiled monochrome images\n\n"
+    #             "Each row (channel) uses one colour range, set by that channel's "
+    #             "minimum and maximum over all batches and timesteps."
+    #         ),
+    #         _figure,
+    #         _histogram_figure,
+    #     ]
+    # )
+    _figure
     return
 
 
@@ -1041,10 +1041,90 @@ def _(batch_index, loaded, mo, np, plt):
 @app.cell(hide_code=True)
 def _(
     data,
-    fate_batch_indices,
-    fate_cell_type_rules,
     fate_reference_percentiles,
     fate_threshold_fractions,
+    fate_threshold_mode,
+    loaded,
+    names,
+    np,
+):
+    # Marker channels and the absolute cutoffs shared by the cell-fate views.
+    fate_markers = ("SOX17", "SOX2", "TBXT", "FOXA2")
+    _preferred_channels = {
+        "SOX17": "cell_fate_s2/SOX17",
+        "SOX2": "cell_fate_s1/SOX2",
+        "TBXT": "cell_fate_s2/TBXT",
+        "FOXA2": "cell_fate_s2/FOXA2",
+    }
+    fate_channels = {
+        _marker: (
+            _preferred_channels[_marker]
+            if _preferred_channels[_marker] in names
+            else _marker if _marker in names else None
+        )
+        for _marker in fate_markers
+    }
+    _reference_time = data.shape[1] - 1
+    _boundary = getattr(loaded, "boundary_mask", None)
+    _measurement_mask = getattr(loaded, "measurement_mask", None)
+    fate_absolute_thresholds = {}
+    for _marker in fate_markers:
+        if fate_channels[_marker] is None:
+            continue
+        if fate_threshold_mode.value == "absolute":
+            fate_absolute_thresholds[_marker] = float(
+                fate_threshold_fractions.value[_marker]
+            )
+            continue
+        _channel_index = names.index(fate_channels[_marker])
+        _reference_values = []
+        for _batch in range(data.shape[0]):
+            if (
+                _measurement_mask is not None
+                and not bool(np.asarray(_measurement_mask)[
+                    _batch, _reference_time, _channel_index
+                ])
+            ):
+                continue
+            _batch_boundary = (
+                np.asarray(_boundary)[_batch, 0].astype(bool)
+                if _boundary is not None
+                else np.ones(data.shape[-2:], dtype=bool)
+            )
+            _values = data[_batch, _reference_time, _channel_index][
+                _batch_boundary
+            ]
+            _reference_values.append(_values[np.isfinite(_values)])
+        _pooled_values = (
+            np.concatenate(_reference_values)
+            if _reference_values
+            else np.asarray([], dtype=float)
+        )
+        _reference_percentile = float(
+            fate_reference_percentiles.value[_marker]
+        )
+        _reference_intensity = (
+            float(np.nanmax(_pooled_values))
+            if _pooled_values.size and _reference_percentile == 100.0
+            else float(np.nanpercentile(_pooled_values, _reference_percentile))
+            if _pooled_values.size
+            else np.nan
+        )
+        fate_absolute_thresholds[_marker] = (
+            float(fate_threshold_fractions.value[_marker])
+            * _reference_intensity
+        )
+    return fate_absolute_thresholds, fate_channels, fate_markers
+
+
+@app.cell(hide_code=True)
+def _(
+    data,
+    fate_absolute_thresholds,
+    fate_batch_indices,
+    fate_cell_type_rules,
+    fate_channels,
+    fate_markers,
     fate_threshold_mode,
     fate_time_indices,
     loaded,
@@ -1053,23 +1133,8 @@ def _(
     np,
     plt,
 ):
-    _fate_markers = ("SOX17", "SOX2", "TBXT", "FOXA2")
-    _preferred_channels = {
-        "SOX17": "cell_fate_s2/SOX17",
-        "SOX2": "cell_fate_s1/SOX2",
-        "TBXT": "cell_fate_s2/TBXT",
-        "FOXA2": "cell_fate_s2/FOXA2",
-    }
-    _fate_channels = {
-        _marker: (
-            _preferred_channels[_marker]
-            if _preferred_channels[_marker] in names
-            else _marker if _marker in names else None
-        )
-        for _marker in _fate_markers
-    }
     _missing_fate_markers = [
-        _marker for _marker, _channel in _fate_channels.items()
+        _marker for _marker, _channel in fate_channels.items()
         if _channel is None
     ]
     if _missing_fate_markers:
@@ -1082,53 +1147,6 @@ def _(
     else:
         _reference_time = data.shape[1] - 1
         _boundary = getattr(loaded, "boundary_mask", None)
-        _measurement_mask = getattr(loaded, "measurement_mask", None)
-        _absolute_thresholds = {}
-        for _marker in _fate_markers:
-            if fate_threshold_mode.value == "absolute":
-                _absolute_thresholds[_marker] = float(
-                    fate_threshold_fractions.value[_marker]
-                )
-                continue
-            _channel_index = names.index(_fate_channels[_marker])
-            _reference_values = []
-            for _batch in range(data.shape[0]):
-                if (
-                    _measurement_mask is not None
-                    and not bool(np.asarray(_measurement_mask)[
-                        _batch, _reference_time, _channel_index
-                    ])
-                ):
-                    continue
-                _batch_boundary = (
-                    np.asarray(_boundary)[_batch, 0].astype(bool)
-                    if _boundary is not None
-                    else np.ones(data.shape[-2:], dtype=bool)
-                )
-                _values = data[_batch, _reference_time, _channel_index][
-                    _batch_boundary
-                ]
-                _reference_values.append(_values[np.isfinite(_values)])
-            _pooled_values = (
-                np.concatenate(_reference_values)
-                if _reference_values
-                else np.asarray([], dtype=float)
-            )
-            _reference_percentile = float(
-                fate_reference_percentiles.value[_marker]
-            )
-            _reference_intensity = (
-                float(np.nanmax(_pooled_values))
-                if _pooled_values.size and _reference_percentile == 100.0
-                else float(np.nanpercentile(_pooled_values, _reference_percentile))
-                if _pooled_values.size
-                else np.nan
-            )
-            _absolute_thresholds[_marker] = (
-                float(fate_threshold_fractions.value[_marker])
-                * _reference_intensity
-            )
-
         _cell_colors = {
             "Notochord": np.asarray([214, 39, 160], dtype=float) / 255.0,
             "Endoderm": np.asarray([23, 190, 207], dtype=float) / 255.0,
@@ -1176,15 +1194,16 @@ def _(
                     _marker: data[
                         _batch,
                         _time,
-                        names.index(_fate_channels[_marker]),
+                        names.index(fate_channels[_marker]),
                     ]
-                    for _marker in _fate_markers
+                    for _marker in fate_markers
                 }
                 _high = {
                     _marker: (
-                        _selected_images[_marker] > _absolute_thresholds[_marker]
+                        _selected_images[_marker]
+                        > fate_absolute_thresholds[_marker]
                     )
-                    for _marker in _fate_markers
+                    for _marker in fate_markers
                 }
                 _cell_masks = {}
                 for _cell_type, _rule in _fate_rules.items():
@@ -1207,7 +1226,7 @@ def _(
                         _cell_type
                     ]
 
-                for _column, _marker in enumerate(_fate_markers):
+                for _column, _marker in enumerate(fate_markers):
                     _axis = _fate_axes[_row, _column]
                     _threshold_mask = _high[_marker] & _selected_boundary
                     _shown_image = np.where(
@@ -1216,7 +1235,7 @@ def _(
                     _axis.imshow(_shown_image, cmap="gray", vmin=0.0, vmax=1.0)
                     if _row == 0:
                         _axis.set_title(
-                            f"{_marker}\ncutoff={_absolute_thresholds[_marker]:.3g}"
+                            f"{_marker}\ncutoff={fate_absolute_thresholds[_marker]:.3g}"
                         )
                     _axis.set_axis_off()
                 _fate_axes[_row, 4].imshow(_cell_map, vmin=0.0, vmax=1.0)
@@ -1287,7 +1306,7 @@ def _(
                         and _fate_rules[_right_type][_marker] != "any"
                         and _fate_rules[_left_type][_marker]
                         != _fate_rules[_right_type][_marker]
-                        for _marker in _fate_markers
+                        for _marker in fate_markers
                     )
                     if not _rules_conflict:
                         _overlapping_pairs.append(
@@ -1328,6 +1347,159 @@ def _(
             )
     _fate_view
     # plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    data,
+    fate_absolute_thresholds,
+    fate_channels,
+    fate_markers,
+    loaded,
+    mo,
+    names,
+    np,
+    plt,
+):
+    _available_markers = [
+        _marker for _marker in fate_markers if fate_channels[_marker] is not None
+    ]
+    if not _available_markers:
+        _count_view = mo.callout(
+            "No cell-fate marker channels are loaded.", kind="warn"
+        )
+    else:
+        _boundary = getattr(loaded, "boundary_mask", None)
+        _measurement_mask = getattr(loaded, "measurement_mask", None)
+        _aux = getattr(loaded, "aux", {})
+        _conditions = tuple(_aux.get("batch_conditions", ()))
+        _replicates = tuple(_aux.get("batch_replicates", ()))
+        _timesteps = tuple(_aux.get("timesteps", ()))
+        _times = (
+            np.asarray(_timesteps, dtype=float)
+            if len(_timesteps) == data.shape[1]
+            else np.arange(data.shape[1], dtype=float)
+        )
+        _time_label = (
+            "time (h)" if len(_timesteps) == data.shape[1] else "time index"
+        )
+        _batch_labels = [
+            f"{_conditions[_batch]}, rep {_replicates[_batch]}"
+            if _batch < len(_conditions) and _batch < len(_replicates)
+            else f"Batch {_batch}"
+            for _batch in range(data.shape[0])
+        ]
+        _condition_names = sorted(set(_conditions)) if _conditions else [None]
+        _condition_colors = {
+            _condition: plt.get_cmap("tab10")(_index % 10)
+            for _index, _condition in enumerate(_condition_names)
+        }
+        _time_colors = plt.get_cmap("viridis")(
+            np.linspace(0.0, 1.0, data.shape[1])
+        )
+        _bins = np.linspace(0.0, 1.0, 101)
+
+        _count_figure, _count_axes = plt.subplots(
+            1, len(_available_markers),
+            figsize=(5 * len(_available_markers), 4), squeeze=False,
+        )
+        _hist_figure, _hist_axes = plt.subplots(
+            1, len(_available_markers),
+            figsize=(5 * len(_available_markers), 4), squeeze=False,
+        )
+        for _column, _marker in enumerate(_available_markers):
+            _channel_index = names.index(fate_channels[_marker])
+            _threshold = fate_absolute_thresholds[_marker]
+            # Colony pixel values per [batch][time]; None where not measured.
+            _values = [
+                [
+                    None
+                    if _measurement_mask is not None
+                    and not bool(np.asarray(_measurement_mask)[
+                        _batch, _time, _channel_index
+                    ])
+                    else np.asarray(data[_batch, _time, _channel_index])[
+                        np.asarray(_boundary)[_batch, 0].astype(bool)
+                        if _boundary is not None
+                        else np.ones(data.shape[-2:], dtype=bool)
+                    ]
+                    for _time in range(data.shape[1])
+                ]
+                for _batch in range(data.shape[0])
+            ]
+
+            _count_axis = _count_axes[0, _column]
+            for _batch in range(data.shape[0]):
+                _counts = [
+                    np.nan if _pixels is None
+                    else float(np.sum(_pixels > _threshold))
+                    for _pixels in _values[_batch]
+                ]
+                _condition = _conditions[_batch] if _conditions else None
+                _count_axis.plot(
+                    _times, _counts, marker="o", alpha=0.8,
+                    color=_condition_colors[_condition],
+                    label=_batch_labels[_batch],
+                )
+            _count_axis.set(
+                title=f"{_marker} pixels above {_threshold:.3g}",
+                xlabel=_time_label,
+                ylabel="number of high pixels",
+            )
+            _count_axis.grid(alpha=0.2)
+
+            _hist_axis = _hist_axes[0, _column]
+            for _time in range(data.shape[1]):
+                _pooled = [
+                    _pixels for _pixels in
+                    (_values[_batch][_time] for _batch in range(data.shape[0]))
+                    if _pixels is not None
+                ]
+                if not _pooled:
+                    continue
+                _pooled = np.concatenate(_pooled)
+                _hist_axis.hist(
+                    _pooled[np.isfinite(_pooled)],
+                    bins=_bins,
+                    density=True,
+                    histtype="step",
+                    linewidth=1.5,
+                    color=_time_colors[_time],
+                    label=(
+                        f"{_timesteps[_time]}h"
+                        if _time < len(_timesteps) else f"t={_time}"
+                    ),
+                )
+            _hist_axis.axvline(
+                _threshold, color="black", linestyle="--", linewidth=1.5,
+                label=f"threshold {_threshold:.3g}",
+            )
+            _hist_axis.set(
+                title=f"{_marker} colony intensities",
+                xlabel="intensity",
+                ylabel="density",
+                xlim=(0.0, 1.0),
+                yscale="log",
+            )
+            _hist_axis.legend(fontsize="small")
+        _count_axes[0, -1].legend(
+            fontsize="small", loc="upper left", bbox_to_anchor=(1.02, 1.0)
+        )
+        _count_figure.tight_layout()
+        _hist_figure.tight_layout()
+        _count_view = mo.vstack([
+            mo.md(
+                "### Above-threshold pixel counts\n\n"
+                "Number of colony pixels above each marker's current cutoff, "
+                "for every loaded replicate and timepoint (coloured by "
+                "condition). Histograms pool colony pixels over replicates at "
+                "each timepoint; the dashed line is the cutoff."
+            ),
+            _count_figure,
+            _hist_figure,
+        ])
+    _count_view
     return
 
 

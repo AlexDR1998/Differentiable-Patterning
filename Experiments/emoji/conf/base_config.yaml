@@ -1,4 +1,4 @@
-schema_version: 5
+schema_version: 6
 seed: 0
 
 experiment:
@@ -124,6 +124,9 @@ logging:
     project: NCA-emoji
     group: base-config
     tags: null
+    # Settings whose values become automatic tags. Generated sweeps set this
+    # to the settings their runs differ in; null tags every setting.
+    tag_keys: null
 
 # Publish the best checkpoint with this resolved config and provenance. The
 # SQLite catalogue is rebuilt separately, so concurrent jobs never share it.

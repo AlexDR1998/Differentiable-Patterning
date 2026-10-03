@@ -1,4 +1,4 @@
-schema_version: 5
+schema_version: 6
 seed: 0
 
 experiment:
@@ -37,15 +37,71 @@ data:
     intermediate_reinjection_probability: 0.5
     intermediate_reinjection_probability_end: 0.5
     intermediate_reinjection_decay_start_fraction: 0.25
-  # 260726 only. Each channel is clipped to these percentiles, pooled over
-  # all loaded timesteps, then rescaled to [0, 1].
-    histogram_percentiles: [20.0, 99.5]
-  # 260726 only. Factors multiplying raw 0h intensities, to correct 0h
-  # imaging artifacts before cells express these markers.
-    initial_intensity_scales:
-      cell_fate_s1/SOX17: 0.3
-      cell_fate_s2/SOX17: 0.3
-      cell_fate_s2/FOXA2: 0.02
+  # 260726 only. Each channel is clipped to these percentiles, taken over
+  # all timesteps of a trajectory, then rescaled to [0, 1]. Per-channel
+  # values can be set in cleaning.channel_percentiles.
+    histogram_percentiles: [0.0, 99.5]
+  # 260726 only. Factors multiplying the raw intensities of a channel at a
+  # timestep (hours), for every condition, to correct imaging artifacts.
+    intensity_factors:
+      cell_fate_s1/SOX17:
+        0: 0.3
+      cell_fate_s2/SOX17:
+        0: 0.3
+        12: 0.5
+      cell_fate_s2/FOXA2:
+        0: 0.02
+  # 260726 only. Image cleaning, as tuned in
+  # Experiments/micropatterns/data_cleaning.py; see
+  # Common/dataloader/micropattern_cleaning.py for the steps.
+    cleaning:
+      enabled: true
+      hot_pixel_window: 5
+      hot_pixel_thresholds:
+        cell_fate_s1/SOX17: 30.0
+        cell_fate_s1/SOX2: 30.0
+        cell_fate_s1/TBXT: 30.0
+        cell_fate_s1/LMBR: 0.0
+        cell_fate_s2/SOX17: 30.0
+        cell_fate_s2/FOXA2: 30.0
+        cell_fate_s2/TBXT: 30.0
+        cell_fate_s2/LMBR: 0.0
+        rna_expression/CER1: 30.0
+        rna_expression/LEFTY: 30.0
+        rna_expression/NODAL: 30.0
+        protein_response/LEF1: 30.0
+        protein_response/LMBR: 0.0
+        protein_response/SMAD23: 30.0
+      background_shrink: 4
+      background_radii:
+        cell_fate_s1/SOX17: 50
+        cell_fate_s1/SOX2: 50
+        cell_fate_s1/TBXT: 50
+        cell_fate_s1/LMBR: 0
+        cell_fate_s2/SOX17: 50
+        cell_fate_s2/FOXA2: 50
+        cell_fate_s2/TBXT: 50
+        cell_fate_s2/LMBR: 0
+        rna_expression/CER1: 50
+        rna_expression/LEFTY: 50
+        rna_expression/NODAL: 50
+        protein_response/LEF1: 50
+        protein_response/LMBR: 0
+        protein_response/SMAD23: 0
+    # Colony centres exported from the data cleaning notebook (relative to
+    # the repository root), and the mask radius as a fraction of the
+    # pattern radius.
+      alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+      mask_radius_scale: 1.0
+    # replicate_mean, per_replicate or pooled (see
+    # Common/dataloader/normalisation.py).
+      normalisation: replicate_mean
+      channel_percentiles: {}
+      percentiles_inside_mask: true
+      knockouts_use_control_bounds: false
+  # 260726 only. Images flagged as low quality in the data cleaning notebook
+  # (relative to the repository root); each is treated as not measured.
+    quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
     duplicate_final_timestep: false
   # Nodal knockout settings; they choose which knockout data is loaded.
   knockout:
@@ -130,6 +186,9 @@ logging:
     project: NCA-micropattern
     group: base-config
     tags: null
+    # Settings whose values become automatic tags. Generated sweeps set this
+    # to the settings their runs differ in; null tags every setting.
+    tag_keys: null
 
 # Publish the best checkpoint with this resolved config and provenance. The
 # SQLite catalogue is rebuilt separately, so concurrent jobs never share it.

@@ -212,6 +212,53 @@ def test_build_wandb_tags_combines_automatic_and_explicit_tags():
     assert tags.count("model.family:NCA") == 1
 
 
+def test_build_wandb_tags_keeps_only_tag_keys():
+    cfg = _cfg(
+        {
+            "model": {"family": "NCA", "channels": 8},
+            "run": {"iterations": 1000},
+            "loss": {"terms": [{"type": "multi_target", "multi_target_weights": {"l2": 1.0, "texture": 0.5}}]},
+            "data": {"micropattern": {"cleaning": {"background_radii": {"a": 50, "b": 0}}}},
+            "logging": {
+                "wandb": {
+                    "project": "NCA-test",
+                    "group": "comparison",
+                    "tags": ["paper"],
+                    "tag_keys": [
+                        "model.channels",
+                        "loss.terms.0.multi_target_weights.l2",
+                        "data.micropattern.cleaning.background_radii",
+                    ],
+                }
+            },
+        }
+    )
+
+    tags = build_wandb_tags(cfg)
+
+    # A key covers everything below it; aliases still apply.
+    assert sorted(tags) == sorted(
+        [
+            "model.channels:8",
+            "loss_weight.l2:1.0",
+            "data.micropattern.cleaning.background_radii.a:50",
+            "data.micropattern.cleaning.background_radii.b:0",
+            "paper",
+        ]
+    )
+
+
+def test_build_wandb_tags_with_empty_tag_keys_keeps_only_explicit_tags():
+    cfg = _cfg(
+        {
+            "model": {"family": "NCA"},
+            "logging": {"wandb": {"project": "p", "group": "g", "tags": ["paper"], "tag_keys": []}},
+        }
+    )
+
+    assert build_wandb_tags(cfg) == ["paper"]
+
+
 def test_build_tags_recurses_into_typed_config():
     cfg = _cfg({"run": RunConfig(t=16, iterations=100)})
 
@@ -864,3 +911,78 @@ def test_data_augmenter_4ch_colony_keeps_observable_channels():
     assert y[0].shape == (4, 4, 2, 3)
     assert jnp.array_equal(x[0][:, :4], data[0, :-1])
     assert jnp.array_equal(y[0][:, :4], data[0, 1:])
+
+
+@pytest.mark.parametrize("use_control_bounds", [False, True])
+def test_260726_cleaning_reaches_the_loader(monkeypatch, use_control_bounds):
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+    from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
+
+    calls = []
+    shared_bins = jnp.arange(28, dtype=jnp.float32).reshape(14, 2)
+
+    def fake_loader(path, **kwargs):
+        calls.append(kwargs)
+        count = len(kwargs["replicate_indices"]) * len(kwargs["conditions"])
+        data = jnp.zeros((count, 5, 14, 2, 3))
+        boundary = jnp.ones((count, 1, 2, 3), dtype=bool)
+        mask = jnp.ones((count, 5, 14), dtype=bool)
+        return data, {"channel_schema": object(), "histogram_bins": shared_bins}, ["marker"] * 14, boundary, mask
+
+    monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
+    cleaning = MicropatternCleaningConfig(
+        enabled=True,
+        alignment_file="Experiments/micropatterns/conf/alignment/example.yaml",
+        knockouts_use_control_bounds=use_control_bounds,
+    )
+    cfg = _micropattern_cfg(
+        data_channels=14,
+        dataset="micropatterns_260726",
+        curriculum=("baseline", "ko_24h"),
+        cleaning=cleaning,
+    )
+
+    micropattern_helpers.load_train_validation_data(cfg, impath="/tmp/micropatterns/")
+
+    passed = calls[-1]["cleaning"]
+    assert passed.enabled
+    assert passed.alignment_file == str(
+        micropattern_helpers.REPOSITORY_ROOT / "Experiments/micropatterns/conf/alignment/example.yaml"
+    )
+    # Control bounds for knockouts come from a separate control-only load.
+    if use_control_bounds:
+        assert len(calls) == 2 and calls[0]["conditions"] == ("ctrl",)
+        assert calls[1]["histogram_bins"] is shared_bins
+    else:
+        assert len(calls) == 1 and calls[0]["histogram_bins"] is None
+
+
+def test_260726_quality_flags_reach_the_loader(monkeypatch, tmp_path):
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+    from Common.dataloader.quality_flags import save_quality_flags
+
+    calls = []
+
+    def fake_loader(path, **kwargs):
+        calls.append(kwargs)
+        count = kwargs["replicate_count"]
+        data = jnp.zeros((count, 5, 14, 2, 3))
+        boundary = jnp.ones((count, 1, 2, 3), dtype=bool)
+        mask = jnp.ones((count, 5, 14), dtype=bool)
+        return data, {"channel_schema": object(), "histogram_bins": None}, ["marker"] * 14, boundary, mask
+
+    monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
+    flags = tmp_path / "flags.yaml"
+    save_quality_flags(flags, {"cell_fate_markers/ctrl_s1/a_24h.ome.tif": "blurred"})
+
+    micropattern_helpers.load_data(
+        _micropattern_cfg(data_channels=14, dataset="micropatterns_260726", quality_flags_file=str(flags)),
+        impath="/tmp/micropatterns/",
+    )
+    micropattern_helpers.load_data(
+        _micropattern_cfg(data_channels=14, dataset="micropatterns_260726"),
+        impath="/tmp/micropatterns/",
+    )
+
+    assert calls[0]["excluded_images"] == ("cell_fate_markers/ctrl_s1/a_24h.ome.tif",)
+    assert calls[1]["excluded_images"] == ()

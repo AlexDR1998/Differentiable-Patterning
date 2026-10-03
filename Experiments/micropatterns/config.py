@@ -4,9 +4,10 @@ from dataclasses import dataclass, field
 from typing import Mapping
 
 from Common.config import ConfigValue
+from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
 from Common.dataloader.micropattern_schemas import (
     DEFAULT_260726_HISTOGRAM_PERCENTILES,
-    DEFAULT_260726_INITIAL_INTENSITY_SCALES,
+    DEFAULT_260726_INTENSITY_FACTORS,
 )
 
 
@@ -26,13 +27,22 @@ class MicropatternDataConfig(ConfigValue):
     intermediate_reinjection_decay_start_fraction: float = 0.25
     duplicate_final_timestep: bool = False
     # 260726 only: low/high percentiles each channel is clipped to before
-    # rescaling to [0, 1], and factors for raw 0h intensities keyed by
-    # measurement name (e.g. "cell_fate_s2/FOXA2"). Unlisted channels are
-    # unchanged. See Common/dataloader/micropattern_260726.py.
+    # rescaling to [0, 1], and factors for raw intensities keyed by
+    # measurement name and timestep (e.g. {"cell_fate_s2/FOXA2": {0: 0.02}}).
+    # Unlisted channels and timesteps are unchanged. With cleaning enabled,
+    # the images are cleaned, centred and normalised as described in
+    # Common/dataloader/micropattern_cleaning.py.
     histogram_percentiles: tuple[float, float] = DEFAULT_260726_HISTOGRAM_PERCENTILES
-    initial_intensity_scales: Mapping[str, float] = field(
-        default_factory=lambda: dict(DEFAULT_260726_INITIAL_INTENSITY_SCALES)
+    intensity_factors: Mapping[str, Mapping[int, float]] = field(
+        default_factory=lambda: {
+            name: dict(by_hour) for name, by_hour in DEFAULT_260726_INTENSITY_FACTORS.items()
+        }
     )
+    cleaning: MicropatternCleaningConfig = field(default_factory=MicropatternCleaningConfig)
+    # 260726 only: images flagged as low quality in the data cleaning notebook
+    # (a file from Common/dataloader/quality_flags.py; a relative path is
+    # relative to the repository root). Each is treated as not measured.
+    quality_flags_file: str | None = None
 
     def __post_init__(self):
         low, high = self.histogram_percentiles
@@ -40,10 +50,10 @@ class MicropatternDataConfig(ConfigValue):
             raise ValueError(
                 "data.micropattern.histogram_percentiles must increase within [0, 100]"
             )
-        if any(value < 0 for value in self.initial_intensity_scales.values()):
-            raise ValueError(
-                "data.micropattern.initial_intensity_scales must be non-negative"
-            )
+        if any(
+            value < 0 for by_hour in self.intensity_factors.values() for value in by_hour.values()
+        ):
+            raise ValueError("data.micropattern.intensity_factors must be non-negative")
 
 
 @dataclass(frozen=True)
