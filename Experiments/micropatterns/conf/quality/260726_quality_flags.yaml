@@ -1,0 +1,5 @@
+# Images flagged as low quality in Experiments/micropatterns/data_cleaning.py.
+# Training treats each as not measured. Keys are image paths relative to
+# the dataset root; values are the reasons given.
+format: quality_flags_v1
+flagged: {}
