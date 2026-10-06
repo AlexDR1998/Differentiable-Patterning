@@ -1,0 +1,109 @@
+# Cell-type rules made with Experiments/micropatterns/data_cleaning.py.
+# A marker is high where its normalised (0-1) value is above its
+# threshold; a cell type needs every listed marker state (any = not
+# checked) of at least one of its clauses (a list means "or"),
+# counted with the clause weights under clause_weights (1 if absent).
+# Stains list the markers imaged together in the same colony. The
+# thresholds hold for images processed with the data.micropattern
+# settings under preprocessing.
+format: cell_type_rules_v2
+hour: 48
+markers:
+  SOX17:
+    channel: cell_fate_s2/SOX17
+    threshold: 0.24
+  SOX2:
+    channel: cell_fate_s1/SOX2
+    threshold: 0.3
+  TBXT:
+    channel: cell_fate_s2/TBXT
+    threshold: 0.1
+  FOXA2:
+    channel: cell_fate_s2/FOXA2
+    threshold: 0.32
+stains:
+  cell_fate_s1:
+    SOX17: cell_fate_s1/SOX17
+    SOX2: cell_fate_s1/SOX2
+    TBXT: cell_fate_s1/TBXT
+  cell_fate_s2:
+    SOX17: cell_fate_s2/SOX17
+    TBXT: cell_fate_s2/TBXT
+    FOXA2: cell_fate_s2/FOXA2
+cell_types:
+  Notochord:
+    SOX17: low
+    SOX2: any
+    TBXT: high
+    FOXA2: high
+  Endoderm:
+    SOX17: high
+    SOX2: any
+    TBXT: any
+    FOXA2: any
+  Mesoderm:
+  - SOX17: low
+    SOX2: any
+    TBXT: high
+    FOXA2: low
+  - SOX17: any
+    SOX2: high
+    TBXT: high
+    FOXA2: any
+clause_weights:
+  Mesoderm:
+  - 0.7
+  - 1.0
+preprocessing:
+  histogram_percentiles:
+  - 0.0
+  - 99.5
+  quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+  intensity_factors:
+    cell_fate_s1/SOX17:
+      0: 0.3
+    cell_fate_s2/SOX17:
+      0: 0.15
+      12: 0.5
+    cell_fate_s2/FOXA2:
+      0: 0.02
+  cleaning:
+    enabled: true
+    hot_pixel_window: 5
+    hot_pixel_thresholds:
+      cell_fate_s1/SOX17: 30.0
+      cell_fate_s1/SOX2: 30.0
+      cell_fate_s1/TBXT: 30.0
+      cell_fate_s1/LMBR: 0.0
+      cell_fate_s2/SOX17: 30.0
+      cell_fate_s2/FOXA2: 30.0
+      cell_fate_s2/TBXT: 30.0
+      cell_fate_s2/LMBR: 0.0
+      rna_expression/CER1: 30.0
+      rna_expression/LEFTY: 30.0
+      rna_expression/NODAL: 30.0
+      protein_response/LEF1: 30.0
+      protein_response/LMBR: 0.0
+      protein_response/SMAD23: 30.0
+    background_shrink: 4
+    background_radii:
+      cell_fate_s1/SOX17: 50
+      cell_fate_s1/SOX2: 50
+      cell_fate_s1/TBXT: 50
+      cell_fate_s1/LMBR: 0
+      cell_fate_s2/SOX17: 50
+      cell_fate_s2/FOXA2: 50
+      cell_fate_s2/TBXT: 50
+      cell_fate_s2/LMBR: 0
+      rna_expression/CER1: 50
+      rna_expression/LEFTY: 50
+      rna_expression/NODAL: 50
+      protein_response/LEF1: 50
+      protein_response/LMBR: 0
+      protein_response/SMAD23: 0
+    alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+    mask_radius_scale: 1.0
+    normalisation: replicate_mean
+    channel_percentiles: {}
+    percentiles_inside_mask: true
+    knockouts_use_control_bounds: false

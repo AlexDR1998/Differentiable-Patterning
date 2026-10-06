@@ -12,8 +12,10 @@ import scipy.ndimage as ndi
 import skimage.io
 from skimage import morphology
 
+from Common.dataloader import background, hot_pixels
 from Common.dataloader.alignment import grid_position, load_colony_alignment
 from Common.dataloader.background import subtract_background
+from Common.dataloader.disk_cache import cache_folder, cached_array
 from Common.dataloader.hot_pixels import replace_hot_pixels_per_channel
 from Common.dataloader.micropattern_schemas import (
     DEFAULT_260726_HISTOGRAM_PERCENTILES,
@@ -527,12 +529,16 @@ def _normalisation_downsample(downsample):
     return 4 if downsample % 4 == 0 else downsample
 
 
-def _clean_record(record, schema_group, intensity_factors, cleaning, alignment, root, work):
-    """Clean, block-average and centre one image (``cleaning`` steps 1 to 5).
+def _schema_group(group):
+    return next(item for item in MICROPATTERN_260726_SCHEMA.experiment_groups if item.name == group)
 
-    Returns the unnormalised image ``[X, Y, C]`` at downsampling ``work`` and
-    the circular mask of the pattern radius times ``mask_radius_scale``.
+
+def _clean_image(record, intensity_factors, cleaning, work):
+    """Cleaning steps 1 to 4 for one image: ``[X, Y, C]`` at downsampling ``work``.
+
+    These are the slow steps, which ``cleaned_image`` can cache on disk.
     """
+    schema_group = _schema_group(record.group)
     raw = _read_multichannel_image(record.path, record.group)
     names = [channel.name for channel in schema_group.channels]
     image = np.stack(
@@ -550,6 +556,55 @@ def _clean_record(record, schema_group, intensity_factors, cleaning, alignment, 
         cleaning.background_shrink,
     )
     image, _ = _downsample_image_and_mask(image, np.zeros(image.shape[:2], dtype=bool), work)
+    return image.astype(np.float32)
+
+
+# The code behind _clean_image; editing any of it starts a new cache folder.
+_CLEANING_SOURCES = (
+    hot_pixels,
+    background,
+    _read_multichannel_image,
+    _channel_values,
+    _downsample_image_and_mask,
+    _schema_group,
+    _clean_image,
+)
+
+
+def cleaning_cache_folder(cache_dir, root, intensity_factors, cleaning, work):
+    """The ``disk_cache`` folder for images cleaned with these settings.
+
+    Only the settings of cleaning steps 1 to 4 count, so one folder serves
+    every selection of conditions and replicates, every alignment and every
+    normalisation setting.
+    """
+    settings = {
+        "dataset": str(Path(root).expanduser().resolve()),
+        "downsample": int(work),
+        "channels": {
+            group.name: [[channel.name, channel.source_index] for channel in group.channels]
+            for group in MICROPATTERN_260726_SCHEMA.experiment_groups
+        },
+        "intensity_factors": _coerce_intensity_factors(intensity_factors),
+        "hot_pixel_thresholds": dict(cleaning.hot_pixel_thresholds),
+        "hot_pixel_window": cleaning.hot_pixel_window,
+        "background_radii": dict(cleaning.background_radii),
+        "background_shrink": cleaning.background_shrink,
+    }
+    return cache_folder(cache_dir, f"micropattern_260726_ds{work}", settings, _CLEANING_SOURCES)
+
+
+def cleaned_image(record, intensity_factors, cleaning, work, root, folder=None):
+    """``_clean_image``, read from or saved to the cache ``folder`` when given."""
+    intensity_factors = _coerce_intensity_factors(intensity_factors)
+    if folder is None:
+        return _clean_image(record, intensity_factors, cleaning, work)
+    relative = Path(record.path).relative_to(Path(root).expanduser().resolve()).as_posix()
+    return cached_array(folder, relative, lambda: _clean_image(record, intensity_factors, cleaning, work))
+
+
+def _centre_image(image, record, cleaning, alignment, root, work):
+    """Cleaning step 5: centre ``image`` with ``alignment`` and make its circular mask."""
     centre = grid_position(alignment.centre(Path(record.path).relative_to(root).as_posix()), work)
     target = ((image.shape[0] - 1) / 2.0, (image.shape[1] - 1) / 2.0)
     image = ndi.shift(
@@ -660,6 +715,7 @@ def load_micropattern_260726(
     intensity_factors=None,
     cleaning=None,
     excluded_images=None,
+    cache_dir=None,
 ):
     """Load physical replicates of the multichannel 260726 NCA dataset.
 
@@ -698,6 +754,11 @@ def load_micropattern_260726(
     replicates of the same condition, so the trajectory still has a
     sensible initial state; ``aux["imputed"]`` marks these, and
     ``aux["excluded"]`` all flagged slots.
+
+    ``cache_dir`` keeps the cleaned images on disk (see
+    ``Common/dataloader/disk_cache.py``), so later loads with the same
+    cleaning settings skip the slow cleaning steps 1 to 4. It is only used
+    with ``cleaning`` enabled; ``None`` turns it off.
 
     Returns
     -------
@@ -808,12 +869,16 @@ def load_micropattern_260726(
         # Every image is cleaned once and kept at the normalisation resolution.
         cleaned_images = {}
 
+        folder = (
+            None
+            if cache_dir is None
+            else cleaning_cache_folder(cache_dir, dataset_root, intensity_factors, cleaning, work)
+        )
+
         def prepared(record):
             if record not in cleaned_images:
-                schema_group = schema.experiment_groups[group_index[record.group]]
-                cleaned_images[record] = _clean_record(
-                    record, schema_group, intensity_factors, cleaning, alignment, dataset_root, work
-                )
+                image = cleaned_image(record, intensity_factors, cleaning, work, dataset_root, folder)
+                cleaned_images[record] = _centre_image(image, record, cleaning, alignment, dataset_root, work)
             return cleaned_images[record]
 
         if histogram_bins is None:

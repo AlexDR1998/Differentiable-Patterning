@@ -1,4 +1,4 @@
-experiment_name: nca_nodal_ko_strategy_replicates_v4
+experiment_name: nca_nodal_ko_strategy_replicates_v6
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_nodal_ko_strategy_replicates
 seed_mode: index
@@ -112,20 +112,37 @@ groups:
 
   # WT baselines from models/baseline_downsample_sweep_v2.yaml
   # (nca_micropattern_replicate_resolutions_v4, convective scaling).
+  # - initialization.model_id:
+  #     - 20260930T083744Z-cfg79e94017ae4e-0a073065  # ds8
+  #     - 20260929T192736Z-cfg6523b16256b6-0b3f3c47  # ds32
+  #     - 20260929T182242Z-cfg71bb64e9a300-d1d80ff9  # ds16
+  #   data.batches: [2, 2, 2]
+  #   data.downsample: [8, 32, 16]
+  #   run.t: [256, 64, 128]
+  #   trainer.loop_autodiff: [checkpointed, lax, lax]
+  #   data.micropattern.train_replicates:
+  #     - [1, 2]
+  #     - [3, 4]
+  #     - [1, 2]
+  #   data.micropattern.validation_replicates:
+  #     - [3, 4]
+  #     - [1, 2]
+  #     - [3, 4]
+
   - initialization.model_id:
-      - 20260930T083744Z-cfg79e94017ae4e-0a073065  # ds8
-      - 20260929T192736Z-cfg6523b16256b6-0b3f3c47  # ds32
-      - 20260929T182242Z-cfg71bb64e9a300-d1d80ff9  # ds16
+      - 20261003T162633Z-cfg0b6babc3d095-6b5aeae1  # ds8
+      - 20261003T164241Z-cfg756be362057e-66a78e3f  # ds16
+      - 20261004T050453Z-cfg81637d0b6675-3fa42592  # ds32
     data.batches: [2, 2, 2]
-    data.downsample: [8, 32, 16]
-    run.t: [256, 64, 128]
+    data.downsample: [8, 16, 32]
+    run.t: [256, 128, 64]
     trainer.loop_autodiff: [checkpointed, lax, lax]
     data.micropattern.train_replicates:
       - [1, 2]
-      - [3, 4]
+      - [1, 2]
       - [1, 2]
     data.micropattern.validation_replicates:
       - [3, 4]
-      - [1, 2]
+      - [3, 4]
       - [3, 4]
     run.iterations: [4000, 4000, 4000]

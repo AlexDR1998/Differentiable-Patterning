@@ -7,6 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 from einops import repeat
 
+from Common.dataloader.disk_cache import cache_dir_from_environment
 from Common.dataloader.micropattern import (
     load_micropattern_260726,
     load_micropattern_circle_4ch_individual,
@@ -329,6 +330,8 @@ def load_data(
             intensity_factors=data_config.micropattern.intensity_factors,
             cleaning=_cleaning_for_loader(data_config.micropattern.cleaning),
             excluded_images=_excluded_images(data_config.micropattern),
+            # Local notebooks set DATA_CACHE_DIR to reuse cleaned images.
+            cache_dir=cache_dir_from_environment(),
         ))
         data = dataset.data
         aux = dataset.aux

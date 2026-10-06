@@ -270,19 +270,21 @@ MICROPATTERN_260726_SCHEMA = ChannelSchema(
 # Default intensity scaling for the 260726 dataset. Each channel is clipped to
 # these percentiles (pooled over all loaded images) and rescaled to [0, 1].
 DEFAULT_260726_HISTOGRAM_PERCENTILES = (0.0, 99.5)
-# Multiplicative corrections applied to raw 0h intensities, keyed by
-# measurement name. Some 0h images are brighter than later timepoints because
-# of imaging artifacts, before cells express the marker at all. Values below
-# one dim the 0h image. The corrected values also feed the percentile bins.
-DEFAULT_260726_INITIAL_INTENSITY_SCALES = {
-    "cell_fate_s1/SOX17": 0.3,
-    "cell_fate_s2/SOX17": 0.3,
-    "cell_fate_s2/FOXA2": 0.02,
-}
-# The same corrections as factors per measurement name and timestep (hours),
-# the form the loader takes. Any channel and timestep can be listed.
+# Multiplicative corrections of raw intensities per measurement name and
+# timestep (hours), the form the loader takes; any channel and timestep can
+# be listed. Some early images are brighter than later timepoints because of
+# imaging artifacts, before cells express the marker at all. Values below one
+# dim the image. The corrected values also feed the percentile bins. Keep in
+# step with data.micropattern.intensity_factors in
+# Experiments/micropatterns/conf/base_config.yaml.
 DEFAULT_260726_INTENSITY_FACTORS = {
-    name: {0: value} for name, value in DEFAULT_260726_INITIAL_INTENSITY_SCALES.items()
+    "cell_fate_s1/SOX17": {0: 0.3},
+    "cell_fate_s2/SOX17": {0: 0.15, 12: 0.5},
+    "cell_fate_s2/FOXA2": {0: 0.02},
+}
+# The 0h factors alone, for views that only correct 0h.
+DEFAULT_260726_INITIAL_INTENSITY_SCALES = {
+    name: by_hour[0] for name, by_hour in DEFAULT_260726_INTENSITY_FACTORS.items() if 0 in by_hour
 }
 # Image cleaning defaults (see Common/dataloader/micropattern_cleaning.py).
 # LMBR, the structural membrane stain, gets no hot pixel replacement or
@@ -292,7 +294,7 @@ DEFAULT_260726_HOT_PIXEL_THRESHOLDS = {
     for channel in MICROPATTERN_260726_SCHEMA.measurement_channels
 }
 DEFAULT_260726_BACKGROUND_RADII = {
-    channel.name: 0 if channel.marker in ("LMBR", "SMAD23") else 50
+    channel.name: 0 if channel.marker in ("LMBR", "SMAD23", "CER1", "LEFTY", "NODAL") else 10
     for channel in MICROPATTERN_260726_SCHEMA.measurement_channels
 }
 

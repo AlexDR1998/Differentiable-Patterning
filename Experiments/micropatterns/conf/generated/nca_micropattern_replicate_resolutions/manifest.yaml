@@ -1,4 +1,4 @@
-experiment_name: nca_micropattern_replicate_resolutions_v4
+experiment_name: nca_micropattern_replicate_resolutions_v6
 entrypoint: Experiments.micropatterns.train:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_micropattern_replicate_resolutions.yaml
@@ -9,7 +9,7 @@ configs:
   overrides:
     run.repeat: 0
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -83,20 +83,27 @@ configs:
     data.downsample: 4
     run.t: 512
     trainer.loop_autodiff: checkpointed
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 242886303
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 242886303
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -127,12 +134,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -251,8 +303,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -264,7 +323,7 @@ configs:
   overrides:
     run.repeat: 0
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -338,20 +397,27 @@ configs:
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 393353683
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 393353683
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -382,12 +448,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -506,8 +617,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -519,7 +637,7 @@ configs:
   overrides:
     run.repeat: 0
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -593,20 +711,27 @@ configs:
     data.downsample: 16
     run.t: 128
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 364522461
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 364522461
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -637,12 +762,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -761,8 +931,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -774,7 +951,7 @@ configs:
   overrides:
     run.repeat: 0
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -848,20 +1025,27 @@ configs:
     data.downsample: 32
     run.t: 64
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 1550730039
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 1550730039
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -892,12 +1076,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -1016,8 +1245,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1029,7 +1265,7 @@ configs:
   overrides:
     run.repeat: 0
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -1103,20 +1339,27 @@ configs:
     data.downsample: 4
     run.t: 512
     trainer.loop_autodiff: checkpointed
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 726208580
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 726208580
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -1147,12 +1390,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -1271,8 +1559,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1284,7 +1579,7 @@ configs:
   overrides:
     run.repeat: 0
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -1358,20 +1653,27 @@ configs:
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 1323436024
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 1323436024
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -1402,12 +1704,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -1526,8 +1873,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1539,7 +1893,7 @@ configs:
   overrides:
     run.repeat: 0
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -1613,20 +1967,27 @@ configs:
     data.downsample: 16
     run.t: 128
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 1080542040
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 1080542040
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -1657,12 +2018,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -1781,8 +2187,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1794,7 +2207,7 @@ configs:
   overrides:
     run.repeat: 0
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -1868,20 +2281,27 @@ configs:
     data.downsample: 32
     run.t: 64
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 911472861
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 911472861
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -1912,12 +2332,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -2036,8 +2501,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -2049,7 +2521,7 @@ configs:
   overrides:
     run.repeat: 1
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -2123,20 +2595,27 @@ configs:
     data.downsample: 4
     run.t: 512
     trainer.loop_autodiff: checkpointed
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 153478260
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 153478260
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -2167,12 +2646,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -2291,8 +2815,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -2304,7 +2835,7 @@ configs:
   overrides:
     run.repeat: 1
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -2378,20 +2909,27 @@ configs:
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 680249217
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 680249217
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -2422,12 +2960,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -2546,8 +3129,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -2559,7 +3149,7 @@ configs:
   overrides:
     run.repeat: 1
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -2633,20 +3223,27 @@ configs:
     data.downsample: 16
     run.t: 128
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 1849712019
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 1849712019
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -2677,12 +3274,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -2801,8 +3443,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -2814,7 +3463,7 @@ configs:
   overrides:
     run.repeat: 1
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -2888,20 +3537,27 @@ configs:
     data.downsample: 32
     run.t: 64
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 1690206281
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 1690206281
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -2932,12 +3588,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -3056,8 +3757,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -3069,7 +3777,7 @@ configs:
   overrides:
     run.repeat: 1
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -3143,20 +3851,27 @@ configs:
     data.downsample: 4
     run.t: 512
     trainer.loop_autodiff: checkpointed
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 1597986795
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 1597986795
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -3187,12 +3902,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -3311,8 +4071,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -3324,7 +4091,7 @@ configs:
   overrides:
     run.repeat: 1
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -3398,20 +4165,27 @@ configs:
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 1910634194
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 1910634194
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -3442,12 +4216,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -3566,8 +4385,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -3579,7 +4405,7 @@ configs:
   overrides:
     run.repeat: 1
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -3653,20 +4479,27 @@ configs:
     data.downsample: 16
     run.t: 128
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 1152085198
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 1152085198
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -3697,12 +4530,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -3821,8 +4699,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -3834,7 +4719,7 @@ configs:
   overrides:
     run.repeat: 1
     run.write_images: true
-    labels.gpu: H100
+    labels.gpu: H200
     labels.scaling: convective
     model.family: gNCA
     model.channels: 48
@@ -3908,20 +4793,27 @@ configs:
     data.downsample: 32
     run.t: 64
     trainer.loop_autodiff: lax
-    experiment.name: nca_micropattern_replicate_resolutions_v4
-    logging.wandb.group: nca_micropattern_replicate_resolutions_v4
+    experiment.name: nca_micropattern_replicate_resolutions_v6
+    logging.wandb.group: nca_micropattern_replicate_resolutions_v6
     seed: 154293798
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 6
     seed: 154293798
     experiment:
-      name: nca_micropattern_replicate_resolutions_v4
+      name: nca_micropattern_replicate_resolutions_v6
     system:
       precision: bfloat16
       xla_flags: null
     labels:
       scaling: convective
-      gpu: H100
+      gpu: H200
     data:
       dataset: micropatterns_260726
       batches: 2
@@ -3952,12 +4844,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
         task: micropattern_multi_replicate
       knockout:
@@ -4076,8 +5013,15 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_replicate_resolutions
-        group: nca_micropattern_replicate_resolutions_v4
+        group: nca_micropattern_replicate_resolutions_v6
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
