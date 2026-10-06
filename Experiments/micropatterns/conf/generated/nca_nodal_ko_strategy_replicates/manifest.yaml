@@ -1,4 +1,4 @@
-experiment_name: nca_nodal_ko_strategy_replicates_v5
+experiment_name: nca_nodal_ko_strategy_replicates_v6
 entrypoint: Experiments.micropatterns.train:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/nca_nodal_ko_strategy_replicates.yaml
@@ -23,6 +23,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -70,33 +71,34 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+    initialization.model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
     data.batches: 2
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
     - 3
     - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 1022050301
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 1022050301
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -110,11 +112,11 @@ configs:
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
@@ -163,23 +165,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -190,6 +192,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -303,22 +306,23 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+      model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
 - index: 17
   overrides:
     run.repeat: 0
@@ -337,6 +341,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -384,7 +389,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+    initialization.model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
     data.batches: 2
     data.downsample: 16
     run.t: 128
@@ -396,21 +401,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 560161641
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 560161641
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -477,23 +483,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -504,6 +510,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -617,22 +624,23 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+      model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
 - index: 5
   overrides:
     run.repeat: 0
@@ -651,6 +659,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -698,7 +707,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+    initialization.model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
     data.batches: 2
     data.downsample: 32
     run.t: 64
@@ -710,21 +719,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 1588945316
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 1588945316
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -791,23 +801,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -818,6 +828,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -931,25 +942,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+      model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
 - index: 22
   overrides:
-    run.repeat: 0
+    run.repeat: 1
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -1013,33 +1025,34 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+    initialization.model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
     data.batches: 2
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
     - 3
     - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 2036044446
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 2036044446
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -1053,11 +1066,11 @@ configs:
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
@@ -1106,23 +1119,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -1238,7 +1251,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 0
+      repeat: 1
     logging:
       backend: wandb
       singular_values:
@@ -1247,25 +1260,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+      model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
 - index: 8
   overrides:
-    run.repeat: 0
+    run.repeat: 1
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -1329,7 +1343,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+    initialization.model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
     data.batches: 2
     data.downsample: 16
     run.t: 128
@@ -1341,21 +1355,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 281444313
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 281444313
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -1422,23 +1437,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -1554,7 +1569,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 0
+      repeat: 1
     logging:
       backend: wandb
       singular_values:
@@ -1563,25 +1578,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+      model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
 - index: 23
   overrides:
-    run.repeat: 0
+    run.repeat: 1
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -1645,7 +1661,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+    initialization.model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
     data.batches: 2
     data.downsample: 32
     run.t: 64
@@ -1657,21 +1673,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 56556069
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 56556069
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -1738,23 +1755,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -1870,7 +1887,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 0
+      repeat: 1
     logging:
       backend: wandb
       singular_values:
@@ -1879,25 +1896,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+      model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
 - index: 10
   overrides:
-    run.repeat: 1
+    run.repeat: 2
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -1913,6 +1931,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -1960,33 +1979,34 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+    initialization.model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
     data.batches: 2
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
     - 3
     - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 2015337560
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 2015337560
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -2000,11 +2020,11 @@ configs:
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
@@ -2053,23 +2073,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -2080,6 +2100,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -2184,7 +2205,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 1
+      repeat: 2
     logging:
       backend: wandb
       singular_values:
@@ -2193,25 +2214,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+      model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
 - index: 9
   overrides:
-    run.repeat: 1
+    run.repeat: 2
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -2227,6 +2249,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -2274,7 +2297,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+    initialization.model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
     data.batches: 2
     data.downsample: 16
     run.t: 128
@@ -2286,21 +2309,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 1113916996
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 1113916996
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -2367,23 +2391,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -2394,6 +2418,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -2498,7 +2523,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 1
+      repeat: 2
     logging:
       backend: wandb
       singular_values:
@@ -2507,25 +2532,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+      model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
 - index: 6
   overrides:
-    run.repeat: 1
+    run.repeat: 2
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -2541,6 +2567,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -2588,7 +2615,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+    initialization.model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
     data.batches: 2
     data.downsample: 32
     run.t: 64
@@ -2600,21 +2627,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 1006443827
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 1006443827
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -2681,23 +2709,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -2708,6 +2736,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -2812,7 +2841,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 1
+      repeat: 2
     logging:
       backend: wandb
       singular_values:
@@ -2821,25 +2850,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+      model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
 - index: 16
   overrides:
-    run.repeat: 1
+    run.repeat: 3
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -2903,33 +2933,34 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+    initialization.model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
     data.batches: 2
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
     - 3
     - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 823534631
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 823534631
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -2943,11 +2974,11 @@ configs:
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
@@ -2996,23 +3027,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -3128,7 +3159,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 1
+      repeat: 3
     logging:
       backend: wandb
       singular_values:
@@ -3137,25 +3168,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+      model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
 - index: 3
   overrides:
-    run.repeat: 1
+    run.repeat: 3
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -3219,7 +3251,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+    initialization.model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
     data.batches: 2
     data.downsample: 16
     run.t: 128
@@ -3231,21 +3263,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 2019766388
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 2019766388
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -3312,23 +3345,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -3444,7 +3477,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 1
+      repeat: 3
     logging:
       backend: wandb
       singular_values:
@@ -3453,25 +3486,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+      model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
 - index: 7
   overrides:
-    run.repeat: 1
+    run.repeat: 3
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -3535,7 +3569,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+    initialization.model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
     data.batches: 2
     data.downsample: 32
     run.t: 64
@@ -3547,21 +3581,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 2045921456
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 2045921456
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -3628,23 +3663,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -3760,7 +3795,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 1
+      repeat: 3
     logging:
       backend: wandb
       singular_values:
@@ -3769,25 +3804,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+      model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
 - index: 2
   overrides:
-    run.repeat: 2
+    run.repeat: 4
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -3803,6 +3839,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -3850,33 +3887,34 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+    initialization.model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
     data.batches: 2
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
     - 3
     - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 1705680002
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 1705680002
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -3890,11 +3928,11 @@ configs:
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
@@ -3943,23 +3981,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -3970,6 +4008,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -4074,7 +4113,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 2
+      repeat: 4
     logging:
       backend: wandb
       singular_values:
@@ -4083,25 +4122,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+      model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
 - index: 0
   overrides:
-    run.repeat: 2
+    run.repeat: 4
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -4117,6 +4157,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -4164,7 +4205,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+    initialization.model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
     data.batches: 2
     data.downsample: 16
     run.t: 128
@@ -4176,21 +4217,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 646892613
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 646892613
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -4257,23 +4299,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -4284,6 +4326,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -4388,7 +4431,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 2
+      repeat: 4
     logging:
       backend: wandb
       singular_values:
@@ -4397,25 +4440,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+      model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
 - index: 1
   overrides:
-    run.repeat: 2
+    run.repeat: 4
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -4431,6 +4475,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -4478,7 +4523,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+    initialization.model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
     data.batches: 2
     data.downsample: 32
     run.t: 64
@@ -4490,21 +4535,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 996097414
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 996097414
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -4571,23 +4617,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -4598,6 +4644,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -4702,7 +4749,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 2
+      repeat: 4
     logging:
       backend: wandb
       singular_values:
@@ -4711,25 +4758,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+      model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
 - index: 11
   overrides:
-    run.repeat: 2
+    run.repeat: 5
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -4793,33 +4841,34 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+    initialization.model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
     data.batches: 2
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
     - 3
     - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 651213124
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 651213124
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -4833,11 +4882,11 @@ configs:
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
@@ -4886,23 +4935,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -5018,7 +5067,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 2
+      repeat: 5
     logging:
       backend: wandb
       singular_values:
@@ -5027,25 +5076,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+      model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
 - index: 4
   overrides:
-    run.repeat: 2
+    run.repeat: 5
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -5109,7 +5159,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+    initialization.model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
     data.batches: 2
     data.downsample: 16
     run.t: 128
@@ -5121,21 +5171,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 1674765456
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 1674765456
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -5202,23 +5253,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -5334,7 +5385,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 2
+      repeat: 5
     logging:
       backend: wandb
       singular_values:
@@ -5343,25 +5394,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+      model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
 - index: 14
   overrides:
-    run.repeat: 2
+    run.repeat: 5
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -5425,7 +5477,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+    initialization.model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
     data.batches: 2
     data.downsample: 32
     run.t: 64
@@ -5437,21 +5489,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 65054739
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 65054739
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -5518,23 +5571,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -5650,7 +5703,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 2
+      repeat: 5
     logging:
       backend: wandb
       singular_values:
@@ -5659,25 +5712,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+      model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
 - index: 18
   overrides:
-    run.repeat: 3
+    run.repeat: 6
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -5693,6 +5747,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -5740,33 +5795,34 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+    initialization.model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
     data.batches: 2
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
     - 3
     - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 275012945
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 275012945
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -5780,11 +5836,11 @@ configs:
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
@@ -5833,23 +5889,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -5860,6 +5916,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -5964,7 +6021,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 3
+      repeat: 6
     logging:
       backend: wandb
       singular_values:
@@ -5973,25 +6030,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+      model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
 - index: 21
   overrides:
-    run.repeat: 3
+    run.repeat: 6
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -6007,6 +6065,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -6054,7 +6113,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+    initialization.model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
     data.batches: 2
     data.downsample: 16
     run.t: 128
@@ -6066,21 +6125,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 684617508
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 684617508
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -6147,23 +6207,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -6174,6 +6234,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -6278,7 +6339,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 3
+      repeat: 6
     logging:
       backend: wandb
       singular_values:
@@ -6287,25 +6348,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+      model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
 - index: 13
   overrides:
-    run.repeat: 3
+    run.repeat: 6
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -6321,6 +6383,7 @@ configs:
     data.micropattern.pool_copies: 1
     data.knockout.channel: Nodal
     data.knockout.curriculum:
+    - baseline
     - ko_0h
     - ko_24h
     run.write_videos: false
@@ -6368,7 +6431,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+    initialization.model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
     data.batches: 2
     data.downsample: 32
     run.t: 64
@@ -6380,21 +6443,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 183777490
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 183777490
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -6461,23 +6525,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -6488,6 +6552,7 @@ configs:
         time: null
         channel: Nodal
         curriculum:
+        - baseline
         - ko_0h
         - ko_24h
     model:
@@ -6592,7 +6657,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 3
+      repeat: 6
     logging:
       backend: wandb
       singular_values:
@@ -6601,25 +6666,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+      model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
 - index: 12
   overrides:
-    run.repeat: 3
+    run.repeat: 7
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -6683,33 +6749,34 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+    initialization.model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
     data.batches: 2
     data.downsample: 8
     run.t: 256
     trainer.loop_autodiff: checkpointed
     data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
     - 3
     - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 1293934751
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 1293934751
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -6723,11 +6790,11 @@ configs:
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
@@ -6776,23 +6843,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -6908,7 +6975,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 3
+      repeat: 7
     logging:
       backend: wandb
       singular_values:
@@ -6917,25 +6984,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T162633Z-cfg0b6babc3d095-6b5aeae1
+      model_id: 20261006T142612Z-cfg89e883395b00-0087bf4b
 - index: 19
   overrides:
-    run.repeat: 3
+    run.repeat: 7
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -6999,7 +7067,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+    initialization.model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
     data.batches: 2
     data.downsample: 16
     run.t: 128
@@ -7011,21 +7079,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 133194446
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 133194446
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -7092,23 +7161,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -7224,7 +7293,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 3
+      repeat: 7
     logging:
       backend: wandb
       singular_values:
@@ -7233,25 +7302,26 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261003T164241Z-cfg756be362057e-66a78e3f
+      model_id: 20261006T161017Z-cfgd0754aba5757-fa77124b
 - index: 15
   overrides:
-    run.repeat: 3
+    run.repeat: 7
     labels.gpu: nvidia
     model.family: gNCA
     model.channels: 48
@@ -7315,7 +7385,7 @@ configs:
     loss.terms.0.multi_target_schedules.radial.start_fraction: 0.3
     loss.terms.0.multi_target_schedules.radial.end_fraction: 0.75
     loss.terms.0.multi_target_schedules.radial.stages: 8
-    initialization.model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+    initialization.model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
     data.batches: 2
     data.downsample: 32
     run.t: 64
@@ -7327,21 +7397,22 @@ configs:
     - 3
     - 4
     run.iterations: 4000
-    experiment.name: nca_nodal_ko_strategy_replicates_v5
-    logging.wandb.group: nca_nodal_ko_strategy_replicates_v5
+    experiment.name: nca_nodal_ko_strategy_replicates_v6
+    logging.wandb.group: nca_nodal_ko_strategy_replicates_v6
     seed: 1157200204
     logging.wandb.tag_keys:
     - run.repeat
-    - data.knockout.curriculum
     - initialization.model_id
     - data.downsample
     - run.t
     - trainer.loop_autodiff
+    - data.micropattern.train_replicates
+    - data.micropattern.validation_replicates
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 1157200204
     experiment:
-      name: nca_nodal_ko_strategy_replicates_v5
+      name: nca_nodal_ko_strategy_replicates_v6
     system:
       precision: bfloat16
       xla_flags: null
@@ -7408,23 +7479,23 @@ configs:
             protein_response/SMAD23: 30.0
           background_shrink: 4
           background_radii:
-            cell_fate_s1/SOX17: 50
-            cell_fate_s1/SOX2: 50
-            cell_fate_s1/TBXT: 50
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
             cell_fate_s1/LMBR: 0
-            cell_fate_s2/SOX17: 50
-            cell_fate_s2/FOXA2: 50
-            cell_fate_s2/TBXT: 50
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
             cell_fate_s2/LMBR: 0
-            rna_expression/CER1: 50
-            rna_expression/LEFTY: 50
-            rna_expression/NODAL: 50
-            protein_response/LEF1: 50
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
-          normalisation: replicate_mean
+          normalisation: per_replicate
           channel_percentiles: {}
           percentiles_inside_mask: true
           knockouts_use_control_bounds: false
@@ -7540,7 +7611,7 @@ configs:
       checkpoint_warmup: 64
       write_images: true
       write_videos: false
-      repeat: 3
+      repeat: 7
     logging:
       backend: wandb
       singular_values:
@@ -7549,20 +7620,21 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: nca_micropattern_KO_strategy_resolutions
-        group: nca_nodal_ko_strategy_replicates_v5
+        group: nca_nodal_ko_strategy_replicates_v6
         tags: null
         tag_keys:
         - run.repeat
-        - data.knockout.curriculum
         - initialization.model_id
         - data.downsample
         - run.t
         - trainer.loop_autodiff
+        - data.micropattern.train_replicates
+        - data.micropattern.validation_replicates
     model_store:
       enabled: true
       root: models
       collection: NCA-micropattern
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20261004T050453Z-cfg81637d0b6675-3fa42592
+      model_id: 20261006T142608Z-cfgac2cbf2fba18-3a799518
 emit_files: false
