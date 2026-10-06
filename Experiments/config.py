@@ -59,7 +59,7 @@ from NCA.trainer.config import PoolAdmissionConfig, TrainerConfig
 from NCA.trainer.interval_schedule import INTERVAL_MODES
 
 
-CONFIG_SCHEMA_VERSION = 6
+CONFIG_SCHEMA_VERSION = 7
 
 # data.dataset -> the data section that holds its settings
 DATA_SECTIONS = {
@@ -255,6 +255,9 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
       and timestep, and the image cleaning section ``cleaning``. The 0h
       factors are moved over, and ``cleaning`` stays off, so old runs load
       the data they were trained on.
+    * Version 6 and earlier had no ``data.snowmelt.version``: they read the
+      first snowmelt dataset, so ``version: v1`` is filled in, together with
+      the static channels that were then the default (DEM, INCIDENCE).
     * Loss terms once had ``epsilon``, ``metric``, ``normalize``, ``tau`` and
       ``amplitude_penalty`` options that no loss uses now. They are dropped when
       they hold their old default values.
@@ -285,6 +288,13 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
                     "intensity_factors",
                     {name: {0: value} for name, value in scales.items()},
                 )
+    if version <= 6 and isinstance(data, Mapping) and (
+        data.get("dataset") == "snowmelt" or isinstance(data.get("snowmelt"), Mapping)
+    ):
+        root["data"] = data = dict(data)
+        data["snowmelt"] = dict(data.get("snowmelt") or {})
+        data["snowmelt"].setdefault("version", "v1")
+        data["snowmelt"].setdefault("static_channels", ["DEM", "INCIDENCE"])
     if isinstance(root.get("trainer"), Mapping):
         root["trainer"] = dict(root["trainer"])
         root["trainer"].pop("backend", None)
