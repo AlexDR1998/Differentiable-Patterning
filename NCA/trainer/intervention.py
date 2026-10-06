@@ -220,7 +220,7 @@ def rollout_model_with_blocked_channel_sampled(
 
 
 @eqx.filter_jit
-def rollout_model_with_blocked_channel_prevalence(
+def rollout_model_with_blocked_channel_pattern_counts(
     nca,
     initial_state,
     boundary_mask,
@@ -231,36 +231,35 @@ def rollout_model_with_blocked_channel_prevalence(
     knockout_step,
     fate_channels,
     fate_thresholds,
-    fate_rules,
-    colony_mask,
+    pixel_groups,
+    n_groups,
 ):
-    """Roll out an intervention while retaining only cell-fate area fractions.
+    """Roll out an intervention while retaining only marker-pattern counts.
 
-    ``fate_rules`` has one row per named fate and one column per marker. Values
-    are 1 (high), -1 (low), or 0 (marker ignored). Prevalence is returned for
-    each named fate followed by the union complement (``other``).
+    At every step, each pixel's high/low pattern of the ``fate_channels``
+    (high = above ``fate_thresholds``; bit ``i`` = ``fate_channels[i]``) is
+    counted within its group in ``pixel_groups`` (``[H, W]``, e.g. radial
+    rings; -1 = left out). Returns ``[total_steps + 1, n_groups,
+    2 ** len(fate_channels)]``; cell-type shares follow from these counts
+    (see ``Common.dataloader.cell_type_shares``).
     """
 
     def boundary_callback(state):
         return _apply_boundary(state, boundary_mask, boundary_mode)
 
-    colony = colony_mask.astype(bool)
-    colony_size = jnp.maximum(jnp.sum(colony), 1)
+    n_patterns = 2 ** fate_channels.shape[0]
+    bits = 2 ** jnp.arange(fate_channels.shape[0])
+    groups = pixel_groups.astype(jnp.int32)
 
     def measure(state):
-        selected = state[fate_channels]
-        high = selected > fate_thresholds[:, None, None]
-        matches = (
-            (fate_rules[:, :, None, None] == 0)
-            | ((fate_rules[:, :, None, None] == 1) & high[None])
-            | ((fate_rules[:, :, None, None] == -1) & ~high[None])
-        )
-        named_masks = jnp.all(matches, axis=1)
-        other = ~jnp.any(named_masks, axis=0)
-        masks = jnp.concatenate((named_masks, other[None]), axis=0)
-        return jnp.sum(masks & colony, axis=(-2, -1)) / colony_size
+        high = state[fate_channels] > fate_thresholds[:, None, None]
+        codes = jnp.sum(high * bits[:, None, None], axis=0)
+        # Left-out pixels go to one extra bin that is dropped.
+        index = jnp.where(groups >= 0, groups * n_patterns + codes, n_groups * n_patterns)
+        counts = jnp.bincount(index.ravel(), length=n_groups * n_patterns + 1)
+        return counts[:-1].reshape(n_groups, n_patterns)
 
-    initial_prevalence = measure(initial_state)
+    initial_counts = measure(initial_state)
 
     def step(carry, step_index):
         state, previous_key = carry
@@ -275,9 +274,9 @@ def rollout_model_with_blocked_channel_prevalence(
         )
         return (state, step_key), measure(state)
 
-    (_, _), prevalence = jax.lax.scan(
+    (_, _), counts = jax.lax.scan(
         step,
         (initial_state, key),
         jnp.arange(total_steps),
     )
-    return jnp.concatenate((initial_prevalence[None], prevalence), axis=0)
+    return jnp.concatenate((initial_counts[None], counts), axis=0)
