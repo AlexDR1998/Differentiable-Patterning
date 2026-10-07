@@ -22,8 +22,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -50,7 +50,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -119,7 +119,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -169,10 +169,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1806341205
@@ -197,7 +197,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -226,7 +226,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -266,7 +266,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -316,8 +316,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -344,7 +344,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -413,7 +413,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -466,8 +466,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -494,7 +494,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -566,7 +566,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -619,10 +619,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 2087043557
@@ -647,7 +647,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -679,7 +679,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -719,7 +719,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -772,8 +772,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -800,7 +800,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -872,7 +872,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -922,8 +922,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -950,7 +950,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1019,7 +1019,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1069,10 +1069,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 2046968324
@@ -1097,7 +1097,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1126,7 +1126,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1166,7 +1166,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1216,8 +1216,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -1244,7 +1244,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1313,7 +1313,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1366,8 +1366,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -1394,7 +1394,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1466,7 +1466,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1519,10 +1519,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 598176026
@@ -1547,7 +1547,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1579,7 +1579,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1619,7 +1619,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1672,8 +1672,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -1700,7 +1700,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1772,7 +1772,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1822,8 +1822,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -1850,7 +1850,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1919,7 +1919,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1969,10 +1969,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 407295012
@@ -1997,7 +1997,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2026,7 +2026,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2066,7 +2066,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2116,8 +2116,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -2144,7 +2144,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2213,7 +2213,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2266,8 +2266,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -2294,7 +2294,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2366,7 +2366,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2419,10 +2419,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1332073689
@@ -2447,7 +2447,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2479,7 +2479,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2519,7 +2519,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2572,8 +2572,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -2600,7 +2600,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2672,7 +2672,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2722,8 +2722,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -2750,7 +2750,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2819,7 +2819,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2869,10 +2869,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1418186270
@@ -2897,7 +2897,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2926,7 +2926,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2966,7 +2966,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3016,8 +3016,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -3044,7 +3044,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3113,7 +3113,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3166,8 +3166,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -3194,7 +3194,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3266,7 +3266,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3319,10 +3319,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1519522183
@@ -3347,7 +3347,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3379,7 +3379,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -3419,7 +3419,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3472,8 +3472,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -3500,7 +3500,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3572,7 +3572,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3622,8 +3622,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -3650,7 +3650,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3719,7 +3719,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3769,10 +3769,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 878225224
@@ -3797,7 +3797,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3826,7 +3826,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -3866,7 +3866,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3916,8 +3916,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -3944,7 +3944,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4013,7 +4013,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4066,8 +4066,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -4094,7 +4094,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4166,7 +4166,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4219,10 +4219,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1118805955
@@ -4247,7 +4247,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4279,7 +4279,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4319,7 +4319,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4372,8 +4372,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -4400,7 +4400,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4472,7 +4472,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4522,8 +4522,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -4550,7 +4550,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4619,7 +4619,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4669,10 +4669,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 400599612
@@ -4697,7 +4697,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4726,7 +4726,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4766,7 +4766,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4816,8 +4816,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -4844,7 +4844,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4913,7 +4913,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4966,8 +4966,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -4994,7 +4994,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5066,7 +5066,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5119,10 +5119,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 2119900799
@@ -5147,7 +5147,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5179,7 +5179,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -5219,7 +5219,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5272,8 +5272,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -5300,7 +5300,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5372,7 +5372,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5423,8 +5423,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -5451,7 +5451,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5521,7 +5521,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5572,10 +5572,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1396742090
@@ -5600,7 +5600,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5630,7 +5630,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -5670,7 +5670,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5721,8 +5721,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -5749,7 +5749,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5819,7 +5819,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5873,8 +5873,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -5901,7 +5901,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5974,7 +5974,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -6028,10 +6028,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 952210990
@@ -6056,7 +6056,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -6089,7 +6089,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -6129,7 +6129,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -6183,8 +6183,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -6211,7 +6211,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -6284,7 +6284,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -6335,8 +6335,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -6363,7 +6363,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -6433,7 +6433,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -6484,10 +6484,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1924014660
@@ -6512,7 +6512,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -6542,7 +6542,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -6582,7 +6582,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -6633,8 +6633,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -6661,7 +6661,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -6731,7 +6731,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -6785,8 +6785,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -6813,7 +6813,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -6886,7 +6886,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -6940,10 +6940,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1374624034
@@ -6968,7 +6968,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -7001,7 +7001,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -7041,7 +7041,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -7095,8 +7095,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -7123,7 +7123,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -7196,7 +7196,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -7247,8 +7247,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -7275,7 +7275,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -7345,7 +7345,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -7396,10 +7396,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1294704107
@@ -7424,7 +7424,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -7454,7 +7454,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -7494,7 +7494,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -7545,8 +7545,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -7573,7 +7573,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -7643,7 +7643,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -7697,8 +7697,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -7725,7 +7725,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -7798,7 +7798,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -7852,10 +7852,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1429152570
@@ -7880,7 +7880,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -7913,7 +7913,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -7953,7 +7953,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -8007,8 +8007,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -8035,7 +8035,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -8108,7 +8108,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -8159,8 +8159,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -8187,7 +8187,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -8257,7 +8257,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -8308,10 +8308,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1911213317
@@ -8336,7 +8336,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -8366,7 +8366,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -8406,7 +8406,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -8457,8 +8457,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -8485,7 +8485,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -8555,7 +8555,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -8609,8 +8609,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -8637,7 +8637,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -8710,7 +8710,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -8764,10 +8764,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1361705852
@@ -8792,7 +8792,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -8825,7 +8825,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -8865,7 +8865,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -8919,8 +8919,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -8947,7 +8947,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -9020,7 +9020,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -9070,8 +9070,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -9098,7 +9098,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -9167,7 +9167,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -9217,10 +9217,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 789710164
@@ -9245,7 +9245,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -9274,7 +9274,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -9314,7 +9314,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -9364,8 +9364,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -9392,7 +9392,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -9461,7 +9461,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -9514,8 +9514,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -9542,7 +9542,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -9614,7 +9614,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -9667,10 +9667,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 141615452
@@ -9695,7 +9695,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -9727,7 +9727,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -9767,7 +9767,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -9820,8 +9820,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -9848,7 +9848,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -9920,7 +9920,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -9970,8 +9970,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -9998,7 +9998,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -10067,7 +10067,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -10117,10 +10117,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 296718909
@@ -10145,7 +10145,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -10174,7 +10174,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -10214,7 +10214,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -10264,8 +10264,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -10292,7 +10292,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -10361,7 +10361,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -10414,8 +10414,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -10442,7 +10442,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -10514,7 +10514,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -10567,10 +10567,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 642313784
@@ -10595,7 +10595,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -10627,7 +10627,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -10667,7 +10667,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -10720,8 +10720,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -10748,7 +10748,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -10820,7 +10820,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -10870,8 +10870,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -10898,7 +10898,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -10967,7 +10967,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -11017,10 +11017,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1680603714
@@ -11045,7 +11045,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -11074,7 +11074,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -11114,7 +11114,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -11164,8 +11164,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -11192,7 +11192,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -11261,7 +11261,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -11314,8 +11314,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -11342,7 +11342,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -11414,7 +11414,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -11467,10 +11467,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 924282500
@@ -11495,7 +11495,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -11527,7 +11527,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -11567,7 +11567,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -11620,8 +11620,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -11648,7 +11648,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -11720,7 +11720,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -11770,8 +11770,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -11798,7 +11798,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -11867,7 +11867,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -11917,10 +11917,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1935153793
@@ -11945,7 +11945,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -11974,7 +11974,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -12014,7 +12014,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -12064,8 +12064,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -12092,7 +12092,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -12161,7 +12161,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -12214,8 +12214,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -12242,7 +12242,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -12314,7 +12314,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -12367,10 +12367,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 353789296
@@ -12395,7 +12395,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -12427,7 +12427,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -12467,7 +12467,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -12520,8 +12520,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -12548,7 +12548,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -12620,7 +12620,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -12670,8 +12670,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -12698,7 +12698,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -12767,7 +12767,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -12817,10 +12817,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 2089261940
@@ -12845,7 +12845,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -12874,7 +12874,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -12914,7 +12914,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -12964,8 +12964,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -12992,7 +12992,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -13061,7 +13061,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -13114,8 +13114,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -13142,7 +13142,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -13214,7 +13214,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -13267,10 +13267,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1043830061
@@ -13295,7 +13295,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -13327,7 +13327,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -13367,7 +13367,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -13420,8 +13420,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -13448,7 +13448,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -13520,7 +13520,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -13570,8 +13570,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -13598,7 +13598,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -13667,7 +13667,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -13717,10 +13717,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 503087954
@@ -13745,7 +13745,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -13774,7 +13774,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -13814,7 +13814,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -13864,8 +13864,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -13892,7 +13892,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -13961,7 +13961,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -14014,8 +14014,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -14042,7 +14042,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -14114,7 +14114,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -14167,10 +14167,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 732213632
@@ -14195,7 +14195,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -14227,7 +14227,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -14267,7 +14267,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -14320,8 +14320,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -14348,7 +14348,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -14420,7 +14420,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -14471,8 +14471,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -14499,7 +14499,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -14569,7 +14569,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -14620,10 +14620,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 267114565
@@ -14648,7 +14648,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -14678,7 +14678,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -14718,7 +14718,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -14769,8 +14769,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -14797,7 +14797,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -14867,7 +14867,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -14921,8 +14921,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -14949,7 +14949,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -15022,7 +15022,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -15076,10 +15076,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 939625287
@@ -15104,7 +15104,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -15137,7 +15137,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -15177,7 +15177,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -15231,8 +15231,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -15259,7 +15259,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -15332,7 +15332,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -15383,8 +15383,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -15411,7 +15411,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -15481,7 +15481,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -15532,10 +15532,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 114661864
@@ -15560,7 +15560,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -15590,7 +15590,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -15630,7 +15630,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -15681,8 +15681,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -15709,7 +15709,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -15779,7 +15779,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -15833,8 +15833,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -15861,7 +15861,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -15934,7 +15934,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -15988,10 +15988,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 514088150
@@ -16016,7 +16016,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -16049,7 +16049,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -16089,7 +16089,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -16143,8 +16143,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -16171,7 +16171,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -16244,7 +16244,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -16295,8 +16295,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -16323,7 +16323,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -16393,7 +16393,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -16444,10 +16444,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 1589738942
@@ -16472,7 +16472,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -16502,7 +16502,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -16542,7 +16542,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -16593,8 +16593,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -16621,7 +16621,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -16691,7 +16691,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -16745,8 +16745,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -16773,7 +16773,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -16846,7 +16846,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -16900,10 +16900,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 92928119
@@ -16928,7 +16928,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -16961,7 +16961,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -17001,7 +17001,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -17055,8 +17055,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -17083,7 +17083,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -17156,7 +17156,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -17207,8 +17207,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -17235,7 +17235,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -17305,7 +17305,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -17356,10 +17356,10 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 532125690
@@ -17384,7 +17384,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -17414,7 +17414,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -17454,7 +17454,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -17505,8 +17505,8 @@ configs:
     - NDSI
     data.snowmelt.static_channels:
     - DEM
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -17533,7 +17533,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -17603,7 +17603,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -17657,8 +17657,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 16
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
@@ -17685,7 +17685,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -17758,7 +17758,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -17812,10 +17812,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 32
-    trainer.loop_autodiff: checkpointed
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_architecture_sweep
     logging.wandb.group: nca_snowmelt_architecture_sweep
     seed: 262357606
@@ -17840,7 +17840,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -17873,7 +17873,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -17913,7 +17913,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -17967,8 +17967,8 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
-    run.t: 256
+    data.downsample: 4
+    run.t: 128
     model.channels: 64
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_architecture_sweep
@@ -17995,7 +17995,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -18068,7 +18068,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null

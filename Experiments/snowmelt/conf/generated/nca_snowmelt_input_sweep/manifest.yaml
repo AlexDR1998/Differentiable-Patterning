@@ -19,9 +19,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - SCA
     data.snowmelt.static_channels: []
@@ -48,7 +48,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -77,7 +77,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -117,7 +117,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -162,9 +162,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - SCA
     data.snowmelt.static_channels:
@@ -192,7 +192,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -222,7 +222,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -262,7 +262,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -307,9 +307,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - SCA
     data.snowmelt.static_channels:
@@ -339,7 +339,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -371,7 +371,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -411,7 +411,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -456,9 +456,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - SCA
     data.snowmelt.static_channels:
@@ -489,7 +489,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -522,7 +522,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -562,7 +562,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -607,9 +607,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels: []
@@ -636,7 +636,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -665,7 +665,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -705,7 +705,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -750,9 +750,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -780,7 +780,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -810,7 +810,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -850,7 +850,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -895,9 +895,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -927,7 +927,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -959,7 +959,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -999,7 +999,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1044,9 +1044,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -1077,7 +1077,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1110,7 +1110,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1150,7 +1150,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1195,9 +1195,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -1225,7 +1225,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1255,7 +1255,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1295,7 +1295,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1340,9 +1340,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -1371,7 +1371,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1402,7 +1402,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1442,7 +1442,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1487,9 +1487,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -1520,7 +1520,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1553,7 +1553,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1593,7 +1593,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1638,9 +1638,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -1672,7 +1672,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1706,7 +1706,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1746,7 +1746,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1791,9 +1791,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -1822,7 +1822,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1853,7 +1853,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1893,7 +1893,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1938,9 +1938,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -1970,7 +1970,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2002,7 +2002,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2042,7 +2042,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2087,9 +2087,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -2121,7 +2121,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2155,7 +2155,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2195,7 +2195,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2240,9 +2240,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -2275,7 +2275,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2310,7 +2310,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2350,7 +2350,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2395,9 +2395,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -2430,7 +2430,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2465,7 +2465,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2505,7 +2505,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2550,9 +2550,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -2586,7 +2586,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2622,7 +2622,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2662,7 +2662,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2707,9 +2707,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -2745,7 +2745,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2783,7 +2783,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2823,7 +2823,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2868,9 +2868,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -2907,7 +2907,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2946,7 +2946,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2986,7 +2986,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3031,9 +3031,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - SCA
     data.snowmelt.static_channels: []
@@ -3060,7 +3060,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3089,7 +3089,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -3129,7 +3129,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3174,9 +3174,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - SCA
     data.snowmelt.static_channels:
@@ -3204,7 +3204,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3234,7 +3234,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -3274,7 +3274,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3319,9 +3319,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - SCA
     data.snowmelt.static_channels:
@@ -3351,7 +3351,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3383,7 +3383,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -3423,7 +3423,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3468,9 +3468,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - SCA
     data.snowmelt.static_channels:
@@ -3501,7 +3501,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3534,7 +3534,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -3574,7 +3574,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3619,9 +3619,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels: []
@@ -3648,7 +3648,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3677,7 +3677,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -3717,7 +3717,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3762,9 +3762,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -3792,7 +3792,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3822,7 +3822,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -3862,7 +3862,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3907,9 +3907,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -3939,7 +3939,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3971,7 +3971,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4011,7 +4011,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4056,9 +4056,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -4089,7 +4089,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4122,7 +4122,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4162,7 +4162,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4207,9 +4207,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -4237,7 +4237,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4267,7 +4267,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4307,7 +4307,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4352,9 +4352,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -4383,7 +4383,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4414,7 +4414,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4454,7 +4454,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4499,9 +4499,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -4532,7 +4532,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4565,7 +4565,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4605,7 +4605,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4650,9 +4650,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -4684,7 +4684,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4718,7 +4718,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4758,7 +4758,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4803,9 +4803,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -4834,7 +4834,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4865,7 +4865,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4905,7 +4905,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4950,9 +4950,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -4982,7 +4982,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5014,7 +5014,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -5054,7 +5054,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5099,9 +5099,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -5133,7 +5133,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5167,7 +5167,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -5207,7 +5207,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5252,9 +5252,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -5287,7 +5287,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5322,7 +5322,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -5362,7 +5362,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5407,9 +5407,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -5442,7 +5442,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5477,7 +5477,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -5517,7 +5517,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5562,9 +5562,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -5598,7 +5598,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5634,7 +5634,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -5674,7 +5674,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5719,9 +5719,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -5757,7 +5757,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5795,7 +5795,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -5835,7 +5835,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -5880,9 +5880,9 @@ configs:
     labels.gpu: H200
     system.precision: bfloat16
     data.dataset: snowmelt
-    data.downsample: 2
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    data.downsample: 4
+    run.t: 128
+    trainer.loop_autodiff: lax
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -5919,7 +5919,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -5958,7 +5958,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -5998,7 +5998,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null

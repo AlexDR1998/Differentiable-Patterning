@@ -28,9 +28,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.25
-    run.t: 512
+    run.t: 256
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -55,7 +55,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -130,7 +130,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 512
+      t: 256
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -185,10 +185,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.5
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    run.t: 128
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
     seed: 1806341205
@@ -212,7 +212,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -247,7 +247,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -287,7 +287,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -342,9 +342,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 1.0
-    run.t: 128
+    run.t: 64
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -369,7 +369,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -444,7 +444,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 128
+      t: 64
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -499,9 +499,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.25
-    run.t: 512
+    run.t: 256
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -526,7 +526,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -601,7 +601,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 512
+      t: 256
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -656,10 +656,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.5
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    run.t: 128
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
     seed: 2087043557
@@ -683,7 +683,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -718,7 +718,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -758,7 +758,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -813,9 +813,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 1.0
-    run.t: 128
+    run.t: 64
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -840,7 +840,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -915,7 +915,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 128
+      t: 64
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -970,9 +970,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.25
-    run.t: 512
+    run.t: 256
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -997,7 +997,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1072,7 +1072,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 512
+      t: 256
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1127,10 +1127,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.5
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    run.t: 128
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
     seed: 2046968324
@@ -1154,7 +1154,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1189,7 +1189,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1229,7 +1229,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1284,9 +1284,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 1.0
-    run.t: 128
+    run.t: 64
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -1311,7 +1311,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1386,7 +1386,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 128
+      t: 64
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1441,9 +1441,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.25
-    run.t: 512
+    run.t: 256
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -1468,7 +1468,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1543,7 +1543,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 512
+      t: 256
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1598,10 +1598,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.5
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    run.t: 128
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
     seed: 598176026
@@ -1625,7 +1625,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1660,7 +1660,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -1700,7 +1700,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1755,9 +1755,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 1.0
-    run.t: 128
+    run.t: 64
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -1782,7 +1782,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -1857,7 +1857,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 128
+      t: 64
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -1912,9 +1912,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.25
-    run.t: 512
+    run.t: 256
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -1939,7 +1939,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2014,7 +2014,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 512
+      t: 256
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2069,10 +2069,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.5
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    run.t: 128
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
     seed: 407295012
@@ -2096,7 +2096,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2131,7 +2131,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2171,7 +2171,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2226,9 +2226,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 1.0
-    run.t: 128
+    run.t: 64
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -2253,7 +2253,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2328,7 +2328,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 128
+      t: 64
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2383,9 +2383,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.25
-    run.t: 512
+    run.t: 256
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -2410,7 +2410,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2485,7 +2485,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 512
+      t: 256
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2540,10 +2540,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.5
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    run.t: 128
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
     seed: 1332073689
@@ -2567,7 +2567,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2602,7 +2602,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -2642,7 +2642,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2697,9 +2697,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 1.0
-    run.t: 128
+    run.t: 64
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -2724,7 +2724,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2799,7 +2799,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 128
+      t: 64
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -2854,9 +2854,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.25
-    run.t: 512
+    run.t: 256
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -2881,7 +2881,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -2956,7 +2956,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 512
+      t: 256
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3011,10 +3011,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.5
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    run.t: 128
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
     seed: 1418186270
@@ -3038,7 +3038,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3073,7 +3073,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -3113,7 +3113,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3168,9 +3168,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 1.0
-    run.t: 128
+    run.t: 64
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -3195,7 +3195,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3270,7 +3270,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 128
+      t: 64
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3325,9 +3325,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.25
-    run.t: 512
+    run.t: 256
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -3352,7 +3352,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3427,7 +3427,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 512
+      t: 256
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3482,10 +3482,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.5
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    run.t: 128
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
     seed: 1519522183
@@ -3509,7 +3509,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3536,163 +3536,6 @@ configs:
       - LAP
       - GRAD
       fire_rate: 0.5
-      padding: CIRCULAR
-      kernel_scale: 1
-      activation: tanh
-    trainer:
-      boundary_mode: soft
-      grad_loss: false
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      log_every: 100
-      validation_every: null
-      validation_rollout: false
-      pool_admission:
-        enabled: true
-        relative_threshold: 1.25
-        previous_relative_threshold: 1.1
-        absolute_threshold: null
-        ema_decay: 0.95
-        warmup: null
-    optimiser:
-      type: nadam
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.001
-      warmup_steps: 64
-      decay_rate: 0.99
-      schedule:
-        type: cosine
-        warmup_init_lr: 1.0e-06
-        final_factor: 0.1
-        transition_fraction: 0.75
-    loss:
-      terms:
-      - type: l2
-        weight: 1.0
-      regularisers:
-        intermediate_state: 1.0
-        boundary: 5.0
-        contiguous_growth: 0.0
-        localised_hidden: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        hidden_state_size: 0.0
-    run:
-      mode: train
-      t: 256
-      interval_mode: steps
-      reference_interval: 20
-      interval_steps: null
-      iterations: 4000
-      checkpoint_warmup: 64
-      write_images: true
-      write_videos: true
-      repeat: 1
-    logging:
-      backend: wandb
-      singular_values:
-        enabled: false
-        plot_spectra: true
-        epsilon: 1.0e-08
-      wandb:
-        project: nca_snowmelt_hyperparameter_sweep
-        group: nca_snowmelt_update_rule_sweep
-        tags: null
-        tag_keys:
-        - model.activation
-        - run.repeat
-        - model.fire_rate
-        - run.t
-        - trainer.loop_autodiff
-    model_store:
-      enabled: true
-      root: models
-      collection: NCA-snowmelt
-      model_factory: NCA.model.factory:build_model
-    initialization:
-      model_id: null
-- index: 1
-  overrides:
-    model.family: gNCA
-    model.channels: 32
-    model.kernel_str:
-    - ID
-    - LAP
-    - GRAD
-    model.kernel_scale: 1
-    model.activation: tanh
-    run.interval_mode: steps
-    run.repeat: 1
-    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
-    labels.gpu: H200
-    system.precision: bfloat16
-    data.dataset: snowmelt
-    data.snowmelt.target_channels:
-    - NDSI
-    data.snowmelt.static_channels:
-    - DEM
-    - SLOPE
-    - NORTHNESS
-    - EASTNESS
-    data.downsample: 2
-    model.fire_rate: 1.0
-    run.t: 128
-    trainer.loop_autodiff: lax
-    experiment.name: nca_snowmelt_update_rule_sweep
-    logging.wandb.group: nca_snowmelt_update_rule_sweep
-    seed: 1864753826
-    logging.wandb.tag_keys:
-    - model.activation
-    - run.repeat
-    - model.fire_rate
-    - run.t
-    - trainer.loop_autodiff
-  config:
-    schema_version: 7
-    seed: 1864753826
-    experiment:
-      name: nca_snowmelt_update_rule_sweep
-    system:
-      precision: bfloat16
-      xla_flags: null
-    labels:
-      scaling: convective
-      gpu: H200
-    data:
-      dataset: snowmelt
-      batches: 1
-      downsample: 2
-      snowmelt:
-        root: null
-        version: v2
-        target_channels:
-        - NDSI
-        static_channels:
-        - DEM
-        - SLOPE
-        - NORTHNESS
-        - EASTNESS
-        pad: 4
-        mask_threshold: 0.5
-        exclude_dates:
-        - 0
-        - 1
-        hold_out_dates: []
-        noise_strength: 0.005
-        reinjection_probability: 0.5
-    model:
-      family: gNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      fire_rate: 1.0
       padding: CIRCULAR
       kernel_scale: 1
       activation: tanh
@@ -3773,6 +3616,163 @@ configs:
       model_factory: NCA.model.factory:build_model
     initialization:
       model_id: null
+- index: 1
+  overrides:
+    model.family: gNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - LAP
+    - GRAD
+    model.kernel_scale: 1
+    model.activation: tanh
+    run.interval_mode: steps
+    run.repeat: 1
+    logging.wandb.project: nca_snowmelt_hyperparameter_sweep
+    labels.gpu: H200
+    system.precision: bfloat16
+    data.dataset: snowmelt
+    data.snowmelt.target_channels:
+    - NDSI
+    data.snowmelt.static_channels:
+    - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
+    data.downsample: 4
+    model.fire_rate: 1.0
+    run.t: 64
+    trainer.loop_autodiff: lax
+    experiment.name: nca_snowmelt_update_rule_sweep
+    logging.wandb.group: nca_snowmelt_update_rule_sweep
+    seed: 1864753826
+    logging.wandb.tag_keys:
+    - model.activation
+    - run.repeat
+    - model.fire_rate
+    - run.t
+    - trainer.loop_autodiff
+  config:
+    schema_version: 7
+    seed: 1864753826
+    experiment:
+      name: nca_snowmelt_update_rule_sweep
+    system:
+      precision: bfloat16
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H200
+    data:
+      dataset: snowmelt
+      batches: 1
+      downsample: 4
+      snowmelt:
+        root: null
+        version: v2
+        target_channels:
+        - NDSI
+        static_channels:
+        - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
+        pad: 4
+        mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
+        noise_strength: 0.005
+        reinjection_probability: 0.5
+    model:
+      family: gNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      fire_rate: 1.0
+      padding: CIRCULAR
+      kernel_scale: 1
+      activation: tanh
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 100
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_steps: 64
+      decay_rate: 0.99
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+    run:
+      mode: train
+      t: 64
+      interval_mode: steps
+      reference_interval: 20
+      interval_steps: null
+      iterations: 4000
+      checkpoint_warmup: 64
+      write_images: true
+      write_videos: true
+      repeat: 1
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: nca_snowmelt_hyperparameter_sweep
+        group: nca_snowmelt_update_rule_sweep
+        tags: null
+        tag_keys:
+        - model.activation
+        - run.repeat
+        - model.fire_rate
+        - run.t
+        - trainer.loop_autodiff
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-snowmelt
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
 - index: 8
   overrides:
     model.family: gNCA
@@ -3796,9 +3796,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.25
-    run.t: 512
+    run.t: 256
     trainer.loop_autodiff: checkpointed
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -3823,7 +3823,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -3898,7 +3898,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 512
+      t: 256
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -3953,10 +3953,10 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 0.5
-    run.t: 256
-    trainer.loop_autodiff: checkpointed
+    run.t: 128
+    trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
     seed: 878225224
@@ -3980,7 +3980,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4015,7 +4015,7 @@ configs:
       grad_loss: false
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       validation_every: null
       validation_rollout: false
@@ -4055,7 +4055,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 256
+      t: 128
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
@@ -4110,9 +4110,9 @@ configs:
     - SLOPE
     - NORTHNESS
     - EASTNESS
-    data.downsample: 2
+    data.downsample: 4
     model.fire_rate: 1.0
-    run.t: 128
+    run.t: 64
     trainer.loop_autodiff: lax
     experiment.name: nca_snowmelt_update_rule_sweep
     logging.wandb.group: nca_snowmelt_update_rule_sweep
@@ -4137,7 +4137,7 @@ configs:
     data:
       dataset: snowmelt
       batches: 1
-      downsample: 2
+      downsample: 4
       snowmelt:
         root: null
         version: v2
@@ -4212,7 +4212,7 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 128
+      t: 64
       interval_mode: steps
       reference_interval: 20
       interval_steps: null
