@@ -16,6 +16,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -25,8 +28,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 1654615998
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 1654615998
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -42,12 +50,20 @@ configs:
       downsample: 16
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -106,7 +122,7 @@ configs:
       mode: train
       t: 32
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -123,6 +139,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -141,6 +162,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -150,8 +174,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 1806341205
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 1806341205
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -167,12 +196,20 @@ configs:
       downsample: 8
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -231,7 +268,7 @@ configs:
       mode: train
       t: 64
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -248,6 +285,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -266,6 +308,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -275,8 +320,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 173879092
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 173879092
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -292,12 +342,20 @@ configs:
       downsample: 4
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -356,7 +414,7 @@ configs:
       mode: train
       t: 128
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -373,6 +431,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -391,6 +454,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -400,8 +466,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 1112038970
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 1112038970
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -417,12 +488,20 @@ configs:
       downsample: 2
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -481,7 +560,7 @@ configs:
       mode: train
       t: 256
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -498,6 +577,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -516,6 +600,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -525,8 +612,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 2087043557
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 2087043557
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -542,12 +634,20 @@ configs:
       downsample: 1
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -606,7 +706,7 @@ configs:
       mode: train
       t: 512
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -623,6 +723,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -641,6 +746,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -650,8 +758,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 1739178872
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 1739178872
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -667,12 +780,20 @@ configs:
       downsample: 16
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -731,7 +852,7 @@ configs:
       mode: train
       t: 32
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -748,6 +869,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -766,6 +892,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -775,8 +904,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 1302718217
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 1302718217
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -792,12 +926,20 @@ configs:
       downsample: 8
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -856,7 +998,7 @@ configs:
       mode: train
       t: 64
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -873,6 +1015,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -891,6 +1038,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -900,8 +1050,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 2046968324
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 2046968324
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -917,12 +1072,20 @@ configs:
       downsample: 4
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -981,7 +1144,7 @@ configs:
       mode: train
       t: 128
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -998,6 +1161,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1016,6 +1184,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -1025,8 +1196,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 1537810351
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 1537810351
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -1042,12 +1218,20 @@ configs:
       downsample: 2
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -1106,7 +1290,7 @@ configs:
       mode: train
       t: 256
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -1123,6 +1307,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1141,6 +1330,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -1150,8 +1342,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 938204377
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 938204377
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -1167,12 +1364,20 @@ configs:
       downsample: 1
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -1231,7 +1436,7 @@ configs:
       mode: train
       t: 512
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -1248,6 +1453,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1266,6 +1476,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -1275,8 +1488,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 598176026
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 598176026
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -1292,12 +1510,20 @@ configs:
       downsample: 16
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -1356,7 +1582,7 @@ configs:
       mode: train
       t: 32
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -1373,6 +1599,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1391,6 +1622,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -1400,8 +1634,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 1210484339
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 1210484339
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -1417,12 +1656,20 @@ configs:
       downsample: 8
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -1481,7 +1728,7 @@ configs:
       mode: train
       t: 64
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -1498,6 +1745,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1516,6 +1768,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -1525,8 +1780,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 600203567
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 600203567
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -1542,12 +1802,20 @@ configs:
       downsample: 4
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -1606,7 +1874,7 @@ configs:
       mode: train
       t: 128
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -1623,6 +1891,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1641,6 +1914,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -1650,8 +1926,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 407295012
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 407295012
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -1667,12 +1948,20 @@ configs:
       downsample: 2
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -1731,7 +2020,7 @@ configs:
       mode: train
       t: 256
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -1748,6 +2037,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -1766,6 +2060,9 @@ configs:
     data.dataset: snowmelt
     data.snowmelt.static_channels:
     - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     data.snowmelt.target_channels:
     - NDSI
     model.channels: 32
@@ -1775,8 +2072,13 @@ configs:
     experiment.name: nca_snowmelt_resolution_sweep_v2
     logging.wandb.group: nca_snowmelt_resolution_sweep_v2
     seed: 1075916535
+    logging.wandb.tag_keys:
+    - run.repeat
+    - data.downsample
+    - run.t
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 1075916535
     experiment:
       name: nca_snowmelt_resolution_sweep_v2
@@ -1792,12 +2094,20 @@ configs:
       downsample: 1
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         static_channels:
         - DEM
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -1856,7 +2166,7 @@ configs:
       mode: train
       t: 512
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 4000
       checkpoint_warmup: 64
@@ -1873,6 +2183,11 @@ configs:
         project: nca_snowmelt_hyperparameter_sweep
         group: nca_snowmelt_resolution_sweep_v2
         tags: null
+        tag_keys:
+        - run.repeat
+        - data.downsample
+        - run.t
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models

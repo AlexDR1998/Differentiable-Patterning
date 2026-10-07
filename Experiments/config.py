@@ -445,6 +445,11 @@ def _optional_tuple(value: Any) -> tuple[Any, ...] | None:
     return None if value is None else _tuple(value)
 
 
+def _date_entries(value: Any) -> tuple[int | str, ...]:
+    # Indices stay ints; YAML may parse an unquoted date as a date object, so dates become ISO strings.
+    return tuple(entry if isinstance(entry, int) else str(entry) for entry in _tuple(value))
+
+
 def _loss_term(value: Any, path: str) -> LossTermConfig:
     if isinstance(value, str):
         value = {"type": value}
@@ -562,6 +567,7 @@ def _data_config(value: Any) -> DataConfig:
         "snowmelt": lambda raw: _strict(
             SnowmeltDataConfig, raw, "data.snowmelt",
             target_channels=_tuple, static_channels=_tuple,
+            exclude_dates=_date_entries, hold_out_dates=_date_entries,
         ),
     }
     return _strict(

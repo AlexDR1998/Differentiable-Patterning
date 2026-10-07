@@ -4,14 +4,16 @@ output_subdir: generated/nca_snowmelt_architecture_sweep
 seed_mode: index
 
 # NCA architecture for snowmelt: gated vs plain update, perception kernels and
-# channel count. Target NDSI, static DEM.
+# channel count. Target NDSI, static DEM only: slope and aspect are left out
+# so the DIFF / GRAD comparison below measures what the model can read from
+# the DEM itself.
 #
 # Generate with:
 #   python Experiments/generate_configs.py \
 #       Experiments/snowmelt/conf/experiments/nca_snowmelt_architecture_sweep.yaml \
 #       Experiments/snowmelt/conf/base_config.yaml Experiments/snowmelt/conf/generated
 #
-# Resolution is fixed at 40 m (downsample 4, t=128); see
+# Resolution is fixed at 20 m (downsample 2, t=256); see
 # nca_snowmelt_resolution_sweep.yaml.
 #
 # Kernels: DIFF is the gradient norm (slope magnitude only, isotropic), GRAD is
@@ -32,7 +34,6 @@ grid:
     - [ID, GRAD]
     - [ID, LAP, DIFF]
     - [ID, LAP, GRAD]
-  model.channels: [16, 32, 64]
   model.fire_rate: [0.5]
   run.interval_mode: [steps]
   run.repeat: [0, 1]
@@ -41,8 +42,10 @@ grid:
   system.precision: [bfloat16]
   data.dataset: [snowmelt]
   data.snowmelt.target_channels: [[NDSI]]
-  data.snowmelt.static_channels: [[DEM]]
-  # Baseline resolution: 40 m.
-  data.downsample: [4]
-  run.t: [128]
-  trainer.loop_autodiff: [lax]
+  data.snowmelt.static_channels: [[DEM],[DEM, SLOPE, NORTHNESS, EASTNESS]]
+  # Baseline resolution: 20 m.
+  data.downsample: [2]
+  run.t: [256]
+groups:
+  - model.channels: [16, 32, 64]
+    trainer.loop_autodiff: [lax, checkpointed, checkpointed]

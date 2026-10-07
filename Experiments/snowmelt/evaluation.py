@@ -17,6 +17,10 @@ Scores use physical units (reflectance, NDSI/NDVI in [-1, 1], snow cover
 fraction), catchment pixels only, and are compared with persistence (the first
 image repeated; in ``interval`` mode the image at the start of each interval),
 the usual no-skill reference for snow-cover forecasts.
+
+Dates held out of training (``data.snowmelt.hold_out_dates``) are put back for
+evaluation and flagged in the scores, so they test whether the model
+interpolates (or, for the last date, extrapolates) to dates it never saw.
 """
 
 import numpy as np
@@ -33,11 +37,14 @@ def input_recipe(cfg):
     """The arguments of ``build_snowmelt_sequence`` that a training config used."""
     snowmelt = cfg.data.snowmelt
     return {
+        "version": snowmelt.version,
         "target_channels": tuple(snowmelt.target_channels),
         "static_channels": tuple(snowmelt.static_channels),
         "downsample": int(cfg.data.downsample),
         "pad": int(snowmelt.pad),
         "mask_threshold": float(snowmelt.mask_threshold),
+        "exclude_dates": tuple(snowmelt.exclude_dates),
+        "hold_out_dates": tuple(snowmelt.hold_out_dates),
     }
 
 
@@ -52,29 +59,40 @@ def model_label(cfg):
 
 
 def load_bundle_sequence(bundle, raw, cache=None, verify=True):
-    """Rebuild a bundle's training sequence from ``raw`` (a ``load_snowmelt`` result).
+    """Rebuild a bundle's evaluation sequence from ``raw`` (a ``load_snowmelt`` result).
 
-    With ``verify``, the initial state and boundary channels must match the
-    fingerprint recorded at training time. ``cache`` (a dict) shares sequences
-    between bundles that used the same recipe.
+    This is the training sequence plus any held-out dates (``sequence.held_out``
+    marks them); excluded dates stay out. ``raw`` must be the dataset version
+    the bundle was trained on.
+
+    With ``verify``, the training sequence's initial state and boundary channels
+    must match the fingerprint recorded at training time. ``cache`` (a dict)
+    shares sequences between bundles that used the same recipe.
     """
     from Experiments.model_registry import verify_evaluation_input
 
     recipe = input_recipe(bundle.config)
-    key = tuple(recipe.items())
-    if cache is not None and key in cache:
-        sequence = cache[key]
-    else:
-        sequence = build_snowmelt_sequence(raw=raw, **recipe)
-        if cache is not None:
-            cache[key] = sequence
+    if raw.get("version") not in (None, recipe["version"]):
+        raise ValueError(
+            f"{bundle.id} was trained on snowmelt dataset {recipe['version']}, "
+            f"but the loaded data is {raw['version']}"
+        )
+    cache = {} if cache is None else cache
+
+    def build(include_held_out):
+        key = (*recipe.items(), include_held_out)
+        if key not in cache:
+            cache[key] = build_snowmelt_sequence(raw=raw, include_held_out=include_held_out, **recipe)
+        return cache[key]
+
     if verify:
         if "evaluation_input" not in bundle.manifest:
             raise ValueError(f"{bundle.id} has no evaluation-input fingerprint to verify against")
+        training = build(include_held_out=False)
         verify_evaluation_input(
-            sequence.data, bundle.manifest.evaluation_input, boundary_mask=sequence.boundary_mask
+            training.data, bundle.manifest.evaluation_input, boundary_mask=training.boundary_mask
         )
-    return sequence
+    return build(include_held_out=True)
 
 
 def initial_state(observed, boundary, n_channels):
@@ -201,14 +219,16 @@ def upsample_blocks(values, factor):
     return np.repeat(np.repeat(values, factor, axis=-2), factor, axis=-1)
 
 
-def full_resolution_reference(raw, channel_names, factor):
+def full_resolution_reference(raw, channel_names, factor, exclude_dates=()):
     """Observed channels and catchment on the 10 m grid, cropped to the model's footprint.
 
-    Returns ``(observed [T, C, H, W], catchment [H, W])`` with the same scaling
-    and gap-filling as the training data, but no downsampling.
+    Returns ``(observed [T, C, H, W], catchment [H, W])`` with the same scaling,
+    gap-filling and dates as the evaluation sequence (all but ``exclude_dates``),
+    but no downsampling.
     """
     sequence = build_snowmelt_sequence(
-        raw=raw, target_channels=channel_names, static_channels=(), downsample=1, pad=0
+        raw=raw, target_channels=channel_names, static_channels=(), downsample=1, pad=0,
+        exclude_dates=exclude_dates,
     )
     height, width = raw["mask"].shape
     height, width = (height // factor) * factor, (width // factor) * factor
@@ -216,7 +236,7 @@ def full_resolution_reference(raw, channel_names, factor):
     return observed, raw["mask"][:height, :width]
 
 
-def score(prediction, observed, catchment, channel_names, dates, days, mode="free"):
+def score(prediction, observed, catchment, channel_names, dates, days, mode="free", held_out=None):
     """Per-date, per-channel scores of a prediction over catchment pixels.
 
     ``prediction`` is ``[R, T, C, H, W]`` and ``observed`` ``[T, C, H, W]``,
@@ -229,7 +249,10 @@ def score(prediction, observed, catchment, channel_names, dates, days, mode="fre
     Channels in :data:`SNOW_THRESHOLDS` are also classified as snow / no snow
     and compared with the observed snow map: the snow-covered fractions and
     the critical success index (hits / (hits + misses + false alarms)).
+    ``held_out`` (one flag per date, e.g. ``sequence.held_out``) marks the
+    dates the model was not trained on.
     """
+    held_out = (False,) * observed.shape[0] if held_out is None else tuple(held_out)
     rows = []
     for t in range(1, observed.shape[0]):
         for c, name in enumerate(channel_names):
@@ -243,6 +266,7 @@ def score(prediction, observed, catchment, channel_names, dates, days, mode="fre
             row = {
                 "date": dates[t],
                 "days": float(days[t]),
+                "held_out": bool(held_out[t]),
                 "channel": name,
                 "rmse": float(np.sqrt(mse)),
                 "mae": float(np.mean(np.abs(error))),

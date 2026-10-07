@@ -20,7 +20,7 @@ State channel layout (``model.channels`` = C):
     [0, n_targets)          target channels (training.loss compares these)
     [n_targets, C - m)      hidden channels
     [C - m, C)              fixed boundary channels: catchment mask, then
-                            data.snowmelt.static_channels (e.g. DEM, incidence)
+                            data.snowmelt.static_channels (e.g. DEM, slope)
 """
 
 import os
@@ -32,13 +32,15 @@ def build_run_name(cfg, model_name, optimiser_name):
     snowmelt = cfg.data.snowmelt
     loop = cfg.run
     details = (
-        f"snowmelt_{'-'.join(snowmelt.target_channels)}"
+        f"snowmelt-{snowmelt.version}_{'-'.join(snowmelt.target_channels)}"
         f"_static{_compact_value(snowmelt.static_channels or None)}"
         f"_ds{cfg.data.downsample}"
         f"_t{loop.t}_{loop.interval_mode}"
         f"_lr{cfg.optimiser.learn_rate}"
         f"_irp{snowmelt.reinjection_probability}"
     )
+    if snowmelt.hold_out_dates:
+        details += f"_holdout{'-'.join(map(str, snowmelt.hold_out_dates))}"
     if loop.repeat is not None:
         details += f"_rep{loop.repeat}"
     return f"{model_name}_{build_loss_filename(cfg.loss)}_{details}_{optimiser_name}"
@@ -51,13 +53,22 @@ def load_snowmelt_training_data(cfg):
     snowmelt = cfg.data.snowmelt
     if cfg.data.batches != 1:
         raise ValueError("Snowmelt training uses one acquisition sequence: set data.batches=1")
+    if snowmelt.hold_out_dates and (cfg.run.interval_mode != "steps" or cfg.run.reference_interval is None):
+        # Holding out a date merges its two intervals, so steps must follow days, and the
+        # median interval (the default reference) must not change with the held-out dates.
+        raise ValueError(
+            "data.snowmelt.hold_out_dates needs run.interval_mode=steps and an explicit run.reference_interval"
+        )
     return build_snowmelt_sequence(
         root=snowmelt.root,
+        version=snowmelt.version,
         target_channels=snowmelt.target_channels,
         static_channels=snowmelt.static_channels,
         downsample=cfg.data.downsample,
         pad=snowmelt.pad,
         mask_threshold=snowmelt.mask_threshold,
+        exclude_dates=snowmelt.exclude_dates,
+        hold_out_dates=snowmelt.hold_out_dates,
     )
 
 

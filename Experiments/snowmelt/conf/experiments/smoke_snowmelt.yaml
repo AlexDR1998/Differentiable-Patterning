@@ -1,6 +1,7 @@
 # Pipeline smoke test: two very short snowmelt runs at 80 m resolution
-# (64x64), covering single and multi-band targets, uniform and step-scaled
-# time intervals, both loop_autodiff modes and bundle publication.
+# (64x64) on dataset v2, covering single and multi-band targets, the v2 static
+# channels (slope and aspect), uniform and step-scaled time intervals, both
+# loop_autodiff modes and bundle publication.
 # Run all smoke tests with:
 #   python Experiments/pipeline_smoke_test.py
 experiment_name: smoke_snowmelt
@@ -27,5 +28,8 @@ groups:
     data.snowmelt.target_channels:
       - [SCA]
       - [NDSI, B3, B11]
+    data.snowmelt.static_channels:
+      - [DEM]
+      - [DEM, SLOPE, NORTHNESS, EASTNESS]
     run.interval_mode: [steps, uniform]
     trainer.loop_autodiff: [checkpointed, lax]

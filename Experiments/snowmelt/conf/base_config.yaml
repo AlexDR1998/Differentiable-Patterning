@@ -1,4 +1,4 @@
-schema_version: 5
+schema_version: 7
 seed: 0
 
 experiment:
@@ -18,21 +18,32 @@ data:
   # 517x514 at 10 m -> 129x128 at 40 m (plus the zero border below).
   downsample: 4
   snowmelt:
-    # Null falls back to $SNOWMELT_DATA_ROOT, then $DATA_PATH_BASE/snowmelt.
+    # Folder holding the dataset versions (v1/, v2/). Null falls back to
+    # $SNOWMELT_DATA_ROOT, then $DATA_PATH_BASE/snowmelt.
     root: null
+    # v1: 5 dates (May-July 2018). v2: 10 dates (April-September 2018), plus slope and aspect.
+    version: v2
     # Dynamic channels the NCA reproduces: any of B1..B12, B8A, NDSI, NDVI, SCA.
     # Reflectance is clipped to [0, 1]; NDSI/NDVI are mapped from [-1, 1].
     target_channels: [SCA]
     # Fixed per-pixel inputs in the final state channels, after the catchment mask.
-    static_channels: [DEM, INCIDENCE]
+    # v1: DEM, INCIDENCE. v2: DEM, SLOPE, NORTHNESS, EASTNESS (cos/sin of aspect).
+    static_channels: [DEM]
     pad: 4
     mask_threshold: 0.5
+    # Acquisitions never used, as indices into the dataset's dates (negative
+    # counts from the end) or ISO dates. The first two v2 dates have patchy
+    # cloud cover and brightness artefacts, so the sequence starts at the third.
+    exclude_dates: [0, 1]
+    # Acquisitions left out of training but scored at evaluation, given the same
+    # way (see nca_snowmelt_hold_out_sweep.yaml).
+    hold_out_dates: []
     noise_strength: 0.005
     reinjection_probability: 0.5
 
 model:
   family: NCA
-  # 1 target + hidden + 3 boundary channels (catchment, DEM, incidence).
+  # 1 target + hidden + 2 boundary channels (catchment, DEM).
   channels: 16
   kernel_str: [ID, LAP, GRAD] # Direction matters for geospatial data
   fire_rate: 0.5
@@ -89,11 +100,15 @@ loss:
 
 run:
   mode: train
-  # Acquisitions are 20, 5, 20, 20 days apart. With interval_mode=steps, t is
-  # the step count of the median (20-day) interval: steps = (64, 16, 64, 64).
+  # v2 acquisitions are 15, 5, 30, 20, 5, 20, 20, 30, 25 days apart. Without the
+  # first two (data.snowmelt.exclude_dates) that leaves 30, 20, 5, 20, 20, 30, 25
+  # (150 days). With interval_mode=steps, t is the step count of the reference
+  # interval: steps = (96, 64, 16, 64, 64, 96, 80), 480 in total.
   t: 64
   interval_mode: steps
-  reference_interval: null
+  # 20 days, the median interval. Set explicitly so that holding out dates
+  # (which merges intervals) does not change the steps per day.
+  reference_interval: 20
   interval_steps: null
   iterations: 4000
   # The best checkpoint is only saved after this many iterations.
@@ -111,6 +126,9 @@ logging:
     project: NCA-snowmelt
     group: base-config
     tags: null
+    # Settings whose values become automatic tags. Generated sweeps set this
+    # to the settings their runs differ in; null tags every setting.
+    tag_keys: null
 
 model_store:
   enabled: true

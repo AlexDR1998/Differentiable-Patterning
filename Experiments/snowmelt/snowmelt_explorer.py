@@ -14,16 +14,24 @@ Run from the repository root with:
 
     marimo edit Experiments/snowmelt/snowmelt_explorer.py
 
-Data layout (``SNOWMELT_DATA_ROOT``, default ``~/PhD/Data/snowmelt``):
+The dataset folder (``SNOWMELT_DATA_ROOT``, default ``~/PhD/Data/snowmelt``) holds
+one sub-folder per version, chosen at the top of the notebook:
 
-    S2_rawbands/DoraNivolet_<band>_<date>.tif      12 L2A bands x 5 dates (LZW, float64)
-    S2_derived_indexes/{NDSI,NDVI}_Nivolet_<date>.tif
-    S2_derived_indexes/SCA_Nivolet_NDSIgt04_<date>.tif   binary snow cover (NDSI > 0.4)
-    S2_topographic_attributes/{DEM,INCIDENCEANGLE}_10mTinitaly_NivoletMask.tif
+    v1/S2_rawbands/DoraNivolet_<band>_<date>.tif      12 L2A bands x 5 dates (May-July 2018)
+    v1/S2_derived_indexes/{NDSI,NDVI,SCA_..._NDSIgt04}_Nivolet_<date>.tif
+    v1/S2_topographic_attributes/{DEM,INCIDENCEANGLE}_10mTinitaly_NivoletMask.tif
 
+    v2/S2_rawbands_v1.0/...                           the same 12 bands x 10 dates (April-September 2018)
+    v2/S2_derived_indexes_v1.0/...                    NDSI, NDVI, SCA for every date
+    v2/S2_topographic_attributes_v1.0/{DEM,SLOPE,ASPECT}_Nivolet_10m_filled/...
+    v2/S2_topographic_attributes_v1.0/INCIDENCEANGLE_Nivolet_10m_filled/INCIDENCEANGLE_DOY<ddd>_H<hh>.tif
+                                                      hourly incidence angle for every day of the season
+
+A ``SNOWMELT_DATA_ROOT`` pointing straight at one version folder also works.
 All rasters share one 517 x 514 grid at 10 m in ED50 / UTM 32N (EPSG:23032).
 Reading the rasters uses ``Common/dataloader/snowmelt.py``, the same code as the
-training loader.
+training loader. In v2 the incidence angle changes with time: the per-date layer is
+the angle at one hour on each acquisition date, and a separate section browses all hours.
 
 The last section evaluates trained snowmelt NCA models from the model registry
 (``MODEL_STORE_ROOT``, default ``models/``) using ``Experiments/snowmelt/evaluation.py``.
@@ -37,6 +45,7 @@ app = marimo.App(width="full")
 
 with app.setup(hide_code=True):
     import os
+    import warnings
     from pathlib import Path
 
     import marimo as mo
@@ -47,14 +56,36 @@ with app.setup(hide_code=True):
     from matplotlib.ticker import MaxNLocator
 
     # The same reading code the training loader uses
-    from Common.dataloader.snowmelt import BAND_INFO, BANDS, block_mean, load_snowmelt
+    from Common.dataloader.snowmelt import (
+        BAND_INFO,
+        BANDS,
+        S2_OVERPASS_HOUR,
+        block_mean,
+        day_of_year,
+        incidence_files,
+        load_snowmelt,
+        read_tif,
+    )
 
     # Light figures regardless of the marimo theme, so annotation ink stays legible.
     plt.style.use("default")
 
     DATA_ROOT = Path(
         os.environ.get("SNOWMELT_DATA_ROOT", Path.home() / "PhD" / "Data" / "snowmelt")
-    )
+    ).expanduser()
+
+    def dataset_versions(base):
+        """{name: folder} of the dataset versions under ``base`` (``base`` itself if it is one)."""
+        if any(base.glob("S2_rawbands*")):
+            return {base.name: base}
+        return {p.name: p for p in sorted(base.glob("v*")) if any(p.glob("S2_rawbands*"))}
+
+    def version_contents(folder):
+        """Acquisition dates and topography layers of a version, from file names only."""
+        dates = sorted({f.stem.rsplit("_", 1)[-1] for f in folder.glob("S2_rawbands*/DoraNivolet_*.tif")})
+        topo = sorted({f.name.split("_")[0] for f in folder.glob("S2_topographic_attributes*/**/*NivoletMask.tif")})
+        hourly = incidence_files(folder)
+        return dates, topo, hourly
 
     RGB_PRESETS = {
         "True colour (B4, B3, B2)": ("B4", "B3", "B2"),
@@ -68,7 +99,7 @@ with app.setup(hide_code=True):
     if "snow" not in matplotlib.colormaps:
         matplotlib.colormaps.register(SNOW_CMAP)
 
-    LAYERS = ("Raw band", "NDSI", "NDVI", "SCA (NDSI > 0.4)", "DEM", "Incidence angle")
+    LAYERS = ("Raw band", "NDSI", "NDVI", "SCA (NDSI > 0.4)", "DEM", "Slope", "Aspect", "Incidence angle")
     # Per-layer defaults: (colormap, diverging about zero, fixed limits or None, units)
     LAYER_STYLE = {
         "Raw band": ("Greys_r", False, None, "reflectance"),
@@ -76,36 +107,63 @@ with app.setup(hide_code=True):
         "NDVI": ("BrBG", True, None, "NDVI"),
         "SCA (NDSI > 0.4)": ("snow", False, (0.0, 1.0), "snow cover"),
         "DEM": ("Oranges", False, None, "elevation (m)"),
+        "Slope": ("YlOrBr", False, None, "slope (°)"),
+        "Aspect": ("twilight", False, (0.0, 360.0), "aspect (° clockwise from north)"),  # cyclic colormap
         "Incidence angle": ("Purples", False, None, "incidence angle (°)"),
     }
-    CMAPS = ("auto", "snow", "Greys_r", "Blues", "Oranges", "Purples", "RdBu", "BrBG", "cividis", "viridis")
+    CMAPS = ("auto", "snow", "Greys_r", "Blues", "Oranges", "Purples", "YlOrBr", "twilight", "RdBu", "BrBG", "cividis", "viridis")
+    # Layer name -> key in the load_snowmelt dict, for layers without a date axis in some version
+    TOPOGRAPHY_KEYS = {"DEM": "dem", "Slope": "slope", "Aspect": "aspect", "Incidence angle": "incidence"}
+
+    def available_layers(data):
+        """Layers present in this dataset version (slope and aspect are v2 only)."""
+        return [l for l in LAYERS if l not in TOPOGRAPHY_KEYS or data[TOPOGRAPHY_KEYS[l]] is not None]
+
+    def is_static(data, layer):
+        """True for layers without a date axis. Incidence is static in v1 and per date in v2."""
+        return layer in TOPOGRAPHY_KEYS and data[TOPOGRAPHY_KEYS[layer]].ndim == 2
 
     def get_layer(data, layer, band, t):
         """Return the (H, W) array for a layer at date index t (static layers ignore t)."""
         if layer == "Raw band":
             return data["raw"][t, data["bands"].index(band)]
-        return {
-            "NDSI": lambda: data["ndsi"][t],
-            "NDVI": lambda: data["ndvi"][t],
-            "SCA (NDSI > 0.4)": lambda: data["sca"][t],
-            "DEM": lambda: data["dem"],
-            "Incidence angle": lambda: data["incidence"],
-        }[layer]()
+        if layer in TOPOGRAPHY_KEYS:
+            values = data[TOPOGRAPHY_KEYS[layer]]
+            return values if values.ndim == 2 else values[t]
+        return {"NDSI": data["ndsi"], "NDVI": data["ndvi"], "SCA (NDSI > 0.4)": data["sca"]}[layer][t]
 
-    # Every candidate NCA channel: raw bands, derived indexes, then static topography
-    CHANNELS = BANDS + ("NDSI", "NDVI", "SCA", "DEM", "Incidence angle")
+    def incidence_label(data):
+        """'Incidence angle', with the hour when it is taken from the hourly files."""
+        return "Incidence angle" + ("" if data["incidence_hour"] is None else f" (H{data['incidence_hour']:02d})")
+
+    # Every candidate NCA channel: raw bands, derived indexes, then topography
+    CHANNELS = BANDS + ("NDSI", "NDVI", "SCA", "DEM", "Slope", "Aspect", "Incidence angle")
+
+    def available_channels(data):
+        return [c for c in CHANNELS if c not in TOPOGRAPHY_KEYS or data[TOPOGRAPHY_KEYS[c]] is not None]
 
     def channel_stack(data, name):
         """Return (array, is_static, LAYER_STYLE key, units); array is (T, H, W), or (H, W) if static."""
         if name in data["bands"]:
             return data["raw"][:, data["bands"].index(name)], False, "Raw band", f"{name} reflectance"
+        if name in TOPOGRAPHY_KEYS:
+            return data[TOPOGRAPHY_KEYS[name]], is_static(data, name), name, LAYER_STYLE[name][3]
         return {
             "NDSI": (data["ndsi"], False, "NDSI", "NDSI"),
             "NDVI": (data["ndvi"], False, "NDVI", "NDVI"),
             "SCA": (data["sca"], False, "SCA (NDSI > 0.4)", "snow cover"),
-            "DEM": (data["dem"], True, "DEM", "elevation (m)"),
-            "Incidence angle": (data["incidence"], True, "Incidence angle", "incidence angle (°)"),
         }[name]
+
+    def map_grid(n, ncols=5, panel=(3.6, 4.0), **kwargs):
+        """Figure with n map panels in rows of at most ncols; returns (fig, flat axes[:n])."""
+        ncols = min(n, ncols)
+        nrows = -(-n // ncols)
+        fig, axes = plt.subplots(nrows, ncols, figsize=(panel[0] * ncols, panel[1] * nrows),
+                                 constrained_layout=True, squeeze=False, **kwargs)
+        axes = axes.ravel()
+        for ax in axes[n:]:
+            ax.axis("off")
+        return fig, axes[:n]
 
     def color_limits(arr, layer, pct):
         """Colour limits: fixed for SCA, symmetric about zero for diverging layers, else percentiles."""
@@ -161,28 +219,58 @@ with app.setup(hide_code=True):
         """Ordered dates get an ordered (sequential, single-hue) ramp."""
         return plt.cm.Blues(np.linspace(0.35, 1.0, n))
 
+    from functools import lru_cache
+
+    @lru_cache(maxsize=512)
+    def read_incidence_file(path):
+        """One hourly incidence-angle raster (v2), cached: each file takes ~0.1 s to decode."""
+        return read_tif(path)
+
+    def doy_to_date(year, doy):
+        """Calendar date(s) of day-of-year value(s); works for scalars and arrays."""
+        return np.datetime64(f"{year}-01-01") + (np.asarray(doy) - 1).astype("timedelta64[D]")
+
 
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
     # Nivolet snowmelt: Sentinel-2 dataset explorer
 
-    Visual exploration of five Sentinel-2 L2A acquisitions (May–July 2018) over the
-    Dora/Nivolet catchment, together with derived snow/vegetation indexes and topography.
-    The aim is to understand the spatiotemporal structure of snowmelt before framing it as an
-    NCA target sequence.
+    Visual exploration of Sentinel-2 L2A acquisitions (2018) over the Dora/Nivolet
+    catchment, together with derived snow/vegetation indexes and topography. The aim is to
+    understand the spatiotemporal structure of snowmelt before framing it as an NCA target
+    sequence. Choose the dataset version below; every section follows that choice.
     """)
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
-    data = load_snowmelt(DATA_ROOT)
-    return (data,)
+    versions = dataset_versions(DATA_ROOT)
+    if not versions:
+        raise FileNotFoundError(f"No snowmelt dataset versions under {DATA_ROOT}")
+    version_select = mo.ui.dropdown(list(versions), value=list(versions)[-1], label="Dataset version")
+    # Hours present in the hourly incidence files of any version (empty if none has them)
+    _hours = sorted({_h for _p in versions.values() for (_, _h) in incidence_files(_p)})
+    incidence_hour = mo.ui.dropdown(
+        {f"H{_h:02d}": _h for _h in _hours} or {"—": S2_OVERPASS_HOUR},
+        value=f"H{S2_OVERPASS_HOUR:02d}" if S2_OVERPASS_HOUR in _hours else (f"H{_hours[0]:02d}" if _hours else "—"),
+        label="Incidence hour on acquisition dates (v2)",
+    )
+    mo.hstack([version_select, incidence_hour], justify="start", gap=1.5)
+    return incidence_hour, version_select, versions
+
+
+@app.cell
+def _(incidence_hour, version_select, versions):
+    data_root = versions[version_select.value]
+    with mo.status.spinner(f"Loading {version_select.value} from {data_root}"):
+        data = load_snowmelt(data_root, incidence_hour=incidence_hour.value)
+    return data, data_root
 
 
 @app.cell(hide_code=True)
-def _(data):
+def _(data, data_root, version_select):
     _T, _B, _H, _W = data["raw"].shape
     _n_in = int(data["mask"].sum())
     _dx, _dy = data["pixel_size"]
@@ -190,17 +278,32 @@ def _(data):
     _band_rows = "\n".join(
         f"| {b} | {wl} | {res} | {name} |" for b, (wl, res, name) in BAND_INFO.items()
     )
+    _topography = ", ".join(l for l in ("DEM", "Slope", "Aspect") if data[TOPOGRAPHY_KEYS[l]] is not None)
+    _hourly = incidence_files(data_root)
+    if _hourly:
+        _doys = sorted({_d for _d, _ in _hourly})
+        _first, _last = (np.datetime64("2018-01-01") + np.timedelta64(_d - 1, "D") for _d in (_doys[0], _doys[-1]))
+        _incidence = (
+            f"hourly, {len(_hourly):,} files: DOY {_doys[0]}–{_doys[-1]} ({_first} to {_last}), "
+            f"H{min(_h for _, _h in _hourly):02d}–H{max(_h for _, _h in _hourly):02d}. "
+            f"Per-date layers use H{data['incidence_hour']:02d}"
+        )
+    else:
+        _incidence = "one static map"
     mo.md(f"""
-    ## Dataset summary
+    ## Dataset summary: {version_select.value}
 
     | | |
     |---|---|
+    | Folder | `{data_root}` |
     | Grid | {_H} × {_W} pixels at {_dx:g} × {_dy:g} m ({_H * _dy / 1e3:.2f} × {_W * _dx / 1e3:.2f} km) |
     | CRS | {data["crs"]} |
     | Extent (km) | E {_ext[0]:.2f}–{_ext[1]:.2f}, N {_ext[2]:.2f}–{_ext[3]:.2f} |
     | Catchment pixels | {_n_in:,} of {_H * _W:,} ({100 * _n_in / (_H * _W):.1f}%) |
-    | Dates | {", ".join(data["dates"])} |
+    | Dates | {_T}: {", ".join(data["dates"])} |
     | Raw bands | {_B} (all resampled to 10 m) |
+    | Topography | {_topography} |
+    | Incidence angle | {_incidence} |
 
     <details><summary>Sentinel-2 band reference</summary>
 
@@ -214,15 +317,39 @@ def _(data):
 
 
 @app.cell(hide_code=True)
+def _(versions):
+    # Which files each version has, from the file names alone (nothing is loaded)
+    _contents = {_v: version_contents(_p) for _v, _p in versions.items()}
+    _all_dates = sorted({_d for _dates, _, _ in _contents.values() for _d in _dates})
+    _date_rows = [
+        {"date": _d, "DOY": day_of_year(_d), **{_v: "✓" if _d in _c[0] else "" for _v, _c in _contents.items()}}
+        for _d in _all_dates
+    ]
+    _layer_rows = [
+        {"version": _v, "dates": len(_c[0]), "topography rasters": ", ".join(_c[1]),
+         "hourly incidence files": len(_c[2])}
+        for _v, _c in _contents.items()
+    ]
+    mo.accordion({
+        "Dataset versions compared": mo.vstack([
+            mo.ui.table(_layer_rows, selection=None),
+            mo.ui.table(_date_rows, selection=None, page_size=20),
+        ])
+    }) if len(versions) > 1 else mo.md("")
+    return
+
+
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ### Missing data
 
     Pixels **inside the catchment** that are no-data in a given file (outside-catchment pixels
-    are excluded). Missing values are sparse and date-specific. They appear only in
-    some raw bands on the two July acquisitions, in the NDVI of those dates (which uses B8), and
-    in the static incidence-angle map. NDSI and SCA (built from B3 and B11) are complete.
+    are excluded). The matrix covers every per-date layer (in v2 this includes the incidence
+    angle at the chosen hour); static topography layers are counted below it.
     These pixels are NaN in the arrays loaded here and need filling or masking before NCA training.
+    In the hourly incidence files a pixel also has no value when it gets no direct sun at that
+    hour, so the incidence row depends on the hour chosen at the top.
     """)
     return
 
@@ -233,6 +360,9 @@ def _(data):
     _dates = data["dates"]
     missing_row_labels = list(data["bands"]) + ["NDSI", "NDVI", "SCA"]
     _dynamic = [data["raw"][:, _b] for _b in range(len(data["bands"]))] + [data["ndsi"], data["ndvi"], data["sca"]]
+    if not is_static(data, "Incidence angle"):
+        missing_row_labels.append(incidence_label(data))
+        _dynamic.append(data["incidence"])
 
     # (layer, date) -> boolean (H, W) map of missing catchment pixels
     missing_maps = {}
@@ -243,8 +373,10 @@ def _(data):
             missing_matrix[_i, _t] = _m.sum()
             if _m.any():
                 missing_maps[f"{_name} · {_d}"] = _m
-    for _name, _key in (("DEM", "dem"), ("Incidence angle", "incidence")):
-        _m = np.isnan(data[_key]) & _mask
+    for _name in ("DEM", "Slope", "Aspect", "Incidence angle"):
+        if _name not in available_layers(data) or not is_static(data, _name):
+            continue
+        _m = np.isnan(data[TOPOGRAPHY_KEYS[_name]]) & _mask
         if _m.any():
             missing_maps[f"{_name} · static"] = _m
 
@@ -338,7 +470,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _(data):
-    layer_select = mo.ui.dropdown(LAYERS, value="NDSI", label="Layer")
+    layer_select = mo.ui.dropdown(available_layers(data), value="NDSI", label="Layer")
     band_select = mo.ui.dropdown(BANDS, value="B3", label="Band (raw only)")
     date_select = mo.ui.dropdown(
         {d: i for i, d in enumerate(data["dates"])}, value=data["dates"][0], label="Date"
@@ -385,8 +517,9 @@ def _(
     )
     draw_outline(_ax_map, data["mask"], data["extent_km"])
     _fig.colorbar(_im, ax=_ax_map, shrink=0.8, label=_units)
-    _when ="" if _layer in ("DEM", "Incidence angle") else f" — {date_select.selected_key}"
-    _what = f"{band_select.value} ({BAND_INFO[band_select.value][2]})" if _layer == "Raw band" else _layer
+    _when = "" if is_static(data, _layer) else f" — {date_select.selected_key}"
+    _what = {"Raw band": f"{band_select.value} ({BAND_INFO[band_select.value][2]})",
+             "Incidence angle": incidence_label(data)}.get(_layer, _layer)
     style_map_axes(_ax_map, f"{_what}{_when}")
 
     _vals = _arr[np.isfinite(_arr)]
@@ -427,12 +560,10 @@ def _():
 @app.cell(hide_code=True)
 def _(data, rgb_gamma, rgb_pct, rgb_preset):
     _T = len(data["dates"])
-    _fig, _axes = plt.subplots(1, _T, figsize=(3.6 * _T, 4), constrained_layout=True, sharex=True, sharey=True)
-    for _t, _ax in enumerate(np.atleast_1d(_axes)):
+    _fig, _axes = map_grid(_T, sharex=True, sharey=True)
+    for _t, _ax in enumerate(_axes):
         _ax.imshow(rgb_composite(data, rgb_preset.value, _t, rgb_pct.value, rgb_gamma.value), extent=data["extent_km"])
         style_map_axes(_ax, data["dates"][_t])
-        if _t > 0:
-            _ax.set_ylabel("")
     _fig.suptitle(rgb_preset.selected_key, fontsize=11)
     _fig
     return
@@ -444,14 +575,14 @@ def _():
     ## Time series: small multiples
 
     One layer across all dates on a shared colour scale. *Change from first date* shows
-    where each quantity has moved since the late-May acquisition.
+    where each quantity has moved since the first acquisition.
     """)
     return
 
 
 @app.cell(hide_code=True)
-def _():
-    ts_layer = mo.ui.dropdown(LAYERS[:4], value="NDSI", label="Layer")
+def _(data):
+    ts_layer = mo.ui.dropdown([l for l in available_layers(data) if not is_static(data, l)], value="NDSI", label="Layer")
     ts_band = mo.ui.dropdown(BANDS, value="B11", label="Band (raw only)")
     ts_mode = mo.ui.radio(["Absolute", "Change from first date"], value="Absolute", label="Mode", inline=True)
     mo.hstack([ts_layer, ts_band, ts_mode], justify="start", gap=1.5, wrap=True)
@@ -470,14 +601,12 @@ def _(data, ts_band, ts_layer, ts_mode):
     else:
         _vmin, _vmax = color_limits(_stack, ts_layer.value, (2, 98))
 
-    _fig, _axes = plt.subplots(1, len(_dates), figsize=(3.6 * len(_dates), 4), constrained_layout=True, sharey=True)
+    _fig, _axes = map_grid(len(_dates), sharex=True, sharey=True)
     for _t, _ax in enumerate(_axes):
         _im = _ax.imshow(_stack[_t], cmap=_cmap, vmin=_vmin, vmax=_vmax, extent=data["extent_km"], interpolation="nearest")
         draw_outline(_ax, data["mask"], data["extent_km"])
         style_map_axes(_ax, _dates[_t])
-        if _t > 0:
-            _ax.set_ylabel("")
-    _fig.colorbar(_im, ax=_axes, shrink=0.8, label=_units)
+    _fig.colorbar(_im, ax=list(_axes), shrink=0.8, label=_units)
     _fig
     return
 
@@ -545,37 +674,49 @@ def _(data):
 
 
 @app.cell(hide_code=True)
-def _():
+def _(data):
     elev_bin = mo.ui.slider(25, 300, step=25, value=100, label="Elevation bin (m)", show_value=True)
-    elev_bin
-    return (elev_bin,)
+    terrain_covariate = mo.ui.dropdown(
+        [l for l in ("Incidence angle", "Slope", "Aspect") if l in available_layers(data)],
+        value="Incidence angle", label="Right panel",
+    )
+    mo.hstack([elev_bin, terrain_covariate], justify="start", gap=1.5)
+    return elev_bin, terrain_covariate
 
 
 @app.cell(hide_code=True)
-def _(data, elev_bin):
+def _(data, elev_bin, terrain_covariate):
     _mask = data["mask"]
-    _dem = data["dem"][_mask]
-    _inc = data["incidence"][_mask]
-    _snow = np.nan_to_num(data["sca"][:, _mask]) > 0.5
     _dates = data["dates"]
-    _cols = date_colors(len(_dates))
+    _T = len(_dates)
+    _dem = np.broadcast_to(data["dem"][_mask], (_T, int(_mask.sum())))
+    _snow = np.nan_to_num(data["sca"][:, _mask]) > 0.5
+    _cols = date_colors(_T)
 
     def _binned(values, edges):
-        _idx = np.digitize(values, edges) - 1
+        """Snow-covered fraction per bin and date; ``values`` is (T, pixels), NaN pixels ignored."""
+        _idx = np.digitize(np.nan_to_num(values, nan=-np.inf), edges) - 1
         _ok = (_idx >= 0) & (_idx < len(edges) - 1)
-        _counts = np.bincount(_idx[_ok], minlength=len(edges) - 1)
+        _n = len(edges) - 1
+        _counts = np.array([np.bincount(_i[_o], minlength=_n) for _i, _o in zip(_idx, _ok)])
         _fracs = np.array([
-            np.bincount(_idx[_ok], weights=_s[_ok].astype(float), minlength=len(edges) - 1) / np.maximum(_counts, 1)
-            for _s in _snow
+            np.bincount(_i[_o], weights=_s[_o].astype(float), minlength=_n) / np.maximum(_c, 1)
+            for _i, _o, _s, _c in zip(_idx, _ok, _snow, _counts)
         ])
-        _fracs[:, _counts < 20] = np.nan  # hide sparsely populated bins
+        _fracs[_counts < 20] = np.nan  # hide sparsely populated bins
         return 0.5 * (edges[1:] + edges[:-1]), _fracs, _counts
 
     _e_edges = np.arange(np.floor(np.nanmin(_dem) / elev_bin.value) * elev_bin.value, np.nanmax(_dem) + elev_bin.value, elev_bin.value)
     _e_mid, _e_frac, _e_cnt = _binned(_dem, _e_edges)
-    _finite_inc = np.isfinite(_inc)
-    _i_edges = np.arange(0, 95, 5.0)
-    _i_mid, _i_frac, _ = _binned(np.where(_finite_inc, _inc, -1), _i_edges)
+    _e_cnt = _e_cnt[0]
+
+    # Right panel: incidence is per date in v2 (each date binned by its own map)
+    _cov_name = terrain_covariate.value
+    _cov = data[TOPOGRAPHY_KEYS[_cov_name]]
+    _cov = _cov[:, _mask] if _cov.ndim == 3 else np.broadcast_to(_cov[_mask], (_T, int(_mask.sum())))
+    _i_edges = np.arange(0, 361, 22.5) if _cov_name == "Aspect" else np.arange(0, 95, 5.0)
+    _i_mid, _i_frac, _ = _binned(_cov, _i_edges)
+    _cov_label = incidence_label(data) if _cov_name == "Incidence angle" else _cov_name
 
     _fig, (_ax_e, _ax_h, _ax_i) = plt.subplots(
         1, 3, figsize=(15, 4.5), constrained_layout=True, gridspec_kw={"width_ratios": [1.3, 0.6, 1.1]}
@@ -594,9 +735,11 @@ def _(data, elev_bin):
     _ax_h.set_xlabel("pixels")
     _ax_h.set_title("Hypsometry", fontsize=10)
 
-    _ax_i.set_xlabel("incidence angle (°)")
+    _ax_i.set_xlabel(LAYER_STYLE[_cov_name][3])
     _ax_i.set_ylabel("snow-covered fraction")
-    _ax_i.set_title("Snow cover by incidence angle", fontsize=10)
+    _ax_i.set_title(f"Snow cover by {_cov_label[0].lower() + _cov_label[1:]}", fontsize=10)
+    if _cov_name == "Aspect":
+        _ax_i.set_xticks([0, 90, 180, 270, 360], ["N", "E", "S", "W", "N"])
     _ax_i.legend(frameon=False, fontsize=8)
     for _ax in (_ax_e, _ax_h, _ax_i):
         _ax.spines[["top", "right"]].set_visible(False)
@@ -749,7 +892,7 @@ def _(data):
 
 @app.cell(hide_code=True)
 def _(data, ndsi_recomputed):
-    _fig, _axes = plt.subplots(1, len(data["dates"]), figsize=(16, 3.4), constrained_layout=True, sharey=True)
+    _fig, _axes = map_grid(len(data["dates"]), panel=(3.2, 3.4), sharey=True)
     for _t, _ax in enumerate(_axes):
         _p = data["ndsi"][_t][data["mask"]]
         _c = ndsi_recomputed[_t][data["mask"]]
@@ -759,7 +902,8 @@ def _(data, ndsi_recomputed):
         _ax.set_title(data["dates"][_t], fontsize=9)
         _ax.set_xlabel("NDSI from B3/B11")
         _ax.set_aspect("equal")
-    _axes[0].set_ylabel("NDSI provided")
+        if _t % 5 == 0:
+            _ax.set_ylabel("NDSI provided")
     _fig
     return
 
@@ -772,16 +916,16 @@ def _():
     NCA training in this repository runs on grids much smaller than 517 × 514. This
     block-averages the selected channels (NaN-aware; the mask is carried as a fraction) to show
     how much spatial structure survives at a given training resolution. Each row is one channel
-    on a colour scale shared across dates. Static channels (DEM, incidence angle) are shown once.
-    The catchment mask (from the DEM) is a single connected domain with no interior holes.
+    on a colour scale shared across dates. Static channels (DEM, slope, aspect, and the v1
+    incidence angle) are shown once.
     """)
     return
 
 
 @app.cell(hide_code=True)
-def _():
+def _(data):
     nca_factor = mo.ui.dropdown({"1× (517×514)": 1, "2×": 2, "4×": 4, "8×": 8, "16×": 16}, value="4×", label="Downsample")
-    nca_channels = mo.ui.multiselect(CHANNELS, value=["SCA", "NDSI", "B3", "B11"], label="Channels")
+    nca_channels = mo.ui.multiselect(available_channels(data), value=["SCA", "NDSI", "B3", "B11"], label="Channels")
     mo.hstack([nca_factor, nca_channels], justify="start", gap=1.5, wrap=True)
     return nca_channels, nca_factor
 
@@ -840,12 +984,12 @@ def _():
     mo.md(r"""
     ## Temporal sampling
 
-    The acquisitions are **not evenly spaced in time**. The NCA trainer runs a fixed number of
-    steps `t` between consecutive target images (`_run_nca_steps` in `NCA/trainer/trainer.py`).
-    If every interval gets the same `t`, the model has to reproduce a 5-day change and a
-    20-day change in the same number of steps, i.e. run at different "speeds" in different
-    intervals. The panels below show the true spacing, how the melt curve distorts if the
-    images are treated as evenly spaced, and how much changes per interval and per day.
+    The acquisitions are **not evenly spaced in time**. With `run.interval_mode: steps` the NCA
+    trainer runs the same number of steps `t` between every pair of consecutive target images, so
+    the model has to reproduce a short-interval change and a long-interval change in the same
+    number of steps, i.e. run at different "speeds" in different intervals. The panels below show
+    the true spacing, how the melt curve distorts if the images are treated as evenly spaced, and
+    how much changes per interval and per day.
     """)
     return
 
@@ -939,9 +1083,10 @@ def _(data, days, dt_days, steps_per_day):
     mo.vstack([
         mo.md(f"""
     **Interval summary.** With steps ∝ Δt at {steps_per_day.value} steps/day the rollout covers
-    {int(steps_per_day.value * days[-1])} NCA steps in total. The 5-day interval gets a quarter of the
-    steps of the 20-day intervals. Under uniform spacing every interval gets {_uniform_steps} steps,
-    so the per-step dynamics in the 5-day interval would need to be ~{dt_days.max() / dt_days.min():.0f}× slower.
+    {int(steps_per_day.value * days[-1])} NCA steps in total, and the shortest interval ({dt_days.min()} d)
+    gets {dt_days.min() / dt_days.max():.2f}× the steps of the longest ({dt_days.max()} d). Under uniform
+    spacing every interval gets {_uniform_steps} steps, so the per-step dynamics in the shortest interval
+    would need to be ~{dt_days.max() / dt_days.min():.0f}× slower than in the longest.
     """),
         mo.ui.table(_rows, selection=None),
     ])
@@ -963,16 +1108,165 @@ def _(change_norm, data, dt_days):
     if _per_day:
         _delta = _delta / dt_days[:, None, None]
     _m = np.nanpercentile(np.abs(_delta), 99)
-    _fig, _axes = plt.subplots(1, len(dt_days), figsize=(3.8 * len(dt_days), 4.2), constrained_layout=True, sharey=True)
+    _fig, _axes = map_grid(len(dt_days), panel=(3.8, 4.2), sharex=True, sharey=True)
     for _i, _ax in enumerate(_axes):
         _im = _ax.imshow(_delta[_i], cmap="RdBu", vmin=-_m, vmax=_m, extent=data["extent_km"], interpolation="nearest")
         draw_outline(_ax, data["mask"], data["extent_km"])
         style_map_axes(_ax, f"{_dates[_i][5:]} → {_dates[_i + 1][5:]}  (Δt = {dt_days[_i]} d)")
-        if _i > 0:
-            _ax.set_ylabel("")
     _fig.colorbar(_im, ax=list(_axes), shrink=0.8, label="ΔNDSI per day" if _per_day else "ΔNDSI")
     _fig.suptitle("NDSI change between consecutive acquisitions (red = loss of snow signal)", fontsize=10)
     _fig
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Hourly solar incidence angle (v2)
+
+    v2 replaces the single incidence-angle map with one raster per hour for every day of the
+    season (`INCIDENCEANGLE_DOY<ddd>_H<hh>.tif`). Files are read on demand. Left: the map at the
+    chosen day and hour, over a hillshade; pixels with no value are left grey. Right: the daily
+    cycle on that day: how much of the catchment has a value, and the mean angle over those
+    pixels. The dashed line marks the hour used for the per-date incidence layer elsewhere in this
+    notebook (set at the top). The hour convention of the files (UTC or local time, start or end
+    of the hour) is not documented; Sentinel-2 passes over the Alps at about 10:20 UTC.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(data, data_root):
+    hourly_files = incidence_files(data_root)
+    hourly_year = data["dates"][0][:4]
+    if hourly_files:
+        _doys = sorted({_d for _d, _ in hourly_files})
+        _hours = sorted({_h for _, _h in hourly_files})
+        _first = day_of_year(data["dates"][0])
+        hourly_day = mo.ui.slider(_doys[0], _doys[-1], step=1, value=_first if _first in _doys else _doys[0],
+                                  label="Day of year", show_value=True, full_width=True)
+        hourly_hour = mo.ui.slider(_hours[0], _hours[-1], step=1, value=data["incidence_hour"],
+                                   label="Hour", show_value=True, full_width=True)
+        _out = mo.hstack([hourly_day, hourly_hour], widths=[3, 1], gap=2)
+    else:
+        hourly_day = hourly_hour = None
+        _out = mo.callout("This version has a single static incidence-angle map; hourly files are in v2.", kind="neutral")
+    _out
+    return hourly_day, hourly_files, hourly_hour, hourly_year
+
+
+@app.cell(hide_code=True)
+def _(data, hourly_day, hourly_files, hourly_hour, hourly_year):
+    if not hourly_files:
+        _out = mo.md("")
+    else:
+        _mask = data["mask"]
+        _doy, _hour = hourly_day.value, hourly_hour.value
+        _date = str(doy_to_date(hourly_year, _doy))
+        _hours = sorted(_h for _d, _h in hourly_files if _d == _doy)
+        _maps = {_h: np.where(_mask, read_incidence_file(hourly_files[_doy, _h]), np.nan) for _h in _hours}
+        _valued = np.array([100 * np.isfinite(_maps[_h][_mask]).mean() for _h in _hours])
+        with np.errstate(all="ignore"):
+            _mean = np.array([np.nanmean(_maps[_h][_mask]) if _v > 0 else np.nan for _h, _v in zip(_hours, _valued)])
+
+        _fig = plt.figure(figsize=(16, 6.5), constrained_layout=True)
+        _grid = _fig.add_gridspec(2, 2, width_ratios=[1.3, 1])
+        _ax_map = _fig.add_subplot(_grid[:, 0])
+        _ax_val = _fig.add_subplot(_grid[0, 1])
+        _ax_mean = _fig.add_subplot(_grid[1, 1], sharex=_ax_val)
+
+        _hs = np.where(_mask, hillshade(data["dem"]), np.nan)
+        _ax_map.imshow(_hs, cmap="Greys_r", extent=data["extent_km"], vmin=0, vmax=1)
+        if _hour in _maps:
+            _im = _ax_map.imshow(_maps[_hour], cmap="Purples", vmin=0, vmax=90, extent=data["extent_km"],
+                                 alpha=0.85, interpolation="nearest")
+            _fig.colorbar(_im, ax=_ax_map, shrink=0.8, label="incidence angle (°)")
+        draw_outline(_ax_map, _mask, data["extent_km"])
+        _tag = " · acquisition date" if _date in data["dates"] else ""
+        style_map_axes(_ax_map, f"DOY {_doy} ({_date}{_tag}) · H{_hour:02d}"
+                       + ("" if _hour in _maps else " · no file"))
+
+        _ax_val.plot(_hours, _valued, marker="o", ms=5, lw=2, color="#2f5d95")
+        _ax_val.set_ylabel("catchment with a value (%)")
+        _ax_val.set_ylim(-3, 103)
+        _ax_mean.plot(_hours, _mean, marker="o", ms=5, lw=2, color="#6a51a3")
+        _ax_mean.set_ylabel("mean angle over valued pixels (°)")
+        _ax_mean.set_xlabel("hour (H)")
+        for _ax in (_ax_val, _ax_mean):
+            _ax.axvline(_hour, color="#c0392b", lw=1.5)
+            _ax.axvline(data["incidence_hour"], color="#555", lw=1, ls="--")
+            _ax.grid(color="#eeeeee")
+            _ax.spines[["top", "right"]].set_visible(False)
+        _ax_val.set_title(f"Daily cycle on {_date} (red: shown hour, dashed: per-date layer hour)", fontsize=10)
+        _out = _fig
+    _out
+    return
+
+
+@app.cell(hide_code=True)
+def _(hourly_files, hourly_hour):
+    season_run = mo.ui.run_button(
+        label=f"Load H{hourly_hour.value:02d} for every day" if hourly_files else "Load", disabled=not hourly_files
+    )
+    mo.vstack([
+        mo.md("**Seasonal course.** Reads the chosen hour for every day of the season (one file per day, "
+              "a few tens of seconds), then plots the catchment summary and the pixel chosen in the "
+              "*Pixel inspector* against the acquisition dates."),
+        season_run,
+    ]) if hourly_files else mo.md("")
+    return (season_run,)
+
+
+@app.cell(hide_code=True)
+def _(data, hourly_files, hourly_hour, season_run):
+    # (days, [n_days, H, W] incidence at one hour), or None until the button is pressed
+    season_stack = None
+    if hourly_files and season_run.value:
+        _hour = hourly_hour.value
+        _days = sorted(_d for _d, _h in hourly_files if _h == _hour)
+        _stack = np.stack([
+            np.where(data["mask"], read_tif(hourly_files[_d, _hour]), np.nan)
+            for _d in mo.status.progress_bar(_days, title=f"Reading H{_hour:02d} for {len(_days)} days", remove_on_exit=True)
+        ])
+        season_stack = (_hour, np.array(_days), _stack)
+    return (season_stack,)
+
+
+@app.cell(hide_code=True)
+def _(data, hourly_year, px_col, px_row, season_stack):
+    if season_stack is None:
+        _out = mo.md("")
+    else:
+        _hour, _days, _stack = season_stack
+        _mask = data["mask"]
+        _r, _c = px_row.value, px_col.value
+        _dates = doy_to_date(hourly_year, _days)
+        _acquisitions = np.array(data["dates"], dtype="datetime64[D]")
+        _valued = 100 * np.isfinite(_stack[:, _mask]).mean(axis=1)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)  # days when no pixel has a value
+            _p10, _median, _p90 = np.nanpercentile(_stack[:, _mask], [10, 50, 90], axis=1)
+
+        _fig, (_ax_angle, _ax_val) = plt.subplots(
+            2, 1, figsize=(14, 6.5), sharex=True, constrained_layout=True, gridspec_kw={"height_ratios": [1.6, 1]}
+        )
+        _ax_angle.fill_between(_dates, _p10, _p90, color="#6a51a3", alpha=0.18, lw=0, label="catchment 10–90%")
+        _ax_angle.plot(_dates, _median, color="#6a51a3", lw=2, label="catchment median")
+        if _mask[_r, _c]:
+            _ax_angle.plot(_dates, _stack[:, _r, _c], color="#c0392b", lw=1.5, label=f"pixel ({_r}, {_c})")
+        _ax_angle.set_ylabel("incidence angle (°)")
+        _ax_angle.legend(frameon=False, fontsize=8, loc="upper right")
+        _ax_angle.set_title(f"Incidence angle at H{_hour:02d} over the season (vertical lines: acquisitions)", fontsize=10)
+        _ax_val.plot(_dates, _valued, color="#2f5d95", lw=2)
+        _ax_val.set_ylabel("catchment with a value (%)")
+        _ax_val.set_ylim(-3, 103)
+        for _ax in (_ax_angle, _ax_val):
+            for _a in _acquisitions:
+                _ax.axvline(_a, color="#999", lw=0.8, ls=":")
+            _ax.grid(axis="y", color="#eeeeee")
+            _ax.spines[["top", "right"]].set_visible(False)
+        _out = _fig
+    _out
     return
 
 
@@ -986,6 +1280,8 @@ def _():
     config: the same target channels, static terrain channels, downsampling and catchment
     mask it was trained on. The input is checked against the fingerprint stored in the
     bundle, so a changed dataset or loader fails loudly instead of being scored silently.
+    The input comes from the **dataset version chosen at the top**: select the version a
+    model was trained on (v1 for every model trained before v2 arrived), or the check fails.
 
     - **Free run**: one rollout from the first date through all later dates. Only the first
       image is used, so this is the forecasting test.
@@ -1187,9 +1483,11 @@ def _(
             _catchment = snowmelt_eval.strip_border(_sequence.boundary_mask[0, 0], _pad) > 0.5
 
             if eval_grid.value == "full":
-                _key = (_names, _factor)
+                _key = (_names, _factor, _recipe["exclude_dates"])
                 if _key not in _references:
-                    _full, _full_mask = snowmelt_eval.full_resolution_reference(data, _names, _factor)
+                    _full, _full_mask = snowmelt_eval.full_resolution_reference(
+                        data, _names, _factor, exclude_dates=_recipe["exclude_dates"]
+                    )
                     _references[_key] = (snowmelt_eval.to_physical(_full, _names), _full_mask)
                 _score_observed, _score_mask = _references[_key]
                 _score_prediction = snowmelt_eval.upsample_blocks(_prediction, _factor)
@@ -1198,6 +1496,7 @@ def _(
             _scores = snowmelt_eval.score(
                 _score_prediction, _score_observed, _score_mask, _names,
                 _sequence.dates, _sequence.observation_times, mode=eval_mode.value,
+                held_out=_sequence.held_out,
             )
             _meta = {"model_id": _model_id, **_info.loc[_model_id, [
                 "alias", "label", "family", "targets", "resolution_m", "t", "interval_mode", "repeat",
@@ -1207,6 +1506,7 @@ def _(
                 **_meta,
                 "channel_names": _names,
                 "factor": _factor,
+                "exclude_dates": _recipe["exclude_dates"],
                 "dates": _sequence.dates,
                 "days": _sequence.observation_times,
                 "prediction": _prediction,   # [rollouts, T, C, h, w]
@@ -1453,7 +1753,9 @@ def _(EVAL_SNOW_CHANNELS, data, eval_results, eval_view_model, snowmelt_eval):
         _c = _r["channel_names"].index(_channel)
         _threshold = snowmelt_eval.SNOW_THRESHOLDS[_channel]
         # Compare on the 10 m grid so the elevation bands are the same for every model
-        _full, _mask = snowmelt_eval.full_resolution_reference(data, (_channel,), _r["factor"])
+        _full, _mask = snowmelt_eval.full_resolution_reference(
+            data, (_channel,), _r["factor"], exclude_dates=_r["exclude_dates"]
+        )
         _observed = snowmelt_eval.to_physical(_full, (_channel,))[:, 0][:, _mask] > _threshold
         _mean = snowmelt_eval.upsample_blocks(_r["prediction"][:, :, _c].mean(axis=0), _r["factor"])
         _predicted = _mean[:, _mask] > _threshold

@@ -14,9 +14,10 @@ Run from the repository root with:
     marimo edit Experiments/snowmelt/snowmelt_sweep_explorer.py
 
 The sweeps are listed in ``Experiments/snowmelt/sweeps.py:SWEEPS``: resolution,
-input channels, model architecture and update rule. Model bundles are read from
+input channels, model architecture, update rule and held-out dates. Model bundles are read from
 the model store (``MODEL_STORE_ROOT``, default ``models/``) and the data from
-``SNOWMELT_DATA_ROOT`` (default ``~/PhD/Data/snowmelt``). Training metrics come
+``SNOWMELT_DATA_ROOT`` (default ``~/PhD/Data/snowmelt``, holding ``v1/``, ``v2/``);
+each model is scored on the dataset version it was trained on. Training metrics come
 from each bundle's manifest; inference scores come from rolling every model out
 with ``Experiments/snowmelt/evaluation.py``. Maps and single-model views are in
 ``snowmelt_explorer.py``.
@@ -40,7 +41,7 @@ with app.setup(hide_code=True):
     import pandas as pd
     from matplotlib.colors import LinearSegmentedColormap
 
-    from Common.dataloader.snowmelt import load_snowmelt
+    from Common.dataloader.snowmelt import load_snowmelt, resolve_snowmelt_root
     from Experiments.snowmelt import sweeps
 
     # Light figures regardless of the marimo theme, so annotation ink stays legible.
@@ -65,13 +66,16 @@ with app.setup(hide_code=True):
         "skill": "MSE skill vs persistence, mean over dates (higher is better)",
         "final_skill": "MSE skill vs persistence, final date (higher is better)",
         "rmse": "RMSE, mean over dates (lower is better)",
+        "held_out_snow_csi": "snow CSI, held-out dates (higher is better)",
+        "held_out_skill": "MSE skill vs persistence, held-out dates (higher is better)",
+        "held_out_rmse": "RMSE, held-out dates (lower is better)",
         "snow_area_error": "snow-covered fraction, predicted − observed",
         "rollout_spread": "std across rollouts",
         "best_loss": "best training loss (lower is better)",
         "best_at_fraction": "best checkpoint iteration / iterations",
     }
     # Metrics centred on zero get a diverging colour scale
-    DIVERGING = {"snow_area_error", "skill", "final_skill"}
+    DIVERGING = {"snow_area_error", "skill", "final_skill", "held_out_skill"}
 
     def levels(values):
         """Plot order of a factor: numbers ascending, anything else in order of first appearance."""
@@ -176,6 +180,7 @@ def _():
     | Input channels | Which target channels and terrain (static) channels help? | target set × static set |
     | Architecture | Gated vs plain update, perception kernels, width | family × kernels × channels |
     | Update rule | Stochastic vs deterministic updates, activation | fire rate (with t, fire rate × t fixed) × activation |
+    | Held-out dates | Does the model interpolate to a date it was not trained on? | held-out date |
 
     **Training metrics** (best loss, and when the best checkpoint came) are read from
     each bundle's manifest. The training loss is only comparable between runs with the
@@ -250,16 +255,31 @@ def _(reload_button, store_root):
 
 
 @app.cell(hide_code=True)
-def _():
-    try:
-        raw = load_snowmelt(DATA_ROOT)
-        _out = mo.md(f"Data: `{DATA_ROOT}` ({len(raw['dates'])} acquisitions, {', '.join(raw['dates'])}).")
-    except (FileNotFoundError, OSError, ValueError) as _error:
-        raw = None
-        _out = mo.callout(f"Could not load the snowmelt data from `{DATA_ROOT}` ({_error}). "
-                          "Set SNOWMELT_DATA_ROOT to evaluate models; training metrics are still shown.", kind="warn")
+def _(bundles):
+    # Each bundle is scored on the dataset version it was trained on; versions load on first use.
+    _raw_by_version = {}
+
+    def raw_for(version):
+        if version not in _raw_by_version:
+            _raw_by_version[version] = load_snowmelt(resolve_snowmelt_root(DATA_ROOT, version))
+        return _raw_by_version[version]
+
+    _needed = sorted({_b.config.data.snowmelt.version for _b in bundles.values()})
+    _missing = []
+    for _version in _needed:
+        try:
+            resolve_snowmelt_root(DATA_ROOT, _version)
+        except (FileNotFoundError, ValueError) as _error:
+            _missing.append(f"{_version}: {_error}")
+    if _missing:
+        _out = mo.callout(mo.md("Some dataset versions the models need are missing; their models will fail:\n\n"
+                                + "\n".join(f"- {_m}" for _m in _missing)
+                                + "\n\nSet SNOWMELT_DATA_ROOT to the folder holding `v1/`, `v2/`. "
+                                  "Training metrics are still shown."), kind="warn")
+    else:
+        _out = mo.md(f"Data: `{DATA_ROOT}`; dataset versions used by these models: {', '.join(_needed) or 'none'}.")
     _out
-    return (raw,)
+    return (raw_for,)
 
 
 @app.cell(hide_code=True)
@@ -312,7 +332,7 @@ def _(
     eval_seed,
     eval_sweeps,
     eval_verify,
-    raw,
+    raw_for,
     score_cache,
     training,
 ):
@@ -323,8 +343,6 @@ def _(
     _failures = []
     if not eval_run.value:
         _status = mo.md("Choose sweeps and settings, then click **Evaluate models**. Training metrics are shown below without it.")
-    elif raw is None:
-        _status = mo.callout("The snowmelt data is not loaded.", kind="danger")
     else:
         _todo = list(training.loc[training.sweep.isin(eval_sweeps.value), "model_id"]) if len(training) else []
         _sequences, _references = {}, {}
@@ -334,8 +352,9 @@ def _(
                 # A fixed key per model, so results do not depend on which models are selected
                 _key = jr.fold_in(jr.PRNGKey(_settings[2]), zlib.crc32(_model_id.encode()) & 0x7FFFFFFF)
                 try:
+                    _bundle = bundles[_model_id]
                     score_cache[_cache_key] = sweeps.evaluate_bundle(
-                        bundles[_model_id], raw, _key, n_rollouts=_settings[1], mode=_settings[0],
+                        _bundle, raw_for(_bundle.config.data.snowmelt.version), _key, n_rollouts=_settings[1], mode=_settings[0],
                         grid=_settings[3], verify=_settings[4], sequences=_sequences, references=_references,
                     )
                 except Exception as _error:  # keep going: one bad bundle should not stop the comparison
@@ -594,6 +613,60 @@ def _(scores):
         _fig, _ax = plt.subplots(figsize=(7, 4.2), constrained_layout=True)
         snow_area_plot(_ax, _df, "fire_rate", levels(_df.fire_rate))
         _ax.set_title("Snow-covered area by fire rate (all activations)", fontsize=10)
+        _out = _fig
+    _out
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Held-out dates
+
+    - Each run leaves one date (index into the v2 dates) out of training; `none` is the control
+    - Left: score by date, hollow circle = the held-out date
+    - Right: score on each held-out date, model that did not see it vs the control
+    - Date 9 is the last date, so it tests extrapolation rather than interpolation
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(metric, scores):
+    _df = scores[scores.sweep == "hold_out"] if len(scores) else scores
+    _y = metric.value if metric.value in ("snow_csi", "skill", "rmse") else "snow_csi"
+    if _df.empty or _y not in _df:
+        _out = mo.md("No evaluated held-out-date models.")
+    else:
+        _conditions = levels(_df.held_out_dates)
+        _fig, (_left, _right) = plt.subplots(1, 2, figsize=(13, 4.2), constrained_layout=True)
+        for _k, _condition in enumerate(_conditions):
+            _rows = _df[_df.held_out_dates == _condition]
+            _colour = "#222" if _condition == "none" else COLOURS[_k % len(COLOURS)]
+            _mean = _rows.groupby("days")[_y].mean()
+            _left.plot(_mean.index, _mean.to_numpy(), color=_colour, marker="o", ms=3, lw=1.5, label=_condition)
+            _held = _rows[_rows.held_out].groupby("days")[_y].mean()
+            _left.scatter(_held.index, _held.to_numpy(), s=110, facecolor="none", edgecolor=_colour, lw=2, zorder=3)
+        _left.set_xlabel("days since first acquisition")
+        _left.set_ylabel(_y)
+        _left.legend(title="held out", frameon=False, fontsize=8)
+        style_axes(_left)
+
+        _held = _df[_df.held_out]
+        _control = _df[_df.held_out_dates == "none"]
+        _dates = sorted(set(zip(_held.days, _held.date)))
+        for _i, (_day, _) in enumerate(_dates):
+            for _offset, _rows, _colour, _label in ((-0.15, _held, COLOURS[0], "held out"),
+                                                     (0.15, _control, "#222", "control (trained on it)")):
+                _values = _rows.loc[_rows.days == _day, _y].dropna().to_numpy(float)
+                _right.scatter(np.full(len(_values), _i + _offset), _values, s=18, color=_colour, alpha=0.45, lw=0)
+                if len(_values):
+                    _right.scatter(_i + _offset, _values.mean(), s=60, color=_colour,
+                                   label=_label if _i == 0 else None)
+        _right.set_xticks(range(len(_dates)), [_date for _, _date in _dates], rotation=20, ha="right")
+        _right.set_ylabel(_y)
+        _right.legend(frameon=False, fontsize=8)
+        style_axes(_right)
         _out = _fig
     _out
     return

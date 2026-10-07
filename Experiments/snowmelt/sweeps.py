@@ -54,6 +54,12 @@ SWEEPS = {
         "nca_snowmelt_update_rule_sweep",
         {"fire_rate": "model.fire_rate", "activation": "model.activation"},
     ),
+    "hold_out": Sweep(
+        "Held-out dates",
+        "nca_snowmelt_hold_out_sweep",
+        "nca_snowmelt_hold_out_sweep",
+        {"held_out_dates": "data.snowmelt.hold_out_dates"},
+    ),
 }
 
 
@@ -189,23 +195,27 @@ def evaluate_bundle(bundle, raw, key, n_rollouts=4, mode="free", grid="full", ve
 
     if grid == "full":
         references = {} if references is None else references
-        if (names, factor) not in references:
-            full, full_mask = evaluation.full_resolution_reference(raw, names, factor)
-            references[(names, factor)] = (evaluation.to_physical(full, names), full_mask)
-        score_observed, score_mask = references[(names, factor)]
+        reference_key = (recipe["version"], names, factor, recipe["exclude_dates"])
+        if reference_key not in references:
+            full, full_mask = evaluation.full_resolution_reference(
+                raw, names, factor, exclude_dates=recipe["exclude_dates"]
+            )
+            references[reference_key] = (evaluation.to_physical(full, names), full_mask)
+        score_observed, score_mask = references[reference_key]
         score_prediction = evaluation.upsample_blocks(prediction, factor)
     else:
         score_observed, score_mask, score_prediction = observed, catchment, prediction
 
     rows = evaluation.score(
         score_prediction, score_observed, score_mask, names,
-        sequence.dates, sequence.observation_times, mode=mode,
+        sequence.dates, sequence.observation_times, mode=mode, held_out=sequence.held_out,
     )
     c = names.index(score_channel(names))
     maps = {
         "channel": names[c],
         "factor": factor,
         "dates": sequence.dates,
+        "held_out": sequence.held_out,
         "observed": observed[:, c],
         "mean": prediction[:, :, c].mean(axis=0),
         "std": prediction[:, :, c].std(axis=0),
@@ -218,6 +228,7 @@ def summarise_scores(rows, channel):
     """One model's scores on ``channel``: means over the predicted dates, and the final date.
 
     ``snow_area_error`` is predicted minus observed snow-covered fraction of the catchment.
+    When some dates were held out of training, ``held_out_*`` are the means over those dates.
     """
     rows = [row for row in rows if row["channel"] == channel]
     if not rows:
@@ -243,6 +254,11 @@ def summarise_scores(rows, channel):
             "snow_area_error": float(np.mean(errors)),
             "final_snow_area_error": float(errors[-1]),
         }
+    held_out = [row for row in rows if row.get("held_out")]
+    if held_out:
+        for name in ("skill", "rmse", "snow_csi"):
+            if name in held_out[0]:
+                summary[f"held_out_{name}"] = float(np.nanmean([row[name] for row in held_out]))
     return summary
 
 

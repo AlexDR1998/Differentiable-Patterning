@@ -185,8 +185,16 @@ def _():
         kind="area",
         label="Load saved model lists (YAML exported below; match any)",
     )
-    saved_selection_file
-    return (saved_selection_file,)
+    saved_selection_mode = mo.ui.radio(
+        options={
+            "AND: saved models within the selected W&B groups": "and",
+            "OR: saved models plus the selected W&B groups": "or",
+        },
+        value="AND: saved models within the selected W&B groups",
+        label="Combine saved lists with W&B groups",
+    )
+    mo.vstack([saved_selection_file, saved_selection_mode])
+    return saved_selection_file, saved_selection_mode
 
 
 @app.cell(hide_code=True)
@@ -214,7 +222,7 @@ def _(database_error, database_path, saved_selection_file):
                 )
             }
         _missing = [_model_id for _model_id in saved_model_ids if _model_id not in _found]
-        _summary = f"Showing **{len(_found)} models** from the saved lists."
+        _summary = f"Loaded **{len(_found)} models** from the saved lists."
         if _missing:
             _summary += (
                 f" {len(_missing)} are not in this registry: "
@@ -226,25 +234,44 @@ def _(database_error, database_path, saved_selection_file):
 
 
 @app.cell(hide_code=True)
-def _(database_error, database_path, wandb_group_filter):
+def _(saved_model_ids, saved_selection_mode, wandb_group_filter):
+    # SQL condition on `models AS m` for the models being browsed: the selected
+    # W&B groups combined with the saved lists (AND or OR). The other filters,
+    # including W&B tags, are applied on top of this in both modes.
+    _conditions = []
+    browse_parameters = []
+    if wandb_group_filter.value:
+        _group_placeholders = ", ".join("?" for _ in wandb_group_filter.value)
+        _conditions.append(f"m.wandb_group IN ({_group_placeholders})")
+        browse_parameters.extend(wandb_group_filter.value)
+    if saved_model_ids:
+        _id_placeholders = ", ".join("?" for _ in saved_model_ids)
+        _conditions.append(f"m.model_id IN ({_id_placeholders})")
+        browse_parameters.extend(saved_model_ids)
+    _joiner = " OR " if saved_selection_mode.value == "or" else " AND "
+    browse_clause = (
+        "(" + _joiner.join(f"({_condition})" for _condition in _conditions) + ")"
+        if _conditions else ""
+    )
+    return browse_clause, browse_parameters
+
+
+@app.cell(hide_code=True)
+def _(browse_clause, browse_parameters, database_error, database_path):
     if database_error:
         _wandb_tag_options = []
     else:
-        _selected_groups = wandb_group_filter.value
-        if _selected_groups:
-            _group_placeholders = ", ".join("?" for _ in _selected_groups)
-            _wandb_tag_sql = (
-                "SELECT DISTINCT wt.tag FROM model_wandb_tags AS wt "
-                "JOIN models AS m ON m.model_id = wt.model_id "
-                f"WHERE m.wandb_group IN ({_group_placeholders}) ORDER BY wt.tag"
-            )
-        else:
-            _wandb_tag_sql = "SELECT DISTINCT tag FROM model_wandb_tags ORDER BY tag"
+        _browse_where = f"WHERE {browse_clause} " if browse_clause else ""
+        _wandb_tag_sql = (
+            "SELECT DISTINCT wt.tag FROM model_wandb_tags AS wt "
+            "JOIN models AS m ON m.model_id = wt.model_id "
+            f"{_browse_where}ORDER BY wt.tag"
+        )
         with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
             _wandb_tag_rows = pd.read_sql_query(
                 _wandb_tag_sql,
                 _connection,
-                params=_selected_groups,
+                params=browse_parameters,
             )
         _wandb_tag_options = _wandb_tag_rows["tag"].tolist()
 
@@ -288,6 +315,8 @@ def _(database_error, database_path, wandb_group_filter):
 
 @app.cell(hide_code=True)
 def _(
+    browse_clause,
+    browse_parameters,
     database_error,
     database_path,
     dataset_filter,
@@ -295,8 +324,8 @@ def _(
     numeric_tag_sort,
     numeric_tag_sort_direction,
     saved_model_ids,
+    saved_selection_mode,
     search_text,
-    wandb_group_filter,
     wandb_tag_filter,
 ):
     _columns = [
@@ -304,6 +333,8 @@ def _(
         "experiment", "wandb_group", "status", "best_loss", "best_iteration", "seed",
         "created_at", "annotation_tags", "wandb_tags",
     ]
+    if saved_model_ids:
+        _columns.insert(1, "in_saved_list")
     if database_error:
         results = pd.DataFrame(columns=_columns)
     else:
@@ -329,14 +360,9 @@ def _(
         if dataset_filter.value.strip():
             _clauses.append("LOWER(m.dataset) = LOWER(?)")
             _parameters.append(dataset_filter.value.strip())
-        if wandb_group_filter.value:
-            _group_placeholders = ", ".join("?" for _ in wandb_group_filter.value)
-            _clauses.append(f"m.wandb_group IN ({_group_placeholders})")
-            _parameters.extend(wandb_group_filter.value)
-        if saved_model_ids:
-            _id_placeholders = ", ".join("?" for _ in saved_model_ids)
-            _clauses.append(f"m.model_id IN ({_id_placeholders})")
-            _parameters.extend(saved_model_ids)
+        if browse_clause:
+            _clauses.append(browse_clause)
+            _parameters.extend(browse_parameters)
         for _wandb_tag in wandb_tag_filter.value:
             _clauses.append(
                 "EXISTS (SELECT 1 FROM model_wandb_tags AS wf "
@@ -344,16 +370,26 @@ def _(
             )
             _parameters.append(_wandb_tag)
 
+        # Mark the saved models; in OR mode they are listed first.
+        _saved_select = ""
+        _saved_parameters = []
+        _order_terms = []
+        if saved_model_ids:
+            _id_placeholders = ", ".join("?" for _ in saved_model_ids)
+            _saved_select = f"(m.model_id IN ({_id_placeholders})) AS in_saved_list, "
+            _saved_parameters = list(saved_model_ids)
+            if saved_selection_mode.value == "or":
+                _order_terms.append("in_saved_list DESC")
+
         _where = f" WHERE {' AND '.join(_clauses)}" if _clauses else ""
         _sort_key = numeric_tag_sort.value
         if _sort_key in {"No sort", "Created at"}:
             _numeric_sort_cte = ""
             _numeric_sort_join = ""
             _numeric_sort_select = ""
-            _order_clause = (
-                "" if _sort_key == "No sort" else "ORDER BY m.created_at DESC"
-            )
-            _query_parameters = _parameters
+            if _sort_key == "Created at":
+                _order_terms.append("m.created_at DESC")
+            _sort_parameters = []
         else:
             _direction = (
                 "ASC" if numeric_tag_sort_direction.value == "Ascending" else "DESC"
@@ -369,10 +405,13 @@ def _(
                 "LEFT JOIN numeric_sort AS ns ON ns.model_id = m.model_id"
             )
             _numeric_sort_select = ", ns.value AS numeric_tag_value"
-            _order_clause = (
-                f"ORDER BY ns.value IS NULL, ns.value {_direction}, m.created_at DESC"
-            )
-            _query_parameters = [_sort_key, *_parameters]
+            _order_terms += [
+                "ns.value IS NULL", f"ns.value {_direction}", "m.created_at DESC",
+            ]
+            _sort_parameters = [_sort_key]
+        _order_clause = f"ORDER BY {', '.join(_order_terms)}" if _order_terms else ""
+        # Placeholders appear in the order: sort CTE, SELECT, WHERE.
+        _query_parameters = [*_sort_parameters, *_saved_parameters, *_parameters]
         _sql = f"""
             WITH tags AS (
                 SELECT model_id, GROUP_CONCAT(tag, ', ') AS tags
@@ -384,7 +423,7 @@ def _(
                 GROUP BY model_id
             ){_numeric_sort_cte}
             SELECT
-                m.model_id, a.alias, m.display_name, m.family, m.dataset, m.task,
+                m.model_id, {_saved_select}a.alias, m.display_name, m.family, m.dataset, m.task,
                 m.collection, m.experiment, m.wandb_group, m.status, m.best_loss,
                 m.best_iteration, m.seed, m.created_at,
                 t.tags AS annotation_tags, wt.tags AS wandb_tags
@@ -400,6 +439,8 @@ def _(
         """
         with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as _connection:
             results = pd.read_sql_query(_sql, _connection, params=_query_parameters)
+        if saved_model_ids:
+            results["in_saved_list"] = results["in_saved_list"].astype(bool)
         if _sort_key not in {"No sort", "Created at"}:
             results = results.rename(
                 columns={"numeric_tag_value": f"sort: {_sort_key}"}

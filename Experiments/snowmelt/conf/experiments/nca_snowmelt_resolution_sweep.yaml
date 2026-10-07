@@ -4,7 +4,10 @@ output_subdir: generated/nca_snowmelt_resolution_sweep
 seed_mode: index
 
 # Snowmelt sweep over spatial and temporal resolution together, along the
-# convective diagonal (t proportional to 1/h). Target NDSI, static DEM.
+# convective diagonal (t proportional to 1/h). Target NDSI, static DEM plus
+# slope and aspect (NORTHNESS, EASTNESS). The slope and aspect channels are
+# averaged from the 10 m maps, so coarse grids keep sub-pixel terrain that the
+# gradient of the downsampled DEM loses.
 # Target/static channels are swept in nca_snowmelt_input_sweep.yaml and model
 # hyperparameters in nca_snowmelt_architecture_sweep.yaml and
 # nca_snowmelt_update_rule_sweep.yaml.
@@ -18,10 +21,11 @@ seed_mode: index
 #   8 -> 80 m, 64x64      16 -> 160 m, 32x32
 #
 # Temporal resolution: run.t is the NCA step count of the reference (median,
-# 20-day) interval, i.e. t/20 steps per day. The acquisitions are 20, 5, 20, 20
-# days apart:
+# 20-day) interval, i.e. t/20 steps per day. The v2 acquisitions used (the
+# base config skips the first two) are 30, 20, 5, 20, 20, 30, 25 days apart
+# (150 days):
 #   interval_mode=uniform -> every transition runs t steps
-#   interval_mode=steps   -> transitions run (t, t/4, t, t) steps
+#   interval_mode=steps   -> transitions run t * (days / 20) steps, 7.5 t in total
 # The (downsample, t) pairs below keep t proportional to 1/h (convective
 # scaling), so each step spans the same fraction of a pixel.
 #
@@ -34,12 +38,12 @@ grid:
   labels.gpu: [H200]
   system.precision: [bfloat16]
   data.dataset: [snowmelt]
-  data.snowmelt.static_channels: [[DEM]]
+  data.snowmelt.static_channels: [[DEM, SLOPE, NORTHNESS, EASTNESS]]
   data.snowmelt.target_channels: [[NDSI]]
   model.channels: [32]
 groups:
   # Target sets, each paired with a channel budget:
-  # targets + hidden + 3 boundary channels (catchment, DEM, incidence).
+  # targets + hidden + 5 boundary channels (catchment, DEM, slope, aspect x2).
   # - data.snowmelt.target_channels:
   #     # - [SCA]
   #     - [NDSI]

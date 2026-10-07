@@ -4,14 +4,17 @@ output_subdir: generated/nca_snowmelt_input_sweep
 seed_mode: index
 
 # Which target (dynamic) channels and which terrain (static) channels help the
-# snowmelt NCA. Full factorial of 5 target sets x 4 static sets.
+# snowmelt NCA. Full factorial of 5 target sets x 4 static sets, on dataset v2
+# (the base config's data.snowmelt.version). v2 has no single incidence-angle
+# map, so terrain orientation enters as slope plus aspect (NORTHNESS = cos,
+# EASTNESS = sin).
 #
 # Generate with:
 #   python Experiments/generate_configs.py \
 #       Experiments/snowmelt/conf/experiments/nca_snowmelt_input_sweep.yaml \
 #       Experiments/snowmelt/conf/base_config.yaml Experiments/snowmelt/conf/generated
 #
-# Resolution is fixed at 40 m (downsample 4, t=128); see
+# Resolution is fixed at 20 m (downsample 2, t=256); see
 # nca_snowmelt_resolution_sweep.yaml. Change data.downsample, run.t and
 # trainer.loop_autodiff together to use another resolution.
 #
@@ -34,10 +37,10 @@ grid:
   labels.gpu: [H200]
   system.precision: [bfloat16]
   data.dataset: [snowmelt]
-  # Baseline resolution: 40 m.
-  data.downsample: [4]
-  run.t: [128]
-  trainer.loop_autodiff: [lax]
+  # Baseline resolution: 20 m.
+  data.downsample: [2]
+  run.t: [256]
+  trainer.loop_autodiff: [checkpointed]
 groups:
   # Target sets:
   #   [SCA]                         binary snow map (NDSI > 0.4)
@@ -45,7 +48,8 @@ groups:
   #   [NDSI, NDVI]                  plus vegetation, revealed as snow melts
   #   [NDSI, B3, B11]               plus the two bands NDSI is computed from
   #   [NDSI, B2, B3, B4, B8, B11, B12]  visible, NIR and SWIR bands
-  # Each target set appears with static sets [], [DEM], [INCIDENCE], [DEM, INCIDENCE].
+  # Each target set appears with static sets [], [DEM], [SLOPE, NORTHNESS, EASTNESS]
+  # and [DEM, SLOPE, NORTHNESS, EASTNESS].
   - data.snowmelt.target_channels:
       - [SCA]
       - [SCA]
@@ -70,26 +74,26 @@ groups:
     data.snowmelt.static_channels:
       - []
       - [DEM]
-      - [INCIDENCE]
-      - [DEM, INCIDENCE]
+      - [SLOPE, NORTHNESS, EASTNESS]
+      - [DEM, SLOPE, NORTHNESS, EASTNESS]
       - []
       - [DEM]
-      - [INCIDENCE]
-      - [DEM, INCIDENCE]
+      - [SLOPE, NORTHNESS, EASTNESS]
+      - [DEM, SLOPE, NORTHNESS, EASTNESS]
       - []
       - [DEM]
-      - [INCIDENCE]
-      - [DEM, INCIDENCE]
+      - [SLOPE, NORTHNESS, EASTNESS]
+      - [DEM, SLOPE, NORTHNESS, EASTNESS]
       - []
       - [DEM]
-      - [INCIDENCE]
-      - [DEM, INCIDENCE]
+      - [SLOPE, NORTHNESS, EASTNESS]
+      - [DEM, SLOPE, NORTHNESS, EASTNESS]
       - []
       - [DEM]
-      - [INCIDENCE]
-      - [DEM, INCIDENCE]
-    model.channels: [30, 31, 31, 32,
-                     30, 31, 31, 32,
-                     31, 32, 32, 33,
-                     32, 33, 33, 34,
-                     36, 37, 37, 38]
+      - [SLOPE, NORTHNESS, EASTNESS]
+      - [DEM, SLOPE, NORTHNESS, EASTNESS]
+    model.channels: [30, 31, 33, 34,
+                     30, 31, 33, 34,
+                     31, 32, 34, 35,
+                     32, 33, 35, 36,
+                     36, 37, 39, 40]
