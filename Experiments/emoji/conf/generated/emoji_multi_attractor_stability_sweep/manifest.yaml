@@ -24,7 +24,7 @@ configs:
         size: 1
       target: microbe.png
     data.emoji.target_repeats: 2
-    data.batches: 4
+    data.batches: 2
     data.emoji.shift_amount: 10
     data.emoji.pad:
     - 10
@@ -55,7 +55,7 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkointed
     experiment.stability_mode: clean
     data.emoji.terminal_carry.enabled: false
     data.emoji.regeneration.enabled: false
@@ -79,7 +79,7 @@ configs:
       xla_flags: null
     data:
       dataset: emojis
-      batches: 4
+      batches: 2
       downsample: 1
       emoji:
         task: multi_attractor
@@ -141,7 +141,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkointed
       log_every: 100
       pool_admission:
         enabled: true
@@ -218,7 +218,7 @@ configs:
         size: 1
       target: microbe.png
     data.emoji.target_repeats: 2
-    data.batches: 4
+    data.batches: 2
     data.emoji.shift_amount: 10
     data.emoji.pad:
     - 10
@@ -249,7 +249,7 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkointed
     experiment.stability_mode: terminal_carry
     data.emoji.terminal_carry.enabled: true
     data.emoji.regeneration.enabled: false
@@ -273,7 +273,7 @@ configs:
       xla_flags: null
     data:
       dataset: emojis
-      batches: 4
+      batches: 2
       downsample: 1
       emoji:
         task: multi_attractor
@@ -335,7 +335,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkointed
       log_every: 100
       pool_admission:
         enabled: true
@@ -412,7 +412,7 @@ configs:
         size: 1
       target: microbe.png
     data.emoji.target_repeats: 2
-    data.batches: 4
+    data.batches: 2
     data.emoji.shift_amount: 10
     data.emoji.pad:
     - 10
@@ -443,7 +443,7 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkointed
     experiment.stability_mode: regeneration
     data.emoji.terminal_carry.enabled: false
     data.emoji.regeneration.enabled: true
@@ -467,7 +467,7 @@ configs:
       xla_flags: null
     data:
       dataset: emojis
-      batches: 4
+      batches: 2
       downsample: 1
       emoji:
         task: multi_attractor
@@ -529,7 +529,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkointed
       log_every: 100
       pool_admission:
         enabled: true
@@ -606,7 +606,7 @@ configs:
         size: 1
       target: microbe.png
     data.emoji.target_repeats: 2
-    data.batches: 4
+    data.batches: 2
     data.emoji.shift_amount: 10
     data.emoji.pad:
     - 10
@@ -637,7 +637,7 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkointed
     experiment.stability_mode: terminal_carry_and_regeneration
     data.emoji.terminal_carry.enabled: true
     data.emoji.regeneration.enabled: true
@@ -661,7 +661,7 @@ configs:
       xla_flags: null
     data:
       dataset: emojis
-      batches: 4
+      batches: 2
       downsample: 1
       emoji:
         task: multi_attractor
@@ -723,7 +723,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkointed
       log_every: 100
       pool_admission:
         enabled: true
@@ -800,7 +800,7 @@ configs:
         size: 1
       target: microbe.png
     data.emoji.target_repeats: 2
-    data.batches: 4
+    data.batches: 2
     data.emoji.shift_amount: 10
     data.emoji.pad:
     - 10
@@ -831,7 +831,7 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkointed
     experiment.stability_mode: clean
     data.emoji.terminal_carry.enabled: false
     data.emoji.regeneration.enabled: false
@@ -855,7 +855,7 @@ configs:
       xla_flags: null
     data:
       dataset: emojis
-      batches: 4
+      batches: 2
       downsample: 1
       emoji:
         task: multi_attractor
@@ -917,7 +917,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkointed
       log_every: 100
       pool_admission:
         enabled: true
@@ -994,7 +994,7 @@ configs:
         size: 1
       target: microbe.png
     data.emoji.target_repeats: 2
-    data.batches: 4
+    data.batches: 2
     data.emoji.shift_amount: 10
     data.emoji.pad:
     - 10
@@ -1025,7 +1025,7 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkointed
     experiment.stability_mode: terminal_carry
     data.emoji.terminal_carry.enabled: true
     data.emoji.regeneration.enabled: false
@@ -1049,7 +1049,7 @@ configs:
       xla_flags: null
     data:
       dataset: emojis
-      batches: 4
+      batches: 2
       downsample: 1
       emoji:
         task: multi_attractor
@@ -1111,7 +1111,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkointed
       log_every: 100
       pool_admission:
         enabled: true
@@ -1188,7 +1188,7 @@ configs:
         size: 1
       target: microbe.png
     data.emoji.target_repeats: 2
-    data.batches: 4
+    data.batches: 2
     data.emoji.shift_amount: 10
     data.emoji.pad:
     - 10
@@ -1219,7 +1219,7 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkointed
     experiment.stability_mode: regeneration
     data.emoji.terminal_carry.enabled: false
     data.emoji.regeneration.enabled: true
@@ -1243,7 +1243,7 @@ configs:
       xla_flags: null
     data:
       dataset: emojis
-      batches: 4
+      batches: 2
       downsample: 1
       emoji:
         task: multi_attractor
@@ -1305,7 +1305,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkointed
       log_every: 100
       pool_admission:
         enabled: true
@@ -1382,7 +1382,7 @@ configs:
         size: 1
       target: microbe.png
     data.emoji.target_repeats: 2
-    data.batches: 4
+    data.batches: 2
     data.emoji.shift_amount: 10
     data.emoji.pad:
     - 10
@@ -1413,7 +1413,7 @@ configs:
     optimiser.gradient_clip_norm: 1.0
     optimiser.apply_if_finite: true
     optimiser.max_consecutive_errors: 16
-    trainer.loop_autodiff: lax
+    trainer.loop_autodiff: checkointed
     experiment.stability_mode: terminal_carry_and_regeneration
     data.emoji.terminal_carry.enabled: true
     data.emoji.regeneration.enabled: true
@@ -1437,7 +1437,7 @@ configs:
       xla_flags: null
     data:
       dataset: emojis
-      batches: 4
+      batches: 2
       downsample: 1
       emoji:
         task: multi_attractor
@@ -1499,7 +1499,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: lax
+      loop_autodiff: checkointed
       log_every: 100
       pool_admission:
         enabled: true
