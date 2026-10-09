@@ -217,7 +217,7 @@ def label_names(cell_type_rules):
     return (*cell_type_rules.cell_types, SEVERAL, OTHER)
 
 
-def pattern_label_shares(cell_type_rules, clause_weights=None):
+def pattern_label_shares(cell_type_rules, clause_weights=None, resolve_several=0.0):
     """Share of each label for every high/low pattern of the markers.
 
     Returns ``[2 ** markers, labels]`` (labels as in ``label_names``), where
@@ -227,6 +227,12 @@ def pattern_label_shares(cell_type_rules, clause_weights=None):
     cell types are taken as independent, so a pattern is "Several" with the
     chance of two or more and "Other" with the chance of none. With weights
     of 0 and 1 every pattern has exactly one label.
+
+    ``resolve_several`` (0 to 1) gives a pattern matching several cell
+    types to the one it most likely belongs to, when that probability is
+    at least ``1 - resolve_several`` above the next one. At 0 nothing
+    changes; at 1 the most likely cell type always wins (the first in rule
+    order on ties), so no pattern is "Several".
     """
     markers = cell_type_rules.markers
     weights = dict(cell_type_rules.clause_weights)
@@ -241,6 +247,11 @@ def pattern_label_shares(cell_type_rules, clause_weights=None):
             missing *= np.where(holds, 1.0 - w, 1.0)
         belongs.append(1.0 - missing)
     belongs = np.stack(belongs, axis=1) if belongs else np.zeros((len(codes), 0))
+    if resolve_several > 0 and belongs.shape[1] > 1:
+        ordered = np.sort(belongs, axis=1)
+        resolved = ordered[:, -1] - ordered[:, -2] >= 1.0 - resolve_several
+        highest = np.arange(belongs.shape[1]) == np.argmax(belongs, axis=1)[:, None]
+        belongs = np.where(highest | ~resolved[:, None], belongs, 0.0)
     none = np.prod(1.0 - belongs, axis=1)
     only = np.stack(
         [belongs[:, t] * np.prod(np.delete(1.0 - belongs, t, axis=1), axis=1) for t in range(belongs.shape[1])],
@@ -248,6 +259,41 @@ def pattern_label_shares(cell_type_rules, clause_weights=None):
     ) if belongs.shape[1] else np.zeros((len(codes), 0))
     several = 1.0 - none - only.sum(axis=1)
     return np.column_stack([only, np.clip(several, 0.0, 1.0), none])
+
+
+def pixel_label_shares(values, cell_type_rules, mask=None, resolve_several=0.0):
+    """Per-pixel share of each label, counted as in ``pattern_label_shares``.
+
+    ``values`` is ``{marker: array}`` with every rule marker. Returns
+    ``{name: float array}`` in ``label_names`` order; inside ``mask`` (all
+    pixels if None) the shares of each pixel sum to 1, outside they are 0.
+    Unlike ``classify_cell_types`` this uses the clause weights, so summing
+    it over a colony gives the same shares as counting the pixels' patterns.
+    ``resolve_several`` is as for ``pattern_label_shares``.
+    """
+    markers = cell_type_rules.markers
+    high = marker_high(values, cell_type_rules)
+    codes = sum(high[marker].astype(int) << i for i, marker in enumerate(markers))
+    shares = pattern_label_shares(cell_type_rules, resolve_several=resolve_several)[codes]
+    if mask is not None:
+        shares = shares * np.asarray(mask, dtype=bool)[..., None]
+    return {name: shares[..., j] for j, name in enumerate(label_names(cell_type_rules))}
+
+
+def sample_pixel_labels(shares, rng):
+    """Draw one label per pixel from per-pixel shares.
+
+    ``shares`` is ``{name: float array}`` as from ``pixel_label_shares`` and
+    ``rng`` a ``numpy.random.Generator``. Returns ``{name: boolean array}``;
+    pixels whose shares are all 0 (outside the mask) get no label.
+    """
+    names = list(shares)
+    stacked = np.stack([np.asarray(shares[name], dtype=float) for name in names], axis=-1)
+    cumulative = np.cumsum(stacked, axis=-1)
+    draw = rng.random(stacked.shape[:-1])[..., None] * cumulative[..., -1:]
+    chosen = np.sum(cumulative <= draw, axis=-1)
+    inside = cumulative[..., -1] > 0
+    return {name: inside & (chosen == j) for j, name in enumerate(names)}
 
 
 def cell_type_fractions(labels, mask=None):

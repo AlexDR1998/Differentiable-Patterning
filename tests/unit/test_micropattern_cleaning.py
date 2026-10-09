@@ -239,3 +239,35 @@ def test_quality_flags_file_round_trip(tmp_path):
     assert load_quality_flags(path) == {}
     with pytest.raises(FileNotFoundError, match="Export it"):
         load_quality_flags(tmp_path / "missing.yaml")
+
+
+def test_cache_gives_the_same_data_and_skips_cleaning(tmp_path, monkeypatch):
+    from Common.dataloader import micropattern_260726
+    from Common.dataloader.disk_cache import list_cache_folders
+
+    dataset = tmp_path / "dataset"
+    cache = tmp_path / "cache"
+    alignment_file = _make_dataset(dataset)
+    per_replicate = _cleaning(alignment_file, background_radii={"cell_fate_s1/SOX2": 10})
+    shared = _cleaning(
+        alignment_file, background_radii={"cell_fate_s1/SOX2": 10}, normalisation="replicate_mean"
+    )
+    expected = [_load(dataset, per_replicate), _load(dataset, shared)]
+    cached = [_load(dataset, per_replicate, cache_dir=cache)]
+    [entry] = list_cache_folders(cache)
+    assert entry["items"] == len(CENTRES) - 2  # the knockout images are not loaded
+
+    def no_cleaning(*args, **kwargs):
+        raise AssertionError("cleaned again instead of reading the cache")
+
+    monkeypatch.setattr(micropattern_260726, "_clean_image", no_cleaning)
+    # A different normalisation still reads the same cached images.
+    cached.append(_load(dataset, shared, cache_dir=cache))
+    for from_cache, uncached in zip(cached, expected):
+        assert np.array_equal(np.asarray(from_cache.data), np.asarray(uncached.data))
+        assert np.array_equal(np.asarray(from_cache.boundary_mask), np.asarray(uncached.boundary_mask))
+
+    # Other cleaning settings get a new folder.
+    monkeypatch.undo()
+    _load(dataset, _cleaning(alignment_file, background_radii={"cell_fate_s1/SOX2": 20}), cache_dir=cache)
+    assert len(list_cache_folders(cache)) == 2

@@ -109,12 +109,12 @@ def test_intensity_factors_multiply_raw_values_per_timestep(tmp_path):
     sox17 = names.index("cell_fate_s2/SOX17")
     assert default_aux["intensity_factors"] == {
         "cell_fate_s1/SOX17": {0: 0.3},
-        "cell_fate_s2/SOX17": {0: 0.3},
+        "cell_fate_s2/SOX17": {0: 0.15, 12: 0.5},
         "cell_fate_s2/FOXA2": {0: 0.02},
     }
     # FOXA2 is source page 1, so the raw value of replicate 1 is 102.
     assert np.isclose(np.asarray(default_data)[0, 0, foxa2, 3, 3], 0.102 * 0.02)
-    assert np.isclose(np.asarray(default_data)[0, 0, sox17, 3, 3], 0.101 * 0.3)
+    assert np.isclose(np.asarray(default_data)[0, 0, sox17, 3, 3], 0.101 * 0.15)
 
     data, aux, _, _, _ = load({"cell_fate_s2/SOX17": {0: 0.5}})
     data = np.asarray(data)

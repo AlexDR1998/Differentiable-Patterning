@@ -156,16 +156,17 @@ def stain_counts_from_patterns(counts, markers, stains):
     ]
 
 
-def colony_label_shares(stain_counts, cell_type_rules, smoothing=1.0):
+def colony_label_shares(stain_counts, cell_type_rules, smoothing=1.0, resolve_several=0.0):
     """Label shares ``[labels]`` of one colony from per-ring stain counts.
 
     ``stain_counts`` is as for ``combine_stains``, with one group per ring
     (or band) of the colony. Each ring is estimated on its own and the rings
     are averaged, weighted by their pixel count (mean over the stains).
-    Labels are in the order of ``label_names``.
+    Labels are in the order of ``label_names``. ``resolve_several`` is as
+    for ``pattern_label_shares``.
     """
     shares = combine_stains(stain_counts, cell_type_rules.markers, smoothing) @ pattern_label_shares(
-        cell_type_rules
+        cell_type_rules, resolve_several=resolve_several
     )
     area = np.mean([np.asarray(counts).sum(axis=1) for _, counts in stain_counts], axis=0)
     area = np.where(np.isnan(shares[:, 0]), 0.0, area)

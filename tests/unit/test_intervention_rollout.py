@@ -111,3 +111,37 @@ def test_sampled_rollouts_return_only_requested_boundary_applied_states():
     assert sampled.shape == (3, *initial.shape)
     assert jnp.allclose(sampled, full[observation_steps])
     assert jnp.allclose(sampled_blocked, full_blocked[observation_steps])
+
+
+def test_pattern_count_rollout_counts_marker_patterns_per_group():
+    from NCA.trainer.intervention import rollout_model_with_blocked_channel_pattern_counts
+
+    model = AdditiveModel()
+    initial = jax.random.uniform(jax.random.PRNGKey(0), (3, 4, 4))
+    key = jax.random.PRNGKey(5)
+    boundary_mask = jnp.ones((1, 4, 4))
+    groups = jnp.asarray([[0, 0, 1, 1]] * 3 + [[-1, -1, -1, -1]])
+    thresholds = jnp.asarray([1.0, 1.5])
+    fate_channels = jnp.asarray([2, 0])
+
+    counts = rollout_model_with_blocked_channel_pattern_counts(
+        model, initial, boundary_mask, "soft", key, 3,
+        channel=1,
+        knockout_step=jnp.asarray(1, dtype=jnp.int32),
+        fate_channels=fate_channels,
+        fate_thresholds=thresholds,
+        pixel_groups=groups,
+        n_groups=2,
+    )
+    states = rollout_model_with_blocked_channel(
+        model, initial, model_boundary(boundary_mask), key, 3,
+        channel=1, knockout_step=jnp.asarray(1, dtype=jnp.int32),
+    )
+
+    assert counts.shape == (4, 2, 4)
+    for state, step_counts in zip(states, counts):
+        high = state[fate_channels] > thresholds[:, None, None]
+        codes = high[0] * 1 + high[1] * 2
+        for group in range(2):
+            expected = jnp.bincount(codes[groups == group], length=4)
+            assert jnp.array_equal(step_counts[group], expected)
