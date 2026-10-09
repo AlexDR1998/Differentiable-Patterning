@@ -1,86 +1,101 @@
-experiment_name: smoke_snowmelt
-entrypoint: Experiments.snowmelt.train:run
+experiment_name: smoke_pde
+entrypoint: Experiments.pde.train:run
 base_config: null
 sweep_file: null
-output_dir: Experiments/snowmelt/conf/generated/smoke_snowmelt
+output_dir: Experiments/pde/conf/generated/smoke_pde
 count: 2
 configs:
 - index: 0
   overrides:
     logging.wandb.project: pipeline-smoke
     model_store.collection: pipeline-smoke
-    data.dataset: snowmelt
-    data.downsample: 8
-    model.channels: 16
+    data.dataset: pde
+    data.pde.size: 32
+    data.pde.frames: 6
+    model.channels: 8
     run.t: 16
     run.iterations: 60
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-restore-pde-domain
+    logging.wandb.group: smoke_pde-restore-pde-domain
     model.family: NCA
-    data.snowmelt.target_channels:
-    - SCA
-    data.snowmelt.static_channels:
-    - DEM
-    run.interval_mode: steps
+    data.pde.model: gray_scott
+    data.pde.parameters:
+      alpha: 0.0623
+      gamma: 0.06268
+    data.pde.observed_channels:
+    - A
+    data.pde.dt: 0.5
+    data.pde.t_end: 2000
+    data.pde.initial_condition: gray_scott_shapes
+    data.pde.initial_condition_scale: 1.0
+    data.pde.initial_condition_offset: 0.0
     trainer.loop_autodiff: checkpointed
-    experiment.name: smoke_snowmelt
+    experiment.name: smoke_pde
     seed: 0
     logging.wandb.tag_keys:
     - model.family
-    - data.snowmelt.target_channels
-    - data.snowmelt.static_channels
-    - run.interval_mode
+    - data.pde.model
+    - data.pde.parameters
+    - data.pde.observed_channels
+    - data.pde.dt
+    - data.pde.t_end
+    - data.pde.initial_condition
+    - data.pde.initial_condition_scale
+    - data.pde.initial_condition_offset
     - trainer.loop_autodiff
   config:
     schema_version: 7
     seed: 0
     experiment:
-      name: smoke_snowmelt
+      name: smoke_pde
     system:
       precision: highest
       xla_flags: null
-    labels:
-      scaling: convective
-      gpu: null
     data:
-      dataset: snowmelt
-      batches: 1
-      downsample: 8
-      snowmelt:
-        root: null
-        version: v2
-        target_channels:
-        - SCA
-        static_channels:
-        - DEM
-        pad: 4
-        mask_threshold: 0.5
-        exclude_dates:
-        - 0
-        - 1
-        hold_out_dates: []
-        noise_strength: 0.005
+      dataset: pde
+      batches: 2
+      downsample: 1
+      pde:
+        model: gray_scott
+        parameters:
+          alpha: 0.0623
+          gamma: 0.06268
+        observed_channels:
+        - A
+        size: 32
+        padding: CIRCULAR
+        dx: 1.0
+        dt: 0.5
+        solver: heun
+        t_end: 2000
+        frames: 6
+        initial_condition: gray_scott_shapes
+        initial_condition_scale: 1.0
+        initial_condition_offset: 0.0
+        initial_condition_blur: 0
+        normalisation: minmax
+        seed: 0
+        noise_strength: 0.001
         reinjection_probability: 0.5
     model:
       family: NCA
-      channels: 16
+      channels: 8
       kernel_str:
       - ID
       - LAP
-      - GRAD
-      fire_rate: 0.5
+      activation: relu
+      fire_rate: 1.0
       padding: CIRCULAR
+      kernel_scale: 1
     trainer:
       boundary_mode: soft
-      grad_loss: false
+      grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: checkpointed
       log_every: 20
-      validation_every: null
-      validation_rollout: false
       pool_admission:
         enabled: true
         relative_threshold: 1.25
@@ -99,17 +114,17 @@ configs:
       warmup_steps: 10
       decay_rate: 0.99
       schedule:
-        type: cosine
+        type: exponential
         warmup_init_lr: 1.0e-06
         final_factor: 0.1
         transition_fraction: 0.75
     loss:
       terms:
-      - type: l2
+      - type: euclidean
         weight: 1.0
       regularisers:
         intermediate_state: 1.0
-        boundary: 5.0
+        boundary: 0.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
         update_sensitivity: 0.0
@@ -118,122 +133,119 @@ configs:
     run:
       mode: train
       t: 16
-      interval_mode: steps
-      reference_interval: 20
-      interval_steps: null
       iterations: 60
       checkpoint_warmup: 5
       write_images: true
       write_videos: true
     logging:
       backend: wandb
-      singular_values:
-        enabled: false
-        plot_spectra: true
-        epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-restore-pde-domain
+        group: smoke_pde-restore-pde-domain
         tags: null
         tag_keys:
         - model.family
-        - data.snowmelt.target_channels
-        - data.snowmelt.static_channels
-        - run.interval_mode
+        - data.pde.model
+        - data.pde.parameters
+        - data.pde.observed_channels
+        - data.pde.dt
+        - data.pde.t_end
+        - data.pde.initial_condition
+        - data.pde.initial_condition_scale
+        - data.pde.initial_condition_offset
         - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
       collection: pipeline-smoke
       model_factory: NCA.model.factory:build_model
-    initialization:
-      model_id: null
 - index: 1
   overrides:
     logging.wandb.project: pipeline-smoke
     model_store.collection: pipeline-smoke
-    data.dataset: snowmelt
-    data.downsample: 8
-    model.channels: 16
+    data.dataset: pde
+    data.pde.size: 32
+    data.pde.frames: 6
+    model.channels: 8
     run.t: 16
     run.iterations: 60
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-restore-pde-domain
+    logging.wandb.group: smoke_pde-restore-pde-domain
     model.family: gNCA
-    data.snowmelt.target_channels:
-    - NDSI
-    - B3
-    - B11
-    data.snowmelt.static_channels:
-    - DEM
-    - SLOPE
-    - NORTHNESS
-    - EASTNESS
-    run.interval_mode: uniform
+    data.pde.model: cahn_hilliard
+    data.pde.parameters:
+      D: 0.1
+    data.pde.observed_channels: []
+    data.pde.dt: 0.1
+    data.pde.t_end: 500
+    data.pde.initial_condition: uniform
+    data.pde.initial_condition_scale: 2.0
+    data.pde.initial_condition_offset: -1.0
     trainer.loop_autodiff: lax
-    experiment.name: smoke_snowmelt
+    experiment.name: smoke_pde
     seed: 0
     logging.wandb.tag_keys:
     - model.family
-    - data.snowmelt.target_channels
-    - data.snowmelt.static_channels
-    - run.interval_mode
+    - data.pde.model
+    - data.pde.parameters
+    - data.pde.observed_channels
+    - data.pde.dt
+    - data.pde.t_end
+    - data.pde.initial_condition
+    - data.pde.initial_condition_scale
+    - data.pde.initial_condition_offset
     - trainer.loop_autodiff
   config:
     schema_version: 7
     seed: 0
     experiment:
-      name: smoke_snowmelt
+      name: smoke_pde
     system:
       precision: highest
       xla_flags: null
-    labels:
-      scaling: convective
-      gpu: null
     data:
-      dataset: snowmelt
-      batches: 1
-      downsample: 8
-      snowmelt:
-        root: null
-        version: v2
-        target_channels:
-        - NDSI
-        - B3
-        - B11
-        static_channels:
-        - DEM
-        - SLOPE
-        - NORTHNESS
-        - EASTNESS
-        pad: 4
-        mask_threshold: 0.5
-        exclude_dates:
-        - 0
-        - 1
-        hold_out_dates: []
-        noise_strength: 0.005
+      dataset: pde
+      batches: 2
+      downsample: 1
+      pde:
+        model: cahn_hilliard
+        parameters:
+          D: 0.1
+        observed_channels: []
+        size: 32
+        padding: CIRCULAR
+        dx: 1.0
+        dt: 0.1
+        solver: heun
+        t_end: 500
+        frames: 6
+        initial_condition: uniform
+        initial_condition_scale: 2.0
+        initial_condition_offset: -1.0
+        initial_condition_blur: 0
+        normalisation: minmax
+        seed: 0
+        noise_strength: 0.001
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 16
+      channels: 8
       kernel_str:
       - ID
       - LAP
-      - GRAD
-      fire_rate: 0.5
+      activation: relu
+      fire_rate: 1.0
       padding: CIRCULAR
+      kernel_scale: 1
     trainer:
       boundary_mode: soft
-      grad_loss: false
+      grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
       loop_autodiff: lax
       log_every: 20
-      validation_every: null
-      validation_rollout: false
       pool_admission:
         enabled: true
         relative_threshold: 1.25
@@ -252,17 +264,17 @@ configs:
       warmup_steps: 10
       decay_rate: 0.99
       schedule:
-        type: cosine
+        type: exponential
         warmup_init_lr: 1.0e-06
         final_factor: 0.1
         transition_fraction: 0.75
     loss:
       terms:
-      - type: l2
+      - type: euclidean
         weight: 1.0
       regularisers:
         intermediate_state: 1.0
-        boundary: 5.0
+        boundary: 0.0
         contiguous_growth: 0.0
         localised_hidden: 0.0
         update_sensitivity: 0.0
@@ -271,34 +283,30 @@ configs:
     run:
       mode: train
       t: 16
-      interval_mode: uniform
-      reference_interval: 20
-      interval_steps: null
       iterations: 60
       checkpoint_warmup: 5
       write_images: true
       write_videos: true
     logging:
       backend: wandb
-      singular_values:
-        enabled: false
-        plot_spectra: true
-        epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-restore-pde-domain
+        group: smoke_pde-restore-pde-domain
         tags: null
         tag_keys:
         - model.family
-        - data.snowmelt.target_channels
-        - data.snowmelt.static_channels
-        - run.interval_mode
+        - data.pde.model
+        - data.pde.parameters
+        - data.pde.observed_channels
+        - data.pde.dt
+        - data.pde.t_end
+        - data.pde.initial_condition
+        - data.pde.initial_condition_scale
+        - data.pde.initial_condition_offset
         - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
       collection: pipeline-smoke
       model_factory: NCA.model.factory:build_model
-    initialization:
-      model_id: null
 emit_files: false

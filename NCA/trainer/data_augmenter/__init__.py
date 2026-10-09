@@ -1,8 +1,8 @@
 """Data augmenters: they hold the training data and update the pool of states.
 
 * ``base.PoolAugmenter`` holds the data; the domain augmenters build on it:
-  ``emoji.EmojiAugmenter``, ``micropattern.MicropatternAugmenter`` and
-  ``snowmelt.SnowmeltAugmenter``.
+  ``emoji.EmojiAugmenter``, ``micropattern.MicropatternAugmenter``,
+  ``snowmelt.SnowmeltAugmenter`` and ``pde.PdeAugmenter``.
 * ``transforms.py`` and ``trajectory.py`` hold the pure functions they use
   (reinjection, noise, shifts, damage, padding). Each takes an explicit key.
 """

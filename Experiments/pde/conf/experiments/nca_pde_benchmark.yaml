@@ -1,0 +1,48 @@
+experiment_name: nca_pde_benchmark
+entrypoint: Experiments.pde.train:run
+output_subdir: generated/nca_pde_benchmark
+seed_mode: index
+
+# Train NCA on each pattern-forming PDE in PDE/catalogue.py, with the
+# per-PDE settings of the thesis runs (old Experiments/archive/pde/nca_pde_eval.py):
+# 64x64, 2 trajectories of 12 frames, 32 NCA steps per frame, 16 channels.
+# Differences from the thesis runs: the heat equation starts from a centred square
+# in both trajectories (the thesis used one square and one noise field), and the
+# Cahn-Hilliard and Keller-Segel trajectories are sampled directly at 12 frames.
+#
+# Generate with:
+#   python Experiments/generate_configs.py \
+#       Experiments/pde/conf/experiments/nca_pde_benchmark.yaml \
+#       Experiments/pde/conf/base_config.yaml Experiments/pde/conf/generated
+#
+# Total jobs: 6 PDEs * 2 families * 3 repeats = 36.
+grid:
+  logging.wandb.project: [NCA-PDEs]
+  data.dataset: [pde]
+  model.family: [NCA, gNCA]
+  run.repeat: [0, 1, 2]
+
+# One entry per PDE: each block is zipped, not a Cartesian product.
+groups:
+  - data.pde.model: [gray_scott, chhabra, cahn_hilliard, hillen_painter, keller_segel, heat]
+    data.pde.parameters:
+      - {}
+      - {}
+      - {}
+      - {}
+      - {epsilon: 0.2}
+      - {}
+    data.pde.observed_channels:
+      - [A]
+      - []
+      - []
+      - []
+      - [cells]
+      - []
+    data.pde.dx: [1.0, 0.5, 1.0, 0.5, 1.0, 1.0]
+    data.pde.dt: [0.5, 0.1, 0.1, 0.01, 0.02, 0.5]
+    data.pde.t_end: [5000, 5000, 1000, 100, 400, 1000]
+    data.pde.initial_condition: [gray_scott_shapes, uniform, uniform, uniform, uniform, square]
+    data.pde.initial_condition_scale: [1.0, 0.5, 2.0, 1.0, 0.5, 1.0]
+    data.pde.initial_condition_offset: [0.0, 0.0, -1.0, 0.0, 0.0, 0.0]
+    data.pde.initial_condition_blur: [0, 0, 0, 1, 1, 0]

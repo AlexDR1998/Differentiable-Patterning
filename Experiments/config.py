@@ -43,6 +43,7 @@ from Experiments.impulse.config import (
     OutputConfig,
 )
 from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
+from Experiments.pde.config import PdeDataConfig
 from Experiments.snowmelt.config import SnowmeltDataConfig
 from Experiments.micropatterns.config import (
     KnockoutConfig,
@@ -67,6 +68,7 @@ DATA_SECTIONS = {
     "micropatterns": "micropattern",
     "micropatterns_260726": "micropattern",
     "snowmelt": "snowmelt",
+    "pde": "pde",
 }
 
 
@@ -127,6 +129,7 @@ class DataConfig(ConfigValue):
     emoji: EmojiDataConfig | None = None
     micropattern: MicropatternDataConfig | None = None
     snowmelt: SnowmeltDataConfig | None = None
+    pde: PdeDataConfig | None = None
     knockout: KnockoutConfig = field(default_factory=KnockoutConfig)
 
     def __post_init__(self):
@@ -135,7 +138,7 @@ class DataConfig(ConfigValue):
         if self.downsample <= 0:
             raise ValueError("data.downsample must be positive")
         expected = DATA_SECTIONS[self.dataset]
-        for section in ("emoji", "micropattern", "snowmelt"):
+        for section in ("emoji", "micropattern", "snowmelt", "pde"):
             if (getattr(self, section) is not None) != (section == expected):
                 raise ValueError(
                     f"data.dataset={self.dataset!r} needs data.{expected} settings "
@@ -568,6 +571,12 @@ def _data_config(value: Any) -> DataConfig:
             SnowmeltDataConfig, raw, "data.snowmelt",
             target_channels=_tuple, static_channels=_tuple,
             exclude_dates=_date_entries, hold_out_dates=_date_entries,
+        ),
+        "pde": lambda raw: _strict(
+            PdeDataConfig, raw, "data.pde",
+            observed_channels=_tuple,
+            parameters=lambda x: {str(k): float(v) for k, v in (x or {}).items()},
+            dx=float, dt=float, t_end=float,
         ),
     }
     return _strict(

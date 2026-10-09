@@ -51,9 +51,10 @@ STAGES = [
     ("micropatterns", "smoke_micropatterns"),
     ("micropatterns", "smoke_micropatterns_ko_finetune"),
     ("snowmelt", "smoke_snowmelt"),
+    ("pde", "smoke_pde"),
 ]
 # Label for the code version being tested; used in the W&B group of every run.
-SMOKE_VERSION = "micropattern-260726-cleaning-tags-quality-flags"
+SMOKE_VERSION = "restore-pde-domain"
 PARENT_PLACEHOLDER = "REPLACE_WITH_PARENT_MODEL_ID"
 SMOKE_COLLECTION = "pipeline-smoke"
 
@@ -81,7 +82,7 @@ def run_entry(manifest_path: Path, index: int, env: dict[str, str], log_dir: Pat
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
-        "--only", nargs="+", choices=["emoji", "micropatterns", "snowmelt"],
+        "--only", nargs="+", choices=["emoji", "micropatterns", "snowmelt", "pde"],
         help="Run only these domains (default: all)",
     )
     parser.add_argument(
