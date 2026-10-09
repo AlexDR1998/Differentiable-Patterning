@@ -1,4 +1,4 @@
-experiment_name: stability-and-regeneration-5
+experiment_name: stability-and-regeneration-6
 entrypoint: Experiments.emoji.train:run
 output_subdir: generated/emoji_multi_attractor_stability_sweep
 seed_mode: index
@@ -28,7 +28,7 @@ grid:
   data.emoji.regeneration.initial_probability: [0.05]
   data.emoji.regeneration.final_probability: [0.25]
   run.t: [128]
-  run.iterations: [8000]
+  run.iterations: [16000]
   loss.terms: [[l2]]
   loss.regularisers.intermediate_state: [1.0]
   loss.regularisers.contiguous_growth: [1.0]

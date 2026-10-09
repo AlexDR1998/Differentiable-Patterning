@@ -1,4 +1,4 @@
-experiment_name: stability-and-regeneration-5
+experiment_name: stability-and-regeneration-6
 entrypoint: Experiments.emoji.train:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/experiments/emoji_multi_attractor_stability_sweep.yaml
@@ -40,7 +40,7 @@ configs:
     data.emoji.regeneration.initial_probability: 0.05
     data.emoji.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 8000
+    run.iterations: 16000
     loss.terms:
     - l2
     loss.regularisers.intermediate_state: 1.0
@@ -59,8 +59,8 @@ configs:
     experiment.stability_mode: clean
     data.emoji.terminal_carry.enabled: false
     data.emoji.regeneration.enabled: false
-    experiment.name: stability-and-regeneration-5
-    logging.wandb.group: stability-and-regeneration-5
+    experiment.name: stability-and-regeneration-6
+    logging.wandb.group: stability-and-regeneration-6
     seed: 1654615998
     logging.wandb.tag_keys:
     - model.family
@@ -71,7 +71,7 @@ configs:
     schema_version: 7
     seed: 1654615998
     experiment:
-      name: stability-and-regeneration-5
+      name: stability-and-regeneration-6
       stability_mode: clean
     system:
       precision: tensorfloat32
@@ -180,14 +180,14 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 8000
+      iterations: 16000
       checkpoint_warmup: 10
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-5
+        group: stability-and-regeneration-6
         tags: null
         tag_keys:
         - model.family
@@ -234,7 +234,7 @@ configs:
     data.emoji.regeneration.initial_probability: 0.05
     data.emoji.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 8000
+    run.iterations: 16000
     loss.terms:
     - l2
     loss.regularisers.intermediate_state: 1.0
@@ -253,8 +253,8 @@ configs:
     experiment.stability_mode: terminal_carry
     data.emoji.terminal_carry.enabled: true
     data.emoji.regeneration.enabled: false
-    experiment.name: stability-and-regeneration-5
-    logging.wandb.group: stability-and-regeneration-5
+    experiment.name: stability-and-regeneration-6
+    logging.wandb.group: stability-and-regeneration-6
     seed: 1806341205
     logging.wandb.tag_keys:
     - model.family
@@ -265,7 +265,7 @@ configs:
     schema_version: 7
     seed: 1806341205
     experiment:
-      name: stability-and-regeneration-5
+      name: stability-and-regeneration-6
       stability_mode: terminal_carry
     system:
       precision: tensorfloat32
@@ -374,14 +374,14 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 8000
+      iterations: 16000
       checkpoint_warmup: 10
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-5
+        group: stability-and-regeneration-6
         tags: null
         tag_keys:
         - model.family
@@ -428,7 +428,7 @@ configs:
     data.emoji.regeneration.initial_probability: 0.05
     data.emoji.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 8000
+    run.iterations: 16000
     loss.terms:
     - l2
     loss.regularisers.intermediate_state: 1.0
@@ -447,8 +447,8 @@ configs:
     experiment.stability_mode: regeneration
     data.emoji.terminal_carry.enabled: false
     data.emoji.regeneration.enabled: true
-    experiment.name: stability-and-regeneration-5
-    logging.wandb.group: stability-and-regeneration-5
+    experiment.name: stability-and-regeneration-6
+    logging.wandb.group: stability-and-regeneration-6
     seed: 173879092
     logging.wandb.tag_keys:
     - model.family
@@ -459,7 +459,7 @@ configs:
     schema_version: 7
     seed: 173879092
     experiment:
-      name: stability-and-regeneration-5
+      name: stability-and-regeneration-6
       stability_mode: regeneration
     system:
       precision: tensorfloat32
@@ -568,14 +568,14 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 8000
+      iterations: 16000
       checkpoint_warmup: 10
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-5
+        group: stability-and-regeneration-6
         tags: null
         tag_keys:
         - model.family
@@ -622,7 +622,7 @@ configs:
     data.emoji.regeneration.initial_probability: 0.05
     data.emoji.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 8000
+    run.iterations: 16000
     loss.terms:
     - l2
     loss.regularisers.intermediate_state: 1.0
@@ -641,8 +641,8 @@ configs:
     experiment.stability_mode: terminal_carry_and_regeneration
     data.emoji.terminal_carry.enabled: true
     data.emoji.regeneration.enabled: true
-    experiment.name: stability-and-regeneration-5
-    logging.wandb.group: stability-and-regeneration-5
+    experiment.name: stability-and-regeneration-6
+    logging.wandb.group: stability-and-regeneration-6
     seed: 1112038970
     logging.wandb.tag_keys:
     - model.family
@@ -653,7 +653,7 @@ configs:
     schema_version: 7
     seed: 1112038970
     experiment:
-      name: stability-and-regeneration-5
+      name: stability-and-regeneration-6
       stability_mode: terminal_carry_and_regeneration
     system:
       precision: tensorfloat32
@@ -762,14 +762,14 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 8000
+      iterations: 16000
       checkpoint_warmup: 10
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-5
+        group: stability-and-regeneration-6
         tags: null
         tag_keys:
         - model.family
@@ -816,7 +816,7 @@ configs:
     data.emoji.regeneration.initial_probability: 0.05
     data.emoji.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 8000
+    run.iterations: 16000
     loss.terms:
     - l2
     loss.regularisers.intermediate_state: 1.0
@@ -835,8 +835,8 @@ configs:
     experiment.stability_mode: clean
     data.emoji.terminal_carry.enabled: false
     data.emoji.regeneration.enabled: false
-    experiment.name: stability-and-regeneration-5
-    logging.wandb.group: stability-and-regeneration-5
+    experiment.name: stability-and-regeneration-6
+    logging.wandb.group: stability-and-regeneration-6
     seed: 2087043557
     logging.wandb.tag_keys:
     - model.family
@@ -847,7 +847,7 @@ configs:
     schema_version: 7
     seed: 2087043557
     experiment:
-      name: stability-and-regeneration-5
+      name: stability-and-regeneration-6
       stability_mode: clean
     system:
       precision: tensorfloat32
@@ -956,14 +956,14 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 8000
+      iterations: 16000
       checkpoint_warmup: 10
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-5
+        group: stability-and-regeneration-6
         tags: null
         tag_keys:
         - model.family
@@ -1010,7 +1010,7 @@ configs:
     data.emoji.regeneration.initial_probability: 0.05
     data.emoji.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 8000
+    run.iterations: 16000
     loss.terms:
     - l2
     loss.regularisers.intermediate_state: 1.0
@@ -1029,8 +1029,8 @@ configs:
     experiment.stability_mode: terminal_carry
     data.emoji.terminal_carry.enabled: true
     data.emoji.regeneration.enabled: false
-    experiment.name: stability-and-regeneration-5
-    logging.wandb.group: stability-and-regeneration-5
+    experiment.name: stability-and-regeneration-6
+    logging.wandb.group: stability-and-regeneration-6
     seed: 1739178872
     logging.wandb.tag_keys:
     - model.family
@@ -1041,7 +1041,7 @@ configs:
     schema_version: 7
     seed: 1739178872
     experiment:
-      name: stability-and-regeneration-5
+      name: stability-and-regeneration-6
       stability_mode: terminal_carry
     system:
       precision: tensorfloat32
@@ -1150,14 +1150,14 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 8000
+      iterations: 16000
       checkpoint_warmup: 10
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-5
+        group: stability-and-regeneration-6
         tags: null
         tag_keys:
         - model.family
@@ -1204,7 +1204,7 @@ configs:
     data.emoji.regeneration.initial_probability: 0.05
     data.emoji.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 8000
+    run.iterations: 16000
     loss.terms:
     - l2
     loss.regularisers.intermediate_state: 1.0
@@ -1223,8 +1223,8 @@ configs:
     experiment.stability_mode: regeneration
     data.emoji.terminal_carry.enabled: false
     data.emoji.regeneration.enabled: true
-    experiment.name: stability-and-regeneration-5
-    logging.wandb.group: stability-and-regeneration-5
+    experiment.name: stability-and-regeneration-6
+    logging.wandb.group: stability-and-regeneration-6
     seed: 1302718217
     logging.wandb.tag_keys:
     - model.family
@@ -1235,7 +1235,7 @@ configs:
     schema_version: 7
     seed: 1302718217
     experiment:
-      name: stability-and-regeneration-5
+      name: stability-and-regeneration-6
       stability_mode: regeneration
     system:
       precision: tensorfloat32
@@ -1344,14 +1344,14 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 8000
+      iterations: 16000
       checkpoint_warmup: 10
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-5
+        group: stability-and-regeneration-6
         tags: null
         tag_keys:
         - model.family
@@ -1398,7 +1398,7 @@ configs:
     data.emoji.regeneration.initial_probability: 0.05
     data.emoji.regeneration.final_probability: 0.25
     run.t: 128
-    run.iterations: 8000
+    run.iterations: 16000
     loss.terms:
     - l2
     loss.regularisers.intermediate_state: 1.0
@@ -1417,8 +1417,8 @@ configs:
     experiment.stability_mode: terminal_carry_and_regeneration
     data.emoji.terminal_carry.enabled: true
     data.emoji.regeneration.enabled: true
-    experiment.name: stability-and-regeneration-5
-    logging.wandb.group: stability-and-regeneration-5
+    experiment.name: stability-and-regeneration-6
+    logging.wandb.group: stability-and-regeneration-6
     seed: 2046968324
     logging.wandb.tag_keys:
     - model.family
@@ -1429,7 +1429,7 @@ configs:
     schema_version: 7
     seed: 2046968324
     experiment:
-      name: stability-and-regeneration-5
+      name: stability-and-regeneration-6
       stability_mode: terminal_carry_and_regeneration
     system:
       precision: tensorfloat32
@@ -1538,14 +1538,14 @@ configs:
       t: 128
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
-      iterations: 8000
+      iterations: 16000
       checkpoint_warmup: 10
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: NCA-emoji-multi-attractor
-        group: stability-and-regeneration-5
+        group: stability-and-regeneration-6
         tags: null
         tag_keys:
         - model.family
