@@ -23,8 +23,10 @@ data:
     # pairs:
     #   - initial: {image: crab.png, mode: patch, size: 12}
     #     target: crab.png
-    # `initial` may also be a filename (full image), or use mode: pixel with
-    # channel/value. All pairs must resolve to the same C x H x W shape.
+    # `initial` may also be a filename (full image), or a centre-pixel seed
+    # {image: crab.png, mode: pixel, channels: [3, 4], values: 1.0}, where
+    # channels index NCA channels (data channels, then hidden channels).
+    # All pairs must resolve to the same C x H x W shape.
     pairs: []
     # For multi_attractor, construct [initial, target, ...target] with this many
     # target states. Repeated targets train persistence as well as formation.

@@ -27,4 +27,7 @@ class ImpulseResult:
     final_states: Array
     baseline_trajectory: Array
     perturbed_trajectory: Array
+    # Mean target loss at the end of the evaluation rollout.
+    evaluation_loss: float
+    baseline_evaluation_loss: float
 

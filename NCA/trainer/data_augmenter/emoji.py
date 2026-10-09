@@ -56,6 +56,8 @@ class EmojiAugmenter(PoolAugmenter):
     ``terminal_carry`` and ``regeneration`` are probability schedules (see
     ``schedule_probability``). The data is repeated ``batches`` times and
     padded spatially by ``pad`` = (top, bottom, left, right), or not if None.
+    ``hidden_seeds`` ([trajectory, hidden channels, H, W], before padding)
+    sets the hidden channels of each initial condition, which are otherwise zero.
     """
 
     def __init__(
@@ -70,6 +72,7 @@ class EmojiAugmenter(PoolAugmenter):
         noise_mode="full",
         terminal_carry=None,
         regeneration=None,
+        hidden_seeds=None,
     ):
         super().__init__(data, hidden_channels)
         self.shift_amount = shift_amount
@@ -79,7 +82,15 @@ class EmojiAugmenter(PoolAugmenter):
         self.regeneration = regeneration
         # Key of the last shift, so it can be undone before the next step
         self.previous_key = None
-        data = duplicate_batches(self.data_saved, batches)
+        data = self.data_saved
+        if hidden_seeds is not None:
+            if len(hidden_seeds) != len(data):
+                raise ValueError("hidden_seeds needs one entry per trajectory")
+            data = [
+                trajectory.at[0, self.OBS_CHANNELS:].set(seed)
+                for trajectory, seed in zip(data, hidden_seeds)
+            ]
+        data = duplicate_batches(data, batches)
         if pad is not None:
             data = pad_spatial(data, pad)
         self.data_saved = data

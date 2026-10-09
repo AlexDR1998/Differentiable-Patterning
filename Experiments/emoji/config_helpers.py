@@ -76,6 +76,61 @@ def _load_single_emoji(filename, data_config, impath):
     return data[0, 0]
 
 
+def pixel_seed(initial_cfg):
+    """(channel, value) pairs of a ``mode: pixel`` initial condition.
+
+    ``channels`` lists NCA channel indices (data channels first, then hidden
+    channels) and ``values`` gives one value per channel, or one shared value
+    (default 1.0). The older ``channel``/``value`` form sets a single channel.
+    """
+
+    if "channels" in initial_cfg:
+        channels = [int(channel) for channel in initial_cfg["channels"]]
+        values = initial_cfg.get("values", 1.0)
+    else:
+        channels = [int(initial_cfg.get("channel", 0))]
+        values = initial_cfg.get("value", 1.0)
+    if isinstance(values, (int, float)):
+        values = [values] * len(channels)
+    values = [float(value) for value in values]
+    if not channels or len(values) != len(channels):
+        raise ValueError("pixel initial conditions need one value per channel")
+    if min(channels) < 0 or len(set(channels)) != len(channels):
+        raise ValueError(f"pixel channels must be distinct and non-negative, got {channels}")
+    return list(zip(channels, values))
+
+
+def build_hidden_seeds(data_config, data, model_channels):
+    """Hidden-channel part of the initial conditions, or None if there is none.
+
+    ``data`` is the loaded [pair, time, data channels, H, W] array. Returns a
+    [pair, model_channels - data channels, H, W] array with each pixel seed's
+    hidden channels set at the centre pixel, matching the data-channel seed.
+    """
+
+    emoji = data_config.emoji
+    if emoji.task != "multi_attractor":
+        return None
+    pairs, _, data_channels, height, width = np.shape(data)
+    hidden = np.zeros((pairs, model_channels - data_channels, height, width), dtype=np.float32)
+    found = False
+    for index, pair in enumerate(emoji.pairs):
+        initial = pair.initial
+        if isinstance(initial, str) or initial.get("mode", "full") != "pixel":
+            continue
+        for channel, value in pixel_seed(initial):
+            if channel < data_channels:
+                continue
+            if channel >= model_channels:
+                raise ValueError(
+                    f"data.emoji.pairs[{index}] seeds channel {channel}, but the model "
+                    f"has {model_channels} channels"
+                )
+            hidden[index, channel - data_channels, height // 2, width // 2] = value
+            found = True
+    return hidden if found else None
+
+
 def _build_initial_condition(initial_cfg, data_config, impath):
     if isinstance(initial_cfg, str):
         initial_cfg = {"image": initial_cfg, "mode": "full"}
@@ -101,14 +156,13 @@ def _build_initial_condition(initial_cfg, data_config, impath):
         ]
         return initial
     if mode == "pixel":
-        channel = int(initial_cfg.get("channel", 0))
-        value = float(initial_cfg.get("value", 1.0))
-        if not 0 <= channel < image.shape[0]:
-            raise ValueError(
-                f"initial pixel channel must be in [0, {image.shape[0] - 1}], got {channel}"
-            )
+        # Data channels are set here; hidden channels (index >= the image
+        # channels) are added later by build_hidden_seeds, once the model's
+        # channel count is known.
         initial = np.zeros_like(image)
-        initial[channel, image.shape[-2] // 2, image.shape[-1] // 2] = value
+        for channel, value in pixel_seed(initial_cfg):
+            if channel < image.shape[0]:
+                initial[channel, image.shape[-2] // 2, image.shape[-1] // 2] = value
         return initial
     raise ValueError(f"Unknown multi-attractor initial mode {mode!r}")
 
@@ -170,12 +224,14 @@ def load_data(data_config, impath=None):
 def build_data_augmenter(data_config, data, model_channels):
     """Build the emoji augmenter for ``data`` [batch, time, channels, H, W].
 
-    The data is zero-padded to ``model_channels`` NCA channels.
+    The data is zero-padded to ``model_channels`` NCA channels, apart from
+    the hidden channels of pixel seeds (``build_hidden_seeds``).
     """
     emoji = data_config.emoji
     augmenter = EmojiAugmenter(
         data,
         hidden_channels=model_channels - emoji.data_channels,
+        hidden_seeds=build_hidden_seeds(data_config, data, model_channels),
         batches=data_config.batches,
         pad=_pad_tuple(emoji.pad),
         shift_amount=emoji.shift_amount,

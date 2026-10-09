@@ -22,6 +22,7 @@ from Experiments.config_helpers import (
 )
 from Experiments.emoji.config_helpers import (
     build_data_augmenter,
+    build_hidden_seeds,
     build_data_config_string,
     build_filename,
     load_data as load_emoji_data,
@@ -428,6 +429,60 @@ def test_multi_attractor_patch_initial_condition(monkeypatch):
     assert data.shape == (1, 2, 4, 8, 8)
     assert data[0, 0].sum() == 4 * 2 * 2
     assert data[0, 1].sum() == 4 * 8 * 8
+
+
+def _pixel_seed_cfg(monkeypatch):
+    monkeypatch.setattr(
+        "Experiments.emoji.config_helpers.load_emoji_sequence",
+        lambda sequence, **kwargs: jnp.ones((1, 1, 4, 5, 5)),
+    )
+    return _multi_attractor_cfg(
+        [
+            # Data channels 0 and 2, hidden channel 5 (model channel 5 = hidden 1)
+            {
+                "initial": {"image": "crab.png", "mode": "pixel", "channels": [0, 2, 5], "values": [1.0, 0.5, 2.0]},
+                "target": "crab.png",
+            },
+            # Older single-channel form
+            {"initial": {"image": "microbe.png", "mode": "pixel", "channel": 1}, "target": "microbe.png"},
+        ],
+        target_repeats=1,
+    )
+
+
+def test_pixel_seeds_set_data_channels_and_hidden_channels(monkeypatch):
+    cfg = _pixel_seed_cfg(monkeypatch)
+
+    data, _ = load_emoji_data(cfg.data, impath="/tmp/emojis/")
+    hidden = build_hidden_seeds(cfg.data, data, model_channels=8)
+
+    assert data[0, 0, :, 2, 2].tolist() == [1.0, 0.0, 0.5, 0.0]
+    assert data[0, 0].sum() == 1.5
+    assert data[1, 0, :, 2, 2].tolist() == [0.0, 1.0, 0.0, 0.0]
+    assert hidden.shape == (2, 4, 5, 5)
+    assert hidden[0, 1, 2, 2] == 2.0
+    assert hidden.sum() == 2.0
+    with pytest.raises(ValueError, match="model has 5 channels"):
+        build_hidden_seeds(cfg.data, data, model_channels=5)
+
+
+def test_hidden_pixel_seeds_reach_the_augmenter_and_survive_reinjection(monkeypatch):
+    cfg = _pixel_seed_cfg(monkeypatch)
+    data, _ = load_emoji_data(cfg.data, impath="/tmp/emojis/")
+
+    augmenter, _ = build_data_augmenter(cfg.data, data, model_channels=8)
+    x, _ = augmenter.initialize_pool(jax.random.PRNGKey(0))
+    x, _ = augmenter.advance_pool(x, x, 1, jax.random.PRNGKey(1))
+
+    # batches=2 repeats the two pairs; emoji.pad (default 10) moves the centre to 12
+    saved = augmenter.return_saved_data()
+    assert len(saved) == len(x) == 4
+    for index in (0, 2):
+        assert saved[index][0, 5, 12, 12] == 2.0
+        assert saved[index][0, 5].sum() == 2.0
+        # The pool may be shifted and noised, but slot 0 keeps the seed
+        assert x[index][0, 5].max() > 1.9
+    assert saved[1][0, 4:].sum() == 0.0
 
 
 def test_multi_attractor_requires_pairs():

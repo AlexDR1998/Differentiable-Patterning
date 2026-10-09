@@ -1,22 +1,26 @@
-experiment_name: stability-and-regeneration-5
+# Three stable patterns grown from one-pixel seeds that differ only in their
+# channel code: alpha (channel 3) plus a binary code in hidden channels 4 and 5.
+# With n code channels this gives up to 2^n distinguishable seeds.
+experiment_name: multi-attractor-pixel-seed-1
 entrypoint: Experiments.emoji.train:run
-output_subdir: generated/emoji_multi_attractor_stability_sweep
+output_subdir: generated/emoji_multi_attractor_pixel_seed_example
 seed_mode: index
 
 grid:
   logging.wandb.project: [NCA-emoji-multi-attractor]
-  # logging.wandb.group: [stability-and-regeneration-3]
   model.family: [NCA, gNCA]
   model.channels: [48]
   model.fire_rate: [0.5]
   data.emoji.task: [multi_attractor]
   data.emoji.pairs:
-    - - initial: {image: crab.png, mode: patch, size: 1}
+    - - initial: {image: crab.png, mode: pixel, channels: [3, 4]}
         target: crab.png
-      - initial: {image: microbe.png, mode: patch, size: 1}
+      - initial: {image: microbe.png, mode: pixel, channels: [3, 5]}
         target: microbe.png
+      - initial: {image: rooster.png, mode: pixel, channels: [3, 4, 5]}
+        target: rooster.png
   data.emoji.target_repeats: [2]
-  data.batches: [2]
+  data.batches: [4]
   data.emoji.shift_amount: [10]
   data.emoji.pad: [[10,10,10,10]]
   data.emoji.terminal_carry.start_iteration: [1000]

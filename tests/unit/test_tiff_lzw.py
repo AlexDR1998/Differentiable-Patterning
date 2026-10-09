@@ -70,12 +70,14 @@ def test_read_tiff_passes_through_uncompressed_files(tmp_path):
 
 
 SNOWMELT_ROOT = Path(os.environ.get("SNOWMELT_DATA_ROOT", Path.home() / "PhD" / "Data" / "snowmelt"))
+# Raw bands of any dataset version (<root>/v*/S2_rawbands*/)
+SNOWMELT_RAW_BANDS = sorted(SNOWMELT_ROOT.glob("v*/S2_rawbands*/*.tif"))
 
 
-@pytest.mark.skipif(not (SNOWMELT_ROOT / "S2_rawbands").is_dir(), reason="snowmelt data not available")
+@pytest.mark.skipif(not SNOWMELT_RAW_BANDS, reason="snowmelt data not available")
 def test_read_lzw_tiff_matches_opencv_on_real_geotiff():
     cv2 = pytest.importorskip("cv2")
-    path = sorted((SNOWMELT_ROOT / "S2_rawbands").glob("*.tif"))[0]
+    path = SNOWMELT_RAW_BANDS[0]
 
     decoded = read_lzw_tiff(path)
 

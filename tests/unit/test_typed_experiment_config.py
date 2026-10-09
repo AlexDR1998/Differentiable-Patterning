@@ -17,6 +17,7 @@ from Experiments.config import (
     [
         Path("Experiments/emoji/conf/base_config.yaml"),
         Path("Experiments/micropatterns/conf/base_config.yaml"),
+        Path("Experiments/pde/conf/base_config.yaml"),
     ],
 )
 def test_active_base_configs_convert_and_round_trip(path):
@@ -172,3 +173,29 @@ def test_impulse_workflow_has_a_separate_typed_root():
 
     assert isinstance(config, ImpulseExperimentConfig)
     assert config.impulse.rollout.steps == 64
+    assert config.checkpoint.model_id == "REPLACE_WITH_MODEL_ID"
+    # A null data section means the model bundle's own training data.
+    assert config.data is None
+
+
+def test_impulse_config_rejects_a_model_section():
+    value = yaml.safe_load(
+        Path("Experiments/impulse/conf/base_config.yaml").read_text()
+    )
+    value["model"] = {"family": "NCA", "channels": 32}
+
+    with pytest.raises(ValueError, match="checkpoint.model_id"):
+        impulse_experiment_config_from_mapping(value)
+
+
+def test_impulse_config_accepts_an_explicit_data_section():
+    value = yaml.safe_load(
+        Path("Experiments/impulse/conf/base_config.yaml").read_text()
+    )
+    value["data"] = yaml.safe_load(
+        Path("Experiments/emoji/conf/base_config.yaml").read_text()
+    )["data"]
+
+    config = impulse_experiment_config_from_mapping(value)
+
+    assert config.data.dataset == "emojis"

@@ -21,9 +21,11 @@ class perturbation(AbstractModel):
     WIDTH: float
 
     def __init__(self,mode,CHANNELS,OBS_CHANNELS,x,WIDTH,key):
-        # Location is normalised (0 to 1) coordinates
+        # The centre is sigmoid(location) in normalised (0 to 1) coordinates.
+        # Store the logit of a uniform draw so the starting centre is uniform
+        # over the interior of the lattice, not biased towards one corner.
         self.WIDTH = WIDTH
-        self.location = jr.uniform(key,(2,),minval=0,maxval=1)
+        self.location = jax.scipy.special.logit(jr.uniform(key,(2,),minval=0.1,maxval=0.9))
         self.mode=mode
         self.OBS_CHANNELS = OBS_CHANNELS
         self.CHANNELS = CHANNELS
@@ -72,7 +74,8 @@ class perturbation(AbstractModel):
         return self.values
     
     def get_location(self):
-        return self.location
+        """Centre of a local perturbation in normalised (0 to 1) coordinates."""
+        return jax.nn.sigmoid(self.location)
     
     def regulariser(self,x,REG_FUNCS):
         reg_loss = 0.0

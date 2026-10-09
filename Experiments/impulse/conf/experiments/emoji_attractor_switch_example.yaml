@@ -3,14 +3,22 @@ entrypoint: Experiments.impulse.optimise:run
 output_subdir: generated/emoji_attractor_switch_example
 seed_mode: index
 grid:
-  checkpoint.path: [models/multi_species_model.eqx]
-  model.family: [NCA]
-  model.channels: [32]
+  # A multi_attractor emoji bundle, e.g. from
+  # Experiments/emoji/conf/experiments/emoji_multi_attractor_stability_sweep.yaml
+  # (python -m Experiments.model_registry list)
+  checkpoint.model_id: [REPLACE_WITH_MODEL_ID]
   impulse.pair_source.type: [stable_attractor]
-  impulse.pair_source.source_index: [0]
-  impulse.pair_source.target_index: [1]
   impulse.objective.type: [targeted]
+  impulse.rollout.loss_window: [16]
   impulse.intervention.channels: [hidden]
   impulse.intervention.spatial: [local]
   impulse.intervention.width: [0.1, 0.2]
   impulse.loss.regularisers.l2: [0.1, 1.0]
+
+groups:
+  # One run per transition (source -> target), indices into data.emoji.pairs.
+  # For K patterns list all K(K-1) ordered pairs, e.g. for K = 3:
+  #   source_index: [0, 0, 1, 1, 2, 2]
+  #   target_index: [1, 2, 0, 2, 0, 1]
+  - impulse.pair_source.source_index: [0, 1]
+    impulse.pair_source.target_index: [1, 0]

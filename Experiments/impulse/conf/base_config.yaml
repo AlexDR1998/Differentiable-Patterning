@@ -10,40 +10,24 @@ system:
   xla_flags: null
 
 checkpoint:
-  # The model section below must match the saved checkpoint architecture.
-  path: models/example.eqx
-  base_directory: null
-  base_env: MODEL_SAVE_PATH
+  # Registry ID or alias of the trained model to perturb. The model
+  # architecture comes from its bundle.
+  model_id: REPLACE_WITH_MODEL_ID
+  # null: MODEL_STORE_ROOT, then ./models
+  store_root: null
 
-data:
-  dataset: emojis
-  batches: 1
-  downsample: 1
-  emoji:
-    task: multi_attractor
-    sequence: []
-    pairs:
-      - initial: {image: crab.png, mode: patch, size: 12}
-        target: crab.png
-      - initial: {image: microbe.png, mode: patch, size: 12}
-        target: microbe.png
-    target_repeats: 2
-    observed_channels: 4
-    data_channels: 4
-    crop_square: false
-    pad: [10, 10, 10, 10]
-    regeneration:
-      enabled: false
+logging:
+  backend: wandb
+  wandb:
+    project: NCA-impulse
+    group: base-config
+    tags: null
+    tag_keys: null
 
-model:
-  family: NCA
-  channels: 32
-  kernel_str: [ID, LAP, GRAD]
-  activation: relu
-  fire_rate: 0.5
-  padding: REPLICATE
-  kernel_scale: 1
-  parameter_noise_level: 0.01
+# null: use the data section the model was trained with. Set a full data
+# section here to start from different initial conditions.
+data: null
+
 impulse:
   iterations: 1000
   batch_size: 8
@@ -51,16 +35,23 @@ impulse:
   log_every: 100
 
   pair_source:
-    # external_target, model_future, trajectory_state, or stable_attractor
+    # stable_attractor: grown source pattern -> grown target pattern
+    # external_target: source initial condition -> target data image
+    # model_future: source initial condition -> its own unperturbed future
+    # trajectory_state: two time points of the source data trajectory
     type: stable_attractor
+    # Indices into data.emoji.pairs
     source_index: 0
     target_index: 1
     stabilisation_steps: [128, 256]
     target_steps: 192
-    initial_index: 0
+    initial_time: 0
+    target_time: -1
 
   rollout:
     steps: 64
+    # Average the target loss over the last loss_window steps (1: final state only)
+    loss_window: 1
     evaluation_steps: 256
     scan_kind: lax
 

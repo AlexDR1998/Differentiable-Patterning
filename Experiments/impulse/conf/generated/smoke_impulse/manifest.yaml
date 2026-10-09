@@ -1,0 +1,194 @@
+experiment_name: smoke_impulse
+entrypoint: Experiments.impulse.optimise:run
+base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/impulse/conf/base_config.yaml
+sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/impulse/conf/experiments/smoke_impulse.yaml
+output_dir: Experiments/impulse/conf/generated/smoke_impulse
+count: 2
+configs:
+- index: 1
+  overrides:
+    checkpoint.model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+    logging.wandb.project: pipeline-smoke
+    impulse.iterations: 4
+    impulse.batch_size: 2
+    impulse.resample_every: 2
+    impulse.log_every: 1
+    impulse.pair_source.stabilisation_steps:
+    - 8
+    - 16
+    impulse.rollout.steps: 8
+    impulse.rollout.evaluation_steps: 16
+    impulse.output.directory: smoke_impulse
+    impulse.objective.type: targeted
+    impulse.rollout.loss_window: 1
+    experiment.name: smoke_impulse
+    logging.wandb.group: smoke_impulse
+    seed: 1654615998
+    logging.wandb.tag_keys:
+    - impulse.objective.type
+    - impulse.rollout.loss_window
+  config:
+    schema_version: 7
+    seed: 1654615998
+    experiment:
+      name: smoke_impulse
+    system:
+      precision: highest
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_impulse
+        tags: null
+        tag_keys:
+        - impulse.objective.type
+        - impulse.rollout.loss_window
+    data: null
+    impulse:
+      iterations: 4
+      batch_size: 2
+      resample_every: 2
+      log_every: 1
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 8
+        - 16
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 8
+        loss_window: 1
+        evaluation_steps: 16
+        scan_kind: lax
+      intervention:
+        channels: hidden
+        spatial: local
+        width: 0.2
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 1.0
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.001
+        gradient_clip_norm: 1.0
+      output:
+        directory: smoke_impulse
+        base_env: IMPULSE_OUTPUT_PATH
+- index: 0
+  overrides:
+    checkpoint.model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+    logging.wandb.project: pipeline-smoke
+    impulse.iterations: 4
+    impulse.batch_size: 2
+    impulse.resample_every: 2
+    impulse.log_every: 1
+    impulse.pair_source.stabilisation_steps:
+    - 8
+    - 16
+    impulse.rollout.steps: 8
+    impulse.rollout.evaluation_steps: 16
+    impulse.output.directory: smoke_impulse
+    impulse.objective.type: minimal_destructive
+    impulse.rollout.loss_window: 4
+    experiment.name: smoke_impulse
+    logging.wandb.group: smoke_impulse
+    seed: 1806341205
+    logging.wandb.tag_keys:
+    - impulse.objective.type
+    - impulse.rollout.loss_window
+  config:
+    schema_version: 7
+    seed: 1806341205
+    experiment:
+      name: smoke_impulse
+    system:
+      precision: highest
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_impulse
+        tags: null
+        tag_keys:
+        - impulse.objective.type
+        - impulse.rollout.loss_window
+    data: null
+    impulse:
+      iterations: 4
+      batch_size: 2
+      resample_every: 2
+      log_every: 1
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 8
+        - 16
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 8
+        loss_window: 4
+        evaluation_steps: 16
+        scan_kind: lax
+      intervention:
+        channels: hidden
+        spatial: local
+        width: 0.2
+      objective:
+        type: minimal_destructive
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 1.0
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.001
+        gradient_clip_norm: 1.0
+      output:
+        directory: smoke_impulse
+        base_env: IMPULSE_OUTPUT_PATH
+emit_files: false

@@ -6,9 +6,10 @@ runs. A run passes when it exits cleanly and publishes a complete model bundle.
 The runs go one after another on a single GPU, each in a fresh process through
 ``Experiments.run_config``, exactly as the cluster launchers run them.
 
-The Nodal knockout fine-tuning sweep starts from an existing trained model,
-set by hand in ``smoke_micropatterns_ko_finetune.yaml``. It is skipped until
-that placeholder is replaced.
+The Nodal knockout fine-tuning sweep and the impulse sweep start from an
+existing trained model, set by hand in ``smoke_micropatterns_ko_finetune.yaml``
+and ``smoke_impulse.yaml``. Each is skipped until its placeholder is replaced.
+Impulse runs publish no bundle, so for them a clean exit is enough.
 
 Usage (from the repository root, on a GPU machine):
 
@@ -52,9 +53,12 @@ STAGES = [
     ("micropatterns", "smoke_micropatterns_ko_finetune"),
     ("snowmelt", "smoke_snowmelt"),
     ("pde", "smoke_pde"),
+    ("impulse", "smoke_impulse"),
 ]
+# Sweeps that use a trained model rather than publish one.
+NO_BUNDLE_SWEEPS = {"smoke_impulse"}
 # Label for the code version being tested; used in the W&B group of every run.
-SMOKE_VERSION = "restore-pde-domain"
+SMOKE_VERSION = "pixel-seeds-and-impulse-explorer"
 PARENT_PLACEHOLDER = "REPLACE_WITH_PARENT_MODEL_ID"
 SMOKE_COLLECTION = "pipeline-smoke"
 
@@ -129,8 +133,16 @@ def main() -> int:
     launch_commands: list[str] = []
     for domain, sweep_name in stages:
         base_cfg, sweep_cfg = load_sweep(domain, sweep_name)
-        if PARENT_PLACEHOLDER in sweep_cfg["grid"].get("initialization.model_id", []):
-            print(f"{sweep_name}: skipped, set initialization.model_id in its YAML file first")
+        parent_key = next(
+            (
+                key
+                for key in ("initialization.model_id", "checkpoint.model_id")
+                if PARENT_PLACEHOLDER in sweep_cfg["grid"].get(key, [])
+            ),
+            None,
+        )
+        if parent_key is not None:
+            print(f"{sweep_name}: skipped, set {parent_key} in its YAML file first")
             results.append((sweep_name, -1, "skipped: parent model ID not set", 0.0))
             continue
 
@@ -156,18 +168,20 @@ def main() -> int:
         log_dir = manifest_path.parent / "logs"
         log_dir.mkdir(exist_ok=True)
         env["WANDB_DIR"] = str(log_dir)
+        env["IMPULSE_OUTPUT_PATH"] = str(log_dir)
         for index in range(count):
             before = smoke_bundles(model_root)
             start = time.time()
             returncode = run_entry(manifest_path, index, env, log_dir)
             minutes = (time.time() - start) / 60
             new_bundles = smoke_bundles(model_root) - before
+            expected_bundles = 0 if sweep_name in NO_BUNDLE_SWEEPS else 1
 
             if returncode != 0:
                 status = f"FAILED (exit {returncode}), see {log_dir / f'{index:02d}.err.log'}"
-            elif len(new_bundles) != 1:
-                status = f"FAILED: expected 1 new bundle, found {len(new_bundles)}"
-            elif OmegaConf.load(new_bundles.pop()).status != "complete":
+            elif len(new_bundles) != expected_bundles:
+                status = f"FAILED: expected {expected_bundles} new bundles, found {len(new_bundles)}"
+            elif new_bundles and OmegaConf.load(new_bundles.pop()).status != "complete":
                 status = "FAILED: bundle status is not 'complete'"
             else:
                 status = "ok"

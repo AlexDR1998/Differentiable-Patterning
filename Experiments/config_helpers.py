@@ -168,48 +168,18 @@ def build_loss_filename(loss_config, include_loss_args=False):
     return loss_str
 
 
-def resolve_checkpoint_path(checkpoint_config, env=None):
-    """Resolve a configured checkpoint path and require an existing ``.eqx`` file.
+def open_registry_bundle(model_id, store_root=None, env=None):
+    """Open a model bundle by ID or alias.
 
-    Relative paths are resolved against ``checkpoint.base_directory`` when it
-    is set. Otherwise the environment variable named by
-    ``checkpoint.base_env`` is used when available, followed by the current
-    working directory.
+    ``store_root`` defaults to ``MODEL_STORE_ROOT`` and then ``./models``,
+    matching the registry CLI and explorer defaults.
     """
 
-    configured_path = checkpoint_config.path
-    if not configured_path:
-        raise ValueError("checkpoint.path must be set")
+    from Experiments.model_registry import ModelRegistry
 
-    path = Path(str(configured_path)).expanduser()
-    if path.suffix != ".eqx":
-        path = path.with_suffix(".eqx")
-    if not path.is_absolute():
-        base_directory = checkpoint_config.base_directory
-        environment = os.environ if env is None else env
-        base_env = checkpoint_config.base_env
-        if base_directory is None and base_env:
-            base_directory = environment.get(str(base_env))
-        if base_directory is not None:
-            path = Path(str(base_directory)).expanduser() / path
-    path = path.resolve()
-    if not path.is_file():
-        raise FileNotFoundError(f"Model checkpoint not found: {path}")
-    return path
-
-
-def load_model_checkpoint(model_config, checkpoint_config, key=None, env=None):
-    """Construct the configured model architecture and load checkpoint leaves.
-
-    The model section must describe the same architecture used to create the
-    checkpoint. Returns the loaded model, its compact configuration string,
-    and the resolved checkpoint path.
-    """
-
-    model, model_cfg_str = build_model(model_config, key=key)
-    checkpoint_path = resolve_checkpoint_path(checkpoint_config, env=env)
-    model = model.load(checkpoint_path)
-    return model, model_cfg_str, checkpoint_path
+    environment = os.environ if env is None else env
+    resolved_store_root = store_root or environment.get("MODEL_STORE_ROOT") or "models"
+    return ModelRegistry(resolved_store_root).get(model_id)
 
 
 def load_model_registry_list(
@@ -231,8 +201,6 @@ def load_model_registry_list(
     """
 
     from omegaconf import OmegaConf
-
-    from Experiments.model_registry import ModelRegistry
 
     path = Path(export_path).expanduser().resolve()
     if not path.is_file():
@@ -269,11 +237,8 @@ def load_model_registry_list(
             f"{len(model_ids)}"
         )
 
-    environment = os.environ if env is None else env
-    resolved_store_root = store_root or environment.get("MODEL_STORE_ROOT") or "models"
-    registry = ModelRegistry(resolved_store_root)
     return [
-        registry.get(model_id).load_model(
+        open_registry_bundle(model_id, store_root, env).load_model(
             key=key,
             implementation=implementation,
         )

@@ -231,10 +231,12 @@ class ImpulseExperimentConfig(ConfigValue):
     seed: int
     experiment: ExperimentMetadataConfig
     system: SystemConfig
-    data: DataConfig
-    model: ModelConfig
+    # The model always comes from the registry bundle named by
+    # checkpoint.model_id. A null data section means the bundle's training data.
     checkpoint: CheckpointLoadConfig
     impulse: ImpulseConfig
+    logging: LoggingConfig
+    data: DataConfig | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -691,11 +693,12 @@ def impulse_experiment_config_from_mapping(
     value: Mapping[str, Any],
 ) -> ImpulseExperimentConfig:
     root = _current_layout(value)
-    # The sweep tools add logging.wandb.group to every config, but impulse
-    # runs do not log to W&B.
-    root.pop("logging", None)
     allowed = {field_.name for field_ in fields(ImpulseExperimentConfig)}
     unknown = set(root) - allowed
+    if "model" in unknown:
+        raise ValueError(
+            "Impulse configs take the model from checkpoint.model_id; remove the model section"
+        )
     if unknown:
         raise ValueError(f"Unknown top-level impulse configuration fields: {sorted(unknown)}")
 
@@ -717,10 +720,10 @@ def impulse_experiment_config_from_mapping(
         seed=int(root.get("seed", 0)),
         experiment=_strict(ExperimentMetadataConfig, root["experiment"], "experiment"),
         system=_strict(SystemConfig, root.get("system"), "system", xla_flags=_tuple),
-        data=_data_config(root["data"]),
-        model=_model_config(root["model"]),
         checkpoint=_strict(CheckpointLoadConfig, root.get("checkpoint"), "checkpoint"),
         impulse=_strict(ImpulseConfig, impulse_node, "impulse"),
+        logging=_logging_config(root["logging"]),
+        data=None if root.get("data") is None else _data_config(root["data"]),
     )
 
 

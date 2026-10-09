@@ -64,3 +64,40 @@ def run_nca_batch(
     trajectory = jnp.swapaxes(trajectory, 0, 1)
     return final_states, trajectory
 
+
+
+@eqx.filter_jit
+def run_nca_batch_to_steps(
+    model,
+    initial_states,
+    steps,
+    max_steps,
+    key,
+    boundary_callback=identity_boundary,
+    scan_kind="lax",
+):
+    """Run each batch element for its own number of NCA updates.
+
+    ``steps`` is an integer array with one entry per batch element, each at
+    most ``max_steps``. All elements run in one compiled rollout of
+    ``max_steps`` updates. An element stops changing once it has had its
+    number of updates, so ``max_steps`` (a Python int) sets the compiled
+    length, not the sampled step counts.
+    """
+
+    batched_model = jax.vmap(model, in_axes=(0, None, 0), out_axes=0)
+
+    def step(states, step_index):
+        step_key = jax.random.fold_in(key, step_index)
+        batch_keys = jax.random.split(step_key, len(states))
+        updated = batched_model(states, boundary_callback, batch_keys)
+        running = (step_index < steps)[:, None, None, None]
+        return jnp.where(running, updated, states), None
+
+    final_states, _ = eqx.internal.scan(
+        step,
+        initial_states,
+        xs=jnp.arange(max_steps),
+        kind=scan_kind,
+    )
+    return final_states

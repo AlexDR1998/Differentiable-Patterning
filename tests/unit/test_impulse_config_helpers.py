@@ -1,8 +1,12 @@
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import pytest
+from omegaconf import OmegaConf
 
-from Experiments.config_helpers import load_model_checkpoint, resolve_checkpoint_path
+from Common.trainer.training_result import TrainingResult
+from Experiments.config import experiment_config_from_mapping
+from Experiments.config_helpers import build_model, open_registry_bundle
 from Experiments.impulse.config_helpers import (
     build_impulse_optimiser,
     build_intervention,
@@ -10,6 +14,7 @@ from Experiments.impulse.config_helpers import (
     build_pair_source,
     resolve_output_directory,
 )
+from Experiments.model_registry import create_model_id, publish_model_bundle
 from NCA.model.NCA_model import NCA
 from NCA.trainer.impulse import StableAttractorPairSource, TargetedObjective
 
@@ -30,26 +35,12 @@ def _cfg(value):
     return value
 
 
-def _impulse_cfg(checkpoint_path="model.eqx"):
+def _impulse_cfg():
     return _cfg(
         {
-            "checkpoint": {
-                "path": checkpoint_path,
-                "base_directory": None,
-                "base_env": "MODEL_SAVE_PATH",
-            },
             "data": {
                 "dataset": "emojis",
                 "emoji": {"data_channels": 4, "observed_channels": 4},
-            },
-            "model": {
-                "family": "NCA",
-                "channels": 6,
-                "kernel_str": ["ID", "LAP"],
-                "activation": "relu",
-                "fire_rate": 1.0,
-                "padding": "CIRCULAR",
-                "kernel_scale": 1,
             },
             "impulse": {
                 "pair_source": {
@@ -58,7 +49,8 @@ def _impulse_cfg(checkpoint_path="model.eqx"):
                     "target_index": 1,
                     "stabilisation_steps": [2, 3],
                     "target_steps": 2,
-                    "initial_index": 0,
+                    "initial_time": 0,
+                    "target_time": -1,
                 },
                 "rollout": {"scan_kind": "lax"},
                 "intervention": {
@@ -88,32 +80,36 @@ def _impulse_cfg(checkpoint_path="model.eqx"):
     )
 
 
-def test_checkpoint_helpers_resolve_environment_root_and_load_model(tmp_path):
-    key = jax.random.PRNGKey(0)
-    original = NCA(6, KERNEL_STR=["ID", "LAP"], FIRE_RATE=1.0, key=key)
-    checkpoint_path = tmp_path / "models" / "test_model.eqx"
-    checkpoint_path.parent.mkdir()
+def test_registry_model_loads_by_id_from_environment_store(tmp_path):
+    value = OmegaConf.to_container(
+        OmegaConf.load("Experiments/emoji/conf/base_config.yaml"), resolve=True
+    )
+    value["model"]["channels"] = 6
+    train_cfg = experiment_config_from_mapping(value)
+    original, _ = build_model(train_cfg.model, key=jax.random.PRNGKey(0))
+    checkpoint_path = tmp_path / "trained.eqx"
     eqx.tree_serialise_leaves(checkpoint_path, original)
-    cfg = _impulse_cfg("models/test_model")
+    published = publish_model_bundle(
+        store_root=tmp_path / "store",
+        collection="tests",
+        model_id=create_model_id(train_cfg),
+        display_name="model",
+        checkpoint_path=checkpoint_path,
+        cfg=train_cfg,
+        training_result=TrainingResult(checkpoint_path, 1, 0.5, True),
+        repository_root=tmp_path,
+    )
 
-    resolved = resolve_checkpoint_path(
-        cfg.checkpoint, env={"MODEL_SAVE_PATH": str(tmp_path)}
+    bundle = open_registry_bundle(
+        published.id, env={"MODEL_STORE_ROOT": str(tmp_path / "store")}
     )
-    loaded, _, loaded_path = load_model_checkpoint(
-        cfg.model,
-        cfg.checkpoint,
-        key=jax.random.PRNGKey(1),
-        env={"MODEL_SAVE_PATH": str(tmp_path)},
-    )
+    loaded = bundle.load_model(key=jax.random.PRNGKey(1))
 
-    assert resolved == checkpoint_path.resolve()
-    assert loaded_path == resolved
-    original_leaves = eqx.filter(original, eqx.is_array)
-    loaded_leaves = eqx.filter(loaded, eqx.is_array)
-    assert all(
-        jnp.array_equal(left, right)
-        for left, right in zip(jax.tree.leaves(original_leaves), jax.tree.leaves(loaded_leaves))
-    )
+    assert bundle.path == published.path
+    assert bundle.config.data == train_cfg.data
+    original_leaves = jax.tree.leaves(eqx.filter(original, eqx.is_array))
+    loaded_leaves = jax.tree.leaves(eqx.filter(loaded, eqx.is_array))
+    assert all(jnp.array_equal(left, right) for left, right in zip(original_leaves, loaded_leaves))
 
 
 def test_impulse_builders_construct_configured_components(tmp_path):
@@ -141,3 +137,32 @@ def test_impulse_builders_construct_configured_components(tmp_path):
     assert intervention.values.shape == (1, 2, 6, 6)
     assert optimiser is not None
     assert output == (tmp_path / "results").resolve()
+
+
+def test_pair_sources_only_use_the_configured_source_and_target_patterns():
+    # Three patterns; pattern k has value 10k at time 0 and 10k + 1 afterwards
+    trajectories = jnp.stack(
+        [jnp.stack([jnp.full((2, 3, 3), 10.0 * k), jnp.full((2, 3, 3), 10.0 * k + 1)]) for k in range(3)]
+    )
+    model = NCA(2, KERNEL_STR=["ID"], FIRE_RATE=1.0, key=jax.random.PRNGKey(0))
+    key = jax.random.PRNGKey(1)
+
+    def sample(pair_type):
+        cfg = _impulse_cfg()
+        cfg.impulse.pair_source.update(type=pair_type, source_index=2, target_index=1)
+        return build_pair_source(cfg.impulse, model, trajectories).sample(4, model, key)
+
+    external = sample("external_target")
+    stored = sample("trajectory_state")
+    future = sample("model_future")
+
+    assert jnp.all(external.initial_states == 20.0)
+    assert jnp.all(external.target_states == 11.0)
+    assert jnp.all(stored.initial_states == 20.0)
+    assert jnp.all(stored.target_states == 21.0)
+    assert jnp.all(future.initial_states == 20.0)
+
+    cfg = _impulse_cfg()
+    cfg.impulse.pair_source.update(target_index=3)
+    with pytest.raises(ValueError, match="outside the 3 data pairs"):
+        build_pair_source(cfg.impulse, model, trajectories)

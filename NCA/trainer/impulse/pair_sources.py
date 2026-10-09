@@ -3,7 +3,11 @@ from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 
-from NCA.trainer.impulse.rollout import identity_boundary, run_nca_batch
+from NCA.trainer.impulse.rollout import (
+    identity_boundary,
+    run_nca_batch,
+    run_nca_batch_to_steps,
+)
 from NCA.trainer.impulse.types import ImpulseBatch
 
 
@@ -118,26 +122,24 @@ class StableAttractorPairSource:
         if minimum < 0 or maximum <= minimum:
             raise ValueError("stabilisation_steps must be an increasing [minimum, maximum) range")
 
-        source_states = []
-        target_states = []
-        sampled_steps = []
-        for batch_index in range(batch_size):
-            item_key = jax.random.fold_in(key, batch_index)
-            steps = int(jax.random.randint(item_key, (), minimum, maximum))
-            stable = run_nca_batch(
-                model,
-                conditions,
-                steps,
-                item_key,
-                boundary_callback=self.boundary_callback,
-                scan_kind=self.scan_kind,
-            )
-            source_states.append(stable[self.source_index])
-            target_states.append(stable[self.target_index])
-            sampled_steps.append(steps)
+        # One step count per batch item, shared by its source and target, as
+        # if both conditions had been grown for the same time.
+        steps_key, rollout_key = jax.random.split(key)
+        steps = jax.random.randint(steps_key, (batch_size,), minimum, maximum)
+        pair = conditions[jnp.asarray([self.source_index, self.target_index])]
+        # [batch, 2, C, H, W] -> [batch * 2, C, H, W], to run as one batch
+        initial = jnp.broadcast_to(pair, (batch_size, *pair.shape)).reshape((-1, *pair.shape[1:]))
+        stable = run_nca_batch_to_steps(
+            model,
+            initial,
+            jnp.repeat(steps, 2),
+            maximum - 1,
+            rollout_key,
+            boundary_callback=self.boundary_callback,
+            scan_kind=self.scan_kind,
+        ).reshape((batch_size, *pair.shape))
         return ImpulseBatch(
-            jnp.stack(source_states),
-            jnp.stack(target_states),
-            {"stabilisation_steps": sampled_steps},
+            stable[:, 0],
+            stable[:, 1],
+            {"stabilisation_steps": steps},
         )
-

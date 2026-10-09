@@ -46,6 +46,9 @@ spec:
                 value: /workspace/writeable/Data/
               - name: MODEL_STORE_ROOT
                 value: /workspace/writeable/Models/
+              # Impulse optimisation results (Experiments/impulse)
+              - name: IMPULSE_OUTPUT_PATH
+                value: /workspace/writeable/output/
               - name: XLA_PYTHON_CLIENT_MEM_FRACTION
                 value: "0.9"
               # - name: XLA_FLAGS

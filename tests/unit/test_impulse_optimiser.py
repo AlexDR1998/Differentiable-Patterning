@@ -92,6 +92,47 @@ def test_stable_attractor_source_matches_switch_pool_semantics():
     assert jnp.allclose(batch.target_states, 2.0)
 
 
+def test_stable_attractor_source_runs_each_item_for_its_own_step_count():
+    model = AdditiveModel(increment=0.5)
+    conditions = jnp.stack([jnp.zeros((2, 3, 3)), jnp.ones((2, 3, 3))])
+    source = StableAttractorPairSource(
+        conditions,
+        source_index=1,
+        target_index=0,
+        stabilisation_steps=(1, 6),
+    )
+
+    batch = source.sample(16, model, jax.random.PRNGKey(3))
+
+    steps = batch.metadata["stabilisation_steps"][:, None, None, None]
+    assert jnp.all((steps >= 1) & (steps < 6))
+    assert len(jnp.unique(steps)) > 1
+    assert jnp.allclose(batch.initial_states, 1.0 + 0.5 * steps)
+    assert jnp.allclose(batch.target_states, 0.5 * steps)
+
+
+def test_local_perturbation_starts_anywhere_in_the_lattice_interior():
+    centres = jnp.stack(
+        [
+            perturbation(
+                mode={"channel": "all", "spatial": "local"},
+                CHANNELS=2,
+                OBS_CHANNELS=2,
+                x=jnp.zeros((1, 2, 4, 4)),
+                WIDTH=0.1,
+                key=jax.random.PRNGKey(seed),
+            ).get_location()
+            for seed in range(200)
+        ]
+    )
+
+    assert jnp.all((centres >= 0.1) & (centres <= 0.9))
+    # Uniform over [0.1, 0.9] in each coordinate, so all four quadrants are used.
+    quadrants = {(bool(x > 0.5), bool(y > 0.5)) for x, y in centres}
+    assert len(quadrants) == 4
+    assert jnp.allclose(jnp.mean(centres, axis=0), 0.5, atol=0.05)
+
+
 def test_model_future_source_keeps_freeze_target_and_rollout_horizons_separate():
     model = AdditiveModel(increment=0.5)
     initial = jnp.zeros((1, 2, 3, 3))
@@ -189,6 +230,46 @@ def test_targeted_optimiser_reduces_error_and_keeps_model_frozen():
     assert jnp.array_equal(model.increment, model_before)
     assert result.baseline_trajectory.shape == (2, 1, 2, 4, 4)
     assert result.perturbed_trajectory.shape == (2, 1, 2, 4, 4)
+    # Without an intervention the frozen model stays at zero, one away from the target.
+    assert result.baseline_evaluation_loss == 1.0
+    assert result.evaluation_loss < result.baseline_evaluation_loss
+
+
+def test_loss_window_averages_target_error_over_final_rollout_states():
+    # States after each step are 0.25, 0.5, 0.75, 1.0; the target is 1.0.
+    model = AdditiveModel(channels=2, increment=0.25)
+    initial = jnp.zeros((1, 2, 4, 4))
+    batch = ExternalTargetPairSource(initial, jnp.ones_like(initial)).sample(
+        3, model, jax.random.PRNGKey(0)
+    )
+    intervention = perturbation(
+        mode={"channel": "all", "spatial": "global"},
+        CHANNELS=2,
+        OBS_CHANNELS=2,
+        x=initial,
+        WIDTH=1.0,
+        key=jax.random.PRNGKey(1),
+    )
+
+    def target_loss(loss_window):
+        optimiser = NCAImpulseOptimiser(
+            model=model,
+            pair_source=None,
+            intervention=intervention,
+            objective=TargetedObjective(),
+            optimiser=optax.adam(0.1),
+            observed_channels=2,
+            rollout_steps=4,
+            loss_window=loss_window,
+            loss_functions=[per_sample_l2],
+        )
+        values = optimiser.evaluate(intervention, batch, jax.random.PRNGKey(2))
+        assert values["loss_per_sample"].shape == (3,)
+        return float(values["target_loss"])
+
+    assert target_loss(1) == 0.0
+    assert jnp.isclose(target_loss(2), (0.25**2 + 0.0) / 2)
+    assert jnp.isclose(target_loss(4), (0.75**2 + 0.5**2 + 0.25**2 + 0.0) / 4)
 
 
 def test_intervention_channel_mode_only_changes_permitted_channels():
