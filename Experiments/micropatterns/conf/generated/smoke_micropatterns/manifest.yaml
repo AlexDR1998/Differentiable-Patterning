@@ -40,7 +40,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-micropattern-260726-intensity-scaling
+    logging.wandb.group: smoke_micropatterns-snowmelt-date-split
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     data.micropattern.pool_copies: 2
@@ -48,8 +48,14 @@ configs:
     data.knockout.curriculum: null
     experiment.name: smoke_micropatterns
     seed: 0
+    logging.wandb.tag_keys:
+    - model.family
+    - trainer.loop_autodiff
+    - data.micropattern.pool_copies
+    - logging.singular_values.enabled
+    - data.knockout.curriculum
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 0
     experiment:
       name: smoke_micropatterns
@@ -89,12 +95,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
       knockout:
         mode: null
@@ -174,8 +225,14 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-micropattern-260726-intensity-scaling
+        group: smoke_micropatterns-snowmelt-date-split
         tags: null
+        tag_keys:
+        - model.family
+        - trainer.loop_autodiff
+        - data.micropattern.pool_copies
+        - logging.singular_values.enabled
+        - data.knockout.curriculum
     model_store:
       enabled: true
       root: models
@@ -218,7 +275,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-micropattern-260726-intensity-scaling
+    logging.wandb.group: smoke_micropatterns-snowmelt-date-split
     model.family: gNCA
     trainer.loop_autodiff: lax
     data.micropattern.pool_copies: 1
@@ -229,8 +286,14 @@ configs:
     - ko_24h
     experiment.name: smoke_micropatterns
     seed: 0
+    logging.wandb.tag_keys:
+    - model.family
+    - trainer.loop_autodiff
+    - data.micropattern.pool_copies
+    - logging.singular_values.enabled
+    - data.knockout.curriculum
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 0
     experiment:
       name: smoke_micropatterns
@@ -270,12 +333,57 @@ configs:
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
         histogram_percentiles:
-        - 20.0
+        - 0.0
         - 99.5
-        initial_intensity_scales:
-          cell_fate_s1/SOX17: 0.3
-          cell_fate_s2/SOX17: 0.3
-          cell_fate_s2/FOXA2: 0.02
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockouts_use_control_bounds: false
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
         duplicate_final_timestep: false
       knockout:
         mode: null
@@ -358,8 +466,14 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-micropattern-260726-intensity-scaling
+        group: smoke_micropatterns-snowmelt-date-split
         tags: null
+        tag_keys:
+        - model.family
+        - trainer.loop_autodiff
+        - data.micropattern.pool_copies
+        - logging.singular_values.enabled
+        - data.knockout.curriculum
     model_store:
       enabled: true
       root: models

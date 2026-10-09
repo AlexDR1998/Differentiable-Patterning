@@ -18,7 +18,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-micropattern-260726-cleaning-tags-quality-flags
+    logging.wandb.group: smoke_emoji-snowmelt-date-split
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -44,7 +44,7 @@ configs:
     - loss.regularisers.update_sensitivity
     - loss.regularisers.perturbation_conservation
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 0
     experiment:
       name: smoke_emoji
@@ -152,7 +152,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-micropattern-260726-cleaning-tags-quality-flags
+        group: smoke_emoji-snowmelt-date-split
         tags: null
         tag_keys:
         - model.family
@@ -182,7 +182,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-micropattern-260726-cleaning-tags-quality-flags
+    logging.wandb.group: smoke_emoji-snowmelt-date-split
     model.family: gNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -208,7 +208,7 @@ configs:
     - loss.regularisers.update_sensitivity
     - loss.regularisers.perturbation_conservation
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 0
     experiment:
       name: smoke_emoji
@@ -316,7 +316,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-micropattern-260726-cleaning-tags-quality-flags
+        group: smoke_emoji-snowmelt-date-split
         tags: null
         tag_keys:
         - model.family
@@ -346,7 +346,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-micropattern-260726-cleaning-tags-quality-flags
+    logging.wandb.group: smoke_emoji-snowmelt-date-split
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -382,7 +382,7 @@ configs:
     - loss.regularisers.update_sensitivity
     - loss.regularisers.perturbation_conservation
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 0
     experiment:
       name: smoke_emoji
@@ -500,7 +500,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-micropattern-260726-cleaning-tags-quality-flags
+        group: smoke_emoji-snowmelt-date-split
         tags: null
         tag_keys:
         - model.family
@@ -530,7 +530,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-micropattern-260726-cleaning-tags-quality-flags
+    logging.wandb.group: smoke_emoji-snowmelt-date-split
     model.family: gnNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -557,7 +557,7 @@ configs:
     - loss.regularisers.update_sensitivity
     - loss.regularisers.perturbation_conservation
   config:
-    schema_version: 6
+    schema_version: 7
     seed: 0
     experiment:
       name: smoke_emoji
@@ -666,7 +666,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-micropattern-260726-cleaning-tags-quality-flags
+        group: smoke_emoji-snowmelt-date-split
         tags: null
         tag_keys:
         - model.family

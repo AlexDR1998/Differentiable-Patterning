@@ -8,7 +8,7 @@ seed_mode: index
 # it is then crossed with six intervention curricula and ten stochastic repeats.
 # Total jobs: 4 initialization/split cases * 6 curricula * 10 repeats = 240.
 grid:
-  run.repeat: [0, 1, 2, 3]
+  run.repeat: [0, 1, 2, 3, 4, 5, 6, 7]
 
   labels.gpu: [nvidia]
   model.family: [gNCA]
@@ -28,7 +28,7 @@ grid:
   data.knockout.curriculum:
     # - [ko_0h]
     # - [ko_24h]
-    - [ko_0h, ko_24h]
+    # - [ko_0h, ko_24h]
     # - [baseline, ko_0h]
     # - [baseline, ko_24h]
     - [baseline, ko_0h, ko_24h]
@@ -129,20 +129,40 @@ groups:
   #     - [1, 2]
   #     - [3, 4]
 
+  # - initialization.model_id:
+  #     - 20261003T162633Z-cfg0b6babc3d095-6b5aeae1  # ds8
+  #     - 20261003T164241Z-cfg756be362057e-66a78e3f  # ds16
+  #     - 20261004T050453Z-cfg81637d0b6675-3fa42592  # ds32
+  #   data.batches: [2, 2, 2]
+  #   data.downsample: [8, 16, 32]
+  #   run.t: [256, 128, 64]
+  #   trainer.loop_autodiff: [checkpointed, lax, lax]
+  #   data.micropattern.train_replicates:
+  #     - [1, 2]
+  #     - [1, 2]
+  #     - [1, 2]
+  #   data.micropattern.validation_replicates:
+  #     - [3, 4]
+  #     - [3, 4]
+  #     - [3, 4]
+  #   run.iterations: [4000, 4000, 4000]
+
+
   - initialization.model_id:
-      - 20261003T162633Z-cfg0b6babc3d095-6b5aeae1  # ds8
-      - 20261003T164241Z-cfg756be362057e-66a78e3f  # ds16
-      - 20261004T050453Z-cfg81637d0b6675-3fa42592  # ds32
+    - 20261006T142612Z-cfg89e883395b00-0087bf4b  # ds8
+    - 20261006T161017Z-cfgd0754aba5757-fa77124b  # ds16
+    - 20261006T142608Z-cfgac2cbf2fba18-3a799518  # ds32
     data.batches: [2, 2, 2]
     data.downsample: [8, 16, 32]
     run.t: [256, 128, 64]
     trainer.loop_autodiff: [checkpointed, lax, lax]
     data.micropattern.train_replicates:
-      - [1, 2]
+      - [3, 4]
       - [1, 2]
       - [1, 2]
     data.micropattern.validation_replicates:
-      - [3, 4]
+      - [1, 2]
       - [3, 4]
       - [3, 4]
     run.iterations: [4000, 4000, 4000]
+    

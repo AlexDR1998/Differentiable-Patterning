@@ -1,6 +1,6 @@
 experiment_name: nca_micropattern_replicate_resolutions_v6
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_micropattern_replicate_resolutions_high
+output_subdir: generated/nca_micropattern_replicate_resolutions
 seed_mode: index
 
 # Resolution-transfer sweep for the established 14-channel replicate regime.
