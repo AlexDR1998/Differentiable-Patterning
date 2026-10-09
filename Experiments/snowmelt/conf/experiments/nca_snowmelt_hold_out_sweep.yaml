@@ -52,6 +52,6 @@ grid:
     - [8]
     - [9]
   # Baseline resolution: 20 m.
-  data.downsample: [2]
-  run.t: [256]
-  trainer.loop_autodiff: [checkpointed]
+  data.downsample: [4]
+  run.t: [128]
+  trainer.loop_autodiff: [lax]

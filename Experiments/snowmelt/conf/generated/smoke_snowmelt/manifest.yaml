@@ -17,16 +17,24 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-micropattern-260726-intensity-scaling
+    logging.wandb.group: smoke_snowmelt-snowmelt-date-split
     model.family: NCA
     data.snowmelt.target_channels:
     - SCA
+    data.snowmelt.static_channels:
+    - DEM
     run.interval_mode: steps
     trainer.loop_autodiff: checkpointed
     experiment.name: smoke_snowmelt
     seed: 0
+    logging.wandb.tag_keys:
+    - model.family
+    - data.snowmelt.target_channels
+    - data.snowmelt.static_channels
+    - run.interval_mode
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -42,13 +50,17 @@ configs:
       downsample: 8
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - SCA
         static_channels:
         - DEM
-        - INCIDENCE
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -57,7 +69,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
     trainer:
@@ -107,7 +119,7 @@ configs:
       mode: train
       t: 16
       interval_mode: steps
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 60
       checkpoint_warmup: 5
@@ -121,8 +133,14 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-micropattern-260726-intensity-scaling
+        group: smoke_snowmelt-snowmelt-date-split
         tags: null
+        tag_keys:
+        - model.family
+        - data.snowmelt.target_channels
+        - data.snowmelt.static_channels
+        - run.interval_mode
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models
@@ -142,18 +160,29 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-micropattern-260726-intensity-scaling
+    logging.wandb.group: smoke_snowmelt-snowmelt-date-split
     model.family: gNCA
     data.snowmelt.target_channels:
     - NDSI
     - B3
     - B11
+    data.snowmelt.static_channels:
+    - DEM
+    - SLOPE
+    - NORTHNESS
+    - EASTNESS
     run.interval_mode: uniform
     trainer.loop_autodiff: lax
     experiment.name: smoke_snowmelt
     seed: 0
+    logging.wandb.tag_keys:
+    - model.family
+    - data.snowmelt.target_channels
+    - data.snowmelt.static_channels
+    - run.interval_mode
+    - trainer.loop_autodiff
   config:
-    schema_version: 5
+    schema_version: 7
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -169,15 +198,22 @@ configs:
       downsample: 8
       snowmelt:
         root: null
+        version: v2
         target_channels:
         - NDSI
         - B3
         - B11
         static_channels:
         - DEM
-        - INCIDENCE
+        - SLOPE
+        - NORTHNESS
+        - EASTNESS
         pad: 4
         mask_threshold: 0.5
+        exclude_dates:
+        - 0
+        - 1
+        hold_out_dates: []
         noise_strength: 0.005
         reinjection_probability: 0.5
     model:
@@ -186,7 +222,7 @@ configs:
       kernel_str:
       - ID
       - LAP
-      - DIFF
+      - GRAD
       fire_rate: 0.5
       padding: CIRCULAR
     trainer:
@@ -236,7 +272,7 @@ configs:
       mode: train
       t: 16
       interval_mode: uniform
-      reference_interval: null
+      reference_interval: 20
       interval_steps: null
       iterations: 60
       checkpoint_warmup: 5
@@ -250,8 +286,14 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-micropattern-260726-intensity-scaling
+        group: smoke_snowmelt-snowmelt-date-split
         tags: null
+        tag_keys:
+        - model.family
+        - data.snowmelt.target_channels
+        - data.snowmelt.static_channels
+        - run.interval_mode
+        - trainer.loop_autodiff
     model_store:
       enabled: true
       root: models

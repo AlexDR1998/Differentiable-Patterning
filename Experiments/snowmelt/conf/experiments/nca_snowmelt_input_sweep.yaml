@@ -38,9 +38,9 @@ grid:
   system.precision: [bfloat16]
   data.dataset: [snowmelt]
   # Baseline resolution: 20 m.
-  data.downsample: [2]
-  run.t: [256]
-  trainer.loop_autodiff: [checkpointed]
+  data.downsample: [4]
+  run.t: [128]
+  trainer.loop_autodiff: [lax]
 groups:
   # Target sets:
   #   [SCA]                         binary snow map (NDSI > 0.4)

@@ -108,3 +108,46 @@ def test_trajectory_keeps_selected_channels_at_each_stride():
     assert frames.shape == (3, 2, *sequence.data.shape[-2:])
     np.testing.assert_array_equal(frames[0, 0], sequence.data[0, 0, 0])
     np.testing.assert_array_equal(frames[0, 1], 0.0)  # hidden channels start at zero
+
+
+def test_load_bundle_sequence_rejects_data_of_another_dataset_version():
+    snowmelt = SimpleNamespace(
+        version="v1", target_channels=("SCA",), static_channels=("DEM",), pad=0, mask_threshold=0.5,
+        exclude_dates=(), hold_out_dates=(),
+    )
+    bundle = SimpleNamespace(id="m1", config=SimpleNamespace(data=SimpleNamespace(snowmelt=snowmelt, downsample=1)))
+    raw = _synthetic_raw()
+
+    assert evaluation.load_bundle_sequence(bundle, {**raw, "version": "v1"}, verify=False).dates == tuple(raw["dates"])
+    with pytest.raises(ValueError, match="trained on snowmelt dataset v1"):
+        evaluation.load_bundle_sequence(bundle, {**raw, "version": "v2"}, verify=False)
+
+
+def test_load_bundle_sequence_puts_held_out_dates_back_and_score_flags_them():
+    snowmelt = SimpleNamespace(
+        version="v1", target_channels=("NDSI",), static_channels=("DEM",), pad=0, mask_threshold=0.5,
+        exclude_dates=(), hold_out_dates=(1,),
+    )
+    bundle = SimpleNamespace(id="m1", config=SimpleNamespace(data=SimpleNamespace(snowmelt=snowmelt, downsample=1)))
+    raw = _synthetic_raw()
+
+    sequence = evaluation.load_bundle_sequence(bundle, raw, verify=False)
+    observed = sequence.data[0]
+    rows = evaluation.score(
+        observed[None], observed, raw["mask"], ("NDSI",), sequence.dates, sequence.observation_times,
+        held_out=sequence.held_out,
+    )
+
+    assert sequence.dates == tuple(raw["dates"]) and sequence.held_out == (False, True, False)
+    assert [row["held_out"] for row in rows] == [True, False]
+
+
+def test_hold_out_needs_steps_mode_and_explicit_reference_interval():
+    from Experiments.snowmelt.train import load_snowmelt_training_data
+
+    cfg = SimpleNamespace(
+        data=SimpleNamespace(batches=1, snowmelt=SimpleNamespace(hold_out_dates=(3,))),
+        run=SimpleNamespace(interval_mode="steps", reference_interval=None),
+    )
+    with pytest.raises(ValueError, match="reference_interval"):
+        load_snowmelt_training_data(cfg)

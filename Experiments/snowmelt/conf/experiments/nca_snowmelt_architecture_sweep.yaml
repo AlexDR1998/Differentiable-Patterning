@@ -44,8 +44,8 @@ grid:
   data.snowmelt.target_channels: [[NDSI]]
   data.snowmelt.static_channels: [[DEM],[DEM, SLOPE, NORTHNESS, EASTNESS]]
   # Baseline resolution: 20 m.
-  data.downsample: [2]
-  run.t: [256]
+  data.downsample: [4]
+  run.t: [128]
 groups:
   - model.channels: [16, 32, 64]
-    trainer.loop_autodiff: [lax, checkpointed, checkpointed]
+    trainer.loop_autodiff: [lax, lax, checkpointed]

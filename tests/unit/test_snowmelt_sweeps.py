@@ -28,7 +28,7 @@ def test_config_value_reads_typed_configs_and_dicts_alike():
     assert sweeps.config_value(plain, "model.kernel_str") == "ID+LAP"
 
 
-@pytest.mark.parametrize("name, count", [("resolution", 15), ("input", 40), ("architecture", 60), ("update_rule", 27)])
+@pytest.mark.parametrize("name, count", [("resolution", 15), ("input", 40), ("architecture", 60), ("update_rule", 27), ("hold_out", 24)])
 def test_generated_manifests_have_one_run_per_factor_combination(name, count):
     sweep = sweeps.SWEEPS[name]
 
@@ -65,6 +65,7 @@ def _publish_small_bundle(tmp_path, raw, targets):
     ), resolve=True)["configs"][5]["config"]  # [NDSI] with static [DEM]
     value["data"]["downsample"] = 2
     value["data"]["snowmelt"]["pad"] = 1
+    value["data"]["snowmelt"]["exclude_dates"] = []  # the synthetic data has only 3 dates
     value["data"]["snowmelt"]["target_channels"] = list(targets)
     value["model"].update(channels=len(targets) + 5, kernel_str=["ID", "LAP"])
     value["run"]["t"] = 4
