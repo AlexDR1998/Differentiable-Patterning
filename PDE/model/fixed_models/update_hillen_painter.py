@@ -29,16 +29,26 @@ class F(eqx.Module):
         du = div(D*u*grad(u)) - div(chi*u*(1-u/gamma)/(1+alpha*v)^2 * grad(v)) + r*u*(1-u)
         dv = Lap(v) + u/(1+phi*u) - v
 
-        Args:
-            PADDING (str): Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
-            dx (float): grid spacing
-            KERNEL_SCALE (int, optional): spatial operator kernel size. Defaults to 1.
-            logistic_growth_rate (float, optional): r. Defaults to 0.1.
-            gamma (float, optional): cell crowding capacity. Defaults to 10.0.
-            alpha (float, optional): receptor saturation. Defaults to 0.5.
-            chi (float, optional): chemotactic sensitivity. Defaults to 5.0.
-            phi (float, optional): signal production saturation. Defaults to 0.8.
-            D (float, optional): cell diffusion. Defaults to 0.1.
+        Parameters
+        ----------
+        PADDING : str
+            Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
+        dx : float
+            Grid spacing
+        KERNEL_SCALE : int, optional
+            Spatial operator kernel size. Defaults to 1.
+        logistic_growth_rate : float, optional
+            Logistic growth rate r. Defaults to 0.1.
+        gamma : float, optional
+            Cell crowding capacity. Defaults to 10.0.
+        alpha : float, optional
+            Receptor saturation. Defaults to 0.5.
+        chi : float, optional
+            Chemotactic sensitivity. Defaults to 5.0.
+        phi : float, optional
+            Signal production saturation. Defaults to 0.8.
+        D : float, optional
+            Cell diffusion. Defaults to 0.1.
         """
         self.logistic_growth_rate=logistic_growth_rate
         self.gamma=gamma

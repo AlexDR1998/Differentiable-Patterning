@@ -21,12 +21,18 @@ class F(eqx.Module):
         mu = X^3 - X - gamma*Lap(X)
         dX = D*Lap(mu)
 
-        Args:
-            PADDING (str): Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
-            dx (float): grid spacing
-            KERNEL_SCALE (int, optional): spatial operator kernel size. Defaults to 1.
-            gamma (float, optional): structure lengthscale. Defaults to 1.0.
-            D (float, optional): Diffusion strength. Defaults to 0.1.
+        Parameters
+        ----------
+        PADDING : str
+            Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
+        dx : float
+            Grid spacing
+        KERNEL_SCALE : int, optional
+            Spatial operator kernel size. Defaults to 1.
+        gamma : float, optional
+            Structure lengthscale. Defaults to 1.0.
+        D : float, optional
+            Diffusion strength. Defaults to 0.1.
         """
         self.gamma = gamma
         self.D = D

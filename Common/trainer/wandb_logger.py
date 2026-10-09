@@ -46,9 +46,7 @@ class WandbLogger:
         self.log_data_at_init(data)
 
     def log_data_at_init(self,data):    
-        """
-        Log data at the start of training. Defined as a separate function to allow for overwriting in subclasses
-        """
+        """Log the target data ``[Batch, Time, C, x, y]`` as images at the start of training (subclasses override)."""
         outputs = np.array(data)
         self.log_image("True sequence RGB", rearrange(outputs, "Batch Time C x y ->(Batch x) (Time y) C")[:,:,:3], step=None)
         if outputs.shape[2]>3:
@@ -129,10 +127,7 @@ class WandbLogger:
             wandb.log({tag: wandb_images}, step=step)
     
     def log_video(self,tag,video:Float[Array,"T C X Y"],step=None):
-        """
-            Expects a 4D tensor of shape (T, C, X, Y) where C is 1 or 3
-            Values should be floats in [0,1]
-        """
+        """Log a video ``(T, C, X, Y)`` with C = 1 or 3 and values in [0, 1]."""
         assert len(video.shape) == 4, "Video must be 4D"
         assert video.shape[1] in [1, 3], "Video must have 1 or 3 channels"
         
@@ -144,16 +139,13 @@ class WandbLogger:
         wandb.log({tag: wandb_video}, step=None)
 
     def log_image(self, tag, images, step=None):
-        # Accepts either [Batch, Width, Height, Channels] or [Width, Height, Channels]
-        # If images is a list, convert to numpy array
+        # Accepts [Batch, Width, Height, Channels] or [Width, Height, Channels]
         images = np.array(images)
         if images.shape[-1]==2:
             images = np.concatenate([images, np.zeros_like(images[..., :1])], axis=-1)  # Add a zero 3rd channel if only 2 channels are present
         if len(images.shape) == 4:
-            # If images is a batch, log as a batch
             self.log_image_batch(tag, images, step)
         elif len(images.shape) == 3:
-            # If images is a single image, log as a single image
             self.log_image_single(tag, images, step)
         else:
             raise ValueError("Image must be 3D or 4D (batch)")
@@ -187,9 +179,7 @@ class WandbLogger:
         raise NotImplementedError
     
     def normalise_images(self,x):
-        """
-        Normalises the images to [0,1] range for tensorboard logging
-        """
+        """Rescale ``x`` to [0, 1]."""
         x = x - np.min(x)
         x = x / np.max(x)
         return x

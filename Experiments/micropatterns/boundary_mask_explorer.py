@@ -17,9 +17,8 @@ Run from the repository root with:
 
     marimo run Experiments/micropatterns/boundary_mask_explorer.py
 
-The functions use NumPy for a lightweight visual preview. Their equations are
-composed from operations that have direct JAX equivalents, so they can be moved
-to the differentiable inverse-design path without changing the parameterisation.
+The functions use NumPy, but only operations with direct JAX equivalents, so
+they can be moved into the differentiable inverse-design code unchanged.
 """
 
 import marimo
@@ -188,12 +187,11 @@ def _():
         profile_mode,
         synthetic_channels=None,
     ):
-        """Create [C,H,W] state consistent with the proposed geometry.
+        """Initial [C, H, W] state for the proposed geometry.
 
-        The geometry channel is always the final channel. This matches
-        ``model_boundary``, which clamps the final mask channels after every
-        update. Biological channels are restricted to the adhesion domain and
-        hidden channels remain zero.
+        The geometry mask is the last channel, as ``model_boundary`` expects.
+        Observed channels are zero outside the adhesion domain and hidden
+        channels are zero.
         """
 
         if channel_count <= observed_channels:
@@ -227,7 +225,7 @@ def _():
         return _state
 
     def resize_image(image, output_shape):
-        """Bilinear resize implemented without an additional dependency."""
+        """Bilinear resize with ``np.interp``."""
 
         _input_y = np.arange(image.shape[-2], dtype=np.float32)
         _input_x = np.arange(image.shape[-1], dtype=np.float32)
@@ -243,14 +241,12 @@ def _():
         )
 
     def extend_masked_texture(image, mask):
-        """Smoothly continue a measured colony for Fourier analysis.
+        """Smoothly fill the outside of a colony, for estimating its Fourier spectrum.
 
-        An i.i.d. fill injects artificial Nyquist-scale power. Nearest-interior
-        filling avoids that noise but creates visible Voronoi regions. Here the
-        unmeasured exterior is initialized to the interior mean and relaxed by
-        diffusion while measured pixels remain fixed. The continuation is used
-        only to estimate a rectangular Fourier spectrum; it is not biological
-        data and is not shown as part of the circular reference.
+        The outside starts at the interior mean and is relaxed by diffusion
+        while the measured pixels stay fixed. (A random fill would add
+        high-frequency power; a nearest-pixel fill gives Voronoi regions.)
+        The fill is only used for the spectrum, not shown as data.
         """
 
         _mask = np.asarray(mask, dtype=bool)
@@ -259,9 +255,8 @@ def _():
         _image = np.asarray(image, dtype=np.float32)
         _extended = np.full_like(_image, np.mean(_image[_mask]))
         _extended[_mask] = _image[_mask]
-        # Repeated Gaussian relaxation approximates harmonic continuation and
-        # has no nearest-neighbour ownership boundaries. Reflecting the outer
-        # image edge avoids introducing a second artificial zero boundary.
+        # Repeated Gaussian smoothing approximates a harmonic fill. Reflecting
+        # at the image edge avoids a second zero boundary.
         for _ in range(64):
             _relaxed = ndi.gaussian_filter(_extended, sigma=1.0, mode="reflect")
             _extended[~_mask] = _relaxed[~_mask]
@@ -276,12 +271,12 @@ def _():
         iterations,
         seed,
     ):
-        """Multichannel IAAFT-like synthesis from a circular reference.
+        """Multichannel IAAFT-like texture synthesis from a circular reference.
 
-        Each channel alternates between the reference power spectrum and its
-        empirical marginal distribution. A shared random phase perturbation
-        initializes all channels, retaining relative cross-channel phases.
-        The final rank projection is performed inside the proposed geometry.
+        Each channel alternates between matching the reference power spectrum
+        and its value distribution. All channels start from the same random
+        phases, so their relative phases are kept. The last distribution match
+        is done inside the proposed geometry.
         """
 
         _rng = np.random.default_rng(seed)
@@ -349,15 +344,13 @@ def _():
         candidate_count,
         seed,
     ):
-        """Resample real multichannel patches with overlap-add blending.
+        """Texture made from real multichannel patches, blended where they overlap.
 
-        Channels belonging to one staining panel use identical source patches
-        and geometric transforms. This retains cellular morphology and local
-        cross-channel dependence without inventing correlations between panels
-        that were not co-measured. Source patches are restricted to a central
-        fraction of the circular colony to exclude edge and registration artifacts.
-        At each placement, several candidates compete on normalized multichannel
-        overlap error so adjacent patches meet along compatible cellular texture.
+        Channels of one staining panel share the same source patches and
+        transforms, which keeps cell shapes and within-panel correlations
+        without inventing correlations between panels. Patches come from the
+        central part of the colony, away from edge artefacts. At each position
+        the candidate with the smallest normalised overlap error is used.
         """
 
         _reference = np.asarray(reference, dtype=np.float32)
@@ -379,8 +372,7 @@ def _():
         _sampling_mask = _reference_mask & (
             _radial_distance <= float(interior_fraction) * _reference_radius
         )
-        # Eroding the central sampling region ensures every pixel of a source
-        # patch, rather than only its centre, lies within the requested radius.
+        # Erode so that whole patches, not just their centres, lie within the radius.
         _valid = ndi.binary_erosion(_sampling_mask, iterations=_half)
         while not np.any(_valid) and _patch_size > 3:
             _patch_size -= 2
@@ -414,9 +406,8 @@ def _():
                 _positions.append(_candidate)
             return _positions
 
-        # Unlike a full Hann window, a flat-top window does not periodically
-        # attenuate every patch centre. Only the overlap-width border is
-        # feathered, using a raised cosine with a nonzero edge weight.
+        # Flat-top window: only the overlap border is feathered (raised cosine
+        # with a nonzero edge weight), so patch centres are not dimmed.
         _feather = min(max(_effective_overlap, 1), _patch_size // 2)
         _window_1d = np.ones(_patch_size, dtype=np.float32)
         _ramp = 0.5 - 0.5 * np.cos(
@@ -500,15 +491,12 @@ def _():
         measurement_groups,
         iterations,
     ):
-        """Match marginal histograms while approaching group covariance.
+        """Match each channel's histogram and, approximately, each panel's covariance.
 
-        Exact marginal histograms and exact Pearson covariance are not, in
-        general, simultaneously attainable by a single affine transform. This
-        alternates two projections within each genuinely co-measured panel:
-        rank/quantile matching for every channel, then whitening and recolouring
-        toward the reference covariance. A final quantile projection guarantees
-        the requested marginal histograms while retaining the covariance fit as
-        closely as the empirical distributions permit.
+        Both cannot in general be matched exactly at once, so within each
+        co-measured panel this alternates quantile matching per channel with
+        whitening and recolouring towards the reference covariance. A final
+        quantile match makes the histograms exact.
         """
 
         _result = np.array(synthetic, dtype=np.float32, copy=True)
@@ -955,9 +943,8 @@ def _(
                 _upper_scale = _candidate_scale
         _, fourier_area_scale, selected_level_set, _matched_pixels = _best
 
-        # Raster ties can make the thresholded count jump over the target.
-        # Move only the closest boundary pixels across the threshold so the
-        # final discrete area remains exact without changing the interior.
+        # Ties can make the thresholded pixel count jump past the target, so
+        # move only the boundary pixels nearest the threshold to get the exact area.
         _threshold_level = float(softness.value) * np.log(
             1.0 / float(binary_threshold.value) - 1.0
         )

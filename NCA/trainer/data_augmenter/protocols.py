@@ -11,11 +11,9 @@ AugmenterBatch: TypeAlias = Tuple[PyTree[jax.Array], PyTree[jax.Array]]
 
 
 class NCAAugmenterProtocol(Protocol):
-    """Minimum interface consumed by the NCA training loop.
+    """Methods the NCA training loop calls on an augmenter.
 
-    Implementations may store a data pool, but each stochastic update must
-    derive its result from the supplied key. This keeps the numerical part of
-    augmentation reproducible and compatible with JAX transformations.
+    All randomness must come from the key passed in, so runs are reproducible.
     """
 
     OBS_CHANNELS: int

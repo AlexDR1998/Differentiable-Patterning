@@ -23,7 +23,7 @@ Run from the repository root with:
 
 import marimo
 
-__generated_with = "0.23.10"
+__generated_with = "0.25.1"
 app = marimo.App(width="full")
 
 with app.setup(hide_code=True):
@@ -40,6 +40,7 @@ with app.setup(hide_code=True):
     import jax.random as jr
     import marimo as mo
     import matplotlib.pyplot as plt
+    from matplotlib.colors import to_rgb
     import numpy as np
     import pandas as pd
     from dotenv import load_dotenv
@@ -51,60 +52,87 @@ with app.setup(hide_code=True):
         rollout_model_sampled,
         rollout_model_with_blocked_channel,
         rollout_model_with_blocked_channel_sampled,
-        rollout_model_with_blocked_channel_prevalence,
+        rollout_model_with_blocked_channel_pattern_counts,
+    )
+    from Common.dataloader.cell_type_fit import radial_rings
+    from Common.dataloader.cell_type_shares import (
+        colony_label_shares,
+        pattern_counts,
+        rule_stains,
+        stain_counts_from_patterns,
+    )
+    from Common.dataloader.cell_types import (
+        label_names,
+        load_cell_type_rules,
+        marker_values,
+        pixel_label_shares,
+        sample_pixel_labels,
     )
     from Common.model.boundary import hard_boundary, model_boundary, no_boundary
     from Common.save_to_video import save_to_video_rgb
 
     load_dotenv(repository_root / ".env", override=False)
 
-    FATE_MARKERS = ("TBXT", "SOX17", "SOX2", "FOXA2")
-    CELL_TYPES = ("Notochord", "Endoderm", "Mesoderm")
-    DEFAULT_FATE_RULES = {
-        "Notochord": {"TBXT": "high", "SOX17": "low", "SOX2": "low", "FOXA2": "high"},
-        "Endoderm": {"TBXT": "any", "SOX17": "high", "SOX2": "any", "FOXA2": "any"},
-        "Mesoderm": {"TBXT": "high", "SOX17": "low", "SOX2": "high", "FOXA2": "low"},
-    }
+    # Cell types come from a rule file exported by data_cleaning.py.
+    CELL_TYPE_DIRECTORY = repository_root / "Experiments/micropatterns/conf/cell_types"
 
-    def fate_rule_mask(high_by_marker, rule):
-        """Return the pixels satisfying a configurable marker-state rule."""
-        conditions = [
-            high_by_marker[marker] if state == "high" else ~high_by_marker[marker]
-            for marker, state in rule.items()
-            if state != "any"
+
+    def marker_channel_indices(channel_names, cell_type_rules):
+        """Index of each rule marker in ``channel_names`` (by channel, else by
+        marker name as in model states), in the order of the rule markers."""
+        channel_names = list(channel_names)
+        return [
+            channel_names.index(channel) if channel in channel_names else channel_names.index(marker)
+            for marker, channel in cell_type_rules.channels.items()
         ]
-        if not conditions:
-            return np.ones_like(next(iter(high_by_marker.values())), dtype=bool)
-        return np.logical_and.reduce(conditions)
 
-    def fate_rule_warnings(rules):
-        """Describe exact or potentially overlapping categorical definitions."""
-        warnings = []
-        for left_index, left in enumerate(CELL_TYPES):
-            for right in CELL_TYPES[left_index + 1:]:
-                left_rule, right_rule = rules[left], rules[right]
-                if left_rule == right_rule:
-                    warnings.append(f"{left} and {right} have duplicate definitions.")
-                    continue
-                conflicts = any(
-                    left_rule[marker] != "any"
-                    and right_rule[marker] != "any"
-                    and left_rule[marker] != right_rule[marker]
-                    for marker in FATE_MARKERS
-                )
-                if not conflicts:
-                    warnings.append(
-                        f"{left} and {right} can classify the same cells; summed "
-                        "prevalence will not be normalised."
-                    )
-        return warnings
+    def model_stain_counts(full_counts, cell_type_rules):
+        """Per-stain counts from counts over every rule marker (model output)."""
+        stains = [tuple(_channels) for _channels in rule_stains(cell_type_rules).values()]
+        return stain_counts_from_patterns(full_counts, cell_type_rules.markers, stains)
 
-    def fate_rule_matrix(rules):
-        encoding = {"low": -1, "any": 0, "high": 1}
-        return np.asarray([
-            [encoding[rules[cell_type][marker]] for marker in FATE_MARKERS]
-            for cell_type in CELL_TYPES
-        ], dtype=np.int8)
+    def model_label_shares(
+        image, channel_names, cell_type_rules, colony, n_rings, resolve_several=0.0
+    ):
+        """Label shares (``label_names`` order) of one model state ``[C, H, W]``.
+
+        Every marker is in every pixel, but shares are estimated per stain and
+        ring as for the measured data, so the two are comparable.
+        """
+        values = marker_values(image, channel_names, cell_type_rules, axis=0)
+        markers = cell_type_rules.markers
+        counts = pattern_counts(
+            np.stack([np.ravel(values[_m]) for _m in markers]),
+            [cell_type_rules.thresholds[_m] for _m in markers],
+            radial_rings(colony, n_rings).ravel(),
+            n_rings,
+        )
+        return colony_label_shares(
+            model_stain_counts(counts, cell_type_rules),
+            cell_type_rules,
+            resolve_several=resolve_several,
+        )
+
+    def data_label_shares(
+        image, channel_names, cell_type_rules, colony, n_rings, resolve_several=0.0
+    ):
+        """Label shares of one measured image ``[C, H, W]``, combining the
+        stains of the rule file (e.g. SOX2 in stain 1, FOXA2 in stain 2)."""
+        rings = radial_rings(colony, n_rings).ravel()
+        stain_counts = []
+        for _channels in rule_stains(cell_type_rules).values():
+            values = marker_values(image, channel_names, cell_type_rules, axis=0, channels=_channels)
+            markers = tuple(_channels)
+            stain_counts.append((
+                markers,
+                pattern_counts(
+                    np.stack([np.ravel(values[_m]) for _m in markers]),
+                    [cell_type_rules.thresholds[_m] for _m in markers],
+                    rings,
+                    n_rings,
+                ),
+            ))
+        return colony_label_shares(stain_counts, cell_type_rules, resolve_several=resolve_several)
 
     def load_training_histogram_bins(bundle, root):
         """Fit scaling once from the model's configured baseline train split."""
@@ -355,6 +383,17 @@ with app.setup(hide_code=True):
             ),
             axis=-1,
         )
+
+    def ko_time_label(hour, measurement_hour, prefix=""):
+        """Label of a KO time; a KO at (or after) the measurement is the baseline."""
+        if float(hour) >= float(measurement_hour):
+            return "Baseline"
+        return f"{prefix}{float(hour):g}h"
+
+    def ko_time_ticks(measurement_hour):
+        """Ticks every 12h up to the measurement, which is labelled baseline."""
+        ticks = [*np.arange(0.0, float(measurement_hour), 12.0), float(measurement_hour)]
+        return ticks, [ko_time_label(tick, measurement_hour) for tick in ticks]
 
     def parse_one_based_indices(specification):
         """Parse comma-separated indices and inclusive ranges such as 1,3-5."""
@@ -929,6 +968,73 @@ def _(
 
 @app.cell(hide_code=True)
 def _():
+    _cell_type_files = sorted(CELL_TYPE_DIRECTORY.glob("*.yaml"))
+    cell_type_file = mo.ui.dropdown(
+        options={_path.name: str(_path) for _path in _cell_type_files},
+        value=_cell_type_files[-1].name if _cell_type_files else None,
+        label="Cell type file",
+        full_width=True,
+    )
+    cell_type_rings = mo.ui.number(
+        1, 40, value=12, step=1, label="Rings for the share estimate"
+    )
+    mo.vstack([
+        mo.md(
+            "## Cell types\n\n"
+            "Thresholds, cell-type rules and stains are read from a file "
+            "exported by `data_cleaning.py` (Export cell types). Because SOX2 "
+            "and FOXA2 are imaged in different stains, cell-type shares are "
+            "estimated per radial ring by combining the stains (see "
+            "`Common/dataloader/cell_type_shares.py`), for the model output "
+            "as well as the data, and the rings are then averaged by area. "
+            "Pixels matching more than one cell type are counted as *Several*."
+        ),
+        mo.hstack([cell_type_file, cell_type_rings]),
+    ])
+    return cell_type_file, cell_type_rings
+
+
+@app.cell(hide_code=True)
+def _(cell_type_file):
+    mo.stop(
+        cell_type_file.value is None,
+        mo.callout(f"No cell type files found in `{CELL_TYPE_DIRECTORY}`.", kind="warn"),
+    )
+    cell_type_rules = load_cell_type_rules(cell_type_file.value)
+    _rule_rows = [
+        {
+            "cell_type": _cell_type,
+            "clause": _index + 1,
+            "weight": _weight,
+            **{_marker: _clause.get(_marker, "any") for _marker in cell_type_rules.markers},
+        }
+        for _cell_type, _clauses in cell_type_rules.rules.items()
+        for _index, (_clause, _weight) in enumerate(
+            zip(_clauses, cell_type_rules.weights_of(_cell_type))
+        )
+    ]
+    mo.vstack([
+        mo.md(
+            f"Tuned at {cell_type_rules.hour}h. Thresholds: "
+            + ", ".join(
+                f"{_marker} {_value:g}"
+                for _marker, _value in cell_type_rules.thresholds.items()
+            )
+            + ". Stains: "
+            + "; ".join(
+                f"{_stain} ({', '.join(_channels)})"
+                for _stain, _channels in rule_stains(cell_type_rules).items()
+            )
+            + ". The thresholds only hold for images pre-processed with the "
+            "file's `preprocessing` settings."
+        ),
+        mo.ui.table(_rule_rows, selection=None),
+    ])
+    return (cell_type_rules,)
+
+
+@app.cell(hide_code=True)
+def _():
     mo.md(r"""
     ## Fine NODAL-KO timing sweep (model ensembles)
 
@@ -937,6 +1043,11 @@ def _():
     measured 0h and 24h knockout conditions. Each rollout retains only the
     requested endpoint (48h by default), keeping the memory cost small.
     """)
+    return
+
+
+@app.cell
+def _():
     return
 
 
@@ -1252,7 +1363,7 @@ def _(fine_group_by, fine_ko_results):
 
 
 @app.cell(hide_code=True)
-def _(fine_ko_results):
+def _(cell_type_rules, fine_ko_results):
     _fine_channel_options = (
         [
             _name for _name in fine_ko_results[0]["channel_names"]
@@ -1275,31 +1386,6 @@ def _(fine_ko_results):
         step=1,
         label="Display every Nth swept KO time",
     )
-    fine_channel_thresholds = mo.ui.dictionary({
-        _marker: mo.ui.slider(
-            0.0,
-            1.0,
-            value=0.3,
-            step=0.01,
-            label=f"{_marker} absolute threshold",
-            full_width=True,
-        )
-        for _marker in ("TBXT", "SOX17", "SOX2", "FOXA2")
-    })
-    fine_cell_type_rules = mo.ui.dictionary({
-        _cell_type: mo.ui.dictionary({
-            _marker: mo.ui.dropdown(
-                {"High": "high", "Low": "low", "Irrespective": "any"},
-                value={"high": "High", "low": "Low", "any": "Irrespective"}[
-                    DEFAULT_FATE_RULES[_cell_type][_marker]
-                ],
-                label=_marker,
-                full_width=True,
-            )
-            for _marker in FATE_MARKERS
-        })
-        for _cell_type in CELL_TYPES
-    })
     fine_group_by = mo.ui.dropdown(
         {
             "Training curriculum": "curriculum",
@@ -1326,8 +1412,8 @@ def _(fine_ko_results):
         full_width=True,
     )
     fine_display_cell_types = mo.ui.multiselect(
-        options=[*CELL_TYPES, "Other"],
-        value=list(CELL_TYPES),
+        options=list(label_names(cell_type_rules)),
+        value=list(label_names(cell_type_rules)),
         label="Displayed cell types",
         full_width=True,
     )
@@ -1335,21 +1421,37 @@ def _(fine_ko_results):
         value=False,
         label="Scale cell-type snapshot brightness by LMBR",
     )
+    fine_resolve_several = mo.ui.slider(
+        0.0,
+        1.0,
+        value=0.0,
+        step=0.05,
+        show_value=True,
+        label="Resolve multiple matches to the most likely type",
+    )
+    fine_cell_map_mode = mo.ui.dropdown(
+        {"Mix colours by share": "mixed", "Sample one label per pixel": "sampled"},
+        value="Mix colours by share",
+        label="Snapshot colouring",
+    )
     mo.vstack([
         mo.hstack([fine_snapshot_channels, fine_snapshot_stride]),
-        mo.md("### Per-marker absolute expression thresholds (0–1)"),
-        fine_channel_thresholds,
-        mo.md("### Cell-type marker selections"),
-        fine_cell_type_rules,
         fine_display_cell_types,
+        mo.hstack([fine_resolve_several, fine_cell_map_mode]),
+        mo.md(
+            "- Resolve: a multiple match goes to the most likely type if it "
+            "leads the next by at least 1 − value (0: keep *Several*, "
+            "1: always). Used by every prevalence plot.\n"
+            "- Sample: one label per pixel drawn from its shares (fixed seed)."
+        ),
         fine_scale_cell_maps_by_lmbr,
         mo.hstack([fine_group_by, fine_uncertainty]),
     ])
     return (
-        fine_cell_type_rules,
-        fine_channel_thresholds,
+        fine_cell_map_mode,
         fine_display_cell_types,
         fine_group_by,
+        fine_resolve_several,
         fine_scale_cell_maps_by_lmbr,
         fine_snapshot_channels,
         fine_snapshot_stride,
@@ -1357,28 +1459,45 @@ def _(fine_ko_results):
     )
 
 
-@app.cell(hide_code=True)
-def _(fine_cell_type_rules):
-    _fine_rule_warnings = fate_rule_warnings(fine_cell_type_rules.value)
-    if _fine_rule_warnings:
-        mo.callout("\n\n".join(_fine_rule_warnings), kind="warn")
-    else:
-        mo.callout("Cell-type definitions are mutually exclusive.", kind="success")
-    return
+@app.cell
+def _():
+    # CELL_TYPE_COLOURS = {
+    #     "Notochord": "#d627a0",
+    #     "Endoderm": "#17becf",
+    #     "Mesoderm": "#2ca02c",
+    #     "Several": "#ff7f0e",
+    #     "Other": "#7f7f7f",
+    # }
+
+    CELL_TYPE_COLOURS = {
+        "Notochord": (0.4, 0.7, 0.6),
+        "Endoderm": (0.9, 0.9, 0.3),
+        "Mesoderm": (1.0, 0.0, 0.0),
+        "Several": (0.0, 0.0, 1.0),
+        "Other": (0.5, 0.5, 0.5),
+    }
+
+    def cell_type_colour(label):
+        return CELL_TYPE_COLOURS.get(label, "#000000")
+
+    return (cell_type_colour,)
 
 
 @app.cell(hide_code=True)
 def _(
-    fine_cell_type_rules,
-    fine_channel_thresholds,
+    cell_type_colour,
+    cell_type_rings,
+    cell_type_rules,
+    fine_resolve_several,
     fine_display_cell_types,
     fine_display_groups,
     fine_group_by,
     fine_ko_results,
     fine_uncertainty,
 ):
-    _fine_required_markers = ("TBXT", "SOX17", "SOX2", "FOXA2")
-    _fine_rules = fine_cell_type_rules.value
+    _fine_required_markers = cell_type_rules.markers
+    _fine_labels = label_names(cell_type_rules)
+    _fine_rings = int(cell_type_rings.value)
     if fine_ko_results is None:
         fine_cell_type_prevalence = pd.DataFrame()
         fine_true_cell_type_prevalence = pd.DataFrame()
@@ -1410,10 +1529,6 @@ def _(
             _result for _result in fine_ko_results
             if _result["true_snapshots"] is not None
         ]
-        _fine_thresholds = {
-            _marker: float(fine_channel_thresholds.value[_marker])
-            for _marker in _fine_required_markers
-        }
         _fine_prevalence_rows = []
         _fine_map_results = []
         for _fine_result in fine_ko_results:
@@ -1424,24 +1539,26 @@ def _(
             for _fine_offset, _fine_hour in enumerate(
                 _fine_result["requested_ko_hours"]
             ):
-                _fine_high = {
-                    _marker: _fine_fate_images[
-                        _fine_offset, _fine_names_for_fates.index(_marker)
-                    ] > _fine_thresholds[_marker]
-                    for _marker in _fine_required_markers
-                }
-                _fine_cell_masks = {
-                    _cell_type: fate_rule_mask(_fine_high, _fine_rules[_cell_type])
-                    for _cell_type in CELL_TYPES
-                }
-                _fine_cell_masks["Other"] = ~np.logical_or.reduce(
-                    tuple(_fine_cell_masks.values())
+                _fine_image = _fine_fate_images[_fine_offset]
+                # Per-pixel label shares for the maps, with the clause
+                # weights used for the prevalence below.
+                _fine_result_maps.append(pixel_label_shares(
+                    marker_values(
+                        _fine_image, _fine_names_for_fates, cell_type_rules, axis=0
+                    ),
+                    cell_type_rules,
+                    _fine_colony,
+                    resolve_several=fine_resolve_several.value,
+                ))
+                _fine_shares = model_label_shares(
+                    _fine_image,
+                    _fine_names_for_fates,
+                    cell_type_rules,
+                    _fine_colony,
+                    _fine_rings,
+                    resolve_several=fine_resolve_several.value,
                 )
-                _fine_result_maps.append({
-                    _fine_cell_type: np.asarray(_fine_cell_mask & _fine_colony)
-                    for _fine_cell_type, _fine_cell_mask in _fine_cell_masks.items()
-                })
-                for _fine_cell_type, _fine_cell_mask in _fine_cell_masks.items():
+                for _fine_cell_type, _fine_share in zip(_fine_labels, _fine_shares):
                     _fine_prevalence_rows.append({
                         "model_id": _fine_result["model_id"],
                         "model_label": _fine_result["label"],
@@ -1454,9 +1571,7 @@ def _(
                             _fine_result["realised_ko_hours"][_fine_offset]
                         ),
                         "cell_type": _fine_cell_type,
-                        "relative_prevalence": float(
-                            np.mean(_fine_cell_mask[_fine_colony])
-                        ),
+                        "relative_prevalence": float(_fine_share),
                     })
             _fine_map_results.append({
                 "model_id": _fine_result["model_id"],
@@ -1469,7 +1584,7 @@ def _(
                     _fine_result["requested_ko_hours"]
                 ),
                 "boundary": np.asarray(_fine_colony),
-                "cell_masks": tuple(_fine_result_maps),
+                "cell_shares": tuple(_fine_result_maps),
                 "lmbr": np.asarray(
                     _fine_fate_images[:, _fine_names_for_fates.index("LMBR")]
                 ),
@@ -1502,81 +1617,31 @@ def _(
             })
         )
         _fine_true_rows = []
-        if _fine_true_sources:
-            for _fine_true_source in _fine_true_sources:
-                _fine_true_names = _fine_true_source["true_channel_names"]
-                _fine_true_colony = _fine_true_source["boundary"]
-                _fine_true_labels = {
-                    0.0: "True KO 0h",
-                    24.0: "True KO 24h",
-                    _fine_true_source["snapshot_hour"]: "True baseline",
-                }
-                for _fine_true_hour, _fine_true_image in (
-                    _fine_true_source["true_snapshots"].items()
-                ):
-                    _fine_true_high = {
-                        _marker: _fine_true_image[
-                            _fine_true_names.index(f"cell_fate_s2/{_marker}")
-                        ] > _fine_thresholds[_marker]
-                        for _marker in ("TBXT", "SOX17", "FOXA2")
-                    }
-                    _fine_true_s1_high = {
-                        _marker: _fine_true_image[
-                            _fine_true_names.index(f"cell_fate_s1/{_marker}")
-                        ] > _fine_thresholds[_marker]
-                        for _marker in ("TBXT", "SOX2", "SOX17")
-                    }
-                    # Never combine pixels from the separately stained S1 and S2
-                    # panels. Use whichever panel measures more of the selected
-                    # rule, and explicitly report any omitted marker selections.
-                    _fine_true_panels = (
-                        ("cell_fate_s2", _fine_true_high, {"TBXT", "SOX17", "FOXA2"}),
-                        ("cell_fate_s1", _fine_true_s1_high, {"TBXT", "SOX17", "SOX2"}),
-                    )
-                    _fine_true_masks = {}
-                    _fine_true_definitions = {}
-                    for _cell_type in CELL_TYPES:
-                        _fine_selected = {
-                            marker for marker, state in _fine_rules[_cell_type].items()
-                            if state != "any"
-                        }
-                        _fine_panel_name, _fine_panel_high, _fine_available = max(
-                            _fine_true_panels,
-                            key=lambda panel: len(_fine_selected & panel[2]),
-                        )
-                        _fine_panel_rule = {
-                            marker: state
-                            for marker, state in _fine_rules[_cell_type].items()
-                            if marker in _fine_available
-                        }
-                        _fine_omitted = sorted(_fine_selected - _fine_available)
-                        _fine_true_masks[_cell_type] = fate_rule_mask(
-                            _fine_panel_high, _fine_panel_rule
-                        )
-                        _fine_true_definitions[_cell_type] = (
-                            f"{_fine_panel_name}: "
-                            + ", ".join(
-                                f"{marker}={state}"
-                                for marker, state in _fine_panel_rule.items()
-                                if state != "any"
-                            )
-                            + (f"; omitted {', '.join(_fine_omitted)}" if _fine_omitted else "")
-                        )
-                    for _fine_cell_type, _fine_true_mask in (
-                        _fine_true_masks.items()
-                    ):
-                        _fine_true_rows.append({
-                            "replicate": _fine_true_source["replicate"],
-                            "knockout_hour": float(_fine_true_hour),
-                            "condition": _fine_true_labels[_fine_true_hour],
-                            "cell_type": _fine_cell_type,
-                            "measured_definition": _fine_true_definitions[
-                                _fine_cell_type
-                            ],
-                            "relative_prevalence": float(
-                                np.mean(_fine_true_mask[_fine_true_colony])
-                            ),
-                        })
+        for _fine_true_source in _fine_true_sources:
+            _fine_true_labels = {
+                0.0: "True KO 0h",
+                24.0: "True KO 24h",
+                _fine_true_source["snapshot_hour"]: "True baseline",
+            }
+            for _fine_true_hour, _fine_true_image in (
+                _fine_true_source["true_snapshots"].items()
+            ):
+                _fine_true_shares = data_label_shares(
+                    _fine_true_image,
+                    _fine_true_source["true_channel_names"],
+                    cell_type_rules,
+                    _fine_true_source["boundary"],
+                    _fine_rings,
+                    resolve_several=fine_resolve_several.value,
+                )
+                for _fine_cell_type, _fine_share in zip(_fine_labels, _fine_true_shares):
+                    _fine_true_rows.append({
+                        "replicate": _fine_true_source["replicate"],
+                        "knockout_hour": float(_fine_true_hour),
+                        "condition": _fine_true_labels[_fine_true_hour],
+                        "cell_type": _fine_cell_type,
+                        "relative_prevalence": float(_fine_share),
+                    })
         fine_true_cell_type_prevalence = pd.DataFrame(_fine_true_rows)
         _fine_summary_rows = []
         for (_fine_group_label, _fine_cell_type, _fine_hour), _fine_values in (
@@ -1610,12 +1675,6 @@ def _(
         _fine_prevalence_figure, _fine_prevalence_axis = plt.subplots(
             figsize=(11, 5), dpi=150
         )
-        _fine_cell_colors = {
-            "Notochord": "#d627a0",
-            "Endoderm": "#17becf",
-            "Mesoderm": "#2ca02c",
-            "Other": "#7f7f7f",
-        }
         _fine_group_styles = ("-", "--", ":", "-.")
         _fine_group_names = list(dict.fromkeys(fine_prevalence_summary["group"]))
         _fine_style_by_group = {
@@ -1636,7 +1695,7 @@ def _(
                 _fine_curve["knockout_hour"],
                 _fine_curve["mean_prevalence"],
                 _fine_style_by_group[_fine_group_label],
-                color=_fine_cell_colors[_fine_cell_type],
+                color=cell_type_colour(_fine_cell_type),
                 label=f"{_fine_group_label} · {_fine_cell_type}",
             )
             if (
@@ -1672,7 +1731,7 @@ def _(
                     _fine_prevalence_axis.scatter(
                         _fine_true_row["knockout_hour"],
                         _fine_true_row["relative_prevalence"],
-                        color=_fine_cell_colors[_fine_true_row["cell_type"]],
+                        color=cell_type_colour(_fine_true_row["cell_type"]),
                         marker=_fine_true_markers[_fine_true_condition],
                         s=65,
                         edgecolor="black",
@@ -1691,11 +1750,14 @@ def _(
                     linewidth=0.5,
                     label=_fine_true_condition,
                 )
+        _fine_ko_ticks, _fine_ko_tick_labels = ko_time_ticks(
+            fine_ko_results[0]["snapshot_hour"]
+        )
         _fine_prevalence_axis.set(
             xlabel="NODAL knockout time (h)",
             ylabel="Fraction of colony pixels",
-            xticks=[0, 12, 24, 36, 48],
-            xticklabels=["0h", "12h", "24h", "36h", "48h"],
+            xticks=_fine_ko_ticks,
+            xticklabels=_fine_ko_tick_labels,
             title=(
                 f"Predicted cell-type prevalence at "
                 f"{fine_ko_results[0]['snapshot_hour']:g}h"
@@ -1719,10 +1781,9 @@ def _(
                 "Bands show the selected uncertainty across distinct models, "
                 "initial-condition replicates, and seeded runs in each group. "
                 "Groups with one total sample have no uncertainty band. Each true "
-                "data replicate is plotted separately. Because SOX2 and FOXA2 are "
-                "stained in separate true-data panels, each true prevalence uses "
-                "the panel satisfying the most selected markers. Its measured "
-                "definition column explicitly lists any omitted selections."
+                "data replicate is plotted separately. Model and true prevalences "
+                "are both estimated from the stains of the cell type file (see "
+                "Cell types above)."
             ),
             mo.ui.table(fine_prevalence_summary, selection=None, page_size=15),
             mo.ui.table(fine_prevalence_export, selection=None, page_size=15),
@@ -1786,27 +1847,22 @@ def _(
 
 @app.cell(hide_code=True)
 def _(
+    cell_type_colour,
     fine_cell_type_maps,
     fine_display_cell_types,
     fine_display_groups,
+    fine_cell_map_mode,
     fine_ko_results,
     fine_scale_cell_maps_by_lmbr,
     fine_snapshot_stride,
 ):
+    _fine_map_rng = np.random.default_rng(0)
     if fine_ko_results is None or not fine_cell_type_maps:
         _fine_cell_map_view = mo.md("")
     else:
         _fine_map_colors = {
-            "Notochord": np.asarray(
-                [214, 39, 160], dtype=float
-            ) / 255.0,
-            "Endoderm": np.asarray(
-                [23, 190, 207], dtype=float
-            ) / 255.0,
-            "Mesoderm": np.asarray(
-                [44, 160, 44], dtype=float
-            ) / 255.0,
-            "Other": np.asarray([127, 127, 127], dtype=float) / 255.0,
+            _label: np.asarray(to_rgb(cell_type_colour(_label)))
+            for _label in fine_display_cell_types.value
         }
         _fine_selected_map_types = tuple(fine_display_cell_types.value)
         _fine_visible_map_results = [
@@ -1818,22 +1874,28 @@ def _(
         for _fine_map_result in _fine_visible_map_results:
             _fine_map_indices = list(range(
                 0,
-                len(_fine_map_result["cell_masks"]),
+                len(_fine_map_result["cell_shares"]),
                 int(fine_snapshot_stride.value),
             ))
-            if _fine_map_indices[-1] != len(_fine_map_result["cell_masks"]) - 1:
-                _fine_map_indices.append(len(_fine_map_result["cell_masks"]) - 1)
+            if _fine_map_indices[-1] != len(_fine_map_result["cell_shares"]) - 1:
+                _fine_map_indices.append(len(_fine_map_result["cell_shares"]) - 1)
             _fine_rgb_maps = []
             for _fine_map_index in _fine_map_indices:
                 _fine_rgb_map = np.zeros(
                     (*_fine_map_result["boundary"].shape, 3), dtype=float
                 )
+                # Colours are mixed by each pixel's label shares, or one
+                # label per pixel is drawn from them.
+                _fine_pixel_shares = _fine_map_result["cell_shares"][_fine_map_index]
+                if fine_cell_map_mode.value == "sampled":
+                    _fine_pixel_shares = sample_pixel_labels(
+                        _fine_pixel_shares, _fine_map_rng
+                    )
                 for _fine_map_cell_type in _fine_selected_map_types:
-                    _fine_rgb_map[
-                        _fine_map_result["cell_masks"][_fine_map_index][
-                            _fine_map_cell_type
-                        ]
-                    ] = _fine_map_colors[_fine_map_cell_type]
+                    _fine_rgb_map += (
+                        _fine_pixel_shares[_fine_map_cell_type][..., None]
+                        * _fine_map_colors[_fine_map_cell_type]
+                    )
                 if fine_scale_cell_maps_by_lmbr.value:
                     _fine_lmbr_brightness = np.clip(
                         _fine_map_result["lmbr"][_fine_map_index], 0.0, 1.0
@@ -1850,9 +1912,11 @@ def _(
                 _fine_cell_map_axes[0], _fine_rgb_maps, _fine_map_indices
             ):
                 _fine_cell_map_axis.imshow(_fine_rgb_map, vmin=0.0, vmax=1.0)
-                _fine_cell_map_axis.set_title(
-                    f"KO {_fine_map_result['requested_ko_hours'][_fine_map_index]:g}h"
-                )
+                _fine_cell_map_axis.set_title(ko_time_label(
+                    _fine_map_result["requested_ko_hours"][_fine_map_index],
+                    fine_ko_results[0]["snapshot_hour"],
+                    prefix="KO ",
+                ))
                 _fine_cell_map_axis.set_axis_off()
             # _fine_cell_map_figure.suptitle(
             #     f"{_fine_map_result['label']} · cell identity at "
@@ -1881,7 +1945,11 @@ def _(
                 mo.md(
                     "Brightness is scaled by the LMBR nuclear marker."
                     if fine_scale_cell_maps_by_lmbr.value
-                    else "Cell types use uniform categorical brightness."
+                    else (
+                        "One label per pixel, drawn from its cell-type shares."
+                        if fine_cell_map_mode.value == "sampled"
+                        else "Colours are mixed by each pixel's cell-type shares."
+                    )
                 ),
                 mo.md(_fine_map_legend),
                 *_fine_cell_map_figures,
@@ -1945,7 +2013,11 @@ def _(fine_ko_results, fine_snapshot_channels, fine_snapshot_stride):
             _fine_axis.set_xticks(
                 (np.asarray(_fine_tick_indices) + 0.5) * _fine_tile_width - 0.5,
                 [
-                    f"KO {_fine_result['requested_ko_hours'][_index]:g}h"
+                    ko_time_label(
+                        _fine_result["requested_ko_hours"][_index],
+                        _fine_result["snapshot_hour"],
+                        prefix="KO ",
+                    )
                     for _index in (
                         _fine_display_indices[_display_index]
                         for _display_index in _fine_tick_indices
@@ -1980,9 +2052,10 @@ def _():
     mo.md(r"""
     ## Cell-fate dynamics across intervention and measurement time
 
-    Sweep NODAL-KO time while measuring the mutually exclusive cell-fate area
-    fractions at every NCA update. Only four scalar prevalences are retained
-    per step, rather than full image trajectories. After the sweep, use the
+    Sweep NODAL-KO time while measuring the cell-type shares (from the cell
+    type file above) at every NCA update. Only the number of pixels of each
+    marker pattern in each ring is kept per step, rather than full image
+    trajectories. After the sweep, use the
     selectors below to explore model and cell-type heatmaps without rerunning.
     """)
     return
@@ -2023,31 +2096,6 @@ def _(selection_records):
     dynamics_seed = mo.ui.number(
         0, 2**31 - 1, value=0, step=1, label="Rollout seed"
     )
-    dynamics_channel_thresholds = mo.ui.dictionary({
-        _marker: mo.ui.slider(
-            0.0,
-            1.0,
-            value=0.3,
-            step=0.01,
-            label=f"{_marker} absolute threshold",
-            full_width=True,
-        )
-        for _marker in ("TBXT", "SOX17", "SOX2", "FOXA2")
-    })
-    dynamics_cell_type_rules = mo.ui.dictionary({
-        _cell_type: mo.ui.dictionary({
-            _marker: mo.ui.dropdown(
-                {"High": "high", "Low": "low", "Irrespective": "any"},
-                value={"high": "High", "low": "Low", "any": "Irrespective"}[
-                    DEFAULT_FATE_RULES[_cell_type][_marker]
-                ],
-                label=_marker,
-                full_width=True,
-            )
-            for _marker in FATE_MARKERS
-        })
-        for _cell_type in CELL_TYPES
-    })
     run_dynamics_sweep = mo.ui.run_button(label="Run prevalence dynamics sweep")
     mo.vstack([
         dynamics_models,
@@ -2058,14 +2106,8 @@ def _(selection_records):
             dynamics_endpoint,
         ]),
         mo.hstack([dynamics_replicate, dynamics_seed, run_dynamics_sweep]),
-        mo.md("### Per-marker absolute expression thresholds (0–1)"),
-        dynamics_channel_thresholds,
-        mo.md("### Cell-type marker selections"),
-        dynamics_cell_type_rules,
     ])
     return (
-        dynamics_cell_type_rules,
-        dynamics_channel_thresholds,
         dynamics_endpoint,
         dynamics_ko_interval,
         dynamics_ko_start,
@@ -2078,20 +2120,12 @@ def _(selection_records):
 
 
 @app.cell(hide_code=True)
-def _(dynamics_cell_type_rules):
-    _dynamics_rule_warnings = fate_rule_warnings(dynamics_cell_type_rules.value)
-    if _dynamics_rule_warnings:
-        mo.callout("\n\n".join(_dynamics_rule_warnings), kind="warn")
-    else:
-        mo.callout("Cell-type definitions are mutually exclusive.", kind="success")
-    return
-
-
-@app.cell(hide_code=True)
 def _(
+    cell_type_file,
+    cell_type_rings,
+    cell_type_rules,
+    fine_resolve_several,
     data_root,
-    dynamics_cell_type_rules,
-    dynamics_channel_thresholds,
     dynamics_endpoint,
     dynamics_ko_interval,
     dynamics_ko_start,
@@ -2127,8 +2161,8 @@ def _(
             + 0.5 * float(dynamics_ko_interval.value),
             float(dynamics_ko_interval.value),
         )
-        _dynamics_cell_types = (*CELL_TYPES, "Other")
-        _dynamics_fate_rules = fate_rule_matrix(dynamics_cell_type_rules.value)
+        _dynamics_cell_types = label_names(cell_type_rules)
+        _dynamics_rings = int(cell_type_rings.value)
         _dynamics_results = []
         for _dynamics_model_id in tqdm(
             dynamics_models.value,
@@ -2151,11 +2185,13 @@ def _(
                 int(dynamics_replicate.value),
                 _dynamics_bins,
             )
-            _dynamics_marker_order = ("TBXT", "SOX17", "SOX2", "FOXA2")
             _dynamics_thresholds = [
-                float(dynamics_channel_thresholds.value[_dynamics_marker])
-                for _dynamics_marker in _dynamics_marker_order
+                cell_type_rules.thresholds[_dynamics_marker]
+                for _dynamics_marker in cell_type_rules.markers
             ]
+            _dynamics_colony = (
+                np.asarray(_dynamics_data["boundary"]).squeeze().astype(bool)
+            )
             _dynamics_initial = _dynamics_data["initial_state"]
             _dynamics_model_channels = int(_dynamics_model.N_CHANNELS)
             _dynamics_state = jnp.pad(
@@ -2170,10 +2206,9 @@ def _(
             _dynamics_total_steps = int(round(
                 float(dynamics_endpoint.value) * _dynamics_steps_per_12h / 12.0
             ))
-            _dynamics_fate_channels = jnp.asarray([
-                _dynamics_data["state_channel_names"].index(_marker)
-                for _marker in _dynamics_marker_order
-            ])
+            _dynamics_fate_channels = jnp.asarray(marker_channel_indices(
+                _dynamics_data["state_channel_names"], cell_type_rules
+            ))
             _dynamics_matrices = []
             _dynamics_realised_ko = []
             for _dynamics_ko_hour in tqdm(
@@ -2185,8 +2220,8 @@ def _(
                 _dynamics_ko_step = int(round(
                     float(_dynamics_ko_hour) * _dynamics_steps_per_12h / 12.0
                 ))
-                _dynamics_prevalence = (
-                    rollout_model_with_blocked_channel_prevalence(
+                _dynamics_counts = (
+                    rollout_model_with_blocked_channel_pattern_counts(
                         _dynamics_model,
                         _dynamics_state,
                         jnp.asarray(_dynamics_data["boundary"]),
@@ -2197,11 +2232,19 @@ def _(
                         jnp.asarray(_dynamics_ko_step, dtype=jnp.int32),
                         _dynamics_fate_channels,
                         jnp.asarray(_dynamics_thresholds),
-                        jnp.asarray(_dynamics_fate_rules),
-                        jnp.asarray(_dynamics_data["boundary"]).squeeze().astype(bool),
+                        jnp.asarray(radial_rings(_dynamics_colony, _dynamics_rings)),
+                        _dynamics_rings,
                     )
                 )
-                _dynamics_matrices.append(np.asarray(_dynamics_prevalence))
+                # Shares at every measurement step, estimated as in the fine sweep.
+                _dynamics_matrices.append(np.stack([
+                    colony_label_shares(
+                        model_stain_counts(_dynamics_step_counts, cell_type_rules),
+                        cell_type_rules,
+                        resolve_several=fine_resolve_several.value,
+                    )
+                    for _dynamics_step_counts in np.asarray(_dynamics_counts)
+                ]))
                 _dynamics_realised_ko.append(
                     12.0 * _dynamics_ko_step / _dynamics_steps_per_12h
                 )
@@ -2224,10 +2267,7 @@ def _(
                     * 12.0 / _dynamics_steps_per_12h
                 ),
                 "prevalence": np.stack(_dynamics_matrices),
-                "thresholds": dict(zip(
-                    _dynamics_marker_order, _dynamics_thresholds
-                )),
-                "cell_type_rules": dynamics_cell_type_rules.value,
+                "cell_type_file": cell_type_file.value,
             })
         temporal_prevalence_results = tuple(_dynamics_results)
         _dynamics_status = mo.callout(
@@ -2364,8 +2404,11 @@ def _(
                 f"{_heatmap_result['label']}\n"
                 f"{dynamics_heatmap_cell_type.value} area fraction"
             ),
-            xticks=[0, 12, 24, 36, 48],
             yticks=[0, 12, 24, 36, 48],
+        )
+        # A KO at the last measurement changes none of them: the baseline.
+        _heatmap_axis.set_xticks(
+            *ko_time_ticks(_heatmap_measurement_hours[-1])
         )
         _heatmap_figure.colorbar(
             _heatmap_image, ax=_heatmap_axis, label="Fraction of colony pixels"

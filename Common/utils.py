@@ -28,9 +28,7 @@ import itertools
 # Some convenient helper functions
 
 def get_jax_memory_stats():
-  """
-  Returns dict of memory usage stats for each jax device.
-  """
+  """Memory usage stats of each jax device, as a flat dict."""
   stats = {}
   for d in jax.devices():
     if hasattr(d, "memory_stats"):
@@ -49,10 +47,10 @@ def squarish(H):
     a -= 1
 
 def index_to_param_list(index,n_processes,full_hyperparameters):
-  """
-    Take a Dict of arrays of hyperparameters, and return a list of n_processes dicts of hyperparameters,
-    such that all hyperparameter combinations are enumerated and split over the n_processes.
-    index selects which of the n_processes to return.
+  """Share of the hyperparameter grid for process ``index`` of ``n_processes``.
+
+  ``full_hyperparameters`` maps names to lists of values; every combination
+  is enumerated and every ``n_processes``-th one is returned.
   """
   
   keys = list(full_hyperparameters.keys())
@@ -62,26 +60,11 @@ def index_to_param_list(index,n_processes,full_hyperparameters):
 
 
 def save_pickle(data, path: Union[str, Path], overwrite: bool = False):
+    """Pickle ``data`` to ``path``; a .pickle suffix is added if missing.
+
+    Adapted from https://github.com/google/jax/issues/2116. Raises
+    RuntimeError if the file exists and ``overwrite`` is False.
     """
-    Taken from https://github.com/google/jax/issues/2116
-
-    Parameters
-    ----------
-    path : Union[str, Path]
-        path to filename.
-    overwrite : bool, optional
-        Overwrite existing filename. The default is False.
-
-    Raises
-    ------
-    RuntimeError
-        file already exists.
-
-    Returns
-    -------
-    None.
-
-"""
     suffix = ".pickle"
     path = Path(path)
     if path.suffix != suffix:
@@ -127,21 +110,7 @@ def key_array_gen(key,shape):
 	return key_array
 
 def key_pytree_gen(key,shape):
-	"""
-	
-	
-	Parameters
-	----------
-	key : jax.random.PRNGKey, 
-		Jax random number key.
-	shape : tuple of ints
-		Shape to broadcast to
-
-	Returns
-	-------
-	key_array : uint32[shape,2]
-		array of random keys
-	"""
+	"""Like ``key_array_gen``, but returns a list of keys along the first axis."""
 	#print(shape)
 	shape = list(shape)
 	shape.append(2)
@@ -154,18 +123,7 @@ def key_pytree_gen(key,shape):
 #	for i in range(BATCHES):		
 
 def grad_norm(grad):
-	"""
-	Normalises each vector/matrix in grad 
-
-	Parameters
-	----------
-	grad : NCA/pytree
-
-	Returns
-	-------
-	grad : NCA/pytree
-
-	"""
+	"""Normalise the weights of layers 3 and 5 (and the bias of layer 5) of an NCA gradient to unit norm."""
 	w_where = lambda l: l.weight
 	b_where = lambda l: l.bias
 	w1 = grad.layers[3].weight/(jnp.linalg.norm(grad.layers[3].weight)+1e-8)
@@ -181,13 +139,7 @@ def grad_norm(grad):
 
 
 def my_animate(img,clip=True):
-	"""
-	Boilerplate code to produce matplotlib animation
-	Parameters
-	----------
-	img : float32 or int array [N,rgb,_,_]
-		img must be float in range [0,1] 
-	"""
+	"""Show a matplotlib animation of images ``[N, rgb, x, y]``; with ``clip``, values are clipped to [0, 1]."""
 	if clip:
 		im_min = 0
 		im_max = 1

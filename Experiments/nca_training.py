@@ -1,4 +1,4 @@
-"""Lifecycle boundary shared by active NCA experiment entrypoints."""
+"""NCA training step shared by the experiment entrypoints."""
 
 from dataclasses import replace
 

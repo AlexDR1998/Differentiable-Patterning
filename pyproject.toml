@@ -1,4 +1,4 @@
-# Makes Common, NCA and Experiments importable from anywhere after
+# Makes Common, NCA, PDE and Experiments importable from anywhere after
 #     pip install -e .
 # Dependencies are managed by the files in requirements/ (pip or conda),
 # so none are listed here.
@@ -15,7 +15,7 @@ requires-python = ">=3.10"
 dependencies = []
 
 [tool.setuptools.packages.find]
-include = ["Common*", "NCA*", "Experiments*"]
+include = ["Common*", "NCA*", "PDE*", "Experiments*"]
 namespaces = true
 
 [tool.pytest.ini_options]

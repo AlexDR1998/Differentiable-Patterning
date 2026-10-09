@@ -1,10 +1,10 @@
 # /// script
-# dependencies = ["marimo", "jax", "matplotlib", "numpy"]
+# dependencies = ["marimo", "jax", "matplotlib", "numpy", "pyyaml"]
 # ///
 
-"""A typed-config emoji NCA training walkthrough.
+"""Walkthrough: train a small emoji NCA with the experiment pipeline.
 
-Run from the repository root with:
+Run from the repository root (after ``pip install -e .``) with:
 
     marimo edit demo/nca_training_config_walkthrough.py
 """
@@ -17,10 +17,8 @@ app = marimo.App(width="full")
 with app.setup:
     import json
     import os
-    import sys
     import tempfile
     from pathlib import Path
-
 
     import jax
     import jax.numpy as jnp
@@ -28,8 +26,8 @@ with app.setup:
     import matplotlib.animation as animation
     import matplotlib.pyplot as plt
     import numpy as np
+    import yaml
 
-    from Common.dataloader.preprocessing import PreprocessingConfig
     from Common.trainer.config import (
         LossConfig,
         OptimiserConfig,
@@ -37,36 +35,31 @@ with app.setup:
         ScheduleConfig,
     )
     from Experiments.config import (
-        CheckpointConfig,
+        CONFIG_SCHEMA_VERSION,
         DataConfig,
         ExperimentConfig,
         ExperimentMetadataConfig,
         LoggingConfig,
         ModelStoreConfig,
-        RuntimeConfig,
-        TrainingConfig,
-        TrainingLoopConfig,
+        RunConfig,
+        SystemConfig,
         WandbConfig,
         config_to_dict,
+        experiment_config_from_mapping,
     )
-    from NCA.model.factory import build_model
-    from Experiments.emoji.config import (
-        EmojiDataConfig,
-        EmojiPairConfig,
-        ProbabilityScheduleConfig,
-    )
+    from Experiments.emoji.config import EmojiDataConfig, EmojiPairConfig
     from Experiments.emoji.config_helpers import build_data_augmenter, load_data
-    from NCA.model.config import ModelConfig
     from Experiments.model_registry import (
         ModelRegistry,
         create_model_id,
         evaluation_input_provenance,
-        publish_model_bundle,
         verify_evaluation_input,
     )
+    from Experiments.nca_training import run_training
+    from NCA.model.config import ModelConfig
+    from NCA.model.factory import build_model
     from NCA.trainer.config import PoolAdmissionConfig, TrainerConfig
     from NCA.trainer.context import TrainerContext
-    from NCA.trainer.trainer import build_trainer
 
 
 @app.cell(hide_code=True)
@@ -74,26 +67,43 @@ def _():
     mo.md(r"""
     # NCA training walkthrough
 
-    This notebook is first tutorial on using this codebase to train NCA to perform dynamical self organisation based on a target sequence of data. This is a high level overview of the data selection, model construction, training and evaluation workflow.
+    This notebook is a first introduction to the codebase. It trains a small
+    neural cellular automaton (NCA) to grow a sequence of emoji images, and
+    goes through the same steps as a real experiment: choosing data, building
+    a model, writing the experiment config, training, saving the model as a
+    bundle, and loading it back to run it.
 
-    Each section constructs the relevant
-    configuration dataclasses owned by that part of the workflow.
+    ## How the pieces fit together
 
-    The example supports sequential emoji morphing and multi-attractor
-    patterning. This notebook performs training locally, which should be quick (and low quality) with the default parameters.
-    """)
-    return
+    A real experiment starts from a YAML file and runs on a remote GPU:
 
+    ```text
+    Experiments/emoji/conf/base_config.yaml   (+ sweep overrides, conf/experiments/*.yaml)
+      └─ Experiments/run_config.py            reads the YAML, converts it with
+                                              Experiments.config.load_experiment_config
+         └─ ExperimentConfig                  frozen dataclasses, same names as the YAML
+            └─ Experiments/emoji/train.py:run(cfg)
+                 load_data, build_model, build_data_augmenter, TrainerContext
+               └─ Experiments/nca_training.py:run_training
+                    build_trainer → NcaTrainer.train → TrainingResult
+                    publish_model_bundle → <model store>/bundles/...
+    ```
 
-@app.cell(hide_code=True)
-def _():
-    mo.md(r"""
-    # 1. Data selection and loading
+    Here we build the `ExperimentConfig` directly in Python, one section at a
+    time, then do by hand what `Experiments/emoji/train.py` does. Each section
+    of this notebook fills in one section of the config:
 
-    `PreprocessingConfig` owns reusable preprocessing, while `EmojiDataConfig`
-    owns emoji-specific task and augmentation choices. They are composed here
-    into the experiment-level `DataConfig`, then used immediately to load and
-    preview the selected trajectories.
+    | Notebook section | Config section | Defined in |
+    | --- | --- | --- |
+    | 1. Data | `cfg.data` | `Experiments/config.py`, `Experiments/emoji/config.py` |
+    | 2. Model | `cfg.model` | `NCA/model/config.py` |
+    | 3. Training | `cfg.run`, `cfg.trainer`, `cfg.optimiser`, `cfg.loss` | `Experiments/config.py`, `NCA/trainer/config.py`, `Common/trainer/config.py` |
+    | 4. The whole config | `ExperimentConfig` | `Experiments/config.py` |
+
+    The default settings are tiny so that training takes a minute or two on a
+    laptop CPU. The results will be poor; real runs use larger models, more
+    iterations and a GPU. `docs/configuration.md` and `docs/nca_trainer.md`
+    describe the config and the trainer in more detail.
     """)
     return
 
@@ -114,11 +124,45 @@ def _():
             "MODEL_STORE_ROOT",
             str(_repo_root / "models" / "local" / "notebook"),
         ),
-        label="Local model-store root",
+        label="Model store root (cfg.model_store.root)",
         full_width=True,
     )
-    mo.vstack([data_path_base, local_store_root])
+    mo.vstack([
+        mo.md(
+            "Two paths come from the environment in real runs: `DATA_PATH_BASE` "
+            "(where the datasets live) and `MODEL_STORE_ROOT` (where trained "
+            "models are saved). A few example emojis are included in `demo/demo_data/`."
+        ),
+        data_path_base,
+        local_store_root,
+    ])
     return data_path_base, local_store_root
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # 1. Data
+
+    `cfg.data` is a `DataConfig`. Its `dataset` field picks one of the data
+    sections: here `dataset="emojis"`, so the emoji settings go in
+    `data.emoji` (an `EmojiDataConfig`), and `data.micropattern` and
+    `data.snowmelt` stay empty.
+
+    There are two emoji tasks:
+
+    - **Sequential morphing** (`task="sequence"`): one trajectory that goes
+      through the listed images in order.
+    - **Multi-attractor patterning** (`task="multi_attractor"`): several
+      independent trajectories, each from an initial condition (for example a
+      small patch of an image) to a target image repeated `target_repeats` times.
+
+    Each domain has a `load_data(cfg.data)` function in
+    `Experiments/<domain>/config_helpers.py`. It returns an array shaped
+    `[batch, time, channels, H, W]`, where `data[:, 0]` is the initial condition
+    and the later time slots are the targets.
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -138,8 +182,8 @@ def _(data_path_base):
         )
         if _filenames:
             _emoji_contents = mo.md(
-                "### Available emoji files\n\n"
-                + "\n".join(f"- `{_filename}`" for _filename in _filenames)
+                "Available emoji files: "
+                + ", ".join(f"`{_filename}`" for _filename in _filenames)
             )
         else:
             _emoji_contents = mo.callout(
@@ -158,11 +202,11 @@ def _():
             "Multi-attractor patterning": "multi_attractor",
         },
         value="Sequential morphing",
-        label="Training objective",
+        label="data.emoji.task",
     )
     emoji_sequence_text = mo.ui.text(
         value="crab.png, microbe.png",
-        label="Sequential filenames (comma separated)",
+        label="data.emoji.sequence (comma separated, used by 'sequence')",
         full_width=True,
     )
     attractor_pairs_text = mo.ui.text_area(
@@ -172,7 +216,7 @@ def _():
             '{"initial": {"image": "microbe.png", "mode": "patch", "size": 4}, '
             '"target": "microbe.png"}]'
         ),
-        label="Attractor pairs (JSON)",
+        label="data.emoji.pairs (JSON, used by 'multi_attractor')",
         full_width=True,
     )
     downsample_value = mo.ui.dropdown(
@@ -183,20 +227,16 @@ def _():
             "Full (1)": 1,
         },
         value="Small (8)",
-        label="PreprocessingConfig.downsample",
+        label="data.downsample",
     )
     target_repeats_value = mo.ui.slider(
         1,
         3,
         value=2,
-        label="EmojiDataConfig.target_repeats",
+        label="data.emoji.target_repeats",
     )
     mo.vstack([
         task_picker,
-        mo.md(
-            "Sequential training uses the filename sequence. Multi-attractor "
-            "training uses the initial-condition/target pairs."
-        ),
         emoji_sequence_text,
         attractor_pairs_text,
         mo.hstack([downsample_value, target_repeats_value]),
@@ -210,35 +250,7 @@ def _():
     )
 
 
-@app.cell(hide_code=True)
-def _(data_config, data_config_error, data_path_base):
-    data = None
-    data_name = None
-    data_load_error = data_config_error
-    _image_root = Path(data_path_base.value).expanduser() / "Emojis"
-    if data_load_error is None and not _image_root.is_dir():
-        data_load_error = (
-            "Set DATA_PATH_BASE to a directory containing an Emojis/ directory."
-        )
-    if data_load_error is None:
-        try:
-            data, data_name = load_data(data_config, impath=str(_image_root))
-        except Exception as _error:
-            data_load_error = str(_error)
-    return data, data_load_error, data_name
-
-
-@app.cell(hide_code=True)
-def _():
-    mo.md(r"""
-    ## Data details
-
-    shown below are the constructed DataConfig, and images of the actual data. The images show time series targets from left to right, with any duplicate batches/trajectories vertically
-    """)
-    return
-
-
-@app.cell(hide_code=True)
+@app.cell
 def _(
     attractor_pairs_text,
     downsample_value,
@@ -248,59 +260,61 @@ def _(
 ):
     data_config = None
     data_config_error = None
-    _task = task_picker.value
     try:
         _sequence = tuple(
             _item.strip()
             for _item in emoji_sequence_text.value.split(",")
             if _item.strip()
         )
-        if _task == "sequence" and not _sequence:
-            raise ValueError("At least one sequential filename is required.")
         _pairs = ()
-        if _task == "multi_attractor":
-            _raw_pairs = json.loads(attractor_pairs_text.value)
+        if task_picker.value == "multi_attractor":
             _pairs = tuple(
-                EmojiPairConfig(
-                    initial=_item["initial"],
-                    target=_item["target"],
-                )
-                for _item in _raw_pairs
+                EmojiPairConfig(initial=_item["initial"], target=_item["target"])
+                for _item in json.loads(attractor_pairs_text.value)
             )
-            if not _pairs:
-                raise ValueError("At least one attractor pair is required.")
 
         data_config = DataConfig(
             dataset="emojis",
-            batches=1,
-            preprocessing=PreprocessingConfig(
-                downsample=int(downsample_value.value)
-            ),
-            augmentation=EmojiDataConfig(
-                task=_task,
-                sequence=_sequence if _task == "sequence" else (),
+            batches=1,  # copies of each trajectory in the training pool
+            downsample=int(downsample_value.value),
+            emoji=EmojiDataConfig(
+                task=task_picker.value,
+                sequence=_sequence if task_picker.value == "sequence" else (),
                 pairs=_pairs,
                 target_repeats=int(target_repeats_value.value),
-                pad=(2, 2, 2, 2),
+                pad=(2, 2, 2, 2),  # zero border added around each image
+                # Augmentation is switched off here, and explored in the
+                # second demo notebook
                 shift_amount=0,
                 noise_strength=0.0,
-                regenerate=False,
-                terminal_carry=ProbabilityScheduleConfig(),
-                regeneration=ProbabilityScheduleConfig(),
             ),
         )
     except (KeyError, TypeError, ValueError, json.JSONDecodeError) as _error:
         data_config_error = str(_error)
-    mo.md(
-        "### Constructed `DataConfig`\n\n" f"```json\n{json.dumps(config_to_dict(data_config), indent=2)}\n```"
-    )
     return data_config, data_config_error
 
 
+@app.cell
+def _(data_config, data_config_error, data_path_base):
+    data = None
+    data_name = None
+    data_load_error = data_config_error
+    _image_root = Path(data_path_base.value).expanduser() / "Emojis"
+    if data_load_error is None and not _image_root.is_dir():
+        data_load_error = "Set DATA_PATH_BASE to a directory containing an Emojis/ directory."
+    if data_load_error is None:
+        try:
+            # Without impath, load_data reads $DATA_PATH_BASE/Emojis/
+            data, data_name = load_data(data_config, impath=str(_image_root))
+        except Exception as _error:
+            data_load_error = str(_error)
+    return data, data_load_error, data_name
+
+
 @app.cell(hide_code=True)
-def _(data, data_load_error, data_name):
+def _(data, data_config, data_load_error, data_name):
     if data_load_error is not None:
-        _data_output = mo.callout(data_load_error, kind="info")
+        _data_output = mo.callout(data_load_error, kind="danger")
     else:
         _array = np.asarray(data)
         _batches, _times = _array.shape[:2]
@@ -313,54 +327,64 @@ def _(data, data_load_error, data_name):
         for _batch in range(_batches):
             for _time in range(_times):
                 _axes[_batch, _time].imshow(
-                    np.clip(
-                        np.moveaxis(_array[_batch, _time, :3], 0, -1),
-                        0.0,
-                        1.0,
-                    )
+                    np.clip(np.moveaxis(_array[_batch, _time, :3], 0, -1), 0.0, 1.0)
                 )
                 _axes[_batch, _time].set_title(
-                    f"trajectory {_batch}, state {_time}"
+                    "initial condition" if _time == 0 else f"target {_time}",
+                    fontsize=9,
                 )
                 _axes[_batch, _time].set_axis_off()
-        _figure.suptitle(f"{data_name} — {_array.shape}")
+        _figure.suptitle(f"data {_array.shape} = [batch, time, channels, H, W]")
         _figure.tight_layout()
-        # _data_output = mo.vstack([
-        #     mo.md(
-        #         "### Constructed `DataConfig`\n\n"
-        #         f"```json\n{json.dumps(config_to_dict(data_config), indent=2)}\n```"
-        #     ),
-        #     _figure,
-        # ])
-    # _data_output
-    _figure
+        _data_output = mo.vstack([
+            mo.md(
+                f"Loaded `{data_name}`. Each row is one trajectory, time runs "
+                "left to right. The name is built from the data config and "
+                "becomes part of the run name."
+            ),
+            _figure,
+            mo.accordion({
+                "data config (as YAML)": mo.md(
+                    f"```yaml\n{yaml.safe_dump(config_to_dict(data_config), sort_keys=False)}```"
+                )
+            }),
+        ])
+    _data_output
     return
 
 
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    # 2. Model construction
+    # 2. Model
 
-    `ModelConfig` describes only the NCA architecture. NCA models are all subclasses of [Equinox modules](https://docs.kidger.site/equinox/api/module/module/), which allows for very flexible gradient based optimisation. The NCA class has custom `partition()` and `combine()` methods, which tell equinox exactly which parts of the NCA model to apply gradient updates to via [`filter_grad`](https://docs.kidger.site/equinox/api/transformations/#equinox.filter_grad).
+    `cfg.model` is a `ModelConfig`, which describes only the NCA architecture:
 
+    - `channels`: the size of each cell's state. The first
+      `data.emoji.observed_channels` (4: RGBA) are compared to the images;
+      the rest are hidden channels the NCA can use freely.
+    - `kernel_str`: the fixed spatial filters each cell uses to sense its
+      neighbours (`ID` identity, `LAP` Laplacian, `GRAD` gradients; see
+      `Common/model/spatial_operators.py`).
+    - `fire_rate`: the probability that each cell updates at each step
+      (less than 1 makes the update asynchronous and stochastic).
+    - `family`: which model to build. `NCA/model/factory.py:build_model` maps
+      families to classes. `gNCA`, `nNCA` and `gnNCA` are the plain `NCA`
+      with gating and/or parameter noise switched on.
 
-    The selected seed is
-    used to initialize its Equinox parameters and is later reused as the
-    experiment seed when the complete configuration is assembled.
+    Models are [Equinox modules](https://docs.kidger.site/equinox/api/module/module/),
+    so they are ordinary JAX PyTrees that can be passed through `jit`, `vmap`
+    and `grad`. `model.partition()` splits a model into the parts that are
+    trained and the parts that are fixed (such as the spatial kernels), for use
+    with [`eqx.filter_grad`](https://docs.kidger.site/equinox/api/transformations/#equinox.filter_grad).
+    The update rule itself is in `NCA/model/NCA_model.py`.
     """)
     return
 
 
 @app.cell(hide_code=True)
 def _():
-    seed_value = mo.ui.number(
-        0,
-        1_000_000,
-        value=0,
-        step=1,
-        label="Experiment seed",
-    )
+    seed_value = mo.ui.number(0, 1_000_000, value=0, step=1, label="cfg.seed")
     channel_count = mo.ui.dropdown(
         options={
             "8 channels": 8,
@@ -370,12 +394,12 @@ def _():
             "32 channels": 32,
         },
         value="8 channels",
-        label="ModelConfig.channels",
+        label="model.channels",
     )
     fire_rate_value = mo.ui.dropdown(
         options={"0.5 stochastic": 0.5, "1.0 deterministic": 1.0},
         value="0.5 stochastic",
-        label="ModelConfig.fire_rate",
+        label="model.fire_rate",
     )
     mo.hstack([seed_value, channel_count, fire_rate_value])
     return channel_count, fire_rate_value, seed_value
@@ -386,58 +410,63 @@ def _(channel_count, fire_rate_value):
     model_config = ModelConfig(
         family="NCA",
         channels=int(channel_count.value),
-        activation="relu",
         kernel_str=("ID", "LAP", "GRAD"),
         fire_rate=float(fire_rate_value.value),
-        padding="CIRCULAR",
+        padding="CIRCULAR",  # how the grid edges are treated
+        activation="relu",
     )
     return (model_config,)
 
 
 @app.cell
 def _(model_config, seed_value):
-    model_key, train_key = jax.random.split(
-        jax.random.PRNGKey(int(seed_value.value))
-    )
+    # As in Experiments/emoji/train.py: one key for the model, one for training
+    model_key, train_key = jax.random.split(jax.random.PRNGKey(int(seed_value.value)))
     model, model_name = build_model(model_config, key=model_key)
     return model, model_name, train_key
 
 
 @app.cell(hide_code=True)
-def _(model, model_config, model_name):
-    _differentiable, _static = model.partition()
+def _(model, model_name):
+    _trainable, _fixed = model.partition()
     _parameter_count = sum(
         int(np.prod(_leaf.shape))
-        for _leaf in jax.tree_util.tree_leaves(_differentiable)
+        for _leaf in jax.tree_util.tree_leaves(_trainable)
         if hasattr(_leaf, "shape")
     )
-    mo.vstack([
-        mo.md(
-            "### Constructed `ModelConfig`\n\n"
-            f"```json\n{json.dumps(config_to_dict(model_config), indent=2)}\n```"
-        ),
-        mo.callout(
-            f"Built `{model_name}` with {_parameter_count:,} trainable parameters.",
-            kind="success",
-        ),
-    ])
+    mo.callout(
+        f"Built `{model_name}` with {_parameter_count:,} trainable parameters.",
+        kind="success",
+    )
     return
 
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(rf"""
-    # 3. Training and optimizer setup
+    mo.md(r"""
+    # 3. Training settings
 
-    This section constructs the loop, trainer, optimizer, loss, and checkpoint
-    dataclasses. It then combines those values with the `DataConfig` and
-    `ModelConfig` from the previous sections to create the one
-    `ExperimentConfig` consumed by the trainer.
+    Four config sections control training:
 
-    Some important parameters include:
-     - Learning rate
-     - loop_autodiff: set to lax for fastest runtime but higher memory usage, set to checkpointed if lax causes OOM errors
-     - LossConfig: as with most ML, constructing the right loss function is often the hardest part
+    - `cfg.run` (`RunConfig`): `t`, the number of NCA steps between
+      consecutive target images, and `iterations`, the number of gradient
+      steps. The best checkpoint is only kept after `checkpoint_warmup`
+      iterations.
+    - `cfg.trainer` (`TrainerConfig`): how the trainer works.
+      `loop_autodiff="checkpointed"` saves memory during backpropagation
+      through the rollout; `"lax"` is faster but uses more memory.
+      `pool_admission` is explained in the second demo notebook.
+    - `cfg.optimiser` (`OptimiserConfig`): the optimiser (NAdam by default)
+      and its learning-rate schedule.
+    - `cfg.loss` (`LossConfig`): a list of loss `terms` (each with a `type`
+      and relative `weight`) and a mapping of `regularisers` to coefficients.
+      Available losses are listed in `Common/trainer/loss_table.py`, and their
+      options in `Common/trainer/config.py`. As in most machine learning,
+      choosing the loss is often the hardest part.
+
+    `cfg.logging.backend` is `"wandb"` for real runs. Here it defaults to
+    `"none"`; with `"wandb"` the notebook logs offline to `./wandb/`, which
+    can be uploaded later with `wandb sync`.
     """)
     return
 
@@ -445,46 +474,45 @@ def _():
 @app.cell(hide_code=True)
 def _():
     rollout_steps = mo.ui.dropdown(
-        options={
-            "4 steps": 4,
-            "8 steps": 8,
-            "12 steps": 12,
-            "16 steps": 16,
-            "32 steps": 32,
-        },
+        options={"4 steps": 4, "8 steps": 8, "16 steps": 16, "32 steps": 32},
         value="16 steps",
-        label="TrainingLoopConfig.t",
+        label="run.t",
     )
     iteration_count = mo.ui.dropdown(
         options={
-            "5 iterations": 5,
             "10 iterations": 10,
             "100 iterations": 100,
+            "500 iterations": 500,
             "1000 iterations": 1000,
         },
         value="100 iterations",
-        label="TrainingLoopConfig.iterations",
+        label="run.iterations",
     )
     learning_rate_value = mo.ui.number(
-        0.0001,
-        0.01,
-        value=0.001,
-        step=0.0001,
-        label="OptimiserConfig.learn_rate",
+        0.0001, 0.01, value=0.001, step=0.0001, label="optimiser.learn_rate"
     )
-    mo.vstack([rollout_steps, iteration_count, learning_rate_value])
-    return iteration_count, learning_rate_value, rollout_steps
+    logging_backend = mo.ui.radio(
+        options={"none": "none", "wandb (offline)": "wandb"},
+        value="none",
+        label="logging.backend",
+    )
+    mo.vstack([
+        mo.hstack([rollout_steps, iteration_count, learning_rate_value]),
+        logging_backend,
+    ])
+    return iteration_count, learning_rate_value, logging_backend, rollout_steps
 
 
 @app.cell
 def _(iteration_count, learning_rate_value, rollout_steps):
-    training_loop_config = TrainingLoopConfig(
+    run_config = RunConfig(
         t=int(rollout_steps.value),
         iterations=int(iteration_count.value),
+        checkpoint_warmup=0,
         write_images=False,
+        write_videos=False,
     )
     trainer_config = TrainerConfig(
-        grad_loss=False,
         loop_autodiff="checkpointed",
         log_every=max(1, int(iteration_count.value) // 2),
         pool_admission=PoolAdmissionConfig(enabled=False),
@@ -492,21 +520,35 @@ def _(iteration_count, learning_rate_value, rollout_steps):
     optimiser_config = OptimiserConfig(
         learn_rate=float(learning_rate_value.value),
         warmup_steps=0,
-        schedule=ScheduleConfig(type="cosine",final_factor=0.2)
+        schedule=ScheduleConfig(type="cosine", final_factor=0.2),
     )
     loss_config = LossConfig(
-        terms=(PointwiseLossConfig(type="l2"),),
+        terms=(PointwiseLossConfig(type="l2", weight=1.0),),
         regularisers={},
     )
-    checkpoint_config = CheckpointConfig(warmup=0)
-    training_config = TrainingConfig(
-        loop=training_loop_config,
-        trainer=trainer_config,
-        optimizer=optimiser_config,
-        loss=loss_config,
-        checkpoint=checkpoint_config,
-    )
-    return (training_config,)
+    return loss_config, optimiser_config, run_config, trainer_config
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # 4. The whole experiment config
+
+    The sections above, plus a name, the seed, logging and model-store
+    settings, make up one `ExperimentConfig`. All config classes are frozen
+    dataclasses, so a config can't be changed once built (use
+    `dataclasses.replace` to make a modified copy). They also check their
+    values when built: try an invalid value, such as a negative learning rate,
+    and the error appears straight away rather than during training.
+
+    The dataclasses have the same section and field names as the YAML files,
+    so `run.t` in a YAML file is `cfg.run.t` in code. Below, the config is
+    written out as YAML: this is what `Experiments/emoji/conf/base_config.yaml`
+    looks like, and what is saved as `config.yaml` in each trained model's
+    bundle. Converting that YAML back (with the same function `run_config.py`
+    uses) gives the identical config.
+    """)
+    return
 
 
 @app.cell
@@ -514,30 +556,35 @@ def _(
     data_config,
     data_config_error,
     local_store_root,
+    logging_backend,
+    loss_config,
     model_config,
+    optimiser_config,
+    run_config,
     seed_value,
     task_picker,
-    training_config,
+    trainer_config,
 ):
     experiment_config = None
     experiment_config_error = data_config_error
     if experiment_config_error is None:
         try:
             experiment_config = ExperimentConfig(
-                schema_version=1,
+                schema_version=CONFIG_SCHEMA_VERSION,
                 seed=int(seed_value.value),
-                experiment=ExperimentMetadataConfig(
-                    name=f"notebook_emoji_{task_picker.value}"
-                ),
-                runtime=RuntimeConfig(precision="highest"),
+                experiment=ExperimentMetadataConfig(name=f"notebook_emoji_{task_picker.value}"),
+                system=SystemConfig(precision="highest"),
                 data=data_config,
                 model=model_config,
-                training=training_config,
+                run=run_config,
+                trainer=trainer_config,
+                optimiser=optimiser_config,
+                loss=loss_config,
                 logging=LoggingConfig(
-                    backend="wandb",
+                    backend=logging_backend.value,
                     wandb=WandbConfig(
                         project="NCA-notebook",
-                        group=f"single-config-{task_picker.value}",
+                        group=f"walkthrough-{task_picker.value}",
                     ),
                 ),
                 model_store=ModelStoreConfig(
@@ -556,253 +603,240 @@ def _(experiment_config, experiment_config_error):
     if experiment_config_error is not None:
         _config_output = mo.callout(experiment_config_error, kind="danger")
     else:
-        _config_output = mo.accordion({
-            "Constructed ExperimentConfig": mo.md(
-                f"```json\n{json.dumps(config_to_dict(experiment_config), indent=2)}\n```"
-            )
-        })
+        _as_yaml = config_to_dict(experiment_config)
+        _round_trip = experiment_config_from_mapping(_as_yaml) == experiment_config
+        _config_output = mo.vstack([
+            mo.accordion({
+                "The experiment config as YAML": mo.md(
+                    f"```yaml\n{yaml.safe_dump(_as_yaml, sort_keys=False)}```"
+                )
+            }),
+            mo.callout(
+                "Converting this YAML back with `experiment_config_from_mapping` "
+                + ("gives the same config." if _round_trip else "gives a different config!"),
+                kind="success" if _round_trip else "danger",
+            ),
+        ])
     _config_output
     return
 
 
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # 5. The data augmenter
+
+    The trainer never sees the images directly. It gets a *data augmenter*
+    (`NCA/trainer/data_augmenter/`), built by each domain's
+    `build_data_augmenter(cfg.data, data, model.N_CHANNELS)`. The augmenter
+
+    - adds zero hidden channels so the data has as many channels as the NCA,
+      and pads and copies the data as set in `cfg.data`;
+    - holds the training *pool*: `x`, the states each time slot starts from,
+      and `y`, the targets they should reach after `run.t` NCA steps;
+    - after every training step, `advance_pool` builds the next pool from the
+      states the NCA actually reached, mixed with the true images, and
+      optionally shifted, damaged or noised.
+
+    Training from its own earlier outputs is what teaches the NCA to keep a
+    pattern stable, rather than only to reach it once. The second demo
+    notebook looks at this in more detail.
+    """)
+    return
+
+
 @app.cell
-def _(
-    data,
-    data_name,
-    experiment_config,
-    experiment_config_error,
-    model,
-    model_name,
-):
+def _(data, data_load_error, experiment_config, model, model_name):
     augmenter = None
-    augmenter_name = None
     run_name = None
-    trainer = None
-    trainer_context = None
-    trainer_setup_error = experiment_config_error
-    if trainer_setup_error is None and data is None:
-        trainer_setup_error = "Load the selected data before constructing the trainer."
-    if trainer_setup_error is None:
-        try:
-            augmenter, augmenter_name = build_data_augmenter(
-                experiment_config.data, data, model.N_CHANNELS
-            )
-            run_name = (
-                f"{experiment_config.experiment.name}_{model_name}_"
-                f"{data_name}_{augmenter_name}"
-            )
-            trainer_context = TrainerContext(
-                run_name=run_name,
-                storage_id=create_model_id(experiment_config),
-                model_directory=os.path.join(
-                    experiment_config.model_store.root,
-                    experiment_config.logging.wandb.group,
-                    "",
-                ),
-                data_augmenter=augmenter,
-                observed_channels=experiment_config.data.emoji.observed_channels,
-                data_channels=experiment_config.data.emoji.data_channels,
-                loss_time_channel_mask=(
-                    experiment_config.trainer.loss_time_channel_mask
-                ),
-                evaluation_input=evaluation_input_provenance(data),
-            )
-            trainer = build_trainer(
-                experiment_config,
-                model,
-                data=data,
-                context=trainer_context,
-            )
-        except Exception as _error:
-            trainer_setup_error = str(_error)
-    return run_name, trainer, trainer_context, trainer_setup_error
+    if data_load_error is None and experiment_config is not None:
+        augmenter, _augmenter_name = build_data_augmenter(
+            experiment_config.data, data, model.N_CHANNELS
+        )
+        run_name = f"{experiment_config.experiment.name}_{model_name}"
+    return augmenter, run_name
 
 
 @app.cell(hide_code=True)
-def _(run_name, trainer_setup_error):
-    if trainer_setup_error is not None:
-        mo.callout(trainer_setup_error, kind="danger")
+def _(augmenter, data):
+    if augmenter is None:
+        _augmenter_output = mo.callout("Load the data first.", kind="info")
     else:
-        mo.callout(
-            f"Trainer is ready for `{run_name}`. Optimizer, loss, logging, and "
-            "checkpoint state will be resolved from `ExperimentConfig` at train time.",
-            kind="success",
+        _pool_x, _pool_y = augmenter.initialize_pool(jax.random.PRNGKey(0))
+        _augmenter_output = mo.md(
+            f"""
+    - Loaded data: `{tuple(np.shape(data))}`
+    - `augmenter.return_saved_data()`: {len(augmenter.return_saved_data())} trajectories of
+      shape `{tuple(augmenter.return_saved_data()[0].shape)}` (hidden channels and padding added)
+    - Initial pool: `x[0]` has shape `{tuple(_pool_x[0].shape)}`, `y[0]` has shape
+      `{tuple(_pool_y[0].shape)}`. There is one slot per transition between images.
+    """
         )
+    _augmenter_output
     return
 
 
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    # 4. Actual training
+    # 6. Training
 
-    The following cell just runs `trainer.train(train_key)`, but wrapped in some nice dynamic loss plotting. `trainer.train` owns preparation, compilation, and execution. Depending on data resolution, training iterations, and model timesteps between target images, this can be quick or slow.
+    The next cell is what `Experiments/emoji/train.py` does after building
+    the model and augmenter:
+
+    1. It fills in a `TrainerContext` (`NCA/trainer/context.py`). This holds
+       the values that are not user choices but are derived from the loaded
+       data or the environment: the augmenter, the run name, where to save
+       the checkpoint, channel counts, and a fingerprint of the input data
+       (`evaluation_input`) so later evaluations can check they use the same
+       initial condition.
+    2. It calls `run_training`, which builds the trainer and calls
+       `NcaTrainer.train`. That compiles one training step (the NCA rollout,
+       loss, gradient and optimiser update) with JAX, then runs it in a
+       Python loop that also updates the pool, logs, and keeps the best
+       checkpoint. Afterwards `run_training` publishes the best checkpoint
+       as a model bundle, because `model_store.enabled` is true.
+
+    Here we also pass a `progress_callback`, which is called after every
+    iteration and is used for the live loss plot. The first iteration takes
+    longer, because that is when JAX compiles the step.
     """)
     return
 
 
 @app.cell(hide_code=True)
-def _(trainer_setup_error):
-    training_is_ready = trainer_setup_error is None
+def _(experiment_config_error):
     training_button = mo.ui.run_button(
-        label="Run this local typed-config training job",
-        disabled=not training_is_ready,
+        label="Train locally",
+        disabled=experiment_config_error is not None,
     )
-    if training_is_ready:
-        _training_control = training_button
-    else:
-        _training_control = mo.vstack([
-            mo.callout(trainer_setup_error, kind="danger"),
-            training_button,
-        ])
-    _training_control
+    training_button
     return (training_button,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
-    data_path_base,
+    augmenter,
+    data,
     experiment_config,
     run_name,
     train_key,
-    trainer,
-    trainer_context,
     training_button,
+    model,
 ):
-    training_outcome = None
-    if training_button.value:
-        os.environ["DATA_PATH_BASE"] = data_path_base.value.strip()
-        os.environ["MODEL_STORE_ROOT"] = experiment_config.model_store.root
-        os.environ["WANDB_MODE"] = "offline"
-        os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-        jax.config.update("jax_default_matmul_precision", experiment_config.system.precision)
+    mo.stop(not training_button.value or augmenter is None)
 
-        _loss_history = []
+    # run_config.py sets these from the config and environment in real runs
+    jax.config.update("jax_default_matmul_precision", experiment_config.system.precision)
+    os.environ["WANDB_MODE"] = "offline"
 
-        def _update_loss_plot(iteration, loss, metrics):
-            del metrics
-            _loss_history.append(loss)
-            _iterations = np.arange(1, len(_loss_history) + 1)
-            _best_losses = np.minimum.accumulate(_loss_history)
-            _figure, _axis = plt.subplots(figsize=(8, 4))
-            _axis.plot(_iterations, _loss_history, label="Training loss")
-            _axis.plot(
-                _iterations,
-                _best_losses,
-                linestyle="--",
-                label="Best loss",
-            )
-            _axis.set(
-                xlabel="Iteration",
-                ylabel="Loss",
-                title=(
-                    f"Training loss — iteration {iteration + 1}/"
-                    f"{experiment_config.run.iterations}"
-                ),
-            )
-            if all(_loss > 0 for _loss in _loss_history):
-                _axis.set_yscale("log")
-            _axis.grid(alpha=0.25)
-            _axis.legend()
-            _figure.tight_layout()
-            mo.output.replace(_figure)
-            plt.close(_figure)
+    trainer_context = TrainerContext(
+        run_name=run_name,
+        # A new ID each time: bundle directories are never overwritten
+        storage_id=create_model_id(experiment_config),
+        model_directory=os.path.join(
+            experiment_config.model_store.root, experiment_config.logging.wandb.group, ""
+        ),
+        data_augmenter=augmenter,
+        observed_channels=experiment_config.data.emoji.observed_channels,
+        data_channels=experiment_config.data.emoji.data_channels,
+        evaluation_input=evaluation_input_provenance(data),
+    )
 
-        _training_result = trainer.train(
-            key=train_key,
-            progress_callback=_update_loss_plot,
+    _loss_history = []
+
+    def _plot_loss(iteration, loss, metrics):
+        _loss_history.append(loss)
+        _figure, _axis = plt.subplots(figsize=(8, 3.5))
+        _axis.plot(_loss_history, label="training loss")
+        _axis.plot(np.minimum.accumulate(_loss_history), "--", label="best loss")
+        _axis.set(
+            xlabel="iteration",
+            ylabel="loss",
+            yscale="log" if min(_loss_history) > 0 else "linear",
+            title=f"iteration {iteration + 1}/{experiment_config.run.iterations}",
         )
-        _bundle_path = None
-        if _training_result.checkpoint_path is not None:
-            _bundle = publish_model_bundle(
-                store_root=experiment_config.model_store.root,
-                collection=(
-                    experiment_config.model_store.collection
-                    or experiment_config.logging.wandb.project
-                ),
-                model_id=trainer_context.storage_id,
-                display_name=run_name,
-                checkpoint_path=_training_result.checkpoint_path,
-                cfg=experiment_config,
-                training_result=_training_result,
-                model_factory=experiment_config.model_store.model_factory,
-                evaluation_input=trainer_context.evaluation_input,
-            )
-            _bundle.verify()
-            _training_result.checkpoint_path.unlink()
-            _bundle_path = str(_bundle.path)
-        training_outcome = {
-            "run_name": run_name,
-            "bundle_path": _bundle_path,
-            "best_loss": _training_result.best_loss,
-        }
-    return (training_outcome,)
+        _axis.grid(alpha=0.25)
+        _axis.legend()
+        _figure.tight_layout()
+        mo.output.replace(_figure)
+        plt.close(_figure)
+
+    training_result = run_training(
+        experiment_config,
+        model=model,
+        data=data,
+        context=trainer_context,
+        key=train_key,
+        progress_callback=_plot_loss,
+    )
+    trained_model_id = trainer_context.storage_id
+    return trained_model_id, training_result
 
 
 @app.cell(hide_code=True)
-def _(training_outcome):
-    if training_outcome is None:
-        mo.callout("No training has been started in this session.", kind="info")
-    else:
-        mo.callout(
-            f"Training completed: `{training_outcome['run_name']}`. "
-            f"Bundle: `{training_outcome['bundle_path']}`. "
-            f"Best loss: `{training_outcome['best_loss']}`.",
-            kind="success",
-        )
+def _(trained_model_id, training_result):
+    mo.callout(
+        f"Training finished. Best loss `{training_result.best_loss:.4g}` at iteration "
+        f"`{training_result.best_iteration}`. Published model `{trained_model_id}`.",
+        kind="success",
+    )
     return
 
 
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    # 5. Model registry, evaluation, and inference
+    # 7. Model registry and inference
 
-    The registry table is restricted to bundles published by this notebook.
-    Select one model to reload its immutable configuration and checkpoint.
-    Inference reconstructs and verifies the saved data-derived initial condition
-    before rendering observable and hidden state channels.
+    A model bundle is a directory under
+    `<model store>/bundles/<collection>/<experiment>/` holding `model.eqx`
+    (the weights), `config.yaml` (the full experiment config) and
+    `manifest.yaml` (checksums, git state, data fingerprint and training
+    summary). Bundles are never edited after they are written.
+
+    `ModelRegistry` (`Experiments/model_registry.py`) indexes a model store
+    into a small SQLite database and returns it as pandas dataframes; the same
+    is available from the command line as `python -m Experiments.model_registry list`.
+    `bundle.load_model()` rebuilds the model from its saved `ModelConfig`
+    and loads the weights. See `docs/model_registry.md`.
+
+    Press *Refresh* (for example after training) to index the model store.
+    The table only shows models trained by this notebook. Select one to run it
+    from its initial condition. The data is loaded again from the saved data
+    config and checked against the fingerprint saved at training time.
     """)
     return
 
 
 @app.cell(hide_code=True)
 def _():
-    bundle_refresh = mo.ui.run_button(label="Refresh notebook model bundles")
+    bundle_refresh = mo.ui.run_button(label="Refresh model list")
     return (bundle_refresh,)
 
 
 @app.cell(hide_code=True)
-def _(bundle_refresh, local_store_root, training_outcome):
+def _(bundle_refresh, local_store_root):
     _rows = []
     _store_root = Path(local_store_root.value).expanduser()
-    if bundle_refresh.value or training_outcome is not None:
+    if bundle_refresh.value and _store_root.is_dir():
         _registry = ModelRegistry(_store_root)
         _registry.reindex()
         _models = _registry.models_df()
-        _notebook_models = _models[
-            (_models["collection"].fillna("").str.lower() == "nca-notebook")
-            & _models["experiment"].fillna("").str.startswith("notebook_emoji_")
-        ]
-        _rows = _notebook_models.to_dict("records")
-    bundle_table = mo.ui.table(
-        _rows,
-        selection="single",
-        page_size=10,
-    )
-    mo.vstack([
-        bundle_refresh,
-        mo.md(
-            "Only the `nca-notebook` collection with `notebook_emoji_*` "
-            "experiment names is shown."
-        ),
-        bundle_table,
-    ])
+        if len(_models):
+            _notebook_models = _models[
+                (_models["collection"].fillna("").str.lower() == "nca-notebook")
+                & _models["experiment"].fillna("").str.startswith("notebook_emoji_")
+            ]
+            _rows = _notebook_models.to_dict("records")
+    bundle_table = mo.ui.table(_rows, selection="single", page_size=10)
+    mo.vstack([bundle_refresh, bundle_table])
     return (bundle_table,)
 
 
 @app.cell(hide_code=True)
 def _(bundle_table, local_store_root):
+    selected_bundle = None
     _selected = bundle_table.value
     if _selected is None or len(_selected) == 0:
         _bundle_detail = mo.md("Select a model to inspect its bundle.")
@@ -812,43 +846,27 @@ def _(bundle_table, local_store_root):
             if hasattr(_selected, "iloc")
             else _selected[0]["model_id"]
         )
-        _bundle = ModelRegistry(
-            Path(local_store_root.value).expanduser()
-        ).get(str(_model_id))
+        selected_bundle = ModelRegistry(Path(local_store_root.value).expanduser()).get(
+            str(_model_id)
+        )
         _bundle_detail = mo.md(
             "### Selected bundle\n\n"
-            f"- ID: `{_bundle.id}`\n"
-            f"- Dataset: `{_bundle.manifest.data.get('dataset', 'unknown')}`\n"
-            f"- Task: `{_bundle.manifest.data.get('task', 'unknown')}`\n"
-            f"- Path: `{_bundle.path}`"
+            f"- ID: `{selected_bundle.id}`\n"
+            f"- Dataset: `{selected_bundle.manifest.data.dataset}`, "
+            f"task: `{selected_bundle.manifest.data.task}`\n"
+            f"- Model: `{selected_bundle.config.model.family}` with "
+            f"{selected_bundle.config.model.channels} channels\n"
+            f"- Path: `{selected_bundle.path}`"
         )
     _bundle_detail
-    return
+    return (selected_bundle,)
 
 
 @app.cell(hide_code=True)
 def _():
-    inference_steps = mo.ui.number(
-        1,
-        512,
-        value=128,
-        step=1,
-        label="Inference steps",
-    )
-    inference_seed = mo.ui.number(
-        0,
-        2**31 - 1,
-        value=0,
-        step=1,
-        label="Inference seed",
-    )
-    inference_fps = mo.ui.slider(
-        1,
-        60,
-        value=20,
-        step=1,
-        label="Video frames per second",
-    )
+    inference_steps = mo.ui.number(1, 512, value=128, step=1, label="Inference steps")
+    inference_seed = mo.ui.number(0, 2**31 - 1, value=0, step=1, label="Inference seed")
+    inference_fps = mo.ui.slider(1, 60, value=20, step=1, label="Video frames per second")
     run_inference = mo.ui.run_button(label="Run inference and render video")
     mo.vstack([
         mo.hstack([inference_steps, inference_seed, inference_fps]),
@@ -857,222 +875,141 @@ def _():
     return inference_fps, inference_seed, inference_steps, run_inference
 
 
+@app.cell
+def _(data_path_base, inference_seed, inference_steps, run_inference, selected_bundle):
+    mo.stop(
+        not run_inference.value or selected_bundle is None,
+        mo.callout("Select one model above, then run inference.", kind="info"),
+    )
+    if "evaluation_input" not in selected_bundle.manifest:
+        raise ValueError("This bundle has no data fingerprint; retrain it with this notebook.")
+
+    # Rebuild the training data from the saved config, and check it matches
+    _inference_data, _ = load_data(
+        selected_bundle.config.data,
+        impath=str(Path(data_path_base.value).expanduser() / "Emojis"),
+    )
+    verify_evaluation_input(_inference_data, selected_bundle.manifest.evaluation_input)
+
+    _key = jax.random.PRNGKey(int(inference_seed.value))
+    _model = selected_bundle.load_model(key=_key)
+    # The augmenter adds the hidden channels and padding, as in training
+    _inference_augmenter, _ = build_data_augmenter(
+        selected_bundle.config.data, _inference_data, _model.N_CHANNELS
+    )
+    _initial_state = _inference_augmenter.return_saved_data()[0][0]
+    # model.run returns [steps + 1, channels, H, W], starting with the initial state
+    inference_trajectory = np.asarray(
+        _model.run(int(inference_steps.value), jnp.asarray(_initial_state), key=_key)
+    )
+    return (inference_trajectory,)
+
+
 @app.cell(hide_code=True)
-def _(
-    bundle_table,
-    data_path_base,
-    inference_fps,
-    inference_seed,
-    inference_steps,
-    local_store_root,
-    run_inference,
-):
-    if not run_inference.value:
-        _inference_output = mo.callout(
-            "Select one notebook model and run inference to generate its video.",
-            kind="info",
+def _(inference_fps, inference_trajectory, selected_bundle):
+    _observed_channels = int(selected_bundle.config.data.emoji.observed_channels)
+    _hidden_channel_count = inference_trajectory.shape[1] - _observed_channels
+    _panel_columns = 5
+    _hidden_rows = max(1, -(-_hidden_channel_count // _panel_columns))
+    _figure, _axes = plt.subplots(
+        1 + _hidden_rows,
+        _panel_columns,
+        figsize=(8, 2.25 * (1 + _hidden_rows)),
+        squeeze=False,
+    )
+
+    def _rgb_frame(frame):
+        return np.clip(np.moveaxis(frame[:3], 0, -1), 0.0, 1.0)
+
+    _rgb_artist = _axes[0, 0].imshow(_rgb_frame(inference_trajectory[0]))
+    _axes[0, 0].set_title("RGB", fontsize=8)
+    _observable_artists = []
+    for _channel in range(min(_observed_channels, _panel_columns - 1)):
+        _observable_artists.append(
+            _axes[0, _channel + 1].imshow(
+                np.clip(inference_trajectory[0, _channel], 0.0, 1.0),
+                cmap="viridis",
+                vmin=0.0,
+                vmax=1.0,
+            )
         )
-    else:
-        try:
-            _selected = bundle_table.value
-            if _selected is None or len(_selected) != 1:
-                raise ValueError("Select exactly one notebook model.")
-            _model_id = (
-                _selected.iloc[0]["model_id"]
-                if hasattr(_selected, "iloc")
-                else _selected[0]["model_id"]
-            )
-            _registry = ModelRegistry(
-                Path(local_store_root.value).expanduser()
-            )
-            _bundle = _registry.get(str(_model_id))
-            if (
-                str(_bundle.manifest.collection).lower() != "nca-notebook"
-                or not str(_bundle.manifest.experiment).startswith("notebook_emoji_")
-            ):
-                raise ValueError("The selected bundle was not generated by this notebook.")
-            if "evaluation_input" not in _bundle.manifest:
-                raise ValueError(
-                    "The bundle has no evaluation-input fingerprint; retrain it "
-                    "with this notebook."
-                )
+        _axes[0, _channel + 1].set_title(f"observed {_channel}", fontsize=8)
 
-            _image_root = Path(data_path_base.value).expanduser() / "Emojis"
-            _inference_data, _ = load_data(
-                _bundle.config.data,
-                impath=str(_image_root),
+    _hidden_values = inference_trajectory[:, _observed_channels:]
+    _hidden_scale = max(float(np.max(np.abs(_hidden_values))) if _hidden_values.size else 0.0, 1e-6)
+    _hidden_artists = []
+    for _hidden_channel in range(_hidden_channel_count):
+        _row, _column = divmod(_hidden_channel, _panel_columns)
+        _hidden_artists.append(
+            _axes[1 + _row, _column].imshow(
+                inference_trajectory[0, _observed_channels + _hidden_channel],
+                cmap="coolwarm",
+                vmin=-_hidden_scale,
+                vmax=_hidden_scale,
             )
-            verify_evaluation_input(
-                _inference_data,
-                _bundle.manifest.evaluation_input,
-            )
+        )
+        _axes[1 + _row, _column].set_title(f"hidden {_hidden_channel}", fontsize=8)
+    for _axis in _axes.flat:
+        _axis.set_axis_off()
+    _figure.tight_layout()
 
-            _key = jax.random.PRNGKey(int(inference_seed.value))
-            _inference_model = _bundle.load_model(key=_key)
-            _observed_channels = int(
-                _bundle.config.data.emoji.observed_channels
-            )
-            _input_hidden_channels = int(_inference_model.N_CHANNELS) - int(
-                _bundle.config.data.emoji.data_channels
-            )
-            _hidden_channel_count = (
-                int(_inference_model.N_CHANNELS) - _observed_channels
-            )
-            if _input_hidden_channels < 0 or _hidden_channel_count < 0:
-                raise ValueError(
-                    "Model has fewer channels than its configured input data."
-                )
+    def _render_frame(frame_index):
+        _frame = inference_trajectory[frame_index]
+        _rgb_artist.set_data(_rgb_frame(_frame))
+        for _channel, _artist in enumerate(_observable_artists):
+            _artist.set_data(np.clip(_frame[_channel], 0.0, 1.0))
+        for _hidden_channel, _artist in enumerate(_hidden_artists):
+            _artist.set_data(_frame[_observed_channels + _hidden_channel])
+        return [_rgb_artist, *_observable_artists, *_hidden_artists]
 
-            _inference_augmenter, _ = build_data_augmenter(
-                _bundle.config.data,
-                _inference_data,
-                int(_inference_model.N_CHANNELS),
-            )
-            _initial_state = _inference_augmenter.return_saved_data()[0][0]
-            _trajectory = np.asarray(
-                _inference_model.run(
-                    int(inference_steps.value),
-                    jnp.asarray(_initial_state),
-                    key=_key,
-                )
-            )
+    _movie = animation.FuncAnimation(
+        _figure,
+        _render_frame,
+        frames=len(inference_trajectory),
+        interval=1000 / int(inference_fps.value),
+        blit=True,
+    )
+    with tempfile.TemporaryDirectory() as _video_directory:
+        _video_path = Path(_video_directory) / "nca-inference.mp4"
+        _movie.save(
+            _video_path,
+            writer=animation.FFMpegWriter(fps=int(inference_fps.value)),
+            dpi=100,
+        )
+        _video_bytes = _video_path.read_bytes()
+    plt.close(_figure)
+    mo.vstack([
+        mo.md(
+            f"`{selected_bundle.id}` run for {len(inference_trajectory) - 1} steps "
+            "from its initial condition. Top row: the observed (RGBA) channels; "
+            "below: the hidden channels."
+        ),
+        mo.video(_video_bytes, controls=True, muted=True, autoplay=True, loop=True, width="100%"),
+    ])
+    return
 
-            _panel_columns = 5
-            if _observed_channels > _panel_columns - 1:
-                raise ValueError(
-                    "Video layout supports at most four observable channels."
-                )
-            _hidden_rows = max(
-                1,
-                (_hidden_channel_count + _panel_columns - 1) // _panel_columns,
-            )
-            _panel_rows = 1 + _hidden_rows
-            _figure, _axes = plt.subplots(
-                _panel_rows,
-                _panel_columns,
-                figsize=(8, 2.25 * _panel_rows),
-                squeeze=False,
-            )
 
-            def _rgb_frame(frame):
-                _observable = frame[:_observed_channels]
-                _rgb = np.moveaxis(
-                    _observable[: min(3, len(_observable))],
-                    0,
-                    -1,
-                )
-                if _rgb.shape[-1] < 3:
-                    _rgb = np.pad(
-                        _rgb,
-                        ((0, 0), (0, 0), (0, 3 - _rgb.shape[-1])),
-                    )
-                return np.clip(_rgb, 0.0, 1.0)
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # Where next
 
-            _rgb_artist = _axes[0, 0].imshow(_rgb_frame(_trajectory[0]))
-            _axes[0, 0].set_title("RGB composite", fontsize=8)
-            _observable_artists = []
-            for _channel in range(_observed_channels):
-                _artist = _axes[0, _channel + 1].imshow(
-                    np.clip(_trajectory[0, _channel], 0.0, 1.0),
-                    cmap="viridis",
-                    vmin=0.0,
-                    vmax=1.0,
-                )
-                _axes[0, _channel + 1].set_title(
-                    f"Observable {_channel}",
-                    fontsize=8,
-                )
-                _observable_artists.append(_artist)
-
-            _hidden_values = _trajectory[:, _observed_channels:]
-            _hidden_scale = max(
-                float(np.max(np.abs(_hidden_values)))
-                if _hidden_values.size
-                else 0.0,
-                1e-6,
-            )
-            _hidden_artists = []
-            for _hidden_channel in range(_hidden_channel_count):
-                _state_channel = _observed_channels + _hidden_channel
-                _hidden_row, _hidden_column = divmod(
-                    _hidden_channel,
-                    _panel_columns,
-                )
-                _artist = _axes[1 + _hidden_row, _hidden_column].imshow(
-                    _trajectory[0, _state_channel],
-                    cmap="coolwarm",
-                    vmin=-_hidden_scale,
-                    vmax=_hidden_scale,
-                )
-                _axes[1 + _hidden_row, _hidden_column].set_title(
-                    f"Hidden {_hidden_channel}",
-                    fontsize=8,
-                )
-                _hidden_artists.append(_artist)
-
-            for _axis in _axes.flat:
-                _axis.set_axis_off()
-            _figure.tight_layout()
-
-            def _render_frame(frame_index):
-                _rgb_artist.set_data(_rgb_frame(_trajectory[frame_index]))
-                for _channel, _artist in enumerate(_observable_artists):
-                    _artist.set_data(
-                        np.clip(
-                            _trajectory[frame_index, _channel],
-                            0.0,
-                            1.0,
-                        )
-                    )
-                for _hidden_channel, _artist in enumerate(_hidden_artists):
-                    _artist.set_data(
-                        _trajectory[
-                            frame_index,
-                            _observed_channels + _hidden_channel,
-                        ]
-                    )
-                return [
-                    _rgb_artist,
-                    *_observable_artists,
-                    *_hidden_artists,
-                ]
-
-            _movie = animation.FuncAnimation(
-                _figure,
-                _render_frame,
-                frames=len(_trajectory),
-                interval=1000 / int(inference_fps.value),
-                blit=True,
-            )
-            with tempfile.TemporaryDirectory() as _video_directory:
-                _video_path = Path(_video_directory) / "nca-inference.mp4"
-                _movie.save(
-                    _video_path,
-                    writer=animation.FFMpegWriter(
-                        fps=int(inference_fps.value)
-                    ),
-                    dpi=100,
-                )
-                _video_bytes = _video_path.read_bytes()
-            plt.close(_figure)
-            _inference_output = mo.vstack([
-                mo.md(
-                    f"Verified and rendered `{_bundle.id}` from its configured "
-                    f"initial condition for {int(inference_steps.value)} steps."
-                ),
-                mo.video(
-                    _video_bytes,
-                    controls=True,
-                    muted=True,
-                    autoplay=True,
-                    loop=True,
-                    width="100%",
-                    rounded=True,
-                ),
-            ])
-        except Exception as _error:
-            _inference_output = mo.callout(str(_error), kind="danger")
-    _inference_output
+    - **Objectives and the training pool:** `demo/nca_objectives_and_pool_dynamics.py`
+      looks at loss terms, regularisers, the data augmenter and pool admission.
+    - **Running real experiments:** start from
+      `Experiments/emoji/conf/base_config.yaml`. A sweep file in
+      `conf/experiments/` lists the settings to vary (`grid:` of dotted keys
+      such as `run.t` or `model.channels`).
+      `python Experiments/generate_configs.py` turns it into a manifest of
+      configs, and the scripts in `launch/` run the manifest on the cluster.
+      See the README.
+    - **Other data:** `Experiments/micropatterns/` and `Experiments/snowmelt/`
+      follow the same pattern as `Experiments/emoji/`, with their own
+      `load_data`, `build_data_augmenter` and `train.py`.
+    - **Looking at results:** `marimo edit Experiments/model_registry_explorer.py`
+      searches and compares trained bundles; `Experiments/dataset_explorer.py`
+      and the other `*_explorer.py` notebooks look at datasets and evaluations.
+    """)
     return
 
 

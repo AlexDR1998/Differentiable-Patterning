@@ -25,6 +25,7 @@ def _():
     import matplotlib.pyplot as plt
     import numpy as np
     import scipy.ndimage as ndi
+    from matplotlib.patches import Wedge
 
     from Common.dataloader.alignment import (
         ColonyAlignment,
@@ -37,12 +38,23 @@ def _():
         save_colony_alignment,
     )
     from Common.dataloader.background import rolling_ball_background, subtract_background
+    from Common.dataloader.cell_type_fit import (
+        BANDS,
+        band_margins,
+        cell_type_score,
+        colony_share,
+        coordinate_search,
+        radial_bands,
+        radial_rings,
+        target_score,
+        threshold_grid,
+    )
+    from Common.dataloader.cell_type_shares import share_estimator
     from Common.dataloader.cell_types import (
         CellTypeRules,
-        cell_type_fractions,
-        classify_cell_types,
+        classify_within_stain,
+        label_names,
         load_cell_type_rules,
-        marker_high,
         save_cell_type_rules,
     )
     from Common.dataloader.hot_pixels import replace_hot_pixels_per_channel
@@ -56,7 +68,7 @@ def _():
     from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
     from Common.dataloader.micropattern_schemas import (
         DEFAULT_260726_HISTOGRAM_PERCENTILES,
-        DEFAULT_260726_INITIAL_INTENSITY_SCALES,
+        DEFAULT_260726_INTENSITY_FACTORS,
         MICROPATTERN_260726_SCHEMA,
     )
     from Common.dataloader.normalisation import (
@@ -67,37 +79,44 @@ def _():
     from Common.dataloader.quality_flags import load_quality_flags, save_quality_flags
 
     return (
+        BANDS,
         CellTypeRules,
         ColonyAlignment,
         DEFAULT_260726_HISTOGRAM_PERCENTILES,
-        DEFAULT_260726_INITIAL_INTENSITY_SCALES,
+        DEFAULT_260726_INTENSITY_FACTORS,
         MICROPATTERN_260726_SCHEMA,
         MicropatternCleaningConfig,
         NORMALISATION_MODES,
         Path,
+        Wedge,
         anywidget,
+        band_margins,
         base64,
         block_centre,
         build_micropattern_260726_manifest,
-        cell_type_fractions,
+        cell_type_score,
         circular_colony_mask,
-        classify_cell_types,
+        classify_within_stain,
+        colony_share,
+        coordinate_search,
         coverage_map,
         fit_colony_centre,
         fit_score,
         grid_position,
         io,
+        label_names,
         load_cell_type_rules,
         load_colony_alignment,
         load_micropattern_260726,
         load_quality_flags,
         lru_cache,
-        marker_high,
         mo,
         ndi,
         np,
         percentile_bins,
         plt,
+        radial_bands,
+        radial_rings,
         read_micropattern_260726_image,
         replace_hot_pixels_per_channel,
         rescale,
@@ -105,8 +124,11 @@ def _():
         save_cell_type_rules,
         save_colony_alignment,
         save_quality_flags,
+        share_estimator,
         source_condition,
         subtract_background,
+        target_score,
+        threshold_grid,
         traitlets,
         yaml,
     )
@@ -178,7 +200,7 @@ def _(mo):
         label="Experiment groups",
     )
     timesteps = mo.ui.text(value="0,12,24,36,48", label="Timesteps (hours)")
-    replicate_count = mo.ui.slider(1, 6, value=3, label="Replicates", show_value=True)
+    replicate_count = mo.ui.slider(1, 6, value=4, label="Replicates", show_value=True)
     load_button = mo.ui.run_button(label="Load raw images")
     mo.vstack(
         [
@@ -253,11 +275,7 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(
-    DEFAULT_260726_HISTOGRAM_PERCENTILES,
-    MICROPATTERN_260726_SCHEMA,
-    mo,
-):
+def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, MICROPATTERN_260726_SCHEMA, mo):
     _names = MICROPATTERN_260726_SCHEMA.measurement_names
     shrink = mo.ui.dropdown(
         options={"1 (exact, slow)": 1, "2": 2, "4": 4, "8": 8},
@@ -277,7 +295,7 @@ def _(
         for _channel in MICROPATTERN_260726_SCHEMA.measurement_channels
     }
     _is_lmbr = {_name: _marker[_name] == "LMBR" for _name in _names}
-    _no_background = {_name: _marker[_name] in ("LMBR", "SMAD23") for _name in _names}
+    _no_background = {_name: _marker[_name] in ("LMBR", "SMAD23", "LEFTY", "CER1", "NODAL") for _name in _names}
     hot_pixel_thresholds = mo.ui.dictionary(
         {
             _name: mo.ui.number(0.0, 100.0, value=0.0 if _is_lmbr[_name] else 30.0, step=0.5)
@@ -287,7 +305,7 @@ def _(
     background_radii = mo.ui.dictionary(
         {
             _name: mo.ui.slider(
-                0, 400, step=10, value=0 if _no_background[_name] else 50, show_value=True
+                0, 400, step=10, value=0 if _no_background[_name] else 10, show_value=True
             )
             for _name in _names
         }
@@ -381,7 +399,7 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(DEFAULT_260726_INITIAL_INTENSITY_SCALES, loaded_names, mo, selection):
+def _(DEFAULT_260726_INTENSITY_FACTORS, loaded_names, mo, selection):
     _hours = selection["timesteps"]
     intensity_scales = mo.ui.dictionary(
         {
@@ -390,9 +408,7 @@ def _(DEFAULT_260726_INITIAL_INTENSITY_SCALES, loaded_names, mo, selection):
                     f"{_hour}h": mo.ui.number(
                         0.0,
                         5.0,
-                        value=DEFAULT_260726_INITIAL_INTENSITY_SCALES.get(_name, 1.0)
-                        if _hour == 0
-                        else 1.0,
+                        value=DEFAULT_260726_INTENSITY_FACTORS.get(_name, {}).get(_hour, 1.0),
                         step=0.005,
                     )
                     for _hour in _hours
@@ -410,8 +426,9 @@ def _(DEFAULT_260726_INITIAL_INTENSITY_SCALES, loaded_names, mo, selection):
                 "one timestep, for every condition, before anything else. Use "
                 "it to correct timesteps whose overall brightness is off "
                 "because of imaging artifacts. A factor of 1 changes nothing. "
-                "The 0h column starts from the existing 0h corrections "
-                "(`DEFAULT_260726_INITIAL_INTENSITY_SCALES`). The corrected "
+                "The factors start from the defaults "
+                "(`DEFAULT_260726_INTENSITY_FACTORS`, the same as "
+                "`data.micropattern.intensity_factors` in the base config). The corrected "
                 "images also feed the normalisation bounds."
             ),
             mo.hstack(
@@ -693,7 +710,12 @@ def _(
     # Cleaning of single channels for the live views. Results are cached per
     # image, channel and setting, so changing one channel's controls only
     # recomputes that channel. The cache is rebuilt when images are reloaded.
-    @lru_cache(maxsize=128)
+    # It holds every channel of every loaded image twice over: the cell-type
+    # view cleans several markers across all trajectories in turn, and a
+    # smaller cache drops each marker's images before they are reused.
+    _cache_size = 2 * sum(_entry["channels"].shape[-1] for _entry in raw_images)
+
+    @lru_cache(maxsize=max(_cache_size, 128))
     def clean_channel(index, channel, scale, hot_threshold, hot_size, radius, shrink_factor):
         """Return ``(scaled, cleaned)`` for one channel at the training resolution."""
         scaled = raw_images[index]["channels"][..., channel : channel + 1].astype(np.float32)
@@ -841,8 +863,9 @@ def _(mo, raw_images, record_label):
         label="Image",
         full_width=True,
     )
-    mo.vstack([mo.md("## 4. Inspect one image"), record_picker])
-    return (record_picker,)
+    inspect_run = mo.ui.run_button(label="Show image")
+    mo.vstack([mo.md("## 4. Inspect one image"), mo.hstack([record_picker, inspect_run], justify="start")])
+    return inspect_run, record_picker
 
 
 @app.cell(hide_code=True)
@@ -855,6 +878,7 @@ def _(
     cleaning_settings,
     colony_fits,
     colony_statistics,
+    inspect_run,
     manual_radius,
     mask_mode,
     mo,
@@ -868,6 +892,7 @@ def _(
     record_picker,
     show_figure,
 ):
+    mo.stop(not inspect_run.value, mo.md("Press **Show image** to draw this view. It does not redraw by itself when the controls change."))
     _entry = raw_images[record_picker.value]
     _group = _entry["record"].group
     _names = GROUP_CHANNELS[_group]
@@ -1517,7 +1542,15 @@ def _(centring_index, get_flags, image_key, mo, raw_images):
 
 
 @app.cell(hide_code=True)
-def _(centring_index, flag_reason, flag_remove, flag_set, image_key, raw_images, set_flags):
+def _(
+    centring_index,
+    flag_reason,
+    flag_remove,
+    flag_set,
+    image_key,
+    raw_images,
+    set_flags,
+):
     _key = image_key(raw_images[centring_index]["record"])
     if flag_set.value:
         set_flags(lambda _current: {**_current, _key: flag_reason.value})
@@ -1940,7 +1973,14 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(export_flags, flags_path, get_flags, mo, resolve_alignment_path, save_quality_flags):
+def _(
+    export_flags,
+    flags_path,
+    get_flags,
+    mo,
+    resolve_alignment_path,
+    save_quality_flags,
+):
     mo.stop(not export_flags.value)
     _path = resolve_alignment_path(flags_path.value)
     save_quality_flags(_path, get_flags())
@@ -1949,7 +1989,14 @@ def _(export_flags, flags_path, get_flags, mo, resolve_alignment_path, save_qual
 
 
 @app.cell(hide_code=True)
-def _(flags_path, load_flags, load_quality_flags, mo, resolve_alignment_path, set_flags):
+def _(
+    flags_path,
+    load_flags,
+    load_quality_flags,
+    mo,
+    resolve_alignment_path,
+    set_flags,
+):
     mo.stop(not load_flags.value)
     set_flags(load_quality_flags(resolve_alignment_path(flags_path.value)))
     return
@@ -1993,6 +2040,111 @@ def _(get_flags, image_key, mo, raw_images, record_label):
             mo.ui.table(_rows, selection=None) if _rows else mo.md(""),
         ]
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    from Common.dataloader.disk_cache import cache_dir_from_environment as _from_environment
+
+    cache_dir = mo.ui.text(
+        value=_from_environment() or "",
+        label="Cache directory (DATA_CACHE_DIR)",
+        full_width=True,
+    )
+    cache_downsample = mo.ui.number(start=1, stop=16, value=4, label="Cleaning downsampling")
+    fill_cache = mo.ui.run_button(label="Fill cache")
+    mo.vstack(
+        [
+            mo.md(
+                "### Local cache of cleaned images\n\n"
+                "Cleaning (intensity factors, hot pixels, background removal "
+                "and block-averaging) is the slow part of loading. With "
+                "`DATA_CACHE_DIR` set (e.g. in `.env`), the training loader "
+                "keeps each cleaned image in that directory and reads it back "
+                "next time, so evaluation notebooks load quickly. Centring, "
+                "normalisation and the final downsampling are quick and are "
+                "always recomputed, so one cache folder serves every "
+                "selection of conditions and replicates and every "
+                "normalisation setting.\n\n"
+                "- **Fill cache** cleans every image of the dataset with the "
+                "**Training settings** and saves them in a folder of their "
+                "own, with a `settings.yaml`. Images already in it are "
+                "skipped.\n"
+                "- The cleaning downsampling is 4 for any training "
+                "downsampling that is a multiple of 4 (4, 8, 16, ...); "
+                "otherwise it is the training downsampling itself.\n"
+                "- Changing the cleaning settings, or the code that does the "
+                "cleaning, starts a new folder. Old folders are listed below "
+                "and can be deleted by hand."
+            ),
+            cache_dir,
+            mo.hstack([cache_downsample, fill_cache], justify="start"),
+        ]
+    )
+    return cache_dir, cache_downsample, fill_cache
+
+
+@app.cell(hide_code=True)
+def _(
+    MicropatternCleaningConfig,
+    build_micropattern_260726_manifest,
+    cache_dir,
+    cache_downsample,
+    fill_cache,
+    mo,
+    selection,
+    training_settings,
+):
+    from Common.dataloader.disk_cache import list_cache_folders as _list_folders
+    from Common.dataloader.micropattern_260726 import (
+        cleaned_image as _cleaned_image,
+        cleaning_cache_folder as _cleaning_cache_folder,
+    )
+
+    mo.stop(not cache_dir.value.strip(), mo.md("Set a cache directory to use the cache."))
+    _message = mo.md("")
+    if fill_cache.value:
+        _settings = dict(training_settings["cleaning"])
+        _settings["channel_percentiles"] = {
+            _name: tuple(_pair) for _name, _pair in _settings["channel_percentiles"].items()
+        }
+        _cleaning = MicropatternCleaningConfig(**_settings)
+        _folder = _cleaning_cache_folder(
+            cache_dir.value,
+            selection["root"],
+            training_settings["intensity_factors"],
+            _cleaning,
+            int(cache_downsample.value),
+        )
+        # Every image of the dataset, each in its own condition (no substitution).
+        _records = build_micropattern_260726_manifest(
+            selection["root"],
+            conditions=("ctrl", "sl0", "sl24"),
+            timesteps=(0, 12, 24, 36, 48),
+            replicate_count=64,
+            substitute_preperturbation=False,
+        )["records"]
+        _before = len(list(_folder.rglob("*.npy")))
+        for _record in mo.status.progress_bar(_records, title="Cleaning images", remove_on_exit=True):
+            _cleaned_image(
+                _record,
+                training_settings["intensity_factors"],
+                _cleaning,
+                int(cache_downsample.value),
+                selection["root"],
+                _folder,
+            )
+        _message = mo.md(
+            f"Cleaned **{len(_records) - _before}** images into `{_folder}` "
+            f"({_before} were already there)."
+        )
+    _rows = [
+        {_key: _value for _key, _value in _row.items() if _key != "settings"}
+        | {"downsampling": _row["settings"].get("downsample")}
+        for _row in _list_folders(cache_dir.value)
+    ]
+    mo.vstack([_message, mo.ui.table(_rows, selection=None) if _rows else mo.md("The cache is empty.")])
     return
 
 
@@ -2104,6 +2256,7 @@ def _(
         label="Trajectory",
     )
     strip_histograms = mo.ui.checkbox(value=False, label="Show intensity histograms")
+    strip_run = mo.ui.run_button(label="Show channel")
     mo.vstack(
         [
             mo.md(
@@ -2114,8 +2267,8 @@ def _(
                 "scale across timesteps (0.5–99.5 percentiles). Processed "
                 "images are on the normalised 0–1 scale. Images flagged as low "
                 "quality have a red border.\n\n"
-                "This view updates live with every control and does not need "
-                "**Clean all loaded images**. Only the chosen channel is "
+                "Press **Show channel** to draw it (it does not need "
+                "**Clean all loaded images**). Only the chosen channel is "
                 "processed. With bounds shared across replicates (averaged or "
                 "pooled), all trajectories of that channel are processed, so "
                 "the first view of a channel, or a change to its section 2 "
@@ -2134,9 +2287,10 @@ def _(
             ),
             mo.hstack([normalise_mode, knockout_reference], justify="start"),
             mo.hstack([image_source, inside_only, zero_outside], justify="start"),
+            strip_run,
         ]
     )
-    return strip_channel, strip_histograms, strip_trajectory
+    return strip_channel, strip_histograms, strip_run, strip_trajectory
 
 
 @app.cell(hide_code=True)
@@ -2158,11 +2312,13 @@ def _(
     show_figure,
     strip_channel,
     strip_histograms,
+    strip_run,
     strip_trajectory,
     trajectories,
     trajectory_label,
     zero_outside,
 ):
+    mo.stop(not strip_run.value, mo.md("Press **Show channel** to draw this view. It does not redraw by itself when the controls change."))
     _name = strip_channel.value
     _group, _channel = CHANNEL_SOURCE[_name]
     _trajectory = strip_trajectory.value
@@ -2294,6 +2450,7 @@ def _(loaded_names, mo, selection, trajectories, trajectory_label):
         label="Ball radii (full-resolution pixels, comma separated)",
         full_width=True,
     )
+    ball_run = mo.ui.run_button(label="Compare ball sizes")
     mo.vstack(
         [
             mo.md(
@@ -2310,9 +2467,10 @@ def _(loaded_names, mo, selection, trajectories, trajectory_label):
             ),
             mo.hstack([ball_channel, ball_trajectory, ball_hour], justify="start"),
             ball_radii,
+            ball_run,
         ]
     )
-    return ball_channel, ball_hour, ball_radii, ball_trajectory
+    return ball_channel, ball_hour, ball_radii, ball_run, ball_trajectory
 
 
 @app.cell(hide_code=True)
@@ -2322,6 +2480,7 @@ def _(
     ball_channel,
     ball_hour,
     ball_radii,
+    ball_run,
     ball_trajectory,
     cleaning_settings,
     despeckle_settings,
@@ -2334,6 +2493,7 @@ def _(
     trajectories,
     trajectory_label,
 ):
+    mo.stop(not ball_run.value, mo.md("Press **Compare ball sizes** to draw this view. It does not redraw by itself when the controls change."))
     _name = ball_channel.value
     _group, _channel = CHANNEL_SOURCE[_name]
     _index = trajectories[ball_trajectory.value].get((_group, ball_hour.value))
@@ -2397,7 +2557,7 @@ def _(
     _profile_axis.set_title(f"Profile along row {_row}", fontsize=9)
     _profile_axis.legend(fontsize=7)
     _profile.tight_layout()
-    mo.vstack([show_figure(_figure), _profile])
+    mo.vstack([show_figure(_figure,dpi=200), _profile])
     return
 
 
@@ -2422,6 +2582,7 @@ def _(loaded_names, mo, selection, trajectories, trajectory_label):
     hot_zoom = mo.ui.slider(
         40, 400, step=20, value=120, label="Zoom window (full-resolution pixels)", show_value=True
     )
+    hot_run = mo.ui.run_button(label="Compare thresholds")
     mo.vstack(
         [
             mo.md(
@@ -2439,9 +2600,10 @@ def _(loaded_names, mo, selection, trajectories, trajectory_label):
             mo.hstack([hot_channel, hot_trajectory, hot_hour], justify="start"),
             hot_values,
             hot_zoom,
+            hot_run,
         ]
     )
-    return hot_channel, hot_hour, hot_trajectory, hot_values, hot_zoom
+    return hot_channel, hot_hour, hot_run, hot_trajectory, hot_values, hot_zoom
 
 
 @app.cell(hide_code=True)
@@ -2452,6 +2614,7 @@ def _(
     despeckled_channel,
     hot_channel,
     hot_hour,
+    hot_run,
     hot_trajectory,
     hot_values,
     hot_zoom,
@@ -2462,6 +2625,7 @@ def _(
     trajectories,
     trajectory_label,
 ):
+    mo.stop(not hot_run.value, mo.md("Press **Compare thresholds** to draw this view. It does not redraw by itself when the controls change."))
     _name = hot_channel.value
     _group, _channel = CHANNEL_SOURCE[_name]
     _index = trajectories[hot_trajectory.value].get((_group, hot_hour.value))
@@ -2543,7 +2707,16 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Cell type prevalence
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(
+    CHANNEL_SOURCE,
     MICROPATTERN_260726_SCHEMA,
     get_loaded_cell_types,
     loaded_names,
@@ -2552,77 +2725,81 @@ def _(
     trajectory_label,
 ):
     FATE_MARKERS = ("SOX17", "SOX2", "TBXT", "FOXA2")
-    # Same defaults as the cell-fate explorer in Experiments/dataset_explorer.py.
+    # Each stain (cell-fate group) images some of the markers together, in the
+    # same colonies: {stain: {marker: channel}} for the loaded groups.
+    _marker_of = {
+        _channel.name: _channel.marker
+        for _channel in MICROPATTERN_260726_SCHEMA.measurement_channels
+    }
+    _stains = {}
+    for _name in loaded_names:
+        if _marker_of[_name] in FATE_MARKERS:
+            _stains.setdefault(CHANNEL_SOURCE[_name][0], {})[_marker_of[_name]] = _name
+    FATE_STAINS = {
+        _stain: {_m: _channels[_m] for _m in FATE_MARKERS if _m in _channels}
+        for _stain, _channels in _stains.items()
+    }
+    # One channel per marker, recorded as `channels` in the cell type file for
+    # labelling a single image that holds every marker (same defaults as the
+    # cell-fate explorer in Experiments/dataset_explorer.py).
     _preferred = {
         "SOX17": "cell_fate_s2/SOX17",
         "SOX2": "cell_fate_s1/SOX2",
         "TBXT": "cell_fate_s2/TBXT",
         "FOXA2": "cell_fate_s2/FOXA2",
     }
-    _default_thresholds = {_marker: 0.3 for _marker in FATE_MARKERS}
+    FATE_CHANNELS = {}
+    for _marker in FATE_MARKERS:
+        _found = [_channels[_marker] for _channels in FATE_STAINS.values() if _marker in _channels]
+        if _found:
+            FATE_CHANNELS[_marker] = _preferred[_marker] if _preferred[_marker] in _found else _found[0]
+
+    # Each cell type has one or more clauses, joined by "or".
     _default_rules = {
-        "Notochord": {"SOX17": "low", "SOX2": "any", "TBXT": "high", "FOXA2": "high"},
-        "Endoderm": {"SOX17": "high", "SOX2": "any", "TBXT": "any", "FOXA2": "any"},
-        "Mesoderm": {"SOX17": "low", "SOX2": "any", "TBXT": "high", "FOXA2": "low"},
+        "Notochord": [{"SOX17": "low", "SOX2": "any", "TBXT": "high", "FOXA2": "high"}],
+        "Endoderm": [{"SOX17": "high", "SOX2": "any", "TBXT": "any", "FOXA2": "any"}],
+        # TBXT+/FOXA2-/SOX17- (checked in stain 2) or TBXT+/SOX2+ (stain 1).
+        "Mesoderm": [
+            {"SOX17": "low", "SOX2": "any", "TBXT": "high", "FOXA2": "low"},
+            {"SOX17": "any", "SOX2": "high", "TBXT": "high", "FOXA2": "any"},
+        ],
     }
-    # A loaded cell type file replaces the defaults (markers it lacks keep them).
+    # A loaded cell type file replaces the default rules.
     _loaded = get_loaded_cell_types()
     if _loaded is not None:
-        _preferred.update({_m: _c for _m, _c in _loaded.channels.items() if _m in _preferred})
-        _default_thresholds.update(
-            {_m: _t for _m, _t in _loaded.thresholds.items() if _m in _default_thresholds}
-        )
         _default_rules = {
-            _cell_type: {_m: _rule.get(_m, "any") for _m in FATE_MARKERS}
-            for _cell_type, _rule in _loaded.rules.items()
+            _cell_type: [{_m: _clause.get(_m, "any") for _m in FATE_MARKERS} for _clause in _clauses]
+            for _cell_type, _clauses in _loaded.rules.items()
         }
-    _marker_of = {
-        _channel.name: _channel.marker
-        for _channel in MICROPATTERN_260726_SCHEMA.measurement_channels
-    }
-    _options = {
-        _marker: [_name for _name in loaded_names if _marker_of[_name] == _marker]
-        for _marker in FATE_MARKERS
-    }
-    fate_sources = mo.ui.dictionary(
-        {
-            _marker: mo.ui.dropdown(
-                options=_options[_marker],
-                value=_preferred[_marker]
-                if _preferred[_marker] in _options[_marker]
-                else _options[_marker][0],
-            )
-            for _marker in FATE_MARKERS
-            if _options[_marker]
-        }
-    )
-    fate_thresholds = mo.ui.dictionary(
-        {
-            _marker: mo.ui.slider(
-                0.0,
-                1.0,
-                step=0.01,
-                value=round(min(max(_default_thresholds[_marker], 0.0), 1.0), 2),
-                show_value=True,
-            )
-            for _marker in FATE_MARKERS
-        }
-    )
     _states = {"High": "high", "Low": "low", "Indifferent": "any"}
     _state_labels = {_value: _label for _label, _value in _states.items()}
+    # {cell type: {clause number: {marker: dropdown}}}
     fate_rules = mo.ui.dictionary(
         {
             _cell_type: mo.ui.dictionary(
                 {
-                    _marker: mo.ui.dropdown(
-                        options=_states, value=_state_labels[_rule[_marker]]
+                    str(_i): mo.ui.dictionary(
+                        {
+                            _marker: mo.ui.dropdown(
+                                options=_states, value=_state_labels[_clause[_marker]]
+                            )
+                            for _marker in FATE_MARKERS
+                        }
                     )
-                    for _marker in FATE_MARKERS
+                    for _i, _clause in enumerate(_clauses)
                 }
             )
-            for _cell_type, _rule in _default_rules.items()
+            for _cell_type, _clauses in _default_rules.items()
         }
     )
+
+    def rule_clauses(rules_value):
+        """``{cell type: [clause, ...]}`` from the value of ``fate_rules``."""
+        return {
+            _cell_type: [_clauses[_key] for _key in sorted(_clauses, key=int)]
+            for _cell_type, _clauses in rules_value.items()
+        }
+
     fate_trajectories = mo.ui.multiselect(
         options={trajectory_label(_trajectory): _trajectory for _trajectory in trajectories},
         # value=[trajectory_label(_trajectory) for _trajectory in trajectories],
@@ -2630,13 +2807,101 @@ def _(
         label="Trajectories (one row each)",
         full_width=True,
     )
+    fate_show_channels = mo.ui.checkbox(
+        value=False, label="Also show each stain's channels after thresholding"
+    )
+    # The cell types the rules define, and how many rows (clauses) each has
+    # (fixed until a cell type file is loaded).
+    FATE_CELL_TYPES = tuple(_default_rules)
+    FATE_CLAUSE_COUNTS = {_cell_type: len(_clauses) for _cell_type, _clauses in _default_rules.items()}
+    return (
+        FATE_CELL_TYPES,
+        FATE_CHANNELS,
+        FATE_CLAUSE_COUNTS,
+        FATE_MARKERS,
+        FATE_STAINS,
+        fate_rules,
+        fate_show_channels,
+        fate_trajectories,
+        rule_clauses,
+    )
+
+
+@app.cell(hide_code=True)
+def _(FATE_MARKERS, get_threshold_defaults, mo):
+    # Threshold sliders, in a cell of their own so that a fit or a loaded file
+    # can set them without resetting the other cell-type controls.
+    _defaults = {_marker: 0.3 for _marker in FATE_MARKERS}
+    _defaults.update({_m: _t for _m, _t in get_threshold_defaults().items() if _m in _defaults})
+    fate_thresholds = mo.ui.dictionary(
+        {
+            _marker: mo.ui.slider(
+                0.0,
+                1.0,
+                step=0.01,
+                value=round(min(max(_defaults[_marker], 0.0), 1.0), 2),
+                show_value=True,
+            )
+            for _marker in FATE_MARKERS
+        }
+    )
+    return (fate_thresholds,)
+
+
+@app.cell(hide_code=True)
+def _(FATE_CLAUSE_COUNTS, get_weight_defaults, mo):
+    # Row weights of the cell types with several rows (1 = the row fully
+    # counts, 0 = ignored), in a cell of their own so that a fit or a loaded
+    # file can set them without resetting the rules.
+    _saved = get_weight_defaults()
+
+    def _start(cell_type, row, rows):
+        weights = _saved.get(cell_type, ())
+        return round(20 * float(weights[row])) / 20 if len(weights) == rows else 1.0
+
+    fate_weights = mo.ui.dictionary(
+        {
+            _cell_type: mo.ui.dictionary(
+                {
+                    str(_row): mo.ui.slider(
+                        0.0, 1.0, step=0.05, value=_start(_cell_type, _row, _rows), show_value=True
+                    )
+                    for _row in range(_rows)
+                }
+            )
+            for _cell_type, _rows in FATE_CLAUSE_COUNTS.items()
+            if _rows > 1
+        }
+    )
+    return (fate_weights,)
+
+
+@app.cell(hide_code=True)
+def _(
+    FATE_CELL_TYPES,
+    FATE_MARKERS,
+    FATE_STAINS,
+    fate_rules,
+    fate_show_channels,
+    fate_thresholds,
+    fate_trajectories,
+    fate_weights,
+    mo,
+):
     _marker_table = mo.vstack(
-        [mo.hstack([mo.md("**marker**"), mo.md("**channel**"), mo.md("**high above**")], widths=[1, 3, 3])]
+        [mo.hstack([mo.md("**marker**"), mo.md("**imaged in**"), mo.md("**high above**")], widths=[1, 3, 3])]
         + [
             mo.hstack(
                 [
                     mo.md(f"`{_marker}`"),
-                    fate_sources[_marker] if _marker in fate_sources else mo.md("*not loaded*"),
+                    mo.md(
+                        ", ".join(
+                            f"`{_channels[_marker]}`"
+                            for _channels in FATE_STAINS.values()
+                            if _marker in _channels
+                        )
+                        or "*not loaded*"
+                    ),
                     fate_thresholds[_marker],
                 ],
                 widths=[1, 3, 3],
@@ -2645,75 +2910,112 @@ def _(
             for _marker in FATE_MARKERS
         ]
     )
-    _rule_table = mo.vstack(
-        [mo.hstack([mo.md("**cell type**")] + [mo.md(f"**{_m}**") for _m in FATE_MARKERS], widths="equal")]
-        + [
-            mo.hstack(
-                [mo.md(_cell_type)] + [fate_rules[_cell_type][_m] for _m in FATE_MARKERS],
-                widths="equal",
-                align="center",
+    _rule_rows = [
+        mo.hstack(
+            [mo.md("**cell type**")] + [mo.md(f"**{_m}**") for _m in FATE_MARKERS] + [mo.md("**row weight**")],
+            widths="equal",
+        )
+    ]
+    for _cell_type in FATE_CELL_TYPES:
+        for _i in range(len(fate_rules.value[_cell_type])):
+            _rule_rows.append(
+                mo.hstack(
+                    [mo.md(_cell_type if _i == 0 else f"*or* {_cell_type}")]
+                    + [fate_rules[_cell_type][str(_i)][_m] for _m in FATE_MARKERS]
+                    + [fate_weights[_cell_type][str(_i)] if _cell_type in fate_weights else mo.md("")],
+                    widths="equal",
+                    align="center",
+                )
             )
-            for _cell_type in _default_rules
-        ]
-    )
     mo.vstack(
         [
             mo.md(
                 "### Cell types at 48h\n\n"
-                "Each pixel is labelled from the processed (normalised 0–1) "
+                "Pixels are labelled from the processed (normalised 0–1) "
                 "marker images at 48h, so the thresholds follow every control "
                 "above, including normalisation. A marker is **high** where its "
                 "value is above its threshold. A cell type is assigned where "
-                "all of its rules hold (*Indifferent* = not checked). Pixels "
-                "matching no rule are *Other*, and pixels matching more than "
-                "one are *Several*.\n\n"
-                "The markers come from two separate stains (SOX2 only in stain "
-                "1, FOXA2 only in stain 2), so they were imaged in different "
-                "colonies. Combining them pixel by pixel relies on the colonies "
-                "being centred and alike, so keep centring on.\n\n"
+                "all marker states of one of its rows hold (*Indifferent* = "
+                "not checked); a cell type with several rows matches if any "
+                "row holds (*or*). Pixels matching no cell type are *Other*, "
+                "and pixels matching more than one are *Several*.\n\n"
+                "**Row weights** (cell types with several rows) say how much "
+                "each row counts in the estimated shares: a cell matching "
+                "rows with weights w1, w2 counts as that cell type with "
+                "probability 1 − (1 − w1)(1 − w2), so weights of 1 give the "
+                "plain *or* and 0 switches a row off.\n\n"
+                "**Two stains.** The markers were imaged in two stains, in "
+                "different colonies: SOX2 only in stain 1 and FOXA2 only in "
+                "stain 2, while SOX17 and TBXT are in both (one threshold "
+                "each, used for both stains). Pixels of different colonies "
+                "are not the same cells, so a rule cannot be checked by "
+                "putting the two stains' images on top of each other. The "
+                "shares are estimated instead, ring by ring: within a ring, the share of "
+                "every high/low combination of all four markers is estimated "
+                "by assuming that SOX2 and FOXA2 are unrelated once SOX17 and "
+                "TBXT are known (e.g. among TBXT+/SOX17- pixels, being SOX2+ "
+                "says nothing about being FOXA2-). Each cell type then gets "
+                "the share of the combinations its rows match, so rules that "
+                "mix the stains (like the two mesoderm rows) are counted "
+                "once. Model output, which has every marker in every pixel, "
+                "should be scored with the same estimate (see "
+                "`Common/dataloader/cell_type_shares.py`).\n\n"
+                "Below, each selected trajectory is a column with one row "
+                "per stain, every pixel labelled from that stain alone, "
+                "using only the rows it can check (rows with weight 0 left "
+                "out). A row that needs a marker the stain lacks is not "
+                "checked there, so e.g. notochord (needs FOXA2) only appears "
+                "in stain 2, and a pixel can be *Other* in one stain while a "
+                "row checked in the other stain would match. The bar chart "
+                "underneath gives the whole-colony shares estimated from both "
+                "stains together. Tick the box to also see each stain's "
+                "channels after thresholding.\n\n"
                 "Select several trajectories to compare replicates, and "
                 "control against knockout, side by side (load the knockout "
-                "conditions in section 1). The bar chart below the images "
-                "shows how the cell-type fractions change as you move the "
-                "thresholds. Export the channels, thresholds and rules under "
+                "conditions in section 1). **Fit thresholds to radial "
+                "targets** (below) sets the sliders' starting values, which "
+                "you can then tweak. Export the thresholds and rules under "
                 "**Export and load cell types**."
             ),
             fate_trajectories,
+            fate_show_channels,
             _marker_table,
             mo.md("**Rules**"),
-            _rule_table,
+            mo.vstack(_rule_rows),
         ]
     )
-    return (
-        FATE_MARKERS,
-        fate_rules,
-        fate_sources,
-        fate_thresholds,
-        fate_trajectories,
-    )
+    return
 
 
 @app.cell(hide_code=True)
 def _(
+    CELL_TYPE_HOUR,
     CellTypeRules,
+    FATE_CHANNELS,
     FATE_MARKERS,
+    FATE_STAINS,
     fate_rules,
-    fate_sources,
     fate_thresholds,
-    selection,
+    fate_weights,
+    rule_clauses,
     training_settings,
 ):
-    # The current channels, thresholds and rules, with the pre-processing
+    # The current thresholds and rules, with the stains and pre-processing
     # they hold for (None until every marker is loaded).
     cell_type_rules = (
         CellTypeRules(
-            channels={_m: fate_sources.value[_m] for _m in FATE_MARKERS},
+            channels=dict(FATE_CHANNELS),
             thresholds={_m: float(fate_thresholds.value[_m]) for _m in FATE_MARKERS},
-            rules={_c: dict(_rule) for _c, _rule in fate_rules.value.items()},
-            hour=48 if 48 in selection["timesteps"] else selection["timesteps"][-1],
+            rules=rule_clauses(fate_rules.value),
+            hour=CELL_TYPE_HOUR,
             preprocessing=training_settings,
+            stains=FATE_STAINS,
+            clause_weights={
+                _cell_type: [_weights[_key] for _key in sorted(_weights, key=int)]
+                for _cell_type, _weights in fate_weights.value.items()
+            },
         )
-        if all(_m in fate_sources.value for _m in FATE_MARKERS)
+        if all(_m in FATE_CHANNELS for _m in FATE_MARKERS)
         else None
     )
     return (cell_type_rules,)
@@ -2721,164 +3023,930 @@ def _(
 
 @app.cell(hide_code=True)
 def _(
-    CONDITION_COLOURS,
+    FATE_CHANNELS,
     FATE_MARKERS,
-    cell_type_fractions,
-    cell_type_rules,
-    classify_cell_types,
-    fate_sources,
-    fate_trajectories,
+    FATE_STAINS,
     high_percentiles,
     live_channel,
     low_percentiles,
-    marker_high,
+    np,
+    radial_rings,
+    selection,
+    share_estimator,
+):
+    # Nothing in this cell depends on the thresholds, so the threshold fit
+    # can use it without rerunning whenever it moves the sliders.
+    CELL_TYPE_HOUR = 48 if 48 in selection["timesteps"] else selection["timesteps"][-1]
+    # Colours of the cell types in the views below.
+    # CELL_TYPE_COLOURS = {
+    #     "Notochord": (0.84, 0.15, 0.63),
+    #     "Endoderm": (0.09, 0.75, 0.81),
+    #     "Mesoderm": (0.17, 0.63, 0.17),
+    #     "Several": (1.0, 0.6, 0.0),
+    #     "Other": (0.5, 0.5, 0.5),
+    # }
+
+    CELL_TYPE_COLOURS = {
+        "Notochord": (0.5, 0.8, 0.5),
+        "Endoderm": (0.8, 0.8, 0.4),
+        "Mesoderm": (1.0, 0.0, 0.0),
+        "Several": (0.0, 0.0, 1.0),
+        "Other": (0.5, 0.5, 0.5),
+    }
+    # Why the cell-type views cannot be drawn yet (None when they can).
+    _missing = [_marker for _marker in FATE_MARKERS if _marker not in FATE_CHANNELS]
+    _invalid = [
+        _name
+        for _channels in FATE_STAINS.values()
+        for _name in _channels.values()
+        if low_percentiles.value[_name] >= high_percentiles.value[_name]
+    ]
+    if _missing:
+        cell_type_problem = "Load the cell-fate groups that contain " + ", ".join(_missing) + "."
+    elif _invalid:
+        cell_type_problem = "Low % must be below high % for: " + ", ".join(f"`{_n}`" for _n in _invalid)
+    else:
+        cell_type_problem = None
+
+    def marker_images(trajectory):
+        """``{stain: ({marker: image}, mask)}`` of one trajectory at the
+        cell-type hour, or None if a stain was not imaged then."""
+        stains = {}
+        for stain, channels in FATE_STAINS.items():
+            values = {}
+            masks = []
+            for marker, channel in channels.items():
+                _, images = live_channel(channel, trajectory)
+                if CELL_TYPE_HOUR not in images:
+                    return None
+                values[marker], mask = images[CELL_TYPE_HOUR]
+                masks.append(mask)
+            stains[stain] = (values, np.logical_and.reduce(masks))
+        return stains
+
+    def stain_samples(images, groups_of):
+        """Pixels of each stain, pooled over trajectories, for ``share_estimator``.
+
+        ``images`` lists ``marker_images`` results, one per trajectory, and
+        ``groups_of(position, mask)`` gives the group of every pixel of the
+        trajectory at that position in the list (-1 = left out).
+        """
+        samples = []
+        for stain, channels in FATE_STAINS.items():
+            markers = tuple(channels)
+            values = [
+                np.stack([stains[stain][0][m] for m in markers]).reshape(len(markers), -1)
+                for stains in images
+            ]
+            groups = [
+                np.asarray(groups_of(position, stains[stain][1])).ravel()
+                for position, stains in enumerate(images)
+            ]
+            samples.append((markers, np.concatenate(values, axis=1), np.concatenate(groups)))
+        return samples
+
+    def ring_shares(images, n_rings, cell_type_rules):
+        """Estimated label shares ``[trajectory, ring, label]`` and ring areas
+        ``[trajectory, ring]`` (mean pixel count over the stains)."""
+
+        def ring_of(position, mask):
+            ring = radial_rings(mask, n_rings)
+            return np.where(ring >= 0, position * n_rings + ring, -1)
+
+        samples = stain_samples(images, ring_of)
+        n_groups = len(images) * n_rings
+        shares = share_estimator(samples, n_groups, cell_type_rules)(cell_type_rules.thresholds)
+        area = np.mean(
+            [np.bincount(groups[groups >= 0], minlength=n_groups) for _, _, groups in samples], axis=0
+        )
+        return shares.reshape(len(images), n_rings, -1), area.reshape(len(images), n_rings)
+
+    return (
+        CELL_TYPE_COLOURS,
+        CELL_TYPE_HOUR,
+        cell_type_problem,
+        marker_images,
+        ring_shares,
+        stain_samples,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    CELL_TYPE_COLOURS,
+    CONDITION_COLOURS,
+    FATE_MARKERS,
+    FATE_STAINS,
+    cell_type_problem,
+    cell_type_rules,
+    classify_within_stain,
+    fate_show_channels,
+    fate_trajectories,
+    label_names,
+    marker_images,
     mo,
     np,
     plt,
+    radial_ring_count,
+    ring_shares,
     show_figure,
     trajectories,
     trajectory_label,
 ):
-    _missing = [_marker for _marker in FATE_MARKERS if _marker not in fate_sources.value]
-    mo.stop(
-        bool(_missing),
-        mo.callout(
-            "Load the cell-fate groups that contain " + ", ".join(_missing) + ".", kind="warn"
-        ),
-    )
-    _invalid = [
-        _name
-        for _name in fate_sources.value.values()
-        if low_percentiles.value[_name] >= high_percentiles.value[_name]
-    ]
-    mo.stop(
-        bool(_invalid),
-        mo.md("Low % must be below high % for: " + ", ".join(f"`{_n}`" for _n in _invalid)),
-    )
+    mo.stop(cell_type_problem is not None, mo.callout(cell_type_problem, kind="warn"))
     # Controls first, then knockouts, each in replicate order.
     _selected = [_t for _t in trajectories if _t in fate_trajectories.value]
     mo.stop(not _selected, mo.md("Select at least one trajectory."))
     _hour = cell_type_rules.hour
+    _names = label_names(cell_type_rules)
+    _colours = np.array([CELL_TYPE_COLOURS.get(_name, (1.0, 1.0, 1.0)) for _name in _names])
 
-    _colours = {
-        "Notochord": (0.84, 0.15, 0.63),
-        "Endoderm": (0.09, 0.75, 0.81),
-        "Mesoderm": (0.17, 0.63, 0.17),
-        "Several": (1.0, 0.6, 0.0),
-        "Other": (0.5, 0.5, 0.5),
-    }
-
-    def _classify(trajectory):
-        """Marker values, high maps, cell-type labels and mask for one trajectory, or None."""
-        values = {}
-        masks = []
-        for marker in FATE_MARKERS:
-            _, images = live_channel(fate_sources.value[marker], trajectory)
-            if _hour not in images:
-                return None
-            values[marker], mask = images[_hour]
-            masks.append(mask)
-        inside = np.logical_and.reduce(masks)
-        high = marker_high(values, cell_type_rules)
-        labels = classify_cell_types(values, cell_type_rules, inside)
-        return values, high, labels, inside
-
-    _results = {}
+    _images = {}
     _not_measured = []
     for _trajectory in _selected:
-        _result = _classify(_trajectory)
+        _result = marker_images(_trajectory)
         if _result is None:
             _not_measured.append(trajectory_label(_trajectory))
         else:
-            _results[_trajectory] = _result
+            _images[_trajectory] = _result
     mo.stop(
-        not _results,
-        mo.callout(f"None of the selected trajectories has every marker at {_hour}h.", kind="warn"),
+        not _images,
+        mo.callout(f"None of the selected trajectories has every stain at {_hour}h.", kind="warn"),
     )
 
-    _columns = len(FATE_MARKERS) + 1
+    # Cell types per pixel, each stain on its own (rows it can check): one
+    # row per stain, one column per trajectory.
+    _stain_names = list(FATE_STAINS)
     _figure, _axes = plt.subplots(
-        len(_results), _columns, figsize=(2.7 * _columns, 2.9 * len(_results)), squeeze=False
+        len(_stain_names), len(_images), figsize=(2.8 * len(_images), 3.0 * len(_stain_names)), squeeze=False
     )
-    for _row, (_trajectory, (_values, _high, _labels, _inside)) in enumerate(_results.items()):
-        _area = max(int(_inside.sum()), 1)
-        for _axis, _marker in zip(_axes[_row], FATE_MARKERS):
-            _axis.imshow(
-                np.where(_high[_marker] & _inside, _values[_marker], 0.0), cmap="gray", vmin=0, vmax=1
-            )
-            _axis.set_title(
-                f"{_marker} high: {100 * (_high[_marker] & _inside).sum() / _area:.1f}%",
-                fontsize=8,
-            )
-        _map = np.zeros((*_inside.shape, 3))
-        for _cell_type, _mask in _labels.items():
-            _map[_mask] = _colours.get(_cell_type, (1.0, 1.0, 1.0))
-        _axes[_row, -1].imshow(_map)
-        _axes[_row, -1].set_title("cell types", fontsize=8)
-        _axes[_row, 0].set_ylabel(trajectory_label(_trajectory), fontsize=9)
-        for _axis in _axes[_row]:
+    for _column, (_trajectory, _stains) in enumerate(_images.items()):
+        for _row, _stain in enumerate(_stain_names):
+            _axis = _axes[_row, _column]
+            _values, _inside = _stains[_stain]
+            _labels = classify_within_stain(_values, cell_type_rules, _inside)
+            _map = np.ones((*_inside.shape, 3))
+            for _label, _cell_type in enumerate(_names):
+                _map[_labels[_cell_type]] = _colours[_label]
+            _axis.imshow(_map)
             _axis.set_xticks([])
             _axis.set_yticks([])
-    _figure.suptitle(
-        f"{_hour}h. Markers from: "
-        + ", ".join(f"{_m} {fate_sources.value[_m].split('/')[0]}" for _m in FATE_MARKERS)
-        + ". Thresholds: "
-        + ", ".join(f"{_m} {cell_type_rules.thresholds[_m]:.2f}" for _m in FATE_MARKERS),
-        fontsize=8,
-    )
+        _axes[0, _column].set_title(
+            trajectory_label(_trajectory), fontsize=8, color=CONDITION_COLOURS[_trajectory[0]]
+        )
+    for _row, _stain in enumerate(_stain_names):
+        _axes[_row, 0].set_ylabel(f"{_stain}\n({', '.join(FATE_STAINS[_stain])})", fontsize=8)
+    _figure.suptitle(f"Cell types at {_hour}h, each stain on its own", fontsize=9)
     _figure.tight_layout()
 
-    # Prevalence of each cell type, one stacked bar per trajectory.
-    _cell_types = list(next(iter(_results.values()))[2])
-    _fractions = {
-        _trajectory: {
-            _cell_type: 100 * _fraction
-            for _cell_type, _fraction in cell_type_fractions(_labels, _inside).items()
-        }
-        for _trajectory, (_, _, _labels, _inside) in _results.items()
-    }
-    _bars, _bar_axis = plt.subplots(figsize=(max(4.0, 1.1 * len(_results) + 2.5), 3.4))
-    _positions = np.arange(len(_results))
-    _bottom = np.zeros(len(_results))
-    for _cell_type in _cell_types:
-        _heights = np.array([_fractions[_t][_cell_type] for _t in _results])
-        _bar_axis.bar(
-            _positions,
-            _heights,
-            bottom=_bottom,
-            color=_colours.get(_cell_type, (1.0, 1.0, 1.0)),
-            label=_cell_type,
-        )
+    # Estimated shares per ring, combining both stains (see "Two stains").
+    _n_rings = radial_ring_count.value
+    _shares, _area = ring_shares(list(_images.values()), _n_rings, cell_type_rules)
+
+    # Whole-colony prevalence: the ring estimates, weighted by area.
+    _area = np.where(np.isnan(_shares[..., 0]), 0.0, _area)
+    _colony = np.nansum(_shares * _area[..., None], axis=1) / np.maximum(_area.sum(axis=1), 1e-9)[:, None]
+    _bars, _bar_axis = plt.subplots(figsize=(max(4.0, 1.1 * len(_images) + 2.5), 3.4))
+    _positions = np.arange(len(_images))
+    _bottom = np.zeros(len(_images))
+    for _label, _cell_type in enumerate(_names):
+        _heights = 100 * _colony[:, _label]
+        _bar_axis.bar(_positions, _heights, bottom=_bottom, color=_colours[_label], label=_cell_type)
         _bottom += _heights
     _bar_axis.set_xticks(_positions)
-    _bar_axis.set_xticklabels([trajectory_label(_t) for _t in _results], rotation=30, ha="right", fontsize=8)
-    for _tick, _trajectory in zip(_bar_axis.get_xticklabels(), _results):
+    _bar_axis.set_xticklabels([trajectory_label(_t) for _t in _images], rotation=30, ha="right", fontsize=8)
+    for _tick, _trajectory in zip(_bar_axis.get_xticklabels(), _images):
         _tick.set_color(CONDITION_COLOURS[_trajectory[0]])
-    _bar_axis.set_ylabel("% of mask", fontsize=8)
+    _bar_axis.set_ylabel("% of colony (estimated)", fontsize=8)
     _bar_axis.set_ylim(0, 100)
     _bar_axis.legend(fontsize=7, bbox_to_anchor=(1.02, 1), loc="upper left")
     _bar_axis.set_title(f"Cell-type prevalence at {_hour}h", fontsize=9)
     _bars.tight_layout()
 
-    _legend = " · ".join(
-        f"<span style='color: rgb({int(255 * _c[0])}, {int(255 * _c[1])}, {int(255 * _c[2])})'>■</span> {_t}"
-        for _t, _c in _colours.items()
-        if _t in _cell_types
+    _views = [show_figure(_figure), show_figure(_bars)]
+    if fate_show_channels.value:
+        # Each stain's channels after thresholding (only the high pixels shown).
+        _panels = [(_stain, _marker) for _stain, _channels in FATE_STAINS.items() for _marker in _channels]
+        _channels, _channel_axes = plt.subplots(
+            len(_images), len(_panels), figsize=(2.3 * len(_panels), 2.5 * len(_images)), squeeze=False
+        )
+        for _row, (_trajectory, _stains) in enumerate(_images.items()):
+            for _axis, (_stain, _marker) in zip(_channel_axes[_row], _panels):
+                _values, _inside = _stains[_stain]
+                _high = (_values[_marker] > cell_type_rules.thresholds[_marker]) & _inside
+                _axis.imshow(np.where(_high, _values[_marker], 0.0), cmap="gray", vmin=0, vmax=1)
+                _axis.set_title(
+                    f"{_stain.rsplit('_', 1)[-1]} {_marker} high: "
+                    f"{100 * _high.sum() / max(int(_inside.sum()), 1):.1f}%",
+                    fontsize=8,
+                )
+                _axis.set_xticks([])
+                _axis.set_yticks([])
+            _channel_axes[_row, 0].set_ylabel(trajectory_label(_trajectory), fontsize=9)
+        _channels.suptitle(
+            f"{_hour}h. Thresholds: "
+            + ", ".join(f"{_m} {cell_type_rules.thresholds[_m]:.2f}" for _m in FATE_MARKERS),
+            fontsize=8,
+        )
+        _channels.tight_layout()
+        _views.append(show_figure(_channels))
+    mo.vstack(
+        _views
+        + (
+            [mo.md(f"Skipped (a stain is missing at {_hour}h): " + ", ".join(_not_measured))]
+            if _not_measured
+            else []
+        )
     )
-    _table = [
-        {"trajectory": trajectory_label(_t), **{_c: round(_v, 1) for _c, _v in _fractions[_t].items()}}
-        for _t in _results
-    ]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo, trajectories):
+    _conditions = list(dict.fromkeys(_condition for _condition, _ in trajectories))
+    _replicates = sorted({_replicate for _, _replicate in trajectories})
+    radial_conditions = mo.ui.multiselect(
+        options=_conditions, value=_conditions, label="Conditions"
+    )
+    radial_replicates = mo.ui.multiselect(
+        options={f"replicate {_r + 1}": _r for _r in _replicates},
+        value=[f"replicate {_r + 1}" for _r in _replicates],
+        label="Replicates",
+    )
+    radial_ring_count = mo.ui.slider(4, 40, value=12, label="Rings", show_value=True)
+    radial_spread = mo.ui.dropdown(
+        options={"standard deviation": "sd", "standard error": "sem"},
+        value="standard deviation",
+        label="Error band",
+    )
     mo.vstack(
         [
+            mo.md(
+                "### Radial cell-type prevalence\n\n"
+                "The estimated share of each cell type in rings around the "
+                "colony centre (see **Two stains** above), using the rules "
+                "and thresholds above, so it follows every threshold and "
+                "rule change. Rings split each colony's radius (its furthest "
+                "mask pixel) evenly. Each panel is one condition, with one "
+                "line per cell type: the mean over the selected replicates, "
+                "and the band is their standard deviation or standard "
+                "error. All labels add up to 100% at every radius. The ring "
+                "count is also used for the bar chart above. The colonies "
+                "must be centred for the rings to mean anything. Dashed "
+                "lines mark the band edges set under **Fit thresholds to "
+                "radial targets**."
+            ),
+            mo.hstack(
+                [radial_conditions, radial_replicates, radial_ring_count, radial_spread],
+                justify="start",
+            ),
+        ]
+    )
+    return (
+        radial_conditions,
+        radial_replicates,
+        radial_ring_count,
+        radial_spread,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    CELL_TYPE_COLOURS,
+    CONDITION_COLOURS,
+    band_edges,
+    cell_type_problem,
+    cell_type_rules,
+    label_names,
+    marker_images,
+    mo,
+    np,
+    plt,
+    radial_conditions,
+    radial_replicates,
+    radial_ring_count,
+    radial_spread,
+    ring_shares,
+    show_figure,
+    trajectories,
+    trajectory_label,
+):
+    mo.stop(cell_type_problem is not None, mo.callout(cell_type_problem, kind="warn"))
+    _hour = cell_type_rules.hour
+    _selected = [
+        _t
+        for _t in trajectories
+        if _t[0] in radial_conditions.value and _t[1] in radial_replicates.value
+    ]
+    mo.stop(not _selected, mo.md("Select at least one condition and replicate."))
+
+    _images = {}
+    _not_measured = []
+    for _trajectory in _selected:
+        _result = marker_images(_trajectory)
+        if _result is None:
+            _not_measured.append(trajectory_label(_trajectory))
+        else:
+            _images[_trajectory] = _result
+    mo.stop(
+        not _images,
+        mo.callout(f"None of the selected trajectories has every stain at {_hour}h.", kind="warn"),
+    )
+
+    _n_rings = radial_ring_count.value
+    _centres = (np.arange(_n_rings) + 0.5) / _n_rings
+    # [trajectory, ring, label] in percent.
+    _shares = 100 * ring_shares(list(_images.values()), _n_rings, cell_type_rules)[0]
+    _names = label_names(cell_type_rules)
+    _used = list(_images)
+    _conditions = [_c for _c in radial_conditions.value if any(_t[0] == _c for _t in _used)]
+
+    def _mean_and_spread(stack):
+        """Mean and error band over replicates (rows), ignoring empty rings."""
+        count = np.sum(~np.isnan(stack), axis=0)
+        mean = np.nansum(stack, axis=0) / np.where(count > 0, count, np.nan)
+        squared = np.nansum((stack - mean) ** 2, axis=0)
+        sd = np.sqrt(squared / np.where(count > 1, count - 1, np.nan))
+        spread = sd / np.sqrt(count) if radial_spread.value == "sem" else sd
+        return mean, np.nan_to_num(spread)
+
+    _figure, _axes = plt.subplots(
+        1, len(_conditions), figsize=(3.6 * len(_conditions), 3.0), sharey=True, squeeze=False
+    )
+    for _axis, _condition in zip(_axes[0], _conditions):
+        _members = [_i for _i, _t in enumerate(_used) if _t[0] == _condition]
+        for _label, _cell_type in enumerate(_names):
+            _mean, _spread = _mean_and_spread(_shares[_members, :, _label])
+            _colour = CELL_TYPE_COLOURS.get(_cell_type, (0.0, 0.0, 0.0))
+            _axis.plot(_centres, _mean, color=_colour, label=_cell_type)
+            _axis.fill_between(_centres, _mean - _spread, _mean + _spread, color=_colour, alpha=0.25, linewidth=0)
+        _axis.set_title(
+            f"{_condition} (n={len(_members)})",
+            fontsize=9,
+            color=CONDITION_COLOURS.get(_condition, "black"),
+        )
+        # Band edges of "Fit thresholds to radial targets" below.
+        for _edge in band_edges.value:
+            _axis.axvline(_edge, color="0.4", linestyle="--", linewidth=0.8)
+        _axis.set_xlabel("distance from centre (fraction of radius)", fontsize=8)
+        _axis.set_xlim(0, 1)
+        _axis.set_ylim(0, 100)
+        _axis.tick_params(labelsize=7)
+    _axes[0, 0].set_ylabel("% of ring (estimated)", fontsize=8)
+    _axes[0, -1].legend(fontsize=7, bbox_to_anchor=(1.02, 1), loc="upper left")
+    _figure.suptitle(
+        f"Radial cell-type prevalence at {_hour}h (band: "
+        + ("standard error" if radial_spread.value == "sem" else "standard deviation")
+        + " over replicates). Thresholds: "
+        + ", ".join(f"{_m} {_t:.2f}" for _m, _t in cell_type_rules.thresholds.items()),
+        fontsize=8,
+    )
+    _figure.tight_layout()
+
+    mo.vstack(
+        [show_figure(_figure)]
+        + (
+            [mo.md(f"Skipped (a stain is missing at {_hour}h): " + ", ".join(_not_measured))]
+            if _not_measured
+            else []
+        )
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    band_edges = mo.ui.range_slider(
+        0.0,
+        1.0,
+        step=0.01,
+        value=[0.35, 0.7],
+        show_value=True,
+        label="Band edges (fraction of colony radius)",
+    )
+    band_gap = mo.ui.slider(
+        0.0, 0.3, step=0.01, value=0.0, show_value=True, label="Gap left out around each edge"
+    )
+    fit_restarts = mo.ui.slider(0, 20, value=5, show_value=True, label="Random restarts")
+    run_fit = mo.ui.run_button(label="Fit thresholds")
+    return band_edges, band_gap, fit_restarts, run_fit
+
+
+@app.cell(hide_code=True)
+def _(FATE_CELL_TYPES, FATE_CLAUSE_COUNTS, mo, trajectories):
+    # Up to three colony-wide constraints, each off until a condition is set.
+    _off = "—"
+    _conditions = [_off, *dict.fromkeys(_condition for _condition, _ in trajectories)]
+    _labels = [*FATE_CELL_TYPES, "Several", "Other"]
+    fit_constraints = mo.ui.array(
+        [
+            mo.ui.dictionary(
+                {
+                    "condition": mo.ui.dropdown(options=_conditions, value=_off),
+                    "cell type": mo.ui.dropdown(options=_labels, value=_labels[0]),
+                    "direction": mo.ui.dropdown(options=["minimise", "maximise"], value="minimise"),
+                    "weight": mo.ui.slider(0.0, 2.0, step=0.05, value=0.5, show_value=True),
+                }
+            )
+            for _ in range(3)
+        ]
+    )
+    _several_rows = [_c for _c, _rows in FATE_CLAUSE_COUNTS.items() if _rows > 1]
+    fit_weight_types = mo.ui.multiselect(
+        options=_several_rows, value=_several_rows, label="Also fit the row weights of"
+    )
+    return fit_constraints, fit_weight_types
+
+
+@app.cell(hide_code=True)
+def _(
+    BANDS,
+    FATE_CELL_TYPES,
+    get_band_targets,
+    mo,
+    set_band_targets,
+    trajectories,
+):
+    # One dropdown per condition and band. Choices are kept in a state, so
+    # they survive this cell rerunning when the cell-type controls change.
+    _no_target = "—"
+    _choices = [_no_target, *FATE_CELL_TYPES, "Other"]
+    _saved = get_band_targets()
+
+    def _remember(condition, band):
+        return lambda value: set_band_targets(
+            lambda current: {**current, condition: {**current.get(condition, {}), band: value}}
+        )
+
+    band_targets = mo.ui.dictionary(
+        {
+            _condition: mo.ui.dictionary(
+                {
+                    _band: mo.ui.dropdown(
+                        options=_choices,
+                        value=_saved.get(_condition, {}).get(_band, _no_target)
+                        if _saved.get(_condition, {}).get(_band, _no_target) in _choices
+                        else _no_target,
+                        on_change=_remember(_condition, _band),
+                    )
+                    for _band in BANDS
+                }
+            )
+            for _condition in dict.fromkeys(_condition for _condition, _ in trajectories)
+        }
+    )
+    return (band_targets,)
+
+
+@app.cell(hide_code=True)
+def _(BANDS, CELL_TYPE_COLOURS, Wedge):
+    def draw_band_schematic(axis, band_types, edges, gap, title, title_colour="black"):
+        """Colony drawn as a centre disc, a ring and a periphery, each coloured
+        by its cell type in ``band_types`` (hatched where there is none)."""
+        inner, outer = edges
+        half = gap / 2.0
+        spans = [(0.0, inner - half), (inner + half, outer - half), (outer + half, 1.0)]
+        for (start, stop), band in zip(spans, BANDS):
+            if stop <= max(start, 0.0):
+                continue
+            colour = CELL_TYPE_COLOURS.get(band_types.get(band))
+            axis.add_patch(
+                Wedge(
+                    (0.0, 0.0),
+                    stop,
+                    0,
+                    360,
+                    width=stop - max(start, 0.0),
+                    facecolor=colour if colour is not None else "white",
+                    edgecolor="none" if colour is not None else "0.6",
+                    hatch=None if colour is not None else "//",
+                )
+            )
+        axis.add_patch(Wedge((0.0, 0.0), 1.0, 0, 360, fill=False, edgecolor="0.3"))
+        axis.set_xlim(-1.08, 1.08)
+        axis.set_ylim(-1.08, 1.08)
+        axis.set_aspect("equal")
+        axis.axis("off")
+        axis.set_title(title, fontsize=9, color=title_colour)
+
+    return (draw_band_schematic,)
+
+
+@app.cell(hide_code=True)
+def _(
+    BANDS,
+    CELL_TYPE_COLOURS,
+    CONDITION_COLOURS,
+    band_edges,
+    band_gap,
+    band_targets,
+    draw_band_schematic,
+    fit_constraints,
+    fit_restarts,
+    fit_weight_types,
+    mo,
+    plt,
+    run_fit,
+    show_figure,
+):
+    _conditions = list(band_targets.value)
+    _figure, _axes = plt.subplots(
+        1, len(_conditions), figsize=(max(2.2 * len(_conditions), 5.0), 2.4), squeeze=False
+    )
+    for _axis, _condition in zip(_axes[0], _conditions):
+        draw_band_schematic(
+            _axis,
+            band_targets.value[_condition],
+            band_edges.value,
+            band_gap.value,
+            _condition,
+            CONDITION_COLOURS.get(_condition, "black"),
+        )
+    _figure.suptitle("Target cell types", fontsize=9)
+    _figure.tight_layout()
+
+    _legend = " · ".join(
+        f"<span style='color: rgb({int(255 * _c[0])}, {int(255 * _c[1])}, {int(255 * _c[2])})'>■</span> {_t}"
+        for _t, _c in CELL_TYPE_COLOURS.items()
+        if _t != "Several"
+    )
+    _target_table = mo.vstack(
+        [mo.hstack([mo.md("**condition**")] + [mo.md(f"**{_b}**") for _b in BANDS], widths="equal")]
+        + [
+            mo.hstack(
+                [mo.md(_condition)] + [band_targets[_condition][_b] for _b in BANDS],
+                widths="equal",
+                align="center",
+            )
+            for _condition in _conditions
+        ]
+    )
+    mo.vstack(
+        [
+            mo.md(
+                "### Fit thresholds to radial targets\n\n"
+                "Pick the cell type that should be the most common in the "
+                "centre, ring and periphery of each condition (*—* = no "
+                "target). Band edges are fractions of the colony radius, "
+                "and the gap leaves out a strip around each edge, so pixels "
+                "on a fuzzy boundary do not count.\n\n"
+                "**Fit thresholds** searches the marker thresholds (in steps "
+                "of 0.01, with the channels and rules above held fixed) for "
+                "the ones that best meet the targets across all loaded "
+                "replicates. For every band with a target and every "
+                "replicate it takes the *margin*: the share of the target "
+                "cell type minus the share of the most common other label "
+                "(including *Several* and *Other*). A positive margin means "
+                "the target wins. The fit maximises the mean margin, with "
+                "each capped at 10 percentage points so that a band that is "
+                "already won cannot make up for one that is lost (ties go to "
+                "the larger uncapped margin).\n\n"
+                "**Colony-wide constraints** ask for a cell type's share of "
+                "the whole colony, in one condition, to be as small or as "
+                "large as possible. The colony share is the area-weighted "
+                "mean of its bands (gaps left out), averaged over "
+                "replicates, and each constraint adds its weight times that "
+                "share to the score (or subtracts it, to minimise). With "
+                "weight 1, one percentage point of colony share counts as "
+                "much as one point of mean band margin. Constraints work "
+                "with or without band targets.\n\n"
+                "**Row weights**: the fit can also choose the row weights "
+                "(in steps of 0.05) of the chosen cell types, e.g. how much "
+                "each mesoderm row counts. They are set like the thresholds "
+                "afterwards.\n\n"
+                "The search starts from the "
+                "sliders' starting values (the last fit or loaded file, "
+                "else 0.3; later tweaks are not used) and from a few random "
+                "points. The "
+                "fitted thresholds and row weights then become the starting "
+                "values of their sliders under **Cell types at 48h**, so every "
+                "cell-type view follows them and you can tweak them by hand."
+            ),
+            mo.hstack([band_edges, band_gap], justify="start"),
+            _target_table,
             mo.md(_legend),
             show_figure(_figure),
-            _bars,
-            mo.ui.table(_table, selection=None),
+            mo.md("**Colony-wide constraints** (optional; *—* = off)"),
+            mo.vstack(
+                [
+                    mo.hstack(
+                        [mo.md(f"**{_key}**") for _key in ("condition", "cell type", "direction", "weight")],
+                        widths="equal",
+                    )
+                ]
+                + [
+                    mo.hstack(
+                        [_row[_key] for _key in ("condition", "cell type", "direction", "weight")],
+                        widths="equal",
+                        align="center",
+                    )
+                    for _row in fit_constraints
+                ]
+            ),
+            fit_weight_types,
+            mo.hstack([fit_restarts, run_fit], justify="start"),
         ]
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    BANDS,
+    CELL_TYPE_HOUR,
+    CellTypeRules,
+    FATE_CHANNELS,
+    FATE_MARKERS,
+    FATE_STAINS,
+    band_edges,
+    band_gap,
+    band_margins,
+    band_targets,
+    cell_type_problem,
+    cell_type_score,
+    colony_share,
+    coordinate_search,
+    fate_rules,
+    fit_constraints,
+    fit_restarts,
+    fit_weight_types,
+    get_threshold_defaults,
+    get_weight_defaults,
+    label_names,
+    marker_images,
+    mo,
+    np,
+    radial_bands,
+    rule_clauses,
+    run_fit,
+    set_fit_result,
+    set_threshold_defaults,
+    set_weight_defaults,
+    share_estimator,
+    stain_samples,
+    target_score,
+    threshold_grid,
+    trajectories,
+    trajectory_label,
+):
+    # This cell sets the threshold and row weight sliders, so it must not
+    # depend on them (or on anything built from them, like cell_type_rules):
+    # it would rerun straight away and fit again, forever. It reads the
+    # marker images and rules directly, and starts from the sliders' stored
+    # starting values (marimo does not rerun a cell for a state it set itself).
+    mo.stop(not run_fit.value)
+    mo.stop(cell_type_problem is not None, mo.callout(cell_type_problem, kind="warn"))
+    _start = {_marker: 0.3 for _marker in FATE_MARKERS}
+    _start.update({_m: _t for _m, _t in get_threshold_defaults().items() if _m in _start})
+    _rules = CellTypeRules(
+        channels=dict(FATE_CHANNELS),
+        thresholds=_start,
+        rules=rule_clauses(fate_rules.value),
+        stains=FATE_STAINS,
+    )
+    _names = label_names(_rules)
+    _targets = {
+        _condition: {_b: _t for _b, _t in _bands.items() if _t in _names}
+        for _condition, _bands in band_targets.value.items()
+    }
+    _active_constraints = [_row for _row in fit_constraints.value if _row["condition"] in _targets]
+    _conditions_used = {_c for _c, _goal in _targets.items() if _goal} | {
+        _row["condition"] for _row in _active_constraints
+    }
+    _wanted = [_t for _t in trajectories if _t[0] in _conditions_used]
+    mo.stop(
+        not _wanted,
+        mo.callout("Choose a band target or a colony-wide constraint first.", kind="warn"),
+    )
+
+    _images, _used, _skipped = [], [], []
+    for _trajectory in _wanted:
+        _result = marker_images(_trajectory)
+        if _result is None:
+            _skipped.append(trajectory_label(_trajectory))
+        else:
+            _images.append(_result)
+            _used.append(_trajectory)
+    mo.stop(
+        not _used,
+        mo.callout(f"No chosen trajectory has every stain at {CELL_TYPE_HOUR}h.", kind="warn"),
+    )
+
+    # Group 3 * i + band holds band `band` of the i-th used trajectory, in
+    # each stain; the shares of each group are estimated across the stains.
+    def _band_of(position, mask):
+        band = radial_bands(mask, band_edges.value, band_gap.value)
+        return np.where(band >= 0, len(BANDS) * position + band, -1)
+
+    _n_groups = len(BANDS) * len(_used)
+    _samples = stain_samples(_images, _band_of)
+    _shares = share_estimator(_samples, _n_groups, _rules)
+    _area = np.mean(
+        [np.bincount(_groups[_groups >= 0], minlength=_n_groups) for _, _, _groups in _samples], axis=0
+    )
+    _group_targets = []
+    for _trajectory in _used:
+        _goal = _targets.get(_trajectory[0], {})
+        _group_targets += [_names.index(_goal[_b]) if _b in _goal else -1 for _b in BANDS]
+
+    def _colonies(condition):
+        """The band groups of each used colony of a condition."""
+        return [
+            [len(BANDS) * _i + _b for _b in range(len(BANDS))]
+            for _i, _t in enumerate(_used)
+            if _t[0] == condition
+        ]
+
+    # (colonies, label, signed weight) for cell_type_score.
+    _constraints = [
+        (
+            _colonies(_row["condition"]),
+            _names.index(_row["cell type"]),
+            _row["weight"] if _row["direction"] == "maximise" else -_row["weight"],
+        )
+        for _row in _active_constraints
+    ]
+
+    # Parameters: one threshold per marker, then one weight per row of the
+    # cell types whose row weights are fitted. The other weights stay at
+    # their slider starting values.
+    _saved_weights = get_weight_defaults()
+    _start_weights = {
+        _c: [float(_w) for _w in _saved_weights[_c]]
+        if len(_saved_weights.get(_c, ())) == len(_clauses)
+        else [1.0] * len(_clauses)
+        for _c, _clauses in _rules.rules.items()
+    }
+    _free = [(_c, _row) for _c in fit_weight_types.value for _row in range(len(_rules.rules[_c]))]
+    _n_markers = len(FATE_MARKERS)
+
+    def _weights(parameters):
+        weights = {_c: list(_w) for _c, _w in _start_weights.items()}
+        for (cell_type, row), value in zip(_free, parameters[_n_markers:]):
+            weights[cell_type][row] = float(value)
+        return weights
+
+    def _shares_at(parameters):
+        return _shares(parameters[:_n_markers], _weights(parameters))
+
+    def _objective(parameters):
+        return cell_type_score(
+            _shares_at(parameters), _group_targets, area=_area, constraints=_constraints
+        )
+
+    _grids = [threshold_grid(0.01)] * _n_markers + [threshold_grid(0.05)] * len(_free)
+    _current = np.array(
+        [_start[_m] for _m in FATE_MARKERS] + [_start_weights[_c][_row] for _c, _row in _free]
+    )
+    _starts = [_current] + list(
+        np.random.default_rng(0).uniform(0.0, 1.0, (fit_restarts.value, len(_current)))
+    )
+    _best, _best_key = _current, None
+    for _point in mo.status.progress_bar(_starts, title="Fitting thresholds", remove_on_exit=True):
+        _parameters, _key = coordinate_search(_objective, _point, _grids)
+        if _best_key is None or _key > _best_key:
+            _best, _best_key = _parameters, _key
+
+    def _evaluate(parameters):
+        """Shares [trajectory, band, label], margins [trajectory, band], all shares [group, label]."""
+        shares = _shares_at(parameters)
+        margins = band_margins(shares, _group_targets)
+        return (
+            shares.reshape(len(_used), len(BANDS), -1),
+            margins.reshape(len(_used), len(BANDS)),
+            shares,
+        )
+
+    _now_shares, _now_margins, _now_flat = _evaluate(_current)
+    _fit_shares, _fit_margins, _fit_flat = _evaluate(_best)
+    _conditions = list(dict.fromkeys(_t[0] for _t in _used))
+
+    def _most_common(shares, rows, band):
+        mean = np.nanmean(shares[rows, band], axis=0) if not np.isnan(shares[rows, band]).all() else None
+        return None if mean is None else _names[int(np.nanargmax(mean))]
+
+    _rows = []
+    for _condition in _conditions:
+        _members = [_i for _i, _t in enumerate(_used) if _t[0] == _condition]
+        for _b, _band_name in enumerate(BANDS):
+            if _band_name not in _targets.get(_condition, {}):
+                continue
+            _target = _names.index(_targets[_condition][_band_name])
+            _rows.append(
+                {
+                    "condition": _condition,
+                    "band": _band_name,
+                    "target": _names[_target],
+                    "target % (start)": round(100 * float(np.nanmean(_now_shares[_members, _b, _target])), 1),
+                    "target % (fitted)": round(100 * float(np.nanmean(_fit_shares[_members, _b, _target])), 1),
+                    "replicates won (start)": f"{int(np.sum(_now_margins[_members, _b] > 0))}/{len(_members)}",
+                    "replicates won (fitted)": f"{int(np.sum(_fit_margins[_members, _b] > 0))}/{len(_members)}",
+                    "most common (fitted)": _most_common(_fit_shares, _members, _b) or "no pixels",
+                }
+            )
+    _constraint_rows = [
+        {
+            "condition": _row["condition"],
+            "cell type": _row["cell type"],
+            "direction": _row["direction"],
+            "weight": _row["weight"],
+            "colony % (start)": round(100 * colony_share(_now_flat, _area, _colonies_, _label), 1),
+            "colony % (fitted)": round(100 * colony_share(_fit_flat, _area, _colonies_, _label), 1),
+        }
+        for _row, (_colonies_, _label, _) in zip(_active_constraints, _constraints)
+    ]
+    _threshold_table = [
+        {"marker": _m, "start": round(float(_c), 2), "fitted": round(float(_f), 2)}
+        for _m, _c, _f in zip(FATE_MARKERS, _current, _best)
+    ]
+    _weight_table = [
+        {"row": f"{_c} row {_row + 1}", "start": round(float(_s), 2), "fitted": round(float(_f), 2)}
+        for (_c, _row), _s, _f in zip(_free, _current[_n_markers:], _best[_n_markers:])
+    ]
+    _schematics = []
+    for _condition in _conditions:
+        _members = [_i for _i, _t in enumerate(_used) if _t[0] == _condition]
+        _schematics.append(
+            (
+                _condition,
+                len(_members),
+                {_band_name: _most_common(_fit_shares, _members, _b) for _b, _band_name in enumerate(BANDS)},
+            )
+        )
+
+    # The fitted thresholds and row weights become the slider defaults under
+    # "Cell types at 48h" (which redraws every cell-type view), and the
+    # result is kept for the cell below, since this cell stops once the
+    # sliders change.
+    set_threshold_defaults({_m: round(float(_t), 2) for _m, _t in zip(FATE_MARKERS, _best)})
+    set_weight_defaults(_weights(_best))
+    set_fit_result(
+        {
+            "thresholds": _threshold_table,
+            "weights": _weight_table,
+            "bands": _rows,
+            "constraints": _constraint_rows,
+            "schematics": _schematics,
+            "edges": tuple(band_edges.value),
+            "gap": band_gap.value,
+            "won": (int(np.sum(_now_margins > 0)), int(np.sum(_fit_margins > 0))),
+            "targeted": int(np.sum(~np.isnan(_fit_margins))),
+            "band score": (target_score(_now_margins), target_score(_fit_margins)),
+            "score": (_objective(_current)[0], _best_key[0]),
+            "skipped": _skipped,
+        }
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    CONDITION_COLOURS,
+    draw_band_schematic,
+    get_fit_result,
+    mo,
+    plt,
+    show_figure,
+):
+    _fit = get_fit_result()
+    mo.stop(_fit is None)
+    _figure, _axes = plt.subplots(
+        1, len(_fit["schematics"]), figsize=(max(2.2 * len(_fit["schematics"]), 5.0), 2.4), squeeze=False
+    )
+    for _axis, (_condition, _n, _band_types) in zip(_axes[0], _fit["schematics"]):
+        draw_band_schematic(
+            _axis,
+            _band_types,
+            _fit["edges"],
+            _fit["gap"],
+            f"{_condition} (n={_n})",
+            CONDITION_COLOURS.get(_condition, "black"),
+        )
+    _figure.suptitle("Most common cell type, fitted thresholds\n(mean over replicates)", fontsize=9)
+    _figure.tight_layout()
+    _total = _fit["targeted"]
+    _summary = (
+        "**Last fit.** The threshold and row weight sliders under **Cell "
+        "types at 48h** now start at the fitted values; tweak them from "
+        f"there. Score: {100 * _fit['score'][0]:.1f} at the start, "
+        f"**{100 * _fit['score'][1]:.1f}** fitted."
+    )
+    if _total:
+        _summary += (
+            f" Bands won (over all replicates): {_fit['won'][0]}/{_total} at the "
+            f"start, **{_fit['won'][1]}/{_total}** fitted (band part of the score: "
+            f"{100 * _fit['band score'][0]:.1f} → {100 * _fit['band score'][1]:.1f}, best 10.0)."
+        )
+    _summary += f" Band edges {_fit['edges'][0]:.2f}–{_fit['edges'][1]:.2f}, gap {_fit['gap']:.2f}."
+    mo.vstack(
+        [mo.md(_summary), mo.ui.table(_fit["thresholds"], selection=None)]
+        + ([mo.ui.table(_fit["weights"], selection=None)] if _fit["weights"] else [])
+        + ([mo.ui.table(_fit["bands"], selection=None)] if _fit["bands"] else [])
+        + ([mo.ui.table(_fit["constraints"], selection=None)] if _fit["constraints"] else [])
+        + [show_figure(_figure)]
         + (
-            [mo.md(f"Skipped (a marker is missing at {_hour}h): " + ", ".join(_not_measured))]
-            if _not_measured
+            [mo.md("Skipped (a stain is missing): " + ", ".join(_fit["skipped"]))]
+            if _fit["skipped"]
             else []
         )
     )
@@ -2898,14 +3966,17 @@ def _(mo):
         [
             mo.md(
                 "### Export and load cell types\n\n"
-                "**Export cell types** writes the marker channels, thresholds "
-                "and cell-type rules above to a file, together with the "
-                "**Training settings** they were tuned with: the thresholds "
-                "only hold for images processed the same way. Read it "
-                "elsewhere with `Common.dataloader.cell_types.load_cell_type_rules` "
-                "and label images with `classify_cell_types`. **Load cell "
-                "types** puts a file's channels, thresholds and rules back "
-                "into the controls above."
+                "**Export cell types** writes the thresholds, cell-type rules "
+                "(with their *or* rows) and stains above to a file, together "
+                "with the **Training settings** they were tuned with: the "
+                "thresholds only hold for images processed the same way. "
+                "Read it elsewhere with "
+                "`Common.dataloader.cell_types.load_cell_type_rules`, and "
+                "estimate cell-type shares with "
+                "`Common.dataloader.cell_type_shares.share_estimator` (for "
+                "model output too, so it is scored like the data). **Load "
+                "cell types** puts a file's thresholds and rules back into "
+                "the controls above."
             ),
             cell_types_path,
             mo.hstack([export_cell_types, load_cell_types], justify="start"),
@@ -2951,11 +4022,15 @@ def _(
     mo,
     resolve_alignment_path,
     set_loaded_cell_types,
+    set_threshold_defaults,
+    set_weight_defaults,
     training_settings,
 ):
     mo.stop(not load_cell_types.value)
     _rules = load_cell_type_rules(resolve_alignment_path(cell_types_path.value))
     set_loaded_cell_types(_rules)
+    set_threshold_defaults(dict(_rules.thresholds))
+    set_weight_defaults({_c: list(_w) for _c, _w in _rules.clause_weights.items()})
     _differs = _rules.preprocessing != training_settings
     mo.md(
         f"Loaded **{len(_rules.rules)}** cell types (tuned at {_rules.hour}h)."
@@ -3379,15 +4454,36 @@ def _(mo):
     get_flags, set_flags = mo.state({})
     # The cell type file loaded under "Cell types at 48h" (a CellTypeRules).
     get_loaded_cell_types, set_loaded_cell_types = mo.state(None)
+    # Default threshold of each marker for the sliders under "Cell types at
+    # 48h", {marker: threshold}, set by a loaded cell type file or a fit.
+    get_threshold_defaults, set_threshold_defaults = mo.state({})
+    # Default row (clause) weights for the cell types with several rules
+    # rows, {cell type: [weight, ...]}, set by a loaded file or a fit.
+    get_weight_defaults, set_weight_defaults = mo.state({})
+    # Result of the last "Fit thresholds" run (a dict, see that cell), or None.
+    get_fit_result, set_fit_result = mo.state(None)
+    # Target cell type of each radial band, {condition: {band: cell type}}.
+    # Kept here so the targets survive the cell-type controls being rebuilt.
+    get_band_targets, set_band_targets = mo.state(
+        {"ctrl": {"centre": "Mesoderm", "ring": "Endoderm", "periphery": "Endoderm"}}
+    )
     return (
+        get_band_targets,
+        get_fit_result,
         get_flags,
         get_loaded_alignment,
         get_loaded_cell_types,
         get_offsets,
+        get_threshold_defaults,
+        get_weight_defaults,
+        set_band_targets,
+        set_fit_result,
         set_flags,
         set_loaded_alignment,
         set_loaded_cell_types,
         set_offsets,
+        set_threshold_defaults,
+        set_weight_defaults,
     )
 
 

@@ -32,14 +32,22 @@ class F(eqx.Module):
         dA = DA*Lap(A) + SA*A^2/(KI+I) - KdA*A
         dI = DI*Lap(I) + SI*A^2 - KdI*I
 
-        Args:
-            PADDING (str): Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
-            dx (float): grid spacing
-            KERNEL_SCALE (int, optional): spatial operator kernel size. Defaults to 1.
-            KI (float, optional): inhibition constant.
-            KdA, KdI (float, optional): decay rates of activator and inhibitor.
-            SA, SI (float, optional): production rates of activator and inhibitor.
-            DA, DI (float, optional): diffusion rates of activator and inhibitor.
+        Parameters
+        ----------
+        PADDING : str
+            Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
+        dx : float
+            Grid spacing
+        KERNEL_SCALE : int, optional
+            Spatial operator kernel size. Defaults to 1.
+        KI : float, optional
+            Inhibition constant.
+        KdA, KdI : float, optional
+            Decay rates of activator and inhibitor.
+        SA, SI : float, optional
+            Production rates of activator and inhibitor.
+        DA, DI : float, optional
+            Diffusion rates of activator and inhibitor.
         """
         self.KI = KI
         self.KdA = KdA

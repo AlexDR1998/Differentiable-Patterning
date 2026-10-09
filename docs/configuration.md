@@ -1,9 +1,9 @@
-# Typed experiment configuration
+# Experiment configuration
 
-Experiment YAML files are composed with OmegaConf in `Experiments/` (base
-config plus sweep overrides) and then converted straight away into frozen
-dataclasses by `Experiments.config.load_experiment_config`. OmegaConf objects
-must not be passed into `Common/` or `NCA/`.
+Experiment YAML files (a base config plus sweep overrides) are merged with
+OmegaConf and then converted into frozen dataclasses by
+`Experiments.config.load_experiment_config`. Only these dataclasses are
+passed into `Common/` and `NCA/`.
 
 The dataclasses use the same section and field names as the YAML files, so
 `run.t` in a sweep file is `cfg.run.t` in code:
@@ -13,7 +13,7 @@ ExperimentConfig                 (Experiments/config.py)
 ├── experiment                   name, stability_mode
 ├── system: SystemConfig         precision, gpu, xla_flags
 ├── data: DataConfig             dataset, batches, downsample
-│   ├── emoji | micropattern | snowmelt   (whichever matches data.dataset)
+│   ├── emoji | micropattern | snowmelt | pde   (whichever matches data.dataset)
 │   └── knockout: KnockoutConfig          curriculum, channel, mode, time
 ├── model: ModelConfig           (NCA/model/config.py)
 ├── run: RunConfig               t, iterations, checkpoint_warmup, ...
@@ -27,7 +27,9 @@ ExperimentConfig                 (Experiments/config.py)
 ```
 
 Impulse optimisation has its own `ImpulseExperimentConfig`, which reuses the
-same `system`, `data` and `model` sections.
+same `system`, `data` and `logging` sections. It has no `model` section: the
+trained model is loaded from the registry by `checkpoint.model_id`, and
+`data: null` (the default) means the data the model was trained on.
 
 Conversion is strict: unknown fields and unsupported model families fail
 before JAX starts. Every field has a value after conversion, so read fields as
@@ -41,44 +43,43 @@ as `run.checkpoint_warmup`.
 
 ## W&B tags
 
-Each run gets one automatic `key:value` W&B tag per setting in
+Each run gets a `key:value` W&B tag for every setting in
 `logging.wandb.tag_keys` (a key also covers everything below it, e.g.
-`data.micropattern.cleaning.background_radii`), plus the tags written in
-`logging.wandb.tags`. `Experiments/generate_configs.py` sets `tag_keys` to the
-settings whose values differ between the runs of the sweep, so the tags show
-only what distinguishes a run and stay useful for filtering; seeds, names and
-settings that are the same in every run are left out. A sweep file can choose
-its own by setting `logging.wandb.tag_keys` in its grid. With `tag_keys: null`
-(a config run on its own, or a manifest generated before this option) every
-setting is tagged. The local model registry always keeps the full tags.
+`data.micropattern.cleaning`), plus any tags in `logging.wandb.tags`.
+`Experiments/generate_configs.py` sets `tag_keys` to the settings that differ
+between runs of the sweep, so tags show what distinguishes each run. A sweep
+can set its own `logging.wandb.tag_keys` in its grid. With `tag_keys: null`
+(a single config, or an old manifest) every setting is tagged. The model
+registry always keeps the full tags.
 
 ## Older configs
 
-Current files have `schema_version: 6`. Configs with an older version are
-translated as they are read by `upgrade_legacy_config`, the only place old
-spellings are handled. Version 6 replaced `data.micropattern.initial_intensity_scales`
-(0h only) with `intensity_factors` (any channel and timestep) and added
-`data.micropattern.cleaning` (see below); older configs have their 0h factors
-moved over and keep cleaning off, so they load the data they were trained on.
-Version 5 added `data.micropattern.histogram_percentiles` and
-`initial_intensity_scales`. Older micropattern configs that lack them get the
-values the loader used to hard-code, percentiles `[0.5, 99.95]` and
-`cell_fate_s2/FOXA2: 0.075`, so old runs and bundles load the data they were
-trained on. Version 3 only differs by an unused `trainer.sharding`
-option, and version 2 also by an unused `trainer.backend` option; both are
-dropped. Version 1 came in two layouts:
+Current files have `schema_version: 7`. Older configs are translated when read
+by `upgrade_legacy_config`, the only place old spellings are handled. Each
+upgrade fills in the values the code used before, so old runs and bundles load
+the same data they were trained on:
 
-- sweep files and manifests: top-level `knockout`, `run.warmup`, flat
-  `trainer.pool_admission_*` keys, `run.filename_mode` and
-  `data.emoji.regenerate`;
-- saved model bundles: `runtime`, `training.{loop, trainer, optimizer, loss,
-  checkpoint}`, `data.preprocessing` and `data.{augmentation, intervention}`.
+- **7** added `data.snowmelt.version` (`v1` or `v2`, the dataset folder under
+  `data.snowmelt.root`). Older snowmelt configs get `v1` and, if they used
+  the default, the old static channels `[DEM, INCIDENCE]`.
+- **6** replaced `data.micropattern.initial_intensity_scales` (0h only) with
+  `intensity_factors` (any channel and timestep) and added
+  `data.micropattern.cleaning`. Older configs keep cleaning off.
+- **5** added `data.micropattern.histogram_percentiles` and
+  `initial_intensity_scales`. Older configs get the previously hard-coded
+  `[0.5, 99.95]` and `cell_fate_s2/FOXA2: 0.075`.
+- **3** and **2** differ only by the unused `trainer.sharding` and
+  `trainer.backend` options, which are dropped.
+- **1** came in two layouts:
+  - sweep files and manifests: top-level `knockout`, `run.warmup`, flat
+    `trainer.pool_admission_*` keys, `run.filename_mode` and
+    `data.emoji.regenerate`;
+  - saved bundles: `runtime`, `training.{loop, trainer, optimizer, loss,
+    checkpoint}`, `data.preprocessing` and `data.{augmentation, intervention}`.
 
-Saved bundles are never edited, so they keep loading through this function.
-Old manifests also still run. Note that `data.emoji.regenerate` in old sweep
-files never actually switched regeneration off (the base config's
-`regeneration.enabled` always took precedence); old manifests reproduce that,
-and current sweep files set `data.emoji.regeneration.enabled` directly.
+`data.emoji.regenerate` in old sweep files never actually turned regeneration
+off (the base config's `regeneration.enabled` won); old manifests reproduce
+this. Current sweep files set `data.emoji.regeneration.enabled` directly.
 
 ## 260726 micropattern pre-processing
 
@@ -170,11 +171,28 @@ its own colony; validation replicates and knockout conditions reuse the bins
 of the control training replicates. The legacy `micropatterns` dataset
 ignores all of these settings.
 
+## PDE data
+
+`data.dataset: pde` trains on trajectories simulated at the start of each run
+(`Experiments/pde/train.py`, settings in `Experiments/pde/config.py`):
+
+- `data.pde.model` names a PDE in `PDE/catalogue.py`. `parameters` overrides
+  its defaults; keys must be that model's parameter names.
+- `data.batches` trajectories start from `initial_condition` (seeded by
+  `data.pde.seed`, not the model seed) and are sampled at `frames` evenly
+  spaced times in `[0, t_end]`. `run.t` is the number of NCA steps per frame.
+- `observed_channels` picks the PDE channels the NCA reproduces; the other
+  PDE channels stay hidden from it.
+- Leave `parameters` empty in base configs: sweeps are merged into it, so a
+  sweep can add keys but not remove them.
+- `conf/experiments/nca_pde_benchmark.yaml` holds working `dx`, `dt`,
+  `t_end` and initial conditions for every PDE.
+
 ## Loss weight schedules
 
-Any loss term can multiply its configured `weight` by an optional schedule.
-The `multi_target` loss also supports schedules for its named internal
-components. Fractions refer to the complete configured training run.
+Any loss term's `weight` can be multiplied by a schedule, and so can each
+named component of the `multi_target` loss. Fractions are of the whole
+training run.
 
 ```yaml
 loss:
@@ -202,9 +220,8 @@ loss:
           end_fraction: 0.75
 ```
 
-Supported schedule types are `constant`, `linear`, and `cosine`. Effective
-weights and raw, unweighted multi-target components are logged under
-`loss_weight/*` and `loss_component_raw/*`, respectively. Best-checkpoint
-selection begins only after the final weight transition so that losses from
-different objective phases are not compared directly. When provided,
-`schedule_label` is appended to model and logging names as `_ls<label>`.
+Schedule types are `constant`, `linear` and `cosine`. Effective weights are
+logged under `loss_weight/*` and unweighted multi-target components under
+`loss_component_raw/*`. The best checkpoint is only chosen after the last
+weight change, so losses under different weightings aren't compared.
+`schedule_label`, if set, is added to model and log names as `_ls<label>`.

@@ -18,7 +18,7 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_pde-restore-pde-domain
+    logging.wandb.group: smoke_pde-pixel-seeds-and-impulse-explorer
     model.family: NCA
     data.pde.model: gray_scott
     data.pde.parameters:
@@ -141,7 +141,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_pde-restore-pde-domain
+        group: smoke_pde-pixel-seeds-and-impulse-explorer
         tags: null
         tag_keys:
         - model.family
@@ -172,7 +172,7 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_pde-restore-pde-domain
+    logging.wandb.group: smoke_pde-pixel-seeds-and-impulse-explorer
     model.family: gNCA
     data.pde.model: cahn_hilliard
     data.pde.parameters:
@@ -291,7 +291,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_pde-restore-pde-domain
+        group: smoke_pde-pixel-seeds-and-impulse-explorer
         tags: null
         tag_keys:
         - model.family

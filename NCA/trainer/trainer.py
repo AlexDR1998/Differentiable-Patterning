@@ -127,8 +127,8 @@ class NcaTrainer:
 		
 		self._log_root = trainer_config.log_directory
 		self._model_root = context.model_directory
-		# Keep human-readable names in logging metadata. Checkpoint paths use a
-		# bounded, collision-resistant storage ID supplied by the entrypoint.
+		# Logging uses the readable run name; checkpoint paths use the short
+		# unique storage ID from the entrypoint, if given.
 		self.model_filename = context.storage_id or context.run_name
 		
 	def setup_logging(self):
@@ -150,7 +150,7 @@ class NcaTrainer:
 			"time": self.knockout_config.time,
 			"channel": self.knockout_config.channel,
 		}
-		# Set logging behvaiour based on provided filename
+		# Set logging behaviour based on the provided filename
 		print(f"Raw data shape(s): {describe_batch_shapes(self._data_raw)}")
 		logging_data = self.data_augmenter.return_observed_data()
 		if self.model_filename is None:

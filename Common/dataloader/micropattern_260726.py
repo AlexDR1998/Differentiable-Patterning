@@ -103,7 +103,7 @@ def _resolve_manifest_path(root, directory, value):
 
 
 def _select_replicates(files, group, replicate_indices):
-    """Return fixed replicate slots plus any deliberately unused files."""
+    """Split ``files`` into the selected replicate slots and the unused rest."""
 
     files = sorted(files, key=_natural_sort_key)
     replicate_indices = tuple(replicate_indices)
@@ -143,16 +143,13 @@ def build_micropattern_260726_manifest(
     experiment_groups=None,
     substitute_preperturbation=True,
 ):
-    """Index selected files without reading image pixels.
+    """List the selected image files, without reading them.
 
-    ``replicate_indices`` selects zero-based physical replicate slots. When it
-    is omitted, the first ``replicate_count`` slots are loaded.
-    ``replicate_manifest`` may override automatic selection for any
-    ``(condition, group, timestep)`` key with an ordered sequence of up to
-    ``replicate_count`` relative or absolute filenames.
-
-    ``experiment_groups`` restricts indexing to the named staining groups;
-    ``None`` selects all groups.
+    ``replicate_indices`` selects zero-based replicate slots; by default the
+    first ``replicate_count``. ``replicate_manifest`` can replace the
+    automatic choice for any ``(condition, group, timestep)`` key with an
+    ordered list of up to ``replicate_count`` relative or absolute filenames.
+    ``experiment_groups`` restricts the staining groups (``None`` = all).
     """
 
     schema = MICROPATTERN_260726_SCHEMA.select_groups(experiment_groups)
@@ -717,15 +714,14 @@ def load_micropattern_260726(
     excluded_images=None,
     cache_dir=None,
 ):
-    """Load physical replicates of the multichannel 260726 NCA dataset.
+    """Load replicates of the multichannel 260726 micropattern dataset.
 
-    ``boundary_radius_quantile`` robustly trims foreground pixels far from the
-    inferred colony centre before constructing a circle.  Lower values or a
-    ``boundary_radius_scale`` below one produce a stricter common boundary.
-    ``pool_copies`` repeats each selected physical batch in the returned
-    training batch while retaining the original replicate provenance.
-    ``replicate_indices`` selects zero-based physical replicate slots; its
-    order determines their order on the returned batch axis.
+    ``boundary_radius_quantile`` drops foreground pixels far from the colony
+    centre before fitting a circle; lower values or a
+    ``boundary_radius_scale`` below one give a tighter common boundary.
+    ``pool_copies`` repeats each replicate along the batch axis (the
+    provenance in ``aux`` is repeated too). ``replicate_indices`` selects
+    zero-based replicate slots, in batch order.
     ``intensity_factors`` maps measurement names (e.g.
     ``"cell_fate_s2/FOXA2"``) to ``{timestep: factor}``; each factor multiplies
     the raw intensities of that channel at that timestep, for every
@@ -762,20 +758,17 @@ def load_micropattern_260726(
 
     Returns
     -------
-    targets:
-        Float32 array ``[B, T, M, X, Y]`` where ``M`` is the number of
+    MicropatternDataset
+        ``data``: float32 ``[B, T, M, X, Y]``, where ``M`` is the number of
         channels in the selected experiment groups and
         ``B = replicate_count * len(conditions) * pool_copies``.
-    aux:
-        Selected schema, provenance, group masks, histogram bins, and inventory.
-    measurement_names:
-        Names aligned with the target channel axis.
-    boundary_mask:
-        Boolean array ``[B, 1, X, Y]`` derived from cell-fate S1 when selected,
-        otherwise from the first selected group.
-    measurement_mask:
-        Boolean availability array ``[B, T, M]``.  Downstream one-step losses
-        can use ``measurement_mask[:, 1:]``.
+        ``aux``: selected schema, provenance, group masks, histogram bins
+        and file inventory.
+        ``channel_names``: measurement names along the channel axis.
+        ``boundary_mask``: boolean ``[B, 1, X, Y]``, from cell-fate S1 when
+        selected, otherwise from the first selected group.
+        ``measurement_mask``: boolean ``[B, T, M]``, True where measured
+        (``measurement_mask[:, 1:]`` for one-step losses).
     """
 
     if downsample <= 0:

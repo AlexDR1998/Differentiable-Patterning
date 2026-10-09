@@ -29,15 +29,24 @@ class F(eqx.Module):
         dP = nu*Lap(P) + div(V)/M^2
         dS = D*Lap(S) - V.grad(S)
 
-        Args:
-            PADDING (str): Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
-            dx (float): grid spacing
-            forcing (array): body force, broadcastable to V
-            rho (float, optional): density. Defaults to 1.0.
-            nu (float, optional): viscosity. Defaults to 0.1.
-            M (float, optional): artificial Mach number; smaller is closer to incompressible. Defaults to 1.0.
-            D (float, optional): scalar diffusion. Defaults to 1.0.
-            KERNEL_SCALE (int, optional): spatial operator kernel size. Defaults to 1.
+        Parameters
+        ----------
+        PADDING : str
+            Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
+        dx : float
+            Grid spacing
+        forcing : array
+            Body force, broadcastable to V
+        rho : float, optional
+            Density. Defaults to 1.0.
+        nu : float, optional
+            Viscosity. Defaults to 0.1.
+        M : float, optional
+            Artificial Mach number; smaller is closer to incompressible. Defaults to 1.0.
+        D : float, optional
+            Scalar diffusion. Defaults to 1.0.
+        KERNEL_SCALE : int, optional
+            Spatial operator kernel size. Defaults to 1.
         """
         self.ops = Ops(PADDING,dx,KERNEL_SCALE,SMOOTHING=1)
         self.forcing = forcing

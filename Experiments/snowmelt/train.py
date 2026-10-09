@@ -7,7 +7,7 @@ Launched through the standard manifest workflow, e.g.::
 
 or for a single config file::
 
-    python Experiments/run_config.py --config <config.yaml> \
+    python Experiments/run_config.py --config-file <config.yaml> \
         --entrypoint Experiments.snowmelt.train:run
 
 The target sequence is one Sentinel-2 acquisition series over the Nivolet

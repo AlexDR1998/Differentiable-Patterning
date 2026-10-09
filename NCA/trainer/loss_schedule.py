@@ -1,4 +1,4 @@
-"""Pure, fixed-structure schedules for loss component weights."""
+"""Schedules for loss term weights over training iterations."""
 
 from __future__ import annotations
 

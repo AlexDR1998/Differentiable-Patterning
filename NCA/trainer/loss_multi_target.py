@@ -20,7 +20,7 @@ MULTI_TARGET_WEIGHT_DEFAULTS = {
 
 
 def init_texture_params(key, spatial_shape, metric="l2", samples=128):
-    """Initialise the existing LPIPS texture model once before training."""
+    """Initialise the LPIPS texture model parameters (once, before training)."""
     from Common.trainer import loss_vgg
 
     model = loss_vgg.lpips_variants[metric]

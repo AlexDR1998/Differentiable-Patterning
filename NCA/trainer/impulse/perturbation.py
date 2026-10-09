@@ -8,10 +8,11 @@ from einops import repeat, rearrange
 from jaxtyping import Float,Array,Key
 from Common.model.abstract_model import AbstractModel
 class perturbation(AbstractModel):
-    """
-        Equinox module that applies a learned perturbation to the NCA state.
-        The perturbation can be local, global, or flat; and can affect all channels, only observed channels, only hidden channels, or a single observed channel.
-        The perturbation expects the NCA state in the shape (Batch, C, X, Y), and applies the same perturbation across all batch elements.
+    """Learned perturbation added to NCA states of shape (batch, C, X, Y).
+
+    The perturbation can be local, global or flat, and can act on all channels,
+    the observed or hidden channels, or a single observed channel. The same
+    perturbation is applied to every batch element.
     """
     location: Array
     values: Array

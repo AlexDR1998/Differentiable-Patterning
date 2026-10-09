@@ -47,7 +47,7 @@ PVC_PATH = os.getenv("PVC_PATH")
 def _trajectory_snapshot_channels(T, data_augmenter, t, channel_schema=None):
 	"""Select observed channels at observation frames.
 
-	``t`` is either a frame stride (historical) or a sequence of frame indices.
+	``t`` is either a frame stride or a sequence of frame indices.
 	"""
 	T_snapshot = T[::t] if isinstance(t, int) else T[np.asarray(t)]
 	schema = channel_schema or getattr(data_augmenter, "schema", None)
@@ -291,17 +291,11 @@ class NCALogger(WandbLogger):
 			print(f"Warning: Failed to log channel/time diagnostics: {exc}", flush=True)
 
 	def log_model_parameters(self,nca,i):  # type: ignore
-		"""Log model parameters
-
-		Args:
-			nca : nca model class (PyTree)
-			i : training step
-		"""
+		"""Log weight histograms (and images of 2D weights) at training step ``i``."""
 		
 		for idx, w in enumerate(nca.get_weights()):
 			w = np.squeeze(w)
 			self.log_histogram(f"Train/weight_{idx}", w, step=i)
-			# print("Weight shape ",w.shape)
 			if len(w.shape) == 2:
 				w = repeat(w,"W H -> W H 3")
 				self.log_image(f"Train/weight_image_{idx}", self.normalise_images(w), step=i)
@@ -340,9 +334,14 @@ class NCALogger(WandbLogger):
 			
 
 	def log_model_outputs(self,x,i):
-		"""
-			x: Dict {"states": PyTree[Float[Array, "N CHANNELS x y"], "B"]}
-			i: training step
+		"""Log memory use and example states at training step ``i``.
+
+		Parameters
+		----------
+		x : dict
+			``{"states": list (one per batch) of [N, CHANNELS, x, y] arrays}``
+		i : int
+			Training step.
 		"""
 		memory_stats = get_jax_memory_stats()
 		for key in memory_stats:

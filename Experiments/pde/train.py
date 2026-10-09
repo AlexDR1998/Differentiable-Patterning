@@ -7,7 +7,7 @@ Launched through the standard manifest workflow, e.g.::
 
 or for a single config file::
 
-    python Experiments/run_config.py --config <config.yaml> \
+    python Experiments/run_config.py --config-file <config.yaml> \
         --entrypoint Experiments.pde.train:run
 
 The training data is ``data.batches`` trajectories of one PDE from

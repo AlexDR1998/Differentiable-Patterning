@@ -16,10 +16,7 @@ import jax.random as jr
 
 
 def _make_gaussian_kernel(sigma, nstds):
-    """
-    Helper to create a Gaussian kernel with concrete Python values.
-    Must be called outside of JIT context.
-    """
+    """Normalised 2D Gaussian kernel as a numpy array (call outside jit)."""
     import math
     sigma_x = float(sigma) * 0.5
     extent = float(nstds) * sigma_x
@@ -41,15 +38,14 @@ _GAUSSIAN_CACHE = {
 }
 
 def _gaussian(sigma, nstds):
-    """
-    Creates a normalized 2D Gaussian kernel. JIT-compatible via pre-computed cache.
-    
-    Parameters:
-        sigma: float, standard deviation scaling factor
-        nstds: float, number of standard deviations for kernel extent
-    
-    Returns:
-        Normalized 2D Gaussian kernel as jax array
+    """Normalised 2D Gaussian kernel, taken from ``_GAUSSIAN_CACHE`` when possible so it works under jit.
+
+    Parameters
+    ----------
+    sigma : float
+        width scale (the standard deviation is ``sigma / 2``)
+    nstds : float
+        kernel half-width in standard deviations
     """
     key = (sigma, nstds)
     if key in _GAUSSIAN_CACHE:
@@ -59,22 +55,15 @@ def _gaussian(sigma, nstds):
         return _make_gaussian_kernel(sigma, nstds)
 
 def _sharpen(X,k):
-    """
-        Sharpens the images with a gaussian kernel of size 2*k+1
-        Parameters:
-            X: np.ndarray of shape [N C H W] where N=Batches, C=channels, H=height, W=width
-            k: int, size parameter for the gaussian kernel
-        Returns:
-            np.ndarray of shape [N C H W], sharpened images
-    """
+    """Unsharp-mask images ``[N C H W]``: ``X + 2 (X - blur)``, with a Gaussian blur of scale ``k``."""
     C = X.shape[1]
     kernel = _gaussian(k,k)
     # Kernel shape for depthwise conv: [kh, kw, in_features_per_group=1, out_features=C]
     kernel = repeat(kernel,"kh kw -> kh kw () C", C=C)
-    # Input shape: [batch=1, H, W, in_features=C]
+    # Input shape: [N, H, W, C]
     X_reshaped = rearrange(X,"N C H W -> N H W C")
     
-    # Use explicit dimension_numbers to ensure correct interpretation
+    # Layouts of input, kernel and output
     dimension_numbers = ('NHWC', 'HWIO', 'NHWC')
     blur = jax.lax.conv_general_dilated(
         X_reshaped,
@@ -84,23 +73,14 @@ def _sharpen(X,k):
         dimension_numbers=dimension_numbers,
         feature_group_count=C,  # Each channel processed independently
     )
-    # Rearrange back to [C H W]
+    # Rearrange back to [N C H W]
     
     blur = rearrange(blur, "N H W C -> N C H W")
     return X + 2*(X - blur)
 
 
 def _sample_random_patches(X,S,K,key):
-    """
-        Samples S random patches of size KxK from image X of shape [H W]
-		Parameters:
-			X: float32 [H W]
-			S: int, number of patches to sample
-			K: int, size of patches (KxK)
-			key: jax.random.PRNGKey
-		Returns:
-			patches: float32 [S K*K], sampled patches
-    """
+    """Sample ``S`` random KxK patches from an image ``[H W]``; returns ``[S K*K]``."""
     H,W = X.shape
     keys = jr.split(key,2)
     ys = jr.randint(keys[0],(S,),0,H)
@@ -114,16 +94,9 @@ def _sample_random_patches(X,S,K,key):
     return patches
     
 def _downsample_and_patch(X,S,K,D,key):
-    """
-        Downsamples image X by factor of 2 D times and samples S random patches of size KxK from it.
-        Parameters:
-            X: float32 [H W]
-            S: int, number of patches to sample
-            K: int, size of patches (KxK)
-            D: int, number of downsampling layers
-            key: jax.random.PRNGKey
-        Returns:
-            patches: float32 [D S K*K], sampled patches
+    """Sample ``S`` random KxK patches from an image ``[H W]`` and from ``D`` successive 2x downsamplings of it.
+
+    Returns ``[D+1, S, K*K]``.
     """
     patches = [_sample_random_patches(X,S,K,key=key)]
     Xd = X
@@ -138,14 +111,7 @@ def _downsample_and_patch(X,S,K,D,key):
 
 
 def _ott_patch_loss(PX,PY,aux):
-    """
-        Computes linear OT loss between 2 point clouds of size S in dimensionality K*K. 
-        Parameters:
-            PX: float32 [S K*K]
-            PY: float32 [S K*K]
-        Returns:
-            ot_cost: float32, OT cost between patches sampled from X and Y
-    """
+    """Entropy-regularised OT cost between two patch sets ``[S K*K]``; ``aux`` holds "epsilon" and "internal_loss_func"."""
     
     metric = {
         "l2": ott.geometry.costs.Euclidean(),
@@ -182,30 +148,28 @@ def _ott_patch_loss(PX,PY,aux):
 
 @eqx.filter_jit
 def ott_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen":True,"epsilon":0.1,"internal_loss_func":"l2"}):
-    """
-        Computes OT loss between images x and y by sampling random patches at multiple scales.
+    """OT loss between the patches of each channel of x and y, at several scales.
 
-        Parameters
-        ----------
-        x : float32 [N C H W]
-            predictions
-        y : float32 [N C H W]
-            true data
-        key: jax.random.PRNGKey
-            Jax random number key.
-        where : boolean array [N C]
-            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
-        aux : dict
-            Additional parameters for the loss function. Includes D, S, K
-                S : int - number of patches to sample
-                K : int - size of patches (KxK)
-                D : int - number of downsampling steps
-                Sharpen: bool - whether to sharpen images before computing loss
-        Returns
-        -------
-        loss : float32 [N]
-            loss 
+    Parameters
+    ----------
+    x : float32 [N C H W]
+        predictions
+    y : float32 [N C H W]
+        true data
+    key : jax.random.PRNGKey
+    where : boolean array [N C 1 1]
+        channels (and timesteps) to include
+    aux : dict
+        S : number of patches per scale
+        K : patch size (KxK)
+        D : number of 2x downsampling steps
+        sharpen : sharpen images before sampling patches
+        epsilon : entropic regularisation
+        internal_loss_func : patch cost, one of "l2", "l2_squared", "l1", "cos", "arccos"
 
+    Returns
+    -------
+    loss : float32 [N]
     """
     N = x.shape[0]
     C = x.shape[1]
@@ -223,15 +187,7 @@ def ott_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen":True,"epsilo
         y = _sharpen(y,2)
 
     def ot_loss(x,y,key):
-        """
-            OT loss for a single channel/timestep
-            Parameters:
-                x: float32 [H W]
-                y: float32 [H W]
-                k: jax.random.PRNGKey
-            Returns:
-                loss: float32
-        """
+        """OT loss for one channel ``[H W]``, averaged over scales."""
         ks = jr.split(key,2)
         px = _downsample_and_patch(x,S,K,D,key=ks[0])
         py = _downsample_and_patch(y,S,K,D,key=ks[1])
@@ -248,33 +204,30 @@ def ott_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen":True,"epsilo
 
 @eqx.filter_jit
 def ott_channel_stack_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen":True,"epsilon":0.1,"internal_loss_func":"l2"}):
-    """
-        Computes OT loss between images x and y by sampling random patches at multiple scales, 
-        sampling the same patches across all channels and flattening those "stack" patches to the OT pointcloud space
-        
-        Where mask is currently not supported for this loss.
+    """OT loss on patches taken at the same positions in every channel and stacked into one vector.
 
-        Parameters
-        ----------
-        x : float32 [N C H W]
-            predictions
-        y : float32 [N C H W]
-            true data
-        key: jax.random.PRNGKey
-            Jax random number key.
-        where : boolean array [N C]
-            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
-        aux : dict
-            Additional parameters for the loss function. Includes D, S, K
-                S : int - number of patches to sample
-                K : int - size of patches (KxK)
-                D : int - number of downsampling steps
-                Sharpen: bool - whether to sharpen images before computing loss
-        Returns
-        -------
-        loss : float32 [N]
-            loss 
+    ``where`` is ignored.
 
+    Parameters
+    ----------
+    x : float32 [N C H W]
+        predictions
+    y : float32 [N C H W]
+        true data
+    key : jax.random.PRNGKey
+    where : None
+        not supported
+    aux : dict
+        S : number of patches per scale
+        K : patch size (KxK)
+        D : number of 2x downsampling steps
+        sharpen : sharpen images before sampling patches
+        epsilon : entropic regularisation
+        internal_loss_func : patch cost, one of "l2", "l2_squared", "l1", "cos", "arccos"
+
+    Returns
+    -------
+    loss : float32 [N]
     """
     N = x.shape[0]
     C = x.shape[1]
@@ -291,15 +244,7 @@ def ott_channel_stack_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen
         y = _sharpen(y,2)
 
     def v_ot_loss(x,y,key):
-        """
-            OT loss for a single timestep
-            Parameters:
-                x: float32 [C H W]
-                y: float32 [C H W]
-                k: jax.random.PRNGKey
-            Returns:
-                loss: float32
-        """
+        """OT loss for one sample ``[C H W]``, averaged over scales."""
         keys = jr.split(key,2)
         v_ch_downsample_and_patch = jax.vmap(_downsample_and_patch, in_axes=(0,None,None,None,None),out_axes=0) # vectorized over channels
         px = v_ch_downsample_and_patch(x,S,K,D,keys[0]) # C D S K*K

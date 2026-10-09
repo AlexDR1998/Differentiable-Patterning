@@ -44,8 +44,8 @@ def perlin(size,cutoff,key):
         n10 = gradient(p[p[xi + 1] + yi], xf - 1, yf)
         # combine noises
         x1 = lerp(n00, n10, u)
-        x2 = lerp(n01, n11, u)  # FIX1: I was using n10 instead of n01
-        return lerp(x1, x2, v)  # FIX2: I also had to reverse x1 and x2 here
+        x2 = lerp(n01, n11, u)
+        return lerp(x1, x2, v)
 
     def lerp(a, b, x):
         "linear interpolation"
@@ -56,12 +56,12 @@ def perlin(size,cutoff,key):
         return 6 * t**5 - 15 * t**4 + 10 * t**3
 
     def gradient(h, x, y):
-        "grad converts h to the right gradient vector and return the dot product with (x,y)"
+        "dot product of the gradient vector picked by h with (x, y)"
         vectors = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
         g = vectors[h % 4]
         return g[:, :, 0] * x + g[:, :, 1] * y
 
-    # EDIT : generating noise at multiple frequencies and adding them up
+    # Sum noise over several frequencies
     p = np.zeros(size)
     
     for i in range(cutoff):
@@ -70,7 +70,7 @@ def perlin(size,cutoff,key):
         lin = np.linspace(0, freq, size, endpoint=False)
         #liny = np.linspace(0, fr
         # eq, shape[1], endpoint=False)
-        x, y = np.meshgrid(lin, lin)  # FIX3: I thought I had to invert x and y here but it was a mistake
+        x, y = np.meshgrid(lin, lin)
         p = _perlin(x, y, key) / freq + p
     #p = p - np.mean(p)
     p = 2*(p - np.min(p)) / (np.max(p) - np.min(p)) -1

@@ -171,7 +171,7 @@ def test_masked_slots_match_unmasked_rollouts_of_their_own_length(rollout_inputs
         reference, _ = _rollout(model, states, uniform_schedule(steps, 3), key)
         for batch in range(len(states)):
             assert jnp.array_equal(masked[batch][slot], reference[batch][slot])
-    # Longer rollouts genuinely differ, so the equality above is not vacuous.
+    # Longer rollouts do differ, so the equality above is a real check.
     longer, _ = _rollout(model, states, uniform_schedule(3, 3), key)
     assert not jnp.array_equal(masked[0][1], longer[0][1])
 

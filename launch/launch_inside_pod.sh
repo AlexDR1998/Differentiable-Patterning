@@ -3,7 +3,7 @@
 # Runs one manifest entry inside a Kubernetes pod (see run.tpl.yml).
 source "$(dirname "${BASH_SOURCE[0]}")/manifest.sh"
 
-normalize_workspace_path() { # ensures the path is absolute and rooted at /workspace; handles absolute paths and workspace-relative paths
+normalize_workspace_path() { # make a path absolute under /workspace (accepts absolute or workspace-relative paths)
   local input_path="$1"
   case "$input_path" in
     /*)

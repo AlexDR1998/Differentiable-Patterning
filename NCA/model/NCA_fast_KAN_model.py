@@ -150,8 +150,8 @@ class FastKaNCA(NCA):
     def get_kan_layer_inputs_outputs(self, x):
         """Return diagnostic KAN layer input/output tensors for one NCA state.
 
-        This intentionally avoids fire-rate masking and boundary callbacks. It
-        exposes the deterministic update rule internals used by the KAN layers.
+        Skips fire-rate masking and boundary callbacks, so this is the
+        deterministic update rule only.
         """
         if x.ndim != 3 or x.shape[0] != self.N_CHANNELS:
             raise ValueError(

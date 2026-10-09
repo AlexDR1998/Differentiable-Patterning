@@ -8,10 +8,9 @@ import jax.tree_util as jtu
 
 
 def split_trajectory(data, n_steps: int = 1):
-    """Return initial states and observable target states.
+    """Return initial states ``data[:-n_steps]`` and targets ``data[n_steps:]``.
 
-    ``data`` is a PyTree whose leaves have shape ``(time, channels, height,
-    width)``. The input is never mutated.
+    ``data`` is a PyTree whose leaves have shape ``(time, channels, height, width)``.
     """
 
     if n_steps < 1:

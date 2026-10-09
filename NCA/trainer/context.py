@@ -1,4 +1,4 @@
-"""Runtime inputs that are derived while assembling an NCA experiment."""
+"""Runtime values derived from loaded data, passed to the NCA trainer."""
 
 from dataclasses import dataclass
 from typing import Any
@@ -8,8 +8,8 @@ from typing import Any
 class TrainerContext:
     """Non-serialisable values needed by a configured training run.
 
-    User choices belong in the experiment config.  This object only carries
-    values derived from loaded data or the runtime environment.
+    User choices belong in the experiment config; this only holds values
+    derived from loaded data or the runtime environment.
     """
 
     run_name: str

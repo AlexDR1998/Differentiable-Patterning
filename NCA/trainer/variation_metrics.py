@@ -72,10 +72,9 @@ def _pairwise_distances(left, right):
 def replicate_variation_metrics(prediction, target, boundary, radial_bins=16):
     """Compare two equally sized, unordered replicate feature populations.
 
-    Inputs have shape ``[replicate, channel, x, y]``. Pairwise-distance
-    correlation compares the sorted distance spectra, keeping the statistic
-    invariant to replicate ordering when biological replicate identities are
-    not paired across staining experiments.
+    Inputs have shape ``[replicate, channel, x, y]``. The pairwise-distance
+    correlation compares sorted distance spectra, so it does not depend on
+    replicate order (replicates are not paired across staining experiments).
     """
 
     if prediction.shape != target.shape:

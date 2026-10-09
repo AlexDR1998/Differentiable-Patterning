@@ -97,11 +97,10 @@ class RuntimeMetrics:
 
 
 def _divergence_code(loss, states):
-    """Classify divergence without confusing a bad state for a bad loss.
+    """Return 0 (fine), 1 (non-finite loss), 2 (non-finite states) or 3 (loss > 1e16).
 
-    The objective is evaluated from ``states``, so state finiteness must be
-    checked first. Otherwise a NaN produced by the rollout is always reported
-    as a loss NaN and the useful distinction is lost.
+    States are checked first: the loss is computed from them, so a NaN state
+    would otherwise be reported as a NaN loss.
     """
     if any(
         bool(jax.device_get(jnp.any(~jnp.isfinite(value))))
@@ -210,7 +209,7 @@ def _update_training_pool(
 
 
 def _report_divergence(output, state, iteration):
-    """Print enough numerical context to locate the first failing subsystem."""
+    """Print summary statistics to help find where a divergence started."""
     print(f"Divergence diagnostics at step {iteration}:")
     print(f"  loss: {_array_diagnostic(output.loss)}")
 
@@ -258,12 +257,10 @@ def run_loop(
     progress_callback=None,
     validation_evaluator=None,
 ):
-    """Compile once, then coordinate state, pool, logging and checkpoints.
+    """Compile the step once, then run the loop: pool, logging and checkpoints.
 
-    ``progress_callback``, when provided, is called after each successful
-    iteration with ``(iteration, loss, metrics)``. It is intended for runtime
-    interfaces such as notebook visualisations and is kept outside compiled
-    numerical code.
+    ``progress_callback``, if given, is called after each successful iteration
+    with ``(iteration, loss, metrics)``, e.g. for notebook plots.
     """
 
     state = TrainState(

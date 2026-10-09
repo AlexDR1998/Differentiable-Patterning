@@ -130,14 +130,10 @@ def adhesion_mask_convex_hull(data):
     data : float32 array [X,Y,...]
       data to be masked.
 
-    rscale : float32
-      scales how much bigger or smaller the radius of the mask is
-
-      
     Returns
     -------
     mask : boolean array [X,Y]
-      Array with circle of 1/0 indicating likely presence/lack of adhesive surface in micropattern
+      Convex hull of 1/0 indicating likely presence/lack of adhesive surface in micropattern
   """
   
   if len(data.shape) == 3:
@@ -160,15 +156,15 @@ def adhesion_mask_convex_hull(data):
 
 def adhesion_mask_convex_hull_ellipse(data,angle=0.4):
     """
-    Given data output from load_sequence_*, returns a binary mask representing the circle where cells can adhere.
+    Given data output from load_sequence_*, returns a binary mask representing the ellipse where cells can adhere.
 
     Parameters
     ----------
     data : float32 array [T,1,size,size,4]
         timesteps (T) of RGBA images. Dummy index of 1 for number of batches
 
-    rscale : float32
-        scales how much bigger or smaller the radius of the mask is
+    angle : float32
+        initial guess for the ellipse rotation (radians)
 
     Returns
     -------
@@ -207,7 +203,7 @@ def adhesion_mask_convex_hull_ellipse(data,angle=0.4):
 
 def adhesion_mask_batch(data):
   """
-    Applies ashesion_mask but to a batch of different initial conditions
+    Applies adhesion_mask to a batch of different initial conditions
   
     Parameters
     ----------

@@ -13,44 +13,37 @@ class AbstractModel(eqx.Module):
 		raise NotImplementedError
 
 	def partition(self):
-		"""
-		Behaves like eqx.partition. Overwrite in subclasses to account for hard coded array parameters
+		"""Split the model into trainable and non-trainable parts, like ``eqx.partition``.
+
+		Subclasses override this to keep fixed array parameters out of ``diff``.
 
 		Returns
 		-------
 		diff : PyTree
-			PyTree of same structure as AbstractModel, with all non trainable parameters set to None
+			Same structure as the model, with non-trainable parameters set to None.
 		static : PyTree
-			PyTree of same structure as AbstractModel with all trainable parameters set to None
-
+			Same structure as the model, with trainable parameters set to None.
 		"""
 		diff,static = eqx.partition(self,eqx.is_array)
 		return diff,static
 
 	def boundary_regulariser_state(self, state):
-		"""Return the part of ``state`` governed by the spatial boundary.
+		"""Part of ``state`` that boundary penalties apply to (the whole state by default).
 
-		Most models evolve one grid, so the complete state is appropriate.
-		Hierarchical models can override this view to exclude auxiliary grids
-		from fine-resolution boundary penalties.
+		Hierarchical models override this to leave out their coarser grids.
 		"""
 		return state
 
 	def prepare_pool_state(self, state):
-		"""Prepare a state before it is used as a new training rollout input.
+		"""Prepare a pool state before it starts a new training rollout (unchanged by default).
 
-		Ordinary models preserve the complete recurrent state. Hierarchical
-		models can override this to reconstruct auxiliary levels that should
-		not themselves be persisted by the training pool.
+		Hierarchical models override this to rebuild the coarser levels, which
+		the training pool does not store.
 		"""
 		return state
 	
 	def get_weights(self):
-		"""Returns a flat list of the trainable arrays (squeezed), for plotting and logging.
-
-		Returns:
-			weights : list of arrays of trainable parameters
-		"""
+		"""Flat list of the trainable arrays (squeezed), for plotting and logging."""
 		diff_self,_ = self.partition()
 		return [jnp.squeeze(w) for w in jax.tree_util.tree_leaves(diff_self)]
 	

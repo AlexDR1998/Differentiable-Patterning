@@ -1,0 +1,27 @@
+# Pipeline smoke test: optimise an impulse on an existing trained emoji model
+# for a few iterations. A run passes when it exits cleanly (it publishes no
+# bundle).
+#
+# Set checkpoint.model_id to a multi_attractor emoji bundle that exists in the
+# model store both locally and on the cluster, e.g. one from smoke_emoji.
+# Until the placeholder is replaced, pipeline_smoke_test.py skips this sweep.
+experiment_name: smoke_impulse
+entrypoint: Experiments.impulse.optimise:run
+output_subdir: generated/smoke_impulse
+seed_mode: fixed
+
+grid:
+  checkpoint.model_id: [20261009T112029Z-cfg40e6697d57a1-b0638e96]
+  logging.wandb.project: [pipeline-smoke]
+  impulse.iterations: [4]
+  impulse.batch_size: [2]
+  impulse.resample_every: [2]
+  impulse.log_every: [1]
+  impulse.pair_source.stabilisation_steps: [[8, 16]]
+  impulse.rollout.steps: [8]
+  impulse.rollout.evaluation_steps: [16]
+  impulse.output.directory: [smoke_impulse]
+
+groups:
+  - impulse.objective.type: [targeted, minimal_destructive]
+    impulse.rollout.loss_window: [1, 4]

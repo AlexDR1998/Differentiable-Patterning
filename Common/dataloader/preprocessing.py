@@ -1,4 +1,4 @@
-"""Configuration and validation for image preprocessing pipelines."""
+"""Settings for the older micropattern preprocessing pipeline."""
 
 from dataclasses import dataclass
 from enum import Enum
@@ -6,7 +6,7 @@ from typing import Iterable
 
 
 class ProcessingStep(str, Enum):
-    """Supported legacy micropattern preprocessing operations."""
+    """Preprocessing steps of the older micropattern loader."""
 
     HISTOGRAM_EQUALISE = "hist_eq"
     REMOVE_BACKGROUND = "remove_background"
@@ -21,7 +21,7 @@ class ProcessingStep(str, Enum):
 
 @dataclass(frozen=True)
 class PreprocessingConfig:
-    """An ordered, reproducible preprocessing specification."""
+    """Ordered preprocessing steps and their settings."""
 
     steps: tuple[ProcessingStep, ...] = ()
     downsample: int = 1

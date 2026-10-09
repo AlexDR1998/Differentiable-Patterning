@@ -17,7 +17,7 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-restore-pde-domain
+    logging.wandb.group: smoke_snowmelt-pixel-seeds-and-impulse-explorer
     model.family: NCA
     data.snowmelt.target_channels:
     - SCA
@@ -133,7 +133,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-restore-pde-domain
+        group: smoke_snowmelt-pixel-seeds-and-impulse-explorer
         tags: null
         tag_keys:
         - model.family
@@ -160,7 +160,7 @@ configs:
     run.checkpoint_warmup: 5
     optimiser.warmup_steps: 10
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-restore-pde-domain
+    logging.wandb.group: smoke_snowmelt-pixel-seeds-and-impulse-explorer
     model.family: gNCA
     data.snowmelt.target_channels:
     - NDSI
@@ -286,7 +286,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-restore-pde-domain
+        group: smoke_snowmelt-pixel-seeds-and-impulse-explorer
         tags: null
         tag_keys:
         - model.family

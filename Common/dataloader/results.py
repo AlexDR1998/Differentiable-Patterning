@@ -1,8 +1,7 @@
-"""Typed results returned by data loaders.
+"""Dataclasses returned by the data loaders.
 
-Keeping loader outputs in dataclasses makes array axes and optional metadata
-explicit at call sites.  The dataclasses deliberately contain no loading or
-processing behaviour; they are plain descriptions of already-loaded data.
+They name the array axes and metadata of already-loaded data and do no
+loading or processing themselves.
 """
 
 from dataclasses import dataclass, field
@@ -22,7 +21,7 @@ class ImageSequenceDataset:
         return self.data.shape
 
     def __getitem__(self, item):
-        """Temporary array-style access for downstream migration."""
+        """Index ``data`` directly."""
 
         return self.data[item]
 
@@ -49,12 +48,12 @@ class MicropatternDataset:
 
     @property
     def schema(self):
-        """Channel schema attached by the loader, when available."""
+        """Channel schema attached by the loader, or None."""
 
         return self.aux.get("channel_schema")
 
     def __iter__(self):
-        """Support the historical five-value API during the migration period."""
+        """Unpack as ``(data, aux, channel_names, boundary_mask, measurement_mask)``, as older code expects."""
 
         yield self.data
         yield self.aux

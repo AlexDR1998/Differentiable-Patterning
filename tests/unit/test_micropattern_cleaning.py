@@ -18,7 +18,7 @@ from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
 
 SIZE = 128
 RADIUS = 40
-# Raw colony centres (row, column), deliberately off the image centre.
+# Raw colony centres (row, column), off the image centre.
 CENTRES = {
     ("ctrl", 1, 0): (60.0, 70.0),
     ("ctrl", 1, 24): (68.0, 58.0),

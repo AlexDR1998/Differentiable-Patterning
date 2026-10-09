@@ -25,13 +25,20 @@ class F(eqx.Module):
         dA = DA*Lap(A) - A*B^2 + alpha*(1-A)
         dB = DB*Lap(B) + A*B^2 - (gamma+alpha)*B
 
-        Args:
-            PADDING (str): Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
-            dx (float): grid spacing
-            KERNEL_SCALE (int, optional): spatial operator kernel size. Defaults to 1.
-            DA, DB (float, optional): diffusion rates of A and B.
-            alpha (float, optional): feed rate (often called F).
-            gamma (float, optional): kill rate (often called k).
+        Parameters
+        ----------
+        PADDING : str
+            Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
+        dx : float
+            Grid spacing
+        KERNEL_SCALE : int, optional
+            Spatial operator kernel size. Defaults to 1.
+        DA, DB : float, optional
+            Diffusion rates of A and B.
+        alpha : float, optional
+            Feed rate (often called F).
+        gamma : float, optional
+            Kill rate (often called k).
         """
         self.gamma = gamma
         self.alpha = alpha

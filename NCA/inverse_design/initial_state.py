@@ -53,9 +53,9 @@ def sample_circular_patches(
 ) -> Array:
     """Tile random real patches into a rectangular initial texture.
 
-    Patch centres and dihedral transforms are selected exclusively by ``key``.
-    Co-measured channels in a group share selections. The discrete sample is
-    explicitly stopped from participating in automatic differentiation.
+    Patch centres and dihedral transforms are chosen by ``key``. Channels
+    measured together (in one group) share the same choices. Gradients are
+    stopped through the sample.
     """
 
     reference = jnp.asarray(reference)

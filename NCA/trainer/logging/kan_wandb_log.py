@@ -56,7 +56,7 @@ def _fraction_abs_below(x, eps):
 
 class FastKANLogger(NCALogger):
 	def _log_legacy_kan_parameters(self,nca,i):
-		#Log weights and biasses of model every 10 training epochs
+		# Log weight histograms
 		weights = nca.get_weights()
 		if len(weights) >= 2:
 			self.log_histogram('Input layer weights',weights[0],step=i)

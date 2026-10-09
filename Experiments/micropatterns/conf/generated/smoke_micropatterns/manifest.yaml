@@ -40,7 +40,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-snowmelt-date-split
+    logging.wandb.group: smoke_micropatterns-pixel-seeds-and-impulse-explorer
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     data.micropattern.pool_copies: 2
@@ -225,7 +225,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-snowmelt-date-split
+        group: smoke_micropatterns-pixel-seeds-and-impulse-explorer
         tags: null
         tag_keys:
         - model.family
@@ -275,7 +275,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-snowmelt-date-split
+    logging.wandb.group: smoke_micropatterns-pixel-seeds-and-impulse-explorer
     model.family: gNCA
     trainer.loop_autodiff: lax
     data.micropattern.pool_copies: 1
@@ -466,7 +466,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-snowmelt-date-split
+        group: smoke_micropatterns-pixel-seeds-and-impulse-explorer
         tags: null
         tag_keys:
         - model.family

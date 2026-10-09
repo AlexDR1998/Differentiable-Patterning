@@ -93,21 +93,20 @@ def _(data, data_4ch, plt, rearrange):
 @app.cell
 def _(load_micropattern_circle_nodal_knockout_9ch_explicit_colony):
     def get_data_colony_knockout(DOWNSAMPLE):
-        """
-            Helper function that wraps load_micropattern_circle_8ch_individual_explicit_colony()
-            Paramaters
-            ----------
-            DOWNSAMPLE int
-                Downsampling factor to load data at
-            Returns
-            -------
-            data float32 [B=1 T C X Y]
-                Timecourse data at specified downsampling
-            boundary_mask bool [B=1 X Y]
-                Boundary mask at specified downsampling
-            CHANNEL_NAMES list of str
-                Channel names for data
+        """Load the NODAL knockout colony data (24h knockouts).
 
+        Parameters
+        ----------
+        DOWNSAMPLE : int
+            Downsampling factor.
+
+        Returns
+        -------
+        data : float32 [B=1, T, C, X, Y]
+        boundary_mask : bool [B=1, X, Y]
+        channel_names : list of str
+        measurement_mask
+            Which channels are measured at each timestep.
         """
         dataset = load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
             impath="../Data/Timecourse Seperate Colonies/",
@@ -143,13 +142,10 @@ def _(get_data_colony_knockout, plt):
 @app.cell
 def _(onp):
     def duplicate_x_channels_9ch(x):
-        """
-            Duplicates channels in x to match the individual colony experiment groups.
-            X [N C H W] with C=9 -> [N 12 H W] with channels duplicated as needed.
-            data_channels = ["lmbr","tbxt","sox17","sox2" - "lmbr","tbxt","sox17","foxa2" - "cer1","lefty2","nodal" - "lef1" ]
-            input_channels = ["lmbr","tbxt","sox17","sox2","foxa2","cer1","lefty2","nodal","lef1"]
+        """Duplicate channels of ``x`` [N, 9, H, W] to match the 12 data channels.
 
-
+        input_channels = ["lmbr","tbxt","sox17","sox2","foxa2","cer1","lefty2","nodal","lef1"]
+        data_channels = ["lmbr","tbxt","sox17","sox2" - "lmbr","tbxt","sox17","foxa2" - "cer1","lefty2","nodal" - "lef1" ]
         """
         x_dup = [x[:,0:4],x[:,0:3],x[:,4:8],x[:,8:9]]
         return onp.concatenate(x_dup,axis=1)

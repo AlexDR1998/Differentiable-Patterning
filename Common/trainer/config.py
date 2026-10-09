@@ -1,4 +1,4 @@
-"""Configuration shared by trainer implementations across domains."""
+"""Optimiser and loss configs shared by all trainers."""
 
 from dataclasses import dataclass, field
 from typing import Mapping
@@ -17,7 +17,7 @@ class ScheduleConfig(ConfigValue):
 
 @dataclass(frozen=True)
 class LossWeightScheduleConfig(ConfigValue):
-    """Multiply one configured loss weight over a fraction of training."""
+    """Factor applied to one loss weight, changing over a fraction of training."""
 
     type: str = "constant"
     initial_factor: float = 1.0
@@ -73,7 +73,7 @@ class OptimiserConfig(ConfigValue):
 
 @dataclass(frozen=True)
 class LossTermConfig(ConfigValue):
-    """One independently configured component of the training objective."""
+    """One weighted term of the training loss."""
 
     type: str = "l2"
     weight: float = 1.0
@@ -88,7 +88,7 @@ class LossTermConfig(ConfigValue):
 
 @dataclass(frozen=True)
 class PointwiseLossConfig(LossTermConfig):
-    """Parameter-free pointwise, spectral, and distribution losses."""
+    """Pointwise, spectral and distribution losses with no extra options."""
 
 
 @dataclass(frozen=True)

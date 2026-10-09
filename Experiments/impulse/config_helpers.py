@@ -117,7 +117,7 @@ def build_objective(objective_cfg):
 
 
 def build_intervention(intervention_cfg, observed_channels, model, trajectories, key):
-    """Initialise the legacy Equinox perturbation module from config."""
+    """Build the perturbation module (``impulse/perturbation.py``) from config."""
 
     return perturbation(
         mode={
@@ -133,7 +133,7 @@ def build_intervention(intervention_cfg, observed_channels, model, trajectories,
 
 
 def build_impulse_optimiser(optimiser_cfg):
-    """Build the lightweight Optax optimiser used for intervention parameters."""
+    """Optax optimiser for the intervention parameters."""
 
     constructors = {
         "adam": optax.adam,
@@ -151,7 +151,7 @@ def build_impulse_optimiser(optimiser_cfg):
 
 
 def resolve_output_directory(output_cfg, env=None):
-    """Resolve and create the directory used for intervention outputs."""
+    """Create and return the directory for intervention outputs."""
 
     directory = Path(str(output_cfg.directory)).expanduser()
     environment = os.environ if env is None else env

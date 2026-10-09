@@ -19,7 +19,7 @@ from NCA.trainer.impulse.regularisers import intervention_metrics, weighted_regu
 
 
 class AdditiveModel(eqx.Module):
-    """Small deterministic model used by impulse optimiser tests."""
+    """Small deterministic model for the optimiser tests."""
 
     increment: jax.Array
     N_CHANNELS: int = eqx.field(static=True)
@@ -33,7 +33,7 @@ class AdditiveModel(eqx.Module):
 
 
 def per_sample_l2(x, y, key=None, where=None, cache=None):
-    """Return simple per-sample squared error for optimiser tests."""
+    """Per-sample squared error."""
 
     return jnp.mean((x - y) ** 2, axis=(-3, -2, -1))
 

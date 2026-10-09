@@ -59,8 +59,8 @@ export MODEL_STORE_ROOT="${MODEL_STORE_ROOT:-$IO_ROOT/Models/}"
 export IMPULSE_OUTPUT_PATH="${IMPULSE_OUTPUT_PATH:-$IO_ROOT/output/}"
 
 export RUN_CONFIG_PROFILE="$PROFILE_GPU"
-# The trainer captures a short warmed-up window. Do not wrap imports,
-# compilation, and the entire experiment in a second profiler session.
+# The trainer profiles a short window after warmup itself, so don't also
+# profile the whole run here.
 export RUN_CONFIG_PROFILE_TRACE=0
 export RUN_CONFIG_PROFILE_MEMORY=0
 

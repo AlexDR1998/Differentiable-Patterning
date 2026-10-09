@@ -64,7 +64,7 @@ def l2_colony_grouped(x,y,key,where,aux=None,cache=None):
 
 
 def _grouped_summary_loss(loss_func, x, y, where, aux):
-    """Project the legacy grouped state into its schema-defined target layout."""
+    """Map the grouped 9-channel state to the 12-channel target layout, then apply ``loss_func``."""
     schema = MICROPATTERN_GROUPED_12CH_SCHEMA
     x = project_state_to_measurements(x[:, :schema.n_state_channels], schema)
     y = y[:, :schema.n_measurement_channels]
@@ -74,14 +74,14 @@ def _grouped_summary_loss(loss_func, x, y, where, aux):
 
 
 def radial_profile_grouped_loss(x,y,key=None,where=None,aux=None,cache=None):
-    """Radial-profile loss for the legacy grouped micropattern layout."""
+    """Radial-profile loss on the grouped micropattern layout."""
     aux = {} if aux is None else dict(aux)
     aux.setdefault("channel_weights", MICROPATTERN_GROUPED_12CH_SCHEMA.measurement_weights)
     return _grouped_summary_loss(radial_profile_loss, x, y, where, aux)
 
 
 def channel_correlation_grouped_loss(x,y,key=None,where=None,aux=None,cache=None):
-    """Correlation loss for co-measured legacy micropattern channels."""
+    """Channel-correlation loss over co-measured channels of the grouped micropattern layout."""
     aux = {} if aux is None else dict(aux)
     aux.setdefault("pairs", MICROPATTERN_GROUPED_12CH_SCHEMA.co_measurement_pairs)
     aux.setdefault("pair_weights", MICROPATTERN_GROUPED_12CH_SCHEMA.correlation_pair_weights)
@@ -93,7 +93,7 @@ def channel_correlation_grouped_loss(x,y,key=None,where=None,aux=None,cache=None
 # ---------------------------------------------------------------------
 
 def _pad_grouped_12ch_values(values, pad_value=0):
-    """Pad values in the same four colony groups as grouped VGG image channels."""
+    """Pad per-channel values in the four colony groups, as the grouped VGG image channels are padded."""
     groups = [values[0:4], values[4:8], values[8:11], values[11:12]]
     return jnp.concatenate(
         [
@@ -109,11 +109,11 @@ def grouped_vgg_triplet_weights(
     random_channel_shuffle=False,
     key=None,
 ):
-    """Map 12 target-channel weights onto the six grouped VGG comparisons.
+    """Map 12 per-channel weights onto the six grouped VGG triplets.
 
-    Mixed RGB triplets receive the mean importance of their active biological
-    channels. The result includes the existing duplicate/group compensation and
-    is renormalised per sample so uniform importance exactly preserves it.
+    A triplet gets the mean weight of its active channels, times the usual
+    weighting for duplicated channels. The result is rescaled per sample so
+    that uniform weights give the usual weighting exactly.
     """
     if random_channel_shuffle:
         base_weighting = jnp.array(
@@ -168,26 +168,27 @@ def precompute_vgg_hyperspectral_colony_target(y, key, where=None, aux={"vgg_met
 
 
 def vgg_hyperspectral_colony(x, y, key, where=None, aux={"vgg_metric": "l2"}, cache=None):
-    """
-        VGG loss on the grouped micropattern layout. Each experiment group is
-        padded to a multiple of 3 channels, so blocks never mix experiments.
-        Parameters
-        ----------
-        x : float32 [N,9,WIDTH,HEIGHT]
-            predictions
-        y : float32 [N,12,WIDTH,HEIGHT]
-            true data, with the duplicated measurement channels
-        key : jax.random.PRNGKey
-            Jax random number key.
-        where : boolean array [N,9 or 12,(),()]
-            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
-        aux : dict
-            as for loss_vgg.vgg_hyperspectral, plus optional "channel_importance" (12 weights)
-        cache : precomputed target features, or None
-        Returns
-        -------
-        loss : float32 [N]
-            loss reduced over channel and spatial axes
+    """VGG loss on the grouped micropattern layout.
+
+    Each experiment group is padded to a multiple of 3 channels, so VGG
+    triplets never mix experiments.
+
+    Parameters
+    ----------
+    x : float32 [N,9,WIDTH,HEIGHT]
+        predictions
+    y : float32 [N,12,WIDTH,HEIGHT]
+        true data, with the duplicated measurement channels
+    key : jax.random.PRNGKey
+    where : boolean array [N,9 or 12,(),()]
+        channels (and timesteps) to include
+    aux : dict
+        as for loss_vgg.vgg_hyperspectral, plus optional "channel_importance" (12 weights)
+    cache : precomputed target features, or None
+
+    Returns
+    -------
+    loss : float32 [N]
     """
     where_y = None
     if where is not None:
@@ -240,28 +241,25 @@ def vgg_hyperspectral_colony_and_l2(x, y, key, where, aux={"vgg_metric": "l2"}, 
 # ---------------------------------------------------------------------
 
 def ott_grouped_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen":True,"epsilon":0.1,"internal_loss_func":"l2"}):
-    """
-        Computes OT loss between images x and y by grouping channels based on experiment and ott_loss on each group.
-        Parameters
-        ----------
-        x : float32 [N C=8 H W]
-            predictions
-        y : float32 [N C=11 H W]
-            true data - with some duplicate channels from different experiment groups
-        key: jax.random.PRNGKey
-            Jax random number key.
-        where : boolean array [N C 1 1]
-            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
-        aux : dict
-            Additional parameters for the loss function. Includes D, S, K, Sharpen
-                S : int - number of patches to sample
-                K : int - size of patches (KxK)
-                D : int - number of downsampling steps
-                Sharpen: bool - whether to sharpen images before computing loss
-        Returns
-        -------
-        loss : float32 [N]
-            loss reduced over channel and spatial axes
+    """OT loss computed separately on each experiment group of channels.
+
+    Patches are taken at the same positions in every channel of a group.
+
+    Parameters
+    ----------
+    x : float32 [N 9 H W]
+        predictions
+    y : float32 [N 12 H W]
+        true data, with the duplicated measurement channels
+    key : jax.random.PRNGKey
+    where : boolean array [N 9 1 1]
+        channels (and timesteps) to include
+    aux : dict
+        as for loss_ott.ott_loss
+
+    Returns
+    -------
+    loss : float32 [N]
     """
     
     N = x.shape[0]
@@ -283,15 +281,7 @@ def ott_grouped_loss(x,y,key,where=None,aux={"D":3,"S":1024,"K":5,"sharpen":True
         y = y*where.astype(y.dtype)
     
     def v_ot_loss(x,y,key):
-        """
-            OT loss for a single timestep
-            Parameters:
-                x: float32 [C H W]
-                y: float32 [C H W]
-                k: jax.random.PRNGKey
-            Returns:
-                loss: float32
-        """
+        """OT loss for one group of one sample ``[C H W]``, averaged over scales."""
         keys = jr.split(key,2)
         v_ch_downsample_and_patch = jax.vmap(loss_ott._downsample_and_patch, in_axes=(0,None,None,None,None),out_axes=0) # vectorized over channels. Don't vectorize over keys - we want to select the same patches across channels in each group
         px = v_ch_downsample_and_patch(x,S,K,D,keys[0]) # C D S K*K

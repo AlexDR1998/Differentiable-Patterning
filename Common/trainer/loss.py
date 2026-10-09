@@ -16,93 +16,28 @@ import jax.random as jr
 
 @jax.jit
 def cosine(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Parameters
-		----------
-		x : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [...]
-			loss reduced over channel and spatial axes
-	"""
+	"""Negative cosine similarity, normalised by the norms of the whole ``x`` and ``y`` arrays."""
 	return -jnp.nan_to_num(jnp.mean((x*y)/(jnp.linalg.norm(x)*jnp.linalg.norm(y)),axis=[-1,-2,-3],where=where))
 
 @jax.jit
 def l2(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Parameters
-		----------
-		x : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [...]
-			loss reduced over channel and spatial axes
-		"""
+	"""Mean squared error."""
 	
 	return jnp.nan_to_num(jnp.mean((x-y)**2,axis=[-1,-2,-3],where=where))
 
 @jax.jit
 def l1(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Parameters
-		----------
-		x : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [...]
-			loss reduced over channel and spatial axes
-		"""
+	"""Mean absolute error."""
 	return jnp.nan_to_num(jnp.mean(jnp.abs(x-y),axis=[-1,-2,-3],where=where))
 
 @jax.jit
 def euclidean(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		General format of loss functions here:
-
-		Parameters
-		----------
-		x : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [...]
-			loss reduced over channel and spatial axes
-
-	"""
+	"""Root mean squared error."""
 	return jnp.nan_to_num(jnp.sqrt(jnp.mean(((x-y)**2),axis=[-1,-2,-3],where=where)))
 
 @eqx.filter_jit
 def sliced_wasserstein_spatial(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Sliced Wasserstein distance in spatial domain
-
-		Parameters
-		----------
-		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [N]
-			loss reduced over channel and spatial axes
-	"""
+	"""Sliced Wasserstein distance with ``aux["samples"]`` (default 64) random spatial projections."""
 	
 	WIDTH = x.shape[2]
 	HEIGHT = x.shape[3]
@@ -126,21 +61,7 @@ def sliced_wasserstein_spatial(x,y,key=None,where=None,aux=None,cache=None):
 
 @eqx.filter_jit
 def sliced_wasserstein_channel(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Sliced Wasserstein distance across channels
-
-		Parameters
-		----------
-		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [N]
-			loss reduced over channel and spatial axes
-	"""
+	"""Sliced Wasserstein distance between pixel distributions, with ``aux["samples"]`` (default 64) random projections across channels."""
 	
 	CHANNELS = x.shape[1]
 	if aux["samples"] is None:
@@ -166,21 +87,7 @@ def sliced_wasserstein_channel(x,y,key=None,where=None,aux=None,cache=None):
 @eqx.filter_jit
 def sliced_wasserstein_rotational(x,y,key=None,where=None,aux=None,cache=None):
 
-	"""
-		Sliced Wasserstein distance in spatial domain, using random rotations
-
-		Parameters
-		----------
-		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [N]
-			loss reduced over channel and spatial axes
-	"""
+	"""Sliced Wasserstein distance between 1D profiles of the images rotated by ``aux["samples"]`` (default 64) random angles."""
 	
 	WIDTH = x.shape[2]
 	HEIGHT = x.shape[3]
@@ -242,19 +149,7 @@ def _rotate_and_project(arr, angle_deg):
 
 @eqx.filter_jit
 def wasserstein_projected(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Parameters
-		----------
-		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [N]
-			loss reduced over channel and spatial axes
-	"""
+	"""Mean squared difference of random projections of the whole image (not sorted)."""
 	
 	CHANNELS = x.shape[1]
 	WIDTH = x.shape[2]
@@ -307,19 +202,7 @@ def spectral_wasserstein_projected(x,y,key=None,where=None,aux=None,cache=None):
 
 @jax.jit
 def bhattacharyya_distance(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Parameters
-		----------
-		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [...]
-			loss reduced over channel and spatial axes
-	"""
+	"""Bhattacharyya distance between channel images, each normalised to unit L2 norm."""
 	eps = 1e-6
 	x_norm = (x+eps) / (jnp.linalg.norm(x,axis=(-1,-2),keepdims=True)+eps)
 	y_norm = (y+eps) / (jnp.linalg.norm(y,axis=(-1,-2),keepdims=True)+eps)
@@ -331,19 +214,7 @@ def bhattacharyya_distance(x,y,key=None,where=None,aux=None,cache=None):
 
 @jax.jit
 def hellinger_distance(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Parameters
-		----------
-		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [N]
-			loss reduced over channel and spatial axes
-	"""
+	"""Hellinger distance between channel images, each normalised to unit L2 norm."""
 	eps = 1e-6
 	x_norm = (x+eps) / (jnp.linalg.norm(x,axis=(-1,-2),keepdims=True)+eps)
 	y_norm = (y+eps) / (jnp.linalg.norm(y,axis=(-1,-2),keepdims=True)+eps)
@@ -353,19 +224,7 @@ def hellinger_distance(x,y,key=None,where=None,aux=None,cache=None):
 
 @jax.jit
 def kl_divergence(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Parameters
-		----------
-		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [N]
-			loss reduced over channel and spatial axes
-	"""
+	"""KL divergence KL(x || y) between channel images, each normalised to sum to 1."""
 	eps = 1e-6
 	x_norm = (x+eps) / (jnp.sum(x,axis=[-1,-2],keepdims=True)+eps)
 	y_norm = (y+eps) / (jnp.sum(y,axis=[-1,-2],keepdims=True)+eps)
@@ -375,21 +234,9 @@ def kl_divergence(x,y,key=None,where=None,aux=None,cache=None):
 
 @jax.jit
 def average_amplitude_distance(x,y,key=None,where=None,aux=None,cache=None):
-	"""
-		Distance between average intensities of each channel and timestep. Removes all spatial information, 
-		can be a useful auxiliary loss when combined with losses that re-normalise X and Y
-	
-		Parameters
-		----------
-		x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-			true data
+	"""Squared difference of the mean intensity of each channel.
 
-		Returns
-		-------
-		loss : float32 array [N]
-			loss reduced over channel and spatial axes
+	Ignores all spatial structure; useful alongside losses that rescale x and y.
 	"""
 	x_amp = jnp.mean(x,axis=[-1,-2],keepdims=True)
 	y_amp = jnp.mean(y,axis=[-1,-2],keepdims=True)
@@ -473,21 +320,7 @@ def radial_profile_loss(x,y,key=None,where=None,aux=None,cache=None):
 
 @jax.jit
 def spectral_no_phase(x,y,key=None,where=None,aux=None,cache=None):
-	""" 
-		l2 norm in fourier space (discarding phase information)
-
-		Parameters
-		----------
-		x : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [...]
-			loss reduced over channel and spatial axes
-	"""
+	"""L2 distance between Fourier amplitudes (phase discarded)."""
 	fx = jnp.fft.rfft2(x)
 	fy = jnp.fft.rfft2(y)
 	fx = jnp.abs(fx)
@@ -497,21 +330,7 @@ def spectral_no_phase(x,y,key=None,where=None,aux=None,cache=None):
 
 @jax.jit
 def spectral_only_phase(x,y,key=None,where=None,aux=None,cache=None):
-	""" 
-		l2 norm in fourier space, keeping only phase information.
-
-		Parameters
-		----------
-		x : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [...]
-			loss reduced over channel and spatial axes
-	"""
+	"""L2 distance between Fourier phases (spectra scaled to unit modulus)."""
 	fx = jnp.fft.rfft2(x)
 	fy = jnp.fft.rfft2(y)
 	fx_phase = fx / (jnp.abs(fx)+1e-8)
@@ -521,22 +340,7 @@ def spectral_only_phase(x,y,key=None,where=None,aux=None,cache=None):
 
 @jax.jit
 def spectral(x,y,key=None,where=None,aux=None,cache=None):
-	""" 
-		l2 norm in fourier space, keeping phase information.
-		Weighted to emphasise importance of certain frequencies
-
-		Parameters
-		----------
-		x : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			predictions
-		y : float32 [...,CHANNELS,WIDTH,HEIGHT]
-			true data
-
-		Returns
-		-------
-		loss : float32 array [...]
-			loss reduced over channel and spatial axes
-	"""
+	"""L2 distance between Fourier transforms."""
 	fx = jnp.fft.rfft2(x)
 	fy = jnp.fft.rfft2(y)
 	return jnp.nan_to_num(jnp.abs(l2(fx,fy,key,where=where)))

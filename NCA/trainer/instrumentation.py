@@ -1,4 +1,4 @@
-"""Optional JAX profiling and timing, isolated from training semantics."""
+"""Optional JAX profiling and timing; does not affect training."""
 
 import os
 import time

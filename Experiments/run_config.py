@@ -42,7 +42,7 @@ def synchronize_jax(jax_module: Any) -> None:
 
 
 def apply_runtime_overrides(cfg: Any) -> None:
-    """Apply deployment-specific paths without embedding them in manifests."""
+    """Set ``model_store.root`` from ``MODEL_STORE_ROOT`` if it is set."""
     model_store_root = os.getenv("MODEL_STORE_ROOT")
     if model_store_root and OmegaConf.select(cfg, "model_store", default=None) is not None:
         OmegaConf.update(cfg, "model_store.enabled", True, force_add=True)
@@ -53,7 +53,7 @@ def apply_runtime_overrides(cfg: Any) -> None:
 def apply_experiment_defaults(
     cfg: Any, experiment_name: Any, overrides: Any = None
 ) -> None:
-    """Propagate sweep-level identity into a selected run configuration."""
+    """Set ``experiment.name`` (and the W&B group, unless overridden) from the sweep name."""
     if not experiment_name:
         return
     OmegaConf.update(cfg, "experiment.name", str(experiment_name), force_add=True)

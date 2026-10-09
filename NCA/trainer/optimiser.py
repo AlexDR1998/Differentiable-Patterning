@@ -30,7 +30,7 @@ def muon_optimiser(schedule):
     # )
 
 def sam_optimiser(base_optimiser, rho=0.05, sync_period=2):
-    """Wraps an existing optimiser with SAM (Sharpness-Aware Minimization)."""
+    """Wrap an optimiser with SAM (Sharpness-Aware Minimization)."""
     # return optax.chain(
         # optax.sam(rho=rho, base_optimiser=base_optimiser),
         # optax.scale_by_param_block_norm(),
@@ -51,9 +51,9 @@ def sam_optimiser(base_optimiser, rho=0.05, sync_period=2):
 def build_learning_rate_schedule(optimiser_config, total_steps):
     """Build the configured Optax learning-rate schedule and its name.
 
-    All schedules share the existing linear warmup. Schedule-specific time is
-    counted after warmup, except for the legacy exponential schedule whose
-    transition length remains ``run.iterations`` for backward compatibility.
+    Every schedule starts with a linear warmup and is counted from its end,
+    except the exponential schedule, whose transition length is the total
+    ``run.iterations`` (as in older runs).
     """
     peak_lr = float(optimiser_config.learn_rate)
     warmup_steps = int(optimiser_config.warmup_steps)
@@ -143,9 +143,7 @@ def build_learning_rate_schedule(optimiser_config, total_steps):
 
 
 def build_optimiser(optimiser_config, total_steps, return_schedule=False):
-    """
-        Construct an optimiser from its focused typed configuration.
-    """
+    """Build the optimiser from its typed config."""
     schedule, schedule_name = build_learning_rate_schedule(optimiser_config, total_steps)
     if optimiser_config.type == "nadam":
         base_optimiser = optax.nadam(schedule)

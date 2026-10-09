@@ -1,4 +1,4 @@
-"""Resolve typed loss configuration into the existing JAX loss primitives."""
+"""Turn the typed loss config into the JAX loss functions used in training."""
 
 from dataclasses import fields, dataclass
 from typing import Any

@@ -1,14 +1,11 @@
-# Local model registry
+# Model registry
 
-Config-driven NCA training publishes the best checkpoint as an immutable model
-bundle when `model_store.enabled` is true. W&B remains the training log; these
-bundles are the offline, reproducible inference artifacts.
+With `model_store.enabled: true`, training saves the best checkpoint as a model
+bundle. W&B holds the training logs; bundles are what you load models from
+afterwards. Bundles are never edited once written.
 
-Local runs use `model_store.root` from the resolved config. Cluster launchers
-set `MODEL_STORE_ROOT` at runtime so manifests remain portable across storage
-mounts. The runtime value takes precedence over the config default.
-
-The store has the following layout:
+The store root is `model_store.root` from the config, overridden by the
+`MODEL_STORE_ROOT` environment variable (the cluster launchers set it):
 
 ```text
 $MODEL_STORE_ROOT/
@@ -21,8 +18,8 @@ $MODEL_STORE_ROOT/
   registry.sqlite
 ```
 
-Training jobs only create their own bundle directories. They do not write the
-shared SQLite file. Rebuild that disposable index after copying models locally:
+Training jobs only write their own bundle folder. `registry.sqlite` is an index
+you rebuild after copying models locally:
 
 ```bash
 python -m Experiments.model_registry reindex
@@ -30,17 +27,12 @@ python -m Experiments.model_registry list
 python -m Experiments.model_registry show <model-id>
 ```
 
-The CLI uses `--root` when supplied, otherwise `MODEL_STORE_ROOT`, and finally
-the repository-local `models/` directory:
+The CLI uses `--root` if given, then `MODEL_STORE_ROOT`, then `models/` in the
+repository.
 
-```bash
-python -m Experiments.model_registry --root /path/to/Models reindex
-```
+## Loading models
 
-## Python and marimo
-
-The registry exposes ordinary pandas dataframes suitable for marimo tables,
-filters, and SQL-backed analysis:
+The registry returns pandas dataframes, which work directly in marimo:
 
 ```python
 from Experiments.model_registry import ModelRegistry
@@ -53,11 +45,15 @@ tags = registry.tags_df()
 selected = models.query("family == 'NCA' and status == 'complete'")
 bundle = registry.get(selected.iloc[0].model_id)
 model = bundle.load_model()
-cfg = bundle.config
+cfg = bundle.config  # typed ExperimentConfig
 ```
 
-Aliases, tags, and notes are deliberately mutable and live outside immutable
-model bundles:
+Each bundle records the resolved config, model factory, git state, package
+versions and a checkpoint checksum. `bundle.load_model()` rebuilds the model
+from its saved `ModelConfig` through that factory, checks the checksum, then
+loads the weights.
+
+Aliases, tags and notes can be changed, and are stored outside the bundle:
 
 ```python
 registry.annotate(
@@ -68,28 +64,19 @@ registry.annotate(
 )
 ```
 
-The saved config is the resolved, versioned `ExperimentConfig` dataclass
-representation and must not be changed. `bundle.config` is typed, and model
-reconstruction receives only its saved `ModelConfig`.
-Notebook-specific rollout data and parameters should remain separate inputs.
-
 ### Retired model families
 
-`bundle.load_model()` uses portable reconstruction by default. Bundles whose
-saved family is `NCA_sycl` or `NCA_fast` are rebuilt as `NCA`, and `gNCA_sycl`
-as `gNCA`. The parameters have the same layout, so their Equinox leaves load
-directly on CPU or NVIDIA/CUDA. Passing `implementation="recorded"` for one of
-these bundles is unsupported because the recorded implementation is no longer
-present.
+Bundles saved as `NCA_sycl` or `NCA_fast` load as `NCA`, and `gNCA_sycl` as
+`gNCA`; the weights have the same layout. `implementation="recorded"` does not
+work for these, since the old code is gone.
 
-The `gNCA`, `nNCA` and `gnNCA` families are not separate classes any more:
-the factory builds an `NCA` with `GATED=True` and/or `PARAMETER_NOISE_LEVEL`
-set. These options are static fields, so they are not written to `model.eqx`,
-and the saved layout matches the old classes exactly.
+`gNCA`, `nNCA` and `gnNCA` are now `NCA` with `GATED=True` and/or
+`PARAMETER_NOISE_LEVEL` set. These are static fields, so they are not saved in
+`model.eqx` and old bundles load unchanged.
 
 ## Recording evaluations
 
-Evaluation summaries are immutable artifacts separate from model bundles:
+Evaluation results are saved separately from the bundles:
 
 ```python
 from Experiments.model_registry import record_evaluation
@@ -106,31 +93,21 @@ record_evaluation(
 registry.reindex()
 ```
 
-Store large trajectories beside the evaluation manifest as `.npz` or another
-appropriate format. Keep only scalar summary metrics in the manifest and SQL
-index.
+Keep only scalar metrics in the manifest. Save large arrays next to it (e.g.
+as `.npz`).
 
-## Recovery contract
+## Checking evaluation inputs
 
-An Equinox leaf checkpoint requires a matching model structure. Each bundle
-therefore records the resolved config, model factory, Git state, package
-versions, and checkpoint checksum. `bundle.load_model()` reconstructs the model
-through that factory, verifies the checksum, and then loads the leaves.
-
-## Reconstructing evaluation inputs
-
-New bundles include a compact `evaluation_input` record rather than a copy of
-the initial-condition arrays. It fingerprints the canonical `data[:, 0]` input
-and, when used, the boundary mask. The resolved config remains the recipe for
-reloading the source data. A local evaluator must rebuild that data and verify
-it before running:
+Bundles don't store the training data. Instead `manifest.evaluation_input`
+holds hashes, shapes and dtypes of the initial condition `data[:, 0]` (and the
+boundary mask, if used). Before evaluating, reload the data as described by
+`bundle.config` and check it still matches:
 
 ```python
 from Experiments.model_registry import verify_evaluation_input
 
 bundle = registry.get(model_id)
-# Reload with the domain loader selected by bundle.config.
-data, boundary_mask = ...
+data, boundary_mask = ...  # reload with the domain's loader
 verify_evaluation_input(
     data,
     bundle.manifest.evaluation_input,
@@ -138,6 +115,4 @@ verify_evaluation_input(
 )
 ```
 
-This adds only hashes, shapes, and dtypes to each bundle. If the external data
-or preprocessing has changed, verification fails instead of evaluating on a
-silently different initial condition.
+This fails if the data or pre-processing has changed since training.

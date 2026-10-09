@@ -46,9 +46,7 @@ from pprint import pprint
 
 
 def show_histograms(data, channel_names, title="Pre processing histograms"):
-    """
-    Shows histograms of pixel intensities for each channel and timestep
-    """
+    """Plot histograms of pixel intensities for each channel and timestep."""
 
     # n_channels = #data.shape[-1]
 
@@ -83,10 +81,13 @@ def process_data(
     VERBOSE=False,
     mode=("mean_0_std_1", "map_to_0_1", "downsample"),
 ):
-    """
-    Expects data as a list of [T] arrays of shape [BATCH, X, Y, CHANNELS], where for each entry in the list, BATCH can be different
-    Some transformations need to be applied consistently across T,
+    """Apply the preprocessing steps in ``mode``, in order.
 
+    ``data`` is a list over timesteps of ``[BATCH, X, Y, C]`` arrays (BATCH may
+    differ between timesteps). ``hist_eq``, ``map_to_0_1`` and
+    ``mean_0_std_1`` pool their statistics over all timesteps. Returns
+    ``(data, aux)``, where ``aux`` holds backgrounds, foregrounds, the
+    histogram bounds and the ``PreprocessingConfig``.
     """
     config = PreprocessingConfig.from_legacy(
         mode,
@@ -168,11 +169,7 @@ def process_data(
         return arr
 
     def batch_average(arr):
-        """
-        Averages the data across the batch dimension.
-        Expects an array of shape [BATCH, X, Y, C]
-        Returns an array of shape [1, X, Y, C]
-        """
+        """Average ``[BATCH, X, Y, C]`` arrays over the batch, giving ``[1, X, Y, C]``."""
         if BATCH_AVERAGE:
             return [
                 reduce(timestep, "BATCH X Y C -> () X Y C", "mean") for timestep in arr
@@ -222,10 +219,7 @@ def process_data(
         return arr, backgrounds
 
     def _remove_background(arr):
-        """
-        Expects an array of shape [BATCH, X, Y, C]
-        For each channel and batch, computes the background with the rolling ball algorithm and subtracts it from the image.
-        """
+        """Subtract a rolling-ball background from each image and channel of ``[BATCH, X, Y, C]``."""
         arr = jnp.array(arr)
         backgrounds = []
         # Apply rolling ball algorithm to each channel
@@ -241,10 +235,7 @@ def process_data(
         return arr, backgrounds
 
     def _remove_background_tophat(arr):
-        """
-        Expects an array of shape [BATCH, X, Y, C]
-        For each channel and batch, computes the background with the tophat algorithm and subtracts it from the image.
-        """
+        """Remove the background of each image and channel of ``[BATCH, X, Y, C]`` with a white top-hat."""
         arr = jnp.array(arr)
         backgrounds = []
         # Apply tophat algorithm to each channel
@@ -519,68 +510,48 @@ def load_micropattern_circle_nodal_knockout_9ch_explicit_colony(
     FILTER_KN_TIME=0,
     PROCESSING_MODES=("map_to_0_1",),
 ):
-    """
-        Loads circular micropatterns for 9 channels: LMBR, TBXT, SOX17, SOX2, FOXA2, Cer1, Lefty2, Nodal, Dappi
-        Data is measured from 6 separate colonies, with some duplication of channels (LMBR, TBXT, SOX17 are in both A and B)
+    """Load circular micropatterns from separately stained colonies (subfolders A-F).
 
-        Depending on if FILTER_KN_TIME is None, 0 or 24, this function will load different colonies and return DIFFERENT SHAPES OF OUTPUT DATA
-        1) If FILTER_KN_TIME is None, loads colonies A, B, C, D (no knockouts)
-            Returns data of shape [BATCHES, TIMESTEPS, 12 CHANNELS, X, Y]
-            CHANNEL NAMES:
-            [
-                "A-LMBR",
-                "A-TBXT",
-                "A-SOX17",
-                "A-SOX2",
-                "B-LMBR",
-                "B-TBXT",
-                "B-SOX17",
-                "B-FOXA2",
-                "C-Cer1",
-                "C-Lefty2",
-                "C-Nodal",
-                "D-Lef1",
-            ]
-        2) If FILTER_KN_TIME is 0 or 24, loads colonies and D, E, F (knockout), and some extra padding channels as the NCA model expects 9 channels
-            Returns data of shape [BATCHES, TIMESTEPS, 9 CHANNELS, X, Y]
-            CHANNEL NAMES:
-            [
-                "0-LMBR",
-                "E-TBXT",
-                "E-SOX17",
-                "E-SOX2",
-                "F-FOXA2",
-                "0-Cer1",
-                "0-Lefty2",
-                "C-Nodal",
-                "D-Lef1",
-            ]
-        Parameters:
-        ----------
-        impath: str
-            Path to the folder containing the data. Expects subfolders A, B, C, D, E, F for each colony.
-        DOWNSAMPLE: int
-            Factor to downsample the images by.
-        BATCHES: int
-            Number of batches to repeat the data for.
-        BACKGROUND_RADIUS: int
-            Radius for background subtraction.
-        TIMESTEPS: list
-            List of timesteps in hours to load. 
-        HIST_EQS: tuple
-            Percentiles for histogram equalisation.
-        PROCESSING_MODES: list
-            List of processing modes to apply. See process_data function for options.
-        Returns:
-        -------
-        ims: jnp.array
-            Processed images of shape [BATCHES, TIMESTEPS, CHANNELS, X, Y]
-        aux: dict
-            Auxiliary data from processing. Used for debugging.
-        CHANNEL_NAMES_COLONIES: list
-            List of channel names in the order they are loaded.
-        boundary_mask: jnp.array
-            Boundary mask of shape [BATCHES, 1, X, Y]. Indicates where the micropattern is adhesing to the substrate.
+    Colonies: A (LMBR, TBXT, SOX17, SOX2), B (LMBR, TBXT, SOX17, FOXA2),
+    C (Cer1, Lefty2, Nodal), D (Lef1), E (TBXT, SOX17, SOX2), F (FOXA2).
+    LMBR, TBXT and SOX17 are measured in both A and B.
+
+    ``FILTER_KN_TIME`` selects the data:
+
+    - ``None``: control colonies A-D.
+    - ``0`` or ``24``: Nodal knockout from that hour. D, E and F are the
+      knockout colonies. After 0h the A/B marker channels are taken from E
+      and F, LMBR, Cer1 and Lefty2 are zeroed, and Nodal is zeroed from the
+      knockout time. Zeroed channels are named with a ``0-`` prefix.
+
+    Both cases give 12 channels, named in ``channel_names``.
+
+    Parameters
+    ----------
+    impath : str
+        Folder with one subfolder per colony.
+    DOWNSAMPLE : int
+        Downsampling factor.
+    BATCHES : int
+        Number of copies of the data along the batch axis.
+    BACKGROUND_RADIUS : int
+        Radius for background subtraction.
+    TIMESTEPS : sequence of int
+        Timesteps to load, in hours.
+    HIST_EQS : tuple
+        Percentiles for histogram equalisation.
+    FILTER_KN_TIME : int or None
+        Knockout start time (see above).
+    PROCESSING_MODES : sequence of str
+        Processing steps, see ``process_data``.
+
+    Returns
+    -------
+    MicropatternDataset
+        ``data`` is ``[BATCHES, T, 12, X, Y]`` and ``boundary_mask``
+        ``[BATCHES, 1, X, Y]`` (where the micropattern adheres to the
+        substrate). ``measurement_mask`` marks which channels are measured
+        at each timestep.
     """
     CHANNEL_NAMES_DESIRED = [
         ["LMBR","TBXT","SOX17","SOX2"],
@@ -779,36 +750,35 @@ def load_micropattern_circle_8ch_individual_explicit_colony(
     HIST_EQS=(1.0, 95.0),
     PROCESSING_MODES=("map_to_0_1",),
 ):
-    """
-        Loads circular micropatterns for 8 channels: LMBR, TBXT, SOX17, SOX2, FOXA2, Cer1, Lefty2, Nodal
-        Data is measured from 3 separate colonies, with some duplication of channels (LMBR, TBXT, SOX17 are in both A and B)
+    """Load circular micropatterns from three separately stained colonies.
 
-        Parameters:
-        ----------
-        impath: str
-            Path to the folder containing the data. Expects subfolders A, B, C for each colony.
-        DOWNSAMPLE: int
-            Factor to downsample the images by.
-        BATCHES: int
-            Number of batches to repeat the data for.
-        BACKGROUND_RADIUS: int
-            Radius for background subtraction.
-        TIMESTEPS: list
-            List of timesteps in hours to load. 
-        HIST_EQS: tuple
-            Percentiles for histogram equalisation.
-        PROCESSING_MODES: list
-            List of processing modes to apply. See process_data function for options.
-        Returns:
-        -------
-        ims: jnp.array
-            Processed images of shape [BATCHES, TIMESTEPS, CHANNELS=11, X, Y]
-        aux: dict
-            Auxiliary data from processing. Used for debugging.
-        CHANNEL_NAMES_COLONIES: list
-            List of channel names in the order they are loaded.
-        boundary_mask: jnp.array
-            Boundary mask of shape [BATCHES, 1, X, Y]. Indicates where the micropattern is adhesing to the substrate.
+    Subfolders A (LMBR, TBXT, SOX17, SOX2), B (LMBR, TBXT, SOX17, FOXA2) and
+    C (Cer1, Lefty2, Nodal); LMBR, TBXT and SOX17 are measured in both A
+    and B.
+
+    Parameters
+    ----------
+    impath : str
+        Folder with subfolders A, B and C.
+    DOWNSAMPLE : int
+        Downsampling factor.
+    BATCHES : int
+        Number of copies of the data along the batch axis.
+    BACKGROUND_RADIUS : int
+        Radius for background subtraction.
+    TIMESTEPS : sequence of int
+        Timesteps to load, in hours.
+    HIST_EQS : tuple
+        Percentiles for histogram equalisation.
+    PROCESSING_MODES : sequence of str
+        Processing steps, see ``process_data``.
+
+    Returns
+    -------
+    MicropatternDataset
+        ``data`` is ``[BATCHES, T, 11, X, Y]`` and ``boundary_mask``
+        ``[BATCHES, 1, X, Y]`` (where the micropattern adheres to the
+        substrate).
     """
     CHANNEL_NAMES_DESIRED = [
         ["LMBR","TBXT","SOX17","SOX2"],
@@ -899,12 +869,9 @@ def load_micropattern_circle_8ch_individual_explicit_colony(
 
 
 def downsample_padder(arr, downsample):
-    """Pads arrays with extra zeros if needed such that it can be properly downsampled by downsample
+    """Zero-pad the spatial axes up to a multiple of ``downsample``.
 
-        Assumes array in shape X Y C, _ X Y C or _ _ X Y C
-    Args:
-        arr (_type_): _description_
-        downsample (_type_): _description_
+    Accepts ``[X, Y, C]``, ``[_, X, Y, C]`` or ``[_, _, X, Y, C]`` arrays.
     """
     # print(arr.shape)
     if arr.ndim == 3:
@@ -955,7 +922,7 @@ def downsample_padder(arr, downsample):
 
 
 def pad_to_biggest(ims):
-    """takes a list of images [array[X Y C]] and pads the X and Y dimensions to that of the biggest one"""
+    """Zero-pad a list of ``[X, Y, C]`` images to the largest X and Y, keeping them centred."""
     # Determine the maximum height and width among all images
     max_height = max(im.shape[0] for im in ims)
     max_width = max(im.shape[1] for im in ims)
@@ -986,15 +953,12 @@ def load_micropattern_shape_array(
     HIST_BINS=None,
     PROCESSING_MODES=("align", "hist_eq", "map_to_0_1"),
 ):
-    """_summary_
+    """Load and preprocess a shaped micropattern image.
 
-    Args:
-        impath (string): path to files
-        DOWNSAMPLE (int): downsampling ratio
-        BATCH_AVERAGE (bool, optional): Average data across batches. Defaults to False.
-
-    Returns:
-        Array [BATCH, X, Y, C]: _description_
+    Only one file (``filenames[1]`` of the sorted ``impath`` glob) is
+    loaded, since only its shape is used. Returns a
+    ``MicropatternShapeDataset`` with the output of ``process_data`` as
+    ``data``.
     """
     CHANNEL_NAMES = [
         "SOX17",
@@ -1122,9 +1086,7 @@ def load_micropattern_shape_sequence(
 
 
 def normalise_micropattern_radii(training_data, impath, percentile_thresh):
-    """
-        Loads the micropattern radii data, and normalises it such that the histogram of pixel values matches those from the training data at 48h
-    """
+    """Load the micropattern radii images and rescale each channel to the range of the training data at 48h."""
     filenames = glob.glob(impath)
     filenames = list(sorted(filenames))
     ims = []
@@ -1150,8 +1112,7 @@ def normalise_micropattern_radii(training_data, impath, percentile_thresh):
     ims = list(map(normalise, ims))
 
     # Now scale each channel so the max and min match those from the training data at 48h
-    # We assume the order of channels in ims is the same as in training data (LMBR, TBXT, SOX17, SOX2)
-    # We also assume the histogram of pixel values in the training data at 48h is representative of the desired distribution for the radii data
+    # Channels are assumed to be in the training data order (LMBR, TBXT, SOX17, SOX2)
     training_ims_48h = training_data[0, -1, :4]  # Shape is [B, T, C, X, Y] -> [C,X,Y]
     training_max = np.max(training_ims_48h, axis=(1, 2))  # Max for each channel
     training_min = np.min(training_ims_48h, axis=(1, 2))  # Min for each channel
@@ -1175,8 +1136,7 @@ def normalise_micropattern_radii(training_data, impath, percentile_thresh):
 
 
 def shift_image(img, shift_val):
-    """
-    Shift a 2D image by a fractional amount using bilinear interpolation with periodic boundaries.
+    """Shift a 2D image by a fractional amount, with bilinear interpolation and periodic boundaries.
 
     Parameters
     ----------
@@ -1232,10 +1192,10 @@ def shift_image(img, shift_val):
 
 # @jax.jit
 def align_centre_of_mass(img_stack):
-    """
-    Given a stack of images with shape (N, H, W, C) where the spatial structure
-    is roughly circular, shift each image so that the center of mass (computed from
-    the sum over channels) aligns with the center of the image.
+    """Shift each image of a stack so its colony centre is at the image centre.
+
+    The centre is the centroid of a smoothed, thresholded, convex-hull
+    foreground of the channel mean.
 
     Parameters
     ----------
@@ -1246,6 +1206,8 @@ def align_centre_of_mass(img_stack):
     -------
     aligned_stack : numpy.ndarray
         Stack of aligned images with the same shape.
+    foregrounds : numpy.ndarray
+        Shifted foreground masks, (N, H, W).
     """
     aligned_stack = img_stack.copy()
     N, H, W, C = aligned_stack.shape

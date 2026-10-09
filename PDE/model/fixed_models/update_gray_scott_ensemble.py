@@ -26,13 +26,20 @@ class F(eqx.Module):
         The state has shape [len(gamma), len(alpha), 2, x, y]; see update_gray_scott.py
         for the equations.
 
-        Args:
-            PADDING (str): Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
-            dx (float): grid spacing
-            KERNEL_SCALE (int, optional): spatial operator kernel size. Defaults to 1.
-            DA, DB (float, optional): diffusion rates of A and B.
-            alpha (array, optional): feed rates.
-            gamma (array, optional): kill rates.
+        Parameters
+        ----------
+        PADDING : str
+            Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
+        dx : float
+            Grid spacing
+        KERNEL_SCALE : int, optional
+            Spatial operator kernel size. Defaults to 1.
+        DA, DB : float, optional
+            Diffusion rates of A and B.
+        alpha : array, optional
+            Feed rates.
+        gamma : array, optional
+            Kill rates.
         """
         self.gamma=repeat(gamma,"a -> a b () () ()",b=len(alpha))
         self.alpha=repeat(alpha,"b -> a b () () ()",a=len(gamma))

@@ -26,26 +26,27 @@ class Ops(eqx.Module):
     #partial_laplacian_inverse: eqx.Module
     def __init__(self,PADDING,dx,KERNEL_SCALE=1,SMOOTHING=1):
         """
-        Equinox module for computing finite difference approximation of gradient, divergence, curl or laplacian of 
-        scalar or vector fields
-        Partition and combine are properly defined such that this isn't changed during training.
-            div and curl: f32[2,C, x, y] -> f32[C, x, y]
+        Finite difference gradient, divergence, curl, laplacian and local average
+        of scalar or vector fields, as fixed convolution kernels. ``partition``
+        keeps the kernels out of the trainable parameters.
+
+            div and curl: f32[2, C, x, y] -> f32[C, x, y]
             grad        : f32[C, x, y] -> f32[2, C, x, y]
             lap         : f32[C, x, y] -> f32[C, x, y]
 
-            Args:
-                PADDING: str
-                    'ZEROS'
-                    'REFLECT'
-                    'REPLICATE'
-                    'CIRCULAR'
-                dx: float
-                    step size
-            
+        Parameters
+        ----------
+        PADDING : str
+            'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
+        dx : float
+            grid spacing
+        KERNEL_SCALE : int
+            kernel radius; 1 gives 3x3 stencils, larger values Gaussian-derivative kernels
+        SMOOTHING : int
+            for KERNEL_SCALE=1: 0 for plain stencils, 1 for Sobel-style smoothed ones
         """
-        # ``KERNEL_SCALE`` is a discrete kernel radius. Typed configs provide
-        # an int, but accepting integral floats preserves older YAML-backed
-        # callers while preventing a float from reaching Conv2d.kernel_size.
+        # KERNEL_SCALE is a kernel radius. Whole-number floats (from older
+        # YAML configs) are accepted and converted to int for Conv2d.
         if isinstance(KERNEL_SCALE, float):
             if not KERNEL_SCALE.is_integer():
                 raise ValueError("KERNEL_SCALE must be a positive integer")
@@ -335,8 +336,7 @@ class Ops(eqx.Module):
     
     @eqx.filter_jit
     def NonlinearDiffusion(self,f: Float[Array,"C x y"],g: Float[Array, "C x y"])->Float[Array, "C x y"]:
-        """ Computes the anisotropic/nonlinear diffusion: Div(f(x) Grad g(x)) in a stable way. 
-        If f is constant, reduces to: f Laplacian g
+        """Nonlinear diffusion Div(f Grad g), computed as Grad f . Grad g + f Lap g.
         """
         grad_f = self.Grad(f)
         grad_g = self.Grad(g)
@@ -350,7 +350,7 @@ class Ops(eqx.Module):
     @eqx.filter_jit
     def VectorLaplacian(self,X: Float[Array,"dim C x y"])->Float[Array, "dim C x y"]:
         """
-        Computes the laplacian of a vector field - in cartesian coordinates it reduces to a vectorised Lap
+        Laplacian of a vector field (Lap of each component, in cartesian coordinates)
         """
         lX = self.Lap(X[0])
         lY = self.Lap(X[1])
@@ -362,11 +362,8 @@ class Ops(eqx.Module):
                X: Float[Array,"dim C x y"],
                Y: Float[Array,"dim C x y"])->Float[Array, "dim C x y"]:
         """
-        Compute the spacial part of a material derivative - (X dot Grad) Y
-        Where Y is a vector field 
-        
-        (X dot Grad) Y = X dot (Grad Y)
-
+        Spatial part of a material derivative, (X dot Grad) Y = X dot (Grad Y),
+        for a vector field Y
         """
         #TODO: check the axes are correct here  
         grad_y = self.VecGrad(Y)
@@ -375,10 +372,8 @@ class Ops(eqx.Module):
     @eqx.filter_jit
     def MatDiff(self,X: Float[Array,"dim C x y"],Y: Float[Array,"C x y"])->Float[Array, "C x y"]:
         """
-        Compute the spacial part of a material derivative - (X dot Grad) Y
-        Where Y is a scalar field 
-        
-        (X dot Grad) Y = X dot (Grad Y)
+        Spatial part of a material derivative, (X dot Grad) Y = X dot (Grad Y),
+        for a scalar field Y
         """
         grad_y = self.Grad(Y)
         return einsum(X,grad_y,"dim C x y, dim C x y -> C x y")

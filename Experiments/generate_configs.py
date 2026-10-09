@@ -157,8 +157,8 @@ def main() -> None:
 
             should_resave_manifest = True
 
-        # Indices are scheduler-facing identifiers. Keep emitted filenames stable:
-        # their contents remain paired with the corresponding manifest entry.
+        # Shuffle only the scheduler indices; config filenames stay paired with
+        # their manifest entries.
         if args.shuffle_indices:
             configs = manifest.get("configs", [])
             old_indices = [item.get("index") for item in configs]
@@ -172,7 +172,7 @@ def main() -> None:
 
         # generate_manifest writes manifest.yaml internally; resave only if we changed it.
         if should_resave_manifest:
-            from omegaconf import OmegaConf  # local import to keep changes minimal
+            from omegaconf import OmegaConf
 
             OmegaConf.save(OmegaConf.create(manifest), output_dir / "manifest.yaml")
 

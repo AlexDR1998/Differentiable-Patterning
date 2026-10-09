@@ -1,10 +1,10 @@
-"""Metadata describing biological channels and co-measured image channels.
+"""Biological state channels and the image channels that measure them.
 
 Micropattern datasets combine staining panels that measure overlapping sets of
-biological markers.  A :class:`ChannelSchema` keeps the unique model state
-separate from the measurement layout stored in the target tensor.  In
-particular, experiment groups record which channels were acquired together and
-can therefore support within-image correlation losses.
+markers. A :class:`ChannelSchema` keeps the model state channels (one per
+marker) separate from the measurement channels in the target tensor.
+Experiment groups record which channels were imaged together, which is what
+within-image correlation losses need.
 """
 
 from dataclasses import dataclass
@@ -18,13 +18,13 @@ class MeasurementChannel:
 
     Parameters
     ----------
-    name:
-        Unique, user-facing name in the assembled target tensor.
-    marker:
-        Biological state channel represented by this measurement.
-    source_index:
-        Channel index in the source image for this experiment.  ``None`` is
-        useful for datasets assembled from separate single-channel files.
+    name : str
+        Unique name in the assembled target tensor.
+    marker : str
+        State channel this measurement belongs to.
+    source_index : int or None
+        Channel index in the source image. ``None`` for datasets built from
+        separate single-channel files.
     """
 
     name: str
@@ -57,11 +57,11 @@ class ExperimentChannelGroup:
 
 @dataclass(frozen=True)
 class ChannelSchema:
-    """Relationship between unique model state and experimental targets.
+    """Mapping between model state channels and measured target channels.
 
-    Target tensors concatenate ``experiment_groups`` in their declared order,
-    preserving repeated measurements of the same marker.  Model predictions
-    contain one channel for each entry in ``state_channels``.
+    Target tensors concatenate ``experiment_groups`` in order, keeping
+    repeated measurements of the same marker. Model predictions have one
+    channel per entry in ``state_channels``.
     """
 
     name: str
@@ -127,10 +127,10 @@ class ChannelSchema:
         return tuple(group.name for group in self.experiment_groups)
 
     def select_groups(self, group_names: Optional[Sequence[str]] = None):
-        """Return a schema containing only the requested experiment groups.
+        """Schema with only the given experiment groups.
 
-        State channels are restricted to markers measured by the selected
-        groups, while retaining their order in the parent schema.
+        State channels are restricted to markers measured by those groups,
+        in their original order.
         """
 
         if group_names is None:
@@ -209,7 +209,7 @@ class ChannelSchema:
 
     @property
     def measurement_weights(self) -> Tuple[float, ...]:
-        """Static weights giving each biological marker unit total weight."""
+        """Per-measurement weights so that each marker has total weight 1."""
 
         occurrence_counts = tuple(
             len(indices) for indices in self.state_to_measurements
@@ -231,7 +231,7 @@ class ChannelSchema:
 
     @property
     def correlation_pair_weights(self) -> Tuple[float, ...]:
-        """Normalize biological pairs repeated across experimental groups."""
+        """Per-pair weights so that a marker pair measured in several groups has total weight 1."""
 
         state_pairs = tuple(
             tuple(sorted((self.target_to_state[left], self.target_to_state[right])))
@@ -259,7 +259,7 @@ class ChannelSchema:
         return len(self.measurement_channels)
 
     def validate_measurement_channel_count(self, channel_count: int):
-        """Raise a descriptive error when a target tensor has the wrong width."""
+        """Raise if a target tensor has the wrong number of channels."""
 
         if channel_count != self.n_measurement_channels:
             raise ValueError(

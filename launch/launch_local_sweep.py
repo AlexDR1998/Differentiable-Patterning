@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Run entries from an experiment manifest sequentially on one local GPU.
 
-This is intentionally a scheduler-free companion to ``launch/launch_batch_slurm.sh``:
-the manifest remains the experiment contract, while each entry runs in a fresh
-Python process through ``Experiments.run_config``.
+A local alternative to ``launch/launch_batch_slurm.sh`` with no scheduler: each
+entry runs in a fresh Python process through ``Experiments.run_config``.
 """
 
 from __future__ import annotations
@@ -26,11 +25,10 @@ def utc_now() -> str:
 
 
 def load_manifest_metadata(path: Path) -> tuple[str, int]:
-    """Read the two top-level fields needed by this launcher.
+    """Read ``experiment_name`` and ``count`` from the manifest with a regex.
 
-    The actual YAML is deliberately left to ``Experiments.run_config``, which
-    uses OmegaConf. This keeps command discovery/dry-runs usable before the
-    project environment is activated.
+    Full YAML parsing is left to ``Experiments.run_config``, so dry runs work
+    before the project environment is activated.
     """
     source = path.read_text(encoding="utf-8")
     name_match = re.search(r"^experiment_name:\s*([^#\n]+)", source, re.MULTILINE)

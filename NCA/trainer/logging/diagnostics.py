@@ -13,8 +13,7 @@ from PIL import Image
 
 
 def plot_to_image(figure):
-	"""Converts the matplotlib plot specified by 'figure' to a PNG image and
-	returns it. The supplied figure is closed and inaccessible after this call."""
+	"""Render a matplotlib figure to a PNG image array, and close the figure."""
 	import matplotlib.pyplot as plt
 
 	buf = io.BytesIO()
@@ -46,11 +45,11 @@ def compute_channel_time_diagnostics(
 ):
 	"""Compute total intensity and mean radial intensity per channel/timestep.
 
-	Inputs use [batch, time, channel, x, y]. Radial distance is measured from
-	the centroid of each boundary mask and normalized by its maximum in-mask
-	radius. Profiles are averaged over batches and over pixels in each annulus.
-	The radial profile includes all pixels out to ``radial_extent`` times the
-	boundary radius, allowing the diagnostic to show the immediate exterior.
+	Inputs are [batch, time, channel, x, y]. Radial distance is measured from
+	the centroid of each boundary mask, normalised by its largest in-mask
+	radius. Profiles are averaged over batches and over the pixels in each
+	annulus, out to ``radial_extent`` times the boundary radius (so just
+	outside the boundary is shown too).
 	"""
 	predictions = np.asarray(predictions, dtype=np.float32)
 	targets = np.asarray(targets, dtype=np.float32)
@@ -148,9 +147,9 @@ def compute_channel_correlation_diagnostics(
 ):
 	"""Compute masked pixelwise Pearson channel correlations per timestep.
 
-	Correlations are calculated independently for each batch from all pixels
-	inside its adhesion mask, then averaged across batches. Constant channels
-	are assigned zero correlation because Pearson correlation is undefined.
+	Correlations are computed for each batch over the pixels inside its
+	adhesion mask, then averaged over batches. Constant channels get zero
+	correlation.
 	"""
 	predictions = np.asarray(predictions, dtype=np.float32)
 	targets = np.asarray(targets, dtype=np.float32)

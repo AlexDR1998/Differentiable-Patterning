@@ -71,7 +71,7 @@ def _safe_wandb_tag(tag, max_length=MAX_WANDB_TAG_LENGTH):
 
 
 def _wandb_tag_key(key):
-    """Shorten known deep configuration paths before length protection."""
+    """Shorten long config paths using ``WANDB_TAG_KEY_ALIASES``."""
 
     for prefix, alias in WANDB_TAG_KEY_ALIASES.items():
         if key == prefix:
@@ -191,10 +191,9 @@ def load_model_registry_list(
 ):
     """Load the NCA models named by a model-registry explorer YAML export.
 
-    Models are returned in export order. Each registry bundle verifies its
-    checkpoint checksum before reconstructing the architecture and loading its
-    Equinox leaves. Portable loading is the default and replaces an archived
-    SYCL implementation with its equivalent standard JAX model.
+    Models are returned in export order, and each checkpoint checksum is
+    checked on loading. ``implementation="portable"`` loads retired SYCL
+    families as their equivalent standard JAX model.
 
     ``store_root`` defaults to ``MODEL_STORE_ROOT`` and then ``./models``,
     matching the registry CLI and explorer defaults.
@@ -334,7 +333,7 @@ def build_wandb_tags(cfg):
 
 
 def build_registry_tags(cfg):
-    """Build readable, untruncated tags for the local model registry."""
+    """Untruncated tags for the local model registry."""
 
     automatic_tags = build_tags(cfg, max_length=None)
     return list(dict.fromkeys((*automatic_tags, *_explicit_tags(cfg))))

@@ -59,7 +59,7 @@ class PreparedTraining:
     def intervention_observation_times(self):
         """Times used to map knockout hours to slots.
 
-        ``None`` keeps the historical 12-hour slots, which uniform schedules use.
+        ``None`` means 12-hour slots, as used by uniform schedules.
         """
         if self.interval_schedule.mode == "uniform":
             return None

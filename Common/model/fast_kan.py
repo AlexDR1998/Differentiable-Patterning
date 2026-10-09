@@ -29,10 +29,12 @@ def resolve_base_activation(base_activation: Union[str, Callable, None]):
 
 
 class FastRBFKANLayer(eqx.Module):
-    """Vectorised Gaussian RBF KAN layer for vector inputs.
+    """Gaussian RBF KAN layer for vector inputs.
 
-    This keeps one univariate RBF expansion per input-output edge, but computes
-    all basis values once per input feature and projects with einsum.
+    Each input-output edge is its own 1D function, a weighted sum of Gaussian
+    bumps on a fixed grid, plus an optional ``base_weight * activation(x)``
+    branch. The basis is evaluated once per input feature and shared by all
+    edges.
     """
 
     in_features: int
@@ -173,10 +175,9 @@ class FastRBFKANLayer(eqx.Module):
     def evaluate_edge_functions(
         self, xs: Float[Array, "samples"]
     ) -> Float[Array, "{self.in_features} {self.out_features} samples"]:
-        """Evaluate complete edge functions over a 1D grid.
+        """Evaluate every edge function on the 1D points ``xs``.
 
-        If layernorm is enabled, these are functions of the post-normalisation
-        scalar coordinate used by the RBF branch.
+        With layernorm, ``xs`` are post-normalisation values.
         """
         basis = self._basis_from_values(xs)
         edge_values = jnp.einsum("sk,iok->ios", basis, self.spline_weight)
@@ -188,7 +189,7 @@ class FastRBFKANLayer(eqx.Module):
     def spline_inputs_from_inputs(
         self, x: Float[Array, "samples {self.in_features}"]
     ) -> Float[Array, "samples {self.in_features}"]:
-        """Return the scalar inputs seen by the spline/RBF branch."""
+        """Inputs as seen by the spline/RBF branch (after layernorm, if used)."""
         self._validate_sample_input(x)
         if self.layernorm is None:
             return x
@@ -197,11 +198,10 @@ class FastRBFKANLayer(eqx.Module):
     def edge_contributions_from_inputs(
         self, x: Float[Array, "samples {self.in_features}"]
     ) -> Float[Array, "{self.in_features} {self.out_features} samples"]:
-        """Evaluate per-edge contributions on real layer input vectors.
+        """Per-edge contributions for a batch of layer inputs (for diagnostics).
 
-        This is diagnostic-only. Unlike evaluate_edge_functions, this receives
-        full input vectors so layernorm is applied exactly as in the forward
-        pass before evaluating spline/RBF contributions.
+        Unlike ``evaluate_edge_functions`` this takes full input vectors, so
+        layernorm is applied as in the forward pass.
         """
         self._validate_sample_input(x)
         spline_x = self.spline_inputs_from_inputs(x)
@@ -230,7 +230,7 @@ class FastRBFKANLayer(eqx.Module):
 
 
 class FastLinearSplineKANLayer(FastRBFKANLayer):
-    """Vectorised fixed-grid piecewise-linear KAN layer for vector inputs."""
+    """Piecewise-linear KAN layer on a fixed grid, for vector inputs."""
 
     def __init__(self, *args, extrapolation: str = "constant", **kwargs):
         if extrapolation not in {"constant", "zero", "linear"}:
@@ -389,11 +389,7 @@ def plot_fast_rbf_kan_edges(
     max_edges: int = 32,
     ax=None,
 ):
-    """Plot selected learned 1D edge functions from a FastRBFKAN.
-
-    This helper imports matplotlib lazily so the model module remains usable in
-    non-plotting environments.
-    """
+    """Plot selected learned 1D edge functions of a FastRBFKAN layer."""
     import matplotlib.pyplot as plt
 
     layer = kan.layers[layer_index]

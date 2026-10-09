@@ -1,4 +1,4 @@
-"""Channel schemas declared by the modern micropattern data loaders."""
+"""Channel schemas of the micropattern datasets."""
 
 from Common.dataloader.channel_schema import (
     ChannelSchema,
@@ -271,11 +271,10 @@ MICROPATTERN_260726_SCHEMA = ChannelSchema(
 # these percentiles (pooled over all loaded images) and rescaled to [0, 1].
 DEFAULT_260726_HISTOGRAM_PERCENTILES = (0.0, 99.5)
 # Multiplicative corrections of raw intensities per measurement name and
-# timestep (hours), the form the loader takes; any channel and timestep can
-# be listed. Some early images are brighter than later timepoints because of
-# imaging artifacts, before cells express the marker at all. Values below one
-# dim the image. The corrected values also feed the percentile bins. Keep in
-# step with data.micropattern.intensity_factors in
+# timestep (hours). Some early images are brighter than later timepoints
+# because of imaging artifacts, before cells express the marker at all;
+# values below one dim them. The corrected values also feed the percentile
+# bins. Keep in step with data.micropattern.intensity_factors in
 # Experiments/micropatterns/conf/base_config.yaml.
 DEFAULT_260726_INTENSITY_FACTORS = {
     "cell_fate_s1/SOX17": {0: 0.3},
@@ -300,7 +299,7 @@ DEFAULT_260726_BACKGROUND_RADII = {
 
 
 def attach_channel_schema(aux, schema):
-    """Attach schema metadata without changing an established return signature."""
+    """Add ``schema`` to a loader's ``aux`` dict."""
 
     if aux is None:
         aux = {}

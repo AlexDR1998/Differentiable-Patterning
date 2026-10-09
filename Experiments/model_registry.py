@@ -1,11 +1,9 @@
-"""Immutable NCA model bundles and a rebuildable, dataframe-friendly catalogue.
+"""Immutable NCA model bundles and a rebuildable SQLite index of them.
 
-Training processes publish independent directories.  ``registry.sqlite`` is a
-derived index and can always be recreated by scanning those directories, which
-makes publication safe on shared filesystems and convenient from marimo.
+Each training run publishes its own bundle directory. ``registry.sqlite`` is
+only an index and can always be rebuilt by scanning those directories.
 
-Run as a script to inspect or rebuild the catalogue without running
-experiments::
+Command line use::
 
     python -m Experiments.model_registry reindex
     python -m Experiments.model_registry list
@@ -76,7 +74,7 @@ def _sha256(path: Path) -> str:
 
 
 def _array_fingerprint(value: Any) -> Dict[str, Any]:
-    """Describe an array without persisting its potentially large contents."""
+    """SHA-256 digest, shape and dtype of an array."""
     import numpy as np
 
     array = np.ascontiguousarray(np.asarray(value))
@@ -93,13 +91,10 @@ def evaluation_input_provenance(
     *,
     boundary_mask: Optional[Any] = None,
 ) -> Dict[str, Any]:
-    """Fingerprint the canonical data-derived input used for local evaluation.
+    """Fingerprints of the training input (initial state and boundary mask).
 
-    Bundles already retain the resolved configuration that tells an evaluator
-    how to reload its source dataset.  Persisting compact fingerprints instead
-    of the arrays themselves lets a later evaluator verify that the reloaded
-    initial state (and, where relevant, boundary mask) is exactly the one seen
-    during training.
+    Stored in the bundle so that an evaluator that reloads the data from the
+    saved config can check it gets the same arrays as training did.
     """
     import numpy as np
 
@@ -125,7 +120,7 @@ def verify_evaluation_input(
     *,
     boundary_mask: Optional[Any] = None,
 ) -> None:
-    """Require reloaded evaluation inputs to match a bundle's provenance."""
+    """Raise if reloaded evaluation inputs differ from the fingerprints in a bundle."""
     if provenance.get("schema_version") != 1 or provenance.get("kind") != "data_t0":
         raise ValueError("Unsupported evaluation input provenance")
     actual = evaluation_input_provenance(data, boundary_mask=boundary_mask)
@@ -137,11 +132,8 @@ def verify_evaluation_input(
 
 
 def _config_container(cfg: Any) -> Dict[str, Any]:
-    # Do not use an exact class-identity check here. Interactive marimo work
-    # can reload ``Experiments.config`` while this module remains imported,
-    # giving a freshly constructed ExperimentConfig a different Python class
-    # identity despite the same typed schema. The serialisation contract is a
-    # dataclass named ExperimentConfig, which config_to_dict validates.
+    # Check the class name rather than isinstance: marimo can reload
+    # Experiments.config, which creates a new ExperimentConfig class.
     if not is_dataclass(cfg) or type(cfg).__name__ != "ExperimentConfig":
         raise TypeError("Model bundles require a typed ExperimentConfig dataclass")
     value = config_to_dict(cfg)
@@ -160,11 +152,10 @@ def _config_digest(config: Mapping[str, Any]) -> str:
 
 
 def create_model_id(cfg: Any) -> str:
-    """Create a short, collision-resistant ID for one training attempt.
+    """Short ID for one training run.
 
-    The configuration component groups equivalent resolved configurations;
-    the timestamp and random component distinguish concurrent or repeated
-    attempts using that configuration.
+    Made of a config hash (shared by runs with the same resolved config), a
+    timestamp and a random part (which tell repeated runs apart).
     """
     return _identifier(_config_digest(_config_container(cfg)))
 
@@ -270,9 +261,8 @@ def open_model_bundle(path: Union[str, Path]) -> ModelBundle:
     manifest = OmegaConf.load(manifest_path)
     if int(manifest.schema_version) != BUNDLE_SCHEMA_VERSION:
         raise ValueError(f"Unsupported bundle schema version {manifest.schema_version}")
-    # Bundle configs are already resolved before publication. Re-resolving here
-    # would reinterpret ordinary strings as Hydra interpolation expressions,
-    # after the typed schema has moved them to different paths.
+    # Saved configs are already resolved; resolving again could treat plain
+    # strings as interpolations.
     config_value = OmegaConf.to_container(OmegaConf.load(config_path), resolve=False)
     if not isinstance(config_value, dict):
         raise TypeError("Bundle config must be a mapping")
@@ -292,7 +282,7 @@ def publish_model_bundle(
     repository_root: Optional[Union[str, Path]] = None,
     evaluation_input: Optional[Mapping[str, Any]] = None,
 ) -> ModelBundle:
-    """Atomically publish one completed checkpoint as an immutable bundle."""
+    """Copy a finished checkpoint and its config into a new bundle directory."""
     source = Path(checkpoint_path).expanduser().resolve()
     if not source.is_file():
         raise FileNotFoundError(f"Checkpoint not found: {source}")
@@ -383,7 +373,7 @@ def publish_model_bundle(
 
 
 class ModelRegistry:
-    """Read model bundles and maintain a disposable SQLite search index."""
+    """Read model bundles and keep a SQLite index of them (rebuilt by ``reindex``)."""
 
     def __init__(self, root: Union[str, Path]):
         self.root = Path(root).expanduser().resolve()
@@ -563,7 +553,7 @@ class ModelRegistry:
         tags: Optional[Iterable[str]] = None,
         notes: Optional[str] = None,
     ) -> Path:
-        """Atomically update local, mutable notebook annotations for a bundle."""
+        """Set the alias, tags or notes of a bundle (stored outside the bundle)."""
         self.get(model_id)
         annotations = self._read_annotations()
         current = annotations.models.get(model_id, {})
@@ -589,9 +579,8 @@ class ModelRegistry:
         identifier = aliases.get(identifier, identifier)
         matching_paths = []
         for path in self.bundle_paths():
-            # Inspect only the identifying metadata first. Opening every bundle
-            # here makes an unrelated bundle from an older schema prevent any
-            # lookup in a mixed-version store.
+            # Read only the manifest here, so that a bundle with an old schema
+            # does not break lookups of other bundles.
             manifest = OmegaConf.load(path / "manifest.yaml")
             if identifier in {
                 str(manifest.get("id", "")),
@@ -603,8 +592,7 @@ class ModelRegistry:
             raise KeyError(f"Unknown model {identifier!r}")
         if len(matching_paths) > 1:
             raise ValueError(f"Model name {identifier!r} is ambiguous; use its ID")
-        # Validate the selected bundle fully. In particular, selecting an old
-        # schema still reports that incompatibility rather than hiding it.
+        # Opening the bundle fully raises if its schema is unsupported.
         return open_model_bundle(matching_paths[0])
 
     def load(self, identifier: str, key=None):
@@ -664,7 +652,7 @@ def record_evaluation(
     seed: Optional[int] = None,
     parameters: Optional[Mapping[str, Any]] = None,
 ) -> Path:
-    """Write an immutable, indexable evaluation summary."""
+    """Write an evaluation summary into ``<store_root>/evaluations/``."""
     evaluation_id = _identifier()
     parent = Path(store_root).expanduser().resolve() / "evaluations" / _slug(evaluator)
     parent.mkdir(parents=True, exist_ok=True)

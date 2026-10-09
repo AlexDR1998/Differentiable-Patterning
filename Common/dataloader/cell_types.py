@@ -58,9 +58,10 @@ class CellTypeRules:
     (stored as a tuple of clauses). ``stains`` maps each stain (images taken
     together, e.g. ``"cell_fate_s1"``) to ``{marker: channel}``; it may be
     empty. ``clause_weights`` maps a cell type to one weight (0 to 1) per
-    clause; cell types left out have weight 1 for every clause. ``hour`` is the timestep the thresholds were tuned on and
-    ``preprocessing`` the ``data.micropattern`` settings of the images;
-    neither is used for labelling.
+    clause; cell types left out have weight 1 for every clause. ``hour`` is
+    the timestep the thresholds were tuned on and ``preprocessing`` the
+    ``data.micropattern`` settings of the images; neither is used for
+    labelling.
     """
 
     channels: Mapping[str, str]

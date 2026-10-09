@@ -751,7 +751,7 @@ def config_to_dict(config: ConfigValue) -> dict[str, Any]:
 
 
 def load_experiment_config(cfg: Any) -> ExperimentConfig | ImpulseExperimentConfig:
-    """Resolve OmegaConf at the sole framework boundary, then discard it."""
+    """Convert an OmegaConf config (or plain mapping) into a typed experiment config."""
     from omegaconf import OmegaConf
 
     value = OmegaConf.to_container(cfg, resolve=True) if OmegaConf.is_config(cfg) else cfg

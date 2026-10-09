@@ -1,3 +1,10 @@
+"""Regularisers evaluated on every NCA update step during training.
+
+Each has the signature ``(state, next_state, context, key)``. ``state`` and
+``next_state`` are lists (one entry per batch) of arrays shaped ``[N, C, H, W]``,
+``context`` is a dict of runtime values (e.g. ``observed_channels``,
+``boundary_callbacks``, ``model``), and the result has one value per batch.
+"""
 import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
@@ -13,65 +20,16 @@ def _batch_map(function, *values):
     return jnp.asarray(jtu.tree_map(function, *values))
 
 
-# def _is_dict_leaf(value):
-#     return isinstance(value, dict)
-
-
-# def _state(example):
-#     return example["latent"] if isinstance(example, dict) else example
-
-
 @eqx.filter_jit
 def intermediate_reg(state, next_state, context, key):
-    """
-    Intermediate state regulariser - tracks how much of x is outwith [0,1]
-
-
-    Parameters
-    ----------
-    x : float32 array [B,N,CHANNELS,_,_]
-        NCA state
-    x_new : float32 array [B,N,CHANNELS,_,_]
-        Updated NCA state
-    vv_nca : Callable
-        NCA update function - doubly vectorised to work on [B,N,CHANNELS,_,_]
-    aux : Any
-        Auxiliary information
-    key : jax.random.PRNGKey
-        Jax random number key
-    Returns
-    -------
-    reg : float
-        float tracking how much of x is outwith range [0,1]
-
-    """
+    """Penalise state values outside [0, 1]."""
     def _reg(x_new_proc,full=True):
-        # if not full:
-            # x = x[:,:self.OBS_CHANNELS]
-        # x_new = _state(x_new)
         return jnp.mean(jnp.abs(x_new_proc)+jnp.abs(x_new_proc-1)-1)
     return _batch_map(_reg, next_state)
-        # v_intermediate_reg = lambda x:jnp.array(jax.tree_util.tree_map(self.intermediate_reg,x))  # noqa: E731
 
 
 def hidden_state_size_regulariser(state, next_state, context, key):
-    """
-    Regulariser to encourage the model to keep the size of the latent representation small, by penalising the mean value of the latent channels.
-
-    Parameters
-    ----------
-    x: PyTree [Batch] of Arrays [N C H W]
-    x_new: PyTree [Batch] of Arrays [N C H W]
-    x_proc: PyTree [Batch] of Arrays [N L h w]
-    x_new_proc: PyTree [Batch] of Arrays [N L h w]
-    vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
-    key: Jax PRNGkey
-    Returns
-    -------
-    reg : float32 Array [BATCH]
-        float tracking how much latent space is being used, by mean value of latent channels
-
-    """
+    """Penalise the mean absolute value of the hidden channels."""
     def _reg(x_new):
         return jnp.mean(jnp.abs(x_new[:,context["observed_channels"]:]))
     return _batch_map(_reg, next_state)
@@ -80,11 +38,9 @@ def hidden_state_size_regulariser(state, next_state, context, key):
 def boundary_regulariser(state, next_state, context, key):
     """Penalise state channels that are nonzero outside the spatial mask.
 
-    ``x_new`` is a PyTree of outer-B leaves shaped ``[N,C,H,W]``. For a
-    ``model_boundary``, its final fixed mask channel(s) are excluded from the
-    penalty; every other channel is weighted by ``1 - spatial_mask``. A
-    ``hard_boundary`` has no dedicated mask channel, so all channels are
-    included. The returned array has shape ``[B]``.
+    Each channel is weighted by ``1 - spatial_mask``. For a ``model_boundary``
+    the trailing mask channel(s) are left out; a ``hard_boundary`` has no mask
+    channel, so all channels are included.
     """
     del state, key
 
@@ -119,31 +75,15 @@ def boundary_regulariser(state, next_state, context, key):
     return jnp.asarray(jtu.tree_map(_reg, callbacks, next_state))
 @eqx.filter_jit
 def contiguous_growth_regulariser(state, next_state, context, key):
-    """
-    Contiguous state regulariser. For the observable channels, penalises any growth of those channels that occurs more than
-    N cells out from the current block of high cells. Intended to stop regions of cells growing seemingly out of nowhere.
+    """Penalise growth of observed channels away from existing high cells.
 
-    NOTE: VMAP THIS OVER BATCHES
-
-    Parameters
-    ----------
-        x: PyTree [Batch] of Arrays [N C H W]
-        x_new: PyTree [Batch] of Arrays [N C H W]
-        x_proc: PyTree [Batch] of Arrays [N L h w]
-        x_new_proc: PyTree [Batch] of Arrays [N L h w]
-        vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
-        key: Jax PRNGkey
-    Returns
-    -------
-        Growth : Array [Batch] float
-            float array tracking how much of growth of x_proc_new in observable channels occurs outwith the bounding region of high observable cells in x_proc
-
+    Growth is penalised where the 3x3 neighbourhood sum of the observed
+    channels is below about 5, to stop patches of cells appearing out of nowhere.
     """
     def _reg(x, x_new):
         x_proc = x[:,:context["observed_channels"]]
         x_new_proc = x_new[:,:context["observed_channels"]]
         dx = jax.nn.relu(x_new_proc - x_proc) # How much obs growth
-        # kernel = jnp.array([[1,1,1],[1,1,1],[1,1,1]],dtype=jnp.float32)
         kernel = jnp.ones((3,3),dtype=jnp.float32)
         kernel = repeat(kernel,"w h -> O I w h",O=1,I=context["observed_channels"])
         dilation = jax.lax.conv_general_dilated(
@@ -160,47 +100,19 @@ def contiguous_growth_regulariser(state, next_state, context, key):
 
 
 def localised_hidden_regulariser(state, next_state, context, key):
-    """
-        Encourages NCA to only use the hidden channels in regions where the observable channels are active. Penalises hidden channel activity in regions where observable channels are low.
-
-    Parameters
-    ----------
-        x: PyTree [Batch] of Arrays [N C H W]
-        x_new: PyTree [Batch] of Arrays [N C H W]
-        x_proc: PyTree [Batch] of Arrays [N L h w]
-        x_new_proc: PyTree [Batch] of Arrays [N L h w]
-        vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
-        key: Jax PRNGkey
-    Returns:
-        Sensitivity: Array [Batch] of floats
-    """
+    """Penalise hidden channel activity where all observed channels are low (< 0.5)."""
 
     def _reg(x_new_proc):
         x_new_proc_obs = x_new_proc[:,:context["observed_channels"]]
         x_new_proc_hidden = x_new_proc[:,context["observed_channels"]:]
         err = jnp.mean(jax.nn.relu(0.5-jnp.max(x_new_proc_obs,axis=1,keepdims=True))*jnp.abs(x_new_proc_hidden))
-        # err = jnp.mean(err,axis=(0,1)) # mean over N and C_hidden
         return err
     return _batch_map(_reg, next_state)
 
 
 
 def update_sensitivity_regulariser(state, next_state, context, key):
-    """
-    Measures NCA update step sensitivity to small changes in inputs. Computes a second update step with a small amount of noise added to the input.
-    Minimized by NCA model that is insensitive to small changes in input.
-
-    Parameters
-    ----------
-        x: PyTree [Batch] of Arrays [N C H W]
-        x_new: PyTree [Batch] of Arrays [N C H W]
-        x_proc: PyTree [Batch] of Arrays [N L h w]
-        x_new_proc: PyTree [Batch] of Arrays [N L h w]
-        vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
-        key: Jax PRNGkey
-    Returns:
-        Sensitivity: Array [Batch] of floats
-    """
+    """Penalise how much the update changes when noise (std 0.1) is added to the input."""
 
     from Common.utils import key_pytree_gen
 
@@ -220,19 +132,10 @@ def update_sensitivity_regulariser(state, next_state, context, key):
     return jnp.asarray(diffs)
 
 def perturbation_conservation_regulariser(state, next_state, context, key):
-    """
-    Measures NCA update step sensitivity to small changes in inputs. Computes a second update step with a small amount of noise added to the input.
-    Minimized by NCA model that is linearly proportional to small changes in input. I.e. if input is changed by dx, output should change by ~dx
+    """Penalise updates that do not carry small input perturbations through unchanged.
 
-
-    Parameters
-    ----------
-        x: PyTree [Batch] of Arrays [N C H W]
-        x_new: PyTree [Batch] of Arrays [N C H W]
-        vv_nca: Callable PyTree [Batch] of Arrays [N C H W], Callable, KeyArray -> PyTree [Batch] of Arrays [N C H W]
-        key: Jax PRNGkey
-    Returns:
-        Loss: Array[Batch] of floats
+    Noise (std 0.1) is added to the input; if the input changes by dx, the
+    output should change by about dx.
     """
     from Common.utils import key_pytree_gen
 

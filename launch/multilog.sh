@@ -9,8 +9,8 @@ set -euo pipefail
 #   ./kjoblogs my-train-job 200
 #
 # Notes:
-# - Does NOT pass -n/--namespace anywhere; it relies on your current kubectl context namespace.
-# - Assumes pods are named like: JOB_NAME_<random>
+# - Uses the namespace of the current kubectl context (no -n/--namespace).
+# - Expects pods named JOB_NAME_<random>.
 
 JOB_NAME="${1:-}"
 TAIL_LINES="${2:-100}"

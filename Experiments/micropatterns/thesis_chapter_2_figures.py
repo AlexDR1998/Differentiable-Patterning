@@ -5,8 +5,6 @@ app = marimo.App(width="columns")
 
 with app.setup:
     import marimo as mo
-    import sys
-    sys.path.append('/home/alex/PhD/Differentiable-Patterning/')
     # print(sys.path)
     import jax 
     import jax.numpy as np
@@ -17,11 +15,20 @@ with app.setup:
     from tqdm.notebook import tqdm
     import time
     from einops import rearrange,repeat,reduce
-    from NCA.model.NCA_gated_model import gNCA
     from NCA.model.NCA_model import NCA
-    # from NCA.model.NCA_multi_scale import mNCA
-    from NCA.model.NCA_noise_model import nNCA
-    from NCA.model.NCA_gated_noise_model import gnNCA
+
+    # gNCA, nNCA and gnNCA are no longer separate classes: they are NCA with its
+    # GATED and/or PARAMETER_NOISE_LEVEL options (see NCA/model/factory.py).
+    # The saved parameters have the same layout, so old .eqx files still load.
+    def gNCA(*args, **kwargs):
+        return NCA(*args, GATED=True, **kwargs)
+
+    def nNCA(*args, **kwargs):
+        return NCA(*args, **kwargs)
+
+    def gnNCA(*args, **kwargs):
+        return NCA(*args, GATED=True, **kwargs)
+
     # from Common.dataloader.micropattern import load_micropattern_circle_8ch_individual,load_micropattern_circle_8ch_individual_explicit_colony
     from Common.model.boundary import model_boundary
     from Common.save_to_video import save_to_video_rgb
@@ -30,7 +37,6 @@ with app.setup:
     # from Experiments.emoji.time_gate_stability_comparison import H_to_filename as H_to_filename_gate
     # from Experiments.emoji.parameter_noise_sweep import H_to_filename as H_to_filename_noise
     # from Experiments.emoji.fire_rate_sweep import H_to_filename as H_to_filename_fr
-    from Experiments.micropatterns.nodal_knockout_fine_tune import H_to_filename as H_to_filename_nodal
     # from Experiments.micropatterns.micropattern_individual_eval import calculate_radial_average
     from Common.dataloader.micropattern import load_micropattern_shape_sequence
     from marimo_utils import plot_matrix,generate_hyperparameter_combinations,generate_hyperparameter_combinations_indexed
@@ -50,15 +56,52 @@ with app.setup:
     DATA_PATH_INDIVIDUAL = DATA_PATH_BASE + "Timecourse Individual Images/*"
     DATA_PATH_GROUPED= DATA_PATH_BASE + "Timecourse Seperate Colonies/*"
     import scipy
-    from Common.trainer.loss import build_loss_functions
+    from Common.trainer.loss_table import build_loss_functions
     vgg_loss_dict = {
-        "vgg_metric":"l2",
+        "metric":"l2",
         "internal_loss_func":"l2",
         "epsilon":1e-10,
         "tau":None,
         "normalize":False,
         "samples":None
     }
+
+    # Filenames of the Nodal knockout fine-tuned models, copied from the removed
+    # Experiments/micropatterns/nodal_knockout_fine_tune.py (git history, b71a7ad^)
+    def H_to_filename_nodal(H):
+        if "ott" in H["loss_mode"]:
+            loss_name = f"{H['loss_mode']}_S{H['ott_S']}K{H['ott_K']}D{int(4-onp.log2(H['downsample']))}shp{H['ott_sharpen']}ep{H['ott_epsilon']}{H['ott_internal_loss_func']}"
+        elif "vgg" in H["loss_mode"]:
+            loss_name = f"{H['loss_mode']}_{H['metric']}"
+            if H["metric"] in ["emdsp","emdfull"]:
+                loss_name += f"_ep{H['ott_epsilon']}{H['ott_internal_loss_func']}{H['loss_normalize']}"
+        elif "clip" in H["loss_mode"]:
+            loss_name = f"{H['loss_mode']}_{H['metric']}_{H['loss_normalize']}"
+        else:
+            loss_name = H["loss_mode"]
+
+        opt_str = H["optimizer"]
+        opt_str_base = H["optimizer"]
+        if H["multistep"]>1:
+            opt_str += f"_multistep{H['multistep']}"
+        if H["block_norm"]:
+            opt_str += "_blocknorm"
+            opt_str_base += "_blocknorm"
+        # _STEPS_AT_DS8 = 64
+
+        if H["stepsize_scaling"]=="convective":
+            STEPS_BETWEEN_IMAGES = int(H["steps_at_ds8"]*(8/H["downsample"])) # Scale steps between images with downsample factor, linearly like for sliving hyperbolic PDEs
+        if H["stepsize_scaling"]=="diffusive":
+            STEPS_BETWEEN_IMAGES = int(H["steps_at_ds8"]*((8/H["downsample"])**2)) # Scale steps between images with downsample factor squared, like for diffusive PDEs
+        # STEPS_BETWEEN_IMAGES = int(512 / H["downsample"])
+        # FILENAME = f"baseline_9ch_{MODEL}_{loss_name}_steps{STEPS_BETWEEN_IMAGES}_ds{DOWNSAMPLE}_ch{CHANNELS}_opt{opt_str}_ns{NOISE_STRENGTH}_ig{INTERMEDIATE_GROWTH_COEFF}_br{BOUNDARY_REG_COEFF}_cg{CONTIGUOUS_GROWTH_COEFF}"
+        FILENAME_BASE = f"baseline_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str_base}_good"
+        if H["knockout"] in [0,24]:
+    
+            FILENAME_KO = f"ftko_{H['knockout_mode']}_{H['knockout']}_9ch_{H['model']}_{loss_name}_ds{H['downsample']}_t{STEPS_BETWEEN_IMAGES}_ch{H['channels']}_opt{opt_str}_{H['TRAINING_ITERATIONS']}iters_lr{H['finetune_lr']}"
+        else:
+            FILENAME_KO = None
+        return {"base":FILENAME_BASE,"ko":FILENAME_KO,"timesteps":STEPS_BETWEEN_IMAGES}
 
 
 @app.cell
@@ -345,10 +388,7 @@ def _(CHANNEL_NAMES_9CH_CIRCULAR, DATA_9CH_CIRCULAR):
 
 @app.function(hide_code=True)
 def plot_data_48h_ind(trajectory,chnames,tres=1,title="",NCHANNELS=9):
-    """
-        Shows just 1 trajectory. Expects single trajectory as a tensor of T C X Y, and int tres
-        describing how to downsample the trajectory in time.
-    """
+    """Show one trajectory [T, C, X, Y], keeping every ``tres``-th timestep."""
     trajectory = trajectory[-1]
     trajectory = rearrange(trajectory[:NCHANNELS],"C x y -> (x) (C y)")
     trajectory = onp.clip(trajectory,a_max=1.0,a_min=0.0)
@@ -508,7 +548,7 @@ def _(HYPERPARAMETERS_9CH_CIRCULAR, NCA_MODELS, run_nca):
 def _(
     BOUNDARY_MASK_9CH_CIRCULAR,
     HYPERPARAMETERS_9CH_CIRCULAR,
-    NCA_MODELS,
+    best_nca,
     run_full_trajectory,
 ):
     def render_video(SHAPE,ncadict,H):
@@ -516,16 +556,15 @@ def _(
         _T,_Tcomp,_Tmono = reshape_for_videos(_TFULL,BOUNDARY_MASK_9CH_CIRCULAR[H["downsample"]][0])
         save_videos(_Tcomp,H,title_suffix=f"{SHAPE}_composite",name_func=H_to_filename_nodal)
 
-    best_index = 0
-    best_nca = NCA_MODELS[best_index]
-    _H_BEST = HYPERPARAMETERS_9CH_CIRCULAR[best_index]
+    # best_nca is chosen in the cell above (index 0)
+    _H_BEST = HYPERPARAMETERS_9CH_CIRCULAR[0]
 
     render_video("triangle",best_nca,_H_BEST)
     render_video("ellipse",best_nca,_H_BEST)
     render_video("full",best_nca,_H_BEST)
     # _TFULL_TRI = run_full_trajectory(_ncadict,shape="triangle",radius=1.0,key=jr.PRNGKey(42))
     # _T,_Tcomp,_Tmono = reshape_for_videos(_TFULL_TRI,BOUNDARY_MASK_9CH_CIRCULAR[_H["downsample"]][0])
-    return (best_nca,)
+    return
 
 
 @app.cell
@@ -618,8 +657,8 @@ def _(RADII_DATA, XS_RADII):
             print(f"X shape: {x.shape}")
             print(f"Data shape: {d.shape}")
             # print(f"Size ratio: {size_ratio}")
-            loss_v = vgg_loss(x[None],d[None],key=jr.PRNGKey(0),where=None)[0]
-            loss_l = l2_loss(x[None],d[None],key=jr.PRNGKey(0),where=None)[0]
+            loss_v = vgg_loss(x[None],d[None],key=jr.PRNGKey(0),where=None,cache=None)[0]
+            loss_l = l2_loss(x[None],d[None],key=jr.PRNGKey(0),where=None,cache=None)[0]
             # print(loss_v,loss_l)
             losses.append(loss_v+loss_l)
             losses_v.append(loss_v)
@@ -659,23 +698,26 @@ def _():
 
 @app.function(hide_code=True)
 def calculate_radial_average(T,R_res,padding_ratio=1.0,pixel_offsets=[[0,0],[0,0]],PLOT_DEBUG=True):
-    """
-        Extract radial averages from trajectories.
-        Parameters
-            T float32 [T C X Y]
-                Input data to radially average
-            R_res int
-                Spatial resolution of radial averaging
-            padding_ratio float
-                Proportion of width of circular region of interest to full square image. Defaults to 1.0
-            pixel_offsets list
-                Extra pixels to remove from padding on either side of width or height. Useful for if the padding around the region
-                of interest is slightly assymetric
-            PLOT_DEBUG bool
-                Flags whether to plot a sample of the cropped trajectory to test if the padding_ratio and pixel_offsets are set correctly
-        Returns
-            T_rad [T C R]
-                Radially averaged T. reduces X Y -> R where R=Y*padding_ratio//2
+    """Radial averages of a trajectory.
+
+    Parameters
+    ----------
+    T : float32 [T, C, X, Y]
+        Data to average.
+    R_res : int
+        Number of radial bins.
+    padding_ratio : float
+        Width of the circular region of interest as a fraction of the image width.
+    pixel_offsets : list
+        Extra pixels to crop on either side of the width and height, for
+        slightly asymmetric padding.
+    PLOT_DEBUG : bool
+        Plot the cropped trajectory, to check ``padding_ratio`` and ``pixel_offsets``.
+
+    Returns
+    -------
+    T_rad : [T, C, R]
+        Radial averages, with R = Y * padding_ratio // 2.
     """
     W_full = T.shape[3]
     H_full = T.shape[2]
@@ -715,9 +757,7 @@ def calculate_radial_average(T,R_res,padding_ratio=1.0,pixel_offsets=[[0,0],[0,0
 @app.cell(hide_code=True)
 def _(RADII):
     def size_slices(T,chnames,tres,padding_ratio=0.9):
-        """
-            Plots radial distributions of different channels at 48h for each micropattern radius
-        """
+        """Plot the radial profile of each channel at 48h for each micropattern radius."""
         # plt.plot()
         T_slice = {}
         radii_dict = {}
@@ -793,9 +833,7 @@ def _(CHANNEL_NAMES_9CH_CIRCULAR, XS_RADII, size_slices):
 
 @app.function(hide_code=True)
 def compute_radial_errors(T,DATA,RADII,padding_ratio=0.9):
-    """
-        Comapres radial average distributions of marker concentration at a single timestep between data and NCA for all MP radii
-    """
+    """Compare radial marker profiles at one timestep between data and NCA, for every micropattern radius."""
     T_slice_nca = {}
     T_slice_data = {}
     radial_distances = []
@@ -1342,13 +1380,13 @@ def _(l2_group_loss, vgg_group_loss):
             print(TS.shape)
             where = onp.ones((1,4,1,1))
             # loss_vgg = onp.array(
-                # [vgg_group_loss(x[None],d[None],key=jr.PRNGKey(0),where=None)[0] for x,d in zip(TS,data)]
+                # [vgg_group_loss(x[None],d[None],key=jr.PRNGKey(0),where=None,cache=None)[0] for x,d in zip(TS,data)]
             # )
 
             # print([x.shape for x in TS])
             # print([(x[None].shape,d[None].shape) for x,d in zip(TS,data)])
-            loss_vgg = onp.array(vgg_group_loss(TS,data,key=jr.PRNGKey(0),where=where))
-            loss_l2 = onp.array(l2_group_loss(TS,data,key=jr.PRNGKey(0),where=where))
+            loss_vgg = onp.array(vgg_group_loss(TS,data,key=jr.PRNGKey(0),where=where,cache=None))
+            loss_l2 = onp.array(l2_group_loss(TS,data,key=jr.PRNGKey(0),where=where,cache=None))
             loss_dict = {
                 "vgg":loss_vgg,
                 "l2":loss_l2,
@@ -1433,13 +1471,13 @@ def _(l2_group_loss, vgg_group_loss):
             print(TS.shape)
             where = onp.ones((1,9,1,1))
             # loss_vgg = onp.array(
-                # [vgg_group_loss(x[None],d[None],key=jr.PRNGKey(0),where=None)[0] for x,d in zip(TS,data)]
+                # [vgg_group_loss(x[None],d[None],key=jr.PRNGKey(0),where=None,cache=None)[0] for x,d in zip(TS,data)]
             # )
 
             # print([x.shape for x in TS])
             # print([(x[None].shape,d[None].shape) for x,d in zip(TS,data)])
-            loss_vgg = onp.array(vgg_group_loss(TS,data,key=jr.PRNGKey(0),where=where))
-            loss_l2 = onp.array(l2_group_loss(TS,data,key=jr.PRNGKey(0),where=where))
+            loss_vgg = onp.array(vgg_group_loss(TS,data,key=jr.PRNGKey(0),where=where,cache=None))
+            loss_l2 = onp.array(l2_group_loss(TS,data,key=jr.PRNGKey(0),where=where,cache=None))
             loss_dict = {
                 "vgg":loss_vgg,
                 "l2":loss_l2,
@@ -1892,10 +1930,7 @@ def _(DATA_9CH_CIRCULAR, DATA_9CH_CIRCULAR_KO, KO_TIMES, TS_KO_INTERP):
     # print(TS_KO_INTERP[0].shape)
     print(list(KO_TIMES))
     def plot_average_intensity_ko_time(TS_KOS,KO_DATA,DATA):
-        """
-            Calculates the proportions of pixels with various marker co-expressions corresponding to cell types of interest.
-            Does this at 48h for each KO time trajectory, and plots them as function of KO
-        """
+        """Plot the fraction of pixels with each cell-type marker co-expression at 48h, against KO time."""
         # Want to measure co-expression of TBXT and FOXA2
         # LMBR, TBXT, SOX17, SOX2, FOXA2
         TS_KOS = onp.array(TS_KOS)
@@ -2278,14 +2313,17 @@ def _(get_x0_and_bmask):
 @app.function
 def reshape_for_videos(T,mask):
 
-    """
-    # Takes a trajectory and returns 3 versions
-    # - Original (clipped to 0-1)
-    # - CMY composite (Horizontal tiles of 3 channel composites)
-    # - Monochrome tiled (3 by 3 tiles of each channel)
-    Parameters:
-    T: Array of shape (T,9,X,Y) representing the trajectory of 9 channels over time
-    mask: Array of shape (X,Y) representing the boundary mask for the colony
+    """Three video versions of a trajectory.
+
+    Returns the original (clipped to [0, 1]), a CMY composite (side by side
+    3-channel composites) and a monochrome 3 x 3 tiling of the channels.
+
+    Parameters
+    ----------
+    T : [T, 9, X, Y]
+        Trajectory of the 9 channels.
+    mask : [1, X, Y]
+        Colony boundary mask.
     """
 
     mask = repeat(mask,"() X Y -> () () X (3 Y)")
@@ -2365,10 +2403,7 @@ def _(
 
 @app.function(hide_code=True)
 def visualise_single_from_tensor(trajectory,chnames,tres=1,title="",NCHANNELS=9):
-    """
-        Shows just 1 trajectory. Expects single trajectory as a tensor of T C X Y, and int tres
-        describing how to downsample the trajectory in time.
-    """
+    """Show one trajectory [T, C, X, Y], keeping every ``tres``-th timestep."""
     trajectory = rearrange(trajectory[::tres,:NCHANNELS],"T C x y -> (C x) (T y)")
     trajectory = onp.clip(trajectory,a_max=1.0,a_min=0.0)
     xw,yw = trajectory.shape
@@ -2385,9 +2420,7 @@ def visualise_single_from_tensor(trajectory,chnames,tres=1,title="",NCHANNELS=9)
 
 @app.function(hide_code=True)
 def reshape_cmy(x):
-    """
-        Takes x of shape [W H 3] in RGB format and returns x in CMY format
-    """
+    """Convert an RGB image [W, H, 3] to CMY."""
     x_cmy = onp.zeros_like(x)
     x_cmy[:,:,0] = 0.5*(x[:,:,1]+x[:,:,2])
     x_cmy[:,:,1] = 0.5*(x[:,:,0]+x[:,:,2])
@@ -2397,10 +2430,7 @@ def reshape_cmy(x):
 
 @app.function(hide_code=True)
 def reshape_cmy_cells(x):
-    """
-        Takes x of shape [W H 3] in RGB format and returns x in CMY format
-        Assumes channler order is TBXT (M) SOX17 (Y) SOX2 (C)
-    """
+    """Convert an RGB image [W, H, 3] to CMY, with channels TBXT (M), SOX17 (Y), SOX2 (C)."""
     x_cmy = onp.zeros_like(x)
     x_cmy[:,:,1] = 0.5*(x[:,:,1]+x[:,:,2])
     x_cmy[:,:,2] = 0.5*(x[:,:,0]+x[:,:,2])
@@ -2559,9 +2589,7 @@ def visualise_cell_fate(trajectory,chnames,tres=1,title="",cmode="cmy"):
 
 @app.function
 def visualise_cellular_detail(trajectory,chnames,timestep=0,ch=0,DOWNSAMPLE=2):
-    """
-        Shows the cellular detail for a single timepoint. Expects trajectory as a tensor of T C X Y, and int timestep describing which timepoint to show.
-    """
+    """Show cellular detail of trajectory [T, C, X, Y] at one ``timestep``."""
     traj_t = trajectory[timestep]
     W = traj_t.shape[1]
     H = traj_t.shape[2]

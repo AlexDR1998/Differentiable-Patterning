@@ -52,7 +52,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-snowmelt-date-split
+    logging.wandb.group: smoke_micropatterns_ko_finetune-pixel-seeds-and-impulse-explorer
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
@@ -229,7 +229,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-snowmelt-date-split
+        group: smoke_micropatterns_ko_finetune-pixel-seeds-and-impulse-explorer
         tags: null
         tag_keys:
         - data.knockout.curriculum
@@ -289,7 +289,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-snowmelt-date-split
+    logging.wandb.group: smoke_micropatterns_ko_finetune-pixel-seeds-and-impulse-explorer
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
@@ -468,7 +468,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-snowmelt-date-split
+        group: smoke_micropatterns_ko_finetune-pixel-seeds-and-impulse-explorer
         tags: null
         tag_keys:
         - data.knockout.curriculum

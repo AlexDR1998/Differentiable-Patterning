@@ -25,14 +25,22 @@ class F(eqx.Module):
         du = Lap(u) - div(c*u/(1+u^2) * grad(v)) + u*(1-u) - epsilon*u^3
         dv = D*Lap(v) + u - alpha*v
 
-        Args:
-            PADDING (str): Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
-            dx (float): grid spacing
-            KERNEL_SCALE (int, optional): spatial operator kernel size. Defaults to 1.
-            c (float, optional): chemotactic sensitivity. Defaults to 3.0.
-            alpha (float, optional): signal decay. Defaults to 0.01.
-            D (float, optional): signal diffusion. Defaults to 1.0.
-            epsilon (float, optional): cubic cell death. Defaults to 0.01.
+        Parameters
+        ----------
+        PADDING : str
+            Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
+        dx : float
+            Grid spacing
+        KERNEL_SCALE : int, optional
+            Spatial operator kernel size. Defaults to 1.
+        c : float, optional
+            Chemotactic sensitivity. Defaults to 3.0.
+        alpha : float, optional
+            Signal decay. Defaults to 0.01.
+        D : float, optional
+            Signal diffusion. Defaults to 1.0.
+        epsilon : float, optional
+            Cubic cell death. Defaults to 0.01.
         """
         self.c = c
         self.alpha=alpha

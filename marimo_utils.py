@@ -14,22 +14,19 @@ def plot_matrix(data):
 
 
 def generate_hyperparameter_combinations(param_grid: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Given a dict mapping hyperparameter names to iterables of values, return a list of
-    dicts representing every combination (cartesian product) of the provided values.
-    Example:
-        generate_hyperparameter_combinations({
-            "lr": [1e-3, 1e-4],
-            "batch": [16, 32]
-        })
-    returns:
-        [{"lr": 1e-3, "batch": 16}, {"lr": 1e-3, "batch": 32}, {"lr": 1e-4, "batch": 16}, ...]
+    """Return every combination (Cartesian product) of the values in ``param_grid``.
+
+    Strings and non-iterable values count as a single value.
+
+    Examples
+    --------
+    >>> generate_hyperparameter_combinations({"lr": [1e-3, 1e-4], "batch": [16, 32]})
+    [{'lr': 0.001, 'batch': 16}, {'lr': 0.001, 'batch': 32}, {'lr': 0.0001, 'batch': 16}, ...]
     """
     keys = list(param_grid.keys())
     value_lists = []
     for k in keys:
         v = param_grid[k]
-        # Treat strings and non-iterables as singletons
         if isinstance(v, str) or not isinstance(v, Iterable):
             value_lists.append([v])
         else:
@@ -38,17 +35,7 @@ def generate_hyperparameter_combinations(param_grid: Dict[str, Any]) -> List[Dic
     return [dict(zip(keys, combo)) for combo in product(*value_lists)]
 
 def generate_hyperparameter_combinations_indexed(param_grid: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Given a dict mapping hyperparameter names to iterables of values, return a list of
-    dicts representing every combination (cartesian product) of the provided values.
-    Example:
-        generate_hyperparameter_combinations({
-            "lr": [1e-3, 1e-4],
-            "batch": [16, 32]
-        })
-    returns:
-        [{"lr": 1e-3, "batch": 16}, {"lr": 1e-3, "batch": 32}, {"lr": 1e-4, "batch": 16}, ...]
-    """
+    """As ``generate_hyperparameter_combinations``, with each dict's position stored under ``"LIST_INDEX"``."""
     list_of_combinations = generate_hyperparameter_combinations(param_grid)
     list_of_indexed_combinations = []
     for i,hparams in enumerate(list_of_combinations):

@@ -42,8 +42,8 @@ Experiments/<domain>/train.py:run(cfg)
   Logging, pool admission and checkpoint decisions stay in Python.
 - Data augmenters follow `data_augmenter/protocols.py:NCAAugmenterProtocol`.
   The entrypoint builds one from the loaded data and puts the instance in
-  `TrainerContext.data_augmenter`. `EmojiAugmenter`, `MicropatternAugmenter`
-  and `SnowmeltAugmenter` build on `base.PoolAugmenter`, and use the pure
+  `TrainerContext.data_augmenter`. `EmojiAugmenter`, `MicropatternAugmenter`,
+  `SnowmeltAugmenter` and `PdeAugmenter` build on `base.PoolAugmenter`, and use the pure
   functions in `transforms.py` and `trajectory.py`. All randomness must come
   from the supplied key.
 

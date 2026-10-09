@@ -48,8 +48,6 @@ class NCA(AbstractModel):
 					 GATED=False,
 					 PARAMETER_NOISE_LEVEL=0.0):
 		"""
-		
-
 		Parameters
 		----------
 		N_CHANNELS : int
@@ -62,7 +60,7 @@ class NCA(AbstractModel):
 		PADDING : str, optional
 			Boundary padding used by the spatial kernels. The default is "CIRCULAR".
 		FIRE_RATE : float, optional
-			Probability that each pixel updates at each timestep. Defaults to 1, i.e. deterministic update
+			Probability that each pixel updates at each timestep. Defaults to 1, i.e. deterministic update.
 		KERNEL_SCALE : int, optional
 			Radius of the spatial kernels. The default is 1.
 		key : jax.random.PRNGKey, optional
@@ -73,11 +71,6 @@ class NCA(AbstractModel):
 		PARAMETER_NOISE_LEVEL : float, optional
 			Standard deviation of Gaussian noise added to the network weights at every
 			step (previously the nNCA model). 0 turns it off. The default is 0.
-
-		Returns
-		-------
-		None.
-
 		"""
 		
 		
@@ -137,15 +130,7 @@ class NCA(AbstractModel):
 			self.layers.append(gated_linear_unit)
 
 	def get_config(self):
-		"""
-		Returns the model configuration as a dictionary.
-
-		Returns
-		-------
-		dict
-			dictionary of model hyperparameters
-
-		"""
+		"""Return the model hyperparameters as a dictionary."""
 		name = "NCA"
 		if self.PARAMETER_NOISE_LEVEL > 0:
 			name = "nNCA"
@@ -175,23 +160,21 @@ class NCA(AbstractModel):
 				  	 x: Float[Array,"{self.N_CHANNELS} x y"],
 					 boundary_callback=lambda x:x,
 					 key=None)->Float[Array, "{self.N_CHANNEL} x y"]:
-		"""
-		
+		"""Apply one NCA update step.
 
 		Parameters
 		----------
 		x : float32 [N_CHANNELS,_,_]
-			input NCA lattice state.
+			Input NCA lattice state.
 		boundary_callback : callable (float32 [N_CHANNELS,_,_]) -> (float32 [N_CHANNELS,_,_]), optional
-			function to augment intermediate NCA states i.e. imposing complex boundary conditions or external structure. Defaults to None
+			Applied to the updated state, e.g. to impose boundary conditions or external structure. Defaults to the identity.
 		key : jax.random.PRNGKey, optional
 			Jax random number key, used for the fire mask and parameter noise. Defaults to a key based on the current time.
 
 		Returns
 		-------
 		x : float32 [N_CHANNELS,_,_]
-			output NCA lattice state.
-
+			Output NCA lattice state.
 		"""
 		
 		if key is None:
@@ -208,8 +191,7 @@ class NCA(AbstractModel):
 		return boundary_callback(x_new)
 
 	def partition(self):
-		"""
-		Behaves like eqx.partition, but moves the hard coded kernels (a jax array) from the "trainable" pytree to the "static" pytree
+		"""Like eqx.partition, but puts the fixed perception kernels in the static pytree.
 
 		Returns
 		-------
@@ -217,7 +199,6 @@ class NCA(AbstractModel):
 			PyTree of same structure as NCA, with all non trainable parameters set to None
 		static : PyTree
 			PyTree of same structure as NCA, with all trainable parameters set to None
-
 		"""
 		
 		total_diff,total_static = eqx.partition(self,eqx.is_inexact_array)

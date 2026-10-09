@@ -6,8 +6,6 @@ app = marimo.App(width="columns")
 with app.setup:
 
     import marimo as mo
-    import sys
-    sys.path.append('/home/alex/PhD/Differentiable-Patterning/')
     # print(sys.path)
     import jax 
     # jax.config.update('jax_platform_name', 'cpu')
@@ -18,11 +16,20 @@ with app.setup:
     from tqdm.notebook import tqdm
     import time
     from einops import rearrange,repeat,reduce
-    from NCA.model.NCA_gated_model import gNCA
     from NCA.model.NCA_model import NCA
-    # from NCA.model.NCA_multi_scale import mNCA
-    from NCA.model.NCA_noise_model import nNCA
-    from NCA.model.NCA_gated_noise_model import gnNCA
+
+    # gNCA, nNCA and gnNCA are no longer separate classes: they are NCA with its
+    # GATED and/or PARAMETER_NOISE_LEVEL options (see NCA/model/factory.py).
+    # The saved parameters have the same layout, so old .eqx files still load.
+    def gNCA(*args, **kwargs):
+        return NCA(*args, GATED=True, **kwargs)
+
+    def nNCA(*args, **kwargs):
+        return NCA(*args, **kwargs)
+
+    def gnNCA(*args, **kwargs):
+        return NCA(*args, GATED=True, **kwargs)
+
     # from Common.dataloader.micropattern import load_micropattern_circle_8ch_individual,load_micropattern_circle_8ch_individual_explicit_colony
     from Common.model.boundary import model_boundary
     try:
@@ -40,22 +47,52 @@ with app.setup:
             ) from error
         return _helper
 
-    try:
-        from Experiments.emoji.old_scripts.time_gate_stability_comparison import H_to_filename as H_to_filename_gate
-    except ModuleNotFoundError as e:
-        H_to_filename_gate = _missing_optional_helper("H_to_filename_gate", e)
-    try:
-        from Experiments.emoji.old_scripts.parameter_noise_sweep import H_to_filename as H_to_filename_noise
-    except ModuleNotFoundError as e:
-        H_to_filename_noise = _missing_optional_helper("H_to_filename_noise", e)
-    try:
-        from Experiments.emoji.old_scripts.fire_rate_sweep import H_to_filename as H_to_filename_fr
-    except ModuleNotFoundError as e:
-        H_to_filename_fr = _missing_optional_helper("H_to_filename_fr", e)
-    try:
-        from Experiments.emoji.old_scripts.local_perturbation import run as run_local_perturbations
-    except ModuleNotFoundError as e:
-        run_local_perturbations = _missing_optional_helper("run_local_perturbations", e)
+    # Filenames of the models trained by the old (pre-config) sweep scripts,
+    # copied from Experiments/emoji/old_scripts/, which has been removed.
+    def H_to_filename_gate(H):
+        if H["channels"]==32:
+            H["steps_between_images"]=64
+        elif H["channels"]==16:
+            H["steps_between_images"]=128
+
+        if H["regenerate"]:
+            regen_str = "regenerate_"
+        else:
+            regen_str = ""
+        FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
+        return FILENAME
+
+    def H_to_filename_noise(H):
+        if H["channels"]==32:
+            H["steps_between_images"]=64
+        elif H["channels"]==16:
+            H["steps_between_images"]=128
+
+        if H["regenerate"]:
+            regen_str = "regenerate_"
+        else:
+            regen_str = ""
+        FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_pn{H['parameter_noise_level']}_dn{H['data_noise_level']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
+        return FILENAME
+
+    def H_to_filename_fr(H):
+        if H["channels"]==32:
+            H["steps_between_images"]=int(32 / H["fire_rate"])
+        elif H["channels"]==16:
+            H["steps_between_images"]=int(64 / H["fire_rate"])
+        if H["regenerate"]:
+            regen_str = "regenerate_"
+        else:
+            regen_str = ""
+        FILENAME = f"emoji_al_mi_ro_{H['loss_mode']}_{H['model']}_{regen_str}ch{H['channels']}_ds{H['downsample']}_steps{H['steps_between_images']}_fr{H['fire_rate']}_iters{H['iters']}_igc{H['intermediate_growth_coeff']}_brc{H['boundary_reg_coeff']}_cgc{H['contiguous_growth_coeff']}_pcc{H['perturbation_conservation_coeff']}_usc{H['update_sensitivity_coeff']}"
+        return FILENAME
+
+    def run_local_perturbations(*args, **kwargs):
+        raise NotImplementedError(
+            "run_local_perturbations came from Experiments/emoji/old_scripts/local_perturbation.py, "
+            "which was removed in commit 736679e. Restore it from git history to recompute the "
+            "perturbation data; the plots only need the saved perturbations/ files."
+        )
     from marimo_utils import plot_matrix,generate_hyperparameter_combinations,generate_hyperparameter_combinations_indexed
     import matplotlib.pyplot as plt
     from pprint import pprint
@@ -1147,13 +1184,13 @@ def export_nca_web_assets(
     reference_steps=8,
     display_channels=(0, 1, 2),
 ):
-    """
-    Export an already-loaded plain NCA to the WebDemo static asset format.
+    """Export a loaded plain NCA to the WebDemo static asset format.
 
-    Example:
-        nca, H = models_reg[0]
-        x0 = make_emoji_web_initial_state(data, H["channels"])
-        export_nca_web_assets(nca, "emoji_good_reg_model", x0=x0)
+    Examples
+    --------
+    >>> nca, H = models_reg[0]
+    >>> x0 = make_emoji_web_initial_state(data, H["channels"])
+    >>> export_nca_web_assets(nca, "emoji_good_reg_model", x0=x0)
     """
     import json
     from pathlib import Path
@@ -1367,9 +1404,7 @@ def _(plot_emoji_snapshots):
 
 @app.function
 def run_emoji_models(nca_hparams,data,key,save_every=None,regrowth=False,regrowth_aux={"pos":[0.5,0.5],"size":0.5}):
-    """
-        Runs given nca model on initial condition, returns a trajectory
-    """
+    """Run the NCA from the initial condition and return its trajectory."""
     nca,H = nca_hparams # unpack nca and hyperparamter dict
     x = np.array(data[0]) # C x y
     if regrowth:
@@ -1403,9 +1438,7 @@ def run_emoji_models(nca_hparams,data,key,save_every=None,regrowth=False,regrowt
 
 @app.function
 def run_full_trajectory(nca_hparams,data,key,regrowth=False,regrowth_aux={"pos":[0.5,0.5],"size":0.5}):
-    """
-        Runs given nca model on initial condition, returns a trajectory
-    """
+    """Run the NCA from the initial condition and return its trajectory."""
     nca,H = nca_hparams # unpack nca and hyperparamter dict
     x = np.array(data[0]) # C x y
     if regrowth:
@@ -1554,10 +1587,7 @@ def visualise_global_perturbation(Hs,name_func=H_to_filename_gate,video_aux={"sa
 @app.cell
 def _():
     def plot_emoji_snapshots(ax,Tr,H):
-        """
-            Takes a trajectory (shape T C x y) and hyperparameter dict H
-            Plots snapshots at T=1,2,3 * steps_between_images (i.e. ignoring initial condition)
-        """
+        """Plot snapshots of ``Tr`` [T, C, x, y] at 1, 2, 3 x steps_between_images (skipping the initial condition)."""
         T,C,X,Y = Tr.shape
         # n_snapshots = 3
         # snapshot_indices = onp.linspace(1,T-1,n_snapshots).astype(int)

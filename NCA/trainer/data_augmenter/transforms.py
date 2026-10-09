@@ -1,7 +1,6 @@
-"""Pure stochastic NCA augmentation transforms.
+"""Random augmentation transforms for NCA pools.
 
-All functions return new PyTrees and accept an explicit PRNG key. They do not
-modify augmenter instances or derive randomness from wall-clock time.
+All functions return new PyTrees, and all randomness comes from the key passed in.
 """
 
 from __future__ import annotations
@@ -49,11 +48,11 @@ def propagate_pool(x):
 
 
 def reinject_observations(x, x_true, observable_channels: int, key, fraction: float = 0.5):
-    """Reproduce the legacy pool propagation and observation reinjection.
+    """Propagate the pool, reset slot 0 to the truth, and reinject observations.
 
-    Exactly ``floor(fraction * eligible_slots)`` batch/time slots are selected
-    globally. A stacked array uses axes ``(batch, time, ...)``; PyTree leaves
-    each represent one trajectory with a leading time axis.
+    Exactly ``floor(fraction * eligible_slots)`` of the later batch/time slots
+    get their observable channels from ``x_true``. A stacked array has axes
+    ``(batch, time, ...)``; PyTree leaves are single trajectories ``(time, ...)``.
     """
 
     if not 0.0 <= fraction <= 1.0:
@@ -113,7 +112,7 @@ def reinject_observations(x, x_true, observable_channels: int, key, fraction: fl
 
 
 def bernoulli_reinject_observations(x, x_true, observable_channels: int, key, probability):
-    """Propagate a pool and independently reinject each eligible slot."""
+    """Propagate the pool and reinject each eligible slot independently with ``probability``."""
 
     x = propagate_pool(x)
     if hasattr(x, "ndim"):

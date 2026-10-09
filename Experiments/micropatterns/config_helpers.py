@@ -84,7 +84,7 @@ def resolve_knockout_curriculum(intervention):
 
 
 def _coerce_dataset_result(result):
-    """Accept old tuple-returning test doubles while loaders migrate."""
+    """Also accept the older tuple return value (used by some test doubles)."""
 
     if isinstance(result, MicropatternDataset):
         return result
@@ -665,8 +665,7 @@ def load_data(
                 f"when duplicate_final_timestep is enabled. Got {CHANNEL_TIMESTEP_MASK.shape}."
             )
 
-    # Pool cardinality is a data-assembly concern: duplicate every aligned
-    # batch component together before handing the result to the augmenter.
+    # Repeat the batch to fill the pool, keeping data, mask and boundary aligned.
     if pool_copies > 1:
         data = jnp.concatenate([data] * pool_copies, axis=0)
         boundary_mask = jnp.concatenate([boundary_mask] * pool_copies, axis=0)
@@ -675,9 +674,8 @@ def load_data(
                 [CHANNEL_TIMESTEP_MASK] * pool_copies, axis=0
             )
 
-    # Data and boundary_mask are [B,T,C,H,W] and [B,1,H,W]. Keep the
-    # historical six-pixel border unless a benchmark/experiment explicitly
-    # requests aligned spatial dimensions.
+    # Data and boundary_mask are [B,T,C,H,W] and [B,1,H,W]. Pad by six pixels
+    # unless pad_multiple asks for sizes that are a multiple of it.
     pad_multiple = data_config.micropattern.pad_multiple
     if pad_multiple is None:
         height_padding = (6, 6)

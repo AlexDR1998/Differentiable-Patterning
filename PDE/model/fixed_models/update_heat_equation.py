@@ -16,11 +16,16 @@ class F(eqx.Module):
                  ):
         """Heat equation: dX = D*Lap(X)
 
-        Args:
-            PADDING (str): Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
-            dx (float): grid spacing
-            KERNEL_SCALE (int, optional): spatial operator kernel size. Defaults to 1.
-            D (float, optional): Diffusion strength. Defaults to 0.1.
+        Parameters
+        ----------
+        PADDING : str
+            Boundary type: 'ZEROS', 'REFLECT', 'REPLICATE' or 'CIRCULAR'
+        dx : float
+            Grid spacing
+        KERNEL_SCALE : int, optional
+            Spatial operator kernel size. Defaults to 1.
+        D : float, optional
+            Diffusion strength. Defaults to 0.1.
         """
         self.D = D
         self.ops = Ops(PADDING,dx,KERNEL_SCALE)

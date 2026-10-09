@@ -1,4 +1,4 @@
-"""State-preserving interventions applied at the NCA update boundary."""
+"""NCA rollouts with channel knockouts: from a given time on, one channel is hidden from perception."""
 
 import equinox as eqx
 import jax
@@ -10,10 +10,9 @@ from Common.model.boundary import no_boundary
 def intervention_slot(intervention_time, observation_times=None):
     """Index of the transition slot in which an intervention time falls.
 
-    Without ``observation_times`` this is the historical 12-hour convention
-    ``time // 12``. With them, it is the last slot starting at or before
-    ``time`` (identical on a uniform 12 h grid). Works on Python scalars and
-    traced arrays; negative times (no intervention) are handled by callers.
+    Without ``observation_times`` this is ``time // 12`` (12-hour slots). With
+    them, it is the last slot starting at or before ``time``. Works on Python
+    scalars and traced arrays; callers handle negative times (no intervention).
     """
     if observation_times is None:
         return intervention_time // 12
@@ -24,7 +23,7 @@ def intervention_slot(intervention_time, observation_times=None):
 def nodal_read_block_mask(
     intervention_time, state_count, *, time_offset=0, observation_times=None
 ):
-    """Select developmental slots at or after an intervention."""
+    """True for time slots at or after the intervention."""
 
     time_indices = jnp.arange(state_count) + time_offset
     return (intervention_time >= 0) & (
@@ -35,7 +34,7 @@ def nodal_read_block_mask(
 def apply_model_with_blocked_channel(
     nca, state, boundary_callback, key, channel, blocked
 ):
-    """Apply an NCA update without exposing one recurrent channel to perception."""
+    """Apply one NCA update; if ``blocked``, ``channel`` is zeroed for perception only."""
 
     def blocked_update(_):
         read_state = state.at[channel].set(0.0)
@@ -50,11 +49,7 @@ def apply_model_with_blocked_channel(
 
 @eqx.filter_jit
 def rollout_model(nca, initial_state, boundary_callback, key, total_steps):
-    """Compile and run a complete ordinary NCA trajectory.
-
-    The returned trajectory includes ``initial_state`` at index zero, matching
-    the existing ``NCA.run`` convention.
-    """
+    """Run an NCA trajectory; index 0 is ``initial_state`` (as in ``NCA.run``)."""
 
     def step(carry, step_index):
         state, previous_key = carry
@@ -80,7 +75,7 @@ def rollout_model_with_blocked_channel(
     channel,
     knockout_step,
 ):
-    """Compile an NCA trajectory with recurrent channel reads blocked on time."""
+    """Run an NCA trajectory with ``channel`` blocked from ``knockout_step`` on."""
 
     def step(carry, step_index):
         state, previous_key = carry
@@ -136,7 +131,7 @@ def rollout_model_sampled(
     total_steps,
     observation_steps,
 ):
-    """Compile a rollout while retaining only requested trajectory states."""
+    """Run a rollout, keeping only the states at ``observation_steps``."""
 
     def boundary_callback(state):
         return _apply_boundary(state, boundary_mask, boundary_mode)
@@ -180,7 +175,7 @@ def rollout_model_with_blocked_channel_sampled(
     knockout_step,
     observation_steps,
 ):
-    """Compile a blocked-channel rollout and retain only requested states."""
+    """Blocked-channel rollout, keeping only the states at ``observation_steps``."""
 
     def boundary_callback(state):
         return _apply_boundary(state, boundary_mask, boundary_mode)
@@ -234,7 +229,7 @@ def rollout_model_with_blocked_channel_pattern_counts(
     pixel_groups,
     n_groups,
 ):
-    """Roll out an intervention while retaining only marker-pattern counts.
+    """Blocked-channel rollout, keeping only counts of marker patterns.
 
     At every step, each pixel's high/low pattern of the ``fate_channels``
     (high = above ``fate_thresholds``; bit ``i`` = ``fate_channels[i]``) is

@@ -3,13 +3,12 @@
 Training rolls every transition ``k -> k+1`` out in parallel as one slot along
 the vmapped time axis. An :class:`IntervalSchedule` says how much NCA time each
 slot represents. It is resolved once from the observation times and holds only
-Python scalars/tuples, so the training step still compiles exactly once.
+Python scalars/tuples, so the training step compiles only once.
 
 Modes
 -----
 ``uniform``
-    Every slot runs ``t`` steps (the historical behaviour; observation times
-    are ignored).
+    Every slot runs ``t`` steps; observation times are ignored (the default).
 ``steps``
     Slot ``i`` runs ``max(1, round(t * dt_i / dt_ref))`` steps, so ``t`` is the
     step count of the reference interval (median interval by default).
@@ -178,8 +177,8 @@ def build_interval_schedule(
 def interval_schedule_from_config(config, n_slots, observation_times=None):
     """Rebuild a training run's schedule from its saved experiment config.
 
-    Configs saved before interval modes existed resolve to ``uniform``, so
-    evaluation code reproduces historical ``k * t`` indexing.
+    Older configs without ``interval_mode`` resolve to ``uniform`` (``k * t``
+    indexing).
     """
     loop = config.run
     return build_interval_schedule(

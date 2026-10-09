@@ -85,7 +85,7 @@ def test_loader_places_physical_replicates_on_batch_axis(tmp_path):
 
     # S1/SOX17 is source page 0; each physical image remains a distinct batch.
     assert np.allclose(data[:, 0, 0, 3, 3], [0.101, 0.201, 0.301])
-    # RNA/CER1 uses source page 1, demonstrating that DAPI page 0 was skipped.
+    # RNA/CER1 uses source page 1, so DAPI page 0 was skipped.
     assert np.allclose(data[:, 0, 8, 3, 3], [0.102, 0.202, 0.302])
 
 

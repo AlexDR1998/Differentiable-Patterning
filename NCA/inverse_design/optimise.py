@@ -49,8 +49,8 @@ def optimise_geometry(
     """Optimise geometry while keeping the NCA and sampled patches frozen.
 
     ``sample_biology(key)`` must return ``[biological_channels, H, W]``. By
-    default it is called once. Optional per-step resampling folds the iteration
-    into the initial-condition key while remaining reproducible.
+    default it is called once; with per-step resampling the iteration number is
+    folded into its key.
     """
 
     sample_key, rollout_key = jax.random.split(key)

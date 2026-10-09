@@ -4,7 +4,7 @@ A pixel is hot when it sits more than ``threshold`` noise levels above the
 median of its ``size x size`` neighbourhood. The median ignores specks
 smaller than about half the window but follows larger structures such as
 nuclei, so the window should be wider than the specks and narrower than a
-nucleus. The noise level is a robust estimate of the spread of
+nucleus. The noise level is the scaled median absolute deviation of
 ``image - median`` over the whole image.
 
 Hot pixels are replaced by the mean of the other, non-hot pixels in their

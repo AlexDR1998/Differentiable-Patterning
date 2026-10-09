@@ -1,4 +1,8 @@
-"""Recurrent training-pool admission policy."""
+"""Decide whether rollout results are written back into the training pool.
+
+A result is rejected when its loss is much higher than a running average (EMA)
+of admitted losses, or than the last admitted loss.
+"""
 
 from dataclasses import dataclass
 from typing import Sequence
@@ -31,7 +35,7 @@ class PoolAdmissionController:
         self.state = PoolAdmissionState()
 
     def reset_references(self) -> None:
-        """Forget scalar comparisons after the training objective changes."""
+        """Reset the reference losses, e.g. after the loss weights change."""
         self.state.loss_ema = None
         self.state.previous_admitted_loss = None
 
@@ -106,7 +110,7 @@ class PoolAdmissionController:
 
 
 class TimePoolAdmissionController:
-    """Apply the established admission policy independently per time slot."""
+    """Apply the admission rule separately to each time slot."""
 
     def __init__(self, config):
         self.config = config

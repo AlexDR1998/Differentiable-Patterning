@@ -190,27 +190,27 @@ def to_vgg_groups(x):
 
 
 # ---------------------------------------------------------------------
-# Precompute target features
-# - to save compute time, sometimes we can just compute the true data
-#   target features once at the start, effectively halving VGG calls.
+# Precompute target features once, halving the VGG calls per step
 # ---------------------------------------------------------------------
 
 def precompute_vgg_target(y, key, aux, arrange_channels):
-    """
-    Initialise the VGG parameters and compute the target features once.
+    """Initialise the VGG parameters and compute the target features once.
 
-    Parameters:
-        y : Pytree[Batches] of float32 [N,CHANNELS,WIDTH,HEIGHT]
-            true data
-        key : jax.random.PRNGKey
-        aux : dict with "vgg_metric" (and "samples" for the OT variants)
-        arrange_channels : function [N,C,W,H] -> [N,3*G,W,H] that pads or
-            groups the channels into blocks of 3
-    Returns:
-        {
-            "vgg_params": params,
-            "target_feats": Pytree[Batches] of [G, ...VGG feature pytree...],
-        }
+    Parameters
+    ----------
+    y : Pytree[Batches] of float32 [N,CHANNELS,WIDTH,HEIGHT]
+        true data
+    key : jax.random.PRNGKey
+    aux : dict
+        "vgg_metric" (and "samples" for the OT variants)
+    arrange_channels : callable
+        [N,C,W,H] -> [N,3*G,W,H], pads or groups the channels into blocks of 3
+
+    Returns
+    -------
+    dict
+        "vgg_params": the VGG parameters, and "target_feats": Pytree[Batches]
+        of [G, ...VGG feature pytree...]
     """
     y = jtu.tree_map(lambda batch: to_vgg_groups(arrange_channels(batch)), y)
     lpips_model = lpips_variants[aux["vgg_metric"]]
@@ -252,13 +252,7 @@ def random_crop_to_vgg_input(x,key):
 
 
 def _permute_matching_channels(x, y, key):
-    """
-    Randomly permute matched channel order before making 3-channel VGG inputs.
-
-    x, y: float array [N, C, H, W]
-    key: jax.random.PRNGKey
-    returns: x, y with shape [N, C, H, W]
-    """
+    """Apply the same random channel permutation to x and y ``[N, C, H, W]`` before making 3-channel VGG inputs."""
     perm = jr.permutation(key, x.shape[1])
     x = jnp.take(x, perm, axis=1)
     y = jnp.take(y, perm, axis=1)
@@ -266,13 +260,9 @@ def _permute_matching_channels(x, y, key):
 
 
 def permute_matching_channel_groups(x, y, key, group_sizes):
-    """
-    Randomly permute matched channel order within fixed experiment groups.
+    """Apply the same random channel permutation to x and y ``[N, C, H, W]``, within each experiment group.
 
-    x, y: float array [N, C, H, W]
-    key: jax.random.PRNGKey
-    group_sizes: sequence of int summing to C
-    returns: x, y with shape [N, C, H, W]
+    ``group_sizes`` are the group sizes, summing to C.
     """
     keys = jr.split(key, len(group_sizes))
     xs = []
@@ -288,7 +278,7 @@ def permute_matching_channel_groups(x, y, key, group_sizes):
 
 
 def permute_grouped_channels(x, key, group_sizes, axis=0):
-    """Apply the same deterministic within-group permutation used for grouped VGG inputs."""
+    """Permute ``x`` along ``axis`` within groups, as ``permute_matching_channel_groups`` does for the same key."""
     keys = jr.split(key, len(group_sizes))
     outputs = []
     start = 0
@@ -304,12 +294,11 @@ def permute_grouped_channels(x, key, group_sizes, axis=0):
 # ---------------------------------------------------------------------
 
 def vgg_group_losses(x, y, key, aux, cache=None):
-    """
-    VGG loss for each block of 3 channels.
+    """VGG loss for each block of 3 channels.
 
-    x, y : float32 [N, 3*G, W, H], channels already padded or grouped
-    cache : precomputed target features, or None
-    Returns float32 [G, N, 1, 1, 1]
+    ``x``, ``y`` are float32 ``[N, 3*G, W, H]`` with channels already padded or
+    grouped; ``cache`` holds precomputed target features, or None. Returns
+    float32 ``[G, N, 1, 1, 1]``.
     """
     x = to_vgg_groups(x)
     y = to_vgg_groups(y)
@@ -325,12 +314,11 @@ def vgg_group_losses(x, y, key, aux, cache=None):
 
     keys = jr.split(key, x.shape[0])
     if aux.get("random_crop", False):
-        # For each N and channel group, select a random 224*224 sized crop,
-        # as this is the input size that VGG was trained on. For larger resolutions, this 
-        # should speed up training.
+        # Random 224x224 crop per sample and channel group (VGG's training
+        # input size); faster for larger images.
         x = random_crop_to_vgg_input(x, key)
         y = random_crop_to_vgg_input(y, key)
-        cache = None # Can't use cached features if we are randomly cropping.
+        cache = None # Cached features don't match random crops.
 
     if cache is None:
         return jax.vmap(
@@ -346,25 +334,24 @@ def vgg_group_losses(x, y, key, aux, cache=None):
 
 
 def vgg_hyperspectral(x, y, key, where=None, aux={"vgg_metric": "l2"}, cache=None):
-    """
-        Takes x and y with > 3 channels and computes VGG loss on each 3-channel subset, averaging the result.
-        Parameters
-        ----------
-        x : float32 [N,CHANNELS,WIDTH,HEIGHT]
-            predictions
-        y : float32 [N,CHANNELS,WIDTH,HEIGHT]
-            true data
-        key : jax.random.PRNGKey
-            Jax random number key.
-        where : boolean array [N,CHANNELS,(),()]
-            Mask to apply to x and y before calculating loss, to select which timesteps and channels we care about.
-        aux : dict
-            "vgg_metric", and optionally "vgg_params", "samples", "random_crop", "random_channel_shuffle"
-        cache : precomputed target features (see precompute_vgg_hyperspectral_target), or None
-        Returns
-        -------
-        loss : float32 [N]
-            loss reduced over channel and spatial axes
+    """VGG loss averaged over blocks of 3 channels (zero-padded to a multiple of 3).
+
+    Parameters
+    ----------
+    x : float32 [N,CHANNELS,WIDTH,HEIGHT]
+        predictions
+    y : float32 [N,CHANNELS,WIDTH,HEIGHT]
+        true data
+    key : jax.random.PRNGKey
+    where : boolean array [N,CHANNELS,(),()]
+        channels (and timesteps) to include
+    aux : dict
+        "vgg_metric", and optionally "vgg_params", "samples", "random_crop", "random_channel_shuffle"
+    cache : precomputed target features (see precompute_vgg_hyperspectral_target), or None
+
+    Returns
+    -------
+    loss : float32 [N]
     """
     if where is not None:
         x = x * where.astype(x.dtype)
