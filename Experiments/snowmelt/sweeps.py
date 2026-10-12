@@ -46,7 +46,8 @@ SWEEPS = {
         "Model architecture",
         "nca_snowmelt_architecture_sweep",
         "nca_snowmelt_architecture_sweep",
-        {"family": "model.family", "kernels": "model.kernel_str", "channels": "model.channels"},
+        {"family": "model.family", "kernels": "model.kernel_str", "channels": "model.channels",
+         "static": "data.snowmelt.static_channels"},
     ),
     "update_rule": Sweep(
         "Update rule",
@@ -135,18 +136,19 @@ def training_row(bundle, sweep):
         # Near 1: the best checkpoint came at the end, so longer training may still help.
         "best_at_fraction": None if best_iteration is None else best_iteration / bundle.config.run.iterations,
         "created_at": str(bundle.manifest.created_at),
+        "wandb_group": bundle.manifest.provenance.wandb.get("group"),
         "wandb_run_id": bundle.manifest.provenance.wandb.get("run_id"),
     }
 
 
 def latest_per_run(rows, sweep):
-    """Keep the newest bundle of each run, so a rerun replaces the earlier attempt.
+    """Keep the newest bundle of each run in each W&B group, so a rerun replaces the earlier attempt.
 
-    Returns ``(kept, superseded)``; both are lists of rows.
+    Runs in different groups are kept apart. Returns ``(kept, superseded)``; both are lists of rows.
     """
     newest = {}
     for row in sorted(rows, key=lambda row: row["created_at"]):
-        newest[run_key(row, sweep)] = row
+        newest[(row.get("wandb_group"), *run_key(row, sweep))] = row
     kept = list(newest.values())
     kept_ids = {row["model_id"] for row in kept}
     return kept, [row for row in rows if row["model_id"] not in kept_ids]

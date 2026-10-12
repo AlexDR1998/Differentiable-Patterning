@@ -1,4 +1,4 @@
-experiment_name: nca_snowmelt_input_sweep
+experiment_name: nca_snowmelt_input_sweep_v2
 entrypoint: Experiments.snowmelt.train:run
 output_subdir: generated/nca_snowmelt_input_sweep
 seed_mode: index
@@ -29,10 +29,10 @@ seed_mode: index
 # Total jobs: 5 target sets * 4 static sets * 2 repeats = 40.
 grid:
   model.family: [gNCA]
-  model.kernel_str: [[ID, LAP, GRAD]]
+  model.kernel_str: [[ID, LAP, GRAD],[ID, LAP, DIFF]]
   model.fire_rate: [0.5]
   run.interval_mode: [steps]
-  run.repeat: [0, 1]
+  run.repeat: [0, 1, 2]
   logging.wandb.project: [nca_snowmelt_hyperparameter_sweep]
   labels.gpu: [H200]
   system.precision: [bfloat16]

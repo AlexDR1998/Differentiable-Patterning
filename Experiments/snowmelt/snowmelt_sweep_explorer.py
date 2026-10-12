@@ -88,25 +88,41 @@ with app.setup(hide_code=True):
         ax.grid(color="#eeeeee")
         ax.spines[["top", "right"]].set_visible(False)
 
-    def factor_plot(ax, df, x, y, hue=None, x_order=None, hue_order=None):
-        """One dot per run and the mean over repeats per level, side by side for each hue.
+    def hue_width(n):
+        """Space given to each of ``n`` hue levels within one x position (0.8 in all)."""
+        return 0.8 / n
 
-        Means are joined by a line when ``x`` is numeric.
+    def hue_offset(k, n):
+        """Horizontal shift of hue level ``k`` of ``n`` within one x position."""
+        return (k - (n - 1) / 2) * hue_width(n)
+
+    def factor_plot(ax, df, x, y, hue=None, x_order=None, hue_order=None):
+        """The mean over repeats per level, side by side for each hue, with one dot per run.
+
+        Numeric ``x``: means are markers joined by a line. Categorical ``x``: means are bars,
+        with the std across repeats as error bars.
         """
         x_order = levels(df[x]) if x_order is None else [v for v in x_order if v in set(df[x])]
         hue_order = [None] if hue is None else (levels(df[hue]) if hue_order is None else hue_order)
         numeric = all(isinstance(v, (int, float, np.integer, np.floating)) for v in x_order)
         for k, level in enumerate(hue_order):
             rows = df if hue is None else df[df[hue] == level]
-            offset = 0.0 if len(hue_order) == 1 else 0.6 * (k / (len(hue_order) - 1) - 0.5)
+            offset = hue_offset(k, len(hue_order))
             colour = COLOURS[k % len(COLOURS)]
-            means = []
-            for i, value in enumerate(x_order):
-                values = rows.loc[rows[x] == value, y].dropna().to_numpy(float)
-                ax.scatter(np.full(len(values), i + offset), values, s=18, color=colour, alpha=0.45, lw=0)
-                means.append(values.mean() if len(values) else np.nan)
-            ax.plot(np.arange(len(x_order)) + offset, means, marker="o", ms=7, lw=1.5 if numeric else 0,
-                    color=colour, label=None if level is None else str(level))
+            label = None if level is None else str(level)
+            runs = [rows.loc[rows[x] == value, y].dropna().to_numpy(float) for value in x_order]
+            means = [values.mean() if len(values) else np.nan for values in runs]
+            positions = np.arange(len(x_order)) + offset
+            if numeric:
+                for i, values in enumerate(runs):
+                    ax.scatter(np.full(len(values), i + offset), values, s=18, color=colour, alpha=0.45, lw=0)
+                ax.plot(positions, means, marker="o", ms=7, lw=1.5, color=colour, label=label)
+            else:
+                spread = [values.std(ddof=1) if len(values) > 1 else np.nan for values in runs]
+                ax.bar(positions, means, width=0.9 * hue_width(len(hue_order)), color=colour, alpha=0.85, label=label)
+                ax.errorbar(positions, means, yerr=spread, fmt="none", ecolor="#333", capsize=2, lw=1)
+                for i, values in enumerate(runs):
+                    ax.scatter(np.full(len(values), i + offset), values, s=10, color="#222", alpha=0.5, lw=0, zorder=3)
         ax.set_xticks(range(len(x_order)), [str(v) for v in x_order], rotation=0 if numeric else 20,
                       ha="center" if numeric else "right")
         ax.set_xlabel(x)
@@ -213,45 +229,104 @@ def _():
 
 @app.cell(hide_code=True)
 def _(reload_button, store_root):
-    # One row per sweep run found in the store (the newest bundle when a run was repeated).
-    # Bundles are read from their folders, so the registry index does not need rebuilding.
+    # One row per completed bundle of each sweep, reruns included (they are dropped after the
+    # group filter below). Bundles are read from their folders, so the registry index does not
+    # need rebuilding.
     reload_button.value
     _store = Path(store_root.value).expanduser()
 
     bundles = {}
     expected_by_sweep = {}
-    _training_rows = []
+    all_runs = []
+    for _name, _sweep in sweeps.SWEEPS.items():
+        expected_by_sweep[_name] = sweeps.expected_runs(_sweep)
+        for _bundle in sweeps.find_bundles(_store, _sweep):
+            bundles[_bundle.id] = _bundle
+            _row = {"sweep": _name, **sweeps.training_row(_bundle, _sweep)}
+            _row["wandb_group"] = _row["wandb_group"] or "(no group)"
+            all_runs.append(_row)
+    mo.md(f"**{len(all_runs)}** sweep bundles in `{_store}`.")
+    return all_runs, bundles, expected_by_sweep
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Model selection
+
+    - Pick the W&B groups to use for each sweep (newest group first, model count in brackets)
+    - Within a group, only the newest bundle of each run is kept; runs from different groups are pooled as repeats
+    - Untick rows in the table to drop single models; evaluation and every plot below use the ticked models
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(all_runs):
+    _selects = {}
+    for _name, _sweep in sweeps.SWEEPS.items():
+        _runs = [_row for _row in all_runs if _row["sweep"] == _name]
+        _newest = {}
+        for _row in sorted(_runs, key=lambda _r: _r["created_at"]):
+            _newest[_row["wandb_group"]] = _row["created_at"]
+        _counts = pd.Series([_row["wandb_group"] for _row in _runs], dtype=object).value_counts()
+        _options = {f"{_group} ({_counts[_group]})": _group
+                    for _group in sorted(_newest, key=_newest.get, reverse=True)}
+        _selects[_name] = mo.ui.multiselect(_options, value=list(_options), label=_sweep.title, full_width=True)
+    group_select = mo.ui.dictionary(_selects)
+    mo.vstack([group_select[_name] for _name in _selects])
+    return (group_select,)
+
+
+@app.cell(hide_code=True)
+def _(all_runs, expected_by_sweep, group_select):
+    _kept_rows = []
     _status_rows = []
     _missing = {}
     for _name, _sweep in sweeps.SWEEPS.items():
-        _rows = []
-        for _bundle in sweeps.find_bundles(_store, _sweep):
-            bundles[_bundle.id] = _bundle
-            _rows.append({"sweep": _name, **sweeps.training_row(_bundle, _sweep)})
+        _groups = set(group_select.value[_name])
+        _rows = [_row for _row in all_runs if _row["sweep"] == _name and _row["wandb_group"] in _groups]
         _kept, _superseded = sweeps.latest_per_run(_rows, _sweep)
-        expected_by_sweep[_name] = sweeps.expected_runs(_sweep)
-        _missing[_name] = sweeps.missing_runs(expected_by_sweep[_name], _kept, _sweep)
-        _training_rows += _kept
+        _expected = expected_by_sweep[_name]
+        _missing[_name] = sweeps.missing_runs(_expected, _kept, _sweep)
+        _kept_rows += _kept
         _status_rows.append({
             "sweep": _sweep.title,
             "experiment": _sweep.experiment,
-            "expected runs": len(expected_by_sweep[_name]) or None,
+            "groups": len(_groups),
+            "expected runs": len(_expected) or None,
             "found": len(_kept),
-            "missing": len(_missing[_name]) if expected_by_sweep[_name] else None,
+            "missing": len(_missing[_name]) if _expected else None,
             "superseded (older reruns)": len(_superseded),
         })
-    training = pd.DataFrame(_training_rows)
+    # Models in the selected groups: the rows the table below can pick from
+    candidates = pd.DataFrame(_kept_rows)
 
     _missing_tables = {
         f"{sweeps.SWEEPS[_name].title}: {len(_rows)} missing": mo.ui.table(pd.DataFrame(_rows), selection=None, page_size=10)
         for _name, _rows in _missing.items() if _rows
     }
+    model_table = mo.ui.table(
+        candidates.dropna(axis=1, how="all").round(4) if len(candidates) else pd.DataFrame({"model_id": []}),
+        initial_selection=list(range(len(candidates))),
+        page_size=10,
+        label="Models",
+    )
     mo.vstack([
-        mo.md(f"**{len(training)}** sweep models in `{_store}`."),
         mo.ui.table(pd.DataFrame(_status_rows), selection=None),
         mo.accordion(_missing_tables) if _missing_tables else mo.md(""),
+        model_table,
     ])
-    return bundles, expected_by_sweep, training
+    return candidates, model_table
+
+
+@app.cell(hide_code=True)
+def _(candidates, model_table):
+    # The models used for evaluation and for every plot below
+    _ticked = set(model_table.value["model_id"]) if len(model_table.value) else set()
+    selected = candidates[candidates.model_id.isin(_ticked)] if len(candidates) else candidates
+    mo.md(f"**{len(selected)}** of {len(candidates)} models selected.")
+    return (selected,)
 
 
 @app.cell(hide_code=True)
@@ -292,11 +367,6 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    eval_sweeps = mo.ui.multiselect(
-        {_sweep.title: _name for _name, _sweep in sweeps.SWEEPS.items()},
-        value=[_sweep.title for _sweep in sweeps.SWEEPS.values()],
-        label="Sweeps",
-    )
     eval_mode = mo.ui.radio(
         {"Free run from first date": "free", "One interval ahead": "interval"},
         value="Free run from first date", label="Rollout", inline=True,
@@ -306,12 +376,9 @@ def _():
     eval_grid = mo.ui.radio({"Model grid": "model", "10 m grid": "full"}, value="10 m grid", label="Score on", inline=True)
     eval_verify = mo.ui.checkbox(value=True, label="Require input to match the bundle fingerprint")
     eval_run = mo.ui.run_button(label="Evaluate models")
-    mo.vstack([
-        eval_sweeps,
-        mo.hstack([eval_mode, eval_rollouts, eval_seed, eval_grid, eval_verify, eval_run],
-                  justify="start", gap=1.5, wrap=True),
-    ])
-    return eval_grid, eval_mode, eval_rollouts, eval_run, eval_seed, eval_sweeps, eval_verify
+    mo.hstack([eval_mode, eval_rollouts, eval_seed, eval_grid, eval_verify, eval_run],
+              justify="start", gap=1.5, wrap=True)
+    return eval_grid, eval_mode, eval_rollouts, eval_run, eval_seed, eval_verify
 
 
 @app.cell
@@ -330,54 +397,58 @@ def _(
     eval_rollouts,
     eval_run,
     eval_seed,
-    eval_sweeps,
     eval_verify,
     raw_for,
     score_cache,
-    training,
+    selected,
 ):
+    # Models already scored with these settings are shown straight away; the button scores the rest
     _settings = (eval_mode.value, int(eval_rollouts.value), int(eval_seed.value), eval_grid.value, eval_verify.value)
+    _todo = list(selected.model_id) if len(selected) else []
+    _failures = []
+    if eval_run.value:
+        _sequences, _references = {}, {}
+        _new = [_model_id for _model_id in _todo if (_model_id, *_settings) not in score_cache]
+        for _model_id in mo.status.progress_bar(_new, title="Evaluating models", remove_on_exit=True):
+            # A fixed key per model, so results do not depend on which models are selected
+            _key = jr.fold_in(jr.PRNGKey(_settings[2]), zlib.crc32(_model_id.encode()) & 0x7FFFFFFF)
+            try:
+                _bundle = bundles[_model_id]
+                score_cache[(_model_id, *_settings)] = sweeps.evaluate_bundle(
+                    _bundle, raw_for(_bundle.config.data.snowmelt.version), _key, n_rollouts=_settings[1], mode=_settings[0],
+                    grid=_settings[3], verify=_settings[4], sequences=_sequences, references=_references,
+                )
+            except Exception as _error:  # keep going: one bad bundle should not stop the comparison
+                _failures.append({"model_id": _model_id, "error": f"{type(_error).__name__}: {_error}"})
+
     _score_rows = []
     _summary_rows = []
     eval_maps = {}
-    _failures = []
-    if not eval_run.value:
-        _status = mo.md("Choose sweeps and settings, then click **Evaluate models**. Training metrics are shown below without it.")
-    else:
-        _todo = list(training.loc[training.sweep.isin(eval_sweeps.value), "model_id"]) if len(training) else []
-        _sequences, _references = {}, {}
-        for _model_id in mo.status.progress_bar(_todo, title="Evaluating models", remove_on_exit=True):
-            _cache_key = (_model_id, *_settings)
-            if _cache_key not in score_cache:
-                # A fixed key per model, so results do not depend on which models are selected
-                _key = jr.fold_in(jr.PRNGKey(_settings[2]), zlib.crc32(_model_id.encode()) & 0x7FFFFFFF)
-                try:
-                    _bundle = bundles[_model_id]
-                    score_cache[_cache_key] = sweeps.evaluate_bundle(
-                        _bundle, raw_for(_bundle.config.data.snowmelt.version), _key, n_rollouts=_settings[1], mode=_settings[0],
-                        grid=_settings[3], verify=_settings[4], sequences=_sequences, references=_references,
-                    )
-                except Exception as _error:  # keep going: one bad bundle should not stop the comparison
-                    _failures.append({"model_id": _model_id, "error": f"{type(_error).__name__}: {_error}"})
-                    continue
-            _rows, _maps = score_cache[_cache_key]
-            _score_rows += [{"model_id": _model_id, **_row} for _row in _rows if _row["channel"] == _maps["channel"]]
-            _summary_rows.append({"model_id": _model_id, **sweeps.summarise_scores(_rows, _maps["channel"])})
-            eval_maps[_model_id] = _maps
-        _status = mo.vstack([
-            mo.md(f"Evaluated **{len(_summary_rows)}** model(s): "
-                  f"{ {'free': 'free run', 'interval': 'one interval ahead'}[_settings[0]]}, {_settings[1]} rollout(s) each, "
-                  f"scored on the { {'model': 'model grid', 'full': '10 m grid'}[_settings[3]]}"
-                  + ("" if _settings[4] else " (**input fingerprints not checked**)") + "."),
-            mo.callout(mo.vstack([mo.md(f"**{len(_failures)}** model(s) failed:"),
-                                  mo.ui.table(pd.DataFrame(_failures), selection=None)]), kind="danger")
-            if _failures else mo.md(""),
-        ])
+    for _model_id in _todo:
+        if (_model_id, *_settings) not in score_cache:
+            continue
+        _rows, _maps = score_cache[(_model_id, *_settings)]
+        _score_rows += [{"model_id": _model_id, **_row} for _row in _rows if _row["channel"] == _maps["channel"]]
+        _summary_rows.append({"model_id": _model_id, **sweeps.summarise_scores(_rows, _maps["channel"])})
+        eval_maps[_model_id] = _maps
 
-    # Training metrics for every model, with the inference summary where it has been computed
-    results = training.merge(pd.DataFrame(_summary_rows), on="model_id", how="left") if _summary_rows else training
+    _remaining = len(_todo) - len(_summary_rows)
+    _status = mo.vstack([
+        mo.md(f"Scored **{len(_summary_rows)}** of {len(_todo)} selected model(s): "
+              f"{ {'free': 'free run', 'interval': 'one interval ahead'}[_settings[0]]}, {_settings[1]} rollout(s) each, "
+              f"on the { {'model': 'model grid', 'full': '10 m grid'}[_settings[3]]}"
+              + ("" if _settings[4] else " (**input fingerprints not checked**)") + "."
+              + (f" Click **Evaluate models** to score the other {_remaining}; training metrics are shown below without it."
+                 if _remaining and not _failures else "")),
+        mo.callout(mo.vstack([mo.md(f"**{len(_failures)}** model(s) failed:"),
+                              mo.ui.table(pd.DataFrame(_failures), selection=None)]), kind="danger")
+        if _failures else mo.md(""),
+    ])
+
+    # Training metrics for every selected model, with the inference summary where it has been computed
+    results = selected.merge(pd.DataFrame(_summary_rows), on="model_id", how="left") if _summary_rows else selected
     # Scores by date on each model's score channel, with the model's factors
-    scores = training.merge(pd.DataFrame(_score_rows), on="model_id") if _score_rows else pd.DataFrame()
+    scores = selected.merge(pd.DataFrame(_score_rows), on="model_id") if _score_rows else pd.DataFrame()
     _status
     return eval_maps, results, scores
 
@@ -523,50 +594,249 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(expected_by_sweep, metric, results):
+def _(expected_by_sweep, results):
     _df = results[results.sweep == "architecture"] if len(results) else results
-    if _df.empty or metric.value is None:
+    _source = pd.DataFrame(expected_by_sweep["architecture"]) if expected_by_sweep["architecture"] else _df
+    _families = levels(_source.family) if len(_source) else []
+    arch_family = mo.ui.radio({str(_f): _f for _f in _families},
+                              value="gNCA" if "gNCA" in _families else (str(_families[-1]) if _families else None),
+                              label="Model family for the architecture figures", inline=True)
+    arch_family if _families else mo.md("")
+    return (arch_family,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Width and kernels
+
+    - Colour: static (terrain) set
+    - Left: score against channel count, pooled over kernels
+    - Right: score by kernel set at one channel count
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(expected_by_sweep, results):
+    _df = results[results.sweep == "architecture"] if len(results) else results
+    _source = pd.DataFrame(expected_by_sweep["architecture"]) if expected_by_sweep["architecture"] else _df
+    _widths = levels(_source.channels) if len(_source) else []
+    arch_width = mo.ui.dropdown({str(_w): _w for _w in _widths}, value=str(_widths[-1]) if _widths else None,
+                                label="Channels for the kernel panels")
+    arch_width if _widths else mo.md("")
+    return (arch_width,)
+
+
+@app.cell(hide_code=True)
+def _(arch_family, arch_width, expected_by_sweep, metric, results):
+    _df = results[results.sweep == "architecture"] if len(results) else results
+    if _df.empty or metric.value is None or arch_width.value is None or arch_family.value is None:
+        _out = mo.md("No architecture-sweep models found.")
+    else:
+        _expected = pd.DataFrame(expected_by_sweep["architecture"]) if expected_by_sweep["architecture"] else _df
+        _statics = levels(_expected.static)
+        _df = _df[_df.family == arch_family.value]
+        _fig, (_left, _right) = plt.subplots(1, 2, figsize=(13, 4.2), constrained_layout=True, sharey=True)
+        factor_plot(_left, _df, "channels", metric.value, hue="static",
+                    x_order=levels(_expected.channels), hue_order=_statics)
+        _left.set_title(f"{arch_family.value}: more channels", fontsize=10)
+        factor_plot(_right, _df[_df.channels == arch_width.value], "kernels", metric.value,
+                    hue="static", x_order=levels(_expected.kernels), hue_order=_statics)
+        _right.set_title(f"{arch_family.value}: kernels at {arch_width.value} channels", fontsize=10)
+        _out = _fig
+    _out
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Predictions and training loss
+
+    - Left: best training loss by kernel set and static set, for the chosen family and one width; letters mark the models on the right
+    - Right: observed and predicted score channel on one date, one model (repeat) per condition
+    - Predictions need the models to be evaluated above
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(expected_by_sweep, results):
+    _df = results[results.sweep == "architecture"] if len(results) else results
+    _source = pd.DataFrame(expected_by_sweep["architecture"]) if expected_by_sweep["architecture"] else _df
+    _has = len(_source) > 0
+    _widths = levels(_source.channels) if _has else []
+    _repeats = levels(_source.repeat) if _has else []
+    _conditions = {f"{_k} · {_s}": (_k, _s) for _k in (levels(_source.kernels) if _has else [])
+                   for _s in levels(_source.static)}
+    # Default: the isotropic vs directional gradient (with LAP) under each static set
+    _default = [_c for _c, (_k, _) in _conditions.items() if _k in ("ID+LAP+DIFF", "ID+LAP+GRAD")] or list(_conditions)[:4]
+    pred_width = mo.ui.dropdown({str(_w): _w for _w in _widths}, value=str(_widths[-1]) if _widths else None,
+                                label="Channels")
+    pred_repeat = mo.ui.dropdown({str(_r): _r for _r in _repeats}, value=str(_repeats[0]) if _repeats else None,
+                                 label="Repeat")
+    pred_conditions = mo.ui.multiselect(_conditions, value=_default, label="Conditions shown (kernels · static)",
+                                        full_width=True)
+    pred_view = mo.ui.radio({"Prediction": "mean", "Prediction − observed": "error"}, value="Prediction",
+                            label="Show", inline=True)
+    mo.vstack([
+        mo.hstack([pred_width, pred_repeat, pred_view], justify="start", gap=1.5),
+        pred_conditions,
+    ]) if _has else mo.md("")
+    return pred_conditions, pred_repeat, pred_view, pred_width
+
+
+@app.cell(hide_code=True)
+def _(eval_maps):
+    # Date 0 is the initial condition, so the slider starts at the first predicted date
+    _n_dates = max((len(_m["dates"]) for _m in eval_maps.values()), default=2)
+    pred_date = mo.ui.slider(1, max(_n_dates - 1, 1), value=max(_n_dates - 1, 1), label="Date index", show_value=True)
+    pred_date if eval_maps else mo.md("")
+    return (pred_date,)
+
+
+@app.cell(hide_code=True)
+def _(
+    arch_family,
+    eval_maps,
+    expected_by_sweep,
+    pred_conditions,
+    pred_date,
+    pred_repeat,
+    pred_view,
+    pred_width,
+    results,
+):
+    _df = results[results.sweep == "architecture"] if len(results) else results
+    if _df.empty or arch_family.value is None:
+        _out = mo.md("No architecture-sweep models found.")
+    else:
+        _expected = pd.DataFrame(expected_by_sweep["architecture"]) if expected_by_sweep["architecture"] else _df
+        _kernels, _statics = levels(_expected.kernels), levels(_expected.static)
+        _df = _df[(_df.family == arch_family.value) & (_df.channels == pred_width.value)]
+
+        # One model per condition: the chosen repeat (the newest bundle if several groups have it)
+        _shown = []
+        for _k, (_kernel, _static) in enumerate(pred_conditions.value):
+            _rows = _df[(_df.kernels == _kernel) & (_df.static == _static) & (_df.repeat == pred_repeat.value)]
+            _model_id = _rows.sort_values("created_at").model_id.iloc[-1] if len(_rows) else None
+            _shown.append((chr(ord("A") + _k), _kernel, _static, _model_id))
+
+        _fig = plt.figure(figsize=(15, 5.5), layout="constrained")
+        _left_fig, _right_fig = _fig.subfigures(1, 2, width_ratios=[1, 1.5])
+
+        # Training loss, with the letter of each shown condition inside its bar
+        _ax = _left_fig.subplots()
+        factor_plot(_ax, _df, "kernels", "best_loss", hue="static", x_order=_kernels, hue_order=_statics)
+        _present = [_v for _v in _kernels if _v in set(_df.kernels)]
+        for _letter, _kernel, _static, _model_id in _shown:
+            if _model_id is None or _kernel not in _present:
+                continue
+            _x = _present.index(_kernel) + hue_offset(_statics.index(_static), len(_statics))
+            _mean = _df.loc[(_df.kernels == _kernel) & (_df.static == _static), "best_loss"].mean()
+            _ax.text(_x, _mean / 2, _letter, ha="center", va="center", fontsize=10, weight="bold",
+                     color="white", zorder=4)
+        _ax.set_title(f"{arch_family.value}, {pred_width.value} channels: training loss", fontsize=10)
+
+        # Observed map, then one prediction per shown condition
+        _evaluated = [_m for *_, _m in _shown if _m in eval_maps]
+        if not _evaluated:
+            _right_fig.text(0.5, 0.5, "Evaluate these models to show their predictions",
+                            ha="center", va="center", fontsize=10, color="#555")
+        else:
+            _first = eval_maps[_evaluated[0]]
+            _t = min(int(pred_date.value), len(_first["dates"]) - 1)
+            _observed = np.where(_first["catchment"], _first["observed"][_t], np.nan)
+            _panels = [("observed", _observed)]
+            for _letter, _kernel, _static, _model_id in _shown:
+                _title = f"{_letter}: {_kernel}\n{_static}"
+                if _model_id not in eval_maps:
+                    _panels.append((f"{_title}\n(not evaluated)", None))
+                    continue
+                _maps = eval_maps[_model_id]
+                _value = _maps["mean"][_t] - (_maps["observed"][_t] if pred_view.value == "error" else 0)
+                _panels.append((_title, np.where(_maps["catchment"], _value, np.nan)))
+
+            _snow_range = np.nanpercentile(_observed, (2, 98))
+            if pred_view.value == "error":
+                _errors = np.concatenate([_p.ravel() for _, _p in _panels[1:] if _p is not None])
+                _limit = np.nanpercentile(np.abs(_errors), 98) or 1.0
+            _ncols = len(_panels) if len(_panels) <= 3 else -(-len(_panels) // 2)
+            _nrows = -(-len(_panels) // _ncols)
+            _axes = _right_fig.subplots(_nrows, _ncols, squeeze=False)
+            for _a in _axes.ravel():
+                _a.axis("off")
+            _images = []
+            for _i, (_a, (_title, _image)) in enumerate(zip(_axes.ravel(), _panels)):
+                _a.set_title(_title, fontsize=7)
+                if _image is None:
+                    continue
+                if _i == 0 or pred_view.value == "mean":
+                    _images.append(_a.imshow(_image, cmap="snow", vmin=_snow_range[0], vmax=_snow_range[1],
+                                             interpolation="nearest"))
+                else:
+                    _images.append(_a.imshow(_image, cmap="RdBu_r", vmin=-_limit, vmax=_limit,
+                                             interpolation="nearest"))
+            _channel = _first["channel"]
+            _right_fig.colorbar(_images[0], ax=list(_axes.ravel()), shrink=0.6, label=_channel)
+            if pred_view.value == "error" and len(_images) > 1:
+                _right_fig.colorbar(_images[-1], ax=list(_axes.ravel()), shrink=0.6,
+                                    label=f"{_channel}, predicted − observed")
+            _right_fig.suptitle(f"{_channel} on {_first['dates'][_t]}", fontsize=10)
+        _out = _fig
+    _out
+    return
+
+
+@app.cell(hide_code=True)
+def _(arch_family, expected_by_sweep, metric, results):
+    _df = results[results.sweep == "architecture"] if len(results) else results
+    if _df.empty or metric.value is None or arch_family.value is None:
         _out = mo.md("No architecture-sweep models found.")
     else:
         _expected = pd.DataFrame(expected_by_sweep["architecture"]) if expected_by_sweep["architecture"] else _df
         _kernels, _channels = levels(_expected.kernels), levels(_expected.channels)
-        _families = levels(_expected.family)
+        _statics = levels(_expected.static)
+        _df = _df[_df.family == arch_family.value]
         _outputs = []
         for _y in dict.fromkeys([metric.value, "best_loss"]):
-            _fig, _axes = plt.subplots(1, len(_families), figsize=(6.5 * len(_families), 4),
+            _fig, _axes = plt.subplots(1, len(_statics), figsize=(6.5 * len(_statics), 4),
                                        constrained_layout=True, sharey=True, squeeze=False)
-            for _ax, _family in zip(_axes[0], _families):
-                factor_plot(_ax, _df[_df.family == _family], "kernels", _y, hue="channels",
-                            x_order=_kernels, hue_order=_channels)
-                _ax.set_title(_family, fontsize=10)
+            for _ax, _static in zip(_axes[0], _statics):
+                factor_plot(_ax, _df[_df.static == _static], "kernels", _y,
+                            hue="channels", x_order=_kernels, hue_order=_channels)
+                _ax.set_title(f"{arch_family.value}, static {_static}", fontsize=10)
             _outputs.append(_fig)
 
         # Direction effect: mean(GRAD) - mean(DIFF), with the std of that difference from the repeats
         _pairs = {"without LAP": ("ID+DIFF", "ID+GRAD"), "with LAP": ("ID+LAP+DIFF", "ID+LAP+GRAD")}
         _rows = []
-        for (_family, _width), _group in _df.groupby(["family", "channels"]):
+        for (_width, _static), _group in _df.groupby(["channels", "static"]):
             for _pair, (_isotropic, _directional) in _pairs.items():
                 _a = _group.loc[_group.kernels == _isotropic, metric.value].dropna()
                 _b = _group.loc[_group.kernels == _directional, metric.value].dropna()
                 if len(_a) and len(_b):
                     _se = np.sqrt(_a.var(ddof=1) / len(_a) + _b.var(ddof=1) / len(_b)) if min(len(_a), len(_b)) > 1 else np.nan
-                    _rows.append({"model": f"{_family}, {_width} ch", "pair": _pair,
+                    _rows.append({"model": f"{_width} ch", "static": _static, "pair": _pair,
                                   "GRAD − DIFF": _b.mean() - _a.mean(), "std error": _se})
         if _rows:
             _diff = pd.DataFrame(_rows)
             _names = list(dict.fromkeys(_diff.model))
-            _fig, _ax = plt.subplots(figsize=(8, 3.8), constrained_layout=True)
-            for _k, _pair in enumerate(_pairs):
-                _sub = _diff[_diff.pair == _pair].set_index("model").reindex(_names)
-                _x = np.arange(len(_names)) + (_k - 0.5) * 0.35
-                _ax.bar(_x, _sub["GRAD − DIFF"], width=0.33, color=COLOURS[_k], label=_pair)
-                _ax.errorbar(_x, _sub["GRAD − DIFF"], yerr=_sub["std error"], fmt="none", ecolor="#333", capsize=3)
-            _ax.axhline(0, color="#777", lw=1)
-            _ax.set_xticks(range(len(_names)), _names, rotation=20, ha="right")
-            _ax.set_ylabel(f"GRAD − DIFF\n{METRICS.get(metric.value, metric.value)}", fontsize=9)
-            _ax.set_title("Effect of gradient direction (error bars: std error from repeats)", fontsize=10)
-            style_axes(_ax)
-            _ax.legend(frameon=False, fontsize=8)
+            _fig, _axes = plt.subplots(1, len(_pairs), figsize=(13, 3.8), constrained_layout=True, sharey=True)
+            for _ax, _pair in zip(_axes, _pairs):
+                for _k, _static in enumerate(_statics):
+                    _sub = _diff[(_diff.pair == _pair) & (_diff.static == _static)].set_index("model").reindex(_names)
+                    _x = np.arange(len(_names)) + hue_offset(_k, len(_statics))
+                    _ax.bar(_x, _sub["GRAD − DIFF"], width=0.9 * hue_width(len(_statics)), color=COLOURS[_k % len(COLOURS)], label=_static)
+                    _ax.errorbar(_x, _sub["GRAD − DIFF"], yerr=_sub["std error"], fmt="none", ecolor="#333", capsize=3)
+                _ax.axhline(0, color="#777", lw=1)
+                _ax.set_xticks(range(len(_names)), _names, rotation=20, ha="right")
+                _ax.set_title(f"{arch_family.value}: effect of gradient direction, {_pair}", fontsize=10)
+                style_axes(_ax)
+            _axes[0].set_ylabel(f"GRAD − DIFF\n{METRICS.get(metric.value, metric.value)}", fontsize=9)
+            _axes[0].legend(title="static", frameon=False, fontsize=8)
+            _fig.suptitle("Error bars: std error from repeats", fontsize=9)
             _outputs.append(_fig)
         _out = mo.vstack(_outputs)
     _out
@@ -657,12 +927,14 @@ def _(metric, scores):
         _dates = sorted(set(zip(_held.days, _held.date)))
         for _i, (_day, _) in enumerate(_dates):
             for _offset, _rows, _colour, _label in ((-0.15, _held, COLOURS[0], "held out"),
-                                                     (0.15, _control, "#222", "control (trained on it)")):
+                                                     (0.15, _control, "#999", "control (trained on it)")):
                 _values = _rows.loc[_rows.days == _day, _y].dropna().to_numpy(float)
-                _right.scatter(np.full(len(_values), _i + _offset), _values, s=18, color=_colour, alpha=0.45, lw=0)
                 if len(_values):
-                    _right.scatter(_i + _offset, _values.mean(), s=60, color=_colour,
-                                   label=_label if _i == 0 else None)
+                    _right.bar(_i + _offset, _values.mean(), width=0.27, color=_colour, alpha=0.85,
+                               yerr=_values.std(ddof=1) if len(_values) > 1 else None,
+                               error_kw={"ecolor": "#333", "capsize": 2, "lw": 1},
+                               label=_label if _i == 0 else None)
+                _right.scatter(np.full(len(_values), _i + _offset), _values, s=10, color="#222", alpha=0.5, lw=0, zorder=3)
         _right.set_xticks(range(len(_dates)), [_date for _, _date in _dates], rotation=20, ha="right")
         _right.set_ylabel(_y)
         _right.legend(frameon=False, fontsize=8)
