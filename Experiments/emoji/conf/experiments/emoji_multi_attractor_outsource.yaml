@@ -8,7 +8,7 @@ seed_mode: index
 
 grid:
 
-  run.repeat: [0,1]
+  run.repeat: [0]
 
   data.emoji.task: [multi_attractor]
 
@@ -16,7 +16,7 @@ grid:
 
   logging.wandb.project: [NCA-emoji-multi-attractor]
 
-  logging.wandb.group: [emoji-multi-attractor-training-sweep-v1]
+  logging.wandb.group: [emoji-multi-attractor-training-sweep-v2]
 
   model.family: [gNCA, NCA]
 
@@ -27,7 +27,8 @@ grid:
   run.t: [128]
 
   run.iterations: [16000]
-  trainer.loop_autodiff: [lax]
+  data.batches: [2]
+  
 
 # Each attractor set is paired with its batch duplication (2 for 2-3
 # attractors, 1 for 4-5, to keep the batch size down) and an attractors:N
@@ -302,8 +303,8 @@ groups:
         - initial: {image: lizard.png, mode: patch, size: 1}
           target: lizard.png
 
-    data.batches: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-                   1, 1, 1, 1, 1, 1]
+    trainer.loop_autodiff: [lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax,
+                            checkpointed, checkpointed, checkpointed, checkpointed, checkpointed, checkpointed]
 
     logging.wandb.tags: [[attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2],
                          [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3],

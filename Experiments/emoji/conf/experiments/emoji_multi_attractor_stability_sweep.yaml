@@ -1,4 +1,4 @@
-experiment_name: stability-and-regeneration-6
+experiment_name: stability-and-regeneration-7-long
 entrypoint: Experiments.emoji.train:run
 output_subdir: generated/emoji_multi_attractor_stability_sweep
 seed_mode: index
@@ -7,6 +7,8 @@ grid:
   logging.wandb.project: [NCA-emoji-multi-attractor]
   # logging.wandb.group: [stability-and-regeneration-3]
   model.family: [NCA, gNCA]
+  run.repeat: [0,1,2,3]
+  model.padding: [REPLICATE, CIRCULAR]
   model.channels: [48]
   model.fire_rate: [0.5]
   data.emoji.task: [multi_attractor]
@@ -15,16 +17,21 @@ grid:
         target: crab.png
       - initial: {image: microbe.png, mode: patch, size: 1}
         target: microbe.png
+    - - initial: {image: crab.png, mode: pixel, channel: 1}
+        target: crab.png
+      - initial: {image: microbe.png, mode: pixel, channel: 2}
+        target: microbe.png
+      
   data.emoji.target_repeats: [2]
-  data.batches: [2]
+  data.batches: [4]
   data.emoji.shift_amount: [10]
   data.emoji.pad: [[10,10,10,10]]
-  data.emoji.terminal_carry.start_iteration: [1000]
+  data.emoji.terminal_carry.start_iteration: [8000]
   data.emoji.terminal_carry.schedule_iterations: [4000]
-  data.emoji.terminal_carry.initial_probability: [0.2]
+  data.emoji.terminal_carry.initial_probability: [0.1]
   data.emoji.terminal_carry.final_probability: [0.9]
-  data.emoji.regeneration.start_iteration: [2000]
-  data.emoji.regeneration.schedule_iterations: [3000]
+  data.emoji.regeneration.start_iteration: [8000]
+  data.emoji.regeneration.schedule_iterations: [4000]
   data.emoji.regeneration.initial_probability: [0.05]
   data.emoji.regeneration.final_probability: [0.25]
   run.t: [128]
