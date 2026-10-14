@@ -41,7 +41,7 @@ grid:
   data.downsample: [4]
   run.t: [128]
   trainer.loop_autodiff: [lax]
-  model.channels: [48]
+  model.channels: [32]
   data.snowmelt.target_channels:
     - [NDSI]
     - [NDSI, B2]

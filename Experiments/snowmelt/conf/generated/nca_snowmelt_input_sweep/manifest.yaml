@@ -22,7 +22,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels: []
@@ -64,7 +64,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -163,7 +163,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -207,7 +207,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -306,7 +306,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -352,7 +352,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -451,7 +451,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -501,7 +501,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -600,7 +600,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -644,7 +644,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -743,7 +743,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -789,7 +789,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -888,7 +888,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -936,7 +936,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -1035,7 +1035,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -1087,7 +1087,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -1186,7 +1186,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -1230,7 +1230,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -1329,7 +1329,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -1375,7 +1375,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -1474,7 +1474,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -1522,7 +1522,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -1621,7 +1621,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -1673,7 +1673,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -1772,7 +1772,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B4
@@ -1816,7 +1816,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -1915,7 +1915,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B4
@@ -1961,7 +1961,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -2060,7 +2060,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B4
@@ -2108,7 +2108,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -2207,7 +2207,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B4
@@ -2259,7 +2259,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -2358,7 +2358,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B5
@@ -2402,7 +2402,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -2501,7 +2501,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B5
@@ -2547,7 +2547,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -2646,7 +2646,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B5
@@ -2694,7 +2694,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -2793,7 +2793,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B5
@@ -2845,7 +2845,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -2944,7 +2944,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B6
@@ -2988,7 +2988,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -3087,7 +3087,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B6
@@ -3133,7 +3133,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -3232,7 +3232,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B6
@@ -3280,7 +3280,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -3379,7 +3379,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B6
@@ -3431,7 +3431,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -3530,7 +3530,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B7
@@ -3574,7 +3574,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -3673,7 +3673,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B7
@@ -3719,7 +3719,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -3818,7 +3818,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B7
@@ -3866,7 +3866,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -3965,7 +3965,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B7
@@ -4017,7 +4017,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -4116,7 +4116,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8
@@ -4160,7 +4160,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -4259,7 +4259,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8
@@ -4305,7 +4305,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -4404,7 +4404,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8
@@ -4452,7 +4452,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -4551,7 +4551,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8
@@ -4603,7 +4603,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -4702,7 +4702,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8A
@@ -4746,7 +4746,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -4845,7 +4845,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8A
@@ -4891,7 +4891,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -4990,7 +4990,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8A
@@ -5038,7 +5038,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -5137,7 +5137,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8A
@@ -5189,7 +5189,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -5288,7 +5288,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B9
@@ -5332,7 +5332,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -5431,7 +5431,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B9
@@ -5477,7 +5477,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -5576,7 +5576,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B9
@@ -5624,7 +5624,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -5723,7 +5723,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B9
@@ -5775,7 +5775,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -5874,7 +5874,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B11
@@ -5918,7 +5918,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -6017,7 +6017,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B11
@@ -6063,7 +6063,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -6162,7 +6162,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B11
@@ -6210,7 +6210,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -6309,7 +6309,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B11
@@ -6361,7 +6361,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -6460,7 +6460,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -6504,7 +6504,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -6603,7 +6603,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -6649,7 +6649,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -6748,7 +6748,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -6796,7 +6796,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -6895,7 +6895,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -6947,7 +6947,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -7046,7 +7046,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels: []
@@ -7088,7 +7088,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -7187,7 +7187,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -7231,7 +7231,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -7330,7 +7330,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -7376,7 +7376,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -7475,7 +7475,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     data.snowmelt.static_channels:
@@ -7525,7 +7525,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -7624,7 +7624,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -7668,7 +7668,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -7767,7 +7767,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -7813,7 +7813,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -7912,7 +7912,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -7960,7 +7960,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -8059,7 +8059,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B2
@@ -8111,7 +8111,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -8210,7 +8210,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -8254,7 +8254,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -8353,7 +8353,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -8399,7 +8399,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -8498,7 +8498,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -8546,7 +8546,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -8645,7 +8645,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B3
@@ -8697,7 +8697,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -8796,7 +8796,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B4
@@ -8840,7 +8840,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -8939,7 +8939,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B4
@@ -8985,7 +8985,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -9084,7 +9084,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B4
@@ -9132,7 +9132,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -9231,7 +9231,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B4
@@ -9283,7 +9283,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -9382,7 +9382,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B5
@@ -9426,7 +9426,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -9525,7 +9525,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B5
@@ -9571,7 +9571,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -9670,7 +9670,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B5
@@ -9718,7 +9718,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -9817,7 +9817,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B5
@@ -9869,7 +9869,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -9968,7 +9968,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B6
@@ -10012,7 +10012,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -10111,7 +10111,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B6
@@ -10157,7 +10157,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -10256,7 +10256,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B6
@@ -10304,7 +10304,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -10403,7 +10403,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B6
@@ -10455,7 +10455,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -10554,7 +10554,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B7
@@ -10598,7 +10598,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -10697,7 +10697,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B7
@@ -10743,7 +10743,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -10842,7 +10842,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B7
@@ -10890,7 +10890,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -10989,7 +10989,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B7
@@ -11041,7 +11041,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -11140,7 +11140,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8
@@ -11184,7 +11184,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -11283,7 +11283,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8
@@ -11329,7 +11329,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -11428,7 +11428,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8
@@ -11476,7 +11476,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -11575,7 +11575,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8
@@ -11627,7 +11627,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -11726,7 +11726,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8A
@@ -11770,7 +11770,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -11869,7 +11869,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8A
@@ -11915,7 +11915,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -12014,7 +12014,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8A
@@ -12062,7 +12062,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -12161,7 +12161,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B8A
@@ -12213,7 +12213,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -12312,7 +12312,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B9
@@ -12356,7 +12356,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -12455,7 +12455,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B9
@@ -12501,7 +12501,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -12600,7 +12600,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B9
@@ -12648,7 +12648,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -12747,7 +12747,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B9
@@ -12799,7 +12799,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -12898,7 +12898,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B11
@@ -12942,7 +12942,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -13041,7 +13041,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B11
@@ -13087,7 +13087,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -13186,7 +13186,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B11
@@ -13234,7 +13234,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -13333,7 +13333,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - B11
@@ -13385,7 +13385,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -13484,7 +13484,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -13528,7 +13528,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -13627,7 +13627,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -13673,7 +13673,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -13772,7 +13772,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -13820,7 +13820,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
@@ -13919,7 +13919,7 @@ configs:
     data.downsample: 4
     run.t: 128
     trainer.loop_autodiff: lax
-    model.channels: 48
+    model.channels: 32
     data.snowmelt.target_channels:
     - NDSI
     - NDVI
@@ -13971,7 +13971,7 @@ configs:
         reinjection_probability: 0.5
     model:
       family: gNCA
-      channels: 48
+      channels: 32
       kernel_str:
       - ID
       - LAP
