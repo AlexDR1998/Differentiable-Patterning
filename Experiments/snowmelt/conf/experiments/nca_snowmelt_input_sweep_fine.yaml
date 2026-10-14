@@ -1,0 +1,63 @@
+experiment_name: nca_snowmelt_input_sweep_single_bands_v1
+entrypoint: Experiments.snowmelt.train:run
+output_subdir: generated/nca_snowmelt_input_sweep
+seed_mode: index
+
+# Which target (dynamic) channels and which terrain (static) channels help the
+# snowmelt NCA. Full factorial of 5 target sets x 4 static sets, on dataset v2
+# (the base config's data.snowmelt.version). v2 has no single incidence-angle
+# map, so terrain orientation enters as slope plus aspect (NORTHNESS = cos,
+# EASTNESS = sin).
+#
+# Generate with:
+#   python Experiments/generate_configs.py \
+#       Experiments/snowmelt/conf/experiments/nca_snowmelt_input_sweep.yaml \
+#       Experiments/snowmelt/conf/base_config.yaml Experiments/snowmelt/conf/generated
+#
+# Resolution is fixed at 20 m (downsample 2, t=256); see
+# nca_snowmelt_resolution_sweep.yaml. Change data.downsample, run.t and
+# trainer.loop_autodiff together to use another resolution.
+#
+# Every target set except [SCA] has NDSI in channel 0, so runs are compared on
+# NDSI (skill against persistence and snow CSI from
+# Experiments/snowmelt/evaluation.py:score), not on the training loss, which
+# changes with the number of targets. [SCA] is compared on snow CSI only.
+#
+# Hidden channels are held at 28, so
+#   model.channels = n_targets + 28 + 1 (catchment) + n_static.
+#
+# Total jobs: 5 target sets * 4 static sets * 2 repeats = 40.
+grid:
+  model.family: [gNCA]
+  model.kernel_str: [[ID, LAP, GRAD]]
+  model.fire_rate: [0.5]
+  run.interval_mode: [steps]
+  run.repeat: [0, 1]
+  logging.wandb.project: [nca_snowmelt_hyperparameter_sweep]
+  labels.gpu: [H200]
+  system.precision: [bfloat16]
+  data.dataset: [snowmelt]
+  # Baseline resolution: 40 m.
+  data.downsample: [4]
+  run.t: [128]
+  trainer.loop_autodiff: [lax]
+  model.channels: [48]
+  data.snowmelt.target_channels:
+    - [NDSI]
+    - [NDSI, B2]
+    - [NDSI, B3]
+    - [NDSI, B4]
+    - [NDSI, B5]
+    - [NDSI, B6]
+    - [NDSI, B7]
+    - [NDSI, B8]
+    - [NDSI, B8A]
+    - [NDSI, B9]
+    - [NDSI, B11]
+    - [NDSI, NDVI]
+  data.snowmelt.static_channels:
+    - []
+    - [DEM]
+    - [DEM, SLOPE]
+    - [DEM, SLOPE, NORTHNESS, EASTNESS]
+  
