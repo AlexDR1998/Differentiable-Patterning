@@ -1,0 +1,131 @@
+experiment_name: nca_nodal_ko_projections_finetune
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/nca_nodal_ko_projections_finetune
+seed_mode: index
+
+# Nodal knockout fine-tuning of the WT models from
+# micropattern_projections_training_sweep.yaml, one per projection (max, sum,
+# slice) and resolution, as in nca_nodal_ko_strategy_replicates.yaml.
+#
+# Before generating the manifest, replace each REPLACE_WITH_* model ID in the
+# group below by a WT model trained on that projection and downsampling, and
+# set its train/validation replicates to the split the WT model was trained
+# on, so the validation replicates stay held out. The run stops early if the
+# parent's projection or model settings differ from its entry here.
+#
+# Total jobs: 3 projections * 3 resolutions * 8 repeats = 72.
+grid:
+  run.repeat: [0, 1, 2, 3, 4, 5, 6, 7]
+
+  labels.gpu: [nvidia]
+  model.family: [gNCA]
+  model.channels: [48]
+  system.precision: [bfloat16]
+
+  logging.wandb.project: [nca_micropattern_KO_projections]
+
+  data.dataset: [micropatterns_260726]
+  data.micropattern.data_channels: [14]
+  data.micropattern.experiment_groups:
+    - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+  data.micropattern.pool_copies: [1]
+
+  data.knockout.channel: [Nodal]
+  data.knockout.curriculum:
+    - [baseline, ko_0h, ko_24h]
+
+  run.write_videos: [false]
+
+  optimiser.learn_rate: [1e-4]
+  optimiser.type: [nadam]
+  optimiser.gradient_clip_norm: [1.0]
+  trainer.log_every: [200]
+  trainer.validation_every: [500]
+  trainer.validation_rollout: [true]
+
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [0.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.random_channel_shuffle: [true]
+
+  # Cosine-reverse schedule: begin texture-led and progressively emphasize
+  # radial structure over the middle of training.
+  loss.schedule_label: [cos_reverse]
+  loss.terms.0.multi_target_schedules.l2.type: [cosine]
+  loss.terms.0.multi_target_schedules.l2.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.l2.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.l2.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.l2.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.l2.stages: [8]
+
+  loss.terms.0.multi_target_schedules.texture.type: [cosine]
+  loss.terms.0.multi_target_schedules.texture.initial_factor: [1.0]
+  loss.terms.0.multi_target_schedules.texture.final_factor: [0.25]
+  loss.terms.0.multi_target_schedules.texture.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.texture.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.texture.stages: [8]
+
+  loss.terms.0.multi_target_schedules.channel_mean.type: [cosine]
+  loss.terms.0.multi_target_schedules.channel_mean.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.channel_mean.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.channel_mean.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.channel_mean.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.channel_mean.stages: [8]
+
+  loss.terms.0.multi_target_schedules.correlation.type: [cosine]
+  loss.terms.0.multi_target_schedules.correlation.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.correlation.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.correlation.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.correlation.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.correlation.stages: [8]
+
+  loss.terms.0.multi_target_schedules.radial.type: [cosine]
+  loss.terms.0.multi_target_schedules.radial.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.radial.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.radial.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.radial.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.radial.stages: [8]
+
+groups:
+  # One entry per WT parent; the lists are zipped. run.t follows the
+  # convective scaling t = 128 * (16 / downsample).
+  - initialization.model_id:
+      - REPLACE_WITH_MAX_DS8_MODEL_ID
+      - REPLACE_WITH_MAX_DS16_MODEL_ID
+      - REPLACE_WITH_MAX_DS32_MODEL_ID
+      - REPLACE_WITH_SUM_DS8_MODEL_ID
+      - REPLACE_WITH_SUM_DS16_MODEL_ID
+      - REPLACE_WITH_SUM_DS32_MODEL_ID
+      - REPLACE_WITH_SLICE_DS8_MODEL_ID
+      - REPLACE_WITH_SLICE_DS16_MODEL_ID
+      - REPLACE_WITH_SLICE_DS32_MODEL_ID
+    data.micropattern.projection: [max, max, max, sum, sum, sum, slice, slice, slice]
+    data.downsample: [8, 16, 32, 8, 16, 32, 8, 16, 32]
+    run.t: [256, 128, 64, 256, 128, 64, 256, 128, 64]
+    trainer.loop_autodiff: [checkpointed, lax, lax, checkpointed, lax, lax, checkpointed, lax, lax]
+    data.batches: [2, 2, 2, 2, 2, 2, 2, 2, 2]
+    # Must be the parent's split.
+    data.micropattern.train_replicates:
+      - [1, 2]
+      - [1, 2]
+      - [1, 2]
+      - [1, 2]
+      - [1, 2]
+      - [1, 2]
+      - [1, 2]
+      - [1, 2]
+      - [1, 2]
+    data.micropattern.validation_replicates:
+      - [3, 4]
+      - [3, 4]
+      - [3, 4]
+      - [3, 4]
+      - [3, 4]
+      - [3, 4]
+      - [3, 4]
+      - [3, 4]
+      - [3, 4]
+    run.iterations: [4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000]

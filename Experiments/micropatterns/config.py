@@ -9,6 +9,7 @@ from Common.dataloader.micropattern_schemas import (
     DEFAULT_260726_HISTOGRAM_PERCENTILES,
     DEFAULT_260726_INTENSITY_FACTORS,
 )
+from Common.dataloader.micropattern_projections import check_projection
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,11 @@ class MicropatternDataConfig(ConfigValue):
     intermediate_reinjection_probability_end: float = 0.5
     intermediate_reinjection_decay_start_fraction: float = 0.25
     duplicate_final_timestep: bool = False
+    # 260726 only: which 2D version of the confocal cell-fate and protein
+    # response stacks to load, "max", "sum" or "slice" (see
+    # Common/dataloader/micropattern_projections.py). The RNA images (imaged in
+    # 2D) are the same for all three.
+    projection: str = "max"
     # 260726 only: low/high percentiles each channel is clipped to before
     # rescaling to [0, 1], and factors for raw intensities keyed by
     # measurement name and timestep (e.g. {"cell_fate_s2/FOXA2": {0: 0.02}}).
@@ -45,6 +51,7 @@ class MicropatternDataConfig(ConfigValue):
     quality_flags_file: str | None = None
 
     def __post_init__(self):
+        check_projection(self.projection)
         low, high = self.histogram_percentiles
         if not 0 <= low < high <= 100:
             raise ValueError(

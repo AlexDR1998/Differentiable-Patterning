@@ -184,6 +184,13 @@ def _(mo):
         value=["Control"],
         label="Conditions",
     )
+    # Version of the confocal cell-fate and protein response stacks; RNA
+    # images are the same for all three.
+    projection = mo.ui.dropdown(
+        options={"Max projection": "max", "Sum projection": "sum", "Single slice": "slice"},
+        value="Max projection",
+        label="Projection",
+    )
     experiment_groups = mo.ui.multiselect(
         options={
             "Cell fate (stain 1)": "cell_fate_s1",
@@ -207,7 +214,7 @@ def _(mo):
             mo.md("## 1. Select raw images"),
             root,
             mo.hstack([conditions, timesteps, replicate_count]),
-            experiment_groups,
+            mo.hstack([projection, experiment_groups], justify="start"),
             load_button,
         ]
     )
@@ -215,6 +222,7 @@ def _(mo):
         conditions,
         experiment_groups,
         load_button,
+        projection,
         replicate_count,
         root,
         timesteps,
@@ -230,6 +238,7 @@ def _(
     load_button,
     mo,
     np,
+    projection,
     read_micropattern_260726_image,
     replicate_count,
     root,
@@ -246,6 +255,7 @@ def _(
     _inventory = build_micropattern_260726_manifest(
         root.value,
         conditions=_conditions,
+        projection=projection.value,
         timesteps=_timesteps,
         replicate_count=replicate_count.value,
         experiment_groups=tuple(experiment_groups.value) or None,
@@ -253,11 +263,14 @@ def _(
     selection = {
         "root": Path(root.value).expanduser().resolve(),
         "conditions": _conditions,
+        "projection": projection.value,
         "timesteps": _timesteps,
         "replicates": _inventory["replicate_indices"],
         "groups": tuple(experiment_groups.value) or None,
     }
-    # Raw images are kept as uint16 (their stored type) to halve memory use.
+    # Raw images are kept in their stored type to halve memory use: uint16,
+    # or float32 for sum projections, which exceed the uint16 range.
+    _dtype = np.float32 if projection.value == "sum" else np.uint16
     raw_images = []
     for _record in mo.status.progress_bar(
         _inventory["records"], title="Reading raw images", remove_on_exit=True
@@ -266,7 +279,7 @@ def _(
         raw_images.append(
             {
                 "record": _record,
-                "channels": _channels.astype(np.uint16),
+                "channels": _channels.astype(_dtype),
                 "foreground": _foreground,
             }
         )
@@ -788,6 +801,7 @@ def _(
     mo,
     normalise_mode,
     radius_scale,
+    selection,
     shrink,
     yaml,
     zero_outside,
@@ -797,6 +811,7 @@ def _(
     _default = tuple(DEFAULT_260726_HISTOGRAM_PERCENTILES)
     _names = MICROPATTERN_260726_SCHEMA.measurement_names
     training_settings = {
+        "projection": selection["projection"],
         "histogram_percentiles": list(_default),
         "quality_flags_file": flags_path.value,
         "intensity_factors": {
@@ -1657,8 +1672,8 @@ def _(Path, mo):
                 "and saved in a file that training reads "
                 "(`data.micropattern.cleaning.alignment_file`).\n\n"
                 "- **Export alignment** fits every image in the dataset (all "
-                "conditions, groups, timesteps and replicates, not only the "
-                "loaded ones), adds the manual corrections from **Manual "
+                "conditions, groups, timesteps, replicates and projections, not "
+                "only the loaded ones), adds the manual corrections from **Manual "
                 "centring**, and writes the centres with the pattern radius. "
                 "Images not loaded here are read and fitted with the current "
                 "settings, which takes a little while. Click **Load "
@@ -1717,6 +1732,7 @@ def _(
 def _(
     ColonyAlignment,
     DISPLAY_DOWNSAMPLE,
+    Path,
     alignment_path,
     block_centre,
     build_micropattern_260726_manifest,
@@ -1744,15 +1760,31 @@ def _(
 ):
     mo.stop(not export_alignment.value)
     _path = resolve_alignment_path(alignment_path.value)
-    # Every image of the dataset, each in its own condition (no substitution).
-    _records = build_micropattern_260726_manifest(
-        selection["root"],
-        conditions=("ctrl", "sl0", "sl24"),
-        timesteps=(0, 12, 24, 36, 48),
-        replicate_count=64,
-        substitute_preperturbation=False,
-    )["records"]
-    _tiffs = len(list(selection["root"].rglob("*.tif")))
+    from Common.dataloader.micropattern_projections import PROJECTIONS as _PROJECTIONS
+    from Common.dataloader.micropattern_projections import image_key as _path_key
+
+    # Every image of the dataset, each in its own condition (no substitution),
+    # in every projection. The centres are keyed without the projection, so
+    # the file serves all three; a few images exist in only some projections.
+    # Each image is fitted on the selected projection where it has one.
+    _records, _all_keys = {}, set()
+    for _projection in sorted(_PROJECTIONS, key=lambda _name: _name != selection["projection"]):
+        _inventory = build_micropattern_260726_manifest(
+            selection["root"],
+            conditions=("ctrl", "sl0", "sl24"),
+            projection=_projection,
+            timesteps=(0, 12, 24, 36, 48),
+            replicate_count=64,
+            substitute_preperturbation=False,
+        )
+        for _record in _inventory["records"]:
+            _records.setdefault(image_key(_record), _record)
+        _all_keys |= {
+            _path_key(Path(_file).relative_to(selection["root"]).as_posix())
+            for _file in _inventory["unselected_files"]
+        }
+    _records = list(_records.values())
+    _tiffs = len(_all_keys | {image_key(_record) for _record in _records})
     _known = {_fit["key"]: _fit for _fit in colony_fits}
     _loaded = get_loaded_alignment()
     _file = _loaded["alignment"] if _loaded is not None and use_loaded_alignment.value else None
@@ -1808,7 +1840,8 @@ def _(
                 f"alignment** to view them (pattern radius "
                 f"{pattern_radius:.1f}, {pattern_radius_source}), "
                 f"{sum(1 for _d in _details.values() if _d['manual'] != (0.0, 0.0))} with a "
-                f"manual correction. There are {_tiffs} TIFF files under the dataset root"
+                f"manual correction. There are {_tiffs} distinct images over "
+                "the max, sum and slice projections"
                 + (
                     "."
                     if _tiffs == len(_centres)
@@ -1893,6 +1926,7 @@ def _(
         _dataset = load_micropattern_260726(
             selection["root"],
             conditions=selection["conditions"],
+            projection=selection["projection"],
             timesteps=selection["timesteps"],
             downsample=DISPLAY_DOWNSAMPLE,
             replicate_indices=selection["replicates"],
@@ -2067,7 +2101,8 @@ def _(mo):
                 "always recomputed, so one cache folder serves every "
                 "selection of conditions and replicates and every "
                 "normalisation setting.\n\n"
-                "- **Fill cache** cleans every image of the dataset with the "
+                "- **Fill cache** cleans every image of the dataset (for the "
+                "selected projection) with the "
                 "**Training settings** and saves them in a folder of their "
                 "own, with a `settings.yaml`. Images already in it are "
                 "skipped.\n"
@@ -2088,6 +2123,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(
     MicropatternCleaningConfig,
+    Path,
     build_micropattern_260726_manifest,
     cache_dir,
     cache_downsample,
@@ -2121,11 +2157,16 @@ def _(
         _records = build_micropattern_260726_manifest(
             selection["root"],
             conditions=("ctrl", "sl0", "sl24"),
+            projection=selection["projection"],
             timesteps=(0, 12, 24, 36, 48),
             replicate_count=64,
             substitute_preperturbation=False,
         )["records"]
-        _before = len(list(_folder.rglob("*.npy")))
+        # One folder holds every projection; count only this one's images.
+        _before = sum(
+            (_folder / f"{Path(_record.path).relative_to(selection['root']).as_posix()}.npy").is_file()
+            for _record in _records
+        )
         for _record in mo.status.progress_bar(_records, title="Cleaning images", remove_on_exit=True):
             _cleaned_image(
                 _record,
@@ -4394,9 +4435,12 @@ def _(DISPLAY_DOWNSAMPLE, coverage_blur, coverage_map, raw_images):
 
 @app.cell(hide_code=True)
 def _(Path, selection):
+    from Common.dataloader.micropattern_projections import image_key as _image_key
+
     def image_key(record):
-        """Image path relative to the dataset root: the key in the alignment file."""
-        return Path(record.path).relative_to(selection["root"]).as_posix()
+        """Image path relative to the dataset root, without the projection:
+        the key in the alignment and quality flags files."""
+        return _image_key(Path(record.path).relative_to(selection["root"]).as_posix())
 
     return (image_key,)
 
@@ -4446,11 +4490,11 @@ def _(
 @app.cell(hide_code=True)
 def _(mo):
     # Manual centre corrections (down, right) in full-resolution pixels, keyed
-    # by image path relative to the dataset root (see image_key).
+    # by image path relative to the dataset root, without the projection (see image_key).
     get_offsets, set_offsets = mo.state({})
     # The alignment file loaded under "Export and load alignment".
     get_loaded_alignment, set_loaded_alignment = mo.state(None)
-    # Images flagged as low quality: {image path relative to the dataset root: reason}.
+    # Images flagged as low quality: {image_key: reason}, shared by all projections.
     get_flags, set_flags = mo.state({})
     # The cell type file loaded under "Cell types at 48h" (a CellTypeRules).
     get_loaded_cell_types, set_loaded_cell_types = mo.state(None)

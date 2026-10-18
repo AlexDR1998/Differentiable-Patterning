@@ -40,7 +40,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-pixel-seeds-and-impulse-explorer
+    logging.wandb.group: smoke_micropatterns-micropattern-projections
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     data.micropattern.pool_copies: 2
@@ -91,6 +91,7 @@ configs:
         data_channels: 14
         pad_multiple: null
         noise_strength: 0.005
+        projection: max
         intermediate_reinjection_probability: 0.5
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
@@ -225,7 +226,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-pixel-seeds-and-impulse-explorer
+        group: smoke_micropatterns-micropattern-projections
         tags: null
         tag_keys:
         - model.family
@@ -275,7 +276,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-pixel-seeds-and-impulse-explorer
+    logging.wandb.group: smoke_micropatterns-micropattern-projections
     model.family: gNCA
     trainer.loop_autodiff: lax
     data.micropattern.pool_copies: 1
@@ -329,6 +330,7 @@ configs:
         data_channels: 14
         pad_multiple: null
         noise_strength: 0.005
+        projection: max
         intermediate_reinjection_probability: 0.5
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
@@ -466,7 +468,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-pixel-seeds-and-impulse-explorer
+        group: smoke_micropatterns-micropattern-projections
         tags: null
         tag_keys:
         - model.family

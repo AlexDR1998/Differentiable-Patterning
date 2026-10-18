@@ -22,6 +22,8 @@ import scipy.ndimage as ndi
 import scipy.signal as signal
 import yaml
 
+from Common.dataloader.micropattern_projections import image_key, keyed_by_image
+
 ALIGNMENT_FORMAT = "colony_alignment_v1"
 
 
@@ -112,9 +114,10 @@ def fit_score(coverage, centre, radius, edge_width=0.08):
 class ColonyAlignment:
     """Colony centres for a fixed dataset, as saved in an alignment file.
 
-    ``centres`` maps each image path, relative to the dataset root (e.g.
-    ``cell_fate_markers/ctrl_s1/A2_F14_24h.ome.tif``), to the colony centre
-    ``(row, column)`` in full-resolution pixels of the raw image. All colonies
+    ``centres`` maps each image, by its projection-free path relative to the
+    dataset root (``image_key``, e.g. ``cell_fate_markers/ctrl_s1/A2_F14_24h``),
+    to the colony centre ``(row, column)`` in full-resolution pixels of the
+    raw image. The max, sum and slice versions of an image share it. All colonies
     share ``pattern_radius`` (full-resolution pixels). ``details`` keeps, per
     image, the automatic fit, the manual correction and the fit score, and
     ``settings`` the fit settings; the loader only reads the centres.
@@ -126,11 +129,12 @@ class ColonyAlignment:
     settings: Mapping = field(default_factory=dict)
 
     def centre(self, relative_path):
+        """Centre of the image at ``relative_path`` (any projection)."""
         try:
-            return self.centres[relative_path]
+            return self.centres[image_key(relative_path)]
         except KeyError:
             raise KeyError(
-                f"The alignment file has no centre for {relative_path}. Export the "
+                f"The alignment file has no centre for {image_key(relative_path)}. Export the "
                 "alignment again from Experiments/micropatterns/data_cleaning.py."
             ) from None
 
@@ -166,7 +170,12 @@ def save_colony_alignment(path, alignment):
 
 
 def load_colony_alignment(path):
-    """Read an alignment file written by ``save_colony_alignment``."""
+    """Read an alignment file written by ``save_colony_alignment``.
+
+    Image paths are turned into ``image_key``s, so files that name the
+    image files themselves (written before the projections were added)
+    are read the same way.
+    """
     path = Path(path)
     if not path.is_file():
         raise FileNotFoundError(
@@ -177,7 +186,7 @@ def load_colony_alignment(path):
         content = yaml.safe_load(file)
     if not isinstance(content, Mapping) or content.get("format") != ALIGNMENT_FORMAT:
         raise ValueError(f"{path} is not a {ALIGNMENT_FORMAT} alignment file")
-    images = content.get("images") or {}
+    images = keyed_by_image(content.get("images") or {}, f"Alignment file {path}")
     return ColonyAlignment(
         pattern_radius=float(content["pattern_radius"]),
         centres={

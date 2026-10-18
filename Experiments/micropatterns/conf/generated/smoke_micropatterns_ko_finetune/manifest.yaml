@@ -52,7 +52,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-pixel-seeds-and-impulse-explorer
+    logging.wandb.group: smoke_micropatterns_ko_finetune-micropattern-projections
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
@@ -94,6 +94,7 @@ configs:
         data_channels: 14
         pad_multiple: null
         noise_strength: 0.005
+        projection: max
         intermediate_reinjection_probability: 0.5
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
@@ -229,7 +230,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-pixel-seeds-and-impulse-explorer
+        group: smoke_micropatterns_ko_finetune-micropattern-projections
         tags: null
         tag_keys:
         - data.knockout.curriculum
@@ -289,7 +290,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-pixel-seeds-and-impulse-explorer
+    logging.wandb.group: smoke_micropatterns_ko_finetune-micropattern-projections
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
@@ -331,6 +332,7 @@ configs:
         data_channels: 14
         pad_multiple: null
         noise_strength: 0.005
+        projection: max
         intermediate_reinjection_probability: 0.5
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
@@ -468,7 +470,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-pixel-seeds-and-impulse-explorer
+        group: smoke_micropatterns_ko_finetune-micropattern-projections
         tags: null
         tag_keys:
         - data.knockout.curriculum

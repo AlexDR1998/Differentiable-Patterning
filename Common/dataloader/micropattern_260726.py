@@ -17,6 +17,12 @@ from Common.dataloader.alignment import grid_position, load_colony_alignment
 from Common.dataloader.background import subtract_background
 from Common.dataloader.disk_cache import cache_folder, cached_array
 from Common.dataloader.hot_pixels import replace_hot_pixels_per_channel
+from Common.dataloader.micropattern_projections import (
+    PROJECTION_FOLDERS,
+    check_projection,
+    image_key,
+    image_stem,
+)
 from Common.dataloader.micropattern_schemas import (
     DEFAULT_260726_HISTOGRAM_PERCENTILES,
     DEFAULT_260726_INTENSITY_FACTORS,
@@ -27,18 +33,22 @@ from Common.dataloader.results import MicropatternDataset
 
 
 _CONDITIONS = ("ctrl", "sl0", "sl24")
+# Folder of each group for a condition and projection folder suffix. Every
+# group but the RNA (imaged in 2D) has one folder per projection (see
+# micropattern_projections.py).
 _GROUP_DIRECTORIES = {
-    "cell_fate_s1": lambda condition: Path("cell_fate_markers")
-    / f"{condition}_s1",
-    "cell_fate_s2": lambda condition: Path("cell_fate_markers")
-    / f"{condition}_s2",
-    "rna_expression": lambda condition: Path("signalling")
+    "cell_fate_s1": lambda condition, folder: Path("cell_fate_markers")
+    / f"{condition}_s1_{folder}",
+    "cell_fate_s2": lambda condition, folder: Path("cell_fate_markers")
+    / f"{condition}_s2_{folder}",
+    "rna_expression": lambda condition, folder: Path("signalling")
     / "rna_expression"
     / condition,
-    "protein_response": lambda condition: Path("signalling")
+    "protein_response": lambda condition, folder: Path("signalling")
     / "protein_response"
-    / condition,
+    / f"{condition}_{folder}",
 }
+
 _STRUCTURAL_SOURCE_CHANNEL = {
     "cell_fate_s1": 3,
     "cell_fate_s2": 3,
@@ -63,9 +73,11 @@ class MicropatternImageRecord:
 
 
 def _natural_sort_key(path):
+    # Sorted without the projection, so every projection gives the same
+    # replicate order.
     return tuple(
         int(part) if part.isdigit() else part.lower()
-        for part in re.split(r"(\d+)", Path(path).name)
+        for part in re.split(r"(\d+)", image_stem(Path(path).name))
     )
 
 
@@ -136,6 +148,7 @@ def _select_replicates(files, group, replicate_indices):
 def build_micropattern_260726_manifest(
     root,
     conditions=("ctrl",),
+    projection="max",
     timesteps=(0, 12, 24, 36, 48),
     replicate_count=3,
     replicate_indices=None,
@@ -150,8 +163,11 @@ def build_micropattern_260726_manifest(
     automatic choice for any ``(condition, group, timestep)`` key with an
     ordered list of up to ``replicate_count`` relative or absolute filenames.
     ``experiment_groups`` restricts the staining groups (``None`` = all).
+    ``projection`` (``"max"``, ``"sum"`` or ``"slice"``) chooses the version
+    of the cell-fate and protein response images; the RNA images have only one.
     """
 
+    check_projection(projection)
     schema = MICROPATTERN_260726_SCHEMA.select_groups(experiment_groups)
     selected_group_names = schema.group_names
     root = Path(root).expanduser().resolve()
@@ -188,11 +204,11 @@ def build_micropattern_260726_manifest(
     replicate_manifest = {} if replicate_manifest is None else replicate_manifest
     for condition in sorted(required_conditions):
         for group in selected_group_names:
-            relative_directory = _GROUP_DIRECTORIES[group]
-            directory = root / relative_directory(condition)
+            directory = root / _GROUP_DIRECTORIES[group](condition, PROJECTION_FOLDERS[projection])
             if not directory.is_dir():
                 raise FileNotFoundError(
-                    f"Expected directory for {condition}/{group}: {directory}"
+                    f"Expected directory for {condition}/{group} ({projection} "
+                    f"projection): {directory}"
                 )
             files_by_time = {timestep: [] for timestep in timesteps}
             for path in directory.glob("*.tif"):
@@ -325,8 +341,9 @@ def _compute_histogram_bins(records, hist_eqs, schema, intensity_factors):
             )
             if np.min(values) < 0 or np.max(values) > 65535:
                 raise ValueError(
-                    "Automatic histogram calculation expects intensities in [0, 65535]; "
-                    "provide histogram_bins explicitly for other data ranges"
+                    "Automatic histogram calculation expects intensities in [0, 65535] "
+                    "(sum projections are larger); enable cleaning or provide "
+                    "histogram_bins explicitly for other data ranges"
                 )
             integer_values = np.rint(values).astype(np.uint16)
             histograms[target_index] += np.bincount(
@@ -695,6 +712,7 @@ def _trajectory_bounds(
 def load_micropattern_260726(
     root,
     conditions=("ctrl",),
+    projection="max",
     timesteps=(0, 12, 24, 36, 48),
     downsample=4,
     replicate_count=3,
@@ -715,6 +733,11 @@ def load_micropattern_260726(
     cache_dir=None,
 ):
     """Load replicates of the multichannel 260726 micropattern dataset.
+
+    ``projection`` (``"max"``, ``"sum"`` or ``"slice"``) chooses the version
+    of the cell-fate and protein response images (see
+    ``micropattern_projections.py``); the RNA images are the same for every
+    projection.
 
     ``boundary_radius_quantile`` drops foreground pixels far from the colony
     centre before fitting a circle; lower values or a
@@ -741,7 +764,8 @@ def load_micropattern_260726(
     fitted to its colony pixels.
 
     ``excluded_images`` lists image paths relative to ``root`` (e.g.
-    ``cell_fate_markers/ctrl_s1/A2_F14_24h.ome.tif``) flagged as low quality.
+    ``cell_fate_markers/ctrl_s1/A2_F14_24h``, compared by ``image_key`` so
+    that the projection does not matter) flagged as low quality.
     Each flagged image is one experiment group at one timestep of one
     replicate, and is treated as not measured: its channels are False in
     ``measurement_mask`` (so losses and reinjection skip them) and it does
@@ -790,6 +814,7 @@ def load_micropattern_260726(
     inventory = build_micropattern_260726_manifest(
         root=root,
         conditions=conditions,
+        projection=projection,
         timesteps=timesteps,
         replicate_count=replicate_count,
         replicate_indices=replicate_indices,
@@ -819,12 +844,12 @@ def load_micropattern_260726(
 
     records = inventory["records"]
     dataset_root = Path(root).expanduser().resolve()
-    excluded_names = set(excluded_images or ())
-    excluded = frozenset(
-        record
-        for record in records
-        if Path(record.path).relative_to(dataset_root).as_posix() in excluded_names
-    )
+    excluded_keys = {image_key(name) for name in excluded_images or ()}
+
+    def relative_key(record):
+        return image_key(Path(record.path).relative_to(dataset_root).as_posix())
+
+    excluded = frozenset(record for record in records if relative_key(record) in excluded_keys)
     if cleaned and histogram_bins is not None and not cleaning.shares_bounds:
         raise ValueError(
             "histogram_bins cannot be reused with per-replicate normalisation; "
@@ -1107,15 +1132,14 @@ def load_micropattern_260726(
     aux = {
         "channel_schema": schema,
         "selected_experiment_groups": schema.group_names,
+        "projection": projection,
         "pool_copies": pool_copies,
         "manifest": records,
         "unselected_files": inventory["unselected_files"],
         "histogram_bins": histogram_bins,
         "intensity_factors": intensity_factors,
         "cleaning": cleaning if cleaned else None,
-        "excluded_images": tuple(
-            sorted(Path(record.path).relative_to(dataset_root).as_posix() for record in excluded)
-        ),
+        "excluded_images": tuple(sorted(relative_key(record) for record in excluded)),
         "excluded": excluded_mask,
         "imputed": imputed,
         "pattern_radius": alignment.pattern_radius if cleaned else None,

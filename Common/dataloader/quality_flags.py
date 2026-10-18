@@ -2,9 +2,12 @@
 
 Images are flagged by hand in ``Experiments/micropatterns/data_cleaning.py``
 and saved in a quality flags file that the training loader reads
-(``data.micropattern.quality_flags_file``). Each flag is one image file, so
-one experiment group at one timestep of one replicate: the loader treats it
-as not measured (see ``load_micropattern_260726``).
+(``data.micropattern.quality_flags_file``). Each flag is one image, so one
+experiment group at one timestep of one replicate: the loader treats it as
+not measured (see ``load_micropattern_260726``). Images are named by their
+``image_key`` (``micropattern_projections.py``), so a flag holds for the
+max, sum and slice versions alike and every projection trains on the same
+images.
 """
 
 from pathlib import Path
@@ -12,18 +15,20 @@ from typing import Mapping
 
 import yaml
 
+from Common.dataloader.micropattern_projections import keyed_by_image
+
 QUALITY_FLAGS_FORMAT = "quality_flags_v1"
 
 
 def save_quality_flags(path, flags):
-    """Write ``{image path relative to the dataset root: reason}`` to a YAML file."""
+    """Write ``{image_key: reason}`` to a YAML file."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as file:
         file.write(
             "# Images flagged as low quality in Experiments/micropatterns/data_cleaning.py.\n"
             "# Training treats each as not measured. Keys are image paths relative to\n"
-            "# the dataset root; values are the reasons given.\n"
+            "# the dataset root, without the projection; values are the reasons given.\n"
         )
         yaml.safe_dump(
             {
@@ -36,7 +41,7 @@ def save_quality_flags(path, flags):
 
 
 def load_quality_flags(path):
-    """Read a file written by ``save_quality_flags``; returns ``{path: reason}``."""
+    """Read a file written by ``save_quality_flags``; returns ``{image_key: reason}``."""
     path = Path(path)
     if not path.is_file():
         raise FileNotFoundError(
@@ -47,4 +52,5 @@ def load_quality_flags(path):
         content = yaml.safe_load(file)
     if not isinstance(content, Mapping) or content.get("format") != QUALITY_FLAGS_FORMAT:
         raise ValueError(f"{path} is not a {QUALITY_FLAGS_FORMAT} quality flags file")
-    return {str(name): str(reason or "") for name, reason in (content.get("flagged") or {}).items()}
+    flagged = {str(name): str(reason or "") for name, reason in (content.get("flagged") or {}).items()}
+    return keyed_by_image(flagged, f"Quality flags file {path}")

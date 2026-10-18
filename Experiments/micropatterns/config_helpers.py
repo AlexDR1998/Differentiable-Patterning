@@ -319,6 +319,7 @@ def load_data(
         dataset = _coerce_dataset_result(load_micropattern_260726(
             impath,
             conditions=conditions,
+            projection=data_config.micropattern.projection,
             timesteps=tuple(data_config.micropattern.timesteps),
             downsample=data_config.downsample,
             replicate_count=data_config.batches,
@@ -421,6 +422,8 @@ def load_data(
             f"_ts{_compact_value(list(data_config.micropattern.timesteps))}"
             f"_cur{_compact_value(curriculum)}"
         )
+        if data_config.micropattern.projection != "max":
+            cfg_str += f"_pj{data_config.micropattern.projection}"
         if custom_impath:
             cfg_str += "_custompath"
         return data, aux, names, boundary, mask[:, 1:], cfg_str

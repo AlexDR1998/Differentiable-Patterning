@@ -111,17 +111,29 @@ settings** and exports the alignment file. The steps are described in
 7. Pixels outside the mask are zeroed and the images are block-averaged to
    the training downsampling.
 
+The cell-fate and protein response stainings are thin 3D confocal stacks.
+`data.micropattern.projection` chooses which 2D version is loaded: `max`
+(default), `sum` or `slice`, read from
+`cell_fate_markers/<condition>_s<n>_{max,sums,slices}/` and
+`signalling/protein_response/<condition>_{max,sums,slices}/`. One run never
+mixes them. The RNA was imaged in 2D, so it is the same for every projection
+(see `Common/dataloader/micropattern_projections.py`). Settings tuned on one
+projection (e.g. intensity factors) may need tuning again for another.
+
 With shared bounds, validation replicates reuse the bounds of the training
 replicates; with `per_replicate`, each replicate sets its own.
 
 The alignment file is computed once in the notebook (an automatic
 fixed-radius fit, then manual corrections) and lists the colony centre of
-every image, keyed by its path relative to the dataset root. A relative
-`alignment_file` is resolved against the repository root.
+every image, keyed by its path relative to the dataset root without the
+projection (e.g. `cell_fate_markers/ctrl_s1/A2_F14_24h`), so one file serves
+the max, sum and slice images. A relative `alignment_file` is resolved
+against the repository root.
 
 ```yaml
 data:
   micropattern:
+    projection: max
     histogram_percentiles: [20.0, 99.5]
     intensity_factors:
       cell_fate_s1/SOX17: {0: 0.3}
@@ -144,8 +156,8 @@ data:
 Images can also be flagged as low quality in the notebook (**Manual
 centring**) and exported as a quality flags file (**Quality flags**), set as
 `data.micropattern.quality_flags_file` (relative to the repository root;
-null for none). Each flag is one image file, so one experiment group at one
-timestep of one replicate. Training treats a flagged image as not measured:
+null for none). Each flag is one image, so one experiment group at one
+timestep of one replicate; like the alignment, it holds for every projection. Training treats a flagged image as not measured:
 its channels are off in the measurement mask, so the loss and reinjection
 skip them, and it does not count towards the normalisation bounds. The
 replicate's other groups and timesteps are kept. Because the NCA pool is

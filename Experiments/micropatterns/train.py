@@ -51,6 +51,12 @@ def load_initial_model(cfg, key, model_root):
             "Nodal fine-tuning requires compatible full 14-channel "
             "micropatterns_260726 parent and child configurations"
         )
+    if parent_data.micropattern.projection != cfg.data.micropattern.projection:
+        raise ValueError(
+            f"Pretrained model {model_id!r} was trained on "
+            f"{parent_data.micropattern.projection} projections, but this run "
+            f"uses {cfg.data.micropattern.projection}"
+        )
     return bundle.load_model(key=key), build_model_config_string(cfg.model)
 
 
@@ -98,6 +104,8 @@ def build_run_name(cfg, model_name, optimiser_name):
         experiment_groups = _as_list(cfg.data.micropattern.experiment_groups)
         if experiment_groups:
             details += "_eg" + "-".join(str(group) for group in experiment_groups)
+        if cfg.data.micropattern.projection != "max":
+            details += f"_pj{cfg.data.micropattern.projection}"
         train_replicates = _as_list(
             cfg.data.micropattern.train_replicates
         )
@@ -143,9 +151,10 @@ def run(cfg):
 
     key = jax.random.PRNGKey(cfg.seed)
     model_key, train_key = jax.random.split(key)
+    # The pretrained model is checked before the slow data loading.
+    model, model_name = load_initial_model(cfg, model_key, model_root)
     training_data, validation_data = load_train_validation_data(cfg.data)
     data, aux, channel_names, boundary, mask, _ = training_data
-    model, model_name = load_initial_model(cfg, model_key, model_root)
     _, optimiser_name, _ = build_optimiser(
         cfg.optimiser,
         cfg.run.iterations,

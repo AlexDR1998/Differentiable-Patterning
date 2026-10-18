@@ -32,6 +32,9 @@ data:
   # to pad each spatial dimension symmetrically to that multiple.
     pad_multiple: null
     noise_strength: 0.005
+  # 260726 only. Which 2D version of the confocal cell-fate and protein
+  # response stacks to load: max, sum or slice. RNA images are the same for all.
+    projection: max
   # Per-slot Bernoulli reinjection schedule. Equal start/end values give a
   # constant rate; e.g. 0.5 and 0.5 approximates the historical 50% policy.
     intermediate_reinjection_probability: 0.5

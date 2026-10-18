@@ -12,7 +12,7 @@ settings:
   radius_quantile: 0.98
   pattern_radius: from Experiments/micropatterns/conf/alignment/260726_alignment.yaml
 images:
-  cell_fate_markers/ctrl_s1/A2_F14_24h.ome.tif:
+  cell_fate_markers/ctrl_s1/A2_F14_24h:
     centre:
     - 541.48
     - 534.46
@@ -22,8 +22,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.983
-  cell_fate_markers/ctrl_s1/A2_F2_12h.ome.tif:
+    score: 0.99
+  cell_fate_markers/ctrl_s1/A2_F2_12h:
     centre:
     - 533.78
     - 552.83
@@ -33,8 +33,8 @@ images:
     manual:
     - 11.0
     - 11.0
-    score: 0.997
-  cell_fate_markers/ctrl_s1/A2_F3_36h.ome.tif:
+    score: 1.0
+  cell_fate_markers/ctrl_s1/A2_F3_36h:
     centre:
     - 544.07
     - 539.51
@@ -44,8 +44,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.93
-  cell_fate_markers/ctrl_s1/A2_F4_12h.ome.tif:
+    score: 0.921
+  cell_fate_markers/ctrl_s1/A2_F4_12h:
     centre:
     - 543.14
     - 537.57
@@ -55,8 +55,8 @@ images:
     manual:
     - 14.0
     - 11.0
-    score: 0.999
-  cell_fate_markers/ctrl_s1/A2_F5_12h.ome.tif:
+    score: 1.0
+  cell_fate_markers/ctrl_s1/A2_F5_12h:
     centre:
     - 530.4
     - 541.8
@@ -66,8 +66,8 @@ images:
     manual:
     - 11.0
     - 8.0
-    score: 0.999
-  cell_fate_markers/ctrl_s1/A2_F5_36h.ome.tif:
+    score: 1.0
+  cell_fate_markers/ctrl_s1/A2_F5_36h:
     centre:
     - 538.45
     - 543.75
@@ -77,8 +77,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.97
-  cell_fate_markers/ctrl_s1/A2_F8_12h.ome.tif:
+    score: 0.954
+  cell_fate_markers/ctrl_s1/A2_F8_12h:
     centre:
     - 529.5
     - 548.5
@@ -88,184 +88,184 @@ images:
     manual:
     - -4.0
     - 13.0
-    score: 0.999
-  cell_fate_markers/ctrl_s1/A2_F8_36h.ome.tif:
+    score: 1.0
+  cell_fate_markers/ctrl_s1/A2_F8_36h:
     centre:
     - 537.85
     - 538.16
     automatic:
     - 537.85
     - 538.16
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.969
-  cell_fate_markers/ctrl_s1/B2_F10_36h.ome.tif:
-    centre:
-    - 539.12
-    - 535.68
-    automatic:
-    - 539.12
-    - 535.68
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.986
-  cell_fate_markers/ctrl_s1/B2_F13_24h.ome.tif:
-    centre:
-    - 534.69
-    - 527.02
-    automatic:
-    - 534.69
-    - 527.02
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.993
-  cell_fate_markers/ctrl_s1/B2_F15_24h.ome.tif:
-    centre:
-    - 537.28
-    - 541.15
-    automatic:
-    - 537.28
-    - 541.15
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.966
-  cell_fate_markers/ctrl_s1/B2_F17_24h.ome.tif:
-    centre:
-    - 529.07
-    - 538.65
-    automatic:
-    - 529.07
-    - 538.65
-    manual:
-    - 0.0
-    - 0.0
-    score: 1.0
-  cell_fate_markers/ctrl_s1/B2_F3_48h.ome.tif:
-    centre:
-    - 537.55
-    - 541.44
-    automatic:
-    - 537.55
-    - 541.44
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.96
-  cell_fate_markers/ctrl_s1/B2_F5_48h.ome.tif:
-    centre:
-    - 538.8
-    - 535.35
-    automatic:
-    - 538.8
-    - 535.35
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.977
-  cell_fate_markers/ctrl_s1/C1_F10_0h.ome.tif:
-    centre:
-    - 538.05
-    - 541.69
-    automatic:
-    - 538.05
-    - 541.69
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.999
-  cell_fate_markers/ctrl_s1/C1_F5_0h.ome.tif:
-    centre:
-    - 538.83
-    - 530.09
-    automatic:
-    - 538.83
-    - 530.09
-    manual:
-    - 0.0
-    - 0.0
-    score: 1.0
-  cell_fate_markers/ctrl_s1/C1_F6_0h.ome.tif:
-    centre:
-    - 536.67
-    - 516.77
-    automatic:
-    - 536.67
-    - 516.77
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.998
-  cell_fate_markers/ctrl_s1/C1_F8_0h.ome.tif:
-    centre:
-    - 533.3
-    - 538.41
-    automatic:
-    - 533.3
-    - 538.41
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.998
-  cell_fate_markers/ctrl_s1/C2_F2_48h.ome.tif:
-    centre:
-    - 547.63
-    - 527.65
-    automatic:
-    - 547.63
-    - 527.65
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.958
-  cell_fate_markers/ctrl_s1/C2_F7_48h.ome.tif:
-    centre:
-    - 540.88
-    - 537.74
-    automatic:
-    - 540.88
-    - 537.74
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.981
-  cell_fate_markers/ctrl_s2/A1_F1_48h.ome.tif:
-    centre:
-    - 540.8
-    - 538.76
-    automatic:
-    - 540.8
-    - 538.76
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.987
-  cell_fate_markers/ctrl_s2/A1_F2_36h.ome.tif:
-    centre:
-    - 534.22
-    - 534.67
-    automatic:
-    - 534.22
-    - 534.67
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.971
-  cell_fate_markers/ctrl_s2/A1_F3_36h.ome.tif:
-    centre:
-    - 533.13
-    - 533.33
-    automatic:
-    - 533.13
-    - 533.33
     manual:
     - 0.0
     - 0.0
     score: 0.974
-  cell_fate_markers/ctrl_s2/A1_F7_24h.ome.tif:
+  cell_fate_markers/ctrl_s1/B2_F10_36h:
+    centre:
+    - 539.12
+    - 535.68
+    automatic:
+    - 539.12
+    - 535.68
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.979
+  cell_fate_markers/ctrl_s1/B2_F13_24h:
+    centre:
+    - 534.69
+    - 527.02
+    automatic:
+    - 534.69
+    - 527.02
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.994
+  cell_fate_markers/ctrl_s1/B2_F15_24h:
+    centre:
+    - 537.28
+    - 541.15
+    automatic:
+    - 537.28
+    - 541.15
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.977
+  cell_fate_markers/ctrl_s1/B2_F17_24h:
+    centre:
+    - 529.07
+    - 538.65
+    automatic:
+    - 529.07
+    - 538.65
+    manual:
+    - 0.0
+    - 0.0
+    score: 1.0
+  cell_fate_markers/ctrl_s1/B2_F3_48h:
+    centre:
+    - 537.55
+    - 541.44
+    automatic:
+    - 537.55
+    - 541.44
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.959
+  cell_fate_markers/ctrl_s1/B2_F5_48h:
+    centre:
+    - 538.8
+    - 535.35
+    automatic:
+    - 538.8
+    - 535.35
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.998
+  cell_fate_markers/ctrl_s1/C1_F10_0h:
+    centre:
+    - 538.05
+    - 541.69
+    automatic:
+    - 538.05
+    - 541.69
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.999
+  cell_fate_markers/ctrl_s1/C1_F5_0h:
+    centre:
+    - 538.83
+    - 530.09
+    automatic:
+    - 538.83
+    - 530.09
+    manual:
+    - 0.0
+    - 0.0
+    score: 1.0
+  cell_fate_markers/ctrl_s1/C1_F6_0h:
+    centre:
+    - 536.67
+    - 516.77
+    automatic:
+    - 536.67
+    - 516.77
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.998
+  cell_fate_markers/ctrl_s1/C1_F8_0h:
+    centre:
+    - 533.3
+    - 538.41
+    automatic:
+    - 533.3
+    - 538.41
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.998
+  cell_fate_markers/ctrl_s1/C2_F2_48h:
+    centre:
+    - 547.63
+    - 527.65
+    automatic:
+    - 547.63
+    - 527.65
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.974
+  cell_fate_markers/ctrl_s1/C2_F7_48h:
+    centre:
+    - 540.88
+    - 537.74
+    automatic:
+    - 540.88
+    - 537.74
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.998
+  cell_fate_markers/ctrl_s2/A1_F1_48h:
+    centre:
+    - 540.8
+    - 538.76
+    automatic:
+    - 540.8
+    - 538.76
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.986
+  cell_fate_markers/ctrl_s2/A1_F2_36h:
+    centre:
+    - 534.22
+    - 534.67
+    automatic:
+    - 534.22
+    - 534.67
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.982
+  cell_fate_markers/ctrl_s2/A1_F3_36h:
+    centre:
+    - 533.13
+    - 533.33
+    automatic:
+    - 533.13
+    - 533.33
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.994
+  cell_fate_markers/ctrl_s2/A1_F7_24h:
     centre:
     - 539.21
     - 535.8
@@ -275,8 +275,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.797
-  cell_fate_markers/ctrl_s2/B1_F15_24h.ome.tif:
+    score: 0.849
+  cell_fate_markers/ctrl_s2/B1_F15_24h:
     centre:
     - 536.53
     - 546.32
@@ -286,8 +286,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.955
-  cell_fate_markers/ctrl_s2/B1_F17_24h.ome.tif:
+    score: 0.964
+  cell_fate_markers/ctrl_s2/B1_F17_24h:
     centre:
     - 537.78
     - 540.75
@@ -297,8 +297,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.718
-  cell_fate_markers/ctrl_s2/B1_F2_12h.ome.tif:
+    score: 0.769
+  cell_fate_markers/ctrl_s2/B1_F2_12h:
     centre:
     - 529.46
     - 538.19
@@ -308,8 +308,8 @@ images:
     manual:
     - 7.0
     - 7.0
-    score: 0.993
-  cell_fate_markers/ctrl_s2/B1_F3_12h.ome.tif:
+    score: 0.998
+  cell_fate_markers/ctrl_s2/B1_F3_12h:
     centre:
     - 522.56
     - 538.92
@@ -319,8 +319,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.999
-  cell_fate_markers/ctrl_s2/B1_F3_48h.ome.tif:
+    score: 1.0
+  cell_fate_markers/ctrl_s2/B1_F3_48h:
     centre:
     - 537.05
     - 540.07
@@ -330,8 +330,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.965
-  cell_fate_markers/ctrl_s2/B1_F4_12h.ome.tif:
+    score: 0.949
+  cell_fate_markers/ctrl_s2/B1_F4_12h:
     centre:
     - 530.5
     - 545.5
@@ -342,7 +342,7 @@ images:
     - -13.0
     - -2.0
     score: 1.0
-  cell_fate_markers/ctrl_s2/B1_F5_12h.ome.tif:
+  cell_fate_markers/ctrl_s2/B1_F5_12h:
     centre:
     - 537.22
     - 542.1
@@ -353,7 +353,7 @@ images:
     - -7.0
     - 11.0
     score: 0.999
-  cell_fate_markers/ctrl_s2/B1_F5_36h.ome.tif:
+  cell_fate_markers/ctrl_s2/B1_F5_36h:
     centre:
     - 535.08
     - 541.47
@@ -363,8 +363,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.974
-  cell_fate_markers/ctrl_s2/B1_F6_48h.ome.tif:
+    score: 0.982
+  cell_fate_markers/ctrl_s2/B1_F6_48h:
     centre:
     - 539.39
     - 533.42
@@ -374,8 +374,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.971
-  cell_fate_markers/ctrl_s2/B1_F8_36h.ome.tif:
+    score: 0.979
+  cell_fate_markers/ctrl_s2/B1_F8_36h:
     centre:
     - 540.88
     - 536.96
@@ -385,8 +385,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.939
-  cell_fate_markers/ctrl_s2/C1_F3_48h.ome.tif:
+    score: 0.907
+  cell_fate_markers/ctrl_s2/C1_F3_48h:
     centre:
     - 532.32
     - 533.47
@@ -396,8 +396,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.925
-  cell_fate_markers/ctrl_s2/C1_F5_24h.ome.tif:
+    score: 0.919
+  cell_fate_markers/ctrl_s2/C1_F5_24h:
     centre:
     - 541.58
     - 531.05
@@ -407,8 +407,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.912
-  cell_fate_markers/ctrl_s2/C2_F5_0h.ome.tif:
+    score: 0.93
+  cell_fate_markers/ctrl_s2/C2_F5_0h:
     centre:
     - 539.54
     - 526.54
@@ -419,7 +419,7 @@ images:
     - 0.0
     - 0.0
     score: 0.889
-  cell_fate_markers/ctrl_s2/C2_F6_0h.ome.tif:
+  cell_fate_markers/ctrl_s2/C2_F6_0h:
     centre:
     - 547.34
     - 536.77
@@ -429,8 +429,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.986
-  cell_fate_markers/ctrl_s2/C2_F8_0h.ome.tif:
+    score: 0.987
+  cell_fate_markers/ctrl_s2/C2_F8_0h:
     centre:
     - 556.65
     - 538.8
@@ -441,7 +441,7 @@ images:
     - 0.0
     - 0.0
     score: 0.976
-  cell_fate_markers/ctrl_s2/C2_F9_0h.ome.tif:
+  cell_fate_markers/ctrl_s2/C2_F9_0h:
     centre:
     - 531.97
     - 537.61
@@ -451,8 +451,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.965
-  cell_fate_markers/sl0_s1/MAX_A2_F10_36h.ome.tif:
+    score: 0.973
+  cell_fate_markers/sl0_s1/A2_F10_36h:
     centre:
     - 547.53
     - 542.27
@@ -462,8 +462,8 @@ images:
     manual:
     - 2.0
     - 4.0
-    score: 0.99
-  cell_fate_markers/sl0_s1/MAX_A2_F10_48h.ome.tif:
+    score: 1.0
+  cell_fate_markers/sl0_s1/A2_F10_48h:
     centre:
     - 538.92
     - 530.42
@@ -473,8 +473,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.905
-  cell_fate_markers/sl0_s1/MAX_A2_F1_12h.ome.tif:
+    score: 0.93
+  cell_fate_markers/sl0_s1/A2_F1_12h:
     centre:
     - 528.15
     - 546.64
@@ -484,8 +484,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.971
-  cell_fate_markers/sl0_s1/MAX_A2_F2_24h.ome.tif:
+    score: 0.983
+  cell_fate_markers/sl0_s1/A2_F2_24h:
     centre:
     - 553.96
     - 542.78
@@ -496,7 +496,7 @@ images:
     - 0.0
     - 0.0
     score: 0.993
-  cell_fate_markers/sl0_s1/MAX_A2_F3_12h.ome.tif:
+  cell_fate_markers/sl0_s1/A2_F3_12h:
     centre:
     - 542.64
     - 538.94
@@ -507,7 +507,7 @@ images:
     - 0.0
     - 0.0
     score: 0.997
-  cell_fate_markers/sl0_s1/MAX_A2_F4_12h.ome.tif:
+  cell_fate_markers/sl0_s1/A2_F4_12h:
     centre:
     - 547.21
     - 531.94
@@ -517,8 +517,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.998
-  cell_fate_markers/sl0_s1/MAX_A2_F4_24h.ome.tif:
+    score: 0.997
+  cell_fate_markers/sl0_s1/A2_F4_24h:
     centre:
     - 533.71
     - 538.96
@@ -529,7 +529,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  cell_fate_markers/sl0_s1/MAX_A2_F6_24h.ome.tif:
+  cell_fate_markers/sl0_s1/A2_F6_24h:
     centre:
     - 533.53
     - 538.43
@@ -539,272 +539,272 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.991
-  cell_fate_markers/sl0_s1/MAX_A2_F7_12h.ome.tif:
+    score: 0.989
+  cell_fate_markers/sl0_s1/A2_F7_12h:
     centre:
     - 527.5
     - 545.05
     automatic:
     - 527.5
     - 545.05
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.998
+  cell_fate_markers/sl0_s1/A2_F7_48h:
+    centre:
+    - 540.23
+    - 540.33
+    automatic:
+    - 540.23
+    - 540.33
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.823
+  cell_fate_markers/sl0_s1/A2_F9_48h:
+    centre:
+    - 548.19
+    - 529.54
+    automatic:
+    - 548.19
+    - 529.54
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.93
+  cell_fate_markers/sl0_s2/B2_F10_48h:
+    centre:
+    - 540.44
+    - 537.56
+    automatic:
+    - 540.44
+    - 537.56
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.888
+  cell_fate_markers/sl0_s2/B2_F1_12h:
+    centre:
+    - 534.9
+    - 548.8
+    automatic:
+    - 534.9
+    - 548.8
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.992
+  cell_fate_markers/sl0_s2/B2_F1_24h:
+    centre:
+    - 536.85
+    - 534.98
+    automatic:
+    - 536.85
+    - 534.98
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.743
+  cell_fate_markers/sl0_s2/B2_F2_12h:
+    centre:
+    - 531.26
+    - 541.0
+    automatic:
+    - 531.26
+    - 541.0
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.993
+  cell_fate_markers/sl0_s2/B2_F3_12h:
+    centre:
+    - 540.82
+    - 536.93
+    automatic:
+    - 540.82
+    - 536.93
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.992
+  cell_fate_markers/sl0_s2/B2_F3_24h:
+    centre:
+    - 534.42
+    - 537.0
+    automatic:
+    - 534.42
+    - 537.0
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.925
+  cell_fate_markers/sl0_s2/B2_F3_48h:
+    centre:
+    - 556.26
+    - 537.11
+    automatic:
+    - 556.26
+    - 537.11
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.811
+  cell_fate_markers/sl0_s2/B2_F4_12h:
+    centre:
+    - 529.98
+    - 539.46
+    automatic:
+    - 529.98
+    - 539.46
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.992
+  cell_fate_markers/sl0_s2/B2_F4_36h:
+    centre:
+    - 545.71
+    - 539.28
+    automatic:
+    - 545.71
+    - 539.28
+    manual:
+    - 0.0
+    - 0.0
+    score: 1.0
+  cell_fate_markers/sl0_s2/B2_F5_24h:
+    centre:
+    - 533.35
+    - 535.15
+    automatic:
+    - 533.35
+    - 535.15
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.872
+  cell_fate_markers/sl0_s2/B2_F5_36h:
+    centre:
+    - 531.55
+    - 533.37
+    automatic:
+    - 531.55
+    - 533.37
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.997
+  cell_fate_markers/sl0_s2/B2_F5_48h:
+    centre:
+    - 539.7
+    - 526.22
+    automatic:
+    - 539.7
+    - 526.22
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.872
+  cell_fate_markers/sl0_s2/B2_F7_48h:
+    centre:
+    - 535.35
+    - 538.37
+    automatic:
+    - 535.35
+    - 538.37
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.884
+  cell_fate_markers/sl0_s2/B2_F8_24h:
+    centre:
+    - 537.14
+    - 538.05
+    automatic:
+    - 537.14
+    - 538.05
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.94
+  cell_fate_markers/sl24_s1/A3_F4_48h:
+    centre:
+    - 532.44
+    - 543.42
+    automatic:
+    - 532.44
+    - 543.42
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.997
+  cell_fate_markers/sl24_s1/A3_F5_48h:
+    centre:
+    - 537.07
+    - 540.42
+    automatic:
+    - 537.07
+    - 540.42
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.968
+  cell_fate_markers/sl24_s1/A3_F7_48h:
+    centre:
+    - 539.22
+    - 538.22
+    automatic:
+    - 539.22
+    - 538.22
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.989
+  cell_fate_markers/sl24_s1/A3_F9_48h:
+    centre:
+    - 537.78
+    - 536.27
+    automatic:
+    - 537.78
+    - 536.27
     manual:
     - 0.0
     - 0.0
     score: 0.999
-  cell_fate_markers/sl0_s1/MAX_A2_F7_48h.ome.tif:
-    centre:
-    - 540.23
-    - 540.33
-    automatic:
-    - 540.23
-    - 540.33
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.722
-  cell_fate_markers/sl0_s1/MAX_A2_F9_48h.ome.tif:
-    centre:
-    - 548.19
-    - 529.54
-    automatic:
-    - 548.19
-    - 529.54
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.912
-  cell_fate_markers/sl0_s2/MAX_B2_F10_48h.ome.tif:
-    centre:
-    - 540.44
-    - 537.56
-    automatic:
-    - 540.44
-    - 537.56
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.793
-  cell_fate_markers/sl0_s2/MAX_B2_F1_12h.ome.tif:
-    centre:
-    - 534.9
-    - 548.8
-    automatic:
-    - 534.9
-    - 548.8
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.994
-  cell_fate_markers/sl0_s2/MAX_B2_F1_24h.ome.tif:
-    centre:
-    - 536.85
-    - 534.98
-    automatic:
-    - 536.85
-    - 534.98
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.739
-  cell_fate_markers/sl0_s2/MAX_B2_F2_12h.ome.tif:
-    centre:
-    - 531.26
-    - 541.0
-    automatic:
-    - 531.26
-    - 541.0
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.995
-  cell_fate_markers/sl0_s2/MAX_B2_F3_12h.ome.tif:
-    centre:
-    - 540.82
-    - 536.93
-    automatic:
-    - 540.82
-    - 536.93
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.995
-  cell_fate_markers/sl0_s2/MAX_B2_F3_24h.ome.tif:
-    centre:
-    - 534.42
-    - 537.0
-    automatic:
-    - 534.42
-    - 537.0
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.924
-  cell_fate_markers/sl0_s2/MAX_B2_F3_48h.ome.tif:
-    centre:
-    - 556.26
-    - 537.11
-    automatic:
-    - 556.26
-    - 537.11
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.754
-  cell_fate_markers/sl0_s2/MAX_B2_F4_12h.ome.tif:
-    centre:
-    - 529.98
-    - 539.46
-    automatic:
-    - 529.98
-    - 539.46
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.995
-  cell_fate_markers/sl0_s2/MAX_B2_F4_36h.ome.tif:
-    centre:
-    - 545.71
-    - 539.28
-    automatic:
-    - 545.71
-    - 539.28
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.998
-  cell_fate_markers/sl0_s2/MAX_B2_F5_24h.ome.tif:
-    centre:
-    - 533.35
-    - 535.15
-    automatic:
-    - 533.35
-    - 535.15
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.9
-  cell_fate_markers/sl0_s2/MAX_B2_F5_36h.ome.tif:
-    centre:
-    - 531.55
-    - 533.37
-    automatic:
-    - 531.55
-    - 533.37
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.998
-  cell_fate_markers/sl0_s2/MAX_B2_F5_48h.ome.tif:
-    centre:
-    - 539.7
-    - 526.22
-    automatic:
-    - 539.7
-    - 526.22
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.683
-  cell_fate_markers/sl0_s2/MAX_B2_F7_48h.ome.tif:
-    centre:
-    - 535.35
-    - 538.37
-    automatic:
-    - 535.35
-    - 538.37
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.773
-  cell_fate_markers/sl0_s2/MAX_B2_F8_24h.ome.tif:
-    centre:
-    - 537.14
-    - 538.05
-    automatic:
-    - 537.14
-    - 538.05
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.96
-  cell_fate_markers/sl24_s1/MAX_A3_F4_48h.ome.tif:
-    centre:
-    - 532.44
-    - 543.42
-    automatic:
-    - 532.44
-    - 543.42
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.804
-  cell_fate_markers/sl24_s1/MAX_A3_F5_48h.ome.tif:
-    centre:
-    - 537.07
-    - 540.42
-    automatic:
-    - 537.07
-    - 540.42
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.789
-  cell_fate_markers/sl24_s1/MAX_A3_F7_48h.ome.tif:
-    centre:
-    - 539.22
-    - 538.22
-    automatic:
-    - 539.22
-    - 538.22
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.76
-  cell_fate_markers/sl24_s1/MAX_A3_F9_48h.ome.tif:
-    centre:
-    - 537.78
-    - 536.27
-    automatic:
-    - 537.78
-    - 536.27
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.841
-  cell_fate_markers/sl24_s2/MAX_B3_F10_48h.ome.tif:
+  cell_fate_markers/sl24_s2/B3_F10_48h:
     centre:
     - 537.91
     - 534.37
     automatic:
     - 537.91
     - 534.37
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.821
-  cell_fate_markers/sl24_s2/MAX_B3_F4_48h.ome.tif:
-    centre:
-    - 538.9
-    - 537.43
-    automatic:
-    - 538.9
-    - 537.43
-    manual:
-    - 0.0
-    - 0.0
-    score: 0.836
-  cell_fate_markers/sl24_s2/MAX_B3_F6_48h.ome.tif:
-    centre:
-    - 536.19
-    - 528.98
-    automatic:
-    - 536.19
-    - 528.98
     manual:
     - 0.0
     - 0.0
     score: 0.805
-  cell_fate_markers/sl24_s2/MAX_B3_F7_48h.ome.tif:
+  cell_fate_markers/sl24_s2/B3_F4_48h:
+    centre:
+    - 538.9
+    - 537.43
+    automatic:
+    - 538.9
+    - 537.43
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.818
+  cell_fate_markers/sl24_s2/B3_F6_48h:
+    centre:
+    - 536.19
+    - 528.98
+    automatic:
+    - 536.19
+    - 528.98
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.783
+  cell_fate_markers/sl24_s2/B3_F7_48h:
     centre:
     - 539.22
     - 549.15
@@ -814,8 +814,8 @@ images:
     manual:
     - 5.0
     - 16.0
-    score: 0.772
-  signalling/protein_response/ctrl/MAX_A1_F1_CTRL_24h.ome.tif:
+    score: 0.776
+  signalling/protein_response/ctrl/A1_F1_24h:
     centre:
     - 531.44
     - 541.01
@@ -825,8 +825,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.952
-  signalling/protein_response/ctrl/MAX_A1_F2_CTRL_24h.ome.tif:
+    score: 0.964
+  signalling/protein_response/ctrl/A1_F2_24h:
     centre:
     - 540.76
     - 535.13
@@ -837,7 +837,7 @@ images:
     - 0.0
     - 0.0
     score: 0.999
-  signalling/protein_response/ctrl/MAX_A1_F3_CTRL_24h.ome.tif:
+  signalling/protein_response/ctrl/A1_F3_24h:
     centre:
     - 537.83
     - 546.79
@@ -847,8 +847,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.994
-  signalling/protein_response/ctrl/MAX_A1_F7_CTRL_0h.ome.tif:
+    score: 0.997
+  signalling/protein_response/ctrl/A1_F7_0h:
     centre:
     - 557.62
     - 511.13
@@ -858,8 +858,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.977
-  signalling/protein_response/ctrl/MAX_A1_F7_CTRL_24h.ome.tif:
+    score: 0.975
+  signalling/protein_response/ctrl/A1_F7_24h:
     centre:
     - 535.5
     - 551.5
@@ -870,7 +870,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/protein_response/ctrl/MAX_A2_F10_CTRL_12h.ome.tif:
+  signalling/protein_response/ctrl/A2_F10_12h:
     centre:
     - 542.7
     - 532.25
@@ -881,7 +881,7 @@ images:
     - 0.0
     - 0.0
     score: 0.999
-  signalling/protein_response/ctrl/MAX_A2_F2_CTRL_36h.ome.tif:
+  signalling/protein_response/ctrl/A2_F2_36h:
     centre:
     - 539.22
     - 547.86
@@ -891,8 +891,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.994
-  signalling/protein_response/ctrl/MAX_A2_F2_CTRL_48h.ome.tif:
+    score: 0.983
+  signalling/protein_response/ctrl/A2_F2_48h:
     centre:
     - 535.03
     - 541.81
@@ -902,8 +902,19 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.775
-  signalling/protein_response/ctrl/MAX_A2_F3_CTRL_48h.ome.tif:
+    score: 0.782
+  signalling/protein_response/ctrl/A2_F3_36h:
+    centre:
+    - 545.85
+    - 530.59
+    automatic:
+    - 545.85
+    - 530.59
+    manual:
+    - 0.0
+    - 0.0
+    score: 0.997
+  signalling/protein_response/ctrl/A2_F3_48h:
     centre:
     - 542.98
     - 531.99
@@ -913,8 +924,8 @@ images:
     manual:
     - -18.0
     - 9.0
-    score: 0.368
-  signalling/protein_response/ctrl/MAX_A2_F4_CTRL_0h.ome.tif:
+    score: 0.479
+  signalling/protein_response/ctrl/A2_F4_0h:
     centre:
     - 576.19
     - 541.11
@@ -924,8 +935,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.482
-  signalling/protein_response/ctrl/MAX_A2_F4_CTRL_36h.ome.tif:
+    score: 0.501
+  signalling/protein_response/ctrl/A2_F4_36h:
     centre:
     - 538.51
     - 534.11
@@ -936,7 +947,7 @@ images:
     - 0.0
     - 0.0
     score: 0.998
-  signalling/protein_response/ctrl/MAX_A2_F4_CTRL_48h.ome.tif:
+  signalling/protein_response/ctrl/A2_F4_48h:
     centre:
     - 534.41
     - 540.5
@@ -946,8 +957,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.696
-  signalling/protein_response/ctrl/MAX_A2_F5_CTRL_12h.ome.tif:
+    score: 0.618
+  signalling/protein_response/ctrl/A2_F5_12h:
     centre:
     - 532.54
     - 540.44
@@ -957,8 +968,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.985
-  signalling/protein_response/ctrl/MAX_A2_F7_CTRL_48h.ome.tif:
+    score: 0.999
+  signalling/protein_response/ctrl/A2_F7_48h:
     centre:
     - 532.0
     - 539.15
@@ -968,8 +979,8 @@ images:
     manual:
     - -9.0
     - 16.0
-    score: 0.462
-  signalling/protein_response/ctrl/MAX_A2_F8_CTRL_12h.ome.tif:
+    score: 0.391
+  signalling/protein_response/ctrl/A2_F8_12h:
     centre:
     - 537.87
     - 523.74
@@ -979,8 +990,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.998
-  signalling/protein_response/ctrl/MAX_A2_F8_CTRL_36h.ome.tif:
+    score: 0.999
+  signalling/protein_response/ctrl/A2_F8_36h:
     centre:
     - 543.92
     - 540.39
@@ -990,8 +1001,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.987
-  signalling/protein_response/ctrl/MAX_A2_F9_CTRL_0h.ome.tif:
+    score: 0.979
+  signalling/protein_response/ctrl/A2_F9_0h:
     centre:
     - 539.6
     - 526.71
@@ -1001,8 +1012,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.96
-  signalling/protein_response/ctrl/MAX_A2_F9_CTRL_12h.ome.tif:
+    score: 0.961
+  signalling/protein_response/ctrl/A2_F9_12h:
     centre:
     - 542.55
     - 537.17
@@ -1013,7 +1024,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/protein_response/ctrl/MAX_A2_F9_CTRL_36h.ome.tif:
+  signalling/protein_response/ctrl/A2_F9_36h:
     centre:
     - 534.34
     - 538.46
@@ -1023,8 +1034,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.999
-  signalling/protein_response/ctrl/MAX_B2_F3_CTRL_0h.ome.tif:
+    score: 0.998
+  signalling/protein_response/ctrl/B2_F3_0h:
     centre:
     - 552.66
     - 539.82
@@ -1035,7 +1046,7 @@ images:
     - 0.0
     - 0.0
     score: 0.965
-  signalling/protein_response/sl0/MAX_A1_F1_sl0_12h.ome.tif:
+  signalling/protein_response/sl0/A1_F1_12h:
     centre:
     - 540.09
     - 538.03
@@ -1045,8 +1056,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.996
-  signalling/protein_response/sl0/MAX_A1_F2_sl0_12h.ome.tif:
+    score: 0.997
+  signalling/protein_response/sl0/A1_F2_12h:
     centre:
     - 534.07
     - 538.12
@@ -1056,8 +1067,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.985
-  signalling/protein_response/sl0/MAX_A1_F3_sl0_12h.ome.tif:
+    score: 0.983
+  signalling/protein_response/sl0/A1_F3_12h:
     centre:
     - 543.5
     - 538.5
@@ -1068,7 +1079,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/protein_response/sl0/MAX_A1_F4_sl0_12h.ome.tif:
+  signalling/protein_response/sl0/A1_F4_12h:
     centre:
     - 546.74
     - 541.22
@@ -1078,8 +1089,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.997
-  signalling/protein_response/sl0/MAX_B2_F1_sl0_36h.ome.tif:
+    score: 0.995
+  signalling/protein_response/sl0/B2_F1_36h:
     centre:
     - 541.02
     - 542.1
@@ -1089,8 +1100,8 @@ images:
     manual:
     - -5.0
     - -11.0
-    score: 0.521
-  signalling/protein_response/sl0/MAX_B2_F2_sl0_36h.ome.tif:
+    score: 0.567
+  signalling/protein_response/sl0/B2_F2_36h:
     centre:
     - 538.18
     - 545.89
@@ -1100,8 +1111,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.957
-  signalling/protein_response/sl0/MAX_B2_F5_sl0_36h.ome.tif:
+    score: 0.955
+  signalling/protein_response/sl0/B2_F5_36h:
     centre:
     - 539.69
     - 543.39
@@ -1112,7 +1123,7 @@ images:
     - 0.0
     - 0.0
     score: 0.995
-  signalling/protein_response/sl0/MAX_B2_F7_sl0_36h.ome.tif:
+  signalling/protein_response/sl0/B2_F7_36h:
     centre:
     - 540.01
     - 542.54
@@ -1123,7 +1134,7 @@ images:
     - 0.0
     - 0.0
     score: 0.998
-  signalling/protein_response/sl0/MAX_D2_F10_sl0_24h.ome.tif:
+  signalling/protein_response/sl0/D2_F10_24h:
     centre:
     - 525.57
     - 534.43
@@ -1133,8 +1144,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.999
-  signalling/protein_response/sl0/MAX_D2_F2_sl0_24h.ome.tif:
+    score: 1.0
+  signalling/protein_response/sl0/D2_F2_24h:
     centre:
     - 533.18
     - 541.34
@@ -1144,8 +1155,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.994
-  signalling/protein_response/sl0/MAX_D2_F2_sl0_48h.ome.tif:
+    score: 0.997
+  signalling/protein_response/sl0/D2_F2_48h:
     centre:
     - 537.94
     - 540.95
@@ -1155,8 +1166,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.918
-  signalling/protein_response/sl0/MAX_D2_F3_sl0_48h.ome.tif:
+    score: 0.934
+  signalling/protein_response/sl0/D2_F3_48h:
     centre:
     - 519.62
     - 518.42
@@ -1166,8 +1177,8 @@ images:
     manual:
     - -2.0
     - 11.0
-    score: 0.376
-  signalling/protein_response/sl0/MAX_D2_F4_sl0_48h.ome.tif:
+    score: 0.547
+  signalling/protein_response/sl0/D2_F4_48h:
     centre:
     - 535.09
     - 533.24
@@ -1177,8 +1188,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.8
-  signalling/protein_response/sl0/MAX_D2_F5_sl0_24h.ome.tif:
+    score: 0.845
+  signalling/protein_response/sl0/D2_F5_24h:
     centre:
     - 536.4
     - 543.5
@@ -1188,8 +1199,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 1.0
-  signalling/protein_response/sl0/MAX_D2_F5_sl0_48h.ome.tif:
+    score: 0.999
+  signalling/protein_response/sl0/D2_F5_48h:
     centre:
     - 534.99
     - 528.52
@@ -1199,8 +1210,8 @@ images:
     manual:
     - 13.0
     - 11.0
-    score: 0.376
-  signalling/protein_response/sl0/MAX_D2_F9_sl0_24h.ome.tif:
+    score: 0.617
+  signalling/protein_response/sl0/D2_F9_24h:
     centre:
     - 526.72
     - 540.86
@@ -1211,7 +1222,7 @@ images:
     - 0.0
     - 0.0
     score: 0.999
-  signalling/protein_response/sl24/MAX_B1_F1_sl24_36h.ome.tif:
+  signalling/protein_response/sl24/B1_F1_36h:
     centre:
     - 541.37
     - 539.91
@@ -1221,8 +1232,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.992
-  signalling/protein_response/sl24/MAX_B1_F2_sl24_36h.ome.tif:
+    score: 0.99
+  signalling/protein_response/sl24/B1_F2_36h:
     centre:
     - 534.83
     - 544.35
@@ -1233,7 +1244,7 @@ images:
     - 0.0
     - 0.0
     score: 0.997
-  signalling/protein_response/sl24/MAX_B1_F3_sl24_36h.ome.tif:
+  signalling/protein_response/sl24/B1_F3_36h:
     centre:
     - 535.46
     - 541.46
@@ -1243,8 +1254,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.994
-  signalling/protein_response/sl24/MAX_B1_F4_sl24_36h.ome.tif:
+    score: 0.998
+  signalling/protein_response/sl24/B1_F4_36h:
     centre:
     - 541.56
     - 539.87
@@ -1255,7 +1266,7 @@ images:
     - 0.0
     - 0.0
     score: 0.997
-  signalling/protein_response/sl24/MAX_B1_F5_sl24_36h.ome.tif:
+  signalling/protein_response/sl24/B1_F5_36h:
     centre:
     - 534.78
     - 540.77
@@ -1265,8 +1276,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.98
-  signalling/protein_response/sl24/MAX_D1_F1_sl24_48h.ome.tif:
+    score: 0.977
+  signalling/protein_response/sl24/D1_F1_48h:
     centre:
     - 530.44
     - 539.13
@@ -1276,8 +1287,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.926
-  signalling/protein_response/sl24/MAX_D1_F4_sl24_48h.ome.tif:
+    score: 0.944
+  signalling/protein_response/sl24/D1_F4_48h:
     centre:
     - 538.5
     - 536.89
@@ -1287,8 +1298,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.934
-  signalling/protein_response/sl24/MAX_D1_F5_sl24_48h.ome.tif:
+    score: 0.966
+  signalling/protein_response/sl24/D1_F5_48h:
     centre:
     - 531.09
     - 540.62
@@ -1298,8 +1309,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.862
-  signalling/protein_response/sl24/MAX_D1_F6_SL24_48h.ome.tif:
+    score: 0.901
+  signalling/protein_response/sl24/D1_F6_48h:
     centre:
     - 535.66
     - 543.08
@@ -1309,8 +1320,8 @@ images:
     manual:
     - 0.0
     - 0.0
-    score: 0.978
-  signalling/rna_expression/ctrl/0h_1-1.tif:
+    score: 0.989
+  signalling/rna_expression/ctrl/0h_1-1:
     centre:
     - 538.3
     - 547.5
@@ -1321,7 +1332,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/rna_expression/ctrl/0h_1-2.tif:
+  signalling/rna_expression/ctrl/0h_1-2:
     centre:
     - 543.5
     - 562.17
@@ -1332,7 +1343,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/rna_expression/ctrl/0h_1-3.tif:
+  signalling/rna_expression/ctrl/0h_1-3:
     centre:
     - 534.76
     - 559.5
@@ -1343,7 +1354,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/rna_expression/ctrl/0h_1-4.tif:
+  signalling/rna_expression/ctrl/0h_1-4:
     centre:
     - 538.29
     - 535.16
@@ -1354,7 +1365,7 @@ images:
     - 0.0
     - 0.0
     score: 0.992
-  signalling/rna_expression/ctrl/12h_2uM-1.tif:
+  signalling/rna_expression/ctrl/12h_2uM-1:
     centre:
     - 536.17
     - 572.17
@@ -1365,7 +1376,7 @@ images:
     - 18.0
     - 2.0
     score: 0.994
-  signalling/rna_expression/ctrl/12h_2uM-2.tif:
+  signalling/rna_expression/ctrl/12h_2uM-2:
     centre:
     - 546.67
     - 562.92
@@ -1376,7 +1387,7 @@ images:
     - 22.0
     - -2.0
     score: 0.846
-  signalling/rna_expression/ctrl/12h_2uM-3.tif:
+  signalling/rna_expression/ctrl/12h_2uM-3:
     centre:
     - 555.65
     - 577.92
@@ -1387,7 +1398,7 @@ images:
     - 20.0
     - 9.0
     score: 0.982
-  signalling/rna_expression/ctrl/12h_2uM-4.tif:
+  signalling/rna_expression/ctrl/12h_2uM-4:
     centre:
     - 535.03
     - 521.48
@@ -1398,7 +1409,7 @@ images:
     - 18.0
     - 5.0
     score: 0.921
-  signalling/rna_expression/ctrl/24h_2uM-1.tif:
+  signalling/rna_expression/ctrl/24h_2uM-1:
     centre:
     - 560.75
     - 562.26
@@ -1409,7 +1420,7 @@ images:
     - 11.0
     - -18.0
     score: 0.401
-  signalling/rna_expression/ctrl/24h_2uM-2.tif:
+  signalling/rna_expression/ctrl/24h_2uM-2:
     centre:
     - 543.75
     - 560.89
@@ -1420,7 +1431,7 @@ images:
     - 20.0
     - -40.0
     score: 0.317
-  signalling/rna_expression/ctrl/24h_2uM-3.tif:
+  signalling/rna_expression/ctrl/24h_2uM-3:
     centre:
     - 529.65
     - 591.64
@@ -1431,7 +1442,7 @@ images:
     - 36.0
     - 5.0
     score: 0.548
-  signalling/rna_expression/ctrl/24h_2uM-4.tif:
+  signalling/rna_expression/ctrl/24h_2uM-4:
     centre:
     - 543.6
     - 576.34
@@ -1442,7 +1453,7 @@ images:
     - 31.0
     - 11.0
     score: 0.586
-  signalling/rna_expression/ctrl/36h_2uM-1.tif:
+  signalling/rna_expression/ctrl/36h_2uM-1:
     centre:
     - 583.93
     - 551.97
@@ -1453,7 +1464,7 @@ images:
     - 27.0
     - 4.0
     score: 0.577
-  signalling/rna_expression/ctrl/36h_2uM-2.tif:
+  signalling/rna_expression/ctrl/36h_2uM-2:
     centre:
     - 530.83
     - 558.18
@@ -1464,7 +1475,7 @@ images:
     - 7.0
     - 20.0
     score: 0.553
-  signalling/rna_expression/ctrl/36h_2uM-3.tif:
+  signalling/rna_expression/ctrl/36h_2uM-3:
     centre:
     - 560.45
     - 556.21
@@ -1475,7 +1486,7 @@ images:
     - 54.0
     - 22.0
     score: 0.397
-  signalling/rna_expression/ctrl/36h_2uM-4.tif:
+  signalling/rna_expression/ctrl/36h_2uM-4:
     centre:
     - 533.25
     - 567.53
@@ -1486,7 +1497,7 @@ images:
     - 25.0
     - 16.0
     score: 0.441
-  signalling/rna_expression/ctrl/48h_2uM-1.tif:
+  signalling/rna_expression/ctrl/48h_2uM-1:
     centre:
     - 545.79
     - 567.24
@@ -1497,7 +1508,7 @@ images:
     - 31.0
     - 11.0
     score: 0.75
-  signalling/rna_expression/ctrl/48h_2uM-2.tif:
+  signalling/rna_expression/ctrl/48h_2uM-2:
     centre:
     - 533.37
     - 571.16
@@ -1508,7 +1519,7 @@ images:
     - 54.0
     - 4.0
     score: 0.332
-  signalling/rna_expression/ctrl/48h_2uM-3.tif:
+  signalling/rna_expression/ctrl/48h_2uM-3:
     centre:
     - 537.95
     - 524.6
@@ -1519,7 +1530,7 @@ images:
     - 43.0
     - 5.0
     score: 0.46
-  signalling/rna_expression/ctrl/48h_2uM-4.tif:
+  signalling/rna_expression/ctrl/48h_2uM-4:
     centre:
     - 581.23
     - 568.42
@@ -1530,7 +1541,7 @@ images:
     - 0.0
     - 0.0
     score: 0.387
-  signalling/rna_expression/ctrl/48h_2uM-5.tif:
+  signalling/rna_expression/ctrl/48h_2uM-5:
     centre:
     - 389.5
     - 417.5
@@ -1541,7 +1552,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/rna_expression/sl0/12h_SL0h-1.tif:
+  signalling/rna_expression/sl0/12h_SL0h-1:
     centre:
     - 517.39
     - 520.88
@@ -1552,7 +1563,7 @@ images:
     - 0.0
     - 0.0
     score: 0.999
-  signalling/rna_expression/sl0/12h_SL0h-2.tif:
+  signalling/rna_expression/sl0/12h_SL0h-2:
     centre:
     - 493.5
     - 543.5
@@ -1563,7 +1574,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/rna_expression/sl0/12h_SL0h-3.tif:
+  signalling/rna_expression/sl0/12h_SL0h-3:
     centre:
     - 515.26
     - 546.81
@@ -1574,7 +1585,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/rna_expression/sl0/12h_SL0h-4.tif:
+  signalling/rna_expression/sl0/12h_SL0h-4:
     centre:
     - 545.11
     - 547.51
@@ -1585,7 +1596,7 @@ images:
     - 0.0
     - 0.0
     score: 0.941
-  signalling/rna_expression/sl0/24h_SL0h-1.tif:
+  signalling/rna_expression/sl0/24h_SL0h-1:
     centre:
     - 527.81
     - 570.71
@@ -1596,7 +1607,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/rna_expression/sl0/24h_SL0h-2.tif:
+  signalling/rna_expression/sl0/24h_SL0h-2:
     centre:
     - 542.96
     - 550.69
@@ -1607,7 +1618,7 @@ images:
     - 5.0
     - 7.0
     score: 0.703
-  signalling/rna_expression/sl0/24h_SL0h-3.tif:
+  signalling/rna_expression/sl0/24h_SL0h-3:
     centre:
     - 543.31
     - 566.32
@@ -1618,7 +1629,7 @@ images:
     - 13.0
     - 4.0
     score: 0.576
-  signalling/rna_expression/sl0/24h_SL0h-4.tif:
+  signalling/rna_expression/sl0/24h_SL0h-4:
     centre:
     - 556.44
     - 555.99
@@ -1629,7 +1640,7 @@ images:
     - 7.0
     - 13.0
     score: 0.633
-  signalling/rna_expression/sl0/36h_SL0h-1.tif:
+  signalling/rna_expression/sl0/36h_SL0h-1:
     centre:
     - 539.34
     - 557.41
@@ -1640,7 +1651,7 @@ images:
     - 13.0
     - 20.0
     score: 0.928
-  signalling/rna_expression/sl0/36h_SL0h-2.tif:
+  signalling/rna_expression/sl0/36h_SL0h-2:
     centre:
     - 531.99
     - 545.28
@@ -1651,7 +1662,7 @@ images:
     - 34.0
     - 20.0
     score: 0.328
-  signalling/rna_expression/sl0/36h_SL0h-3.tif:
+  signalling/rna_expression/sl0/36h_SL0h-3:
     centre:
     - 504.27
     - 540.78
@@ -1662,7 +1673,7 @@ images:
     - 0.0
     - 0.0
     score: 0.787
-  signalling/rna_expression/sl0/36h_SL0h-4.tif:
+  signalling/rna_expression/sl0/36h_SL0h-4:
     centre:
     - 552.16
     - 542.68
@@ -1673,7 +1684,7 @@ images:
     - 7.0
     - 14.0
     score: 0.758
-  signalling/rna_expression/sl0/48h_SL0h-1.tif:
+  signalling/rna_expression/sl0/48h_SL0h-1:
     centre:
     - 503.82
     - 539.81
@@ -1684,7 +1695,7 @@ images:
     - 0.0
     - 0.0
     score: 0.923
-  signalling/rna_expression/sl0/48h_SL0h-2.tif:
+  signalling/rna_expression/sl0/48h_SL0h-2:
     centre:
     - 500.5
     - 550.97
@@ -1695,7 +1706,7 @@ images:
     - 0.0
     - 0.0
     score: 1.0
-  signalling/rna_expression/sl0/48h_SL0h-3.tif:
+  signalling/rna_expression/sl0/48h_SL0h-3:
     centre:
     - 542.86
     - 529.77
@@ -1706,7 +1717,7 @@ images:
     - 16.0
     - 11.0
     score: 0.789
-  signalling/rna_expression/sl0/48h_SL0h-4.tif:
+  signalling/rna_expression/sl0/48h_SL0h-4:
     centre:
     - 564.48
     - 552.45
@@ -1717,7 +1728,7 @@ images:
     - 0.0
     - 0.0
     score: 0.84
-  signalling/rna_expression/sl24/36h_SL24h-1.tif:
+  signalling/rna_expression/sl24/36h_SL24h-1:
     centre:
     - 570.19
     - 551.93
@@ -1728,7 +1739,7 @@ images:
     - 31.0
     - -2.0
     score: 0.619
-  signalling/rna_expression/sl24/36h_SL24h-2.tif:
+  signalling/rna_expression/sl24/36h_SL24h-2:
     centre:
     - 529.8
     - 542.92
@@ -1739,7 +1750,7 @@ images:
     - 29.0
     - 2.0
     score: 0.581
-  signalling/rna_expression/sl24/36h_SL24h-3.tif:
+  signalling/rna_expression/sl24/36h_SL24h-3:
     centre:
     - 573.33
     - 547.71
@@ -1750,7 +1761,7 @@ images:
     - 47.0
     - 4.0
     score: 0.466
-  signalling/rna_expression/sl24/36h_SL24h-4.tif:
+  signalling/rna_expression/sl24/36h_SL24h-4:
     centre:
     - 533.68
     - 547.91
@@ -1761,7 +1772,7 @@ images:
     - 36.0
     - 4.0
     score: 0.613
-  signalling/rna_expression/sl24/48h_SL24h-1.tif:
+  signalling/rna_expression/sl24/48h_SL24h-1:
     centre:
     - 524.68
     - 543.28
@@ -1772,7 +1783,7 @@ images:
     - 29.0
     - 4.0
     score: 0.586
-  signalling/rna_expression/sl24/48h_SL24h-2.tif:
+  signalling/rna_expression/sl24/48h_SL24h-2:
     centre:
     - 515.91
     - 517.65
@@ -1783,7 +1794,7 @@ images:
     - 16.0
     - -4.0
     score: 0.835
-  signalling/rna_expression/sl24/48h_SL24h-3.tif:
+  signalling/rna_expression/sl24/48h_SL24h-3:
     centre:
     - 570.85
     - 538.47
@@ -1794,7 +1805,7 @@ images:
     - 45.0
     - -3.0
     score: 0.698
-  signalling/rna_expression/sl24/48h_SL24h-4.tif:
+  signalling/rna_expression/sl24/48h_SL24h-4:
     centre:
     - 559.33
     - 545.05
