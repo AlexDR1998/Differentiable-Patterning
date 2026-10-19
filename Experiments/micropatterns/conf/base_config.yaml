@@ -91,6 +91,12 @@ data:
         protein_response/LEF1: 10
         protein_response/LMBR: 0
         protein_response/SMAD23: 0
+    # Largest width (full-res pixels) of stitching bands to remove per
+    # channel; empty = off. stripe_block > 0 handles seams covering only
+    # part of a row. See Common/dataloader/stripes.py.
+      horizontal_stripe_widths: {}
+      vertical_stripe_widths: {}
+      stripe_block: 0
     # Colony centres exported from the data cleaning notebook (relative to
     # the repository root), and the mask radius as a fraction of the
     # pattern radius.

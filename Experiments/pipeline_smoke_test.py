@@ -58,7 +58,7 @@ STAGES = [
 # Sweeps that use a trained model rather than publish one.
 NO_BUNDLE_SWEEPS = {"smoke_impulse"}
 # Label for the code version being tested; used in the W&B group of every run.
-SMOKE_VERSION = "micropattern-projections"
+SMOKE_VERSION = "micropattern-stripe-filter"
 PARENT_PLACEHOLDER = "REPLACE_WITH_PARENT_MODEL_ID"
 SMOKE_COLLECTION = "pipeline-smoke"
 

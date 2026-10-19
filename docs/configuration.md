@@ -93,13 +93,20 @@ settings** and exports the alignment file. The steps are described in
    timestep (hours), for every condition, to correct imaging artifacts.
 2. Hot pixels (isolated bright specks) are replaced by the mean of their
    neighbours, per channel (`cleaning.hot_pixel_thresholds`, 0 = off).
-3. A rolling-ball background is subtracted per channel
+3. Narrow horizontal or vertical bands of raised background (e.g. from tile
+   stitching in sum projections) are removed per channel
+   (`cleaning.horizontal_stripe_widths`, `cleaning.vertical_stripe_widths`:
+   largest band width in full-resolution pixels, 0 or absent = off; see
+   `Common/dataloader/stripes.py`). For seams that cover only part of a row,
+   `cleaning.stripe_block` estimates the background in pieces of that many
+   pixels along the row (0 = whole rows).
+4. A rolling-ball background is subtracted per channel
    (`cleaning.background_radii` in full-resolution pixels, 0 = off).
-4. The images are block-averaged to downsampling 4 (the notebook's), or to
+5. The images are block-averaged to downsampling 4 (the notebook's), or to
    the training downsampling if it is not a multiple of 4.
-5. Each colony is centred with the centres in `cleaning.alignment_file`, and
+6. Each colony is centred with the centres in `cleaning.alignment_file`, and
    masked with a disk of the pattern radius times `cleaning.mask_radius_scale`.
-6. Each channel is rescaled linearly to [0, 1] between a low and a high
+7. Each channel is rescaled linearly to [0, 1] between a low and a high
    percentile (`histogram_percentiles`, or `cleaning.channel_percentiles` per
    channel), taken over all timesteps of a trajectory (inside the mask with
    `percentiles_inside_mask`), so brightness can still be compared over time.
@@ -108,7 +115,7 @@ settings** and exports the alignment file. The steps are described in
    bounds) or `pooled` (all pixels together). With
    `knockouts_use_control_bounds`, knockouts take their bounds from the
    control data, so a knockout's change in overall intensity is kept.
-7. Pixels outside the mask are zeroed and the images are block-averaged to
+8. Pixels outside the mask are zeroed and the images are block-averaged to
    the training downsampling.
 
 The cell-fate and protein response stainings are thin 3D confocal stacks.
@@ -145,6 +152,9 @@ data:
       hot_pixel_thresholds: {cell_fate_s1/SOX17: 30.0, ...}
       background_shrink: 4
       background_radii: {cell_fate_s1/SOX17: 50, ...}
+      horizontal_stripe_widths: {cell_fate_s1/TBXT: 20}
+      vertical_stripe_widths: {}
+      stripe_block: 0
       alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
       mask_radius_scale: 1.0
       normalisation: replicate_mean

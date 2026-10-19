@@ -11,10 +11,10 @@ from Common.dataloader.micropattern_260726 import (
 
 
 GROUPS = {
-    "cell_fate_s1": ("cell_fate_markers/ctrl_s1", 4),
-    "cell_fate_s2": ("cell_fate_markers/ctrl_s2", 4),
+    "cell_fate_s1": ("cell_fate_markers/ctrl_s1_max", 4),
+    "cell_fate_s2": ("cell_fate_markers/ctrl_s2_max", 4),
     "rna_expression": ("signalling/rna_expression/ctrl", 4),
-    "protein_response": ("signalling/protein_response/ctrl", 3),
+    "protein_response": ("signalling/protein_response/ctrl_max", 3),
 }
 
 
@@ -44,10 +44,10 @@ def _make_control_dataset(root, rna_replicates=3):
 
 def _make_empty_condition_directories(root, condition):
     directories = (
-        Path("cell_fate_markers") / f"{condition}_s1",
-        Path("cell_fate_markers") / f"{condition}_s2",
+        Path("cell_fate_markers") / f"{condition}_s1_max",
+        Path("cell_fate_markers") / f"{condition}_s2_max",
         Path("signalling/rna_expression") / condition,
-        Path("signalling/protein_response") / condition,
+        Path("signalling/protein_response") / f"{condition}_max",
     )
     for directory in directories:
         (Path(root) / directory).mkdir(parents=True, exist_ok=True)
@@ -311,3 +311,65 @@ def test_rna_stack_is_aligned_using_discarded_dapi_channel(tmp_path):
     )
 
     assert np.allclose(centre, (3.5, 3.5), atol=0.25)
+
+
+def _add_projections(root):
+    """Sum and slice versions of the cell-fate and protein response images,
+    named as in the real data.
+
+    Each projection gets its own brightness offset, so a test can tell which
+    one was loaded.
+    """
+    root = Path(root)
+    for projection, suffix, offset in (("sums", "_sum.tif", 10), ("slices", "_slice.tif", 20)):
+        for directory, channel_count in (
+            (f"cell_fate_markers/ctrl_s1_{projection}", 4),
+            (f"cell_fate_markers/ctrl_s2_{projection}", 4),
+            (f"signalling/protein_response/ctrl_{projection}", 3),
+        ):
+            for replicate in range(1, 4):
+                _write_group_image(
+                    root / directory / f"sample_{replicate}_0h{suffix}",
+                    channel_count,
+                    replicate + offset,
+                )
+
+
+@pytest.mark.parametrize(
+    "projection, folder, offset",
+    [("max", "max", 0), ("sum", "sums", 10), ("slice", "slices", 20)],
+)
+def test_projection_chooses_every_folder_but_rna(tmp_path, projection, folder, offset):
+    _make_control_dataset(tmp_path)
+    _add_projections(tmp_path)
+    histogram_bins = np.tile(np.array([[0.0, 4000.0]], dtype=np.float32), (14, 1))
+    load = lambda name: load_micropattern_260726(
+        tmp_path,
+        projection=name,
+        timesteps=(0,),
+        downsample=1,
+        histogram_bins=histogram_bins,
+        align=False,
+    )
+    data, aux, names, _, _ = load(projection)
+    reference, _, _, _, _ = load("max")
+
+    paths = {record.group: Path(record.path) for record in aux["manifest"] if record.replicate == 0}
+    assert paths["cell_fate_s1"].parent.name == f"ctrl_s1_{folder}"
+    assert paths["cell_fate_s2"].parent.name == f"ctrl_s2_{folder}"
+    assert paths["protein_response"].parent.name == f"ctrl_{folder}"
+    assert paths["rna_expression"].parent.name == "ctrl"
+    assert aux["projection"] == projection
+
+    data, reference = np.asarray(data), np.asarray(reference)
+    expected = (offset + 1) * 100 + 2  # replicate 1, source channel 1
+    for name in ("cell_fate_s1/SOX2", "protein_response/LMBR"):
+        assert data[0, 0, names.index(name)].max() == pytest.approx(expected / 4000.0)
+    cer1 = names.index("rna_expression/CER1")
+    assert np.array_equal(data[:, :, cer1], reference[:, :, cer1])
+
+
+def test_unknown_projection_is_rejected(tmp_path):
+    _make_control_dataset(tmp_path)
+    with pytest.raises(ValueError, match="Unknown projection"):
+        build_micropattern_260726_manifest(tmp_path, projection="mean")

@@ -1039,5 +1039,7 @@ def test_260726_quality_flags_reach_the_loader(monkeypatch, tmp_path):
         impath="/tmp/micropatterns/",
     )
 
-    assert calls[0]["excluded_images"] == ("cell_fate_markers/ctrl_s1/a_24h.ome.tif",)
+    # Flags are keyed without the projection, so they hold for max, sum and slice.
+    assert calls[0]["excluded_images"] == ("cell_fate_markers/ctrl_s1/a_24h",)
     assert calls[1]["excluded_images"] == ()
+    assert calls[0]["projection"] == "max"

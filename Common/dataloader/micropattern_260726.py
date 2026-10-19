@@ -12,11 +12,12 @@ import scipy.ndimage as ndi
 import skimage.io
 from skimage import morphology
 
-from Common.dataloader import background, hot_pixels
+from Common.dataloader import background, hot_pixels, stripes
 from Common.dataloader.alignment import grid_position, load_colony_alignment
 from Common.dataloader.background import subtract_background
 from Common.dataloader.disk_cache import cache_folder, cached_array
 from Common.dataloader.hot_pixels import replace_hot_pixels_per_channel
+from Common.dataloader.stripes import remove_stripes_per_channel
 from Common.dataloader.micropattern_projections import (
     PROJECTION_FOLDERS,
     check_projection,
@@ -548,7 +549,7 @@ def _schema_group(group):
 
 
 def _clean_image(record, intensity_factors, cleaning, work):
-    """Cleaning steps 1 to 4 for one image: ``[X, Y, C]`` at downsampling ``work``.
+    """Cleaning steps 1 to 5 for one image: ``[X, Y, C]`` at downsampling ``work``.
 
     These are the slow steps, which ``cleaned_image`` can cache on disk.
     """
@@ -564,6 +565,12 @@ def _clean_image(record, intensity_factors, cleaning, work):
         [cleaning.hot_pixel_thresholds.get(name, 0) for name in names],
         cleaning.hot_pixel_window,
     )
+    image, _ = remove_stripes_per_channel(
+        image,
+        [cleaning.horizontal_stripe_widths.get(name, 0) for name in names],
+        [cleaning.vertical_stripe_widths.get(name, 0) for name in names],
+        cleaning.stripe_block,
+    )
     image, _ = subtract_background(
         image,
         [cleaning.background_radii.get(name, 0) for name in names],
@@ -576,6 +583,7 @@ def _clean_image(record, intensity_factors, cleaning, work):
 # The code behind _clean_image; editing any of it starts a new cache folder.
 _CLEANING_SOURCES = (
     hot_pixels,
+    stripes,
     background,
     _read_multichannel_image,
     _channel_values,
@@ -588,7 +596,7 @@ _CLEANING_SOURCES = (
 def cleaning_cache_folder(cache_dir, root, intensity_factors, cleaning, work):
     """The ``disk_cache`` folder for images cleaned with these settings.
 
-    Only the settings of cleaning steps 1 to 4 count, so one folder serves
+    Only the settings of cleaning steps 1 to 5 count, so one folder serves
     every selection of conditions and replicates, every alignment and every
     normalisation setting.
     """
@@ -604,6 +612,9 @@ def cleaning_cache_folder(cache_dir, root, intensity_factors, cleaning, work):
         "hot_pixel_window": cleaning.hot_pixel_window,
         "background_radii": dict(cleaning.background_radii),
         "background_shrink": cleaning.background_shrink,
+        "horizontal_stripe_widths": dict(cleaning.horizontal_stripe_widths),
+        "vertical_stripe_widths": dict(cleaning.vertical_stripe_widths),
+        "stripe_block": cleaning.stripe_block,
     }
     return cache_folder(cache_dir, f"micropattern_260726_ds{work}", settings, _CLEANING_SOURCES)
 
@@ -618,7 +629,7 @@ def cleaned_image(record, intensity_factors, cleaning, work, root, folder=None):
 
 
 def _centre_image(image, record, cleaning, alignment, root, work):
-    """Cleaning step 5: centre ``image`` with ``alignment`` and make its circular mask."""
+    """Cleaning step 6: centre ``image`` with ``alignment`` and make its circular mask."""
     centre = grid_position(alignment.centre(Path(record.path).relative_to(root).as_posix()), work)
     target = ((image.shape[0] - 1) / 2.0, (image.shape[1] - 1) / 2.0)
     image = ndi.shift(
@@ -777,7 +788,7 @@ def load_micropattern_260726(
 
     ``cache_dir`` keeps the cleaned images on disk (see
     ``Common/dataloader/disk_cache.py``), so later loads with the same
-    cleaning settings skip the slow cleaning steps 1 to 4. It is only used
+    cleaning settings skip the slow cleaning steps 1 to 5. It is only used
     with ``cleaning`` enabled; ``None`` turns it off.
 
     Returns

@@ -52,7 +52,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-micropattern-projections
+    logging.wandb.group: smoke_micropatterns_ko_finetune-micropattern-stripe-filter
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
@@ -143,6 +143,9 @@ configs:
             protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
           normalisation: per_replicate
@@ -230,7 +233,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-micropattern-projections
+        group: smoke_micropatterns_ko_finetune-micropattern-stripe-filter
         tags: null
         tag_keys:
         - data.knockout.curriculum
@@ -290,7 +293,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-micropattern-projections
+    logging.wandb.group: smoke_micropatterns_ko_finetune-micropattern-stripe-filter
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
@@ -381,6 +384,9 @@ configs:
             protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
           normalisation: per_replicate
@@ -470,7 +476,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-micropattern-projections
+        group: smoke_micropatterns_ko_finetune-micropattern-stripe-filter
         tags: null
         tag_keys:
         - data.knockout.curriculum

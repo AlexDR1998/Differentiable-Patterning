@@ -18,6 +18,8 @@ def _():
     from pathlib import Path
 
     import anywidget
+    import ml_dtypes
+    import tifffile
     import traitlets
     import yaml
 
@@ -77,6 +79,7 @@ def _():
         rescale,
     )
     from Common.dataloader.quality_flags import load_quality_flags, save_quality_flags
+    from Common.dataloader.stripes import remove_stripes, remove_stripes_per_channel
 
     return (
         BANDS,
@@ -110,6 +113,7 @@ def _():
         load_micropattern_260726,
         load_quality_flags,
         lru_cache,
+        ml_dtypes,
         mo,
         ndi,
         np,
@@ -118,6 +122,8 @@ def _():
         radial_bands,
         radial_rings,
         read_micropattern_260726_image,
+        remove_stripes,
+        remove_stripes_per_channel,
         replace_hot_pixels_per_channel,
         rescale,
         rolling_ball_background,
@@ -129,6 +135,7 @@ def _():
         subtract_background,
         target_score,
         threshold_grid,
+        tifffile,
         traitlets,
         yaml,
     )
@@ -242,6 +249,7 @@ def _(
     read_micropattern_260726_image,
     replicate_count,
     root,
+    tifffile,
     timesteps,
 ):
     mo.stop(
@@ -268,23 +276,201 @@ def _(
         "replicates": _inventory["replicate_indices"],
         "groups": tuple(experiment_groups.value) or None,
     }
-    # Raw images are kept in their stored type to halve memory use: uint16,
-    # or float32 for sum projections, which exceed the uint16 range.
-    _dtype = np.float32 if projection.value == "sum" else np.uint16
+    # Raw images are kept as uint16 when that is exact (whole numbers in
+    # [0, 65535]), to halve memory use, and as float32 otherwise (e.g. sum
+    # projections, which exceed the uint16 range).
     raw_images = []
     for _record in mo.status.progress_bar(
         _inventory["records"], title="Reading raw images", remove_on_exit=True
     ):
         _channels, _foreground = read_micropattern_260726_image(_record)
+        _exact = (
+            _channels.min() >= 0
+            and _channels.max() <= 65535
+            and np.array_equal(_channels, np.rint(_channels))
+        )
+        with tifffile.TiffFile(_record.path) as _tiff:
+            _stored = str(_tiff.series[0].dtype)
         raw_images.append(
             {
                 "record": _record,
-                "channels": _channels.astype(_dtype),
+                "channels": _channels.astype(np.uint16 if _exact else np.float32),
                 "foreground": _foreground,
+                "stored_dtype": _stored,
             }
         )
     mo.md(f"Loaded **{len(raw_images)}** raw images.")
     return raw_images, selection
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    bit_depth_run = mo.ui.run_button(label="Check bit depth")
+    mo.vstack(
+        [
+            mo.md(
+                "### Bit depth\n\n"
+                "- Error from casting to 16 bits, divided by the image's own "
+                "pixel noise (robust estimate from the residual after a 3 x 3 "
+                "median). Below 0.1 (✓) the cast adds under 1% to the noise "
+                "variance.\n"
+                "- **uint16**: raw images at full resolution; images above "
+                "65535 are divided by max / 65535 first.\n"
+                "- **bfloat16 / float16**: cleaned images (section 2 settings) "
+                "at the training resolution, rescaled to [0, 1] between the "
+                "channel's low and high % of each image.\n"
+                "- Worst case over the loaded images. Cleans every image, so "
+                "takes a few minutes the first time.\n"
+                "- `system.precision: bfloat16` only sets the matmul "
+                "precision; training data stays float32."
+            ),
+            bit_depth_run,
+        ]
+    )
+    return (bit_depth_run,)
+
+
+@app.cell(hide_code=True)
+def _(
+    GROUP_CHANNELS,
+    bit_depth_run,
+    clean_channel_with,
+    cleaning_settings,
+    high_percentiles,
+    low_percentiles,
+    ml_dtypes,
+    mo,
+    ndi,
+    np,
+    raw_images,
+):
+    mo.stop(not bit_depth_run.value, mo.md("Press **Check bit depth** to run this check."))
+
+    def bit_depth_noise(image):
+        """Robust pixel noise level: scaled median absolute deviation of image - 3 x 3 median."""
+        residual = image - ndi.median_filter(image, size=3, mode="reflect")
+        level = 1.4826 * float(np.median(np.abs(residual - np.median(residual))))
+        return level if level > 0 else float(np.std(residual))
+
+    def bit_depth_normalised(index, name, channel):
+        """Cleaned channel at the training resolution, rescaled to [0, 1] with the section 2 percentiles."""
+        _, cleaned = clean_channel_with(cleaning_settings, index, name, channel)
+        low, high = np.percentile(
+            cleaned, (low_percentiles.value[name], high_percentiles.value[name])
+        )
+        return np.clip((cleaned - low) / max(high - low, 1e-12), 0.0, 1.0).astype(np.float32)
+
+    def _error_ratio(original, cast):
+        _error = float(np.std(cast.astype(np.float32) - original))
+        _level = bit_depth_noise(original)
+        if _error == 0:
+            return 0.0
+        return _error / _level if _level > 0 else float("inf")
+
+    bit_depth_rows = []
+    for _index, _entry in enumerate(
+        mo.status.progress_bar(raw_images, title="Checking bit depth", remove_on_exit=True)
+    ):
+        for _channel, _name in enumerate(GROUP_CHANNELS[_entry["record"].group]):
+            _raw = _entry["channels"][..., _channel].astype(np.float32)
+            _step = max(1.0, float(_raw.max()) / 65535)
+            _as_uint16 = np.rint(_raw / _step).astype(np.uint16) * np.float32(_step)
+            _normalised = bit_depth_normalised(_index, _name, _channel)
+            bit_depth_rows.append(
+                {
+                    "index": _index,
+                    "channel": _name,
+                    "stored": _entry["stored_dtype"],
+                    "max": float(_raw.max()),
+                    "integer": bool(np.array_equal(_raw, np.rint(_raw))),
+                    "above": float(np.mean(_raw > 65535)),
+                    "uint16": _error_ratio(_raw, _as_uint16),
+                    "bfloat16": _error_ratio(_normalised, _normalised.astype(ml_dtypes.bfloat16)),
+                    "float16": _error_ratio(_normalised, _normalised.astype(np.float16)),
+                }
+            )
+
+    def _mark(ratio):
+        return f"{ratio:.3f} {'✓' if ratio < 0.1 else '✗'}"
+
+    _summary = []
+    for _name in dict.fromkeys(_row["channel"] for _row in bit_depth_rows):
+        _rows = [_row for _row in bit_depth_rows if _row["channel"] == _name]
+        _summary.append(
+            {
+                "channel": _name,
+                "stored as": ", ".join(sorted({_row["stored"] for _row in _rows})),
+                "max": f"{max(_row['max'] for _row in _rows):.0f}",
+                "whole numbers": all(_row["integer"] for _row in _rows),
+                "% above 65535": f"{100 * max(_row['above'] for _row in _rows):.2f}",
+                "uint16": _mark(max(_row["uint16"] for _row in _rows)),
+                "bfloat16": _mark(max(_row["bfloat16"] for _row in _rows)),
+                "float16": _mark(max(_row["float16"] for _row in _rows)),
+            }
+        )
+    mo.ui.table(_summary, selection=None)
+    return bit_depth_noise, bit_depth_normalised, bit_depth_rows
+
+
+@app.cell(hide_code=True)
+def _(bit_depth_rows, mo):
+    _names = list(dict.fromkeys(_row["channel"] for _row in bit_depth_rows))
+    bit_depth_channel = mo.ui.dropdown(options=_names, value=_names[0], label="Channel")
+    mo.vstack(
+        [
+            mo.md("- The image of this channel with the largest bfloat16 error."),
+            bit_depth_channel,
+        ]
+    )
+    return (bit_depth_channel,)
+
+
+@app.cell(hide_code=True)
+def _(
+    GROUP_CHANNELS,
+    bit_depth_channel,
+    bit_depth_noise,
+    bit_depth_normalised,
+    bit_depth_rows,
+    ml_dtypes,
+    np,
+    plt,
+    raw_images,
+    record_label,
+    show_figure,
+):
+    _worst = max(
+        (_row for _row in bit_depth_rows if _row["channel"] == bit_depth_channel.value),
+        key=lambda _row: _row["bfloat16"],
+    )
+    _record = raw_images[_worst["index"]]["record"]
+    _normalised = bit_depth_normalised(
+        _worst["index"], _worst["channel"], GROUP_CHANNELS[_record.group].index(_worst["channel"])
+    )
+    _error = _normalised.astype(ml_dtypes.bfloat16).astype(np.float32) - _normalised
+    _noise = bit_depth_noise(_normalised)
+    _limit = max(float(np.abs(_error).max()), 1e-9)
+
+    _figure, _axes = plt.subplots(1, 3, figsize=(11, 3.6))
+    _axes[0].imshow(_normalised, cmap="magma", vmin=0, vmax=1)
+    _axes[0].set_title("normalised (float32)", fontsize=9)
+    _axes[1].imshow(_error, cmap="RdBu_r", vmin=-_limit, vmax=_limit)
+    _axes[1].set_title("bfloat16 - float32", fontsize=9)
+    for _axis in _axes[:2]:
+        _axis.set_xticks([])
+        _axis.set_yticks([])
+    _axes[2].hist(_error.ravel(), bins=101, color="grey")
+    for _sign in (-1, 1):
+        _axes[2].axvline(_sign * _noise, color="C3", linestyle="--", linewidth=0.8)
+    _axes[2].set_yscale("log")
+    _axes[2].set_title("bfloat16 error (red: ± pixel noise)", fontsize=9)
+    _figure.suptitle(
+        f"{_worst['channel']}, {record_label(_record)}: error / noise = {_worst['bfloat16']:.3f}",
+        fontsize=10,
+    )
+    _figure.tight_layout()
+    show_figure(_figure, dpi=120)
+    return
 
 
 @app.cell(hide_code=True)
@@ -299,6 +485,11 @@ def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, MICROPATTERN_260726_SCHEMA, mo):
         options={"3": 3, "5": 5, "7": 7, "9": 9},
         value="5",
         label="Hot pixel window (pixels)",
+    )
+    stripe_block = mo.ui.dropdown(
+        options={"whole rows": 0, "540": 540, "270": 270, "128": 128, "64": 64},
+        value="whole rows",
+        label="Stripe block (pixels)",
     )
     # LMBR is the structural stain: by default it gets no hot pixel
     # replacement or background removal. SMAD23 gets hot pixel replacement
@@ -323,6 +514,13 @@ def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, MICROPATTERN_260726_SCHEMA, mo):
             for _name in _names
         }
     )
+    # Stitching band removal, off by default (largest band width, full-res pixels).
+    h_stripe_widths = mo.ui.dictionary(
+        {_name: mo.ui.number(0, 200, value=0, step=5) for _name in _names}
+    )
+    v_stripe_widths = mo.ui.dictionary(
+        {_name: mo.ui.number(0, 200, value=0, step=5) for _name in _names}
+    )
     low_percentiles = mo.ui.dictionary(
         {
             _name: mo.ui.number(
@@ -339,13 +537,15 @@ def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, MICROPATTERN_260726_SCHEMA, mo):
             for _name in _names
         }
     )
-    _widths = [3, 1.3, 3, 1.1, 1.1]
+    _widths = [3, 1.3, 1.1, 1.1, 3, 1.1, 1.1]
     _table = mo.vstack(
         [
             mo.hstack(
                 [
                     mo.md("**channel**"),
                     mo.md("**hot pixel threshold** (0 = off)"),
+                    mo.md("**h stripe width** (0 = off)"),
+                    mo.md("**v stripe width** (0 = off)"),
                     mo.md("**ball radius** (0 = off)"),
                     mo.md("**low %**"),
                     mo.md("**high %**"),
@@ -358,6 +558,8 @@ def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, MICROPATTERN_260726_SCHEMA, mo):
                 [
                     mo.md(f"`{_name}`"),
                     hot_pixel_thresholds[_name],
+                    h_stripe_widths[_name],
+                    v_stripe_widths[_name],
                     background_radii[_name],
                     low_percentiles[_name],
                     high_percentiles[_name],
@@ -397,17 +599,30 @@ def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, MICROPATTERN_260726_SCHEMA, mo):
                 "which takes them over whole images; inside the mask a lower "
                 "low % is often enough."
             ),
-            mo.hstack([hot_pixel_size, shrink], justify="start"),
+            mo.hstack([hot_pixel_size, shrink, stripe_block], justify="start"),
             _table,
+            mo.md(
+                "- **h / v stripe width**: removes horizontal / vertical bands of "
+                "raised background (e.g. stitching seams in sum projections) up "
+                "to this width, in full-resolution pixels. Runs after hot pixels, "
+                "before the ball. See **Stripe removal comparison**.\n"
+                "- **Stripe block**: for seams covering only part of a row (one "
+                "tile), the background is estimated in pieces of this length. "
+                "Smaller pieces follow seams more closely but are more likely "
+                "to take cell texture for a stripe."
+            ),
         ]
     )
     return (
         background_radii,
+        h_stripe_widths,
         high_percentiles,
         hot_pixel_size,
         hot_pixel_thresholds,
         low_percentiles,
         shrink,
+        stripe_block,
+        v_stripe_widths,
     )
 
 
@@ -557,6 +772,7 @@ def _(
     ndi,
     np,
     plt,
+    remove_stripes_per_channel,
     replace_hot_pixels_per_channel,
     subtract_background,
 ):
@@ -579,9 +795,10 @@ def _(
         """Run the full-resolution cleaning steps on one raw image.
 
         ``settings`` holds the per-channel dictionaries ``scales`` (intensity
-        factors per timestep), ``hot_thresholds`` and ``radii``, plus
-        ``hot_size`` and ``shrink``. Returns float32 ``[X, Y, C]`` arrays after
-        each step: ``scaled`` (intensity factor), ``despeckled`` (hot pixels replaced), ``background`` and
+        factors per timestep), ``hot_thresholds``, ``h_stripes``, ``v_stripes``
+        and ``radii``, plus ``hot_size``, ``stripe_block`` and ``shrink``. Returns float32
+        ``[X, Y, C]`` arrays after each step: ``scaled`` (intensity factor),
+        ``despeckled`` (hot pixels replaced), ``destriped``, ``background`` and
         ``cleaned``, plus the boolean ``hot`` map.
         """
         record = entry["record"]
@@ -595,13 +812,20 @@ def _(
             [settings["hot_thresholds"].get(name, 0) for name in names],
             settings["hot_size"],
         )
+        destriped, _ = remove_stripes_per_channel(
+            despeckled,
+            [settings["h_stripes"].get(name, 0) for name in names],
+            [settings["v_stripes"].get(name, 0) for name in names],
+            settings["stripe_block"],
+        )
         cleaned, background = subtract_background(
-            despeckled, [settings["radii"].get(name, 0) for name in names], settings["shrink"]
+            destriped, [settings["radii"].get(name, 0) for name in names], settings["shrink"]
         )
         return {
             "scaled": scaled,
             "hot": hot,
             "despeckled": despeckled,
+            "destriped": destriped,
             "background": background,
             "cleaned": cleaned,
         }
@@ -694,15 +918,21 @@ def _(
 @app.cell(hide_code=True)
 def _(
     background_radii,
+    h_stripe_widths,
     hot_pixel_size,
     hot_pixel_thresholds,
     intensity_scales,
     shrink,
+    stripe_block,
+    v_stripe_widths,
 ):
     cleaning_settings = {
         "scales": intensity_scales.value,
         "hot_thresholds": hot_pixel_thresholds.value,
         "hot_size": hot_pixel_size.value,
+        "h_stripes": h_stripe_widths.value,
+        "v_stripes": v_stripe_widths.value,
+        "stripe_block": stripe_block.value,
         "radii": background_radii.value,
         "shrink": shrink.value,
     }
@@ -716,6 +946,7 @@ def _(
     lru_cache,
     np,
     raw_images,
+    remove_stripes_per_channel,
     replace_hot_pixels_per_channel,
     rolling_ball_background,
     subtract_background,
@@ -729,21 +960,27 @@ def _(
     _cache_size = 2 * sum(_entry["channels"].shape[-1] for _entry in raw_images)
 
     @lru_cache(maxsize=max(_cache_size, 128))
-    def clean_channel(index, channel, scale, hot_threshold, hot_size, radius, shrink_factor):
+    def clean_channel(
+        index, channel, scale, hot_threshold, hot_size, h_stripe, v_stripe, block, radius, shrink_factor
+    ):
         """Return ``(scaled, cleaned)`` for one channel at the training resolution."""
         scaled = raw_images[index]["channels"][..., channel : channel + 1].astype(np.float32)
         scaled = scaled * np.float32(scale)
         despeckled, _ = replace_hot_pixels_per_channel(scaled, [hot_threshold], hot_size)
-        cleaned, _ = subtract_background(despeckled, [radius], shrink_factor)
+        destriped, _ = remove_stripes_per_channel(despeckled, [h_stripe], [v_stripe], block)
+        cleaned, _ = subtract_background(destriped, [radius], shrink_factor)
         return block_mean(scaled[..., 0]), block_mean(cleaned[..., 0])
 
     def despeckle_settings(settings, index, name):
-        """``(scale, hot_threshold, hot_size)`` for one channel of one image."""
+        """``(scale, hot_threshold, hot_size, h_stripe, v_stripe, block)`` for one channel of one image."""
         timestep = raw_images[index]["record"].timestep
         return (
             intensity_factor(settings["scales"], name, timestep),
             settings["hot_thresholds"].get(name, 0),
             settings["hot_size"],
+            settings["h_stripes"].get(name, 0),
+            settings["v_stripes"].get(name, 0),
+            settings["stripe_block"],
         )
 
     def clean_channel_with(settings, index, name, channel):
@@ -758,17 +995,24 @@ def _(
 
     # Full-resolution versions for comparing ball sizes on one image.
     @lru_cache(maxsize=12)
-    def despeckled_channel(index, channel, scale, hot_threshold, hot_size):
-        """One channel after the intensity factor and hot pixel replacement, full resolution."""
+    def despeckled_channel(
+        index, channel, scale, hot_threshold, hot_size, h_stripe=0, v_stripe=0, block=0
+    ):
+        """One channel after the intensity factor, hot pixel and stripe removal, full resolution."""
         image = raw_images[index]["channels"][..., channel : channel + 1].astype(np.float32)
         image, _ = replace_hot_pixels_per_channel(image * np.float32(scale), [hot_threshold], hot_size)
+        image, _ = remove_stripes_per_channel(image, [h_stripe], [v_stripe], block)
         return image[..., 0]
 
     @lru_cache(maxsize=16)
-    def ball_background(index, channel, scale, hot_threshold, hot_size, radius, shrink_factor):
+    def ball_background(
+        index, channel, scale, hot_threshold, hot_size, h_stripe, v_stripe, block, radius, shrink_factor
+    ):
         """Rolling-ball background of ``despeckled_channel``, full resolution."""
         return rolling_ball_background(
-            despeckled_channel(index, channel, scale, hot_threshold, hot_size),
+            despeckled_channel(
+                index, channel, scale, hot_threshold, hot_size, h_stripe, v_stripe, block
+            ),
             radius,
             shrink_factor,
         )
@@ -789,6 +1033,7 @@ def _(
     alignment_path,
     background_radii,
     flags_path,
+    h_stripe_widths,
     high_percentiles,
     hot_pixel_size,
     hot_pixel_thresholds,
@@ -803,6 +1048,8 @@ def _(
     radius_scale,
     selection,
     shrink,
+    stripe_block,
+    v_stripe_widths,
     yaml,
     zero_outside,
 ):
@@ -825,6 +1072,13 @@ def _(
             "hot_pixel_thresholds": {_n: float(hot_pixel_thresholds.value[_n]) for _n in _names},
             "background_shrink": shrink.value,
             "background_radii": {_n: int(background_radii.value[_n]) for _n in _names},
+            "horizontal_stripe_widths": {
+                _n: int(h_stripe_widths.value[_n]) for _n in _names if h_stripe_widths.value[_n]
+            },
+            "vertical_stripe_widths": {
+                _n: int(v_stripe_widths.value[_n]) for _n in _names if v_stripe_widths.value[_n]
+            },
+            "stripe_block": int(stripe_block.value),
             "alignment_file": alignment_path.value,
             "mask_radius_scale": float(radius_scale.value),
             "normalisation": normalise_mode.value,
@@ -2683,7 +2937,7 @@ def _(
         mo.md("Enter one or more non-negative thresholds, separated by commas."),
     )
 
-    _scale, _, _size = despeckle_settings(cleaning_settings, _index, _name)
+    _scale, _, _size, *_ = despeckle_settings(cleaning_settings, _index, _name)
     _original = despeckled_channel(_index, _channel, _scale, 0, _size)
     _results = {}
     for _threshold in mo.status.progress_bar(
@@ -2744,6 +2998,169 @@ def _(
     )
     _figure.tight_layout()
     show_figure(_figure)
+    return
+
+
+@app.cell(hide_code=True)
+def _(loaded_names, mo, selection, trajectories, trajectory_label):
+    stripe_channel = mo.ui.dropdown(options=loaded_names, value=loaded_names[0], label="Channel")
+    stripe_trajectory = mo.ui.dropdown(
+        options={trajectory_label(_trajectory): _trajectory for _trajectory in trajectories},
+        value=trajectory_label(next(iter(trajectories))),
+        label="Trajectory",
+    )
+    stripe_hour = mo.ui.dropdown(
+        options={f"{_hour}h": _hour for _hour in selection["timesteps"]},
+        value=f"{selection['timesteps'][-1]}h",
+        label="Timestep",
+    )
+    stripe_direction = mo.ui.dropdown(
+        options=["horizontal", "vertical"], value="horizontal", label="Bands"
+    )
+    stripe_values = mo.ui.text(
+        value="0, 10, 20, 40, 80",
+        label="Stripe widths (full-resolution pixels, comma separated)",
+        full_width=True,
+    )
+    stripe_run = mo.ui.run_button(label="Compare stripe widths")
+    mo.vstack(
+        [
+            mo.md(
+                "### Stripe removal comparison\n\n"
+                "- Removes bands of raised background narrower than the width "
+                "(e.g. stitching seams in sum projections). Width 0 = off.\n"
+                "- Intensity factor, hot pixels and stripe block from section 2 "
+                "are applied; the channel's own stripe widths and ball radius "
+                "are not.\n"
+                "- Top: after removal, colour scale capped at the 90th "
+                "percentile so the background shows. Bottom: what was removed.\n"
+                "- Line plot: background level of each row (10th percentile) "
+                "before and after; with a stripe block, only over the piece "
+                "of the row around the strongest stripe."
+            ),
+            mo.hstack(
+                [stripe_channel, stripe_trajectory, stripe_hour, stripe_direction],
+                justify="start",
+            ),
+            stripe_values,
+            stripe_run,
+        ]
+    )
+    return (
+        stripe_channel,
+        stripe_direction,
+        stripe_hour,
+        stripe_run,
+        stripe_trajectory,
+        stripe_values,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    CHANNEL_SOURCE,
+    cleaning_settings,
+    despeckle_settings,
+    despeckled_channel,
+    mo,
+    np,
+    plt,
+    remove_stripes,
+    show_figure,
+    stripe_channel,
+    stripe_direction,
+    stripe_hour,
+    stripe_run,
+    stripe_trajectory,
+    stripe_values,
+    trajectories,
+    trajectory_label,
+):
+    mo.stop(not stripe_run.value, mo.md("Press **Compare stripe widths** to draw this view. It does not redraw by itself when the controls change."))
+    _name = stripe_channel.value
+    _group, _channel = CHANNEL_SOURCE[_name]
+    _index = trajectories[stripe_trajectory.value].get((_group, stripe_hour.value))
+    mo.stop(
+        _index is None,
+        mo.md(f"`{_name}` was not measured at {stripe_hour.value}h for this trajectory."),
+    )
+    try:
+        _widths = [int(float(_value)) for _value in stripe_values.value.split(",") if _value.strip()]
+    except ValueError:
+        _widths = []
+    mo.stop(
+        not _widths or min(_widths) < 0,
+        mo.md("Enter one or more non-negative widths, separated by commas."),
+    )
+
+    _scale, _hot, _size, _, _, _block = despeckle_settings(cleaning_settings, _index, _name)
+    _image = despeckled_channel(_index, _channel, _scale, _hot, _size)
+    _results = {
+        _width: (_image, np.zeros_like(_image))
+        if _width == 0
+        else remove_stripes(_image, _width, stripe_direction.value, _block)
+        for _width in _widths
+    }
+
+    _low, _high = np.percentile(_image, (1, 90))
+    _limit = max(max(float(np.abs(_s).max()) for _, _s in _results.values()), 1e-6)
+    _figure, _axes = plt.subplots(
+        2, len(_widths), figsize=(2.8 * len(_widths), 5.9), squeeze=False
+    )
+    for _column, _width in enumerate(_widths):
+        _cleaned, _stripes = _results[_width]
+        _axes[0, _column].imshow(_cleaned, cmap="magma", vmin=_low, vmax=_high)
+        _axes[0, _column].set_title("no removal" if _width == 0 else f"width {_width}", fontsize=9)
+        _axes[1, _column].imshow(_stripes, cmap="RdBu_r", vmin=-_limit, vmax=_limit)
+        for _axis in _axes[:, _column]:
+            _axis.set_xticks([])
+            _axis.set_yticks([])
+    _axes[0, 0].set_ylabel("stripes removed", fontsize=9)
+    _axes[1, 0].set_ylabel("removed", fontsize=9)
+    _figure.suptitle(
+        f"{_name}, {trajectory_label(stripe_trajectory.value)}, {stripe_hour.value}h, "
+        f"{stripe_direction.value} bands",
+        fontsize=10,
+    )
+    _figure.tight_layout()
+
+    # Profile over the whole row, or with a stripe block, over the piece of the
+    # row (or column) around the strongest stripe removed.
+    _horizontal = stripe_direction.value == "horizontal"
+    _along = 1 if _horizontal else 0
+    _nonzero = [_width for _width in _widths if _width > 0]
+    _span = slice(None)
+    if _block and _nonzero:
+        _strongest = np.unravel_index(
+            np.argmax(np.abs(_results[max(_nonzero)][1])), _image.shape
+        )[_along]
+        _start = int(np.clip(_strongest - _block // 2, 0, _image.shape[_along] - _block))
+        _span = slice(_start, _start + _block)
+
+    def _background_profile(values):
+        values = values[:, _span] if _horizontal else values[_span, :]
+        return np.percentile(values, 10, axis=_along)
+
+    _profile, _profile_axis = plt.subplots(figsize=(10, 3))
+    _profile_axis.plot(_background_profile(_image), color="grey", linewidth=0.8, label="before")
+    for _number, _width in enumerate(_nonzero):
+        _profile_axis.plot(
+            _background_profile(_results[_width][0]),
+            color=plt.cm.viridis(_number / max(len(_nonzero) - 1, 1)),
+            linewidth=0.8,
+            label=f"width {_width}",
+        )
+    _profile_axis.set_xlabel(
+        ("row" if _along == 1 else "column") + " (full-resolution pixels)", fontsize=8
+    )
+    _profile_axis.set_title(
+        "Background level (10th percentile)"
+        + ("" if _span == slice(None) else f", {'columns' if _horizontal else 'rows'} {_span.start}-{_span.stop}"),
+        fontsize=9,
+    )
+    _profile_axis.legend(fontsize=7)
+    _profile.tight_layout()
+    mo.vstack([show_figure(_figure, dpi=200), _profile])
     return
 
 

@@ -7,20 +7,23 @@
 1. intensity factors (``data.micropattern.intensity_factors``);
 2. hot pixel replacement (``hot_pixel_thresholds``, ``hot_pixel_window``),
    see ``Common/dataloader/hot_pixels.py``;
-3. rolling-ball background removal (``background_radii``,
+3. removal of narrow horizontal or vertical bands of raised background,
+   e.g. from tile stitching (``horizontal_stripe_widths``,
+   ``vertical_stripe_widths``, ``stripe_block``), see ``Common/dataloader/stripes.py``;
+4. rolling-ball background removal (``background_radii``,
    ``background_shrink``), see ``Common/dataloader/background.py``;
-4. block-averaging to the normalisation resolution (downsampling 4, the
+5. block-averaging to the normalisation resolution (downsampling 4, the
    notebook's, when the training downsampling is a multiple of 4; otherwise
    the training downsampling itself);
-5. centring with the colony centres in ``alignment_file``, see
+6. centring with the colony centres in ``alignment_file``, see
    ``Common/dataloader/alignment.py``, and a circular mask of the pattern
    radius times ``mask_radius_scale``;
-6. linear rescaling of each channel to [0, 1] between a low and a high
+7. linear rescaling of each channel to [0, 1] between a low and a high
    percentile (``data.micropattern.histogram_percentiles``, or
    ``channel_percentiles`` per channel), taken over all timesteps of a
    trajectory, shared between trajectories as set by ``normalisation``, see
    ``Common/dataloader/normalisation.py``;
-7. zeroing outside the mask and block-averaging to the training resolution.
+8. zeroing outside the mask and block-averaging to the training resolution.
 
 Without ``enabled`` the loader keeps its earlier behaviour, which configs
 saved before schema version 6 rely on.
@@ -53,6 +56,15 @@ class MicropatternCleaningConfig(ConfigValue):
         default_factory=lambda: dict(DEFAULT_260726_BACKGROUND_RADII)
     )
     background_shrink: int = 4
+    # Largest band width per channel in full-resolution pixels (0 or absent
+    # = off), for horizontal and vertical bands. Off for every channel by
+    # default.
+    horizontal_stripe_widths: Mapping[str, int] = field(default_factory=dict)
+    vertical_stripe_widths: Mapping[str, int] = field(default_factory=dict)
+    # Length in full-resolution pixels of the pieces of each row (or column)
+    # that get their own stripe profile, for seams that cover only part of a
+    # row; 0 uses whole rows.
+    stripe_block: int = 0
     # Alignment file exported from the data cleaning notebook. A relative
     # path is resolved against the repository root.
     alignment_file: str | None = None
@@ -70,6 +82,8 @@ class MicropatternCleaningConfig(ConfigValue):
         for label, mapping in (
             ("hot_pixel_thresholds", self.hot_pixel_thresholds),
             ("background_radii", self.background_radii),
+            ("horizontal_stripe_widths", self.horizontal_stripe_widths),
+            ("vertical_stripe_widths", self.vertical_stripe_widths),
             ("channel_percentiles", self.channel_percentiles),
         ):
             unknown = sorted(set(mapping) - names)
@@ -82,6 +96,11 @@ class MicropatternCleaningConfig(ConfigValue):
             raise ValueError("cleaning.hot_pixel_thresholds must be non-negative")
         if any(value < 0 for value in self.background_radii.values()):
             raise ValueError("cleaning.background_radii must be non-negative")
+        for label in ("horizontal_stripe_widths", "vertical_stripe_widths"):
+            if any(value < 0 for value in getattr(self, label).values()):
+                raise ValueError(f"cleaning.{label} must be non-negative")
+        if self.stripe_block < 0:
+            raise ValueError("cleaning.stripe_block must be non-negative")
         if self.hot_pixel_window < 3 or self.hot_pixel_window % 2 == 0:
             raise ValueError("cleaning.hot_pixel_window must be an odd integer of at least 3")
         if self.background_shrink < 1:
