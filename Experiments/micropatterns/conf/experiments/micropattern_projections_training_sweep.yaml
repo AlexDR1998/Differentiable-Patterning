@@ -115,9 +115,12 @@ branches:
       labels.scaling: convective
     groups:
       # t = 128 * (16 / downsample)
-      - data.downsample: [8, 16, 32]
-        run.t: [256, 128, 64]
-        trainer.loop_autodiff: [lax, lax, lax]
+      # - data.downsample: [8, 16, 32]
+        # run.t: [256, 128, 64]
+        # trainer.loop_autodiff: [lax, lax, lax]
+      - data.downsample: [8]
+        run.t: [256]
+        trainer.loop_autodiff: [lax]
       # - data.downsample: [8]
       #   run.t: [256]
       #   trainer.loop_autodiff: [lax]
