@@ -1,0 +1,328 @@
+experiment_name: multi_attractor_stability_sweep_v1
+
+entrypoint: Experiments.emoji.train:run
+
+output_subdir: generated/emoji_multi_attractor_outsource
+
+seed_mode: index
+
+grid:
+
+  run.repeat: [0]
+
+  data.emoji.task: [multi_attractor]
+
+  data.emoji.target_repeats: [2]
+
+  logging.wandb.project: [NCA-emoji-multi-attractor]
+
+  model.family: [gNCA]
+  # logging.wandb.tags: [[gNCA]]
+
+  model.channels: [64]
+
+  model.padding: [REPLICATE]
+
+  run.t: [128]
+
+  run.iterations: [16000]
+  data.batches: [2]
+  data.emoji.shift_amount: [10]
+  data.emoji.pad: [[10,10,10,10]]
+  data.emoji.terminal_carry.start_iteration: [8000]
+  data.emoji.terminal_carry.schedule_iterations: [4000]
+  data.emoji.terminal_carry.initial_probability: [0.1]
+  data.emoji.terminal_carry.final_probability: [0.9]
+  data.emoji.regeneration.start_iteration: [8000]
+  data.emoji.regeneration.schedule_iterations: [4000]
+  data.emoji.regeneration.initial_probability: [0.05]
+  data.emoji.regeneration.final_probability: [0.25]
+  loss.terms: [[l2]]
+  loss.regularisers.intermediate_state: [1.0]
+  loss.regularisers.contiguous_growth: [1.0]
+  loss.regularisers.localised_hidden: [1.0]
+
+# Each attractor set is paired with its batch duplication (2 for 2-3
+# attractors, 1 for 4-5, to keep the batch size down) and an attractors:N
+# W&B tag for filtering runs by number of attractors.
+groups:
+  - experiment.stability_mode: [clean, terminal_carry, regeneration, terminal_carry_and_regeneration]
+    data.emoji.terminal_carry.enabled: [false, true, false, true]
+    data.emoji.regeneration.enabled: [false, false, true, true]
+
+  - data.emoji.pairs:
+
+      # ==========================================
+      # 2
+      # ==========================================
+
+      # 2.1: crab + microbe
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+      # 2.2: crab + rooster
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+      # 2.3: crab + alien_monster
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+      # 2.4: crab + lizard
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 2.5: microbe + rooster
+      - - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+      # 2.6: microbe + alien_monster
+      - - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+      # 2.7: microbe + lizard
+      - - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 2.8: rooster + alien_monster
+      - - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+      # 2.9: rooster + lizard
+      - - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 2.10: alien_monster + lizard
+      - - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # ==========================================
+      # 3
+      # ==========================================
+
+      # 3.1: crab + microbe + rooster
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+      # 3.2: crab + microbe + alien_monster
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+      # 3.3: crab + microbe + lizard
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 3.4: crab + rooster + alien_monster
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+      # 3.5: crab + rooster + lizard
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 3.6: crab + alien_monster + lizard
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 3.7: microbe + rooster + alien_monster
+      - - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+      # 3.8: microbe + rooster + lizard
+      - - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 3.9: microbe + alien_monster + lizard
+      - - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 3.10: rooster + alien_monster + lizard
+      - - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # ==========================================
+      # 4
+      # ==========================================
+
+      # 4.1: crab + microbe + rooster + alien_monster
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+      # 4.2: crab + microbe + rooster + lizard
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 4.3: crab + microbe + alien_monster + lizard
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 4.4: crab + rooster + alien_monster + lizard
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # 4.5: microbe + rooster + alien_monster + lizard
+      - - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+      # ==========================================
+      # 5
+      # ==========================================
+
+      # 5.1: crab + microbe + rooster + alien_monster + lizard
+      - - initial: {image: crab.png, mode: patch, size: 1}
+          target: crab.png
+
+        - initial: {image: microbe.png, mode: patch, size: 1}
+          target: microbe.png
+
+        - initial: {image: rooster.png, mode: patch, size: 1}
+          target: rooster.png
+
+        - initial: {image: alien_monster.png, mode: patch, size: 1}
+          target: alien_monster.png
+
+        - initial: {image: lizard.png, mode: patch, size: 1}
+          target: lizard.png
+
+    trainer.loop_autodiff: [lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax, lax,
+                            checkpointed, checkpointed, checkpointed, checkpointed, checkpointed, checkpointed]
+
+    logging.wandb.tags: [[attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2], [attractors:2],
+                         [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3], [attractors:3],
+                         [attractors:4], [attractors:4], [attractors:4], [attractors:4], [attractors:4],
+                         [attractors:5]]
