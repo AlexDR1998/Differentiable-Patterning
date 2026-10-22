@@ -1292,8 +1292,8 @@ def _():
     over catchment pixels, and are compared with **persistence**: the starting image
     repeated. *Skill* is the MSE skill score 1 − MSE / MSE<sub>persistence</sub> (1 is
     perfect, 0 is no better than persistence). For SCA and NDSI the maps are also classified
-    as snow / no snow (SCA > 0.5, NDSI > 0.4), giving the snow-covered area and the critical
-    success index, CSI = hits / (hits + misses + false alarms). Rollouts are stochastic, so
+    as snow / no snow (SCA > 0.5, NDSI > 0.4), giving the snow-covered area and the snow map
+    accuracy, the fraction of catchment pixels classified correctly. Rollouts are stochastic, so
     several are run per model and their mean is scored. *10 m grid* scoring blows each
     prediction back up to the original raster, so models trained at different resolutions
     are scored against the same pixels.
@@ -1540,9 +1540,9 @@ def _(eval_grid, eval_metrics, eval_mode, pd):
             "mean_persistence_rmse": ("persistence_rmse", "mean"),
             "final_date": ("date", "last"), "final_rmse": ("rmse", "last"),
         }
-        if "snow_csi" in eval_metrics:
+        if "snow_accuracy" in eval_metrics:
             _columns |= {
-                "mean_snow_csi": ("snow_csi", "mean"), "final_snow_csi": ("snow_csi", "last"),
+                "mean_snow_accuracy": ("snow_accuracy", "mean"), "final_snow_accuracy": ("snow_accuracy", "last"),
                 "final_observed_snow_fraction": ("observed_snow_fraction", "last"),
                 "final_predicted_snow_fraction": ("predicted_snow_fraction", "last"),
             }

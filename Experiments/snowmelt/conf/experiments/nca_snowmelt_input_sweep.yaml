@@ -19,9 +19,9 @@ seed_mode: index
 # trainer.loop_autodiff together to use another resolution.
 #
 # Every target set except [SCA] has NDSI in channel 0, so runs are compared on
-# NDSI (skill against persistence and snow CSI from
+# NDSI (skill against persistence and snow map accuracy from
 # Experiments/snowmelt/evaluation.py:score), not on the training loss, which
-# changes with the number of targets. [SCA] is compared on snow CSI only.
+# changes with the number of targets. [SCA] is compared on snow map accuracy only.
 #
 # Hidden channels are held at 28, so
 #   model.channels = n_targets + 28 + 1 (catchment) + n_static.

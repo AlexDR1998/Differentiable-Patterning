@@ -47,7 +47,7 @@ def _colony(centre, brightness, seed):
 def _make_dataset(root):
     centres = {}
     for seed, ((condition, replicate, hour), centre) in enumerate(CENTRES.items()):
-        relative = Path("cell_fate_markers") / f"{condition}_s1" / f"sample_{replicate}_{hour}h.ome.tif"
+        relative = Path("cell_fate_markers") / f"{condition}_s1_max" / f"sample_{replicate}_{hour}h.ome.tif"
         path = Path(root) / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         skimage.io.imsave(
@@ -178,21 +178,39 @@ def test_cleaning_errors(tmp_path):
         MicropatternCleaningConfig(enabled=True)
     with pytest.raises(FileNotFoundError, match="Export it"):
         _load(tmp_path, _cleaning(tmp_path / "missing.yaml"))
+    with pytest.raises(ValueError, match="Unknown channels.*horizontal_stripe_widths"):
+        _cleaning(alignment_file, horizontal_stripe_widths={"TBXT": 20})
+    with pytest.raises(ValueError, match="vertical_stripe_widths must be non-negative"):
+        _cleaning(alignment_file, vertical_stripe_widths={"cell_fate_s1/TBXT": -1})
+    with pytest.raises(ValueError, match="stripe_block must be non-negative"):
+        _cleaning(alignment_file, stripe_block=-1)
+
+
+def test_stripe_removal_is_off_by_default_and_runs_when_set(tmp_path):
+    alignment_file = _make_dataset(tmp_path)
+    cleaning = _cleaning(alignment_file)
+    assert not cleaning.horizontal_stripe_widths and not cleaning.vertical_stripe_widths
+    plain = _load(tmp_path, cleaning)
+    destriped = _load(
+        tmp_path,
+        _cleaning(alignment_file, horizontal_stripe_widths={"cell_fate_s1/TBXT": 8}, stripe_block=32),
+    )
+    assert np.asarray(destriped.data).shape == np.asarray(plain.data).shape
 
 
 def test_alignment_file_round_trip(tmp_path):
     alignment = ColonyAlignment(
         pattern_radius=401.234,
-        centres={"a/b.tif": (540.5, 530.25)},
-        details={"a/b.tif": {"automatic": (541.0, 532.0), "manual": (-0.5, -1.75), "score": 0.97}},
+        centres={"a/b": (540.5, 530.25)},
+        details={"a/b": {"automatic": (541.0, 532.0), "manual": (-0.5, -1.75), "score": 0.97}},
         settings={"edge_width": 0.08},
     )
     path = tmp_path / "nested" / "alignment.yaml"
     save_colony_alignment(path, alignment)
     loaded = load_colony_alignment(path)
     assert loaded.pattern_radius == pytest.approx(401.23)
-    assert loaded.centres == {"a/b.tif": (540.5, 530.25)}
-    assert loaded.details["a/b.tif"]["manual"] == [-0.5, -1.75]
+    assert loaded.centres == {"a/b": (540.5, 530.25)}
+    assert loaded.details["a/b"]["manual"] == [-0.5, -1.75]
     assert loaded.settings == {"edge_width": 0.08}
 
 
@@ -209,7 +227,7 @@ def test_fit_colony_centre_finds_an_off_centre_colony():
 
 def test_flagged_images_are_unmeasured_and_filled_from_other_replicates(tmp_path):
     alignment_file = _make_dataset(tmp_path)
-    flagged = "cell_fate_markers/ctrl_s1/sample_1_24h.ome.tif"
+    flagged = "cell_fate_markers/ctrl_s1_max/sample_1_24h.ome.tif"
     clean, clean_aux, names, _, clean_mask = _load(tmp_path, _cleaning(alignment_file, normalisation="replicate_mean"))
     data, aux, _, _, mask = _load(
         tmp_path,
@@ -217,7 +235,7 @@ def test_flagged_images_are_unmeasured_and_filled_from_other_replicates(tmp_path
         excluded_images=[flagged, "some/other/image.tif"],
     )
     data, mask, clean = np.asarray(data), np.asarray(mask), np.asarray(clean)
-    assert aux["excluded_images"] == (flagged,)
+    assert aux["excluded_images"] == ("cell_fate_markers/ctrl_s1/sample_1_24h",)
     # Replicate 1 at 24h (time index 1) is unmeasured in every stain-1 channel ...
     assert not mask[0, 1].any() and mask[1, 1].all() and mask[0, [0, 2]].all()
     assert aux["excluded"][0, 1, 0] and aux["imputed"][0, 1, 0]
@@ -233,8 +251,8 @@ def test_quality_flags_file_round_trip(tmp_path):
     from Common.dataloader.quality_flags import load_quality_flags, save_quality_flags
 
     path = tmp_path / "flags" / "quality.yaml"
-    save_quality_flags(path, {"b.tif": "blurred", "a.tif": ""})
-    assert load_quality_flags(path) == {"a.tif": "", "b.tif": "blurred"}
+    save_quality_flags(path, {"b": "blurred", "a": ""})
+    assert load_quality_flags(path) == {"a": "", "b": "blurred"}
     save_quality_flags(path, {})
     assert load_quality_flags(path) == {}
     with pytest.raises(FileNotFoundError, match="Export it"):

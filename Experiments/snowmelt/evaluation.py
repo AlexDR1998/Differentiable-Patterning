@@ -248,7 +248,8 @@ def score(prediction, observed, catchment, channel_names, dates, days, mode="fre
 
     Channels in :data:`SNOW_THRESHOLDS` are also classified as snow / no snow
     and compared with the observed snow map: the snow-covered fractions and
-    the critical success index (hits / (hits + misses + false alarms)).
+    ``snow_accuracy``, the fraction of catchment pixels whose class (snow or
+    no snow) is predicted correctly.
     ``held_out`` (one flag per date, e.g. ``sequence.held_out``) marks the
     dates the model was not trained on.
     """
@@ -279,14 +280,10 @@ def score(prediction, observed, catchment, channel_names, dates, days, mode="fre
                 threshold = SNOW_THRESHOLDS[name]
                 true_snow = truth > threshold
                 predicted_snow = mean > threshold
-                hits = np.sum(predicted_snow & true_snow)
-                misses = np.sum(~predicted_snow & true_snow)
-                false_alarms = np.sum(predicted_snow & ~true_snow)
                 row.update({
                     "observed_snow_fraction": float(true_snow.mean()),
                     "predicted_snow_fraction": float(predicted_snow.mean()),
                     "snow_fraction_spread": float((rollouts > threshold).mean(axis=1).std()),
-                    "snow_csi": float(hits / max(hits + misses + false_alarms, 1)),
                     "snow_accuracy": float(np.mean(predicted_snow == true_snow)),
                 })
             rows.append(row)

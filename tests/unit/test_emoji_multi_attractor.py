@@ -148,3 +148,9 @@ def test_to_image_draws_rgba_over_white():
     assert image.shape == (1, 2, 3)
     assert image[0, 0].tolist() == [1.0, 1.0, 1.0]
     assert image[0, 1].tolist() == [1.0, 0.0, 0.0]
+
+
+def test_seed_type_names_the_input_space():
+    assert ma.seed_type("crab.png") == "full"
+    assert ma.seed_type({"image": "crab.png", "mode": "patch", "size": 1}) == "patch"
+    assert ma.seed_type({"image": "crab.png", "mode": "pixel", "channels": [3, 4]}) == "pixel"

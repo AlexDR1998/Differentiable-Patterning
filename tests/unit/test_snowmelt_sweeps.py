@@ -28,7 +28,7 @@ def test_config_value_reads_typed_configs_and_dicts_alike():
     assert sweeps.config_value(plain, "model.kernel_str") == "ID+LAP"
 
 
-@pytest.mark.parametrize("name, count", [("resolution", 15), ("input", 40), ("architecture", 120), ("update_rule", 27), ("hold_out", 24)])
+@pytest.mark.parametrize("name, count", [("resolution", 15), ("input", 120), ("input_single_band", 96), ("architecture", 120), ("update_rule", 27), ("hold_out", 24)])
 def test_generated_manifests_have_one_run_per_factor_combination(name, count):
     sweep = sweeps.SWEEPS[name]
 
@@ -128,7 +128,7 @@ def test_evaluate_bundle_scores_the_ndsi_channel(tmp_path, grid):
     assert maps["channel"] == "NDSI"
     assert maps["observed"].shape == maps["mean"].shape == (3, 4, 4)
     np.testing.assert_allclose(maps["mean"][0], maps["observed"][0], atol=1e-6)  # rollouts start from the data
-    assert np.isfinite(summary["skill"]) and 0.0 <= summary["snow_csi"] <= 1.0
+    assert np.isfinite(summary["skill"]) and 0.0 <= summary["snow_accuracy"] <= 1.0
     assert training["targets"] == "NDSI+B3" and training["static"] == "DEM"
     assert training["wandb_group"] == bundle.manifest.provenance.wandb.get("group")
     assert training["best_loss"] == 0.01 and training["best_at_fraction"] == 30 / bundle.config.run.iterations

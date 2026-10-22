@@ -38,8 +38,15 @@ SWEEPS = {
     ),
     "input": Sweep(
         "Input channels",
+        "nca_snowmelt_input_sweep_v2",
         "nca_snowmelt_input_sweep",
-        "nca_snowmelt_input_sweep",
+        {"targets": "data.snowmelt.target_channels", "static": "data.snowmelt.static_channels",
+         "kernels": "model.kernel_str"},
+    ),
+    "input_single_band": Sweep(
+        "Single added band",
+        "nca_snowmelt_input_sweep_single_bands_v1",
+        "nca_snowmelt_input_sweep_single_bands",
         {"targets": "data.snowmelt.target_channels", "static": "data.snowmelt.static_channels"},
     ),
     "architecture": Sweep(
@@ -248,17 +255,17 @@ def summarise_scores(rows, channel):
         "final_skill": rows[-1]["skill"],
         "final_rmse": rows[-1]["rmse"],
     }
-    if "snow_csi" in rows[0]:
+    if "snow_accuracy" in rows[0]:
         errors = [row["predicted_snow_fraction"] - row["observed_snow_fraction"] for row in rows]
         summary |= {
-            "snow_csi": mean("snow_csi"),
-            "final_snow_csi": rows[-1]["snow_csi"],
+            "snow_accuracy": mean("snow_accuracy"),
+            "final_snow_accuracy": rows[-1]["snow_accuracy"],
             "snow_area_error": float(np.mean(errors)),
             "final_snow_area_error": float(errors[-1]),
         }
     held_out = [row for row in rows if row.get("held_out")]
     if held_out:
-        for name in ("skill", "rmse", "snow_csi"):
+        for name in ("skill", "rmse", "snow_accuracy"):
             if name in held_out[0]:
                 summary[f"held_out_{name}"] = float(np.nanmean([row[name] for row in held_out]))
     return summary

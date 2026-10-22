@@ -62,8 +62,21 @@ def test_score_is_one_for_perfect_and_zero_for_persistence():
     )
 
     assert [row["date"] for row in perfect] == ["b", "c"]
-    assert all(row["rmse"] == 0 and row["skill"] == 1 and row["snow_csi"] == 1 for row in perfect)
+    assert all(row["rmse"] == 0 and row["skill"] == 1 and row["snow_accuracy"] == 1 for row in perfect)
     assert all(row["skill"] == pytest.approx(0.0) for row in persistence)
+
+
+def test_snow_accuracy_counts_correct_snow_free_pixels():
+    # Date 1 has no snow; the model predicts none on 3 of 4 pixels and snow on one
+    observed = np.array([1.0, 0.0])[:, None, None, None] * np.ones((2, 1, 2, 2), np.float32)
+    prediction = np.zeros_like(observed)
+    prediction[1, 0, 0, 0] = 1.0
+    catchment = np.ones((2, 2), dtype=bool)
+
+    (row,) = evaluation.score(prediction[None], observed, catchment, ("SCA",), ("a", "b"), (0.0, 1.0))
+
+    assert row["snow_accuracy"] == pytest.approx(0.75)
+    assert row["observed_snow_fraction"] == 0.0 and row["predicted_snow_fraction"] == pytest.approx(0.25)
 
 
 def test_interval_score_uses_previous_image_as_persistence():

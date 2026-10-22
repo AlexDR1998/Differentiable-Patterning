@@ -1,4 +1,4 @@
-experiment_name: nca_snowmelt_hold_out_sweep
+experiment_name: nca_snowmelt_hold_out_sweep_short
 entrypoint: Experiments.snowmelt.train:run
 output_subdir: generated/nca_snowmelt_hold_out_sweep
 seed_mode: index
@@ -35,7 +35,7 @@ grid:
   model.kernel_str: [[ID, LAP, GRAD]]
   model.fire_rate: [0.5]
   run.interval_mode: [steps]
-  run.repeat: [0, 1, 2]
+  run.repeat: [0, ]
   logging.wandb.project: [nca_snowmelt_hyperparameter_sweep]
   labels.gpu: [H200]
   system.precision: [bfloat16]
