@@ -1,4 +1,4 @@
-experiment_name: emoji_attractor_switch_calibration
+experiment_name: emoji_attractor_switch_calibration_v2
 entrypoint: Experiments.impulse.optimise:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/impulse/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/impulse/conf/experiments/emoji_attractor_switch_calibration.yaml
@@ -22,8 +22,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 321236752
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -35,7 +35,7 @@ configs:
     schema_version: 7
     seed: 321236752
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -47,7 +47,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -125,8 +125,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 498617001
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -138,7 +138,7 @@ configs:
     schema_version: 7
     seed: 498617001
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -150,7 +150,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -228,8 +228,8 @@ configs:
     impulse.rollout.scan_kind: checkpointed
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1754003658
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -241,7 +241,7 @@ configs:
     schema_version: 7
     seed: 1754003658
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -253,7 +253,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -331,8 +331,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 2008486473
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -344,7 +344,7 @@ configs:
     schema_version: 7
     seed: 2008486473
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -356,7 +356,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -434,8 +434,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1783670659
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -447,7 +447,7 @@ configs:
     schema_version: 7
     seed: 1783670659
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -459,7 +459,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -537,8 +537,8 @@ configs:
     impulse.rollout.scan_kind: checkpointed
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1146111162
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -550,7 +550,7 @@ configs:
     schema_version: 7
     seed: 1146111162
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -562,7 +562,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -640,8 +640,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1844544060
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -653,7 +653,7 @@ configs:
     schema_version: 7
     seed: 1844544060
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -665,7 +665,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -743,8 +743,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 2095036715
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -756,7 +756,7 @@ configs:
     schema_version: 7
     seed: 2095036715
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -768,7 +768,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -846,8 +846,8 @@ configs:
     impulse.rollout.scan_kind: checkpointed
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1194111944
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -859,7 +859,7 @@ configs:
     schema_version: 7
     seed: 1194111944
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -871,7 +871,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -949,8 +949,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 875117137
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -962,7 +962,7 @@ configs:
     schema_version: 7
     seed: 875117137
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -974,7 +974,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1052,8 +1052,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 170686013
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1065,7 +1065,7 @@ configs:
     schema_version: 7
     seed: 170686013
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1077,7 +1077,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1155,8 +1155,8 @@ configs:
     impulse.rollout.scan_kind: checkpointed
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 759225243
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1168,7 +1168,7 @@ configs:
     schema_version: 7
     seed: 759225243
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1180,7 +1180,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1258,8 +1258,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1236860582
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1271,7 +1271,7 @@ configs:
     schema_version: 7
     seed: 1236860582
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1283,7 +1283,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1361,8 +1361,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 150271807
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1374,7 +1374,7 @@ configs:
     schema_version: 7
     seed: 150271807
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1386,7 +1386,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1464,8 +1464,8 @@ configs:
     impulse.rollout.scan_kind: checkpointed
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 678645406
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1477,7 +1477,7 @@ configs:
     schema_version: 7
     seed: 678645406
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1489,7 +1489,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1567,8 +1567,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1887471858
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1580,7 +1580,7 @@ configs:
     schema_version: 7
     seed: 1887471858
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1592,7 +1592,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1670,8 +1670,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 777981804
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1683,7 +1683,7 @@ configs:
     schema_version: 7
     seed: 777981804
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1695,7 +1695,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1773,8 +1773,8 @@ configs:
     impulse.rollout.scan_kind: checkpointed
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 528356427
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1786,7 +1786,7 @@ configs:
     schema_version: 7
     seed: 528356427
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1798,7 +1798,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1876,8 +1876,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 410247700
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1889,7 +1889,7 @@ configs:
     schema_version: 7
     seed: 410247700
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1901,7 +1901,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -1979,8 +1979,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 2109690229
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -1992,7 +1992,7 @@ configs:
     schema_version: 7
     seed: 2109690229
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -2004,7 +2004,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -2082,8 +2082,8 @@ configs:
     impulse.rollout.scan_kind: checkpointed
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1323792975
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -2095,7 +2095,7 @@ configs:
     schema_version: 7
     seed: 1323792975
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -2107,7 +2107,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -2185,8 +2185,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1049194116
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -2198,7 +2198,7 @@ configs:
     schema_version: 7
     seed: 1049194116
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -2210,7 +2210,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -2288,8 +2288,8 @@ configs:
     impulse.rollout.scan_kind: lax
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 1721003840
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -2301,7 +2301,7 @@ configs:
     schema_version: 7
     seed: 1721003840
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -2313,7 +2313,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
@@ -2391,8 +2391,8 @@ configs:
     impulse.rollout.scan_kind: checkpointed
     impulse.pair_source.source_index: 0
     impulse.pair_source.target_index: 1
-    experiment.name: emoji_attractor_switch_calibration
-    logging.wandb.group: emoji_attractor_switch_calibration
+    experiment.name: emoji_attractor_switch_calibration_v2
+    logging.wandb.group: emoji_attractor_switch_calibration_v2
     seed: 54611170
     logging.wandb.tag_keys:
     - impulse.loss.regularisers.l2
@@ -2404,7 +2404,7 @@ configs:
     schema_version: 7
     seed: 54611170
     experiment:
-      name: emoji_attractor_switch_calibration
+      name: emoji_attractor_switch_calibration_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -2416,7 +2416,7 @@ configs:
       backend: wandb
       wandb:
         project: NCA-impulse
-        group: emoji_attractor_switch_calibration
+        group: emoji_attractor_switch_calibration_v2
         tags: null
         tag_keys:
         - impulse.loss.regularisers.l2
