@@ -52,6 +52,11 @@ class NCAImpulseOptimiser:
     boundary_callback: object = identity_boundary
     scan_kind: str = "lax"
     resample_every: int = 0
+    # The saved evaluation trajectories keep the observed channels of every
+    # n-th state only, so long rollouts of large lattices fit in memory.
+    evaluation_frame_every: int = 1
+    # Saved states of a checkpointed rollout (see run_nca_batch)
+    checkpoints: int | None = None
     logger: object = None
 
     def __post_init__(self):
@@ -122,28 +127,32 @@ class NCAImpulseOptimiser:
         """Evaluate an intervention without updating its parameters."""
 
         perturbed = intervention(batch.initial_states)
+        rollout = dict(
+            boundary_callback=self.boundary_callback,
+            scan_kind=self.scan_kind,
+            checkpoints=self.checkpoints,
+        )
         if self.loss_window == 1:
-            final_states = run_nca_batch(
-                self.model,
-                perturbed,
-                self.rollout_steps,
-                key,
-                boundary_callback=self.boundary_callback,
-                scan_kind=self.scan_kind,
-            )
+            final_states = run_nca_batch(self.model, perturbed, self.rollout_steps, key, **rollout)
             components = self._loss_components(final_states, batch.target_states, key)
         else:
-            final_states, trajectory = run_nca_batch(
+            # Run up to the loss window without keeping states, then keep only
+            # the window (and only the observed channels, when the loss uses no others).
+            states = run_nca_batch(
+                self.model, perturbed, self.rollout_steps - self.loss_window, key, **rollout
+            )
+            final_states, window = run_nca_batch(
                 self.model,
-                perturbed,
-                self.rollout_steps,
-                key,
-                boundary_callback=self.boundary_callback,
+                states,
+                self.loss_window,
+                jax.random.fold_in(key, 1),
                 return_trajectory=True,
-                scan_kind=self.scan_kind,
+                trajectory_channels=(
+                    self.observed_channels if self.loss_channels == "observed" else None
+                ),
+                **rollout,
             )
             # [batch, window, ...] -> [batch * window, ...], each target repeated window times
-            window = trajectory[:, -self.loss_window:]
             predictions = window.reshape((-1, *window.shape[2:]))
             targets = jnp.repeat(batch.target_states, self.loss_window, axis=0)
             components = self._loss_components(predictions, targets, key)
@@ -244,6 +253,11 @@ class NCAImpulseOptimiser:
             best_metrics = final_metrics
 
         evaluation_steps = self.rollout_steps if evaluation_steps is None else evaluation_steps
+        if evaluation_steps % self.evaluation_frame_every:
+            raise ValueError(
+                f"evaluation_steps ({evaluation_steps}) must be a multiple of "
+                f"evaluation_frame_every ({self.evaluation_frame_every})"
+            )
         evaluation_key = jax.random.fold_in(train_key, iterations + 1)
         perturbed = best_intervention(best_batch.initial_states)
         final_states, perturbed_trajectory = run_nca_batch(
@@ -254,6 +268,8 @@ class NCAImpulseOptimiser:
             boundary_callback=self.boundary_callback,
             return_trajectory=True,
             scan_kind=self.scan_kind,
+            trajectory_every=self.evaluation_frame_every,
+            trajectory_channels=self.observed_channels,
         )
         baseline_final_states, baseline_trajectory = run_nca_batch(
             self.model,
@@ -263,6 +279,8 @@ class NCAImpulseOptimiser:
             boundary_callback=self.boundary_callback,
             return_trajectory=True,
             scan_kind=self.scan_kind,
+            trajectory_every=self.evaluation_frame_every,
+            trajectory_channels=self.observed_channels,
         )
         # Target loss after the longer evaluation rollout, with and without the
         # intervention, to check whether a switch persists.

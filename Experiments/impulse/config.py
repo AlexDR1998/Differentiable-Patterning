@@ -35,7 +35,14 @@ class ImpulseRolloutConfig(ConfigValue):
     # Number of final rollout states the target loss is averaged over.
     loss_window: int = 1
     evaluation_steps: int = 256
+    # Save the observed channels of every n-th evaluation state (must divide
+    # evaluation_steps); keeping every full state can run out of GPU memory.
+    evaluation_frame_every: int = 8
     scan_kind: str = "lax"
+    # Saved states of a checkpointed rollout. null: equinox chooses a few and
+    # the backward pass reruns most steps more than once; set it to steps to
+    # save every state and rerun each step once (faster, more memory).
+    checkpoints: int | None = None
 
 
 @dataclass(frozen=True)

@@ -78,6 +78,8 @@ def run(cfg):
         regulariser_coefficients=dict(impulse_cfg.loss.regularisers),
         scan_kind=impulse_cfg.rollout.scan_kind,
         resample_every=impulse_cfg.resample_every,
+        evaluation_frame_every=impulse_cfg.rollout.evaluation_frame_every,
+        checkpoints=impulse_cfg.rollout.checkpoints,
         logger=logger,
     )
     result = optimiser.train(
