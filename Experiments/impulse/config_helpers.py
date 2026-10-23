@@ -19,6 +19,10 @@ from NCA.trainer.impulse import (
 )
 
 
+INTERVENTION_CHANNELS = ("all", "obs", "hidden", "single")
+INTERVENTION_SPATIAL = ("local", "global", "flat")
+
+
 def _as_dict(value):
     """Convert a mapping-like config section to a plain dictionary."""
 
@@ -119,9 +123,21 @@ def build_objective(objective_cfg):
 def build_intervention(intervention_cfg, observed_channels, model, trajectories, key):
     """Build the perturbation module (``impulse/perturbation.py``) from config."""
 
+    # "observed" matches the loss channel names; the perturbation calls it "obs".
+    channels = {"observed": "obs"}.get(intervention_cfg.channels, intervention_cfg.channels)
+    if channels not in INTERVENTION_CHANNELS:
+        raise ValueError(
+            f"Unknown impulse.intervention.channels {intervention_cfg.channels!r}; "
+            f"expected one of {['observed', *INTERVENTION_CHANNELS]}"
+        )
+    if intervention_cfg.spatial not in INTERVENTION_SPATIAL:
+        raise ValueError(
+            f"Unknown impulse.intervention.spatial {intervention_cfg.spatial!r}; "
+            f"expected one of {list(INTERVENTION_SPATIAL)}"
+        )
     return perturbation(
         mode={
-            "channel": intervention_cfg.channels,
+            "channel": channels,
             "spatial": intervention_cfg.spatial,
         },
         CHANNELS=model.N_CHANNELS,

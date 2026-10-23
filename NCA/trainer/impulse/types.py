@@ -30,4 +30,8 @@ class ImpulseResult:
     # Mean target loss at the end of the evaluation rollout.
     evaluation_loss: float
     baseline_evaluation_loss: float
+    # Fraction of evaluation rollouts that end nearer the target than the
+    # source, with and without the intervention.
+    evaluation_switch_rate: float
+    baseline_switch_rate: float
 

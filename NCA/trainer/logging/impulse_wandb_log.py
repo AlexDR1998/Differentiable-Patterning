@@ -42,6 +42,8 @@ class ImpulseLogger(WandbLogger):
                 "Result/best_step": result.best_step,
                 "Result/evaluation_loss": result.evaluation_loss,
                 "Result/baseline_evaluation_loss": result.baseline_evaluation_loss,
+                "Result/switch_rate": result.evaluation_switch_rate,
+                "Result/baseline_switch_rate": result.baseline_switch_rate,
             }
         )
         # One row per batch element: source, perturbed source, final state, target

@@ -81,3 +81,6 @@ class ImpulseConfig(ConfigValue):
     loss: LossConfig
     optimiser: ImpulseOptimiserConfig
     output: OutputConfig
+    # Not used by the run; sweep over it to repeat otherwise identical configs
+    # with different seeds.
+    repeat: int = 0

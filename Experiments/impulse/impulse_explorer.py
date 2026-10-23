@@ -102,6 +102,8 @@ def _(results_dir):
             "objective": result["config"].impulse.objective.type,
             "evaluation_loss": result["summary"].get("evaluation_loss"),
             "baseline_evaluation_loss": result["summary"].get("baseline_evaluation_loss"),
+            "switch_rate": result["summary"].get("evaluation_switch_rate"),
+            "baseline_switch_rate": result["summary"].get("baseline_switch_rate"),
         }
         for result in results
     ]

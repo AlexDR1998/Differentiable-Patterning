@@ -101,6 +101,23 @@ class NCAImpulseOptimiser:
         weights = self.component_weights[:, None]
         return jnp.sum(weights * components, axis=0) / jnp.sum(weights)
 
+    def _switch_rate(self, final_states, batch):
+        """Fraction of final states nearer the target than the source state.
+
+        Distances are the mean squared error of the observed channels. For
+        stable_attractor pairs the source is the grown source attractor; for
+        the other pair sources it is the start state.
+        """
+
+        def distance(states, references):
+            difference = states[:, : self.observed_channels] - references[:, : self.observed_channels]
+            return jnp.mean(difference**2, axis=(-3, -2, -1))
+
+        nearer_target = distance(final_states, batch.target_states) < distance(
+            final_states, batch.initial_states
+        )
+        return float(jnp.mean(nearer_target))
+
     def evaluate(self, intervention, batch, key):
         """Evaluate an intervention without updating its parameters."""
 
@@ -256,6 +273,8 @@ class NCAImpulseOptimiser:
             self._loss_components(baseline_final_states, best_batch.target_states, evaluation_key)
         )
         return ImpulseResult(
+            evaluation_switch_rate=self._switch_rate(final_states, best_batch),
+            baseline_switch_rate=self._switch_rate(baseline_final_states, best_batch),
             best_intervention=best_intervention,
             best_step=best_step,
             best_loss=best_loss,

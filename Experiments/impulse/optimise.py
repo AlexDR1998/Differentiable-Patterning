@@ -111,6 +111,8 @@ def run(cfg):
         "evaluation_steps": impulse_cfg.rollout.evaluation_steps,
         "evaluation_loss": result.evaluation_loss,
         "baseline_evaluation_loss": result.baseline_evaluation_loss,
+        "evaluation_switch_rate": result.evaluation_switch_rate,
+        "baseline_switch_rate": result.baseline_switch_rate,
         "config": config,
     }
     with (output_directory / f"{run_name}.json").open("w") as handle:
