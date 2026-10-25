@@ -333,6 +333,7 @@ def _(runs):
         "collection": _choice("collection", "Collection"),
         "wandb_group": _choice("wandb_group", "W&B group"),
         "attractors": _choice("attractors", "Attractors"),
+        "seed_type": _choice("seed_type", "Seed type"),
         "family": _choice("family", "Family"),
         "padding": _choice("padding", "Padding"),
         "stability_mode": _choice("stability_mode", "Stability mode"),
@@ -340,7 +341,7 @@ def _(runs):
     target_filter = mo.ui.multiselect(_emojis, label="Must include targets")
     text_filter = mo.ui.text(label="Search model id / targets", placeholder="e.g. crab + lizard")
     mo.vstack([
-        mo.hstack([model_filters[_name] for _name in ("collection", "wandb_group", "attractors")], justify="start", wrap=True),
+        mo.hstack([model_filters[_name] for _name in ("collection", "wandb_group", "attractors", "seed_type")], justify="start", wrap=True),
         mo.hstack([model_filters[_name] for _name in ("family", "padding", "stability_mode")], justify="start", wrap=True),
         mo.hstack([target_filter, text_filter], justify="start", wrap=True),
     ])
@@ -383,16 +384,16 @@ def _(bundles, data_root):
     _models = {}
     _seeds = {}
 
-    def get_model(model_id, parameter_noise):
-        if (model_id, parameter_noise) not in _models:
-            _models[model_id, parameter_noise] = ma.load_model(bundles[model_id], parameter_noise)
-        return _models[model_id, parameter_noise]
+    def get_model(model_id):
+        if model_id not in _models:
+            _models[model_id] = bundles[model_id].load_model()
+        return _models[model_id]
 
     def get_seeds(model_id):
         """(seeds, targets, pair_target, fingerprint warning or None) of a model."""
         if model_id not in _seeds:
             _bundle = bundles[model_id]
-            _channels = get_model(model_id, True).N_CHANNELS
+            _channels = get_model(model_id).N_CHANNELS
             _impath = Path(data_root.value).expanduser() / "Emojis"
             _seed, _target, _pair_target, _data = ma.load_seeds_and_targets(_bundle.config, _channels, _impath)
             _warning = None
@@ -425,13 +426,12 @@ def _():
     eval_length = mo.ui.slider(1, 8, value=2, step=1, label="Length (× run.t)", show_value=True)
     eval_repeats = mo.ui.number(1, 64, value=4, step=1, label="Rollouts per seed")
     tolerance = mo.ui.slider(0.05, 1.0, value=0.25, step=0.05, label="Tolerance", show_value=True)
-    parameter_noise = mo.ui.checkbox(value=True, label="Parameter noise (as in training)")
     eval_seed = mo.ui.number(0, 2**31 - 1, value=0, step=1, label="Seed")
     # Seeds are rolled out in chunks that fit this budget; lower it if the GPU runs out of memory.
     # It changes speed only, not results.
     memory_budget = mo.ui.number(0.125, 64, value=1.0, step=0.125, label="Rollout memory (GB)")
     eval_run = mo.ui.run_button(label="Evaluate selected models")
-    mo.hstack([eval_length, eval_repeats, tolerance, parameter_noise, eval_seed, memory_budget, eval_run],
+    mo.hstack([eval_length, eval_repeats, tolerance, eval_seed, memory_budget, eval_run],
               justify="start", gap=1.5, wrap=True)
     return (
         eval_length,
@@ -439,7 +439,6 @@ def _():
         eval_run,
         eval_seed,
         memory_budget,
-        parameter_noise,
         tolerance,
     )
 
@@ -462,12 +461,11 @@ def _(
     get_model,
     get_seeds,
     memory_budget,
-    parameter_noise,
     score_cache,
     selected,
     tolerance,
 ):
-    _settings = (eval_length.value, eval_repeats.value, tolerance.value, parameter_noise.value, eval_seed.value)
+    _settings = (eval_length.value, eval_repeats.value, tolerance.value, eval_seed.value)
     _todo = [_id for _id in selected.model_id if (_id, _settings) not in score_cache]
     _failures = []
     if eval_run.value and _todo:
@@ -476,7 +474,7 @@ def _(
             try:
                 _seed, _target, _pair_target, _ = get_seeds(_id)
                 _scores, _final, _labels = ma.evaluate_seeds(
-                    get_model(_id, parameter_noise.value), _seed, _target, _pair_target,
+                    get_model(_id), _seed, _target, _pair_target,
                     steps=eval_length.value * _cfg.run.t, horizon=_cfg.run.t, repeats=eval_repeats.value,
                     key=jr.fold_in(jr.PRNGKey(eval_seed.value), zlib.crc32(_id.encode())), tolerance=tolerance.value,
                     memory_gb=memory_budget.value,
@@ -528,7 +526,7 @@ def _(
 
 @app.cell(hide_code=True)
 def _(model_scores):
-    _factors = ["attractors", "family", "padding", "stability_mode", "channels", "t", "targets", "wandb_group"]
+    _factors = ["attractors", "seed_type", "family", "padding", "stability_mode", "channels", "t", "targets", "wandb_group"]
     _factors = [_f for _f in _factors if _f in model_scores]
     _metrics = ["correct", "worst_seed_correct", "wrong_target", "other", "failed", "mse_at_t", "mse_final", "best_loss"]
     plot_x = mo.ui.dropdown(_factors, value="attractors", label="x")
@@ -583,7 +581,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _(eval_repeats, model_scores):
-    _factors = [_f for _f in ("attractors", "family", "padding", "stability_mode", "targets", "wandb_group")
+    _factors = [_f for _f in ("attractors", "seed_type", "family", "padding", "stability_mode", "targets", "wandb_group")
                 if _f in model_scores]
     gallery_group = mo.ui.dropdown(_factors, value="attractors", label="Group by")
     gallery_order = mo.ui.dropdown(["best first", "worst first", "table order"], value="best first", label="Order")
@@ -635,7 +633,7 @@ def _(
                 if not _correct:
                     _ax.set_xlabel(f"→ {ma.outcome_name(_label, _names)}", fontsize=7, color="#e34948", labelpad=2)
             _axes[_i, 0].set_ylabel(
-                f"{_row.family} · {_row.padding}\nrep {_row.repeat} · {_row.model_id[-8:]}\ncorrect {_row.correct:.0%}",
+                f"{_row.seed_type} · {_row.family} · {_row.padding}\nrep {_row.repeat} · {_row.model_id[-8:]}\ncorrect {_row.correct:.0%}",
                 fontsize=7,
             )
         _fig.suptitle(f"{gallery_group.value} = {_level} ({len(_rows)} of "
@@ -662,7 +660,7 @@ def _():
 def _(candidates, selected):
     _pool = selected if len(selected) else candidates
     _options = {
-        f"{_row.targets} · {_row.family} · {_row.padding} · {_row.stability_mode or ''} · rep {_row.repeat} · {_row.model_id[:8]}": _row.model_id
+        f"{_row.targets} · {_row.seed_type} · {_row.family} · {_row.padding} · {_row.stability_mode or ''} · rep {_row.repeat} · {_row.model_id[:8]}": _row.model_id
         for _row in _pool.itertuples()
     }
     explore_model = mo.ui.dropdown(_options, value=next(iter(_options), None), label="Model", full_width=True)
@@ -757,7 +755,6 @@ def _(
     explore_threshold_base,
     get_model,
     memory_budget,
-    parameter_noise,
     picker,
     tolerance,
 ):
@@ -766,7 +763,7 @@ def _(
     _states = np.repeat(ma.coloured_seeds(base_seed, explore_footprint, _rgba), explore_repeats.value, axis=0)
     _steps = explore_length.value * explore_cfg.run.t
     _n_frames = math.gcd(_steps, 8)
-    _distances, _trajectory = ma.rollout(get_model(explore_id, parameter_noise.value), _states, explore_targets,
+    _distances, _trajectory = ma.rollout(get_model(explore_id), _states, explore_targets,
                                          _steps, jr.PRNGKey(eval_seed.value), frames=_n_frames,
                                          memory_gb=memory_budget.value)
     _threshold = tolerance.value * explore_threshold_base
@@ -859,9 +856,8 @@ def _(
     get_model,
     memory_budget,
     hidden_base,
-    parameter_noise,
 ):
-    _key = (explore_id, parameter_noise.value, basin_slice.value, basin_fixed.value, basin_alpha.value,
+    _key = (explore_id, basin_slice.value, basin_fixed.value, basin_alpha.value,
             basin_hues.value, basin_rings.value, explore_length.value, hidden_base.value, eval_seed.value)
     if basin_run.value and _key not in basin_cache:
         _hue = (np.arange(basin_hues.value) + 0.5) / basin_hues.value
@@ -873,12 +869,12 @@ def _(
         _states = ma.coloured_seeds(base_seed, explore_footprint, ma.hsva_to_rgba(_hsva))
         with mo.status.spinner(f"Rolling out {len(_states)} seed colours"):
             _distances, _rgba = ma.rollout(
-                get_model(explore_id, parameter_noise.value), _states, explore_targets,
+                get_model(explore_id), _states, explore_targets,
                 explore_length.value * explore_cfg.run.t, jr.PRNGKey(eval_seed.value),
                 memory_gb=memory_budget.value,
             )
         basin_cache[_key] = {"shape": _h.shape, "distances": _distances[:, -1], "final": _rgba[:, -1], "hsva": _hsva}
-    mo.stop(_key not in basin_cache, mo.md("Press **Compute basin map** (uses the length, hidden channels, noise and memory settings above)."))
+    mo.stop(_key not in basin_cache, mo.md("Press **Compute basin map** (uses the length, hidden channels and memory settings above)."))
     basin = basin_cache[_key]
     return (basin,)
 

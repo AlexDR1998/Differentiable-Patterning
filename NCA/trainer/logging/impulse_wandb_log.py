@@ -33,19 +33,23 @@ class ImpulseLogger(WandbLogger):
             scalars[f"Intervention/{name}"] = float(value)
         self.log_scalars(scalars, step=step)
 
-    def log_result(self, result):
-        """Log the best intervention: summary losses, states and trajectories."""
+    def log_result(self, result, pixel_steps=None):
+        """Log the best intervention: summary losses, states and trajectories.
 
-        self.log_scalars(
-            {
-                "Result/best_loss": result.best_loss,
-                "Result/best_step": result.best_step,
-                "Result/evaluation_loss": result.evaluation_loss,
-                "Result/baseline_evaluation_loss": result.baseline_evaluation_loss,
-                "Result/switch_rate": result.evaluation_switch_rate,
-                "Result/baseline_switch_rate": result.baseline_switch_rate,
-            }
-        )
+        ``pixel_steps`` (k * k * duration of a patch impulse) groups runs by budget.
+        """
+
+        scalars = {
+            "Result/best_loss": result.best_loss,
+            "Result/best_step": result.best_step,
+            "Result/evaluation_loss": result.evaluation_loss,
+            "Result/baseline_evaluation_loss": result.baseline_evaluation_loss,
+            "Result/switch_rate": result.evaluation_switch_rate,
+            "Result/baseline_switch_rate": result.baseline_switch_rate,
+        }
+        if pixel_steps is not None:
+            scalars["Result/pixel_steps"] = pixel_steps
+        self.log_scalars(scalars)
         # One row per batch element: source, perturbed source, final state, target
         states = np.stack(
             [

@@ -12,7 +12,6 @@ when its distance is below ``tolerance`` times the smallest distance between
 two different targets, so the threshold does not depend on the emoji used.
 """
 
-from dataclasses import replace
 from pathlib import Path
 
 import equinox as eqx
@@ -22,7 +21,7 @@ import numpy as np
 from matplotlib.colors import hsv_to_rgb, rgb_to_hsv
 
 from Experiments.emoji.config_helpers import _pad_tuple, build_hidden_seeds, load_data
-from NCA.model.factory import PORTABLE_MODEL_FAMILIES, build_model
+from NCA.model.factory import portable_family
 
 # Labels of final states that are not one of the targets
 OTHER, DIED, DIVERGED = -1, -2, -3
@@ -37,6 +36,11 @@ def is_multi_attractor(cfg):
 
 def emoji_name(filename):
     return Path(filename).stem
+
+
+def seed_type(initial):
+    """Input space of a pair's ``initial`` entry: ``full``, ``patch`` or ``pixel``."""
+    return "full" if isinstance(initial, str) else initial.get("mode", "full")
 
 
 def seed_description(initial):
@@ -70,12 +74,15 @@ def summary_row(bundle):
         "wandb_group": cfg.logging.wandb.group,
         "attractors": len(names),
         "targets": " + ".join(names),
+        "seed_type": " / ".join(dict.fromkeys(seed_type(pair.initial) for pair in emoji.pairs)),
         "seed": " / ".join(dict.fromkeys(seed_description(pair.initial) for pair in emoji.pairs)),
         "family": cfg.model.family,
         "channels": cfg.model.channels,
         "padding": cfg.model.padding,
         "fire_rate": cfg.model.fire_rate,
-        "parameter_noise": cfg.model.parameter_noise_level,
+        # Only the nNCA and gnNCA families use model.parameter_noise_level
+        "parameter_noise": (cfg.model.parameter_noise_level
+                            if portable_family(cfg.model.family) in {"nNCA", "gnNCA"} else 0.0),
         "t": cfg.run.t,
         "iterations": cfg.run.iterations,
         "batches": cfg.data.batches,
@@ -86,21 +93,6 @@ def summary_row(bundle):
         "best_loss": training.get("best_loss"),
         "best_iteration": training.get("best_iteration"),
     }
-
-
-def load_model(bundle, parameter_noise=True):
-    """The bundle's model; ``parameter_noise=False`` switches off the weight noise
-    used in training (a static option, so the saved weights load unchanged)."""
-    if parameter_noise:
-        return bundle.load_model()
-    bundle.verify()
-    model_config = replace(
-        bundle.config.model,
-        family=PORTABLE_MODEL_FAMILIES.get(bundle.config.model.family, bundle.config.model.family),
-        parameter_noise_level=0.0,
-    )
-    model, _ = build_model(model_config, key=jax.random.PRNGKey(0))
-    return model.load(bundle.checkpoint_path)
 
 
 def load_seeds_and_targets(cfg, model_channels, impath):

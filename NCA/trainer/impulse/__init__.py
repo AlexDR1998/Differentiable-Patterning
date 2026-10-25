@@ -12,7 +12,7 @@ from NCA.trainer.impulse.pair_sources import (
     StableAttractorPairSource,
     TrajectoryStatePairSource,
 )
-from NCA.trainer.impulse.rollout import run_nca_batch
+from NCA.trainer.impulse.rollout import run_nca_batch, run_with_intervention
 from NCA.trainer.impulse.types import ImpulseBatch, ImpulseResult
 
 __all__ = [
@@ -27,5 +27,6 @@ __all__ = [
     "TargetedObjective",
     "TrajectoryStatePairSource",
     "run_nca_batch",
+    "run_with_intervention",
 ]
 

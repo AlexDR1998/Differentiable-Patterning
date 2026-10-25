@@ -1,0 +1,34 @@
+# Does a fixed budget of perturbed (pixel, step) pairs work better spread
+# over space or over time? Patch impulses of k x k pixels applied for t NCA
+# steps, with k * k * t = 9, 36 or 81. Each step has its own learned values,
+# so every shape of one budget has the same number of parameters. l2 sums the
+# per-step energy over time, so it is comparable across shapes. Other
+# settings as in emoji_attractor_switch_patch.
+experiment_name: emoji_attractor_switch_budget
+entrypoint: Experiments.impulse.optimise:run
+output_subdir: generated/emoji_attractor_switch_budget
+seed_mode: index
+grid:
+  checkpoint.model_id: [20261017T103911Z-cfg658b3b6ffdb3-28ddf0a3]
+  impulse.iterations: [1000]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.objective.type: [targeted]
+  impulse.rollout.steps: [128]
+  impulse.rollout.loss_window: [32]
+  impulse.rollout.evaluation_steps: [1024]
+  impulse.optimiser.learn_rate: [0.01]
+  impulse.intervention.channels: [hidden,all]
+  impulse.intervention.spatial: [patch]
+  # 0: compare footprints only; 0.1: also penalise impulse energy
+  impulse.loss.regularisers.l2: [0.0, 0.1]
+  impulse.repeat: [0, 1, 2]
+
+groups:
+  # (k, t) for budgets 9 | 36 | 81. The impulse must end before the loss
+  # window, so t <= 128 - 32 + 1 = 97.
+  - impulse.intervention.patch_size: [3, 1, 6, 3, 2, 1, 9, 3, 1]
+    impulse.intervention.duration: [1, 9, 1, 4, 9, 36, 1, 9, 81]
+    impulse.intervention.budget: [9, 9, 36, 36, 36, 36, 81, 81, 81]
+
+  - impulse.pair_source.source_index: [0, 1]
+    impulse.pair_source.target_index: [1, 0]

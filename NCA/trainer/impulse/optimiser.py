@@ -7,7 +7,7 @@ import optax
 
 from Common.trainer.loss_table import build_loss_functions
 from NCA.trainer.impulse.regularisers import intervention_metrics, weighted_regulariser
-from NCA.trainer.impulse.rollout import identity_boundary, run_nca_batch
+from NCA.trainer.impulse.rollout import identity_boundary, run_nca_batch, run_with_intervention
 from NCA.trainer.impulse.types import ImpulseBatch, ImpulseResult
 
 
@@ -70,6 +70,13 @@ class NCAImpulseOptimiser:
             raise ValueError("loss_window cannot be longer than rollout_steps")
         if self.resample_every < 0:
             raise ValueError("resample_every must be non-negative")
+        # The intervention must end before the loss window starts
+        last_step = max(self.rollout_steps - self.loss_window + 1, 1)
+        if self.intervention.duration > last_step:
+            raise ValueError(
+                f"The intervention lasts {self.intervention.duration} steps but must end "
+                f"before the loss window: at most rollout_steps - loss_window + 1 = {last_step}"
+            )
         if self.loss_functions is None:
             self.loss_functions = build_loss_functions(self.loss_names, self.loss_args or {})
         else:
@@ -126,20 +133,31 @@ class NCAImpulseOptimiser:
     def evaluate(self, intervention, batch, key):
         """Evaluate an intervention without updating its parameters."""
 
-        perturbed = intervention(batch.initial_states)
+        # The first delta perturbs the initial state; later ones are added
+        # during the first rollout segment.
+        deltas = intervention.deltas(batch.initial_states)
+        perturbed = batch.initial_states + deltas[0]
+        forcing = deltas[1:] if len(deltas) > 1 else None
         rollout = dict(
             boundary_callback=self.boundary_callback,
             scan_kind=self.scan_kind,
             checkpoints=self.checkpoints,
         )
         if self.loss_window == 1:
-            final_states = run_nca_batch(self.model, perturbed, self.rollout_steps, key, **rollout)
+            final_states = run_nca_batch(
+                self.model, perturbed, self.rollout_steps, key, forcing=forcing, **rollout
+            )
             components = self._loss_components(final_states, batch.target_states, key)
         else:
             # Run up to the loss window without keeping states, then keep only
             # the window (and only the observed channels, when the loss uses no others).
             states = run_nca_batch(
-                self.model, perturbed, self.rollout_steps - self.loss_window, key, **rollout
+                self.model,
+                perturbed,
+                self.rollout_steps - self.loss_window,
+                key,
+                forcing=forcing,
+                **rollout,
             )
             final_states, window = run_nca_batch(
                 self.model,
@@ -160,7 +178,7 @@ class NCAImpulseOptimiser:
             components = jnp.mean(components, axis=-1)
         per_sample_loss = self._weighted_loss(components)
         target_loss = jnp.mean(per_sample_loss)
-        metrics = intervention_metrics(batch.initial_states, perturbed)
+        metrics = intervention_metrics(batch.initial_states, deltas)
         penalty = weighted_regulariser(metrics, self.regulariser_coefficients)
         total_loss = self.objective(target_loss, penalty, metrics)
         return {
@@ -260,9 +278,10 @@ class NCAImpulseOptimiser:
             )
         evaluation_key = jax.random.fold_in(train_key, iterations + 1)
         perturbed = best_intervention(best_batch.initial_states)
-        final_states, perturbed_trajectory = run_nca_batch(
+        final_states, perturbed_trajectory = run_with_intervention(
             self.model,
-            perturbed,
+            best_intervention,
+            best_batch.initial_states,
             evaluation_steps,
             evaluation_key,
             boundary_callback=self.boundary_callback,

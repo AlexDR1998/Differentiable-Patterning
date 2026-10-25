@@ -1,12 +1,12 @@
-experiment_name: emoji_attractor_switch_example
+experiment_name: emoji_attractor_switch_test_1
 entrypoint: Experiments.impulse.optimise:run
-output_subdir: generated/emoji_attractor_switch_example
+output_subdir: generated/emoji_attractor_switch_test_1
 seed_mode: index
 grid:
   # A multi_attractor emoji bundle, e.g. from
   # Experiments/emoji/conf/experiments/emoji_multi_attractor_stability_sweep.yaml
   # (python -m Experiments.model_registry list)
-  checkpoint.model_id: [REPLACE_WITH_MODEL_ID]
+  checkpoint.model_id: [20261017T103911Z-cfg658b3b6ffdb3-28ddf0a3]
   impulse.pair_source.type: [stable_attractor]
   impulse.objective.type: [targeted]
   impulse.rollout.loss_window: [16]

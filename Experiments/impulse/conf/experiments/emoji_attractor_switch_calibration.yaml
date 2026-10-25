@@ -1,0 +1,29 @@
+# Calibration before the weekend sweep: one 2-attractor model, both
+# transitions. Pick learn_rate, rollout length and the l2 range for
+# emoji_attractor_switch_weekend.yaml from Result/switch_rate and
+# Loss/target vs Loss/regulariser.
+experiment_name: emoji_attractor_switch_calibration_v2
+entrypoint: Experiments.impulse.optimise:run
+output_subdir: generated/emoji_attractor_switch_calibration
+seed_mode: index
+grid:
+  checkpoint.model_id: [20261017T103911Z-cfg658b3b6ffdb3-28ddf0a3]
+  impulse.iterations: [2000]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.objective.type: [targeted]
+  impulse.rollout.evaluation_steps: [1024]
+  impulse.intervention.channels: [hidden]
+  impulse.intervention.spatial: [local]
+  impulse.intervention.width: [0.15]
+  impulse.loss.regularisers.l2: [0.0, 0.001, 0.01, 0.1]
+  impulse.optimiser.learn_rate: [0.001, 0.01]
+
+groups:
+  # The model needed 128 steps to grow from a seed; the loss is averaged
+  # over the last quarter of the rollout.
+  - impulse.rollout.steps: [64, 128, 256]
+    impulse.rollout.loss_window: [16, 32, 64]
+    impulse.rollout.scan_kind: [lax, lax, checkpointed]
+
+  - impulse.pair_source.source_index: [0,]
+    impulse.pair_source.target_index: [1,]

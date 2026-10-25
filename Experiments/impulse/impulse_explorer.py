@@ -44,6 +44,7 @@ with app.setup(hide_code=True):
         success_rate,
         switch_matrix,
     )
+    from Experiments.impulse.config_helpers import pixel_steps
 
     plt.style.use("default")
 
@@ -100,6 +101,9 @@ def _(results_dir):
             "model_id": result["model_id"],
             "switch": f"{result['source']} -> {result['target']}",
             "objective": result["config"].impulse.objective.type,
+            "impulse": result["config"].impulse.intervention.spatial,
+            "patch_size": result["config"].impulse.intervention.patch_size,
+            "duration": result["config"].impulse.intervention.duration,
             "evaluation_loss": result["summary"].get("evaluation_loss"),
             "baseline_evaluation_loss": result["summary"].get("baseline_evaluation_loss"),
             "switch_rate": result["summary"].get("evaluation_switch_rate"),
@@ -109,6 +113,38 @@ def _(results_dir):
     ]
     mo.vstack([mo.md(f"{len(results)} impulse runs"), mo.ui.table(_rows, selection=None), model_choice])
     return model_choice, results
+
+
+@app.cell
+def _(results):
+    # Patch impulses with the same k * k * duration budget: switch rate against
+    # duration, averaged over repeats. Reads the saved summaries only.
+    _budget_runs = {}
+    for _result in results:
+        _impulse = _result["config"].impulse
+        _budget = pixel_steps(_impulse.intervention)
+        _rate = _result["summary"].get("evaluation_switch_rate")
+        if _budget is None or _rate is None:
+            continue
+        _line = f"{_result['source']} -> {_result['target']}, l2={dict(_impulse.loss.regularisers).get('l2', 0.0)}"
+        _budget_runs.setdefault(_budget, {}).setdefault(_line, {}).setdefault(
+            _impulse.intervention.duration, []
+        ).append(_rate)
+    mo.stop(not _budget_runs, mo.md("No patch impulse runs"))
+    _fig, _axes = plt.subplots(1, len(_budget_runs), figsize=(4 * len(_budget_runs), 3.2), squeeze=False)
+    for _axis, _budget in zip(_axes[0], sorted(_budget_runs)):
+        for _line, _by_duration in sorted(_budget_runs[_budget].items()):
+            _durations = sorted(_by_duration)
+            _axis.plot(_durations, [np.mean(_by_duration[_t]) for _t in _durations], marker="o", label=_line)
+        _axis.set_xscale("log")
+        _axis.set_xlabel("duration t (patch side k = sqrt(budget / t))")
+        _axis.set_ylabel("switch rate")
+        _axis.set_ylim(-0.05, 1.05)
+        _axis.set_title(f"budget k*k*t = {_budget}", fontsize=9)
+        _axis.legend(fontsize=7)
+    _fig.tight_layout()
+    _fig
+    return
 
 
 @app.cell

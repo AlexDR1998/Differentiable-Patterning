@@ -10,9 +10,11 @@ from Common.model.abstract_model import AbstractModel
 class perturbation(AbstractModel):
     """Learned perturbation added to NCA states of shape (batch, C, X, Y).
 
-    The perturbation can be local, global or flat, and can act on all channels,
-    the observed or hidden channels, or a single observed channel. The same
-    perturbation is applied to every batch element.
+    The perturbation can be local (Gaussian), patch (a small square), global or
+    flat, and can act on all channels, the observed or hidden channels, or a
+    single hidden channel. The same perturbation is applied to every batch element.
+    It can last several NCA steps: values[s] is the delta for step s, all at
+    the same centre (see ``rollout.run_with_intervention``).
     """
     location: Array
     values: Array
@@ -20,12 +22,16 @@ class perturbation(AbstractModel):
     OBS_CHANNELS: int
     CHANNELS: int
     WIDTH: float
+    # Side length in pixels of a patch perturbation. Static, so it is not
+    # written to saved .eqx files and older files still load.
+    PATCH_SIZE: int = eqx.field(static=True)
 
-    def __init__(self,mode,CHANNELS,OBS_CHANNELS,x,WIDTH,key):
+    def __init__(self,mode,CHANNELS,OBS_CHANNELS,x,WIDTH,key,PATCH_SIZE=0,duration=1):
         # The centre is sigmoid(location) in normalised (0 to 1) coordinates.
         # Store the logit of a uniform draw so the starting centre is uniform
         # over the interior of the lattice, not biased towards one corner.
         self.WIDTH = WIDTH
+        self.PATCH_SIZE = PATCH_SIZE
         self.location = jax.scipy.special.logit(jr.uniform(key,(2,),minval=0.1,maxval=0.9))
         self.mode=mode
         self.OBS_CHANNELS = OBS_CHANNELS
@@ -39,22 +45,38 @@ class perturbation(AbstractModel):
         SP = {
             "global":np.s_[:,:],
             "local":np.s_[:,:],
+            "patch":np.s_[:PATCH_SIZE,:PATCH_SIZE],
             "flat":np.s_[:1,:1],
         }[self.mode['spatial']]
         inds = CH + SP
         
-        self.values = np.zeros_like(x[inds])
-    def __call__(self,x):
-        CH = {
-            "all":np.s_[:,:self.CHANNELS],
-            "obs":np.s_[:,:self.OBS_CHANNELS],
-            "hidden":np.s_[:,self.OBS_CHANNELS:],
-            "single":np.s_[:,self.OBS_CHANNELS:self.OBS_CHANNELS+1]
-        }[self.mode['channel']]
+        # (duration, C_sel, ...): one delta per NCA step
+        self.values = np.zeros((duration,*x[inds].shape[1:]),dtype=x.dtype)
 
-        values = self._spatial_mask(jax.nn.sigmoid(self.location),np.array([self.WIDTH,self.WIDTH]),self.values)
-        x = x.at[CH].set(x[CH] + values)
-        return x
+    @property
+    def duration(self):
+        """Number of NCA steps the perturbation is applied for."""
+        return self.values.shape[0]
+
+    def __call__(self,x):
+        """Add the first step's delta to x."""
+        return x + self.deltas(x)[0]
+
+    def deltas(self,x):
+        """Full-lattice delta for every step: (duration, 1, CHANNELS, H, W)."""
+        CH = {
+            "all":np.s_[:,:,:self.CHANNELS],
+            "obs":np.s_[:,:,:self.OBS_CHANNELS],
+            "hidden":np.s_[:,:,self.OBS_CHANNELS:],
+            "single":np.s_[:,:,self.OBS_CHANNELS:self.OBS_CHANNELS+1]
+        }[self.mode['channel']]
+        H,W = x.shape[-2:]
+        if self.mode['spatial'] == "patch":
+            values = self._place_patch(jax.nn.sigmoid(self.location),self.values,H,W)
+        else:
+            values = self._spatial_mask(jax.nn.sigmoid(self.location),np.array([self.WIDTH,self.WIDTH]),self.values)
+        deltas = np.zeros((self.duration,1,*x.shape[-3:]),dtype=x.dtype)
+        return deltas.at[CH].set(np.broadcast_to(values[:,None],deltas[CH].shape))
     @eqx.filter_jit
     def _spatial_mask(self,centers,scales,x):
         if self.mode['spatial'] in ["global","flat"]:
@@ -70,6 +92,20 @@ class perturbation(AbstractModel):
             m = m[:,:,0] * m[:,:,1]
             m = rearrange(m, 'H W -> 1 1 H W')
             return m*x
+
+    def _place_patch(self,centre,values,H,W):
+        """Place the (duration, C, k, k) patch on an H x W lattice, centred at ``centre``.
+
+        Bilinear interpolation gives the centre a gradient: the patch covers
+        exactly k x k pixels at whole-pixel centres and at most (k+1) x (k+1)
+        in between. Pixel i is at i/(H-1), as for the Gaussian mask.
+        """
+        offset = (self.PATCH_SIZE - 1) / 2
+        rows = np.arange(H) - centre[0] * (H - 1) + offset
+        cols = np.arange(W) - centre[1] * (W - 1) + offset
+        coordinates = np.meshgrid(rows, cols, indexing='ij')
+        place = lambda patch: jax.scipy.ndimage.map_coordinates(patch, coordinates, order=1, mode='constant', cval=0.0)
+        return jax.vmap(jax.vmap(place))(values)
     
     def get_values(self):
         return self.values

@@ -5,7 +5,8 @@ experiment:
   name: nca_impulse_template
 
 system:
-  precision: highest
+  # The precision the emoji models were trained with
+  precision: tensorfloat32
   gpu: null
   xla_flags: null
 
@@ -33,6 +34,8 @@ impulse:
   batch_size: 8
   resample_every: 100
   log_every: 100
+  # Sweep over this to repeat a config with different seeds
+  repeat: 0
 
   pair_source:
     # stable_attractor: grown source pattern -> grown target pattern
@@ -53,12 +56,25 @@ impulse:
     # Average the target loss over the last loss_window steps (1: final state only)
     loss_window: 1
     evaluation_steps: 256
+    # Saved evaluation trajectories keep RGBA of every n-th state only
+    evaluation_frame_every: 8
     scan_kind: lax
+    # checkpointed only: saved states (null: equinox chooses; steps: every
+    # state, so each step is rerun once in the backward pass)
+    checkpoints: null
 
   intervention:
+    # all, observed (or obs), hidden, or single (the first hidden channel)
     channels: hidden
+    # local (Gaussian of std width, learned centre), patch (square of
+    # patch_size pixels, learned centre and values), global or flat
     spatial: local
     width: 0.2
+    patch_size: 3
+    # NCA steps the impulse is applied for (a k x k x duration cuboid for patch)
+    duration: 1
+    # Label for grouping runs in W&B only (not used by the run)
+    budget: null
 
   objective:
     type: targeted

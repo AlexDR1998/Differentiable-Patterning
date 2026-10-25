@@ -50,6 +50,13 @@ class ImpulseInterventionConfig(ConfigValue):
     channels: str = "hidden"
     spatial: str = "local"
     width: float = 0.2
+    # Side length in pixels of the square impulse (spatial: patch only)
+    patch_size: int = 3
+    # Number of NCA steps the impulse is applied for, at the same centre
+    duration: int = 1
+    # Not used by the run: a label for grouping runs in W&B, e.g. the
+    # patch_size**2 * duration budget of a sweep
+    budget: int | None = None
 
 
 @dataclass(frozen=True)

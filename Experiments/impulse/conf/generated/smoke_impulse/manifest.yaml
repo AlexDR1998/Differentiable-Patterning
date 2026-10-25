@@ -19,21 +19,25 @@ configs:
     impulse.rollout.steps: 8
     impulse.rollout.evaluation_steps: 16
     impulse.output.directory: smoke_impulse
-    logging.wandb.group: smoke_impulse-micropattern-projections
+    logging.wandb.group: smoke_impulse-impulse-multistep
     impulse.objective.type: targeted
     impulse.rollout.loss_window: 1
+    impulse.intervention.spatial: local
+    impulse.intervention.duration: 1
     experiment.name: smoke_impulse
     seed: 0
     logging.wandb.tag_keys:
     - impulse.objective.type
     - impulse.rollout.loss_window
+    - impulse.intervention.spatial
+    - impulse.intervention.duration
   config:
     schema_version: 7
     seed: 0
     experiment:
       name: smoke_impulse
     system:
-      precision: highest
+      precision: tensorfloat32
       gpu: null
       xla_flags: null
     checkpoint:
@@ -43,17 +47,20 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_impulse-micropattern-projections
+        group: smoke_impulse-impulse-multistep
         tags: null
         tag_keys:
         - impulse.objective.type
         - impulse.rollout.loss_window
+        - impulse.intervention.spatial
+        - impulse.intervention.duration
     data: null
     impulse:
       iterations: 4
       batch_size: 2
       resample_every: 2
       log_every: 1
+      repeat: 0
       pair_source:
         type: stable_attractor
         source_index: 0
@@ -68,11 +75,15 @@ configs:
         steps: 8
         loss_window: 1
         evaluation_steps: 16
+        evaluation_frame_every: 8
         scan_kind: lax
+        checkpoints: null
       intervention:
         channels: hidden
         spatial: local
         width: 0.2
+        patch_size: 3
+        duration: 1
       objective:
         type: targeted
         target_weight: 1.0
@@ -112,21 +123,25 @@ configs:
     impulse.rollout.steps: 8
     impulse.rollout.evaluation_steps: 16
     impulse.output.directory: smoke_impulse
-    logging.wandb.group: smoke_impulse-micropattern-projections
+    logging.wandb.group: smoke_impulse-impulse-multistep
     impulse.objective.type: minimal_destructive
     impulse.rollout.loss_window: 4
+    impulse.intervention.spatial: patch
+    impulse.intervention.duration: 2
     experiment.name: smoke_impulse
     seed: 0
     logging.wandb.tag_keys:
     - impulse.objective.type
     - impulse.rollout.loss_window
+    - impulse.intervention.spatial
+    - impulse.intervention.duration
   config:
     schema_version: 7
     seed: 0
     experiment:
       name: smoke_impulse
     system:
-      precision: highest
+      precision: tensorfloat32
       gpu: null
       xla_flags: null
     checkpoint:
@@ -136,17 +151,20 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_impulse-micropattern-projections
+        group: smoke_impulse-impulse-multistep
         tags: null
         tag_keys:
         - impulse.objective.type
         - impulse.rollout.loss_window
+        - impulse.intervention.spatial
+        - impulse.intervention.duration
     data: null
     impulse:
       iterations: 4
       batch_size: 2
       resample_every: 2
       log_every: 1
+      repeat: 0
       pair_source:
         type: stable_attractor
         source_index: 0
@@ -161,11 +179,15 @@ configs:
         steps: 8
         loss_window: 4
         evaluation_steps: 16
+        evaluation_frame_every: 8
         scan_kind: lax
+        checkpoints: null
       intervention:
         channels: hidden
-        spatial: local
+        spatial: patch
         width: 0.2
+        patch_size: 3
+        duration: 2
       objective:
         type: minimal_destructive
         target_weight: 1.0

@@ -20,7 +20,7 @@ from NCA.trainer.impulse import (
 
 
 INTERVENTION_CHANNELS = ("all", "obs", "hidden", "single")
-INTERVENTION_SPATIAL = ("local", "global", "flat")
+INTERVENTION_SPATIAL = ("local", "patch", "global", "flat")
 
 
 def _as_dict(value):
@@ -135,6 +135,16 @@ def build_intervention(intervention_cfg, observed_channels, model, trajectories,
             f"Unknown impulse.intervention.spatial {intervention_cfg.spatial!r}; "
             f"expected one of {list(INTERVENTION_SPATIAL)}"
         )
+    lattice_size = min(trajectories.shape[-2:])
+    if intervention_cfg.spatial == "patch" and not 1 <= intervention_cfg.patch_size <= lattice_size:
+        raise ValueError(
+            f"impulse.intervention.patch_size must be between 1 and the lattice size "
+            f"({lattice_size}), got {intervention_cfg.patch_size}"
+        )
+    if intervention_cfg.duration < 1:
+        raise ValueError(
+            f"impulse.intervention.duration must be at least 1, got {intervention_cfg.duration}"
+        )
     return perturbation(
         mode={
             "channel": channels,
@@ -145,7 +155,17 @@ def build_intervention(intervention_cfg, observed_channels, model, trajectories,
         x=trajectories[:1, 0],
         WIDTH=intervention_cfg.width,
         key=key,
+        PATCH_SIZE=intervention_cfg.patch_size,
+        duration=intervention_cfg.duration,
     )
+
+
+def pixel_steps(intervention_cfg):
+    """Number of perturbed (pixel, step) pairs of a patch impulse, k * k * duration (else None)."""
+
+    if intervention_cfg.spatial != "patch":
+        return None
+    return intervention_cfg.patch_size**2 * intervention_cfg.duration
 
 
 def build_impulse_optimiser(optimiser_cfg):

@@ -12,14 +12,42 @@ from pathlib import Path
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from Experiments.config import load_experiment_config
 from Experiments.config_helpers import open_registry_bundle
 from Experiments.impulse.config_helpers import build_intervention, load_impulse_data
-from NCA.trainer.impulse.rollout import run_nca_batch
+from NCA.trainer.impulse.rollout import run_nca_batch, run_with_intervention
 
 # steps and return_trajectory are Python values, so they are static here
 rollout = eqx.filter_jit(run_nca_batch)
+rollout_with_intervention = eqx.filter_jit(run_with_intervention)
+
+
+def _rollout(model, intervention, states, steps, key, **kwargs):
+    """Roll out ``states``, with a (possibly multi-step) intervention unless it is None."""
+
+    if intervention is None:
+        return rollout(model, states, steps, key, **kwargs)
+    return rollout_with_intervention(model, intervention, states, steps, key, **kwargs)
+
+
+def save_impulse_result(directory, run_name, result, summary):
+    """Write ``<run_name>.eqx`` (best intervention), ``.npz`` (states) and ``.json`` (summary)."""
+
+    directory = Path(directory)
+    eqx.tree_serialise_leaves(directory / f"{run_name}.eqx", result.best_intervention)
+    np.savez_compressed(
+        directory / f"{run_name}.npz",
+        initial_states=np.asarray(result.initial_states),
+        target_states=np.asarray(result.target_states),
+        perturbed_initial_states=np.asarray(result.perturbed_initial_states),
+        final_states=np.asarray(result.final_states),
+        baseline_trajectory=np.asarray(result.baseline_trajectory),
+        perturbed_trajectory=np.asarray(result.perturbed_trajectory),
+    )
+    with (directory / f"{run_name}.json").open("w") as handle:
+        json.dump(summary, handle, indent=2)
 
 
 def load_impulse_results(directory):
@@ -112,9 +140,7 @@ def switch_matrix(model, intervention, attractors, references, steps, observed_c
 
     patterns, samples = attractors.shape[:2]
     states = attractors.reshape((-1, *attractors.shape[2:]))
-    if intervention is not None:
-        states = intervention(states)
-    final = rollout(model, states, steps, key)
+    final = _rollout(model, intervention, states, steps, key)
     labels = jnp.argmin(attractor_distances(final, references, observed_channels), axis=1)
     one_hot = jax.nn.one_hot(labels.reshape((patterns, samples)), len(references))
     return jnp.mean(one_hot, axis=1)
@@ -123,9 +149,7 @@ def switch_matrix(model, intervention, attractors, references, steps, observed_c
 def distance_over_time(model, intervention, states, references, steps, observed_channels, key):
     """Distances to every reference along the rollout: [batch, time, pattern], plus the trajectory."""
 
-    if intervention is not None:
-        states = intervention(states)
-    _, trajectory = rollout(model, states, steps, key, return_trajectory=True)
+    _, trajectory = _rollout(model, intervention, states, steps, key, return_trajectory=True)
     batch, time = trajectory.shape[:2]
     flat = trajectory.reshape((-1, *trajectory.shape[2:]))
     distances = attractor_distances(flat, references, observed_channels)
@@ -137,7 +161,7 @@ def success_rate(model, interventions, states, references, target, steps, observ
 
     rates = []
     for index, intervention in enumerate(interventions):
-        final = rollout(model, intervention(states), steps, jax.random.fold_in(key, index))
+        final = _rollout(model, intervention, states, steps, jax.random.fold_in(key, index))
         labels = jnp.argmin(attractor_distances(final, references, observed_channels), axis=1)
         rates.append(float(jnp.mean(labels == target)))
     return jnp.asarray(rates)

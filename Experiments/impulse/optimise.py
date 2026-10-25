@@ -1,8 +1,4 @@
-import json
-
-import equinox as eqx
 import jax
-import numpy as np
 
 from Experiments.config import config_to_dict
 from Experiments.config_helpers import (
@@ -11,6 +7,7 @@ from Experiments.config_helpers import (
     loss_weights,
     open_registry_bundle,
 )
+from Experiments.impulse.analysis import save_impulse_result
 from Experiments.impulse.config_helpers import (
     build_impulse_optimiser,
     build_intervention,
@@ -18,6 +15,7 @@ from Experiments.impulse.config_helpers import (
     build_pair_source,
     load_impulse_data,
     loss_args_from_config,
+    pixel_steps,
     resolve_output_directory,
 )
 from Experiments.model_registry import _config_digest
@@ -91,20 +89,10 @@ def run(cfg):
     )
 
     if logger is not None:
-        logger.log_result(result)
+        logger.log_result(result, pixel_steps=pixel_steps(impulse_cfg.intervention))
         logger.finish()
 
     output_directory = resolve_output_directory(cfg.impulse.output)
-    eqx.tree_serialise_leaves(output_directory / f"{run_name}.eqx", result.best_intervention)
-    np.savez_compressed(
-        output_directory / f"{run_name}.npz",
-        initial_states=np.asarray(result.initial_states),
-        target_states=np.asarray(result.target_states),
-        perturbed_initial_states=np.asarray(result.perturbed_initial_states),
-        final_states=np.asarray(result.final_states),
-        baseline_trajectory=np.asarray(result.baseline_trajectory),
-        perturbed_trajectory=np.asarray(result.perturbed_trajectory),
-    )
     summary = {
         "model_id": bundle.id,
         "bundle_path": str(bundle.path),
@@ -115,9 +103,9 @@ def run(cfg):
         "baseline_evaluation_loss": result.baseline_evaluation_loss,
         "evaluation_switch_rate": result.evaluation_switch_rate,
         "baseline_switch_rate": result.baseline_switch_rate,
+        "pixel_steps": pixel_steps(impulse_cfg.intervention),
         "config": config,
     }
-    with (output_directory / f"{run_name}.json").open("w") as handle:
-        json.dump(summary, handle, indent=2)
+    save_impulse_result(output_directory, run_name, result, summary)
     print(f"Saved impulse result to {output_directory / run_name}")
     return result

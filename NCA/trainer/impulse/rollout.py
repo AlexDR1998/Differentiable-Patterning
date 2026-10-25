@@ -20,6 +20,7 @@ def run_nca_batch(
     trajectory_every=1,
     trajectory_channels=None,
     checkpoints=None,
+    forcing=None,
 ):
     """Run an NCA over a batch with independent random keys.
 
@@ -49,6 +50,9 @@ def run_nca_batch(
         Number of saved states for ``scan_kind="checkpointed"`` (None: equinox
         chooses a few, and the backward pass reruns most steps more than once).
         Set it to ``steps`` to save every state and rerun each step once.
+    forcing
+        Optional ``[n, 1 or batch, channels, height, width]`` deltas;
+        ``forcing[i]`` is added to the state after update ``i`` for ``i < n``.
     """
 
     if steps < 0:
@@ -72,6 +76,9 @@ def run_nca_batch(
         step_key = jax.random.fold_in(step_key, step_index)
         batch_keys = jax.random.split(step_key, len(states))
         states = batched_model(states, boundary_callback, batch_keys)
+        if forcing is not None:
+            n = len(forcing)
+            states = states + forcing[jnp.minimum(step_index, n - 1)] * (step_index < n)
         return (step_key, states), states[:, channels] if return_trajectory else None
 
     def frame(carry, step_indices):
@@ -104,6 +111,19 @@ def run_nca_batch(
     trajectory = jnp.swapaxes(trajectory, 0, 1)
     return final_states, trajectory
 
+
+
+def run_with_intervention(model, intervention, initial_states, steps, key, **kwargs):
+    """Run ``run_nca_batch`` with an intervention that may last several steps.
+
+    The intervention's first delta is added to ``initial_states`` and delta
+    ``s`` is added after update ``s - 1``, so a duration-t intervention acts on
+    the first t states. Other keyword arguments go to ``run_nca_batch``.
+    """
+
+    deltas = intervention.deltas(initial_states)
+    forcing = deltas[1:] if len(deltas) > 1 else None
+    return run_nca_batch(model, initial_states + deltas[0], steps, key, forcing=forcing, **kwargs)
 
 
 @eqx.filter_jit
