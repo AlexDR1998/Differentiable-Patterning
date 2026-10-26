@@ -3,7 +3,10 @@ entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_nodal_ko_finetune
 seed_mode: index
 
-# Replace null with the registry ID of a full 14-channel baseline bundle before
+# The parent model IDs below are old 14-channel bundles. The data now leaves
+# out cell_fate_s2/SOX17 (base_config), so replace them with baselines trained
+# with the same excluded_measurements; the run stops otherwise.
+# Replace null with the registry ID of a full-group baseline bundle before
 # generating the sweep. Leaving it null constructs a fresh model.
 grid:
   
@@ -13,7 +16,7 @@ grid:
 
   logging.wandb.project: [nca_micropattern_KO_finetune]
   data.dataset: [micropatterns_260726]
-  data.micropattern.data_channels: [14]
+  data.micropattern.data_channels: [13]  # 14 minus cell_fate_s2/SOX17 (excluded in base_config)
   data.micropattern.experiment_groups:
     - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
   data.micropattern.pool_copies: [1]

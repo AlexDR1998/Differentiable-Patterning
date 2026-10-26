@@ -29,7 +29,7 @@ from Common.dataloader.micropattern_schemas import (
     DEFAULT_260726_INTENSITY_FACTORS,
     MICROPATTERN_260726_SCHEMA,
 )
-from Common.dataloader.normalisation import percentile_bins
+from Common.dataloader.normalisation import trajectory_bins
 from Common.dataloader.results import MicropatternDataset
 
 
@@ -548,6 +548,16 @@ def _schema_group(group):
     return next(item for item in MICROPATTERN_260726_SCHEMA.experiment_groups if item.name == group)
 
 
+def _cleaned_positions(group):
+    """Positions of ``group``'s channels in its cleaned images.
+
+    Cleaned images hold every channel of the full group (so the disk cache
+    does not depend on excluded measurements); ``group`` may have fewer.
+    """
+    names = [channel.name for channel in _schema_group(group.name).channels]
+    return [names.index(channel.name) for channel in group.channels]
+
+
 def _clean_image(record, intensity_factors, cleaning, work):
     """Cleaning steps 1 to 5 for one image: ``[X, Y, C]`` at downsampling ``work``.
 
@@ -661,21 +671,26 @@ def _trajectory_bounds(
 
     The percentiles of each channel are taken over all timesteps of a
     trajectory (inside the mask with ``percentiles_inside_mask``) and shared
-    between trajectories as set by ``cleaning.normalisation``. With
-    ``knockouts_use_control_bounds``, a knockout trajectory takes its bounds
-    from the control trajectory of the same replicate. Images in
+    between trajectories as set by ``cleaning.normalisation``, with knockouts
+    handled as set by ``cleaning.knockout_bounds`` (see
+    ``Common/dataloader/normalisation.py:trajectory_bins``). Images in
     ``excluded`` (flagged as low quality) do not count. Channels a trajectory
     did not measure get NaN.
     """
-    if cleaning.knockouts_use_control_bounds:
-        sources = list(dict.fromkeys(
-            [("ctrl", replicate) for _, replicate in trajectories] + list(trajectories)
-        ))
+    # Trajectories whose pixels set the bounds. Joint bounds always use every
+    # condition, so each load finds the same bounds whatever it selects.
+    replicates = [replicate for _, replicate in trajectories]
+    if cleaning.knockout_bounds == "joint":
+        extra = [(condition, replicate) for condition in _CONDITIONS for replicate in replicates]
+    elif cleaning.knockout_bounds == "control":
+        extra = [("ctrl", replicate) for replicate in replicates]
     else:
-        sources = list(trajectories)
+        extra = []
+    sources = list(dict.fromkeys(extra + list(trajectories)))
     channel_of = {}
     for group, target_indices in zip(schema.experiment_groups, schema.group_measurement_indices):
-        for channel_index, (target_index, channel) in enumerate(zip(target_indices, group.channels)):
+        positions = _cleaned_positions(group)
+        for channel_index, target_index, channel in zip(positions, target_indices, group.channels):
             channel_of[target_index] = (group.name, channel_index, channel.name)
 
     bounds = {trajectory: np.full((schema.n_measurement_channels, 2), np.nan) for trajectory in trajectories}
@@ -701,19 +716,9 @@ def _trajectory_bounds(
                 samples[(condition, replicate)] = np.concatenate(values)
         if not samples:
             continue
-        reference = {}
-        if cleaning.knockouts_use_control_bounds:
-            reference = {
-                trajectory: ("ctrl", trajectory[1])
-                for trajectory in samples
-                if trajectory[0] != "ctrl" and ("ctrl", trajectory[1]) in samples
-            }
-            # Only the requested trajectories and their references set the bounds.
-            keep = set(trajectories) | set(reference.values())
-            samples = {key: value for key, value in samples.items() if key in keep}
         low, high = cleaning.channel_percentiles.get(name, hist_eqs)
-        for trajectory, (lower, upper) in percentile_bins(
-            samples, low, high, cleaning.normalisation, reference=reference
+        for trajectory, (lower, upper) in trajectory_bins(
+            samples, low, high, cleaning.normalisation, cleaning.knockout_bounds
         ).items():
             if trajectory in bounds:
                 bounds[trajectory][target_index] = (lower, upper)
@@ -730,6 +735,7 @@ def load_micropattern_260726(
     replicate_indices=None,
     replicate_manifest=None,
     experiment_groups=None,
+    excluded_measurements=(),
     substitute_preperturbation=True,
     histogram_bins=None,
     hist_eqs=DEFAULT_260726_HISTOGRAM_PERCENTILES,
@@ -773,6 +779,9 @@ def load_micropattern_260726(
     trajectories. Without ``cleaning``, every image is clipped to percentiles
     pooled over all loaded images at full resolution and centred on a circle
     fitted to its colony pixels.
+
+    ``excluded_measurements`` names measurement channels to leave out (e.g.
+    ``("cell_fate_s2/SOX17",)``); see ``ChannelSchema.without_measurements``.
 
     ``excluded_images`` lists image paths relative to ``root`` (e.g.
     ``cell_fate_markers/ctrl_s1/A2_F14_24h``, compared by ``image_key`` so
@@ -821,10 +830,20 @@ def load_micropattern_260726(
     cleaned = cleaning is not None and cleaning.enabled
     conditions = tuple(conditions)
     timesteps = tuple(int(timestep) for timestep in timesteps)
+    unknown = sorted(set(excluded_measurements) - set(MICROPATTERN_260726_SCHEMA.measurement_names))
+    if unknown:
+        raise ValueError("Unknown excluded measurements: " + ", ".join(unknown))
     schema = MICROPATTERN_260726_SCHEMA.select_groups(experiment_groups)
+    # Exclusions in groups that are not loaded have nothing to remove.
+    schema = schema.without_measurements(
+        [name for name in excluded_measurements if name in schema.measurement_names]
+    )
     inventory = build_micropattern_260726_manifest(
         root=root,
-        conditions=conditions,
+        # Joint knockout bounds need the images of every condition.
+        conditions=(
+            _CONDITIONS if cleaned and cleaning.knockout_bounds == "joint" else conditions
+        ),
         projection=projection,
         timesteps=timesteps,
         replicate_count=replicate_count,
@@ -884,6 +903,7 @@ def load_micropattern_260726(
     group_index = {
         group.name: index for index, group in enumerate(schema.experiment_groups)
     }
+    cleaned_positions = {group.name: _cleaned_positions(group) for group in schema.experiment_groups}
     record_lookup = {
         (record.condition, record.group, record.timestep, record.replicate): record
         for record in records
@@ -943,6 +963,7 @@ def load_micropattern_260726(
         )
         if not cleaned:
             return image, mask
+        image = image[..., cleaned_positions[record.group]]
         target_indices = group_target_indices[record.group]
         lower, upper = np.moveaxis(trajectory_bounds[trajectory][list(target_indices)], -1, 0)
         image = np.clip((image - lower) / np.maximum(upper - lower, 1e-6), 0.0, 1.0)

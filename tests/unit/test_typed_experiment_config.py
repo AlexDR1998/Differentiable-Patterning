@@ -178,6 +178,34 @@ def test_impulse_workflow_has_a_separate_typed_root():
     assert config.data is None
 
 
+def test_impulse_config_repeat_defaults_to_zero_and_can_be_set():
+    value = yaml.safe_load(
+        Path("Experiments/impulse/conf/base_config.yaml").read_text()
+    )
+    del value["impulse"]["repeat"]
+    assert impulse_experiment_config_from_mapping(value).impulse.repeat == 0
+
+    value["impulse"]["repeat"] = 2
+    assert impulse_experiment_config_from_mapping(value).impulse.repeat == 2
+
+
+def test_impulse_patch_size_and_duration_have_defaults_for_older_configs():
+    value = yaml.safe_load(
+        Path("Experiments/impulse/conf/base_config.yaml").read_text()
+    )
+    del value["impulse"]["intervention"]["patch_size"]
+    del value["impulse"]["intervention"]["duration"]
+    del value["impulse"]["intervention"]["budget"]
+    defaults = impulse_experiment_config_from_mapping(value).impulse.intervention
+    assert (defaults.patch_size, defaults.duration, defaults.budget) == (3, 1, None)
+    value["impulse"]["intervention"]["budget"] = 36
+    assert impulse_experiment_config_from_mapping(value).impulse.intervention.budget == 36
+
+    value["impulse"]["intervention"].update(spatial="patch", patch_size=5)
+    intervention = impulse_experiment_config_from_mapping(value).impulse.intervention
+    assert (intervention.spatial, intervention.patch_size) == ("patch", 5)
+
+
 def test_impulse_config_rejects_a_model_section():
     value = yaml.safe_load(
         Path("Experiments/impulse/conf/base_config.yaml").read_text()

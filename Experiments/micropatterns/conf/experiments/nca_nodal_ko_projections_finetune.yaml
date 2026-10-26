@@ -14,6 +14,10 @@ seed_mode: index
 # parent's projection or model settings differ from its entry here.
 #
 # Total jobs: 3 projections * 3 resolutions * 8 repeats = 72.
+#
+# The parent model IDs below are old 14-channel bundles. The data now leaves
+# out cell_fate_s2/SOX17 (base_config), so replace them with baselines trained
+# with the same excluded_measurements; the run stops otherwise.
 grid:
   run.repeat: [0, 1, 2, 3, 4, 5, 6, 7]
 
@@ -25,7 +29,7 @@ grid:
   logging.wandb.project: [nca_micropattern_KO_projections]
 
   data.dataset: [micropatterns_260726]
-  data.micropattern.data_channels: [14]
+  data.micropattern.data_channels: [13]  # 14 minus cell_fate_s2/SOX17 (excluded in base_config)
   data.micropattern.experiment_groups:
     - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
   data.micropattern.pool_copies: [1]

@@ -1,4 +1,4 @@
-experiment_name: nca_micropattern_projections_baseline_v2
+experiment_name: nca_micropattern_projections_baseline_v3
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_micropattern_projections
 seed_mode: index
@@ -13,7 +13,7 @@ seed_mode: index
 # Total jobs: 3 projections * 2 held-out replicate splits * 2 repeats
 #             * 4 resolutions (convective only) = 48.
 grid:
-  run.repeat: [0,1,2,3]
+  run.repeat: [0,1,2]
   run.write_images: [true]
 
   labels.gpu: [H200]
@@ -28,7 +28,7 @@ grid:
 
   data.dataset: [micropatterns_260726]
   data.micropattern.task: [micropattern_multi_replicate]
-  data.micropattern.data_channels: [14]
+  data.micropattern.data_channels: [13]  # 14 minus cell_fate_s2/SOX17 (excluded in base_config)
   data.micropattern.experiment_groups:
     - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
   data.micropattern.pool_copies: [1]

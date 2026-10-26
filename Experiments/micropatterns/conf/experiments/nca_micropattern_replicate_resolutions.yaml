@@ -27,7 +27,7 @@ grid:
 
   data.dataset: [micropatterns_260726]
   data.micropattern.task: [micropattern_multi_replicate]
-  data.micropattern.data_channels: [14]
+  data.micropattern.data_channels: [13]  # 14 minus cell_fate_s2/SOX17 (excluded in base_config)
   data.micropattern.experiment_groups:
     - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
   data.micropattern.pool_copies: [1]

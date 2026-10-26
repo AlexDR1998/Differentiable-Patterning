@@ -28,9 +28,22 @@ CENTRES = {
     ("ctrl", 2, 36): (70.0, 61.0),
     ("sl24", 1, 36): (61.0, 69.0),
     ("sl24", 2, 36): (67.0, 57.0),
+    ("sl0", 1, 24): (62.0, 64.0),
+    ("sl0", 1, 36): (65.0, 62.0),
+    ("sl0", 2, 24): (64.0, 66.0),
+    ("sl0", 2, 36): (60.0, 63.0),
 }
-# Brightness of each (condition, replicate); knockout 36h is twice as bright.
-BRIGHTNESS = {("ctrl", 1): 1000.0, ("ctrl", 2): 2000.0, ("sl24", 1): 2000.0, ("sl24", 2): 4000.0}
+# Brightness of each (condition, replicate). The sl24 knockout at 36h is
+# twice as bright as control, and the sl0 knockout is dim (like SOX17 under
+# NODAL knockout).
+BRIGHTNESS = {
+    ("ctrl", 1): 1000.0,
+    ("ctrl", 2): 2000.0,
+    ("sl24", 1): 2000.0,
+    ("sl24", 2): 4000.0,
+    ("sl0", 1): 100.0,
+    ("sl0", 2): 200.0,
+}
 
 
 def _colony(centre, brightness, seed):
@@ -132,7 +145,7 @@ def test_knockouts_can_use_control_bounds(tmp_path):
     own, own_aux, names, _, _ = _load(tmp_path, _cleaning(alignment_file), conditions=("sl24",))
     control, control_aux, _, _, _ = _load(
         tmp_path,
-        _cleaning(alignment_file, knockouts_use_control_bounds=True),
+        _cleaning(alignment_file, knockout_bounds="control"),
         conditions=("sl24",),
     )
     sox17 = names.index("cell_fate_s1/SOX17")
@@ -151,12 +164,60 @@ def test_knockouts_can_use_control_bounds(tmp_path):
     assert own_aux["trajectory_bounds"][("sl24", 1)][name][1] > control_aux["trajectory_bounds"][("sl24", 1)][name][1]
 
 
+@pytest.mark.parametrize("normalisation", ["per_replicate", "replicate_mean"])
+def test_joint_knockout_bounds(tmp_path, normalisation):
+    alignment_file = _make_dataset(tmp_path)
+    name = "cell_fate_s1/SOX17"
+    joint = _cleaning(alignment_file, knockout_bounds="joint", normalisation=normalisation)
+    loads = {
+        conditions: _load(tmp_path, joint, conditions=conditions)
+        for conditions in [("ctrl",), ("sl0",), ("sl24",)]
+    }
+    bounds = {
+        trajectory: values[name]
+        for _, aux, _, _, _ in loads.values()
+        for trajectory, values in aux["trajectory_bounds"].items()
+    }
+    _, own, _, _, _ = _load(tmp_path, _cleaning(alignment_file, normalisation=normalisation))
+    for replicate in (1, 2):
+        # Every condition shares one range, whichever condition is loaded ...
+        assert bounds[("sl0", replicate)] == pytest.approx(bounds[("ctrl", replicate)])
+        assert bounds[("sl24", replicate)] == pytest.approx(bounds[("ctrl", replicate)])
+        # ... widened past the control range: below by the dim sl0 knockout
+        # and above by the brighter sl24 knockout.
+        control = own["trajectory_bounds"][("ctrl", replicate)][name]
+        assert bounds[("ctrl", replicate)][0] < 0.5 * control[0]
+        assert bounds[("ctrl", replicate)][1] > 1.5 * control[1]
+    # The dim sl0 knockout stays dim instead of being stretched to [0, 1].
+    sl0, _, names, _, _ = loads[("sl0",)]
+    late = np.asarray(sl0)[:, 1:, names.index(name)]
+    assert late[late > 0].mean() < 0.2
+
+
 def test_training_downsampling_beyond_four(tmp_path):
     alignment_file = _make_dataset(tmp_path)
     data, _, _, boundary, _ = _load(tmp_path, _cleaning(alignment_file), downsample=8)
     assert np.asarray(data).shape[-2:] == (16, 16)
     assert np.asarray(boundary).shape[-2:] == (16, 16)
     assert np.asarray(data).max() <= 1.0
+
+
+def test_excluded_measurement_leaves_the_other_channels_unchanged(tmp_path):
+    alignment_file = _make_dataset(tmp_path)
+    full, full_aux, full_names, _, _ = _load(tmp_path, _cleaning(alignment_file))
+    excluded, aux, names, _, mask = _load(
+        tmp_path, _cleaning(alignment_file), excluded_measurements=("cell_fate_s1/SOX17",)
+    )
+    assert names == [name for name in full_names if name != "cell_fate_s1/SOX17"]
+    assert np.asarray(mask).shape[-1] == 3
+    # Cleaned images keep every channel of the group, so each remaining
+    # channel (LMBR differs from the others here) must be read from its own
+    # position in them.
+    keep = [full_names.index(name) for name in names]
+    np.testing.assert_allclose(np.asarray(excluded), np.asarray(full)[:, :, keep])
+    for trajectory, bounds in aux["trajectory_bounds"].items():
+        for name in names:
+            assert bounds[name] == pytest.approx(full_aux["trajectory_bounds"][trajectory][name])
 
 
 def test_cleaning_errors(tmp_path):
@@ -273,7 +334,7 @@ def test_cache_gives_the_same_data_and_skips_cleaning(tmp_path, monkeypatch):
     expected = [_load(dataset, per_replicate), _load(dataset, shared)]
     cached = [_load(dataset, per_replicate, cache_dir=cache)]
     [entry] = list_cache_folders(cache)
-    assert entry["items"] == len(CENTRES) - 2  # the knockout images are not loaded
+    assert entry["items"] == 6  # only the control images are loaded
 
     def no_cleaning(*args, **kwargs):
         raise AssertionError("cleaned again instead of reading the cache")

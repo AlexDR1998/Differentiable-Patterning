@@ -7,6 +7,9 @@ seed_mode: index
 # The first group zips each initialization to its matching held-out replicate split;
 # it is then crossed with six intervention curricula and ten stochastic repeats.
 # Total jobs: 4 initialization/split cases * 6 curricula * 10 repeats = 240.
+# The parent model IDs below are old 14-channel bundles. The data now leaves
+# out cell_fate_s2/SOX17 (base_config), so replace them with baselines trained
+# with the same excluded_measurements; the run stops otherwise.
 grid:
   run.repeat: [0, 1, 2, 3, 4, 5, 6, 7]
 
@@ -18,7 +21,7 @@ grid:
   logging.wandb.project: [nca_micropattern_KO_strategy_resolutions]
 
   data.dataset: [micropatterns_260726]
-  data.micropattern.data_channels: [14]
+  data.micropattern.data_channels: [13]  # 14 minus cell_fate_s2/SOX17 (excluded in base_config)
   data.micropattern.experiment_groups:
     - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
   data.micropattern.pool_copies: [1]

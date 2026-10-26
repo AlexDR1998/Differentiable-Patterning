@@ -19,6 +19,8 @@ grid:
   # Must match the parent bundle.
   data.dataset: [micropatterns_260726]
   data.micropattern.data_channels: [14]
+  # The parent keeps every channel, so this run does too.
+  data.micropattern.excluded_measurements: [[]]
   data.micropattern.experiment_groups:
     - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
   data.downsample: [16]

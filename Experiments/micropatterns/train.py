@@ -42,14 +42,22 @@ def load_initial_model(cfg, key, model_root):
     child_groups = cfg.data.micropattern.experiment_groups or all_groups
     if (
         parent_data.dataset != "micropatterns_260726"
-        or parent_data.micropattern.data_channels != 14
-        or tuple(parent_groups) != tuple(child_groups)
         or cfg.data.dataset != "micropatterns_260726"
-        or cfg.data.micropattern.data_channels != 14
+        or set(parent_groups) != set(all_groups)
+        or tuple(parent_groups) != tuple(child_groups)
     ):
         raise ValueError(
-            "Nodal fine-tuning requires compatible full 14-channel "
-            "micropatterns_260726 parent and child configurations"
+            "Nodal fine-tuning requires micropatterns_260726 parent and child "
+            "configurations with every experiment group"
+        )
+    if set(parent_data.micropattern.excluded_measurements) != set(
+        cfg.data.micropattern.excluded_measurements
+    ):
+        raise ValueError(
+            f"Pretrained model {model_id!r} left out the channels "
+            f"{list(parent_data.micropattern.excluded_measurements)}, but this run "
+            f"leaves out {list(cfg.data.micropattern.excluded_measurements)}; "
+            "train a parent with the same data.micropattern.excluded_measurements"
         )
     if parent_data.micropattern.projection != cfg.data.micropattern.projection:
         raise ValueError(

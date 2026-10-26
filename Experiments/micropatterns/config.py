@@ -8,6 +8,7 @@ from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
 from Common.dataloader.micropattern_schemas import (
     DEFAULT_260726_HISTOGRAM_PERCENTILES,
     DEFAULT_260726_INTENSITY_FACTORS,
+    MICROPATTERN_260726_SCHEMA,
 )
 from Common.dataloader.micropattern_projections import check_projection
 
@@ -19,6 +20,9 @@ class MicropatternDataConfig(ConfigValue):
     train_replicates: tuple[int, ...] | None = None
     validation_replicates: tuple[int, ...] | None = None
     experiment_groups: tuple[str, ...] | None = None
+    # 260726 only: measurement channels left out of the data, e.g.
+    # ("cell_fate_s2/SOX17",). The marker can still be measured in another group.
+    excluded_measurements: tuple[str, ...] = ()
     timesteps: tuple[int, ...] = (0, 12, 24, 36, 48)
     data_channels: int | None = 12
     pad_multiple: int | None = None
@@ -61,6 +65,14 @@ class MicropatternDataConfig(ConfigValue):
             value < 0 for by_hour in self.intensity_factors.values() for value in by_hour.values()
         ):
             raise ValueError("data.micropattern.intensity_factors must be non-negative")
+        unknown = sorted(
+            set(self.excluded_measurements) - set(MICROPATTERN_260726_SCHEMA.measurement_names)
+        )
+        if unknown:
+            raise ValueError(
+                "Unknown channels in data.micropattern.excluded_measurements: "
+                + ", ".join(unknown)
+            )
 
 
 @dataclass(frozen=True)

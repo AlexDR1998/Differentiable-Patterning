@@ -38,7 +38,7 @@ from Common.dataloader.micropattern_schemas import (
     DEFAULT_260726_HOT_PIXEL_THRESHOLDS,
     MICROPATTERN_260726_SCHEMA,
 )
-from Common.dataloader.normalisation import NORMALISATION_MODES
+from Common.dataloader.normalisation import KNOCKOUT_BOUNDS, NORMALISATION_MODES
 
 
 @dataclass(frozen=True)
@@ -74,8 +74,10 @@ class MicropatternCleaningConfig(ConfigValue):
     # Percentile overrides per channel, e.g. {"cell_fate_s1/SOX2": (1.0, 99.0)}.
     channel_percentiles: Mapping[str, tuple[float, float]] = field(default_factory=dict)
     percentiles_inside_mask: bool = True
-    # Knockout trajectories take their bounds from the control replicates.
-    knockouts_use_control_bounds: bool = False
+    # How knockouts get their bounds, one of KNOCKOUT_BOUNDS: "selected"
+    # (like any other trajectory), "control" (the control bounds) or "joint"
+    # (control bounds widened where a knockout goes outside them).
+    knockout_bounds: str = "selected"
 
     def __post_init__(self):
         names = set(MICROPATTERN_260726_SCHEMA.measurement_names)
@@ -110,6 +112,10 @@ class MicropatternCleaningConfig(ConfigValue):
         if self.normalisation not in NORMALISATION_MODES:
             raise ValueError(
                 f"cleaning.normalisation must be one of {tuple(NORMALISATION_MODES)}"
+            )
+        if self.knockout_bounds not in KNOCKOUT_BOUNDS:
+            raise ValueError(
+                f"cleaning.knockout_bounds must be one of {tuple(KNOCKOUT_BOUNDS)}"
             )
         for name, (low, high) in self.channel_percentiles.items():
             if not 0 <= low < high <= 100:

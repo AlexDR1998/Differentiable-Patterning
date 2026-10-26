@@ -146,3 +146,27 @@ def test_schema_rejects_invalid_group_selection():
 
     with pytest.raises(ValueError, match="cannot contain duplicates"):
         MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1", "cell_fate_s1"])
+
+
+def test_schema_without_a_measurement_keeps_the_marker_measured_elsewhere():
+    schema = MICROPATTERN_260726_SCHEMA.without_measurements(["cell_fate_s2/SOX17"])
+
+    assert schema.n_measurement_channels == 13
+    assert schema.state_channels == MICROPATTERN_260726_SCHEMA.state_channels
+    assert schema.group_sizes == (4, 3, 3, 3)
+    assert "cell_fate_s2/SOX17" not in schema.measurement_names
+    # SOX17 is now measured once, in stain 1.
+    sox17 = schema.state_channels.index("SOX17")
+    assert schema.state_to_measurements[sox17] == (0,)
+    assert schema.measurement_weights[0] == 1.0
+    assert schema.group_measurement_indices[1] == (4, 5, 6)
+
+
+def test_schema_without_measurements_drops_empty_groups_and_unmeasured_states():
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s2"]).without_measurements(
+        ["cell_fate_s2/SOX17", "cell_fate_s2/FOXA2"]
+    )
+    assert schema.state_channels == ("LMBR", "TBXT")
+    assert MICROPATTERN_260726_SCHEMA.without_measurements([]) is MICROPATTERN_260726_SCHEMA
+    with pytest.raises(ValueError, match="Unknown measurement channels"):
+        MICROPATTERN_260726_SCHEMA.without_measurements(["cell_fate_s3/SOX17"])

@@ -143,7 +143,12 @@ def marker_values(images, channel_names, cell_type_rules, axis=-3, channels=None
         elif marker in channel_names:
             index = channel_names.index(marker)
         else:
-            raise KeyError(f"Neither {channel!r} nor {marker!r} is among the channels {channel_names}")
+            raise KeyError(
+                f"Neither {channel!r} nor {marker!r} is among the channels {channel_names}. "
+                "If the channel was left out (data.micropattern.excluded_measurements), "
+                "export the cell types again without it from "
+                "Experiments/micropatterns/data_cleaning.py"
+            )
         values[marker] = np.take(images, index, axis=axis)
     return values
 

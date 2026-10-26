@@ -7,10 +7,11 @@ from Experiments.config import load_experiment_config
 from Experiments.micropatterns import train
 
 
-def _config(projection):
+def _config(projection, excluded=("cell_fate_s2/SOX17",)):
     cfg = OmegaConf.load("Experiments/micropatterns/conf/base_config.yaml")
     cfg.data.dataset = "micropatterns_260726"
-    cfg.data.micropattern.data_channels = 14
+    cfg.data.micropattern.data_channels = 14 - len(excluded)
+    cfg.data.micropattern.excluded_measurements = list(excluded)
     cfg.data.micropattern.projection = projection
     cfg.initialization.model_id = "parent"
     return load_experiment_config(cfg)
@@ -59,3 +60,9 @@ def test_run_name_marks_projections_other_than_max():
     }
     assert "_pj" not in names["max"]
     assert "_pjsum_" in names["sum"] and "_pjslice_" in names["slice"]
+
+
+def test_parent_with_other_excluded_channels_is_rejected(registry):
+    registry["parent"] = _Bundle(_config("max", excluded=()))
+    with pytest.raises(ValueError, match="same data.micropattern.excluded_measurements"):
+        train.load_initial_model(_config("max"), key=None, model_root="unused")

@@ -769,10 +769,13 @@ def test_260726_knockout_requires_full_schema():
     import Experiments.micropatterns.config_helpers as micropattern_helpers
 
     cfg = _micropattern_cfg(
-        data_channels=11, curriculum=("ko_0h",), dataset="micropatterns_260726"
+        data_channels=11,
+        curriculum=("ko_0h",),
+        dataset="micropatterns_260726",
+        experiment_groups=("cell_fate_s1", "cell_fate_s2", "rna_expression"),
     )
 
-    with pytest.raises(ValueError, match="full 14-channel schema"):
+    with pytest.raises(ValueError, match="every 260726 experiment group"):
         micropattern_helpers.load_data(cfg, impath="/tmp/micropatterns/")
 
 
@@ -1044,3 +1047,35 @@ def test_260726_quality_flags_reach_the_loader(monkeypatch, tmp_path):
     assert calls[0]["excluded_images"] == ("cell_fate_markers/ctrl_s1/a_24h",)
     assert calls[1]["excluded_images"] == ()
     assert calls[0]["projection"] == "max"
+
+
+def test_260726_excluded_measurements_reach_the_loader(monkeypatch):
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+
+    calls = []
+
+    def fake_loader(path, **kwargs):
+        calls.append(kwargs)
+        count = len(kwargs["replicate_indices"]) * len(kwargs["conditions"])
+        data = jnp.zeros((count, 5, 13, 2, 3))
+        boundary = jnp.ones((count, 1, 2, 3), dtype=bool)
+        mask = jnp.ones((count, 5, 13), dtype=bool)
+        return data, {"channel_schema": object(), "histogram_bins": None}, ["marker"] * 13, boundary, mask
+
+    monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
+    cfg = _micropattern_cfg(
+        data_channels=13,
+        dataset="micropatterns_260726",
+        curriculum=("baseline", "ko_24h"),
+        excluded_measurements=("cell_fate_s2/SOX17",),
+    )
+
+    *_, cfg_str = micropattern_helpers.load_data(
+        cfg, impath="/tmp/micropatterns/", replicate_indices=(0, 1)
+    )
+
+    assert calls[-1]["excluded_measurements"] == ("cell_fate_s2/SOX17",)
+    assert "_xs2SOX17" in cfg_str
+    assert micropattern_helpers.measurement_count(None, ("cell_fate_s2/SOX17",)) == 13
+    # Exclusions in groups that are not loaded change nothing.
+    assert micropattern_helpers.measurement_count(["cell_fate_s1"], ("cell_fate_s2/SOX17",)) == 4

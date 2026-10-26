@@ -28,11 +28,12 @@ def test_config_value_reads_typed_configs_and_dicts_alike():
     assert sweeps.config_value(plain, "model.kernel_str") == "ID+LAP"
 
 
-@pytest.mark.parametrize("name, count", [("resolution", 15), ("input", 120), ("input_single_band", 96), ("architecture", 120), ("update_rule", 27), ("hold_out", 24)])
+@pytest.mark.parametrize("name, count", [("resolution", 15), ("input", 120), ("input_single_band", 96), ("architecture", 120), ("update_rule", 27), ("hold_out", 8)])
 def test_generated_manifests_have_one_run_per_factor_combination(name, count):
     sweep = sweeps.SWEEPS[name]
+    manifests = sweeps.generated_manifests()
 
-    expected = sweeps.expected_runs(sweep)
+    expected = sweeps.expected_runs(sweep, manifests[sweeps.default_experiment(sweep, manifests)])
 
     assert len(expected) == count
     assert len({sweeps.run_key(row, sweep) for row in expected}) == count
@@ -104,13 +105,17 @@ def _publish_small_bundle(tmp_path, raw, targets):
     return open_model_bundle(bundle.path)
 
 
-def test_find_bundles_reads_only_the_sweep_folder(tmp_path):
+def test_expected_runs_is_empty_without_a_manifest():
+    assert sweeps.expected_runs(sweeps.SWEEPS["hold_out"], None) == []
+
+
+def test_find_bundles_reads_only_the_collection_folder(tmp_path):
     bundle = _publish_small_bundle(tmp_path, _synthetic_raw(T=3), ("NDSI",))
 
-    found = sweeps.find_bundles(tmp_path / "store", sweeps.SWEEPS["input"])
+    found = sweeps.find_bundles(tmp_path / "store", collection="tests")
 
     assert [b.id for b in found] == [bundle.id]
-    assert sweeps.find_bundles(tmp_path / "store", sweeps.SWEEPS["architecture"]) == []
+    assert sweeps.find_bundles(tmp_path / "store") == []
 
 
 @pytest.mark.parametrize("grid", ["full", "model"])

@@ -106,4 +106,4 @@ preprocessing:
     normalisation: replicate_mean
     channel_percentiles: {}
     percentiles_inside_mask: true
-    knockouts_use_control_bounds: false
+    knockout_bounds: selected

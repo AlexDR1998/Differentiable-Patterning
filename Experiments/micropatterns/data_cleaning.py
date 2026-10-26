@@ -74,9 +74,11 @@ def _():
         MICROPATTERN_260726_SCHEMA,
     )
     from Common.dataloader.normalisation import (
+        KNOCKOUT_BOUNDS,
         NORMALISATION_MODES,
-        percentile_bins,
+        condition_bins,
         rescale,
+        trajectory_bins,
     )
     from Common.dataloader.quality_flags import load_quality_flags, save_quality_flags
     from Common.dataloader.stripes import remove_stripes, remove_stripes_per_channel
@@ -87,6 +89,7 @@ def _():
         ColonyAlignment,
         DEFAULT_260726_HISTOGRAM_PERCENTILES,
         DEFAULT_260726_INTENSITY_FACTORS,
+        KNOCKOUT_BOUNDS,
         MICROPATTERN_260726_SCHEMA,
         MicropatternCleaningConfig,
         NORMALISATION_MODES,
@@ -101,6 +104,7 @@ def _():
         circular_colony_mask,
         classify_within_stain,
         colony_share,
+        condition_bins,
         coordinate_search,
         coverage_map,
         fit_colony_centre,
@@ -117,7 +121,6 @@ def _():
         mo,
         ndi,
         np,
-        percentile_bins,
         plt,
         radial_bands,
         radial_rings,
@@ -137,15 +140,22 @@ def _():
         threshold_grid,
         tifffile,
         traitlets,
+        trajectory_bins,
         yaml,
     )
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md("""
+    mo.md(r"""
     # data_cleaning
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
     A place to try out pre-processing of the raw 260726 micropattern images.
     Each image goes through these steps, in order:
 
@@ -179,6 +189,14 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
+    mo.md(r"""
+    ## 1. Select raw images
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(MICROPATTERN_260726_SCHEMA, mo):
     root = mo.ui.text(
         value="../Data/260726_nca_dataset", label="Dataset root", full_width=True
     )
@@ -215,18 +233,25 @@ def _(mo):
     )
     timesteps = mo.ui.text(value="0,12,24,36,48", label="Timesteps (hours)")
     replicate_count = mo.ui.slider(1, 6, value=4, label="Replicates", show_value=True)
+    # Left out of the views, the bounds, the cell types and the exported
+    # training settings (data.micropattern.excluded_measurements).
+    excluded_channels = mo.ui.multiselect(
+        options=list(MICROPATTERN_260726_SCHEMA.measurement_names),
+        value=["cell_fate_s2/SOX17"],
+        label="Excluded channels",
+    )
     load_button = mo.ui.run_button(label="Load raw images")
     mo.vstack(
         [
-            mo.md("## 1. Select raw images"),
             root,
             mo.hstack([conditions, timesteps, replicate_count]),
-            mo.hstack([projection, experiment_groups], justify="start"),
+            mo.hstack([projection, experiment_groups, excluded_channels], justify="start"),
             load_button,
         ]
     )
     return (
         conditions,
+        excluded_channels,
         experiment_groups,
         load_button,
         projection,
@@ -241,6 +266,7 @@ def _(
     Path,
     build_micropattern_260726_manifest,
     conditions,
+    excluded_channels,
     experiment_groups,
     load_button,
     mo,
@@ -275,6 +301,7 @@ def _(
         "timesteps": _timesteps,
         "replicates": _inventory["replicate_indices"],
         "groups": tuple(experiment_groups.value) or None,
+        "excluded": tuple(excluded_channels.value),
     }
     # Raw images are kept as uint16 when that is exact (whole numbers in
     # [0, 65535]), to halve memory use, and as float32 otherwise (e.g. sum
@@ -305,11 +332,18 @@ def _(
 
 @app.cell(hide_code=True)
 def _(mo):
+    mo.md(r"""
+    ### Bit depth
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
     bit_depth_run = mo.ui.run_button(label="Check bit depth")
     mo.vstack(
         [
             mo.md(
-                "### Bit depth\n\n"
                 "- Error from casting to 16 bits, divided by the image's own "
                 "pixel noise (robust estimate from the residual after a 3 x 3 "
                 "median). Below 0.1 (✓) the cast adds under 1% to the noise "
@@ -474,6 +508,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 2. Per-channel controls
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, MICROPATTERN_260726_SCHEMA, mo):
     _names = MICROPATTERN_260726_SCHEMA.measurement_names
     shrink = mo.ui.dropdown(
@@ -573,7 +615,6 @@ def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, MICROPATTERN_260726_SCHEMA, mo):
     mo.vstack(
         [
             mo.md(
-                "## 2. Per-channel controls\n\n"
                 "- **Hot pixel threshold**: a pixel is replaced by the mean of "
                 "its other neighbours when it is more than this many noise "
                 "levels above the median of its **window**. The noise level "
@@ -627,6 +668,14 @@ def _(DEFAULT_260726_HISTOGRAM_PERCENTILES, MICROPATTERN_260726_SCHEMA, mo):
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Intensity factors
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(DEFAULT_260726_INTENSITY_FACTORS, loaded_names, mo, selection):
     _hours = selection["timesteps"]
     intensity_scales = mo.ui.dictionary(
@@ -649,7 +698,6 @@ def _(DEFAULT_260726_INTENSITY_FACTORS, loaded_names, mo, selection):
     mo.vstack(
         [
             mo.md(
-                "### Intensity factors\n\n"
                 "Each factor multiplies the raw intensities of one channel at "
                 "one timestep, for every condition, before anything else. Use "
                 "it to correct timesteps whose overall brightness is off "
@@ -675,6 +723,14 @@ def _(DEFAULT_260726_INTENSITY_FACTORS, loaded_names, mo, selection):
         ]
     )
     return (intensity_scales,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 3. Circular mask
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -711,7 +767,6 @@ def _(mo):
     mo.vstack(
         [
             mo.md(
-                "## 3. Circular mask\n\n"
                 "**Fixed-radius template fit** (default). The micropattern has "
                 "the same size in every image, so all images share one "
                 "**pattern radius**. It is estimated as the median circle "
@@ -1026,6 +1081,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Training settings
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     DEFAULT_260726_HISTOGRAM_PERCENTILES,
     MICROPATTERN_260726_SCHEMA,
@@ -1040,7 +1103,7 @@ def _(
     image_source,
     inside_only,
     intensity_scales,
-    knockout_reference,
+    knockout_bounds,
     low_percentiles,
     mask_mode,
     mo,
@@ -1059,6 +1122,7 @@ def _(
     _names = MICROPATTERN_260726_SCHEMA.measurement_names
     training_settings = {
         "projection": selection["projection"],
+        "excluded_measurements": list(selection["excluded"]),
         "histogram_percentiles": list(_default),
         "quality_flags_file": flags_path.value,
         "intensity_factors": {
@@ -1088,7 +1152,7 @@ def _(
                 if (low_percentiles.value[_n], high_percentiles.value[_n]) != _default
             },
             "percentiles_inside_mask": bool(inside_only.value),
-            "knockouts_use_control_bounds": bool(knockout_reference.value),
+            "knockout_bounds": knockout_bounds.value,
         },
     }
     # Notebook-only choices that training does not offer.
@@ -1104,7 +1168,6 @@ def _(
     ]
     _block = yaml.safe_dump({"micropattern": training_settings}, sort_keys=False)
     mo.md(
-        "## Training settings\n\n"
         "The `data.micropattern` settings that make the training loader "
         "process the images as this notebook does. Paste them into "
         "`Experiments/micropatterns/conf/base_config.yaml` (or a sweep), and "
@@ -1122,6 +1185,14 @@ def _(
 
 
 @app.cell(column=1, hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 4. Inspect one image
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(mo, raw_images, record_label):
     record_picker = mo.ui.dropdown(
         options={
@@ -1133,7 +1204,7 @@ def _(mo, raw_images, record_label):
         full_width=True,
     )
     inspect_run = mo.ui.run_button(label="Show image")
-    mo.vstack([mo.md("## 4. Inspect one image"), mo.hstack([record_picker, inspect_run], justify="start")])
+    mo.vstack([mo.hstack([record_picker, inspect_run], justify="start")])
     return inspect_run, record_picker
 
 
@@ -1273,13 +1344,20 @@ def _(
 
 @app.cell(hide_code=True)
 def _(mo):
+    mo.md(r"""
+    ### Alignment check
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
     fit_flag = mo.ui.slider(
         0.0, 1.0, step=0.05, value=0.8, label="Flag fits scoring below", show_value=True
     )
     mo.vstack(
         [
             mo.md(
-                "### Alignment check\n\n"
                 "How well the fixed-radius template fit (section 3) found each "
                 "colony. The **score** is 1 minus the colony coverage just "
                 "outside the fitted disk relative to the coverage inside it, "
@@ -1595,6 +1673,14 @@ def _(centring_condition, centring_group, centring_records, mo):
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Manual centring
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(centring_condition, centring_group, centring_hour, centring_records, mo):
     _replicates = sorted(
         {
@@ -1612,7 +1698,6 @@ def _(centring_condition, centring_group, centring_hour, centring_records, mo):
     mo.vstack(
         [
             mo.md(
-                "### Manual centring\n\n"
                 "One image, uncropped and unmasked, placed so that its current "
                 "centre (automatic fit plus any manual correction) sits in the "
                 "middle of the dashed training frame. The blue circle is the "
@@ -1897,6 +1982,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Export and load alignment
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(Path, mo):
     # Relative alignment paths are relative to the repository root, as in
     # data.micropattern.cleaning.alignment_file.
@@ -1921,7 +2014,6 @@ def _(Path, mo):
     mo.vstack(
         [
             mo.md(
-                "### Export and load alignment\n\n"
                 "The dataset is fixed, so the colony centres are computed once "
                 "and saved in a file that training reads "
                 "(`data.micropattern.cleaning.alignment_file`).\n\n"
@@ -2185,6 +2277,7 @@ def _(
             downsample=DISPLAY_DOWNSAMPLE,
             replicate_indices=selection["replicates"],
             experiment_groups=selection["groups"],
+            excluded_measurements=selection["excluded"],
             hist_eqs=tuple(training_settings["histogram_percentiles"]),
             intensity_factors=training_settings["intensity_factors"],
             cleaning=MicropatternCleaningConfig(**_settings),
@@ -2232,6 +2325,14 @@ def _(
 
 @app.cell(hide_code=True)
 def _(mo):
+    mo.md(r"""
+    ### Quality flags
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
     flags_path = mo.ui.text(
         value="Experiments/micropatterns/conf/quality/260726_quality_flags.yaml",
         label="Quality flags file (relative to the repository root)",
@@ -2242,7 +2343,6 @@ def _(mo):
     mo.vstack(
         [
             mo.md(
-                "### Quality flags\n\n"
                 "Images flagged as low quality under **Manual centring**. "
                 "**Export flags** writes them to the file that training reads "
                 "(`data.micropattern.quality_flags_file`), which then treats each "
@@ -2333,6 +2433,14 @@ def _(get_flags, image_key, mo, raw_images, record_label):
 
 @app.cell(hide_code=True)
 def _(mo):
+    mo.md(r"""
+    ### Local cache of cleaned images
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
     from Common.dataloader.disk_cache import cache_dir_from_environment as _from_environment
 
     cache_dir = mo.ui.text(
@@ -2345,7 +2453,6 @@ def _(mo):
     mo.vstack(
         [
             mo.md(
-                "### Local cache of cleaned images\n\n"
                 "Cleaning (intensity factors, hot pixels, background removal "
                 "and block-averaging) is the slow part of loading. With "
                 "`DATA_CACHE_DIR` set (e.g. in `.env`), the training loader "
@@ -2446,6 +2553,7 @@ def _(
 @app.cell(hide_code=True)
 def _(
     CHANNEL_SOURCE,
+    bound_sources,
     clean_channel_with,
     cleaning_settings,
     flagged_indices,
@@ -2453,49 +2561,59 @@ def _(
     image_geometry,
     image_source,
     inside_only,
+    knockout_bounds,
     low_percentiles,
     mo,
     normalise_mode,
     np,
-    percentile_bins,
     place_image,
-    reference_for,
     rescale,
-    rescaling_reference,
-    rescaling_trajectories,
     trajectories,
+    trajectory_bins,
 ):
-    def live_channel(name, trajectory):
+    def live_channel(name, trajectory, normalisation=None, knockout_mode=None):
         """Process one channel with the current controls, for the live views.
+
+        ``normalisation`` and ``knockout_mode`` replace the section 5 choices
+        of how bounds are shared, to compare them side by side.
 
         Returns ``(bounds, images)``: the clipping bounds used for
         ``trajectory`` and ``{hour: (normalised, mask)}`` for its measured
         timesteps, at the training resolution and not yet zeroed outside the
         mask. Shared bounds (averaged or pooled) need every trajectory of the
-        channel, and control bounds for knockouts need the control
-        replicates, so those images are processed too. Results are cached.
+        channel, and control or joint knockout bounds need the other
+        conditions of the replicate, so those images are processed too.
+        Results are cached.
         """
         group, channel = CHANNEL_SOURCE[name]
         low, high = low_percentiles.value[name], high_percentiles.value[name]
         if low >= high:
             raise ValueError(f"Low % must be below high % for {name}")
-        if normalise_mode.value == "per_replicate":
-            needed = [trajectory]
-            if trajectory in rescaling_reference:
-                needed.append(rescaling_reference[trajectory])
-        else:
-            needed = list(rescaling_trajectories)
+        normalisation = normalisation or normalise_mode.value
+        knockout_mode = knockout_mode or knockout_bounds.value
+        sources = bound_sources(knockout_mode)
+
+        def sets_bounds(other):
+            """Whether ``other`` can change the bounds of ``trajectory``."""
+            if normalisation != "per_replicate" or other == trajectory:
+                return True
+            if other[1] != trajectory[1]:
+                return False
+            if knockout_mode == "control":
+                return other[0] == "ctrl" and trajectory[0] != "ctrl"
+            return knockout_mode == "joint"
+
         needed = [
             other
-            for other in needed
-            if other in rescaling_trajectories
-            and any(member_group == group for member_group, _ in rescaling_trajectories[other])
+            for other in sources
+            if sets_bounds(other)
+            and any(member_group == group for member_group, _ in sources[other])
         ]
         indices = sorted(
             {
                 index
                 for other in needed
-                for (member_group, _), index in rescaling_trajectories[other].items()
+                for (member_group, _), index in sources[other].items()
                 if member_group == group
             }
         )
@@ -2512,14 +2630,12 @@ def _(
         for other in needed:
             values = [
                 placed[index][0][placed[index][1]] if inside_only.value else placed[index][0].ravel()
-                for (member_group, _), index in rescaling_trajectories[other].items()
+                for (member_group, _), index in sources[other].items()
                 if member_group == group and index not in flagged_indices
             ]
             if values:
                 samples[other] = np.concatenate(values)
-        bounds = percentile_bins(
-            samples, low, high, normalise_mode.value, reference=reference_for(group, samples)
-        )[trajectory]
+        bounds = trajectory_bins(samples, low, high, normalisation, knockout_mode)[trajectory]
         images = {
             hour: (rescale(placed[index][0], *bounds), placed[index][1])
             for (member_group, hour), index in trajectories[trajectory].items()
@@ -2531,10 +2647,18 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### One channel over time
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     image_source,
     inside_only,
-    knockout_reference,
+    knockout_bounds,
     loaded_names,
     mo,
     normalise_mode,
@@ -2555,7 +2679,6 @@ def _(
     mo.vstack(
         [
             mo.md(
-                "### One channel over time\n\n"
                 "Raw (top) and processed (bottom) images of one channel for "
                 "one trajectory. Raw images are as stored, before the intensity "
                 "factor, background removal or centring, and share one colour "
@@ -2577,10 +2700,10 @@ def _(
             mo.md(
                 "**Intensity rescaling.** The same controls as in section 5 "
                 "(changing them here changes them there too). Pick a knockout "
-                "trajectory and toggle the control bounds to see how much of "
+                "trajectory and switch the knockout bounds to see how much of "
                 "its intensity change is kept."
             ),
-            mo.hstack([normalise_mode, knockout_reference], justify="start"),
+            mo.hstack([normalise_mode, knockout_bounds], justify="start"),
             mo.hstack([image_source, inside_only, zero_outside], justify="start"),
             strip_run,
         ]
@@ -2594,6 +2717,7 @@ def _(
     block_mean,
     flagged_indices,
     high_percentiles,
+    knockout_bounds,
     live_channel,
     low_percentiles,
     mo,
@@ -2602,7 +2726,6 @@ def _(
     outline_flagged,
     plt,
     raw_images,
-    rescaling_reference,
     selection,
     show_figure,
     strip_channel,
@@ -2662,18 +2785,19 @@ def _(
     _axes[0, 0].set_ylabel("raw", fontsize=9)
     _axes[1, 0].set_ylabel("processed", fontsize=9)
     # Where the clipping bounds come from, for the title.
-    if _trajectory in rescaling_reference:
+    _source = {
+        "per_replicate": "own bounds",
+        "replicate_mean": "bounds averaged over replicates",
+        "pooled": "pooled bounds",
+    }[normalise_mode.value]
+    if knockout_bounds.value == "joint":
+        _source += ", widest over conditions"
+    elif knockout_bounds.value == "control" and _trajectory[0] != "ctrl":
         _source = (
-            f"bounds of {trajectory_label(rescaling_reference[_trajectory])}"
+            f"bounds of {trajectory_label(('ctrl', _trajectory[1]))}"
             if normalise_mode.value == "per_replicate"
             else "bounds from control replicates"
         )
-    else:
-        _source = {
-            "per_replicate": "own bounds",
-            "replicate_mean": "bounds averaged over replicates",
-            "pooled": "pooled bounds",
-        }[normalise_mode.value]
     _figure.suptitle(
         f"{_name}, {trajectory_label(_trajectory)}: clipped to "
         f"{_bounds[0]:.1f}–{_bounds[1]:.1f} ({_source})",
@@ -2728,6 +2852,690 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Duplicate channels
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(MICROPATTERN_260726_SCHEMA, loaded_names, mo, selection):
+    _marker = {
+        _channel.name: _channel.marker
+        for _channel in MICROPATTERN_260726_SCHEMA.measurement_channels
+    }
+    # Loaded measurement names of each marker: {marker: (name, ...)}.
+    MARKER_CHANNELS = {
+        _m: tuple(_name for _name in loaded_names if _marker[_name] == _m)
+        for _m in dict.fromkeys(_marker[_name] for _name in loaded_names)
+    }
+    # Start on a marker measured in several groups, if there is one.
+    _duplicated = [_m for _m, _n in MARKER_CHANNELS.items() if len(_n) > 1]
+    duplicate_marker = mo.ui.dropdown(
+        options=list(MARKER_CHANNELS),
+        value=(_duplicated or list(MARKER_CHANNELS))[0],
+        label="Marker",
+    )
+    duplicate_conditions = mo.ui.multiselect(
+        options=list(selection["conditions"]),
+        value=list(selection["conditions"]),
+        label="Conditions",
+    )
+    duplicate_replicates = mo.ui.multiselect(
+        options={f"replicate {_r + 1}": _r for _r in selection["replicates"]},
+        value=[f"replicate {selection['replicates'][0] + 1}"],
+        label="Replicates",
+    )
+    duplicate_hours = mo.ui.multiselect(
+        options={f"{_hour}h": _hour for _hour in selection["timesteps"]},
+        value=[f"{_hour}h" for _hour in selection["timesteps"]],
+        label="Timesteps",
+    )
+    duplicate_images = mo.ui.multiselect(
+        options={"Raw": "raw", "Processed": "processed"},
+        value=["Raw", "Processed"],
+        label="Images",
+    )
+    duplicate_layout = mo.ui.radio(
+        options={"Full rows": "rows", "Circle segments": "segments"},
+        value="Full rows",
+        label="Show as",
+        inline=True,
+    )
+    duplicate_raw_scale = mo.ui.checkbox(value=False, label="Raw: one colour scale per row / segment")
+    duplicate_histograms = mo.ui.checkbox(value=False, label="Show intensity histograms")
+    duplicate_run = mo.ui.run_button(label="Compare duplicates")
+    mo.vstack(
+        [
+            mo.md(
+                "- One marker across the experiment groups that measure it "
+                "(e.g. SOX17 in stains 1 and 2) and across conditions "
+                "(control vs knockouts). Each condition and group pair is "
+                "compared with every other.\n"
+                "- Pick replicates and timesteps: every pair is one column.\n"
+                "- **Full rows**: one row per condition and group. **Circle "
+                "segments**: one image per column, each condition and group "
+                "filling one segment of the colony (needs centring, section 3).\n"
+                "- Raw images are before the intensity factor and background "
+                "removal, centred like the processed ones, and on one colour "
+                "scale (0.5–99.5 percentiles) unless set per row. Processed "
+                "images use the section 2 and 5 settings (see **Knockout "
+                "bounds** for knockout intensity changes).\n"
+                "- Histograms and the table use pixels inside the mask. "
+                "Correlation and difference compare centred colonies pixel by pixel."
+            ),
+            mo.hstack([duplicate_marker, duplicate_conditions, duplicate_images], justify="start"),
+            mo.hstack([duplicate_replicates, duplicate_hours], justify="start"),
+            mo.hstack(
+                [duplicate_layout, duplicate_raw_scale, duplicate_histograms], justify="start"
+            ),
+            duplicate_run,
+        ]
+    )
+    return (
+        MARKER_CHANNELS,
+        duplicate_conditions,
+        duplicate_histograms,
+        duplicate_hours,
+        duplicate_images,
+        duplicate_layout,
+        duplicate_marker,
+        duplicate_raw_scale,
+        duplicate_replicates,
+        duplicate_run,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    CHANNEL_SOURCE,
+    MARKER_CHANNELS,
+    block_mean,
+    duplicate_conditions,
+    duplicate_histograms,
+    duplicate_hours,
+    duplicate_images,
+    duplicate_layout,
+    duplicate_marker,
+    duplicate_raw_scale,
+    duplicate_replicates,
+    duplicate_run,
+    flagged_indices,
+    high_percentiles,
+    image_geometry,
+    live_channel,
+    low_percentiles,
+    mo,
+    ndi,
+    np,
+    outline_flagged,
+    place_image,
+    plt,
+    raw_images,
+    selection,
+    show_figure,
+    trajectories,
+    zero_outside,
+):
+    mo.stop(not duplicate_run.value, mo.md("Press **Compare duplicates** to draw this view."))
+    _names = MARKER_CHANNELS[duplicate_marker.value]
+    _conditions = [_c for _c in selection["conditions"] if _c in duplicate_conditions.value]
+    _kinds = [_kind for _kind in ("raw", "processed") if _kind in duplicate_images.value]
+    _replicates = [
+        _r
+        for _r in sorted(duplicate_replicates.value)
+        if any((_c, _r) in trajectories for _c in _conditions)
+    ]
+    _hours = sorted(duplicate_hours.value)
+    _columns = [(_r, _h) for _r in _replicates for _h in _hours]
+    mo.stop(
+        not (_columns and _kinds),
+        mo.md("Pick at least one image type, condition, timestep and replicate with images."),
+    )
+    _invalid = [_n for _n in _names if low_percentiles.value[_n] >= high_percentiles.value[_n]]
+    mo.stop(_invalid, mo.md(f"Low % must be below high % for `{', '.join(_invalid)}`."))
+
+    # Each compared unit is a (condition, name) pair. Labels leave out the
+    # part that is the same for all of them: "ctrl s1", "s2", "sl0".
+    _units = [(_c, _n) for _c in _conditions for _n in _names]
+
+    def _label(unit):
+        condition, name = unit
+        group = name.split("/")[0].replace("cell_fate_", "").replace("_", " ")
+        parts = ([condition] if len(_conditions) > 1 else []) + ([group] if len(_names) > 1 else [])
+        return " ".join(parts) or group
+
+    # {(unit, replicate, hour): {"index", "raw", "processed", "mask"}} at the
+    # training resolution, centred as in section 3.
+    _panels = {}
+    for _unit in _units:
+        _condition, _name = _unit
+        _group, _channel = CHANNEL_SOURCE[_name]
+        for _replicate in _replicates:
+            _trajectory = (_condition, _replicate)
+            if _trajectory not in trajectories:
+                continue
+            _processed = live_channel(_name, _trajectory)[1] if "processed" in _kinds else {}
+            for _hour in _hours:
+                _index = trajectories[_trajectory].get((_group, _hour))
+                if _index is None:
+                    continue
+                _shift, _mask = image_geometry[_index]
+                _raw = block_mean(raw_images[_index]["channels"][..., _channel].astype(np.float32))
+                _panels[(_unit, _replicate, _hour)] = {
+                    "index": _index,
+                    "raw": place_image(_raw, _shift),
+                    "processed": _processed[_hour][0] if _hour in _processed else None,
+                    "mask": _mask,
+                }
+    mo.stop(not _panels, mo.md("None of the chosen images are loaded."))
+
+    # Raw colour scale: shared by all units, or one per unit.
+    _raw_limits = {}
+    for _unit in _units:
+        _scale_units = (_unit,) if duplicate_raw_scale.value else _units
+        _values = [_p["raw"].ravel() for _k, _p in _panels.items() if _k[0] in _scale_units]
+        if _values:
+            _raw_limits[_unit] = np.percentile(np.concatenate(_values), (0.5, 99.5))
+
+    def _display(key, kind):
+        """One panel on a 0-1 colour scale."""
+        panel = _panels[key]
+        if kind == "processed":
+            return panel["processed"] * panel["mask"] if zero_outside.value else panel["processed"]
+        low, high = _raw_limits[key[0]]
+        return np.clip((panel["raw"] - low) / max(high - low, 1e-12), 0.0, 1.0)
+
+    def _clean_axis(axis):
+        axis.set_xticks([])
+        axis.set_yticks([])
+
+    _cmap = plt.get_cmap("magma").copy()
+    _cmap.set_bad("0.85")
+    _column_titles = [f"replicate {_r + 1}, {_h}h" for _r, _h in _columns]
+
+    if duplicate_layout.value == "rows":
+        _rows = [(_kind, _unit) for _kind in _kinds for _unit in _units]
+        _figure, _axes = plt.subplots(
+            len(_rows), len(_columns), figsize=(2.4 * len(_columns), 2.4 * len(_rows)), squeeze=False
+        )
+        for _row, (_kind, _unit) in enumerate(_rows):
+            _axes[_row, 0].set_ylabel(f"{_kind}\n{_label(_unit)}", fontsize=9)
+            for _column, (_replicate, _hour) in enumerate(_columns):
+                _axis = _axes[_row, _column]
+                _clean_axis(_axis)
+                if _row == 0:
+                    _axis.set_title(_column_titles[_column], fontsize=9)
+                _key = (_unit, _replicate, _hour)
+                if _key not in _panels:
+                    _axis.set_facecolor("0.85")
+                    continue
+                if _panels[_key]["index"] in flagged_indices:
+                    outline_flagged(_axis)
+                _axis.imshow(_display(_key, _kind), cmap=_cmap, vmin=0, vmax=1)
+                if _kind == "raw" or not zero_outside.value:
+                    _axis.contour(_panels[_key]["mask"], levels=[0.5], colors="cyan", linewidths=0.4)
+    else:
+        _figure, _axes = plt.subplots(
+            len(_kinds), len(_columns), figsize=(3.0 * len(_columns), 3.0 * len(_kinds)), squeeze=False
+        )
+        _shape = next(iter(_panels.values()))["raw"].shape
+        _centre = ndi.center_of_mass(next(iter(_panels.values()))["mask"])
+        _rows_grid, _columns_grid = np.indices(_shape)
+        # Clockwise angle from 12 o'clock, split into one segment per unit.
+        _angle = np.mod(
+            np.arctan2(_columns_grid - _centre[1], _centre[0] - _rows_grid), 2 * np.pi
+        )
+        _segment = np.minimum((_angle / (2 * np.pi) * len(_units)).astype(int), len(_units) - 1)
+        _reach = max(_shape)
+        for _row, _kind in enumerate(_kinds):
+            _axes[_row, 0].set_ylabel(_kind, fontsize=9)
+            for _column, (_replicate, _hour) in enumerate(_columns):
+                _axis = _axes[_row, _column]
+                _clean_axis(_axis)
+                _composite = np.full(_shape, np.nan, dtype=np.float32)
+                _flagged = []
+                for _k, _unit in enumerate(_units):
+                    _key = (_unit, _replicate, _hour)
+                    if _key not in _panels:
+                        continue
+                    _inside = _segment == _k
+                    _composite[_inside] = _display(_key, _kind)[_inside]
+                    if _panels[_key]["index"] in flagged_indices:
+                        _flagged.append(_label(_unit))
+                _axis.imshow(_composite, cmap=_cmap, vmin=0, vmax=1)
+                for _k, _unit in enumerate(_units):
+                    _start = 2 * np.pi * _k / len(_units)
+                    _middle = 2 * np.pi * (_k + 0.5) / len(_units)
+                    if len(_units) > 1:
+                        _axis.plot(
+                            [_centre[1], _centre[1] + _reach * np.sin(_start)],
+                            [_centre[0], _centre[0] - _reach * np.cos(_start)],
+                            color="white",
+                            linewidth=0.8,
+                        )
+                    _axis.text(
+                        _centre[1] + 0.3 * _shape[1] * np.sin(_middle),
+                        _centre[0] - 0.3 * _shape[0] * np.cos(_middle),
+                        _label(_unit),
+                        color="white",
+                        fontsize=7,
+                        ha="center",
+                        va="center",
+                    )
+                _axis.set_xlim(-0.5, _shape[1] - 0.5)
+                _axis.set_ylim(_shape[0] - 0.5, -0.5)
+                _title = _column_titles[_column] if _row == 0 else ""
+                if _flagged:
+                    _title += f"\nflagged: {', '.join(_flagged)}"
+                    outline_flagged(_axis)
+                _axis.set_title(_title, fontsize=8)
+    _scale_text = "per row / segment" if duplicate_raw_scale.value else "shared"
+    _figure.suptitle(
+        f"{duplicate_marker.value}, {', '.join(_conditions)} (raw colour scale {_scale_text})",
+        fontsize=10,
+    )
+    _figure.tight_layout()
+    _views = [show_figure(_figure)]
+
+    if duplicate_histograms.value:
+        _inside_values = {
+            (_kind, _key): _panels[_key][_kind][_panels[_key]["mask"]]
+            for _kind in _kinds
+            for _key in _panels
+        }
+        _bins = {"processed": np.linspace(0.0, 1.0, 51)}
+        if "raw" in _kinds:
+            # Shared raw bins up to the pooled 99.9th percentile; brighter
+            # pixels are counted in the last bin.
+            _raw_top = max(
+                float(
+                    np.percentile(
+                        np.concatenate([_v for (_kind, _), _v in _inside_values.items() if _kind == "raw"]),
+                        99.9,
+                    )
+                ),
+                1.0,
+            )
+            _bins["raw"] = np.linspace(0.0, _raw_top, 81)
+        _histograms, _hist_axes = plt.subplots(
+            len(_kinds),
+            len(_columns),
+            figsize=(2.6 * len(_columns), 2.3 * len(_kinds)),
+            squeeze=False,
+            sharey="row",
+        )
+        for _row, _kind in enumerate(_kinds):
+            _hist_axes[_row, 0].set_ylabel(f"{_kind}: pixel count", fontsize=8)
+            for _column, (_replicate, _hour) in enumerate(_columns):
+                _axis = _hist_axes[_row, _column]
+                if _row == 0:
+                    _axis.set_title(_column_titles[_column], fontsize=8)
+                for _k, _unit in enumerate(_units):
+                    _key = (_unit, _replicate, _hour)
+                    if (_kind, _key) not in _inside_values:
+                        continue
+                    _axis.hist(
+                        np.minimum(_inside_values[(_kind, _key)], _bins[_kind][-1]),
+                        bins=_bins[_kind],
+                        histtype="step",
+                        color=f"C{_k}",
+                        label=_label(_unit),
+                    )
+                _axis.set_yscale("log")
+                _axis.tick_params(labelsize=6)
+        _hist_axes[0, 0].legend(fontsize=7)
+        _histograms.tight_layout()
+        _views.append(show_figure(_histograms))
+
+    # Differences between each pair of units, per column.
+    _table = []
+    for _replicate, _hour in _columns:
+        for _i, _first in enumerate(_units):
+            for _second in _units[_i + 1 :]:
+                _a = _panels.get((_first, _replicate, _hour))
+                _b = _panels.get((_second, _replicate, _hour))
+                if _a is None or _b is None:
+                    continue
+                _difference = {
+                    "replicate": _replicate + 1,
+                    "timestep": f"{_hour}h",
+                    "pair": f"{_label(_second)} vs {_label(_first)}",
+                    "raw mean ratio": round(
+                        float(_b["raw"][_b["mask"]].mean() / max(_a["raw"][_a["mask"]].mean(), 1e-12)), 3
+                    ),
+                }
+                if _a["processed"] is not None and _b["processed"] is not None:
+                    _both = _a["mask"] & _b["mask"]
+                    _x, _y = _a["processed"][_both], _b["processed"][_both]
+                    _difference["processed mean difference"] = round(float(_y.mean() - _x.mean()), 3)
+                    _difference["processed mean |difference|"] = round(float(np.abs(_y - _x).mean()), 3)
+                    _difference["processed correlation"] = (
+                        round(float(np.corrcoef(_x, _y)[0, 1]), 3)
+                        if _x.std() > 0 and _y.std() > 0
+                        else None
+                    )
+                _table.append(_difference)
+    if _table:
+        _views.append(mo.ui.table(_table, selection=None))
+    mo.vstack(_views)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Normalisation comparison
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    KNOCKOUT_BOUNDS,
+    NORMALISATION_MODES,
+    joint_missing,
+    knockout_bounds,
+    loaded_names,
+    mo,
+    normalise_mode,
+    selection,
+):
+    bounds_channel = mo.ui.dropdown(options=loaded_names, value=loaded_names[0], label="Channel")
+    bounds_conditions = mo.ui.multiselect(
+        options=list(selection["conditions"]),
+        value=list(selection["conditions"]),
+        label="Conditions",
+    )
+    bounds_normalisations = mo.ui.multiselect(
+        options=list(NORMALISATION_MODES),
+        value=[normalise_mode.value],
+        label="Normalisation",
+    )
+    bounds_knockout_modes = mo.ui.multiselect(
+        options=[_mode for _mode in KNOCKOUT_BOUNDS if not (_mode == "joint" and joint_missing)],
+        value=list(
+            dict.fromkeys(
+                [knockout_bounds.value]
+                + [_mode for _mode in ("selected", "joint") if not (_mode == "joint" and joint_missing)]
+            )
+        ),
+        label="Knockout bounds",
+    )
+    bounds_replicates = mo.ui.multiselect(
+        options={f"replicate {_r + 1}": _r for _r in selection["replicates"]},
+        value=[f"replicate {selection['replicates'][0] + 1}"],
+        label="Replicates",
+    )
+    bounds_hours = mo.ui.multiselect(
+        options={f"{_hour}h": _hour for _hour in selection["timesteps"]},
+        value=[f"{_hour}h" for _hour in selection["timesteps"]],
+        label="Timesteps",
+    )
+    bounds_layout = mo.ui.radio(
+        options={"Circle segments": "segments", "Full rows": "rows"},
+        value="Circle segments",
+        label="Show as",
+        inline=True,
+    )
+    bounds_show_raw = mo.ui.checkbox(value=False, label="Add raw images")
+    bounds_run = mo.ui.run_button(label="Compare bounds")
+    mo.vstack(
+        [
+            mo.md(
+                "- One channel, normalised with each chosen way of setting "
+                "the bounds: one row per normalisation and knockout bounds pair.\n"
+                "- **Circle segments**: each condition fills one segment of "
+                "the colony (needs centring, section 3). **Full rows**: one "
+                "row per condition as well.\n"
+                "- **Add raw images**: the images as stored (no intensity "
+                "factor, cleaning, centring or mask), only averaged to the "
+                "display resolution, on one colour scale (0.5–99.5 percentiles).\n"
+                "- Other settings as in sections 2 and 5. The table lists the "
+                "bounds of each trajectory."
+                + ("\n- *joint* needs sl0 and sl24 loaded." if joint_missing else "")
+            ),
+            mo.hstack([bounds_channel, bounds_conditions, bounds_replicates, bounds_hours], justify="start"),
+            mo.hstack(
+                [bounds_normalisations, bounds_knockout_modes, bounds_layout, bounds_show_raw],
+                justify="start",
+            ),
+            bounds_run,
+        ]
+    )
+    return (
+        bounds_channel,
+        bounds_conditions,
+        bounds_hours,
+        bounds_knockout_modes,
+        bounds_layout,
+        bounds_normalisations,
+        bounds_replicates,
+        bounds_run,
+        bounds_show_raw,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    CHANNEL_SOURCE,
+    KNOCKOUT_BOUNDS,
+    NORMALISATION_MODES,
+    block_mean,
+    bounds_channel,
+    bounds_conditions,
+    bounds_hours,
+    bounds_knockout_modes,
+    bounds_layout,
+    bounds_normalisations,
+    bounds_replicates,
+    bounds_run,
+    bounds_show_raw,
+    flagged_indices,
+    high_percentiles,
+    live_channel,
+    low_percentiles,
+    mo,
+    ndi,
+    np,
+    outline_flagged,
+    plt,
+    raw_images,
+    selection,
+    show_figure,
+    trajectories,
+    trajectory_label,
+    zero_outside,
+):
+    mo.stop(not bounds_run.value, mo.md("Press **Compare bounds** to draw this view."))
+    _name = bounds_channel.value
+    _group = CHANNEL_SOURCE[_name][0]
+    _conditions = [_c for _c in selection["conditions"] if _c in bounds_conditions.value]
+    # Each row of the figure is one (normalisation, knockout bounds) pair.
+    _settings = [
+        (_normalisation, _mode)
+        for _normalisation in NORMALISATION_MODES
+        if _normalisation in bounds_normalisations.value
+        for _mode in KNOCKOUT_BOUNDS
+        if _mode in bounds_knockout_modes.value
+    ]
+    _replicates = [
+        _r
+        for _r in sorted(bounds_replicates.value)
+        if any((_c, _r) in trajectories for _c in _conditions)
+    ]
+    _columns = [(_r, _h) for _r in _replicates for _h in sorted(bounds_hours.value)]
+    mo.stop(
+        not (_columns and _settings and _conditions),
+        mo.md("Pick at least one condition, normalisation, knockout bounds, timestep and replicate."),
+    )
+    mo.stop(
+        low_percentiles.value[_name] >= high_percentiles.value[_name],
+        mo.md(f"Low % must be below high % for `{_name}`."),
+    )
+
+    # {(setting, condition, replicate, hour): (image, mask, index)} and the
+    # bounds of each (setting, trajectory).
+    _panels, _bounds = {}, {}
+    for _setting in _settings:
+        for _condition in _conditions:
+            for _replicate in _replicates:
+                _trajectory = (_condition, _replicate)
+                if _trajectory not in trajectories:
+                    continue
+                _bounds[(_setting, _trajectory)], _images = live_channel(_name, _trajectory, *_setting)
+                for _replicate_hour in _columns:
+                    _hour = _replicate_hour[1]
+                    if _replicate_hour[0] != _replicate or _hour not in _images:
+                        continue
+                    _image, _mask = _images[_hour]
+                    _panels[(_setting, _condition, _replicate, _hour)] = (
+                        _image * _mask if zero_outside.value else _image,
+                        _mask,
+                        trajectories[_trajectory][(_group, _hour)],
+                    )
+    mo.stop(not _panels, mo.md("None of the chosen images are loaded."))
+    # Geometry of the circle segments, from a processed (centred) image.
+    _first_image, _first_mask, _ = next(iter(_panels.values()))
+
+    # Raw images as stored, only averaged to the display resolution, on one
+    # shared 0-1 colour scale. Their row has the setting None.
+    if bounds_show_raw.value:
+        _channel = CHANNEL_SOURCE[_name][1]
+        _raw = {}
+        for _condition in _conditions:
+            for _replicate, _hour in _columns:
+                _index = trajectories.get((_condition, _replicate), {}).get((_group, _hour))
+                if _index is not None:
+                    _raw[(_condition, _replicate, _hour)] = (
+                        block_mean(raw_images[_index]["channels"][..., _channel].astype(np.float32)),
+                        _index,
+                    )
+        if _raw:
+            _low, _high = np.percentile(
+                np.concatenate([_values.ravel() for _values, _ in _raw.values()]), (0.5, 99.5)
+            )
+            for (_condition, _replicate, _hour), (_values, _index) in _raw.items():
+                _panels[(None, _condition, _replicate, _hour)] = (
+                    np.clip((_values - _low) / max(_high - _low, 1e-12), 0.0, 1.0),
+                    None,
+                    _index,
+                )
+    _row_settings = ([None] if bounds_show_raw.value else []) + _settings
+
+    def _setting_label(setting):
+        return "raw" if setting is None else f"{setting[0]}\n{setting[1]}"
+
+    def _clean_axis(axis):
+        axis.set_xticks([])
+        axis.set_yticks([])
+
+    _cmap = plt.get_cmap("magma").copy()
+    _cmap.set_bad("0.85")
+    _column_titles = [f"replicate {_r + 1}, {_h}h" for _r, _h in _columns]
+
+    if bounds_layout.value == "rows":
+        _rows = [(_setting, _condition) for _setting in _row_settings for _condition in _conditions]
+        _figure, _axes = plt.subplots(
+            len(_rows), len(_columns), figsize=(2.4 * len(_columns), 2.4 * len(_rows)), squeeze=False
+        )
+        for _row, (_setting, _condition) in enumerate(_rows):
+            _axes[_row, 0].set_ylabel(f"{_setting_label(_setting)}\n{_condition}", fontsize=8)
+            for _column, (_replicate, _hour) in enumerate(_columns):
+                _axis = _axes[_row, _column]
+                _clean_axis(_axis)
+                if _row == 0:
+                    _axis.set_title(_column_titles[_column], fontsize=9)
+                _key = (_setting, _condition, _replicate, _hour)
+                if _key not in _panels:
+                    _axis.set_facecolor("0.85")
+                    continue
+                _image, _mask, _index = _panels[_key]
+                if _index in flagged_indices:
+                    outline_flagged(_axis)
+                _axis.imshow(_image, cmap=_cmap, vmin=0, vmax=1)
+                if _mask is not None and not zero_outside.value:
+                    _axis.contour(_mask, levels=[0.5], colors="cyan", linewidths=0.4)
+    else:
+        _figure, _axes = plt.subplots(
+            len(_row_settings), len(_columns), figsize=(3.0 * len(_columns), 3.0 * len(_row_settings)), squeeze=False
+        )
+        _shape = _first_image.shape
+        _centre = ndi.center_of_mass(_first_mask)
+        _rows_grid, _columns_grid = np.indices(_shape)
+        # Clockwise angle from 12 o'clock, split into one segment per condition.
+        _angle = np.mod(np.arctan2(_columns_grid - _centre[1], _centre[0] - _rows_grid), 2 * np.pi)
+        _segment = np.minimum((_angle / (2 * np.pi) * len(_conditions)).astype(int), len(_conditions) - 1)
+        _reach = max(_shape)
+        for _row, _setting in enumerate(_row_settings):
+            _axes[_row, 0].set_ylabel(_setting_label(_setting), fontsize=8)
+            for _column, (_replicate, _hour) in enumerate(_columns):
+                _axis = _axes[_row, _column]
+                _clean_axis(_axis)
+                _composite = np.full(_shape, np.nan, dtype=np.float32)
+                _flagged = []
+                for _k, _condition in enumerate(_conditions):
+                    _key = (_setting, _condition, _replicate, _hour)
+                    if _key not in _panels:
+                        continue
+                    _inside = _segment == _k
+                    _composite[_inside] = _panels[_key][0][_inside]
+                    if _panels[_key][2] in flagged_indices:
+                        _flagged.append(_condition)
+                _axis.imshow(_composite, cmap=_cmap, vmin=0, vmax=1)
+                for _k, _condition in enumerate(_conditions):
+                    _start = 2 * np.pi * _k / len(_conditions)
+                    _middle = 2 * np.pi * (_k + 0.5) / len(_conditions)
+                    if len(_conditions) > 1:
+                        _axis.plot(
+                            [_centre[1], _centre[1] + _reach * np.sin(_start)],
+                            [_centre[0], _centre[0] - _reach * np.cos(_start)],
+                            color="white",
+                            linewidth=0.8,
+                        )
+                    _axis.text(
+                        _centre[1] + 0.3 * _shape[1] * np.sin(_middle),
+                        _centre[0] - 0.3 * _shape[0] * np.cos(_middle),
+                        _condition,
+                        color="white",
+                        fontsize=7,
+                        ha="center",
+                        va="center",
+                    )
+                _axis.set_xlim(-0.5, _shape[1] - 0.5)
+                _axis.set_ylim(_shape[0] - 0.5, -0.5)
+                _title = _column_titles[_column] if _row == 0 else ""
+                if _flagged:
+                    _title += f"\nflagged: {', '.join(_flagged)}"
+                    outline_flagged(_axis)
+                _axis.set_title(_title, fontsize=8)
+    _figure.suptitle(f"{_name}, normalised (rows: normalisation / knockout bounds)", fontsize=10)
+    _figure.tight_layout()
+
+    _table = [
+        {
+            "normalisation": _setting[0],
+            "knockout bounds": _setting[1],
+            "trajectory": trajectory_label(_trajectory),
+            "low": round(_low, 2),
+            "high": round(_high, 2),
+        }
+        for (_setting, _trajectory), (_low, _high) in _bounds.items()
+    ]
+    mo.vstack([show_figure(_figure), mo.ui.table(_table, selection=None)])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Ball size comparison
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(loaded_names, mo, selection, trajectories, trajectory_label):
     ball_channel = mo.ui.dropdown(options=loaded_names, value=loaded_names[0], label="Channel")
     ball_trajectory = mo.ui.dropdown(
@@ -2749,7 +3557,6 @@ def _(loaded_names, mo, selection, trajectories, trajectory_label):
     mo.vstack(
         [
             mo.md(
-                "### Ball size comparison\n\n"
                 "The same image with the background removed using several "
                 "ball radii, at full resolution. The intensity factor, hot pixel "
                 "replacement and shrink factor from section 2 are applied; "
@@ -2857,6 +3664,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Hot pixel threshold comparison
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(loaded_names, mo, selection, trajectories, trajectory_label):
     hot_channel = mo.ui.dropdown(options=loaded_names, value=loaded_names[0], label="Channel")
     hot_trajectory = mo.ui.dropdown(
@@ -2881,7 +3696,6 @@ def _(loaded_names, mo, selection, trajectories, trajectory_label):
     mo.vstack(
         [
             mo.md(
-                "### Hot pixel threshold comparison\n\n"
                 "The same image with hot pixels replaced at several "
                 "thresholds, at full resolution. The intensity factor and hot pixel "
                 "window from section 2 are applied; the channel's own "
@@ -3002,6 +3816,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Stripe removal comparison
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(loaded_names, mo, selection, trajectories, trajectory_label):
     stripe_channel = mo.ui.dropdown(options=loaded_names, value=loaded_names[0], label="Channel")
     stripe_trajectory = mo.ui.dropdown(
@@ -3026,7 +3848,6 @@ def _(loaded_names, mo, selection, trajectories, trajectory_label):
     mo.vstack(
         [
             mo.md(
-                "### Stripe removal comparison\n\n"
                 "- Removes bands of raised background narrower than the width "
                 "(e.g. stitching seams in sum projections). Width 0 = off.\n"
                 "- Intensity factor, hot pixels and stripe block from section 2 "
@@ -3335,6 +4156,14 @@ def _(FATE_CLAUSE_COUNTS, get_weight_defaults, mo):
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Cell types at 48h
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     FATE_CELL_TYPES,
     FATE_MARKERS,
@@ -3388,7 +4217,6 @@ def _(
     mo.vstack(
         [
             mo.md(
-                "### Cell types at 48h\n\n"
                 "Pixels are labelled from the processed (normalised 0–1) "
                 "marker images at 48h, so the thresholds follow every control "
                 "above, including normalisation. A marker is **high** where its "
@@ -3720,6 +4548,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Radial cell-type prevalence
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(mo, trajectories):
     _conditions = list(dict.fromkeys(_condition for _condition, _ in trajectories))
     _replicates = sorted({_replicate for _, _replicate in trajectories})
@@ -3728,7 +4564,8 @@ def _(mo, trajectories):
     )
     radial_replicates = mo.ui.multiselect(
         options={f"replicate {_r + 1}": _r for _r in _replicates},
-        value=[f"replicate {_r + 1}" for _r in _replicates],
+        # value=[f"replicate {_r + 1}" for _r in _replicates],
+        value = None,
         label="Replicates",
     )
     radial_ring_count = mo.ui.slider(4, 40, value=12, label="Rings", show_value=True)
@@ -3740,7 +4577,6 @@ def _(mo, trajectories):
     mo.vstack(
         [
             mo.md(
-                "### Radial cell-type prevalence\n\n"
                 "The estimated share of each cell type in rings around the "
                 "colony centre (see **Two stains** above), using the rules "
                 "and thresholds above, so it follows every threshold and "
@@ -3991,6 +4827,14 @@ def _(BANDS, CELL_TYPE_COLOURS, Wedge):
 
 
 @app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Fit thresholds to radial targets
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     BANDS,
     CELL_TYPE_COLOURS,
@@ -4042,7 +4886,6 @@ def _(
     mo.vstack(
         [
             mo.md(
-                "### Fit thresholds to radial targets\n\n"
                 "Pick the cell type that should be the most common in the "
                 "centre, ring and periphery of each condition (*—* = no "
                 "target). Band edges are fractions of the colony radius, "
@@ -4413,6 +5256,14 @@ def _(
 
 @app.cell(hide_code=True)
 def _(mo):
+    mo.md(r"""
+    ### Export and load cell types
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
     cell_types_path = mo.ui.text(
         value="Experiments/micropatterns/conf/cell_types/260726_cell_types.yaml",
         label="Cell type file (relative to the repository root)",
@@ -4423,7 +5274,6 @@ def _(mo):
     mo.vstack(
         [
             mo.md(
-                "### Export and load cell types\n\n"
                 "**Export cell types** writes the thresholds, cell-type rules "
                 "(with their *or* rows) and stains above to a file, together "
                 "with the **Training settings** they were tuned with: the "
@@ -4505,6 +5355,14 @@ def _(
 
 @app.cell(column=2, hide_code=True)
 def _(mo):
+    mo.md(r"""
+    ## 5. Whole selection
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
     overview_button = mo.ui.run_button(label="Clean all loaded images")
     outlier_ratio = mo.ui.slider(
         1.1, 4.0, step=0.1, value=1.5, label="Flag images off by more than", show_value=True
@@ -4512,7 +5370,6 @@ def _(mo):
     mo.vstack(
         [
             mo.md(
-                "## 5. Whole selection\n\n"
                 "Replaces hot pixels and removes the background in every "
                 "loaded image with the current per-channel controls (about "
                 "0.1–0.2 s per channel for the background with shrink 4, plus "
@@ -4578,6 +5435,14 @@ def _(
         )
     overview = {"statistics": _statistics, "images": _images}
     return (overview,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Per-image intensities
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -4647,7 +5512,6 @@ def _(
     mo.vstack(
         [
             mo.md(
-                "### Per-image intensities\n\n"
                 "Each point is one image: hollow = raw (after the intensity factor), "
                 "filled = after hot pixel replacement and background removal. Colours: control blue, "
                 "knockout at 0h orange, knockout at 24h green. Replicates of "
@@ -4722,13 +5586,15 @@ def _(
         for _replicate in selection["replicates"]
         if _members(_condition, _replicate)
     }
-    # Control trajectories for every replicate, also when control is not a
-    # selected condition (its images are always loaded with knockouts). Used
-    # to rescale knockouts with control bounds.
-    control_trajectories = {
-        ("ctrl", _replicate): _members("ctrl", _replicate)
+    # Trajectories of every loaded condition for every replicate, also when
+    # control is not a selected condition (its images are always loaded with
+    # knockouts). Used for the control and joint knockout bounds.
+    condition_trajectories = {
+        (_condition, _replicate): _members(_condition, _replicate)
+        for _condition in ("ctrl", "sl0", "sl24")
+        if _condition == "ctrl" or _condition in selection["conditions"]
         for _replicate in selection["replicates"]
-        if _members("ctrl", _replicate)
+        if _members(_condition, _replicate)
     }
     _loaded_groups = {_entry["record"].group for _entry in raw_images}
     loaded_names = [
@@ -4736,12 +5602,21 @@ def _(
         for _group in MICROPATTERN_260726_SCHEMA.experiment_groups
         if _group.name in _loaded_groups
         for _name in GROUP_CHANNELS[_group.name]
+        if _name not in selection["excluded"]
     ]
-    return control_trajectories, loaded_names, trajectories
+    return condition_trajectories, loaded_names, trajectories
 
 
 @app.cell(hide_code=True)
-def _(NORMALISATION_MODES, mo):
+def _(mo):
+    mo.md(r"""
+    ### Intensity rescaling (normalisation)
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(KNOCKOUT_BOUNDS, NORMALISATION_MODES, mo):
     normalise_mode = mo.ui.dropdown(
         options={
             _description[0].upper() + _description[1:]: _mode
@@ -4758,13 +5633,16 @@ def _(NORMALISATION_MODES, mo):
         inline=True,
     )
     zero_outside = mo.ui.checkbox(value=True, label="Zero outside the mask")
-    knockout_reference = mo.ui.checkbox(
-        value=False, label="Rescale knockouts with control bounds"
+    knockout_bounds = mo.ui.dropdown(
+        options={
+            f"{_mode} ({_description})": _mode for _mode, _description in KNOCKOUT_BOUNDS.items()
+        },
+        value=f"selected ({KNOCKOUT_BOUNDS['selected']})",
+        label="Knockout bounds",
     )
     mo.vstack(
         [
             mo.md(
-                "### Intensity rescaling (normalisation)\n\n"
                 "Each channel is rescaled linearly so its low percentile maps "
                 "to 0 and its high percentile to 1, with clipping. The "
                 "percentiles are taken over all timesteps of a trajectory "
@@ -4777,56 +5655,66 @@ def _(NORMALISATION_MODES, mo):
                 "replicates (real ones included).\n"
                 "- *Pooled*: percentiles of all pixels together, as the "
                 "training loader does now.\n\n"
-                "**Rescale knockouts with control bounds** computes the "
-                "bounds from control data only and applies them to the "
-                "knockouts too, so a knockout's change in overall intensity "
-                "is kept rather than normalised away. Per replicate, each "
-                "knockout replicate uses the bounds of the control replicate "
-                "with the same number. In the shared modes, the average or "
-                "pool is over control trajectories only. Control images are "
-                "used even if control is not a selected condition. A "
-                "knockout without a matching control replicate keeps its "
-                "own bounds. These settings also apply to the live views in "
+                "**Knockout bounds**:\n\n"
+                "- *selected*: knockouts share bounds as set above.\n"
+                "- *control*: knockouts use the control bounds (per "
+                "replicate: the control replicate with the same number), so a "
+                "change in overall intensity is kept.\n"
+                "- *joint*: each condition is rescaled on its own, then all "
+                "use the widest range (per replicate: within each replicate). "
+                "Control bounds change only for channels where a knockout goes "
+                "outside them, listed in the table below. Needs sl0 and sl24 "
+                "loaded.\n\n"
+                "Control images are used even if control is not a selected "
+                "condition. These settings also apply to the live views in "
                 "the middle column."
             ),
             normalise_mode,
-            knockout_reference,
+            knockout_bounds,
             mo.hstack([image_source, inside_only, zero_outside], justify="start"),
         ]
     )
     return (
         image_source,
         inside_only,
-        knockout_reference,
+        knockout_bounds,
         normalise_mode,
         zero_outside,
     )
 
 
 @app.cell(hide_code=True)
-def _(control_trajectories, knockout_reference, trajectories):
-    # Trajectories whose pixels set the bounds, and which trajectory each one
-    # takes its bounds from (missing = itself).
-    if knockout_reference.value:
-        rescaling_trajectories = {**control_trajectories, **trajectories}
-        rescaling_reference = {
-            _trajectory: ("ctrl", _trajectory[1])
-            for _trajectory in trajectories
-            if _trajectory[0] != "ctrl"
-        }
-    else:
-        rescaling_trajectories = dict(trajectories)
-        rescaling_reference = {}
+def _(condition_trajectories, selection, trajectories):
+    # Knockout conditions that joint bounds need but were not loaded.
+    joint_missing = sorted({"sl0", "sl24"} - set(selection["conditions"]))
 
-    def reference_for(group, samples):
-        """``rescaling_reference`` limited to references with pixels of ``group`` in ``samples``."""
+    def bound_sources(knockout_mode):
+        """Trajectories whose pixels set the bounds: the selected ones, plus
+        the control (control bounds) or every condition (joint bounds) of
+        each selected replicate."""
+        if knockout_mode == "joint" and joint_missing:
+            raise ValueError("Joint knockout bounds need sl0 and sl24 loaded")
         return {
-            trajectory: source
-            for trajectory, source in rescaling_reference.items()
-            if source in samples and trajectory in samples
+            **{
+                trajectory: members
+                for trajectory, members in condition_trajectories.items()
+                if knockout_mode == "joint"
+                or (knockout_mode == "control" and trajectory[0] == "ctrl")
+            },
+            **trajectories,
         }
 
-    return reference_for, rescaling_reference, rescaling_trajectories
+    return bound_sources, joint_missing
+
+
+@app.cell(hide_code=True)
+def _(bound_sources, joint_missing, knockout_bounds, mo):
+    mo.stop(
+        knockout_bounds.value == "joint" and bool(joint_missing),
+        mo.md("Joint knockout bounds need all conditions loaded; also load " + ", ".join(joint_missing) + "."),
+    )
+    rescaling_trajectories = bound_sources(knockout_bounds.value)
+    return (rescaling_trajectories,)
 
 
 @app.cell(hide_code=True)
@@ -5099,16 +5987,17 @@ def _(
     CHANNEL_SOURCE,
     flagged_indices,
     high_percentiles,
+    condition_bins,
     inside_only,
+    knockout_bounds,
     loaded_names,
     low_percentiles,
     mo,
     normalise_mode,
     np,
-    percentile_bins,
     prepared,
-    reference_for,
     rescaling_trajectories,
+    trajectory_bins,
 ):
     _invalid = [
         _name
@@ -5121,6 +6010,7 @@ def _(
     )
     # Clipping bounds for every (channel, trajectory), from all its timesteps.
     normalisation_bins = {}
+    joint_bounds_rows = {}
     for _name in loaded_names:
         _group, _channel = CHANNEL_SOURCE[_name]
         _samples = {}
@@ -5136,15 +6026,53 @@ def _(
                 _samples[_trajectory] = np.concatenate(_values)
         if not _samples:
             continue
-        for _trajectory, _bounds in percentile_bins(
-            _samples,
-            low_percentiles.value[_name],
-            high_percentiles.value[_name],
-            normalise_mode.value,
-            reference=reference_for(_group, _samples),
+        _percentiles = (low_percentiles.value[_name], high_percentiles.value[_name])
+        for _trajectory, _bounds in trajectory_bins(
+            _samples, *_percentiles, normalise_mode.value, knockout_bounds.value
         ).items():
             normalisation_bins[(_name, _trajectory)] = _bounds
-    return (normalisation_bins,)
+        if knockout_bounds.value == "joint":
+            # Each condition's own bounds next to the joint ones, one row per
+            # channel (per channel and replicate with per-replicate bounds).
+            for _trajectory, _own in condition_bins(
+                _samples, *_percentiles, normalise_mode.value
+            ).items():
+                _replicate = (
+                    _trajectory[1] + 1 if normalise_mode.value == "per_replicate" else "all"
+                )
+                _row = joint_bounds_rows.setdefault(
+                    (_name, _replicate), {"channel": _name, "replicate": _replicate}
+                )
+                _row[_trajectory[0]] = "{:.1f} – {:.1f}".format(*_own)
+                _row["joint"] = "{:.1f} – {:.1f}".format(
+                    *normalisation_bins[(_name, _trajectory)]
+                )
+    for _row in joint_bounds_rows.values():
+        _row["widened"] = _row.get("ctrl") != _row["joint"]
+    joint_bounds_rows = list(joint_bounds_rows.values())
+    return joint_bounds_rows, normalisation_bins
+
+
+@app.cell(hide_code=True)
+def _(joint_bounds_rows, knockout_bounds, mo):
+    mo.stop(knockout_bounds.value != "joint")
+    _widened = sorted({_row["channel"] for _row in joint_bounds_rows if _row["widened"]})
+    mo.vstack(
+        [
+            mo.md(
+                "**Joint knockout bounds.** Each condition's own bounds and "
+                "the joint bounds all conditions use. *widened*: a knockout "
+                "goes outside the control range, so the control bounds change. "
+                + (
+                    "Widened: " + ", ".join(f"`{_n}`" for _n in _widened) + "."
+                    if _widened
+                    else "No channel is widened."
+                )
+            ),
+            mo.ui.table(joint_bounds_rows, selection=None),
+        ]
+    )
+    return
 
 
 @app.cell(hide_code=True)
@@ -5301,6 +6229,490 @@ def _(
             ),
         ]
     )
+    return
+
+
+@app.cell(column=3, hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 6. Cleaning steps figure
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(image_key, mo, raw_images, trajectories):
+    # Images that can be shown, as (condition, replicate, group, hour) -> raw image index
+    steps_images = {
+        (*_trajectory, _group, _hour): _index
+        for _trajectory, _members in trajectories.items()
+        for (_group, _hour), _index in _members.items()
+    }
+    # Default: the colony of the 3D -> 2D schematic (Experiments/micropatterns/schematics.py)
+    _schematic_key = "cell_fate_markers/sl24_s2/B3_F4_48h"
+    _default = next(
+        (
+            _key
+            for _key, _index in steps_images.items()
+            if image_key(raw_images[_index]["record"]) == _schematic_key
+        ),
+        None,
+    )
+    _start = _default or next(iter(steps_images))
+
+    def _choices(position):
+        return sorted({_key[position] for _key in steps_images})
+
+    steps_condition = mo.ui.dropdown(options=_choices(0), value=_start[0], label="Condition")
+    steps_replicate = mo.ui.dropdown(
+        options={str(_r + 1): _r for _r in _choices(1)}, value=str(_start[1] + 1), label="Replicate"
+    )
+    steps_group = mo.ui.dropdown(options=_choices(2), value=_start[2], label="Experiment group")
+    steps_hour = mo.ui.dropdown(
+        options={f"{_h}h": _h for _h in _choices(3)}, value=f"{_start[3]}h", label="Timestep"
+    )
+    steps_run = mo.ui.run_button(label="Draw cleaning steps")
+    mo.vstack(
+        [
+            mo.md(
+                "- One image after each pre-processing step, with the current settings\n"
+                "- The last two panels need **Clean all loaded images** (section 5)\n"
+                + (
+                    ""
+                    if _default
+                    else f"- The schematic's colony (`{_schematic_key}`) is not loaded: load "
+                    "**Nodal knockout at 24h** and **Cell fate (stain 2)** in section 1\n"
+                )
+            ),
+            mo.hstack([steps_condition, steps_replicate, steps_group, steps_hour], justify="start"),
+            steps_run,
+        ]
+    )
+    return (
+        steps_condition,
+        steps_group,
+        steps_hour,
+        steps_images,
+        steps_replicate,
+        steps_run,
+    )
+
+
+@app.cell(hide_code=True)
+def _(GROUP_CHANNELS, mo, steps_group):
+    _names = list(GROUP_CHANNELS[steps_group.value])
+    steps_channels = mo.ui.multiselect(options=_names, value=_names, label="Channels")
+    steps_layout = mo.ui.dropdown(
+        options={"One composite": "composite", "One row per channel": "rows"},
+        value="One composite",
+        label="Layout",
+    )
+    steps_scale = mo.ui.dropdown(
+        options={
+            "Each panel its own": "panel",
+            "Same as the raw panel": "raw",
+            "One scale for all (true intensities)": "all",
+        },
+        value="Each panel its own",
+        label="Display scale",
+    )
+    steps_percentiles = mo.ui.range_slider(
+        start=0.0, stop=100.0, step=0.1, value=[0.5, 99.5], label="Display percentiles", show_value=True
+    )
+    steps_show_background = mo.ui.checkbox(value=False, label="Show background estimate")
+    steps_show_normalised = mo.ui.checkbox(value=True, label="Show normalised panel")
+    steps_mark_hot = mo.ui.checkbox(value=True, label="Circle replaced hot pixels")
+    steps_pixel_um = mo.ui.number(
+        start=0.01, stop=10.0, step=0.001, value=0.592, label="Pixel size (µm, full resolution)"
+    )
+    steps_scale_bar = mo.ui.number(start=10, stop=500, step=10, value=100, label="Scale bar (µm)")
+    steps_panel_size = mo.ui.slider(1.0, 4.0, step=0.1, value=2.0, label="Panel size (in)", show_value=True)
+    # Total downsampling of the last panels, as data.downsample in training
+    steps_downsample = mo.ui.dropdown(
+        options={"4": 4, "8": 8, "16": 16, "32": 32}, value="4", label="Downsampling"
+    )
+    steps_page = mo.ui.dropdown(options=["white", "black"], value="white", label="Figure background")
+    steps_histograms = mo.ui.checkbox(value=True, label="Intensity histograms")
+    steps_log_counts = mo.ui.checkbox(value=True, label="Log counts")
+    # Zoom square, as fractions of the raw image
+    steps_zoom = mo.ui.checkbox(value=True, label="Zoomed squares")
+    steps_zoom_x = mo.ui.slider(0.0, 1.0, step=0.005, value=0.5, label="Zoom centre x", show_value=True)
+    steps_zoom_y = mo.ui.slider(0.0, 1.0, step=0.005, value=0.5, label="Zoom centre y", show_value=True)
+    steps_zoom_size = mo.ui.slider(0.02, 0.5, step=0.005, value=0.1, label="Zoom size", show_value=True)
+    steps_zoom_colour = mo.ui.text(value="red", label="Zoom outline colour (name or hex)")
+    steps_name = mo.ui.text(value="cleaning_steps", label="File name")
+    steps_save = mo.ui.run_button(label="Save PDF + PNG")
+    mo.vstack(
+        [
+            mo.hstack([steps_channels, steps_layout, steps_scale], justify="start"),
+            mo.hstack(
+                [steps_percentiles, steps_show_background, steps_show_normalised, steps_mark_hot], justify="start"
+            ),
+            mo.hstack([steps_pixel_um, steps_scale_bar, steps_panel_size, steps_downsample], justify="start"),
+            mo.hstack([steps_page, steps_histograms, steps_log_counts], justify="start"),
+            mo.hstack([steps_zoom, steps_zoom_colour], justify="start"),
+            mo.hstack([steps_zoom_x, steps_zoom_y, steps_zoom_size], justify="start"),
+            mo.hstack([steps_name, steps_save], justify="start"),
+        ]
+    )
+    return (
+        steps_channels,
+        steps_downsample,
+        steps_histograms,
+        steps_layout,
+        steps_log_counts,
+        steps_mark_hot,
+        steps_name,
+        steps_page,
+        steps_panel_size,
+        steps_percentiles,
+        steps_pixel_um,
+        steps_save,
+        steps_scale,
+        steps_scale_bar,
+        steps_show_background,
+        steps_show_normalised,
+        steps_zoom,
+        steps_zoom_colour,
+        steps_zoom_size,
+        steps_zoom_x,
+        steps_zoom_y,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    DISPLAY_DOWNSAMPLE,
+    GROUP_CHANNELS,
+    clean_image,
+    cleaning_settings,
+    image_geometry,
+    intensity_factor,
+    mo,
+    normalised_image,
+    np,
+    overview,
+    place_image,
+    raw_images,
+    steps_condition,
+    steps_group,
+    steps_hour,
+    steps_images,
+    steps_replicate,
+    steps_run,
+):
+    mo.stop(not steps_run.value, mo.md("Press **Draw cleaning steps** to draw the figure."))
+    _key = (steps_condition.value, steps_replicate.value, steps_group.value, steps_hour.value)
+    mo.stop(
+        _key not in steps_images,
+        mo.callout("This combination was not loaded; pick another one.", kind="warn"),
+    )
+    _index = steps_images[_key]
+    _record = raw_images[_index]["record"]
+    _names = GROUP_CHANNELS[steps_group.value]
+    _steps = clean_image(raw_images[_index], cleaning_settings)
+
+    # Centring, mask and normalisation as in section 5, at the training resolution
+    _shift, _mask = image_geometry[_index]
+    _masked = place_image(overview["images"][_index]["cleaned"], _shift) * _mask[..., None]
+    _normalised = []
+    for _name in _names:
+        _result = normalised_image(_name, _key[:2], _key[3])
+        _normalised.append(np.zeros(_mask.shape) if _result is None else _result[0])
+
+    _scaled = any(
+        intensity_factor(cleaning_settings["scales"], _name, _record.timestep) != 1.0 for _name in _names
+    )
+    _striped = any(
+        cleaning_settings["h_stripes"].get(_name, 0) or cleaning_settings["v_stripes"].get(_name, 0)
+        for _name in _names
+    )
+    # Each panel: title, [X, Y, C] values, downsampling, kind and the centring
+    # shift (rows, columns) it went through (None if not moved)
+    _panels = [
+        ("raw × intensity factor" if _scaled else "raw", _steps["scaled"], 1, "raw", None),
+        ("hot pixels replaced", _steps["despeckled"], 1, "step", None),
+    ]
+    if _striped:
+        _panels.append(("stripes removed", _steps["destriped"], 1, "step", None))
+    _panels += [
+        ("background estimate", _steps["background"], 1, "background", None),
+        ("background removed", _steps["cleaned"], 1, "step", None),
+        ("centred, masked and downsampled", _masked, DISPLAY_DOWNSAMPLE, "step", _shift),
+        ("normalised", np.stack(_normalised, axis=-1), DISPLAY_DOWNSAMPLE, "normalised", _shift),
+    ]
+    cleaning_steps = {
+        "record": _record,
+        "names": _names,
+        "hot": _steps["hot"],
+        "panels": [
+            {"title": _t, "values": _v, "downsample": _d, "kind": _k, "shift": _s}
+            for _t, _v, _d, _k, _s in _panels
+        ],
+    }
+    return (cleaning_steps,)
+
+
+@app.cell(hide_code=True)
+def _(
+    DISPLAY_DOWNSAMPLE,
+    MICROPATTERN_260726_SCHEMA,
+    block_mean,
+    cleaning_steps,
+    mo,
+    np,
+    plt,
+    record_label,
+    selection,
+    show_figure,
+    steps_channels,
+    steps_downsample,
+    steps_histograms,
+    steps_layout,
+    steps_log_counts,
+    steps_mark_hot,
+    steps_page,
+    steps_panel_size,
+    steps_percentiles,
+    steps_pixel_um,
+    steps_scale,
+    steps_scale_bar,
+    steps_show_background,
+    steps_show_normalised,
+    steps_zoom,
+    steps_zoom_colour,
+    steps_zoom_size,
+    steps_zoom_x,
+    steps_zoom_y,
+):
+    from matplotlib.colors import is_color_like as _is_color_like
+    from matplotlib.patches import Rectangle as _Rectangle
+
+    # Marker colours as in the 3D -> 2D schematic; other markers take the
+    # spare colours in schema order
+    _marker_colours = {
+        "SOX2": (0.0, 0.78, 0.9),
+        "SOX17": (1.0, 0.78, 0.0),
+        "TBXT": (0.92, 0.12, 0.72),
+        "LMBR": (1.0, 1.0, 1.0),
+    }
+    _spare_colours = [(0.0, 0.78, 0.9), (0.92, 0.12, 0.72), (1.0, 0.78, 0.0), (1.0, 0.5, 0.0), (0.15, 0.8, 0.2)]
+    _markers = {_c.name: _c.marker for _c in MICROPATTERN_260726_SCHEMA.measurement_channels}
+    _names = cleaning_steps["names"]
+    _fixed = {_n: _marker_colours[_markers[_n]] for _n in _names if _markers[_n] in _marker_colours}
+    _spare = iter([_c for _c in _spare_colours if _c not in _fixed.values()])
+    _colours = {_n: _fixed.get(_n) or next(_spare) for _n in _names}
+    _shown = [_n for _n in _names if _n in steps_channels.value]
+    # Images stay on black; the page around them can be white or black
+    _page = steps_page.value
+    _text = "black" if _page == "white" else "white"
+    # Histogram line colours: white lines would vanish on a white page
+    _line_colours = {
+        _n: (0.4, 0.4, 0.4) if _page == "white" and min(_c) > 0.85 else _c for _n, _c in _colours.items()
+    }
+    mo.stop(not _shown, mo.md("Pick at least one channel."))
+
+    _panels = [
+        _p
+        for _p in cleaning_steps["panels"]
+        if (_p["kind"] != "background" or steps_show_background.value)
+        and (_p["kind"] != "normalised" or steps_show_normalised.value)
+    ]
+    # The downsampled panels are at DISPLAY_DOWNSAMPLE; like the training loader,
+    # average further blocks after masking and normalisation to reach the
+    # chosen downsampling. "extra" is that further factor.
+    _extra = max(1, steps_downsample.value // DISPLAY_DOWNSAMPLE)
+    _panels = [
+        {**_p, "values": block_mean(_p["values"], _extra), "extra": _extra}
+        if _p["downsample"] > 1 and _extra > 1
+        else {**_p, "extra": 1}
+        for _p in _panels
+    ]
+    _low, _high = steps_percentiles.value
+    # With one scale for all, each channel runs from 0 to the high percentile of
+    # its brightest panel (normalised values keep their own 0 to 1)
+    _intensity_panels = [_p for _p in _panels if _p["kind"] != "normalised"]
+    _shared_high = (
+        {
+            _c: max(float(np.percentile(_p["values"][..., _c], _high)) for _p in _intensity_panels)
+            for _c in range(len(_names))
+        }
+        if steps_scale.value == "all" and _intensity_panels
+        else {}
+    )
+
+    def _limits(values, channel):
+        return np.percentile(values[..., channel], (_low, _high))
+
+    _raw = cleaning_steps["panels"][0]["values"]
+
+    def _scaled(panel, channel):
+        """One channel of a panel in [0, 1] for display."""
+        values = panel["values"][..., channel]
+        if panel["kind"] == "normalised":
+            return np.clip(values, 0.0, 1.0)
+        if steps_scale.value == "all":
+            lo, hi = 0.0, _shared_high[channel]
+        else:
+            lo, hi = _limits(_raw if steps_scale.value == "raw" else panel["values"], channel)
+        return np.clip((values - lo) / max(hi - lo, 1e-6), 0.0, 1.0)
+
+    def _rgb(panel, channels):
+        """Composite of some channels of a panel, on black."""
+        return np.clip(
+            sum(_scaled(panel, _names.index(n))[..., None] * np.asarray(_colours[n]) for n in channels), 0.0, 1.0
+        )
+
+    _zoom_colour = steps_zoom_colour.value.strip() if _is_color_like(steps_zoom_colour.value.strip()) else "red"
+
+    def _zoom_window(panel):
+        """(top, bottom, left, right) of the zoom square in a panel's pixel coordinates.
+
+        The square is placed on the raw image. Downsampled panels average
+        blocks of ``downsample`` pixels, may then be shifted by centring, and
+        then average blocks of ``extra`` of those pixels.
+        """
+        height, width = _raw.shape[:2]
+        work, extra = panel["downsample"], panel["extra"]
+        half = steps_zoom_size.value * min(height, width) / 2 / (work * extra)
+        centre = (steps_zoom_y.value * height - 0.5, steps_zoom_x.value * width - 0.5)
+        shift = panel["shift"] or (0.0, 0.0)
+        row, column = (
+            ((c - (work - 1) / 2) / work + s - (extra - 1) / 2) / extra for c, s in zip(centre, shift)
+        )
+        return row - half, row + half, column - half, column + half
+
+    def _mark_hot(axis, channels):
+        hot = cleaning_steps["hot"][..., [_names.index(n) for n in channels]].any(axis=-1)
+        hot_rows, hot_columns = np.nonzero(hot)
+        axis.scatter(hot_columns, hot_rows, s=14, facecolors="none", edgecolors="lime", linewidths=0.6)
+
+    _rows = [_shown] if steps_layout.value == "composite" else [[_n] for _n in _shown]
+    _size = steps_panel_size.value
+    # Figure rows, top to bottom, with their heights in inches
+    _layout = [("image", _size)] * len(_rows)
+    if steps_zoom.value:
+        _layout += [("gap", 0.08), ("zoom", _size)]
+    if steps_histograms.value:
+        _layout += [("gap", 0.08), ("histogram", 0.5 * _size)]
+    # Room above the panels for their titles, and for the legend with a composite;
+    # below them for the histogram tick labels
+    _top = 0.45 if steps_layout.value == "rows" else 0.75
+    _bottom = 0.35 if _layout[-1][0] == "histogram" else 0.05
+    _height_in = sum(_h for _, _h in _layout) + _top + _bottom
+    steps_figure = plt.figure(figsize=(_size * len(_panels), _height_in), facecolor=_page)
+    _grid = steps_figure.add_gridspec(
+        len(_layout),
+        len(_panels),
+        height_ratios=[_h for _, _h in _layout],
+        wspace=0.04,
+        hspace=0.02,
+        left=0.03,
+        right=0.99,
+        bottom=_bottom / _height_in,
+        top=1 - _top / _height_in,
+    )
+    _row_of = {_kind: _i for _i, (_kind, _) in enumerate(_layout)}
+    for _row, _channels in enumerate(_rows):
+        for _column, _panel in enumerate(_panels):
+            _axis = steps_figure.add_subplot(_grid[_row, _column])
+            _axis.imshow(_rgb(_panel, _channels), interpolation="antialiased")
+            if steps_zoom.value:
+                _top_edge, _bottom_edge, _left, _right = _zoom_window(_panel)
+                _axis.add_patch(_Rectangle((_left, _top_edge), _right - _left, _bottom_edge - _top_edge,
+                                           fill=False, edgecolor=_zoom_colour, linewidth=1.0))
+            _axis.set_xticks([])
+            _axis.set_yticks([])
+            for _spine in _axis.spines.values():
+                _spine.set_visible(False)
+            if _row == 0:
+                _axis.set_title(f"{_column + 1}. {_panel['title']}", fontsize=8, color=_text)
+            if _column == 0 and steps_layout.value == "rows":
+                _axis.set_ylabel(_markers[_channels[0]], fontsize=8, color=_text)
+            if _column == 0 and steps_mark_hot.value:
+                _mark_hot(_axis, _channels)
+            if _row == len(_rows) - 1 and _column == 0:
+                # Every panel shows the same field, so one scale bar serves all
+                _height, _width = _panel["values"].shape[:2]
+                _length = steps_scale_bar.value / (steps_pixel_um.value * _panel["downsample"])
+                _pad = 0.05 * _width
+                _axis.plot([_width - _pad - _length, _width - _pad], [_height - _pad] * 2, color="white", lw=2,
+                           solid_capstyle="butt")
+                _axis.text(_width - _pad - _length / 2, _height - _pad - 0.02 * _height,
+                           f"{steps_scale_bar.value:g} µm", color="white", ha="center", va="bottom", fontsize=6)
+
+    # Intensity histogram of each step (all pixels, in that step's own units)
+    if steps_histograms.value:
+        for _column, _panel in enumerate(_panels):
+            _axis = steps_figure.add_subplot(_grid[_row_of["histogram"], _column])
+            _channel_values = [_panel["values"][..., _names.index(_n)].ravel() for _n in _shown]
+            _range = (min(float(_v.min()) for _v in _channel_values), max(float(_v.max()) for _v in _channel_values))
+            if steps_scale.value == "all" and _panel["kind"] != "normalised":
+                # One intensity axis for all steps before normalisation
+                _range = (
+                    min(float(_p["values"][..., [_names.index(_n) for _n in _shown]].min()) for _p in _intensity_panels),
+                    max(float(_p["values"][..., [_names.index(_n) for _n in _shown]].max()) for _p in _intensity_panels),
+                )
+            if _range[1] <= _range[0]:
+                _range = (_range[0], _range[0] + 1.0)
+            for _n, _v in zip(_shown, _channel_values):
+                _axis.hist(_v, bins=100, range=_range, histtype="step", color=_line_colours[_n], lw=0.8,
+                           log=steps_log_counts.value)
+            _axis.set_facecolor(_page)
+            _axis.set_yticks([])
+            _axis.minorticks_off()
+            _axis.tick_params(colors=_text, labelsize=6, length=2)
+            for _side in ("top", "right", "left"):
+                _axis.spines[_side].set_visible(False)
+            _axis.spines["bottom"].set_color(_text)
+            if _column == 0:
+                _axis.set_ylabel("count (log)" if steps_log_counts.value else "count", fontsize=7, color=_text)
+
+    # The zoom square of every step, pixels drawn as they are (no smoothing)
+    if steps_zoom.value:
+        for _column, _panel in enumerate(_panels):
+            _axis = steps_figure.add_subplot(_grid[_row_of["zoom"], _column])
+            _axis.imshow(_rgb(_panel, _shown), interpolation="nearest")
+            _top_edge, _bottom_edge, _left, _right = _zoom_window(_panel)
+            _axis.set_xlim(_left, _right)
+            _axis.set_ylim(_bottom_edge, _top_edge)
+            _axis.set_xticks([])
+            _axis.set_yticks([])
+            for _spine in _axis.spines.values():
+                _spine.set_edgecolor(_zoom_colour)
+                _spine.set_linewidth(1.5)
+            if _column == 0:
+                _axis.set_ylabel("zoom", fontsize=8, color=_text)
+                if steps_mark_hot.value:
+                    _mark_hot(_axis, _shown)
+
+    if steps_layout.value == "composite":
+        _handles = [plt.Line2D([], [], color=_colours[_n], lw=2) for _n in _shown]
+        steps_figure.legend(_handles, [_markers[_n] for _n in _shown], loc="upper right", ncol=len(_shown), fontsize=7,
+                            bbox_to_anchor=(0.99, 0.995), labelcolor="white",
+                            frameon=True, fancybox=False, facecolor="black", edgecolor="black", framealpha=1.0)
+    _hot_count = int(cleaning_steps["hot"][..., [_names.index(_n) for _n in _shown]].sum())
+    mo.vstack(
+        [
+            show_figure(steps_figure, dpi=150),
+            mo.md(
+                f"- {selection['projection']} projection, {record_label(cleaning_steps['record'])}\n"
+                f"- {_hot_count} hot pixels replaced in the channels shown"
+            ),
+        ]
+    )
+    return (steps_figure,)
+
+
+@app.cell(hide_code=True)
+def _(Path, mo, steps_figure, steps_name, steps_save):
+    mo.stop(not steps_save.value)
+    _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
+    _directory.mkdir(parents=True, exist_ok=True)
+    for _suffix in ("pdf", "png"):
+        steps_figure.savefig(_directory / f"{steps_name.value}.{_suffix}", dpi=400,
+                             facecolor=steps_figure.get_facecolor())
+    mo.md(f"Saved `{steps_name.value}.pdf` and `.png` to `{_directory}`")
     return
 
 

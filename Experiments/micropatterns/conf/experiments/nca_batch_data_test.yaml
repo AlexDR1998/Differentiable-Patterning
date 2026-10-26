@@ -21,7 +21,7 @@ grid:
   loss.terms.0.assignment: [hard]
   trainer.loop_autodiff: [lax]
   data.downsample: [8]
-  data.micropattern.data_channels: [14]
+  data.micropattern.data_channels: [13]  # 14 minus cell_fate_s2/SOX17 (excluded in base_config)
   data.batches: [2]
   data.dataset: [micropatterns_260726]
   data.micropattern.duplicate_final_timestep: [false]

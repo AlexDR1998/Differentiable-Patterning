@@ -20,6 +20,7 @@ from Experiments.config_helpers import (
     build_loss_filename,
 )
 from Common.dataloader.micropattern_schemas import (
+    MICROPATTERN_260726_SCHEMA,
     MICROPATTERN_4CH_SCHEMA,
     MICROPATTERN_GROUPED_12CH_SCHEMA,
 )
@@ -49,18 +50,33 @@ def _excluded_images(micropattern):
     return tuple(load_quality_flags(_repository_path(micropattern.quality_flags_file)))
 
 
+def measurement_count(groups=None, excluded_measurements=()):
+    """Number of 260726 measurement channels for ``groups`` (``None`` = all)
+    without ``excluded_measurements``: the value ``data_channels`` must have."""
+    schema = MICROPATTERN_260726_SCHEMA.select_groups(None if groups is None else tuple(groups))
+    excluded = [name for name in excluded_measurements if name in schema.measurement_names]
+    return schema.without_measurements(excluded).n_measurement_channels
+
+
+def _all_groups(micropattern):
+    """Whether every 260726 experiment group is selected (``None`` = all)."""
+    groups = micropattern.experiment_groups
+    return groups is None or set(groups) == set(MICROPATTERN_260726_SCHEMA.group_names)
+
+
 def _reuses_control_bounds(data_config):
     """Whether knockout loads take their clipping bounds from the control data.
 
     Without cleaning this has always been so. With cleaning, only when
-    ``knockouts_use_control_bounds`` is set and the bounds are shared; with
+    ``knockout_bounds`` is ``"control"`` and the bounds are shared; with
     per-replicate bounds the loader pairs each knockout replicate with its
-    control replicate itself.
+    control replicate itself. With ``"joint"`` every load reads all
+    conditions and finds the same bounds itself.
     """
     cleaning = data_config.micropattern.cleaning
     if not cleaning.enabled:
         return True
-    return cleaning.knockouts_use_control_bounds and cleaning.shares_bounds
+    return cleaning.knockout_bounds == "control" and cleaning.shares_bounds
 
 
 CURRICULUM_CONDITIONS = {
@@ -306,8 +322,8 @@ def load_data(
     pool_copies = int(pool_copies)
     if data_config.dataset == "micropatterns_260726":
         curriculum = resolve_knockout_curriculum(data_config.knockout)
-        if curriculum != ("baseline",) and data_channels != 14:
-            raise ValueError("Knockout curricula require the full 14-channel schema")
+        if curriculum != ("baseline",) and not _all_groups(data_config.micropattern):
+            raise ValueError("Knockout curricula require every 260726 experiment group")
         if impath is None:
             data_path_base = os.getenv("DATA_PATH_BASE")
             if data_path_base is None:
@@ -327,6 +343,7 @@ def load_data(
             histogram_bins=histogram_bins,
             pool_copies=1,
             experiment_groups=data_config.micropattern.experiment_groups,
+            excluded_measurements=data_config.micropattern.excluded_measurements,
             hist_eqs=data_config.micropattern.histogram_percentiles,
             intensity_factors=data_config.micropattern.intensity_factors,
             cleaning=_cleaning_for_loader(data_config.micropattern.cleaning),
@@ -424,6 +441,10 @@ def load_data(
         )
         if data_config.micropattern.projection != "max":
             cfg_str += f"_pj{data_config.micropattern.projection}"
+        for name in data_config.micropattern.excluded_measurements:
+            # e.g. cell_fate_s2/SOX17 -> _xs2SOX17
+            group, marker = name.split("/")
+            cfg_str += f"_x{group.split('_')[-1]}{marker}"
         if custom_impath:
             cfg_str += "_custompath"
         return data, aux, names, boundary, mask[:, 1:], cfg_str

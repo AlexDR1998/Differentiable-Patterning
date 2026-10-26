@@ -24,6 +24,9 @@ data:
     validation_replicates: null
   # Null loads all experiment groups for the selected dataset.
     experiment_groups: null
+  # 260726 only. Measurement channels left out of the data. Stain-2 SOX17
+  # has many imaging artifacts; SOX17 is still measured in stain 1.
+    excluded_measurements: [cell_fate_s2/SOX17]
     timesteps: [0, 12, 24, 36, 48]
   # For legacy micropatterns this is 4 or 12. For 260726 it must match the
   # selected experiment groups' measurement-channel count.
@@ -107,7 +110,7 @@ data:
       normalisation: per_replicate
       channel_percentiles: {}
       percentiles_inside_mask: true
-      knockout_bounds: selected
+      knockout_bounds: joint
   # 260726 only. Images flagged as low quality in the data cleaning notebook
   # (relative to the repository root); each is treated as not measured.
     quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml

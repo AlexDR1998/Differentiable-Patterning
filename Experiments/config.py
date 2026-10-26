@@ -541,6 +541,7 @@ def _emoji_config(value: Any) -> EmojiDataConfig:
 def _micropattern_config(value: Any) -> MicropatternDataConfig:
     raw = _mapping(value, "data.micropattern")
     raw["experiment_groups"] = _optional_tuple(raw.get("experiment_groups"))
+    raw["excluded_measurements"] = tuple(str(name) for name in _tuple(raw.get("excluded_measurements")))
     for split_name in ("train_replicates", "validation_replicates"):
         if raw.get(split_name) is not None:
             raw[split_name] = tuple(int(value) for value in raw[split_name])

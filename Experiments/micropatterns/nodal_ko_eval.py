@@ -44,9 +44,11 @@ with app.setup(hide_code=True):
     import numpy as np
     import pandas as pd
     from dotenv import load_dotenv
+    from omegaconf import OmegaConf
     from tqdm.auto import tqdm
 
-    from Experiments.model_registry import ModelRegistry, load_selection
+    from Common.dataloader.micropattern_projections import PROJECTIONS
+    from Experiments.model_registry import ModelRegistry, load_selection, open_model_bundle
     from NCA.trainer.intervention import (
         rollout_model,
         rollout_model_sampled,
@@ -80,6 +82,51 @@ with app.setup(hide_code=True):
     # Cell types come from a rule file exported by data_cleaning.py.
     CELL_TYPE_DIRECTORY = repository_root / "Experiments/micropatterns/conf/cell_types"
 
+
+    # Edge colours that tell the true-data projections apart in prevalence plots.
+    PROJECTION_EDGE_COLOURS = {"max": "black", "sum": "#8c2d9c", "slice": "#1f77b4"}
+
+    def record_label(record):
+        """Short name of a selected model: its notes, alias, name or ID."""
+        return str(
+            record.get("notes")
+            or record.get("alias")
+            or record.get("display_name")
+            or record["model_id"]
+        )
+
+    def model_option_label(record):
+        """Model picker label, with the projection and a short ID."""
+        return (
+            f"{record_label(record)} · {record['projection']} "
+            f"ds{record['downsample']} [{record['model_id'][-8:]}]"
+        )
+
+    def read_model_settings(registry, model_ids):
+        """Projection and downsample of each model, read from its bundle config.
+
+        The manifests are scanned once; IDs not found (e.g. aliases) fall
+        back to ``registry.get``.
+        """
+        wanted = set(model_ids)
+        bundles = {}
+        for path in registry.bundle_paths():
+            model_id = str(OmegaConf.load(path / "manifest.yaml").get("id", ""))
+            if model_id in wanted:
+                bundles[model_id] = open_model_bundle(path)
+        settings = {}
+        for model_id in model_ids:
+            bundle = bundles.get(model_id) or registry.get(model_id)
+            micropattern = bundle.config.data.micropattern
+            settings[model_id] = {
+                "projection": micropattern.projection if micropattern else "n/a",
+                "downsample": int(bundle.config.data.downsample),
+            }
+        return settings
+
+    def rules_projection(cell_type_rules):
+        """Projection a cell type file was tuned on (older files used max)."""
+        return str(cell_type_rules.preprocessing.get("projection", "max"))
 
     def marker_channel_indices(channel_names, cell_type_rules):
         """Index of each rule marker in ``channel_names`` (by channel, else by
@@ -426,23 +473,67 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(selection_path):
+def _(selection_path, store_root):
     _path = Path(selection_path.value).expanduser()
     if not selection_path.value.strip():
-        selection_records = ()
-        _preview = mo.md("Choose an exported model selection YAML file.")
+        loaded_records = ()
+        _load_status = mo.md("Choose an exported model selection YAML file.")
     elif not _path.is_file():
-        selection_records = ()
-        _preview = mo.callout(f"Selection file not found: `{_path}`", kind="danger")
+        loaded_records = ()
+        _load_status = mo.callout(f"Selection file not found: `{_path}`", kind="danger")
     else:
-        selection_records = load_selection(_path)
+        _records = load_selection(_path)
+        # Projection and downsample come from each bundle's config.
+        _settings = read_model_settings(
+            ModelRegistry(Path(store_root.value).expanduser()),
+            [_record["model_id"] for _record in _records],
+        )
+        loaded_records = tuple(
+            {**_record, **_settings[_record["model_id"]]} for _record in _records
+        )
+        _load_status = mo.md("")
+    _load_status
+    return (loaded_records,)
+
+
+@app.cell(hide_code=True)
+def _(loaded_records):
+    _present_projections = sorted(
+        {_record["projection"] for _record in loaded_records},
+        key=lambda _name: PROJECTIONS.index(_name) if _name in PROJECTIONS else len(PROJECTIONS),
+    )
+    selection_projections = mo.ui.multiselect(
+        options=_present_projections,
+        value=_present_projections,
+        label="Projections",
+    )
+    return (selection_projections,)
+
+
+@app.cell(hide_code=True)
+def _(loaded_records, selection_projections):
+    # Every section below only offers the models of the chosen projections.
+    selection_records = tuple(
+        _record for _record in loaded_records
+        if _record["projection"] in selection_projections.value
+    )
+    if not loaded_records:
+        _preview = mo.md("")
+    else:
         _columns = [
-            "model_id", "alias", "display_name", "notes", "family",
-            "experiment", "best_loss", "seed",
+            "model_id", "alias", "display_name", "notes", "projection",
+            "downsample", "family", "experiment", "best_loss", "seed",
         ]
         _preview_data = pd.DataFrame(selection_records).reindex(columns=_columns)
+        _projection_counts = pd.DataFrame(loaded_records).groupby(
+            ["projection", "downsample"]
+        ).size().rename("models").reset_index()
         _preview = mo.vstack([
-            mo.md(f"## Selected models ({len(selection_records)})"),
+            mo.md(f"## Selected models ({len(selection_records)} of {len(loaded_records)})"),
+            mo.hstack([
+                selection_projections,
+                mo.ui.table(_projection_counts, selection=None, page_size=12),
+            ], justify="start"),
             mo.ui.table(_preview_data, selection=None, page_size=10),
         ])
     _preview
@@ -539,12 +630,7 @@ def _(
             desc="Evaluating models",
             unit="model",
         )):
-            _label = (
-                _record.get("notes")
-                or _record.get("alias")
-                or _record.get("display_name")
-                or _bundle.id
-            )
+            _label = record_label(_record)
             for _condition_index, _condition in enumerate(
                 evaluation_conditions.value
             ):
@@ -615,6 +701,8 @@ def _(
                     "model_id": _bundle.id,
                     "label": str(_label),
                     "notes": _record.get("notes"),
+                    "projection": _record["projection"],
+                    "downsample": _record["downsample"],
                     "registry_record": _record,
                     "condition": _condition,
                     "replicate": int(evaluation_replicate.value),
@@ -666,14 +754,26 @@ def _(evaluation_results):
                 _metric_rows.append({
                     "model_id": _result["model_id"],
                     "label": _result["label"],
+                    "projection": _result["projection"],
+                    "downsample": _result["downsample"],
                     "condition": _result["condition"],
                     "replicate": _result["replicate"],
                     "time": _result["time_labels"][_time_index],
                     "mse": float(np.nanmean(_squared_error[_time_index])),
                 })
         evaluation_metrics = pd.DataFrame(_metric_rows)
+        # Each projection is compared against its own (separately normalised) data.
+        _projection_metrics = (
+            evaluation_metrics.groupby(
+                ["projection", "downsample", "condition", "time"], sort=False
+            )["mse"]
+            .agg(["mean", "std", "count"])
+            .reset_index()
+        )
         _metrics_view = mo.vstack([
             mo.md("## Starter metrics"),
+            mo.md("- Mean MSE per projection (each against its own data)"),
+            mo.ui.table(_projection_metrics, selection=None, page_size=15),
             mo.ui.table(evaluation_metrics, selection=None, page_size=15),
         ])
     _metrics_view
@@ -684,18 +784,18 @@ def _(evaluation_results):
 def _(evaluation_results):
     if evaluation_results is None:
         _model_options = {}
+        _projection_options = []
         _group_options = []
         _channel_options = []
         _time_options = []
     else:
-        _models_by_id = {
-            _result["model_id"]: _result["label"]
+        _model_options = {
+            model_option_label(_result["registry_record"]): _result["model_id"]
             for _result in evaluation_results
         }
-        _model_options = {
-            f"{_label} [{_model_id[-8:]}]": _model_id
-            for _model_id, _label in _models_by_id.items()
-        }
+        _projection_options = list(dict.fromkeys(
+            _result["projection"] for _result in evaluation_results
+        ))
         _group_options = list(dict.fromkeys(
             _name.split("/", 1)[0]
             for _result in evaluation_results
@@ -717,6 +817,11 @@ def _(evaluation_results):
         value=list(_model_options),
         label="Displayed models",
         full_width=True,
+    )
+    display_projections = mo.ui.multiselect(
+        options=_projection_options,
+        value=_projection_options,
+        label="Displayed projections",
     )
     display_channels = mo.ui.multiselect(
         options=_channel_options,
@@ -756,7 +861,7 @@ def _(evaluation_results):
         full_width=True,
     )
     mo.vstack([
-        display_models,
+        mo.hstack([display_projections, display_models], widths=[1, 4]),
         mo.hstack([channel_selection_mode, display_groups, display_channels]),
         mo.hstack([display_times, display_source]),
     ])
@@ -765,6 +870,7 @@ def _(evaluation_results):
         display_channels,
         display_groups,
         display_models,
+        display_projections,
         display_source,
         display_times,
     )
@@ -776,6 +882,7 @@ def _(
     display_channels,
     display_groups,
     display_models,
+    display_projections,
     display_source,
     display_times,
     evaluation_results,
@@ -797,7 +904,10 @@ def _(
     else:
         _figures = []
         for _result in evaluation_results:
-            if _result["model_id"] not in display_models.value:
+            if (
+                _result["model_id"] not in display_models.value
+                or _result["projection"] not in display_projections.value
+            ):
                 continue
             if display_source.value == "target":
                 _source_specs = (("True", _result["target"]),)
@@ -896,7 +1006,10 @@ def _(
                 (np.arange(_row_count) + 0.5) * _tile_height - 0.5,
                 _row_labels,
             )
-            _axis.set_title(f"{_result['label']} · {_result['condition']}")
+            _axis.set_title(
+                f"{_result['label']} · {_result['projection']} "
+                f"ds{_result['downsample']} · {_result['condition']}"
+            )
             _axis.tick_params(length=0)
             _figure.tight_layout()
             _figures.append(_figure)
@@ -910,12 +1023,29 @@ def _(
 @app.cell(hide_code=True)
 def _():
     _cell_type_files = sorted(CELL_TYPE_DIRECTORY.glob("*.yaml"))
-    cell_type_file = mo.ui.dropdown(
-        options={_path.name: str(_path) for _path in _cell_type_files},
-        value=_cell_type_files[-1].name if _cell_type_files else None,
-        label="Cell type file",
-        full_width=True,
-    )
+    _file_options = {
+        f"{_path.name} (tuned on {rules_projection(load_cell_type_rules(_path))})": str(_path)
+        for _path in _cell_type_files
+    }
+    # Default: the newest file tuned on the projection, else the newest file.
+    _default_files = {
+        _projection: (
+            [_option for _option in _file_options if _option.endswith(f"(tuned on {_projection})")]
+            or list(_file_options)
+            or [None]
+        )[-1]
+        for _projection in PROJECTIONS
+    }
+    # Thresholds depend on the projection, so each one has its own file.
+    cell_type_files = mo.ui.dictionary({
+        _projection: mo.ui.dropdown(
+            options=_file_options,
+            value=_default_files[_projection],
+            label=f"Cell type file for {_projection}",
+            full_width=True,
+        )
+        for _projection in PROJECTIONS
+    })
     cell_type_rings = mo.ui.number(
         1, 40, value=12, step=1, label="Rings for the share estimate"
     )
@@ -930,48 +1060,78 @@ def _():
             "as well as the data, and the rings are then averaged by area. "
             "Pixels matching more than one cell type are counted as *Several*."
         ),
-        mo.hstack([cell_type_file, cell_type_rings]),
+        mo.md("- Each projection uses its own file; models and data use the file of their projection"),
+        mo.hstack([cell_type_files, cell_type_rings]),
     ])
-    return cell_type_file, cell_type_rings
+    return cell_type_files, cell_type_rings
 
 
 @app.cell(hide_code=True)
-def _(cell_type_file):
+def _(cell_type_files):
     mo.stop(
-        cell_type_file.value is None,
+        any(_path is None for _path in cell_type_files.value.values()),
         mo.callout(f"No cell type files found in `{CELL_TYPE_DIRECTORY}`.", kind="warn"),
     )
-    cell_type_rules = load_cell_type_rules(cell_type_file.value)
-    _rule_rows = [
-        {
-            "cell_type": _cell_type,
-            "clause": _index + 1,
-            "weight": _weight,
-            **{_marker: _clause.get(_marker, "any") for _marker in cell_type_rules.markers},
-        }
-        for _cell_type, _clauses in cell_type_rules.rules.items()
-        for _index, (_clause, _weight) in enumerate(
-            zip(_clauses, cell_type_rules.weights_of(_cell_type))
-        )
-    ]
-    mo.vstack([
-        mo.md(
-            f"Tuned at {cell_type_rules.hour}h. Thresholds: "
-            + ", ".join(
-                f"{_marker} {_value:g}"
-                for _marker, _value in cell_type_rules.thresholds.items()
-            )
-            + ". Stains: "
-            + "; ".join(
-                f"{_stain} ({', '.join(_channels)})"
-                for _stain, _channels in rule_stains(cell_type_rules).items()
-            )
-            + ". The thresholds only hold for images pre-processed with the "
-            "file's `preprocessing` settings."
+    cell_type_rules_by_projection = {
+        _projection: load_cell_type_rules(_path)
+        for _projection, _path in cell_type_files.value.items()
+    }
+    # Plots and tables share one list of cell types across projections.
+    _label_sets = {
+        _projection: tuple(label_names(_rules))
+        for _projection, _rules in cell_type_rules_by_projection.items()
+    }
+    mo.stop(
+        len(set(_label_sets.values())) > 1,
+        mo.callout(
+            "The cell type files must define the same cell types: "
+            + "; ".join(f"{_p}: {', '.join(_l)}" for _p, _l in _label_sets.items()),
+            kind="danger",
         ),
-        mo.ui.table(_rule_rows, selection=None),
-    ])
-    return (cell_type_rules,)
+    )
+    cell_type_labels = next(iter(_label_sets.values()))
+
+    _rule_tabs = {}
+    for _projection, _rules in cell_type_rules_by_projection.items():
+        _rule_rows = [
+            {
+                "cell_type": _cell_type,
+                "clause": _index + 1,
+                "weight": _weight,
+                **{_marker: _clause.get(_marker, "any") for _marker in _rules.markers},
+            }
+            for _cell_type, _clauses in _rules.rules.items()
+            for _index, (_clause, _weight) in enumerate(
+                zip(_clauses, _rules.weights_of(_cell_type))
+            )
+        ]
+        _mismatch = (
+            [mo.callout(
+                f"This file was tuned on the {rules_projection(_rules)} projection.",
+                kind="warn",
+            )]
+            if rules_projection(_rules) != _projection else []
+        )
+        _rule_tabs[_projection] = mo.vstack([
+            *_mismatch,
+            mo.md(
+                f"Tuned at {_rules.hour}h. Thresholds: "
+                + ", ".join(
+                    f"{_marker} {_value:g}"
+                    for _marker, _value in _rules.thresholds.items()
+                )
+                + ". Stains: "
+                + "; ".join(
+                    f"{_stain} ({', '.join(_channels)})"
+                    for _stain, _channels in rule_stains(_rules).items()
+                )
+                + ". The thresholds only hold for images pre-processed with the "
+                "file's `preprocessing` settings."
+            ),
+            mo.ui.table(_rule_rows, selection=None),
+        ])
+    mo.ui.tabs(_rule_tabs)
+    return cell_type_labels, cell_type_rules_by_projection
 
 
 @app.cell(hide_code=True)
@@ -995,12 +1155,7 @@ def _():
 @app.cell(hide_code=True)
 def _(selection_records):
     _fine_model_options = {
-        str(
-            _record.get("notes")
-            or _record.get("alias")
-            or _record.get("display_name")
-            or _record["model_id"]
-        ) + f" [{_record['model_id'][-8:]}]": _record["model_id"]
+        model_option_label(_record): _record["model_id"]
         for _record in selection_records
     }
     fine_ko_models = mo.ui.multiselect(
@@ -1028,7 +1183,7 @@ def _(selection_records):
     )
     fine_include_true_data = mo.ui.checkbox(
         value=True,
-        label="Include true KO 0h, KO 24h, and baseline prevalence",
+        label="Include true KO 0h, KO 24h, and baseline prevalence (per projection)",
     )
     run_fine_ko = mo.ui.run_button(label="Run fine KO timing sweep")
     mo.vstack([
@@ -1108,6 +1263,9 @@ def _(
         _fine_model_cache = {}
         _fine_bundle_cache = {}
         _fine_bins_cache = {}
+        # True data is loaded once per projection and replicate, with the
+        # first model of that projection.
+        _fine_true_loaded = set()
         _fine_model_results = []
         _fine_total_trajectories = (
             len(_fine_jobs)
@@ -1148,8 +1306,13 @@ def _(
                 _fine_replicate,
                 _fine_bins,
             )
+            _fine_projection = _fine_record["projection"]
             _fine_true_snapshots = None
-            if _fine_model_index == 0 and fine_include_true_data.value:
+            if (
+                fine_include_true_data.value
+                and (_fine_projection, _fine_replicate) not in _fine_true_loaded
+            ):
+                _fine_true_loaded.add((_fine_projection, _fine_replicate))
                 _fine_measurement_hours = tuple(
                     float(_hour)
                     for _hour in _fine_bundle.config.data.micropattern.timesteps
@@ -1198,12 +1361,7 @@ def _(
             _fine_curriculum = tuple(
                 _fine_bundle.config.data.knockout.curriculum or ("baseline",)
             )
-            _fine_label = str(
-                _fine_record.get("notes")
-                or _fine_record.get("alias")
-                or _fine_record.get("display_name")
-                or _fine_bundle.id
-            )
+            _fine_label = record_label(_fine_record)
             for _fine_run_index in range(int(fine_duplicate_runs.value)):
                 _fine_run_seed = (
                     int(fine_ko_seed.value)
@@ -1242,7 +1400,17 @@ def _(
                     "run_index": _fine_run_index,
                     "seed": _fine_run_seed,
                     "replicate": _fine_replicate,
+                    "projection": _fine_projection,
+                    "downsample": _fine_record["downsample"],
                     "groups": {
+                        "projection": _fine_projection,
+                        "projection_resolution": (
+                            f"{_fine_projection} · ds{_fine_record['downsample']}"
+                        ),
+                        "projection_curriculum": (
+                            f"{_fine_projection} · "
+                            + " + ".join(map(str, _fine_curriculum))
+                        ),
                         "curriculum": " + ".join(map(str, _fine_curriculum)),
                         "experiment": str(
                             _fine_record.get("experiment") or "Unlabelled"
@@ -1264,13 +1432,11 @@ def _(
                         _fine_data["boundary"]
                     ).squeeze().astype(bool),
                     "true_snapshots": (
-                        _fine_true_snapshots
-                        if _fine_model_index == 0 and _fine_run_index == 0
-                        else None
+                        _fine_true_snapshots if _fine_run_index == 0 else None
                     ),
                     "true_channel_names": (
                         _fine_data["channel_names"]
-                        if _fine_model_index == 0 and _fine_run_index == 0
+                        if _fine_true_snapshots is not None and _fine_run_index == 0
                         else None
                     ),
                 })
@@ -1304,7 +1470,7 @@ def _(fine_group_by, fine_ko_results):
 
 
 @app.cell(hide_code=True)
-def _(cell_type_rules, fine_ko_results):
+def _(cell_type_labels, fine_ko_results):
     _fine_channel_options = (
         [
             _name for _name in fine_ko_results[0]["channel_names"]
@@ -1329,6 +1495,9 @@ def _(cell_type_rules, fine_ko_results):
     )
     fine_group_by = mo.ui.dropdown(
         {
+            "Projection": "projection",
+            "Projection and resolution": "projection_resolution",
+            "Projection and curriculum": "projection_curriculum",
             "Training curriculum": "curriculum",
             "Experiment": "experiment",
             "Family": "family",
@@ -1337,9 +1506,19 @@ def _(cell_type_rules, fine_ko_results):
             "Each model separately": "individual",
             "All models together": "all",
         },
-        value="Training curriculum",
+        value="Projection",
         label="Group replicate models by",
         full_width=True,
+    )
+    _fine_true_projection_options = list(dict.fromkeys(
+        _result["projection"]
+        for _result in (fine_ko_results or ())
+        if _result["true_snapshots"] is not None
+    ))
+    fine_true_projections = mo.ui.multiselect(
+        options=_fine_true_projection_options,
+        value=_fine_true_projection_options,
+        label="True-data projections",
     )
     fine_uncertainty = mo.ui.dropdown(
         {
@@ -1353,8 +1532,8 @@ def _(cell_type_rules, fine_ko_results):
         full_width=True,
     )
     fine_display_cell_types = mo.ui.multiselect(
-        options=list(label_names(cell_type_rules)),
-        value=list(label_names(cell_type_rules)),
+        options=list(cell_type_labels),
+        value=list(cell_type_labels),
         label="Displayed cell types",
         full_width=True,
     )
@@ -1386,7 +1565,7 @@ def _(cell_type_rules, fine_ko_results):
             "- Sample: one label per pixel drawn from its shares (fixed seed)."
         ),
         fine_scale_cell_maps_by_lmbr,
-        mo.hstack([fine_group_by, fine_uncertainty]),
+        mo.hstack([fine_group_by, fine_uncertainty, fine_true_projections]),
     ])
     return (
         fine_cell_map_mode,
@@ -1396,6 +1575,7 @@ def _(cell_type_rules, fine_ko_results):
         fine_scale_cell_maps_by_lmbr,
         fine_snapshot_channels,
         fine_snapshot_stride,
+        fine_true_projections,
         fine_uncertainty,
     )
 
@@ -1427,18 +1607,26 @@ def _():
 @app.cell(hide_code=True)
 def _(
     cell_type_colour,
+    cell_type_labels,
     cell_type_rings,
-    cell_type_rules,
+    cell_type_rules_by_projection,
     fine_resolve_several,
     fine_display_cell_types,
     fine_display_groups,
     fine_group_by,
     fine_ko_results,
+    fine_true_projections,
     fine_uncertainty,
 ):
-    _fine_required_markers = cell_type_rules.markers
-    _fine_labels = label_names(cell_type_rules)
+    _fine_labels = cell_type_labels
     _fine_rings = int(cell_type_rings.value)
+    # Markers each result needs, from the cell type file of its projection.
+    _fine_missing = sorted({
+        _marker
+        for _result in (fine_ko_results or ())
+        for _marker in cell_type_rules_by_projection[_result["projection"]].markers
+        if _marker not in _result["channel_names"]
+    })
     if fine_ko_results is None:
         fine_cell_type_prevalence = pd.DataFrame()
         fine_true_cell_type_prevalence = pd.DataFrame()
@@ -1446,21 +1634,12 @@ def _(
         fine_prevalence_summary = pd.DataFrame()
         fine_cell_type_maps = ()
         _fine_prevalence_view = mo.md("")
-    elif not all(
-        _marker in _result["channel_names"]
-        for _result in fine_ko_results
-        for _marker in _fine_required_markers
-    ):
+    elif _fine_missing:
         fine_cell_type_prevalence = pd.DataFrame()
         fine_true_cell_type_prevalence = pd.DataFrame()
         fine_prevalence_export = pd.DataFrame()
         fine_prevalence_summary = pd.DataFrame()
         fine_cell_type_maps = ()
-        _fine_missing = sorted(
-            set(_fine_required_markers).difference(
-                *[set(_result["channel_names"]) for _result in fine_ko_results]
-            )
-        )
         _fine_prevalence_view = mo.callout(
             "Cell-type prevalence requires: " + ", ".join(_fine_missing),
             kind="warn",
@@ -1476,6 +1655,7 @@ def _(
             _fine_names_for_fates = _fine_result["channel_names"]
             _fine_fate_images = _fine_result["snapshots"]
             _fine_colony = _fine_result["boundary"]
+            _fine_rules = cell_type_rules_by_projection[_fine_result["projection"]]
             _fine_result_maps = []
             for _fine_offset, _fine_hour in enumerate(
                 _fine_result["requested_ko_hours"]
@@ -1485,16 +1665,16 @@ def _(
                 # weights used for the prevalence below.
                 _fine_result_maps.append(pixel_label_shares(
                     marker_values(
-                        _fine_image, _fine_names_for_fates, cell_type_rules, axis=0
+                        _fine_image, _fine_names_for_fates, _fine_rules, axis=0
                     ),
-                    cell_type_rules,
+                    _fine_rules,
                     _fine_colony,
                     resolve_several=fine_resolve_several.value,
                 ))
                 _fine_shares = model_label_shares(
                     _fine_image,
                     _fine_names_for_fates,
-                    cell_type_rules,
+                    _fine_rules,
                     _fine_colony,
                     _fine_rings,
                     resolve_several=fine_resolve_several.value,
@@ -1503,6 +1683,8 @@ def _(
                     _fine_prevalence_rows.append({
                         "model_id": _fine_result["model_id"],
                         "model_label": _fine_result["label"],
+                        "projection": _fine_result["projection"],
+                        "downsample": _fine_result["downsample"],
                         "run_index": _fine_result.get("run_index", 0),
                         "seed": _fine_result.get("seed"),
                         "replicate": _fine_result.get("replicate"),
@@ -1517,6 +1699,7 @@ def _(
             _fine_map_results.append({
                 "model_id": _fine_result["model_id"],
                 "label": _fine_result["label"],
+                "projection": _fine_result["projection"],
                 "run_index": _fine_result.get("run_index", 0),
                 "seed": _fine_result.get("seed"),
                 "replicate": _fine_result.get("replicate"),
@@ -1535,6 +1718,8 @@ def _(
         _fine_export_index = [
             "model_id",
             "model_label",
+            "projection",
+            "downsample",
             "replicate",
             "seed",
             "group",
@@ -1570,13 +1755,14 @@ def _(
                 _fine_true_shares = data_label_shares(
                     _fine_true_image,
                     _fine_true_source["true_channel_names"],
-                    cell_type_rules,
+                    cell_type_rules_by_projection[_fine_true_source["projection"]],
                     _fine_true_source["boundary"],
                     _fine_rings,
                     resolve_several=fine_resolve_several.value,
                 )
                 for _fine_cell_type, _fine_share in zip(_fine_labels, _fine_true_shares):
                     _fine_true_rows.append({
+                        "projection": _fine_true_source["projection"],
                         "replicate": _fine_true_source["replicate"],
                         "knockout_hour": float(_fine_true_hour),
                         "condition": _fine_true_labels[_fine_true_hour],
@@ -1655,6 +1841,9 @@ def _(
                 fine_true_cell_type_prevalence["cell_type"].isin(
                     fine_display_cell_types.value
                 )
+                & fine_true_cell_type_prevalence["projection"].isin(
+                    fine_true_projections.value
+                )
             ]
             if not fine_true_cell_type_prevalence.empty
             else fine_true_cell_type_prevalence
@@ -1665,21 +1854,24 @@ def _(
                 "True KO 24h": "D",
                 "True baseline": "o",
             }
-            for _fine_true_condition, _fine_true_group in (
-                _fine_true_display.groupby("condition", sort=False)
-            ):
-                for _, _fine_true_row in _fine_true_group.iterrows():
-                    _fine_prevalence_axis.scatter(
-                        _fine_true_row["knockout_hour"],
-                        _fine_true_row["relative_prevalence"],
-                        color=cell_type_colour(_fine_true_row["cell_type"]),
-                        marker=_fine_true_markers[_fine_true_condition],
-                        s=65,
-                        edgecolor="black",
-                        linewidth=0.5,
-                        zorder=5,
-                        label="_nolegend_",
-                    )
+            # With several projections, the marker edge shows the projection.
+            _fine_true_shown = list(dict.fromkeys(_fine_true_display["projection"]))
+            _fine_several_true = len(_fine_true_shown) > 1
+            for _, _fine_true_row in _fine_true_display.iterrows():
+                _fine_prevalence_axis.scatter(
+                    _fine_true_row["knockout_hour"],
+                    _fine_true_row["relative_prevalence"],
+                    color=cell_type_colour(_fine_true_row["cell_type"]),
+                    marker=_fine_true_markers[_fine_true_row["condition"]],
+                    s=65,
+                    edgecolor=(
+                        PROJECTION_EDGE_COLOURS.get(_fine_true_row["projection"], "black")
+                        if _fine_several_true else "black"
+                    ),
+                    linewidth=1.2 if _fine_several_true else 0.5,
+                    zorder=5,
+                    label="_nolegend_",
+                )
             for _fine_true_condition, _fine_true_marker in _fine_true_markers.items():
                 _fine_prevalence_axis.scatter(
                     [],
@@ -1691,6 +1883,18 @@ def _(
                     linewidth=0.5,
                     label=_fine_true_condition,
                 )
+            if _fine_several_true:
+                for _fine_true_projection in _fine_true_shown:
+                    _fine_prevalence_axis.scatter(
+                        [],
+                        [],
+                        color="white",
+                        marker="s",
+                        s=65,
+                        edgecolor=PROJECTION_EDGE_COLOURS.get(_fine_true_projection, "black"),
+                        linewidth=1.2,
+                        label=f"True data: {_fine_true_projection}",
+                    )
         _fine_ko_ticks, _fine_ko_tick_labels = ko_time_ticks(
             fine_ko_results[0]["snapshot_hour"]
         )
@@ -1864,7 +2068,7 @@ def _(
             #     f"{fine_ko_results[0]['snapshot_hour']:g}h"
             # )
             _fine_cell_map_figure.suptitle(
-                f"cell identity at "
+                f"{_fine_map_result['projection']} · cell identity at "
                 f"{fine_ko_results[0]['snapshot_hour']:g}h"
             )
             _fine_cell_map_figure.tight_layout()
@@ -1900,12 +2104,20 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(fine_ko_results, fine_snapshot_channels, fine_snapshot_stride):
+def _(
+    fine_display_groups,
+    fine_group_by,
+    fine_ko_results,
+    fine_snapshot_channels,
+    fine_snapshot_stride,
+):
     if fine_ko_results is None or not fine_snapshot_channels.value:
         _fine_snapshot_view = mo.md("")
     else:
         _fine_snapshot_figures = []
         for _fine_result in fine_ko_results:
+            if _fine_result["groups"][fine_group_by.value] not in fine_display_groups.value:
+                continue
             _fine_names = _fine_result["channel_names"]
             _fine_indices = [
                 _fine_names.index(_name) for _name in fine_snapshot_channels.value
@@ -1976,13 +2188,17 @@ def _(fine_ko_results, fine_snapshot_channels, fine_snapshot_stride):
             #     f"{_fine_result['snapshot_hour']:g}h"
             # )
             _fine_axis.set_title(
-                f"predicted at "
+                f"{_fine_result['projection']} · predicted at "
                 f"{_fine_result['snapshot_hour']:g}h"
             )
             _fine_axis.tick_params(length=0)
             _fine_figure.tight_layout()
             _fine_snapshot_figures.append(_fine_figure)
-        _fine_snapshot_view = mo.vstack(_fine_snapshot_figures)
+        _fine_snapshot_view = (
+            mo.vstack(_fine_snapshot_figures)
+            if _fine_snapshot_figures
+            else mo.md("Select at least one model group.")
+        )
     _fine_snapshot_view
     plt.show()
     return
@@ -2005,12 +2221,7 @@ def _():
 @app.cell(hide_code=True)
 def _(selection_records):
     _dynamics_model_options = {
-        str(
-            _record.get("notes")
-            or _record.get("alias")
-            or _record.get("display_name")
-            or _record["model_id"]
-        ) + f" [{_record['model_id'][-8:]}]": _record["model_id"]
+        model_option_label(_record): _record["model_id"]
         for _record in selection_records
     }
     dynamics_models = mo.ui.multiselect(
@@ -2062,9 +2273,10 @@ def _(selection_records):
 
 @app.cell(hide_code=True)
 def _(
-    cell_type_file,
+    cell_type_files,
+    cell_type_labels,
     cell_type_rings,
-    cell_type_rules,
+    cell_type_rules_by_projection,
     fine_resolve_several,
     data_root,
     dynamics_endpoint,
@@ -2102,7 +2314,7 @@ def _(
             + 0.5 * float(dynamics_ko_interval.value),
             float(dynamics_ko_interval.value),
         )
-        _dynamics_cell_types = label_names(cell_type_rules)
+        _dynamics_cell_types = cell_type_labels
         _dynamics_rings = int(cell_type_rings.value)
         _dynamics_results = []
         for _dynamics_model_id in tqdm(
@@ -2111,6 +2323,8 @@ def _(
             unit="model",
         ):
             _dynamics_record = _dynamics_records[_dynamics_model_id]
+            _dynamics_projection = _dynamics_record["projection"]
+            _dynamics_rules = cell_type_rules_by_projection[_dynamics_projection]
             _dynamics_bundle = _dynamics_registry.get(_dynamics_model_id)
             _dynamics_model = _dynamics_bundle.load_model(
                 key=jr.PRNGKey(int(dynamics_seed.value)),
@@ -2127,8 +2341,8 @@ def _(
                 _dynamics_bins,
             )
             _dynamics_thresholds = [
-                cell_type_rules.thresholds[_dynamics_marker]
-                for _dynamics_marker in cell_type_rules.markers
+                _dynamics_rules.thresholds[_dynamics_marker]
+                for _dynamics_marker in _dynamics_rules.markers
             ]
             _dynamics_colony = (
                 np.asarray(_dynamics_data["boundary"]).squeeze().astype(bool)
@@ -2148,7 +2362,7 @@ def _(
                 float(dynamics_endpoint.value) * _dynamics_steps_per_12h / 12.0
             ))
             _dynamics_fate_channels = jnp.asarray(marker_channel_indices(
-                _dynamics_data["state_channel_names"], cell_type_rules
+                _dynamics_data["state_channel_names"], _dynamics_rules
             ))
             _dynamics_matrices = []
             _dynamics_realised_ko = []
@@ -2180,8 +2394,8 @@ def _(
                 # Shares at every measurement step, estimated as in the fine sweep.
                 _dynamics_matrices.append(np.stack([
                     colony_label_shares(
-                        model_stain_counts(_dynamics_step_counts, cell_type_rules),
-                        cell_type_rules,
+                        model_stain_counts(_dynamics_step_counts, _dynamics_rules),
+                        _dynamics_rules,
                         resolve_several=fine_resolve_several.value,
                     )
                     for _dynamics_step_counts in np.asarray(_dynamics_counts)
@@ -2189,15 +2403,12 @@ def _(
                 _dynamics_realised_ko.append(
                     12.0 * _dynamics_ko_step / _dynamics_steps_per_12h
                 )
-            _dynamics_label = str(
-                _dynamics_record.get("notes")
-                or _dynamics_record.get("alias")
-                or _dynamics_record.get("display_name")
-                or _dynamics_bundle.id
-            )
             _dynamics_results.append({
                 "model_id": _dynamics_bundle.id,
-                "label": _dynamics_label,
+                "label": record_label(_dynamics_record),
+                "option_label": model_option_label(_dynamics_record),
+                "projection": _dynamics_projection,
+                "downsample": _dynamics_record["downsample"],
                 "initial_condition_replicate": int(dynamics_replicate.value),
                 "random_seed": int(dynamics_seed.value),
                 "cell_types": _dynamics_cell_types,
@@ -2208,7 +2419,7 @@ def _(
                     * 12.0 / _dynamics_steps_per_12h
                 ),
                 "prevalence": np.stack(_dynamics_matrices),
-                "cell_type_file": cell_type_file.value,
+                "cell_type_file": cell_type_files.value[_dynamics_projection],
             })
         temporal_prevalence_results = tuple(_dynamics_results)
         _dynamics_status = mo.callout(
@@ -2233,6 +2444,8 @@ def _(temporal_prevalence_results):
                 _dynamics_export_rows.append({
                     "model_realisation_id": _result["model_id"],
                     "model_realisation_label": _result["label"],
+                    "projection": _result["projection"],
+                    "downsample": _result["downsample"],
                     "initial_condition_replicate": _result[
                         "initial_condition_replicate"
                     ],
@@ -2277,7 +2490,7 @@ def _(temporal_prevalence_results):
 @app.cell(hide_code=True)
 def _(temporal_prevalence_results):
     _heatmap_model_options = {
-        f"{_result['label']} [{_result['model_id'][-8:]}]": _result["model_id"]
+        _result["option_label"]: _result["model_id"]
         for _result in (temporal_prevalence_results or ())
     }
     dynamics_heatmap_model = mo.ui.dropdown(
@@ -2342,7 +2555,7 @@ def _(
             xlabel="NODAL knockout time (h)",
             ylabel="Measurement time (h)",
             title=(
-                f"{_heatmap_result['label']}\n"
+                f"{_heatmap_result['label']} · {_heatmap_result['projection']}\n"
                 f"{dynamics_heatmap_cell_type.value} area fraction"
             ),
             yticks=[0, 12, 24, 36, 48],
@@ -2376,12 +2589,7 @@ def _():
 @app.cell(hide_code=True)
 def _(selection_records):
     _render_model_options = {
-        str(
-            _record.get("notes")
-            or _record.get("alias")
-            or _record.get("display_name")
-            or _record["model_id"]
-        ): _record["model_id"]
+        model_option_label(_record): _record["model_id"]
         for _record in selection_records
     }
     composite_model = mo.ui.dropdown(
@@ -2636,12 +2844,7 @@ def _():
 @app.cell(hide_code=True)
 def _(selection_records):
     _generative_model_options = {
-        str(
-            _record.get("notes")
-            or _record.get("alias")
-            or _record.get("display_name")
-            or _record["model_id"]
-        ): _record["model_id"]
+        model_option_label(_record): _record["model_id"]
         for _record in selection_records
     }
     generative_model = mo.ui.dropdown(

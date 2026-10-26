@@ -165,6 +165,40 @@ class ChannelSchema:
             experiment_groups=selected_groups,
         )
 
+    def without_measurements(self, names: Sequence[str] = ()):
+        """Schema without the named measurement channels.
+
+        A group loses only those channels (and is dropped if none are left).
+        State channels are restricted to markers that are still measured, in
+        their original order.
+        """
+
+        names = tuple(names)
+        if not names:
+            return self
+        unknown = sorted(set(names) - set(self.measurement_names))
+        if unknown:
+            raise ValueError(
+                "Unknown measurement channels for schema "
+                f"{self.name!r}: {', '.join(unknown)}"
+            )
+        groups = tuple(
+            ExperimentChannelGroup(
+                group.name,
+                tuple(channel for channel in group.channels if channel.name not in names),
+            )
+            for group in self.experiment_groups
+            if any(channel.name not in names for channel in group.channels)
+        )
+        measured_markers = {channel.marker for group in groups for channel in group.channels}
+        return ChannelSchema(
+            name=f"{self.name}[-{','.join(names)}]",
+            state_channels=tuple(
+                marker for marker in self.state_channels if marker in measured_markers
+            ),
+            experiment_groups=groups,
+        )
+
     @property
     def group_sizes(self) -> Tuple[int, ...]:
         return tuple(len(group.channels) for group in self.experiment_groups)
