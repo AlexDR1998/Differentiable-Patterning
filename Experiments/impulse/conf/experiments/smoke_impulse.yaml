@@ -20,8 +20,9 @@ grid:
   impulse.pair_source.stabilisation_steps: [[8, 16]]
   impulse.rollout.steps: [8]
   impulse.rollout.evaluation_steps: [16]
-  impulse.output.directory: [smoke_impulse]
 
 groups:
   - impulse.objective.type: [targeted, minimal_destructive]
     impulse.rollout.loss_window: [1, 4]
+    impulse.intervention.spatial: [local, patch]
+    impulse.intervention.duration: [1, 2]

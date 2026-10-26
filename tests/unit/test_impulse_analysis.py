@@ -3,6 +3,9 @@ import json
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import numpy as np
+import optax
+import pytest
 import yaml
 from pathlib import Path
 
@@ -11,11 +14,16 @@ from Experiments.impulse.analysis import (
     distance_over_time,
     grow_attractors,
     load_impulse_results,
+    load_saved_intervention,
     move_intervention,
+    summary_row,
     scale_intervention,
     success_rate,
     switch_matrix,
 )
+from Experiments.impulse.config_helpers import build_intervention
+from Experiments.impulse.records import impulse_size
+from NCA.trainer.impulse import ExternalTargetPairSource, NCAImpulseOptimiser, TargetedObjective
 from NCA.trainer.impulse.perturbation import perturbation
 
 
@@ -117,3 +125,80 @@ def test_load_impulse_results_reads_saved_run_summaries(tmp_path):
     assert results[0]["model_id"] == "model-1"
     assert (results[0]["source"], results[0]["target"]) == (2, 0)
     assert results[0]["config"] == cfg
+
+
+def _write_old_format(directory, name, result, summary):
+    """The loose .eqx/.npz/.json files that impulse runs wrote before impulse records."""
+
+    eqx.tree_serialise_leaves(directory / f"{name}.eqx", result.best_intervention)
+    np.savez_compressed(
+        directory / f"{name}.npz",
+        initial_states=np.asarray(result.initial_states),
+        perturbed_trajectory=np.asarray(result.perturbed_trajectory),
+    )
+    (directory / f"{name}.json").write_text(json.dumps(summary))
+
+
+@pytest.mark.parametrize("spatial, duration", [("local", 1), ("patch", 3)])
+def test_old_format_interventions_reload_without_the_model(tmp_path, spatial, duration):
+    value = yaml.safe_load(Path("Experiments/impulse/conf/base_config.yaml").read_text())
+    value["impulse"]["intervention"].update(
+        channels="all", spatial=spatial, patch_size=3, duration=duration
+    )
+    cfg = impulse_experiment_config_from_mapping(value)
+    model = RoundingModel()
+    # [pattern, time, C, H, W]
+    trajectories = jnp.stack([jnp.full((1, 2, 6, 6), k + 0.2) for k in range(2)])
+    intervention = build_intervention(
+        cfg.impulse.intervention, 2, model, trajectories, jax.random.PRNGKey(1)
+    )
+    optimiser = NCAImpulseOptimiser(
+        model=model,
+        pair_source=ExternalTargetPairSource(trajectories[:1, 0], trajectories[1:, 0]),
+        intervention=intervention,
+        objective=TargetedObjective(),
+        optimiser=optax.adam(0.1),
+        observed_channels=2,
+        rollout_steps=4,
+        loss_functions=[lambda x, y, **_: jnp.mean((x - y) ** 2, axis=(-3, -2, -1))],
+    )
+    result = optimiser.train(iterations=3, batch_size=2, key=jax.random.PRNGKey(2), evaluation_steps=4)
+    # Old runs saved a schema 7 config with an output folder
+    config = config_to_dict(cfg)
+    config["schema_version"] = 7
+    config["impulse"]["output"] = {"directory": "impulse_runs", "base_env": "IMPULSE_OUTPUT_PATH"}
+    _write_old_format(tmp_path, "run", result, {"model_id": "model-1", "config": config})
+
+    [saved] = load_impulse_results(tmp_path)
+    loaded, initial_states = load_saved_intervention(saved)
+
+    trained = result.best_intervention
+    states = trajectories[:, 0]
+    assert jnp.any(trained.values != 0)
+    assert loaded.duration == duration
+    assert jnp.array_equal(initial_states, result.initial_states)
+    assert jnp.array_equal(loaded.deltas(states), trained.deltas(states))
+    size = impulse_size(loaded, initial_states[:1])
+    assert size["impulse_l2"] > 0 and size["footprint"] > 0
+    row = summary_row(saved)
+    assert (row["spatial"], row["duration"], row["transition"]) == (spatial, duration, "0 -> 1")
+    assert row["budget"] == (9 * duration if spatial == "patch" else None)
+
+
+def test_interventions_saved_before_patch_mode_still_load(tmp_path):
+    # Saved leaves of a local intervention before PATCH_SIZE existed, in field order
+    location, values = jnp.asarray([0.3, -0.2]), jnp.full((1, 2, 4, 4), 0.5)
+    eqx.tree_serialise_leaves(tmp_path / "old.eqx", [location, values, 2, 2, 0.1])
+    skeleton = perturbation(
+        mode={"channel": "all", "spatial": "local"},
+        CHANNELS=2,
+        OBS_CHANNELS=2,
+        x=jnp.zeros((1, 2, 4, 4)),
+        WIDTH=0.1,
+        key=jax.random.PRNGKey(0),
+    )
+
+    loaded = eqx.tree_deserialise_leaves(tmp_path / "old.eqx", skeleton)
+
+    assert jnp.array_equal(loaded.location, location)
+    assert jnp.array_equal(loaded.values, values)

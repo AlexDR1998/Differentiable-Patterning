@@ -56,7 +56,6 @@ PVC_PATH="${PVC_PATH:-$CODE_ROOT/}"
 export PVC_PATH
 export DATA_PATH_BASE="${DATA_PATH_BASE:-$IO_ROOT/Data/}"
 export MODEL_STORE_ROOT="${MODEL_STORE_ROOT:-$IO_ROOT/Models/}"
-export IMPULSE_OUTPUT_PATH="${IMPULSE_OUTPUT_PATH:-$IO_ROOT/output/}"
 
 export RUN_CONFIG_PROFILE="$PROFILE_GPU"
 # The trainer profiles a short window after warmup itself, so don't also
@@ -80,7 +79,7 @@ mkdir -p "$MODEL_STORE_ROOT" "$IO_ROOT/output" "$WANDB_CACHE_DIR" "$WANDB_DATA_D
 echo "Running manifest index $SLURM_ARRAY_TASK_ID/$((N_JOBS - 1)): $MANIFEST"
 echo "Using code root: $PVC_PATH"
 echo "Using job IO root: $IO_ROOT/"
-echo "Writing model bundles to: $MODEL_STORE_ROOT"
+echo "Writing model bundles and impulse records to: $MODEL_STORE_ROOT"
 echo "Writing wandb local files to: $WANDB_DIR"
 echo "GPU profiling: $PROFILE_GPU"
 echo "JAX profiles: $RUN_CONFIG_PROFILE_DIR"

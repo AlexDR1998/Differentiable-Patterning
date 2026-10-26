@@ -6,8 +6,8 @@ from Experiments.config_helpers import (
     loss_names,
     loss_weights,
     open_registry_bundle,
+    resolve_store_root,
 )
-from Experiments.impulse.analysis import save_impulse_result
 from Experiments.impulse.config_helpers import (
     build_impulse_optimiser,
     build_intervention,
@@ -16,15 +16,18 @@ from Experiments.impulse.config_helpers import (
     load_impulse_data,
     loss_args_from_config,
     pixel_steps,
-    resolve_output_directory,
 )
-from Experiments.model_registry import _config_digest
+from Experiments.impulse.records import create_impulse_id, publish_impulse_record
 from NCA.trainer.impulse import NCAImpulseOptimiser
 from NCA.trainer.logging.impulse_wandb_log import ImpulseLogger
 
 
 def run(cfg):
-    """Load a trained NCA, optimise an intervention, and save float outputs."""
+    """Load a trained NCA, optimise an intervention, and save it as an impulse record.
+
+    The record goes into the model store the model came from
+    (``Experiments/impulse/records.py``).
+    """
 
     key = jax.random.PRNGKey(cfg.seed)
     model_key, intervention_key, train_key = jax.random.split(key, 3)
@@ -45,8 +48,8 @@ def run(cfg):
 
     impulse_cfg = cfg.impulse
     config = config_to_dict(cfg)
-    # The config hash keeps runs of one sweep from overwriting each other.
-    run_name = f"{bundle.id}_{impulse_cfg.objective.type}_cfg{_config_digest(config)[:8]}"
+    # The W&B run is named after the record it will produce
+    impulse_id = create_impulse_id(cfg)
     logger = None
     if cfg.logging.backend == "wandb":
         logger = ImpulseLogger(
@@ -56,7 +59,7 @@ def run(cfg):
                 "project": cfg.logging.wandb.project,
                 "group": cfg.logging.wandb.group,
                 "tags": build_wandb_tags(cfg),
-                "name": run_name,
+                "name": impulse_id,
                 "config": config,
             },
         )
@@ -88,24 +91,21 @@ def run(cfg):
         log_every=impulse_cfg.log_every,
     )
 
+    wandb_run_id = None
     if logger is not None:
         logger.log_result(result, pixel_steps=pixel_steps(impulse_cfg.intervention))
+        wandb_run_id = getattr(logger.run, "id", None)
         logger.finish()
 
-    output_directory = resolve_output_directory(cfg.impulse.output)
-    summary = {
-        "model_id": bundle.id,
-        "bundle_path": str(bundle.path),
-        "best_step": result.best_step,
-        "best_loss": result.best_loss,
-        "evaluation_steps": impulse_cfg.rollout.evaluation_steps,
-        "evaluation_loss": result.evaluation_loss,
-        "baseline_evaluation_loss": result.baseline_evaluation_loss,
-        "evaluation_switch_rate": result.evaluation_switch_rate,
-        "baseline_switch_rate": result.baseline_switch_rate,
-        "pixel_steps": pixel_steps(impulse_cfg.intervention),
-        "config": config,
-    }
-    save_impulse_result(output_directory, run_name, result, summary)
-    print(f"Saved impulse result to {output_directory / run_name}")
+    record = publish_impulse_record(
+        store_root=resolve_store_root(cfg.checkpoint.store_root),
+        impulse_id=impulse_id,
+        cfg=cfg,
+        bundle=bundle,
+        data_config=data_config,
+        result=result,
+        observed_channels=observed_channels,
+        wandb_run_id=wandb_run_id,
+    )
+    print(f"Saved impulse record to {record.path}")
     return result

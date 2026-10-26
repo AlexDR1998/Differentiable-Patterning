@@ -968,8 +968,8 @@ def test_data_augmenter_4ch_colony_keeps_observable_channels():
     assert jnp.array_equal(y[0][:, :4], data[0, 1:])
 
 
-@pytest.mark.parametrize("use_control_bounds", [False, True])
-def test_260726_cleaning_reaches_the_loader(monkeypatch, use_control_bounds):
+@pytest.mark.parametrize("knockout_bounds", ["selected", "control", "joint"])
+def test_260726_cleaning_reaches_the_loader(monkeypatch, knockout_bounds):
     import Experiments.micropatterns.config_helpers as micropattern_helpers
     from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
 
@@ -988,7 +988,7 @@ def test_260726_cleaning_reaches_the_loader(monkeypatch, use_control_bounds):
     cleaning = MicropatternCleaningConfig(
         enabled=True,
         alignment_file="Experiments/micropatterns/conf/alignment/example.yaml",
-        knockouts_use_control_bounds=use_control_bounds,
+        knockout_bounds=knockout_bounds,
     )
     cfg = _micropattern_cfg(
         data_channels=14,
@@ -1004,8 +1004,9 @@ def test_260726_cleaning_reaches_the_loader(monkeypatch, use_control_bounds):
     assert passed.alignment_file == str(
         micropattern_helpers.REPOSITORY_ROOT / "Experiments/micropatterns/conf/alignment/example.yaml"
     )
-    # Control bounds for knockouts come from a separate control-only load.
-    if use_control_bounds:
+    # Control bounds for knockouts come from a separate control-only load;
+    # joint bounds are found by each load itself.
+    if knockout_bounds == "control":
         assert len(calls) == 2 and calls[0]["conditions"] == ("ctrl",)
         assert calls[1]["histogram_bins"] is shared_bins
     else:

@@ -3,25 +3,29 @@
 # come from emoji_attractor_switch_calibration. The l2 regulariser is an RMS
 # over the whole state, so a small patch needs larger l2 values than the
 # Gaussian impulse. Each repeat starts from a different random centre.
-experiment_name: emoji_attractor_switch_patch
+experiment_name: emoji_attractor_switch_patch_v2
 entrypoint: Experiments.impulse.optimise:run
 output_subdir: generated/emoji_attractor_switch_patch
 seed_mode: index
 grid:
   checkpoint.model_id: [20261017T103911Z-cfg658b3b6ffdb3-28ddf0a3]
-  impulse.iterations: [1000]
+  impulse.iterations: [2000]
   impulse.pair_source.type: [stable_attractor]
   impulse.objective.type: [targeted]
-  impulse.rollout.steps: [128]
-  impulse.rollout.loss_window: [32]
+  
   impulse.rollout.evaluation_steps: [1024]
   impulse.optimiser.learn_rate: [0.01]
-  impulse.intervention.channels: [hidden, all]
+  impulse.intervention.channels: [all]
   impulse.intervention.spatial: [patch]
   impulse.intervention.patch_size: [1, 3, 5, 9]
   impulse.loss.regularisers.l2: [0.0, 0.01, 0.1, 1.0]
-  impulse.repeat: [0, 1, 2]
+  impulse.repeat: [0,]
+  
 
 groups:
   - impulse.pair_source.source_index: [0, 1]
     impulse.pair_source.target_index: [1, 0]
+  - impulse.rollout.steps: [128,256,512]
+    impulse.rollout.loss_window: [32,64,128]
+    impulse.rollout.scan_kind: [lax,lax,checkpointed]
+    impulse.rollout.checkpoints: [null, null, 512]

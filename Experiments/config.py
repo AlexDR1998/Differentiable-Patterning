@@ -40,7 +40,6 @@ from Experiments.impulse.config import (
     ImpulseOptimiserConfig,
     ImpulsePairSourceConfig,
     ImpulseRolloutConfig,
-    OutputConfig,
 )
 from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
 from Experiments.pde.config import PdeDataConfig
@@ -60,7 +59,7 @@ from NCA.trainer.config import PoolAdmissionConfig, TrainerConfig
 from NCA.trainer.interval_schedule import INTERVAL_MODES
 
 
-CONFIG_SCHEMA_VERSION = 7
+CONFIG_SCHEMA_VERSION = 9
 
 # data.dataset -> the data section that holds its settings
 DATA_SECTIONS = {
@@ -263,6 +262,12 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
     * Version 6 and earlier had no ``data.snowmelt.version``: they read the
       first snowmelt dataset, so ``version: v1`` is filled in, together with
       the static channels that were then the default (DEM, INCIDENCE).
+    * Version 7 and earlier impulse configs had ``impulse.output`` (a folder
+      for loose result files). Impulse results are now records in the model
+      store, so it is dropped.
+    * Version 8 and earlier had ``data.micropattern.cleaning.knockouts_use_control_bounds``
+      (a bool); version 9 has ``knockout_bounds``. ``true`` becomes
+      ``"control"`` and ``false`` becomes ``"selected"``.
     * Loss terms once had ``epsilon``, ``metric``, ``normalize``, ``tau`` and
       ``amplitude_penalty`` options that no loss uses now. They are dropped when
       they hold their old default values.
@@ -300,6 +305,18 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
         data["snowmelt"] = dict(data.get("snowmelt") or {})
         data["snowmelt"].setdefault("version", "v1")
         data["snowmelt"].setdefault("static_channels", ["DEM", "INCIDENCE"])
+    if version <= 7 and isinstance(root.get("impulse"), Mapping):
+        root["impulse"] = dict(root["impulse"])
+        root["impulse"].pop("output", None)
+    if version <= 8 and isinstance(data, Mapping):
+        micropattern = data.get("micropattern")
+        if isinstance(micropattern, Mapping) and isinstance(micropattern.get("cleaning"), Mapping):
+            if "knockouts_use_control_bounds" in micropattern["cleaning"]:
+                root["data"] = data = dict(data)
+                data["micropattern"] = dict(micropattern)
+                cleaning = data["micropattern"]["cleaning"] = dict(micropattern["cleaning"])
+                use_control = cleaning.pop("knockouts_use_control_bounds")
+                cleaning.setdefault("knockout_bounds", "control" if use_control else "selected")
     if isinstance(root.get("trainer"), Mapping):
         root["trainer"] = dict(root["trainer"])
         root["trainer"].pop("backend", None)
@@ -555,7 +572,7 @@ def _micropattern_config(value: Any) -> MicropatternDataConfig:
                 str(k): (float(v[0]), float(v[1])) for k, v in (x or {}).items()
             },
             percentiles_inside_mask=bool,
-            knockouts_use_control_bounds=bool,
+            knockout_bounds=str,
         )
     return _strict(MicropatternDataConfig, raw, "data.micropattern")
 
@@ -714,7 +731,6 @@ def impulse_experiment_config_from_mapping(
     impulse_node["objective"] = _strict(ImpulseObjectiveConfig, impulse_node.get("objective"), "impulse.objective")
     impulse_node["loss"] = _loss_config(impulse_node.get("loss"), "impulse.loss")
     impulse_node["optimiser"] = _strict(ImpulseOptimiserConfig, impulse_node.get("optimiser"), "impulse.optimiser")
-    impulse_node["output"] = _strict(OutputConfig, impulse_node.get("output"), "impulse.output")
     return ImpulseExperimentConfig(
         schema_version=CONFIG_SCHEMA_VERSION,
         seed=int(root.get("seed", 0)),

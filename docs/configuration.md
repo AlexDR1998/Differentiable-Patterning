@@ -54,10 +54,14 @@ registry always keeps the full tags.
 
 ## Older configs
 
-Current files have `schema_version: 7`. Older configs are translated when read
+Current files have `schema_version: 9`. Older configs are translated when read
 by `upgrade_legacy_config`, the only place old spellings are handled. Each
 upgrade fills in the values the code used before, so old runs and bundles load
 the same data they were trained on:
+
+- **8** removed `impulse.output` (a folder for loose impulse result files).
+  Impulse runs now save records in the model store
+  (`docs/model_registry.md`); older impulse configs just drop the section.
 
 - **7** added `data.snowmelt.version` (`v1` or `v2`, the dataset folder under
   `data.snowmelt.root`). Older snowmelt configs get `v1` and, if they used
@@ -112,9 +116,17 @@ settings** and exports the alignment file. The steps are described in
    `percentiles_inside_mask`), so brightness can still be compared over time.
    `cleaning.normalisation` sets how trajectories share these bounds:
    `replicate_mean` (each trajectory's bounds, averaged), `per_replicate` (own
-   bounds) or `pooled` (all pixels together). With
-   `knockouts_use_control_bounds`, knockouts take their bounds from the
-   control data, so a knockout's change in overall intensity is kept.
+   bounds) or `pooled` (all pixels together). `cleaning.knockout_bounds` sets
+   how knockouts get their bounds:
+   - `selected`: like any other loaded trajectory.
+   - `control`: from the control data, so a knockout's change in overall
+     intensity is kept (values outside the control range are clipped).
+   - `joint`: each condition (`ctrl`, `sl0`, `sl24`) is normalised on its
+     own, then every condition uses the widest range (per replicate with
+     `per_replicate`). Control bounds stay the same unless a knockout goes
+     outside them, and a dim knockout channel stays dim instead of having
+     its noise stretched to [0, 1]. Every load reads all three conditions to
+     find these bounds. Stainings are still normalised separately.
 8. Pixels outside the mask are zeroed and the images are block-averaged to
    the training downsampling.
 
@@ -160,7 +172,7 @@ data:
       normalisation: replicate_mean
       channel_percentiles: {}
       percentiles_inside_mask: true
-      knockouts_use_control_bounds: false
+      knockout_bounds: selected
 ```
 
 Images can also be flagged as low quality in the notebook (**Manual

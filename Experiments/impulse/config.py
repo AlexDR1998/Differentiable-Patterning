@@ -77,12 +77,6 @@ class ImpulseOptimiserConfig(ConfigValue):
 
 
 @dataclass(frozen=True)
-class OutputConfig(ConfigValue):
-    directory: str = "impulse_runs"
-    base_env: str | None = "IMPULSE_OUTPUT_PATH"
-
-
-@dataclass(frozen=True)
 class ImpulseConfig(ConfigValue):
     iterations: int
     batch_size: int
@@ -94,7 +88,6 @@ class ImpulseConfig(ConfigValue):
     objective: ImpulseObjectiveConfig
     loss: LossConfig
     optimiser: ImpulseOptimiserConfig
-    output: OutputConfig
     # Not used by the run; sweep over it to repeat otherwise identical configs
     # with different seeds.
     repeat: int = 0

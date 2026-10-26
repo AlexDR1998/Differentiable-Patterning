@@ -417,11 +417,26 @@ class ModelRegistry:
                 );
                 CREATE TABLE model_tags (model_id TEXT, tag TEXT);
                 CREATE TABLE model_wandb_tags (model_id TEXT, tag TEXT);
+                CREATE TABLE impulses (
+                    impulse_id TEXT PRIMARY KEY, model_id TEXT, experiment TEXT,
+                    path TEXT, created_at TEXT, status TEXT, objective TEXT,
+                    pair_source TEXT, source_index INTEGER, target_index INTEGER,
+                    source_pattern TEXT, target_pattern TEXT, channels TEXT,
+                    spatial TEXT, patch_size INTEGER, duration INTEGER,
+                    pixel_steps INTEGER, switch_rate REAL, baseline_switch_rate REAL,
+                    evaluation_loss REAL, baseline_evaluation_loss REAL,
+                    impulse_l2 REAL, footprint INTEGER, git_commit TEXT,
+                    git_dirty INTEGER, wandb_project TEXT, wandb_group TEXT,
+                    wandb_run_id TEXT
+                );
+                CREATE TABLE impulse_wandb_tags (impulse_id TEXT, tag TEXT);
                 CREATE INDEX models_family_idx ON models(family);
                 CREATE INDEX models_dataset_idx ON models(dataset);
                 CREATE INDEX evaluations_model_idx ON evaluations(model_id);
                 CREATE INDEX model_tags_tag_idx ON model_tags(tag);
                 CREATE INDEX model_wandb_tags_tag_idx ON model_wandb_tags(tag);
+                CREATE INDEX impulses_model_idx ON impulses(model_id);
+                CREATE INDEX impulse_wandb_tags_tag_idx ON impulse_wandb_tags(tag);
                 """
             )
             skipped_legacy_bundles = []
@@ -467,6 +482,7 @@ class ModelRegistry:
                 )
             self._index_evaluations(connection)
             self._index_annotations(connection)
+            self._index_impulses(connection)
             connection.commit()
         finally:
             connection.close()
@@ -485,6 +501,58 @@ class ModelRegistry:
                         manifest.get("seed"), manifest.created_at, str(path.parent),
                     ),
                 )
+
+    def impulse_paths(self) -> Iterable[Path]:
+        return sorted(path.parent for path in (self.root / "impulses").glob("*/*/manifest.yaml"))
+
+    def _index_impulses(self, connection: sqlite3.Connection) -> None:
+        """Index impulse records (``Experiments/impulse/records.py``) and their W&B tags."""
+        from Experiments.impulse.records import open_impulse_record
+
+        skipped = []
+        for path in self.impulse_paths():
+            try:
+                record = open_impulse_record(path)
+            except ValueError as error:
+                if not str(error).startswith("Unsupported impulse record schema version"):
+                    raise
+                skipped.append(path)
+                continue
+            manifest = record.manifest
+            conditions = manifest.conditions
+            results = manifest.results
+            intervention = record.config.impulse.intervention
+            git = manifest.provenance.git
+            wandb = manifest.provenance.wandb
+            connection.execute(
+                "INSERT INTO impulses VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    record.id, record.model_id, manifest.get("experiment"), str(path),
+                    str(manifest.created_at), str(manifest.status),
+                    record.config.impulse.objective.type, conditions.get("pair_source"),
+                    conditions.get("source_index"), conditions.get("target_index"),
+                    conditions.get("source_pattern"), conditions.get("target_pattern"),
+                    intervention.channels, intervention.spatial,
+                    intervention.patch_size if intervention.spatial == "patch" else None,
+                    intervention.duration, results.get("pixel_steps"),
+                    results.get("switch_rate"), results.get("baseline_switch_rate"),
+                    results.get("evaluation_loss"), results.get("baseline_evaluation_loss"),
+                    results.get("impulse_l2"), results.get("footprint"),
+                    git.get("commit"), git.get("dirty"), wandb.get("project"),
+                    wandb.get("group"), wandb.get("run_id"),
+                ),
+            )
+            for tag in build_registry_tags(record.config):
+                connection.execute(
+                    "INSERT INTO impulse_wandb_tags VALUES (?,?)", (record.id, str(tag))
+                )
+        if skipped:
+            warnings.warn(
+                f"Skipped {len(skipped)} impulse record(s) with unsupported schemas "
+                f"while rebuilding {self.database_path}.",
+                UserWarning,
+                stacklevel=3,
+            )
 
     def _read_annotations(self) -> DictConfig:
         if not self.annotations_path.is_file():
@@ -508,6 +576,12 @@ class ModelRegistry:
 
     def _ensure_index(self) -> None:
         if not self.database_path.is_file():
+            self.reindex()
+            return
+        # An index written before impulse records existed has no impulses table
+        with sqlite3.connect(self.database_path) as connection:
+            tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if "impulses" not in tables:
             self.reindex()
 
     def models_df(self):
@@ -544,6 +618,29 @@ class ModelRegistry:
         self._ensure_index()
         with sqlite3.connect(self.database_path) as connection:
             return pd.read_sql_query("SELECT * FROM model_wandb_tags", connection)
+
+    def impulses_df(self):
+        import pandas as pd
+
+        self._ensure_index()
+        with sqlite3.connect(self.database_path) as connection:
+            return pd.read_sql_query("SELECT * FROM impulses ORDER BY created_at DESC", connection)
+
+    def impulse_wandb_tags_df(self):
+        import pandas as pd
+
+        self._ensure_index()
+        with sqlite3.connect(self.database_path) as connection:
+            return pd.read_sql_query("SELECT * FROM impulse_wandb_tags", connection)
+
+    def get_impulse(self, impulse_id: str):
+        """Open an impulse record (``Experiments/impulse/records.py``) by its ID."""
+        from Experiments.impulse.records import open_impulse_record
+
+        matching = [path for path in self.impulse_paths() if path.name == impulse_id]
+        if not matching:
+            raise KeyError(f"Unknown impulse {impulse_id!r}")
+        return open_impulse_record(matching[0])
 
     def annotate(
         self,

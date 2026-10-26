@@ -12,10 +12,12 @@ Run from the repository root with:
 
     marimo edit Experiments/impulse/impulse_explorer.py
 
-Reads the ``.json``/``.eqx`` pairs written by ``Experiments/impulse/optimise.py``
-(``IMPULSE_OUTPUT_PATH``) and the model bundles they name (``MODEL_STORE_ROOT``,
-default ``models/``). Emoji images are read from ``DATA_PATH_BASE``. The
-computations are in ``Experiments/impulse/analysis.py``.
+Reads the impulse records written by ``Experiments/impulse/optimise.py`` and
+the model bundles they link to, both from the model store (``MODEL_STORE_ROOT``,
+default ``models/``; see ``docs/model_registry.md``). Emoji images are read
+from ``DATA_PATH_BASE``. The computations are in
+``Experiments/impulse/analysis.py``. Old flat result files are read by
+``impulse_sweep_explorer.py`` instead.
 """
 
 import marimo
@@ -36,8 +38,6 @@ with app.setup(hide_code=True):
         add_state_noise,
         distance_over_time,
         grow_attractors,
-        load_impulse_results,
-        load_intervention,
         load_model_and_data,
         move_intervention,
         scale_intervention,
@@ -45,6 +45,7 @@ with app.setup(hide_code=True):
         switch_matrix,
     )
     from Experiments.impulse.config_helpers import pixel_steps
+    from Experiments.model_registry import ModelRegistry
 
     plt.style.use("default")
 
@@ -78,19 +79,49 @@ def _():
 
 @app.cell
 def _():
-    results_dir = mo.ui.text(
-        value=os.environ.get("IMPULSE_OUTPUT_PATH", "impulse_runs"), label="Impulse results", full_width=True
-    )
     store_root = mo.ui.text(
         value=os.environ.get("MODEL_STORE_ROOT", "models"), label="Model store", full_width=True
     )
-    mo.vstack([results_dir, store_root])
-    return results_dir, store_root
+    store_root
+    return (store_root,)
 
 
 @app.cell
-def _(results_dir):
-    results = load_impulse_results(results_dir.value)
+def _(store_root):
+    # Rebuild the index so records copied in since the last run are listed
+    registry = ModelRegistry(store_root.value)
+    registry.reindex()
+    experiment_choice = mo.ui.multiselect(
+        sorted(registry.impulses_df().experiment.dropna().unique()), label="Impulse experiments (none: all)"
+    )
+    experiment_choice
+    return experiment_choice, registry
+
+
+@app.cell
+def _(experiment_choice, registry):
+    _impulses = registry.impulses_df()
+    if experiment_choice.value:
+        _impulses = _impulses[_impulses.experiment.isin(experiment_choice.value)]
+    results = []
+    for _row in _impulses.itertuples():
+        _record = registry.get_impulse(_row.impulse_id)
+        results.append(
+            {
+                "name": _record.id,
+                "model_id": _record.model_id,
+                "source": _row.source_index,
+                "target": _row.target_index,
+                "config": _record.config,
+                "summary": {
+                    "evaluation_loss": _row.evaluation_loss,
+                    "baseline_evaluation_loss": _row.baseline_evaluation_loss,
+                    "evaluation_switch_rate": _row.switch_rate,
+                    "baseline_switch_rate": _row.baseline_switch_rate,
+                },
+                "record": _record,
+            }
+        )
     model_ids = sorted({result["model_id"] for result in results})
     model_choice = mo.ui.dropdown(
         model_ids, value=model_ids[0] if model_ids else None, label="Model"
@@ -100,6 +131,7 @@ def _(results_dir):
             "run": result["name"],
             "model_id": result["model_id"],
             "switch": f"{result['source']} -> {result['target']}",
+            "patterns": f"{result['record'].manifest.conditions.source_pattern} -> {result['record'].manifest.conditions.target_pattern}",
             "objective": result["config"].impulse.objective.type,
             "impulse": result["config"].impulse.intervention.spatial,
             "patch_size": result["config"].impulse.intervention.patch_size,
@@ -148,16 +180,15 @@ def _(results):
 
 
 @app.cell
-def _(model_choice, results, store_root):
+def _(model_choice, registry, results, store_root):
     mo.stop(model_choice.value is None, mo.md("No impulse results found"))
     model_results = [result for result in results if result["model_id"] == model_choice.value]
+    # Checks the bundle holds the exact weights the impulses were optimised for
+    model_results[0]["record"].verify_model(registry)
     model, trajectories, observed_channels = load_model_and_data(
         model_results[0]["config"], store_root=store_root.value or None
     )
-    interventions = {
-        result["name"]: load_intervention(result, model, trajectories, observed_channels)
-        for result in model_results
-    }
+    interventions = {result["name"]: result["record"].load_intervention() for result in model_results}
     pattern_count = len(trajectories)
     mo.md(f"{len(model_results)} runs, {pattern_count} patterns, {model.N_CHANNELS} channels")
     return interventions, model, model_results, observed_channels, pattern_count, trajectories
@@ -282,7 +313,7 @@ def _(chosen):
     noise_levels = mo.ui.text(value="0, 0.01, 0.05, 0.1, 0.2", label="State noise (sd)")
     location_grid = mo.ui.number(start=2, stop=12, value=5, label="Position grid size (local impulses)")
     run_robustness = mo.ui.run_button(label="Compute robustness")
-    _local = chosen["config"].impulse.intervention.spatial == "local"
+    _local = chosen["config"].impulse.intervention.spatial in ("local", "patch")
     mo.vstack([mo.hstack([scales, noise_levels] + ([location_grid] if _local else [])), run_robustness])
     return location_grid, noise_levels, run_robustness, scales
 
@@ -332,7 +363,7 @@ def _(
         )
         for _index, value in enumerate(_noise)
     ]
-    _local = chosen["config"].impulse.intervention.spatial == "local"
+    _local = chosen["config"].impulse.intervention.spatial in ("local", "patch")
     _fig, _axes = plt.subplots(1, 3 if _local else 2, figsize=(13 if _local else 9, 3.2))
     _axes[0].plot(_scales, np.asarray(_scale_rates), marker="o")
     _axes[0].set_xlabel("impulse scale")

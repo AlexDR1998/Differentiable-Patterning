@@ -1,4 +1,4 @@
-schema_version: 7
+schema_version: 9
 seed: 0
 
 experiment:
@@ -31,7 +31,7 @@ data: null
 
 impulse:
   iterations: 1000
-  batch_size: 8
+  batch_size: 4
   resample_every: 100
   log_every: 100
   # Sweep over this to repeat a config with different seeds
@@ -101,6 +101,3 @@ impulse:
     learn_rate: 0.001
     gradient_clip_norm: 1.0
 
-  output:
-    directory: impulse_runs
-    base_env: IMPULSE_OUTPUT_PATH

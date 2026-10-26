@@ -9,6 +9,7 @@ from Experiments.config import (
     CONFIG_SCHEMA_VERSION,
     config_to_dict,
     experiment_config_from_mapping,
+    impulse_experiment_config_from_mapping,
     upgrade_legacy_config,
 )
 
@@ -201,3 +202,32 @@ def test_version_1_bundle_keeps_its_260726_normalisation():
     assert micropattern.histogram_percentiles == (0.5, 99.95)
     assert micropattern.intensity_factors == {"cell_fate_s2/FOXA2": {0: 0.075}}
     assert not micropattern.cleaning.enabled
+
+
+def test_version_7_impulse_config_drops_its_output_folder():
+    value = yaml.safe_load(Path("Experiments/impulse/conf/base_config.yaml").read_text())
+    value["schema_version"] = 7
+    value["impulse"]["output"] = {"directory": "impulse_runs", "base_env": "IMPULSE_OUTPUT_PATH"}
+
+    upgraded = upgrade_legacy_config(value)
+    config = impulse_experiment_config_from_mapping(value)
+
+    assert "output" not in upgraded["impulse"]
+    assert upgraded["schema_version"] == CONFIG_SCHEMA_VERSION
+    assert config.impulse.iterations == value["impulse"]["iterations"]
+
+
+@pytest.mark.parametrize("use_control, expected", [(True, "control"), (False, "selected")])
+def test_version_8_knockout_control_bounds_become_a_mode(use_control, expected):
+    value = yaml.safe_load(Path("Experiments/micropatterns/conf/base_config.yaml").read_text())
+    value["schema_version"] = 8
+    cleaning = value["data"]["micropattern"]["cleaning"]
+    del cleaning["knockout_bounds"]
+    cleaning["knockouts_use_control_bounds"] = use_control
+
+    upgraded = upgrade_legacy_config(value)
+
+    assert "knockouts_use_control_bounds" not in upgraded["data"]["micropattern"]["cleaning"]
+    assert upgraded["data"]["micropattern"]["cleaning"]["knockout_bounds"] == expected
+    # The saved config itself is not edited.
+    assert "knockout_bounds" not in cleaning

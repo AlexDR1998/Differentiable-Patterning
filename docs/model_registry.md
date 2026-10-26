@@ -15,6 +15,11 @@ $MODEL_STORE_ROOT/
     manifest.yaml
   evaluations/<evaluator>/<evaluation-id>/
     manifest.yaml
+  impulses/<experiment>/<impulse-id>/
+    intervention.eqx
+    config.yaml
+    manifest.yaml
+    states.npz
   registry.sqlite
 ```
 
@@ -95,6 +100,57 @@ registry.reindex()
 
 Keep only scalar metrics in the manifest. Save large arrays next to it (e.g.
 as `.npz`).
+
+## Impulse records
+
+Each impulse run (`Experiments/impulse/optimise.py`) saves its best
+intervention as a record in the store it loaded the model from
+(`checkpoint.store_root`, then `MODEL_STORE_ROOT`, then `models/`). Records,
+like bundles, are written to a hidden folder and renamed into place, and are
+never edited. The record id (timestamp, config hash, random part) is also the
+W&B run name.
+
+`manifest.yaml` holds:
+
+- `model`: the bundle id, its checkpoint checksum and path, so the impulse
+  links to the exact weights it was optimised for
+- `conditions`: pair source, source and target indices, and their pattern
+  names (`data.emoji.pairs[i].target`)
+- `results`: switch rate, evaluation losses (with and without the impulse) and
+  impulse size
+- `artifact`: the intervention checksum and the state shape, so the
+  intervention can be rebuilt without the model or data
+- `provenance`: config hash, git commit, package versions, W&B project, group,
+  run id and tags
+
+`reindex` adds the tables `impulses` (one row per record) and
+`impulse_wandb_tags` (every setting as an untruncated `key:value` tag, like
+`model_wandb_tags`):
+
+```python
+registry = ModelRegistry.from_env()
+impulses = registry.impulses_df()
+with_models = impulses.merge(registry.models_df(), on="model_id", suffixes=("", "_model"))
+
+record = registry.get_impulse(impulses.iloc[0].impulse_id)
+intervention = record.load_intervention()   # checks the checksum
+states = record.load_states()               # states.npz as a dict
+bundle = record.verify_model(registry)      # the linked bundle, checked against the impulse's checksum
+```
+
+Filtering by the tags of both the model and the impulse, in SQL:
+
+```sql
+SELECT i.* FROM impulses i
+WHERE EXISTS (SELECT 1 FROM model_wandb_tags t
+              WHERE t.model_id = i.model_id AND t.tag = 'data.emoji.task:multi_attractor')
+  AND EXISTS (SELECT 1 FROM impulse_wandb_tags t
+              WHERE t.impulse_id = i.impulse_id AND t.tag = 'impulse.intervention.patch_size:3');
+```
+
+`Experiments/impulse/impulse_explorer.py` reads records from the store. Runs
+saved before records existed (loose `.eqx`/`.json`/`.npz` files in one
+folder) are read only by `impulse_sweep_explorer.py`.
 
 ## Checking evaluation inputs
 

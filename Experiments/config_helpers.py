@@ -168,18 +168,22 @@ def build_loss_filename(loss_config, include_loss_args=False):
     return loss_str
 
 
-def open_registry_bundle(model_id, store_root=None, env=None):
-    """Open a model bundle by ID or alias.
+def resolve_store_root(store_root=None, env=None):
+    """The model store root: ``store_root``, then ``MODEL_STORE_ROOT``, then ``./models``.
 
-    ``store_root`` defaults to ``MODEL_STORE_ROOT`` and then ``./models``,
-    matching the registry CLI and explorer defaults.
+    These match the registry CLI and explorer defaults.
     """
+
+    environment = os.environ if env is None else env
+    return store_root or environment.get("MODEL_STORE_ROOT") or "models"
+
+
+def open_registry_bundle(model_id, store_root=None, env=None):
+    """Open a model bundle by ID or alias, from the store given by ``resolve_store_root``."""
 
     from Experiments.model_registry import ModelRegistry
 
-    environment = os.environ if env is None else env
-    resolved_store_root = store_root or environment.get("MODEL_STORE_ROOT") or "models"
-    return ModelRegistry(resolved_store_root).get(model_id)
+    return ModelRegistry(resolve_store_root(store_root, env)).get(model_id)
 
 
 def load_model_registry_list(

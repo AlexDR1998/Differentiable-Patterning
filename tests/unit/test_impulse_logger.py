@@ -61,12 +61,16 @@ def test_impulse_logger_logs_training_scalars_and_result(logged):
             perturbed_trajectory=np.zeros((batch, steps, channels, size, size)),
             evaluation_loss=0.2,
             baseline_evaluation_loss=0.9,
+            evaluation_switch_rate=0.75,
+            baseline_switch_rate=0.0,
         )
     )
 
     assert logged["Loss/target"] == 0.5
     assert logged["Intervention/linf"] == 0.2
     assert logged["Result/baseline_evaluation_loss"] == 0.9
+    assert logged["Result/switch_rate"] == 0.75
+    assert logged["Result/baseline_switch_rate"] == 0.0
     assert logged["Result/source | perturbed | final | target"].shape == (
         batch * size,
         4 * size,

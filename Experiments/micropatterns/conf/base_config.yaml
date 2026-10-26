@@ -1,4 +1,4 @@
-schema_version: 7
+schema_version: 9
 seed: 0
 
 experiment:
@@ -107,7 +107,7 @@ data:
       normalisation: per_replicate
       channel_percentiles: {}
       percentiles_inside_mask: true
-      knockouts_use_control_bounds: false
+      knockout_bounds: selected
   # 260726 only. Images flagged as low quality in the data cleaning notebook
   # (relative to the repository root); each is treated as not measured.
     quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
