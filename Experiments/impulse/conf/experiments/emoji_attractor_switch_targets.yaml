@@ -1,0 +1,122 @@
+# Which attractor sets are easiest to switch between? gNCA models for every
+# set of 2-5 attractors drawn from {crab, microbe, rooster, alien_monster,
+# lizard}, numbered as in
+# Experiments/emoji/conf/experiments/emoji_multi_attractor_stability_data_wide_sweep.yaml,
+# with an impulse learned for every ordered transition (K(K-1) runs per model).
+#
+# Fill the REPLACE_* slots with bundle IDs. Each ID appears twice: once in
+# the grid and once in its branch, which picks the transitions for its
+# attractor count. Placeholders must stay distinct until replaced.
+experiment_name: emoji_attractor_switch_target_effect_v1
+entrypoint: Experiments.impulse.optimise:run
+output_subdir: generated/emoji_attractor_switch_target_effect_v1
+seed_mode: index
+
+# All ordered (source, target) pairs, as indices into data.emoji.pairs
+transitions:
+  k2: &k2
+    impulse.pair_source.source_index: [0, 1]
+    impulse.pair_source.target_index: [1, 0]
+  k3: &k3
+    impulse.pair_source.source_index: [0, 0, 1, 1, 2, 2]
+    impulse.pair_source.target_index: [1, 2, 0, 2, 0, 1]
+  k4: &k4
+    impulse.pair_source.source_index: [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]
+    impulse.pair_source.target_index: [1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2]
+  k5: &k5
+    impulse.pair_source.source_index: [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4]
+    impulse.pair_source.target_index: [1, 2, 3, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 1, 2, 4, 0, 1, 2, 3]
+
+grid:
+  checkpoint.model_id:
+    - REPLACE_GNCA_2_1  
+    - REPLACE_GNCA_2_2  
+    - REPLACE_GNCA_2_3  
+    - REPLACE_GNCA_2_4  
+    - REPLACE_GNCA_2_5  
+    - REPLACE_GNCA_2_6  
+    - REPLACE_GNCA_2_7  
+    - REPLACE_GNCA_2_8  
+    - REPLACE_GNCA_2_9  
+    - REPLACE_GNCA_3_1  
+    - REPLACE_GNCA_3_2  
+    - REPLACE_GNCA_3_3  
+    - REPLACE_GNCA_4_1  
+    - REPLACE_GNCA_4_2  
+    - REPLACE_GNCA_4_3  
+    - REPLACE_GNCA_4_4  
+    - REPLACE_GNCA_4_5  
+    
+  impulse.iterations: [8000]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.objective.type: [targeted]
+  # impulse.rollout.steps: [256]
+  # impulse.rollout.loss_window: [64]
+  impulse.rollout.evaluation_steps: [1024]
+  impulse.optimiser.learn_rate: [0.01]
+  impulse.intervention.channels: [all]
+  impulse.intervention.spatial: [patch]
+  # impulse.intervention.patch_size: [3]
+  impulse.loss.regularisers.l2: [0.0]
+  impulse.repeat: [0]
+groups:
+  - impulse.intervention.patch_size: [9, 3, 1]
+    impulse.intervention.duration: [1, 9, 81]
+    impulse.intervention.budget: [81, 81, 81]
+  - impulse.rollout.steps: [128,256,512]
+    impulse.rollout.loss_window: [32,64,128]
+    impulse.rollout.scan_kind: [lax,lax,checkpointed]
+    impulse.rollout.checkpoints: [null, null, 512]
+# One branch per model: its transitions and W&B tags for filtering
+branches:
+  - when: {checkpoint.model_id: REPLACE_GNCA_2_1}
+    grid: {logging.wandb.tags: [[attractors:2, attractor_set:2.1]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_GNCA_2_2}
+    grid: {logging.wandb.tags: [[attractors:2, attractor_set:2.2]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_GNCA_2_3}
+    grid: {logging.wandb.tags: [[attractors:2, attractor_set:2.3]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_GNCA_2_4}
+    grid: {logging.wandb.tags: [[attractors:2, attractor_set:2.4]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_GNCA_2_5}
+    grid: {logging.wandb.tags: [[attractors:2, attractor_set:2.5]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_GNCA_2_6}
+    grid: {logging.wandb.tags: [[attractors:2, attractor_set:2.6]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_GNCA_2_7}
+    grid: {logging.wandb.tags: [[attractors:2, attractor_set:2.7]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_GNCA_2_8}
+    grid: {logging.wandb.tags: [[attractors:2, attractor_set:2.8]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_GNCA_2_9}
+    grid: {logging.wandb.tags: [[attractors:2, attractor_set:2.9]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_GNCA_3_1}
+    grid: {logging.wandb.tags: [[attractors:3, attractor_set:3.1]]}
+    groups: [*k3]
+  - when: {checkpoint.model_id: REPLACE_GNCA_3_2}
+    grid: {logging.wandb.tags: [[attractors:3, attractor_set:3.2]]}
+    groups: [*k3]
+  - when: {checkpoint.model_id: REPLACE_GNCA_3_3}
+    grid: {logging.wandb.tags: [[attractors:3, attractor_set:3.3]]}
+    groups: [*k3]
+  - when: {checkpoint.model_id: REPLACE_GNCA_4_1}
+    grid: {logging.wandb.tags: [[attractors:4, attractor_set:4.1]]}
+    groups: [*k4]
+  - when: {checkpoint.model_id: REPLACE_GNCA_4_2}
+    grid: {logging.wandb.tags: [[attractors:4, attractor_set:4.2]]}
+    groups: [*k4]
+  - when: {checkpoint.model_id: REPLACE_GNCA_4_3}
+    grid: {logging.wandb.tags: [[attractors:4, attractor_set:4.3]]}
+    groups: [*k4]
+  - when: {checkpoint.model_id: REPLACE_GNCA_4_4}
+    grid: {logging.wandb.tags: [[attractors:4, attractor_set:4.4]]}
+    groups: [*k4]
+  - when: {checkpoint.model_id: REPLACE_GNCA_4_5}
+    grid: {logging.wandb.tags: [[attractors:4, attractor_set:4.5]]}
+    groups: [*k4]

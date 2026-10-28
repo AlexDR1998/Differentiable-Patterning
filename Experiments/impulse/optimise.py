@@ -8,6 +8,7 @@ from Experiments.config_helpers import (
     open_registry_bundle,
     resolve_store_root,
 )
+from Experiments.emoji.multi_attractor import emoji_name
 from Experiments.impulse.config_helpers import (
     build_impulse_optimiser,
     build_intervention,
@@ -20,6 +21,23 @@ from Experiments.impulse.config_helpers import (
 from Experiments.impulse.records import create_impulse_id, publish_impulse_record
 from NCA.trainer.impulse import NCAImpulseOptimiser
 from NCA.trainer.logging.impulse_wandb_log import ImpulseLogger
+
+
+def multi_attractor_targets(data_config, impulse_cfg, trajectories, observed_channels):
+    """Target patterns [K, observed channels, H, W] and names of a multi-attractor
+    model, with the source and target of this run marked; (None, None) otherwise."""
+
+    if data_config.emoji.task != "multi_attractor":
+        return None, None
+    pair_names = [emoji_name(pair.target) for pair in data_config.emoji.pairs]
+    names = list(dict.fromkeys(pair_names))
+    targets = trajectories[[pair_names.index(name) for name in names], -1, :observed_channels]
+    roles = {
+        pair_names[impulse_cfg.pair_source.source_index]: "source",
+        pair_names[impulse_cfg.pair_source.target_index]: "target",
+    }
+    labels = [f"{name} ({roles[name]})" if name in roles else name for name in names]
+    return targets, labels
 
 
 def run(cfg):
@@ -47,6 +65,7 @@ def run(cfg):
     )
 
     impulse_cfg = cfg.impulse
+    attractors, attractor_names = multi_attractor_targets(data_config, impulse_cfg, trajectories, observed_channels)
     config = config_to_dict(cfg)
     # The W&B run is named after the record it will produce
     impulse_id = create_impulse_id(cfg)
@@ -62,6 +81,7 @@ def run(cfg):
                 "name": impulse_id,
                 "config": config,
             },
+            attractor_names=attractor_names,
         )
     optimiser = NCAImpulseOptimiser(
         model=model,
@@ -81,6 +101,7 @@ def run(cfg):
         resample_every=impulse_cfg.resample_every,
         evaluation_frame_every=impulse_cfg.rollout.evaluation_frame_every,
         checkpoints=impulse_cfg.rollout.checkpoints,
+        attractors=attractors,
         logger=logger,
     )
     result = optimiser.train(
@@ -93,7 +114,12 @@ def run(cfg):
 
     wandb_run_id = None
     if logger is not None:
-        logger.log_result(result, pixel_steps=pixel_steps(impulse_cfg.intervention))
+        logger.log_result(
+            result,
+            pixel_steps=pixel_steps(impulse_cfg.intervention),
+            frame_every=impulse_cfg.rollout.evaluation_frame_every,
+            rollout_steps=impulse_cfg.rollout.steps,
+        )
         wandb_run_id = getattr(logger.run, "id", None)
         logger.finish()
 

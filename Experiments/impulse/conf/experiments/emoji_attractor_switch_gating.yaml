@@ -1,0 +1,83 @@
+# How does gating change the response to perturbations? Pairs of NCA and
+# gNCA models trained on the same attractor set, for 2-5 attractors, with an
+# impulse learned for every ordered transition (K(K-1) runs per model).
+#
+# Fill the REPLACE_* slots with bundle IDs. Each ID appears twice: once in
+# the grid and once in its branch, which picks the transitions for its
+# attractor count. Placeholders must stay distinct until replaced.
+experiment_name: emoji_attractor_switch_gating_v1
+entrypoint: Experiments.impulse.optimise:run
+output_subdir: generated/emoji_attractor_switch_gating_v1
+seed_mode: index
+
+# All ordered (source, target) pairs, as indices into data.emoji.pairs
+transitions:
+  k2: &k2
+    impulse.pair_source.source_index: [0, 1]
+    impulse.pair_source.target_index: [1, 0]
+  k3: &k3
+    impulse.pair_source.source_index: [0, 0, 1, 1, 2, 2]
+    impulse.pair_source.target_index: [1, 2, 0, 2, 0, 1]
+  k4: &k4
+    impulse.pair_source.source_index: [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]
+    impulse.pair_source.target_index: [1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2]
+  k5: &k5
+    impulse.pair_source.source_index: [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4]
+    impulse.pair_source.target_index: [1, 2, 3, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 1, 2, 4, 0, 1, 2, 3]
+
+grid:
+  checkpoint.model_id:
+    - REPLACE_K2_NCA
+    - REPLACE_K2_gNCA
+    - REPLACE_K3_NCA
+    - REPLACE_K3_gNCA
+    - REPLACE_K4_NCA
+    - REPLACE_K4_gNCA
+    - REPLACE_K5_NCA
+    - REPLACE_K5_gNCA
+  impulse.iterations: [8000]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.objective.type: [targeted]
+  # impulse.rollout.steps: [256]
+  # impulse.rollout.loss_window: [64]
+  impulse.rollout.evaluation_steps: [1024]
+  impulse.optimiser.learn_rate: [0.01]
+  impulse.intervention.channels: [all]
+  impulse.intervention.spatial: [patch]
+  # impulse.intervention.patch_size: [3]
+  impulse.loss.regularisers.l2: [0.0, 0.1]
+  impulse.repeat: [0]
+groups:
+  - impulse.intervention.patch_size: [3, 1, 6, 3, 2, 1, 9, 3, 1]
+    impulse.intervention.duration: [1, 9, 1, 4, 9, 36, 1, 9, 81]
+    impulse.intervention.budget: [9, 9, 36, 36, 36, 36, 81, 81, 81]
+  - impulse.rollout.steps: [128,256,512]
+    impulse.rollout.loss_window: [32,64,128]
+    impulse.rollout.scan_kind: [lax,lax,checkpointed]
+    impulse.rollout.checkpoints: [null, null, 512]
+# One branch per model: its transitions and W&B tags for filtering
+branches:
+  - when: {checkpoint.model_id: REPLACE_K2_NCA}
+    grid: {logging.wandb.tags: [[family:NCA, attractors:2]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_K2_gNCA}
+    grid: {logging.wandb.tags: [[family:gNCA, attractors:2]]}
+    groups: [*k2]
+  - when: {checkpoint.model_id: REPLACE_K3_NCA}
+    grid: {logging.wandb.tags: [[family:NCA, attractors:3]]}
+    groups: [*k3]
+  - when: {checkpoint.model_id: REPLACE_K3_gNCA}
+    grid: {logging.wandb.tags: [[family:gNCA, attractors:3]]}
+    groups: [*k3]
+  - when: {checkpoint.model_id: REPLACE_K4_NCA}
+    grid: {logging.wandb.tags: [[family:NCA, attractors:4]]}
+    groups: [*k4]
+  - when: {checkpoint.model_id: REPLACE_K4_gNCA}
+    grid: {logging.wandb.tags: [[family:gNCA, attractors:4]]}
+    groups: [*k4]
+  - when: {checkpoint.model_id: REPLACE_K5_NCA}
+    grid: {logging.wandb.tags: [[family:NCA, attractors:5]]}
+    groups: [*k5]
+  - when: {checkpoint.model_id: REPLACE_K5_gNCA}
+    grid: {logging.wandb.tags: [[family:gNCA, attractors:5]]}
+    groups: [*k5]

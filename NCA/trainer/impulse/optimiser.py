@@ -3,9 +3,11 @@ from dataclasses import dataclass
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 
 from Common.trainer.loss_table import build_loss_functions
+from NCA.trainer.impulse.outcomes import outcome_fractions, switch_steps
 from NCA.trainer.impulse.regularisers import intervention_metrics, weighted_regulariser
 from NCA.trainer.impulse.rollout import identity_boundary, run_nca_batch, run_with_intervention
 from NCA.trainer.impulse.types import ImpulseBatch, ImpulseResult
@@ -57,6 +59,11 @@ class NCAImpulseOptimiser:
     evaluation_frame_every: int = 1
     # Saved states of a checkpointed rollout (see run_nca_batch)
     checkpoints: int | None = None
+    # [K, observed channels, H, W] patterns of a multi-attractor model. When
+    # given, validation also reports the fraction of rollouts ending at each
+    # (see outcomes.py; tolerance as in the multi-attractor explorer).
+    attractors: object = None
+    attractor_tolerance: float = 0.25
     logger: object = None
 
     def __post_init__(self):
@@ -129,6 +136,23 @@ class NCAImpulseOptimiser:
             final_states, batch.initial_states
         )
         return float(jnp.mean(nearer_target))
+
+    def _loss_curve(self, trajectory, targets, key):
+        """Mean target loss of every saved frame [batch, frames, observed channels, H, W].
+
+        None when the loss uses hidden channels, which the saved frames do not keep.
+        """
+
+        if self.loss_channels != "observed":
+            return None
+        frames = trajectory.shape[1]
+        if frames == 0:
+            return np.zeros((0,))
+        # [batch, frames, ...] -> [batch * frames, ...], each target repeated frames times
+        predictions = trajectory.reshape((-1, *trajectory.shape[2:]))
+        targets = jnp.repeat(targets[:, : self.observed_channels], frames, axis=0)
+        losses = self._weighted_loss(self._loss_components(predictions, targets, key))
+        return np.asarray(jnp.mean(losses.reshape((-1, frames)), axis=0))
 
     def evaluate(self, intervention, batch, key):
         """Evaluate an intervention without updating its parameters."""
@@ -205,6 +229,12 @@ class NCAImpulseOptimiser:
                 return values["total_loss"], values
 
             (_, values), gradients = loss_and_aux(intervention)
+            # Before any clipping by the optimiser
+            values["gradient_norms"] = {
+                "total": optax.global_norm(gradients),
+                "location": jnp.linalg.norm(gradients.location),
+                "values": jnp.linalg.norm(gradients.values),
+            }
             parameters, static = eqx.partition(intervention, eqx.is_inexact_array)
             updates, opt_state = self.optimiser.update(gradients, opt_state, parameters)
             parameters = eqx.apply_updates(parameters, updates)
@@ -212,6 +242,39 @@ class NCAImpulseOptimiser:
             return intervention, opt_state, values
 
         return step
+
+    def _make_validation(self, batch, steps, key):
+        """Build a function that scores an intervention on a fixed validation batch.
+
+        It returns the switch rate and target loss after a ``steps`` rollout,
+        with the same batch and key every time, so changes come from the
+        intervention only. With ``attractors``, ``outcomes`` is the fraction
+        of rollouts ending at each attractor, then other, died and diverged.
+        """
+
+        @eqx.filter_jit
+        def rollout(intervention):
+            final_states = run_with_intervention(
+                self.model,
+                intervention,
+                batch.initial_states,
+                steps,
+                key,
+                boundary_callback=self.boundary_callback,
+            )
+            loss = self._weighted_loss(self._loss_components(final_states, batch.target_states, key))
+            return final_states, jnp.mean(loss)
+
+        def validate(intervention):
+            final_states, loss = rollout(intervention)
+            values = {"switch_rate": self._switch_rate(final_states, batch), "evaluation_loss": float(loss)}
+            if self.attractors is not None:
+                values["outcomes"] = outcome_fractions(
+                    final_states[:, : self.observed_channels], self.attractors, self.attractor_tolerance
+                )
+            return values
+
+        return validate
 
     def train(self, iterations, batch_size, key, evaluation_steps=None, log_every=100):
         """Optimise an intervention and return its best evaluated state.
@@ -230,6 +293,17 @@ class NCAImpulseOptimiser:
         parameters, _ = eqx.partition(self.intervention, eqx.is_inexact_array)
         opt_state = self.optimiser.init(parameters)
         step = self._make_step()
+        evaluation_steps = self.rollout_steps if evaluation_steps is None else evaluation_steps
+        if evaluation_steps % self.evaluation_frame_every:
+            raise ValueError(
+                f"evaluation_steps ({evaluation_steps}) must be a multiple of "
+                f"evaluation_frame_every ({self.evaluation_frame_every})"
+            )
+        validate = None
+        if self.logger is not None:
+            # A separate fixed batch, scored with the evaluation rollout at each log step
+            validation_batch = self.pair_source.sample(batch_size, self.model, jax.random.fold_in(key, 1))
+            validate = self._make_validation(validation_batch, evaluation_steps, jax.random.fold_in(key, 2))
 
         intervention = self.intervention
         best_intervention = intervention
@@ -237,12 +311,17 @@ class NCAImpulseOptimiser:
         best_step = -1
         best_loss = float("inf")
         best_metrics = None
+        # Only local and patch interventions have a centre that moves
+        track_location = intervention.mode["spatial"] in ("local", "patch")
+        locations = []
 
         for index in range(iterations):
             step_key = jax.random.fold_in(train_key, index)
             if self.resample_every and index > 0 and index % self.resample_every == 0:
                 batch = self.pair_source.sample(batch_size, self.model, step_key)
             evaluated_intervention = intervention
+            if track_location:
+                locations.append(np.asarray(intervention.get_location()))
             intervention, opt_state, metrics = step(
                 intervention,
                 opt_state,
@@ -258,8 +337,12 @@ class NCAImpulseOptimiser:
                 best_step = index
                 best_metrics = metrics
             if self.logger is not None and index % log_every == 0:
-                self.logger.log_training(metrics, index, log_every)
+                switch_rate = self._switch_rate(metrics["final_states"], batch)
+                self.logger.log_training({**metrics, "switch_rate": switch_rate}, index, log_every)
+                self.logger.log_validation(validate(evaluated_intervention), index)
 
+        if track_location:
+            locations.append(np.asarray(intervention.get_location()))
         final_key = jax.random.fold_in(train_key, iterations)
         final_metrics = self.evaluate(intervention, batch, final_key)
         final_loss = float(final_metrics["total_loss"])
@@ -270,12 +353,6 @@ class NCAImpulseOptimiser:
             best_step = iterations
             best_metrics = final_metrics
 
-        evaluation_steps = self.rollout_steps if evaluation_steps is None else evaluation_steps
-        if evaluation_steps % self.evaluation_frame_every:
-            raise ValueError(
-                f"evaluation_steps ({evaluation_steps}) must be a multiple of "
-                f"evaluation_frame_every ({self.evaluation_frame_every})"
-            )
         evaluation_key = jax.random.fold_in(train_key, iterations + 1)
         perturbed = best_intervention(best_batch.initial_states)
         final_states, perturbed_trajectory = run_with_intervention(
@@ -309,6 +386,8 @@ class NCAImpulseOptimiser:
         baseline_evaluation_loss = self._weighted_loss(
             self._loss_components(baseline_final_states, best_batch.target_states, evaluation_key)
         )
+        evaluation_loss_curve = self._loss_curve(perturbed_trajectory, best_batch.target_states, evaluation_key)
+        baseline_loss_curve = self._loss_curve(baseline_trajectory, best_batch.target_states, evaluation_key)
         return ImpulseResult(
             evaluation_switch_rate=self._switch_rate(final_states, best_batch),
             baseline_switch_rate=self._switch_rate(baseline_final_states, best_batch),
@@ -324,4 +403,13 @@ class NCAImpulseOptimiser:
             perturbed_trajectory=perturbed_trajectory,
             evaluation_loss=float(jnp.mean(evaluation_loss)),
             baseline_evaluation_loss=float(jnp.mean(baseline_evaluation_loss)),
+            location_history=np.stack(locations) if track_location else None,
+            switch_steps=switch_steps(
+                perturbed_trajectory,
+                best_batch.initial_states,
+                best_batch.target_states,
+                self.evaluation_frame_every,
+            ),
+            evaluation_loss_curve=evaluation_loss_curve,
+            baseline_loss_curve=baseline_loss_curve,
         )

@@ -34,4 +34,16 @@ class ImpulseResult:
     # source, with and without the intervention.
     evaluation_switch_rate: float
     baseline_switch_rate: float
+    # [iterations + 1, 2] centre (row, column, 0 to 1) of local and patch
+    # interventions: row i is the centre used at step i, the last row the
+    # final centre. None for global and flat interventions.
+    location_history: Any = None
+    # [batch] NCA step from which each evaluation rollout stays nearer the
+    # target than the source; NaN for rollouts that did not switch.
+    switch_steps: Any = None
+    # [frames] mean target loss after every evaluation_frame_every steps of
+    # the evaluation rollout, with and without the intervention. None when the
+    # loss uses channels the saved trajectories do not keep.
+    evaluation_loss_curve: Any = None
+    baseline_loss_curve: Any = None
 

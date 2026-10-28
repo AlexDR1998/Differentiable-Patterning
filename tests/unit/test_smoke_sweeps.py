@@ -7,7 +7,7 @@ import pytest
 from Experiments.config import load_experiment_config
 from Experiments.config_workflow import generate_manifest, load_config_from_entry, load_yaml
 from Experiments.pipeline_smoke_test import (
-    IMPULSE_SWEEPS,
+    NO_BUNDLE_SWEEPS,
     PARENT_PLACEHOLDER,
     SMOKE_COLLECTION,
     STAGES,
@@ -26,7 +26,7 @@ def _typed_configs(domain, sweep_name, tmp_path):
     return [load_experiment_config(load_config_from_entry(entry)) for entry in manifest["configs"]]
 
 
-TRAINING_STAGES = [stage for stage in STAGES if stage[1] not in IMPULSE_SWEEPS]
+TRAINING_STAGES = [stage for stage in STAGES if stage[1] not in NO_BUNDLE_SWEEPS]
 
 
 @pytest.mark.parametrize("domain,sweep_name", TRAINING_STAGES)

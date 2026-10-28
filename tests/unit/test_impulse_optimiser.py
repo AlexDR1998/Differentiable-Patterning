@@ -279,6 +279,170 @@ def test_targeted_optimiser_reduces_error_and_keeps_model_frozen():
     # The source is all zeros: only the intervention moves the state nearer the target.
     assert result.evaluation_switch_rate == 1.0
     assert result.baseline_switch_rate == 0.0
+    # A global intervention has no centre to track
+    assert result.location_history is None
+    # One evaluation frame: the rollout switched at its first (and only) step
+    assert result.switch_steps.tolist() == [1.0, 1.0]
+    assert result.evaluation_loss_curve.shape == (1,)
+    assert result.evaluation_loss_curve[0] < result.baseline_loss_curve[0] == 1.0
+    norms = result.metrics["gradient_norms"]
+    assert float(norms["total"]) > 0.0 and float(norms["location"]) == 0.0
+
+
+def test_switch_steps_time_the_last_switch_and_skip_failed_rollouts():
+    from NCA.trainer.impulse.outcomes import switch_steps
+
+    source, target = jnp.zeros((1, 1, 2, 2)), jnp.ones((1, 1, 2, 2))
+    # Nearer the target from frame 1, back at the source in frame 2, then switched for good
+    frames = jnp.array([0.0, 0.9, 0.1, 0.8, 1.0])[None, :, None, None, None] * jnp.ones((1, 5, 1, 2, 2))
+    failed = jnp.zeros((1, 5, 1, 2, 2))
+
+    steps = switch_steps(
+        jnp.concatenate([frames, failed]),
+        jnp.concatenate([source, source]),
+        jnp.concatenate([target, target]),
+        frame_every=8,
+    )
+
+    # Frame 3 is the fourth saved frame: 4 * 8 steps
+    assert steps[0] == 32.0 and jnp.isnan(steps[1])
+
+
+def test_validation_switch_rate_is_logged_at_each_log_step():
+    class RecordingLogger:
+        def __init__(self):
+            self.validation = []
+
+        def log_training(self, metrics, step, log_every):
+            pass
+
+        def log_validation(self, values, step):
+            self.validation.append((step, values))
+
+    model = AdditiveModel(channels=2, increment=0.0)
+    initial = jnp.zeros((1, 2, 4, 4))
+    source = ExternalTargetPairSource(initial, jnp.ones_like(initial))
+    intervention = perturbation(
+        mode={"channel": "all", "spatial": "global"},
+        CHANNELS=2,
+        OBS_CHANNELS=2,
+        x=initial,
+        WIDTH=1.0,
+        key=jax.random.PRNGKey(3),
+    )
+    logger = RecordingLogger()
+    optimiser = NCAImpulseOptimiser(
+        model=model,
+        pair_source=source,
+        intervention=intervention,
+        objective=TargetedObjective(),
+        optimiser=optax.adam(0.1),
+        observed_channels=2,
+        rollout_steps=1,
+        loss_functions=[per_sample_l2],
+        logger=logger,
+    )
+
+    optimiser.train(iterations=20, batch_size=2, key=jax.random.PRNGKey(6), evaluation_steps=2, log_every=5)
+
+    assert [step for step, _ in logger.validation] == [0, 5, 10, 15]
+    # Before any update the intervention is zero: nothing switches
+    first, last = logger.validation[0][1], logger.validation[-1][1]
+    assert first["switch_rate"] == 0.0 and first["evaluation_loss"] == 1.0
+    assert last["switch_rate"] == 1.0 and last["evaluation_loss"] < first["evaluation_loss"]
+    assert "outcomes" not in first
+
+
+def test_outcome_fractions_label_each_final_state():
+    from NCA.trainer.impulse.outcomes import outcome_fractions
+
+    attractors = jnp.stack([jnp.zeros((4, 3, 3)), jnp.ones((4, 3, 3))])
+    final = jnp.stack([
+        attractors[1],
+        attractors[1] + 0.01,
+        jnp.full((4, 3, 3), 0.5),  # halfway: other
+        jnp.zeros((4, 3, 3)).at[3].set(0.5),  # alive, near attractor 0
+    ])
+
+    fractions = outcome_fractions(final, attractors, tolerance=0.25)
+
+    # attractor 0, attractor 1, other, died, diverged
+    assert fractions.tolist() == [0.25, 0.5, 0.25, 0.0, 0.0]
+
+
+def test_validation_reports_outcomes_of_a_multi_attractor_model():
+    class RecordingLogger:
+        def __init__(self):
+            self.validation = []
+
+        def log_training(self, metrics, step, log_every):
+            pass
+
+        def log_validation(self, values, step):
+            self.validation.append(values)
+
+    model = AdditiveModel(channels=4, increment=0.0)
+    initial = jnp.zeros((1, 4, 4, 4)).at[:, 3].set(1.0)
+    target = jnp.ones_like(initial)
+    attractors = jnp.stack([initial[0], target[0], jnp.full((4, 4, 4), 0.5).at[3].set(1.0)])
+    logger = RecordingLogger()
+    optimiser = NCAImpulseOptimiser(
+        model=model,
+        pair_source=ExternalTargetPairSource(initial, target),
+        intervention=perturbation(
+            mode={"channel": "all", "spatial": "global"},
+            CHANNELS=4,
+            OBS_CHANNELS=4,
+            x=initial,
+            WIDTH=1.0,
+            key=jax.random.PRNGKey(3),
+        ),
+        objective=TargetedObjective(),
+        optimiser=optax.adam(0.1),
+        observed_channels=4,
+        rollout_steps=1,
+        loss_functions=[per_sample_l2],
+        attractors=attractors,
+        logger=logger,
+    )
+
+    optimiser.train(iterations=40, batch_size=2, key=jax.random.PRNGKey(6), evaluation_steps=1, log_every=39)
+
+    # Attractors 0 (source), 1 (target), 2, then other, died, diverged. Before
+    # any update every rollout stays at the source; later it reaches the target.
+    assert logger.validation[0]["outcomes"].tolist() == [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    assert logger.validation[-1]["outcomes"].tolist() == [0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+
+
+def test_patch_optimiser_records_the_centre_at_every_step():
+    model = AdditiveModel(channels=2, increment=0.0)
+    initial = jnp.zeros((1, 2, 8, 8))
+    source = ExternalTargetPairSource(initial, jnp.ones_like(initial))
+    intervention = perturbation(
+        mode={"channel": "all", "spatial": "patch"},
+        CHANNELS=2,
+        OBS_CHANNELS=2,
+        x=initial,
+        WIDTH=1.0,
+        key=jax.random.PRNGKey(3),
+        PATCH_SIZE=3,
+    )
+    optimiser = NCAImpulseOptimiser(
+        model=model,
+        pair_source=source,
+        intervention=intervention,
+        objective=TargetedObjective(),
+        optimiser=optax.adam(0.1),
+        observed_channels=2,
+        rollout_steps=1,
+        loss_functions=[per_sample_l2],
+    )
+
+    result = optimiser.train(iterations=5, batch_size=1, key=jax.random.PRNGKey(6), evaluation_steps=1)
+
+    assert result.location_history.shape == (6, 2)
+    assert jnp.allclose(result.location_history[0], intervention.get_location())
+    assert jnp.allclose(result.location_history[result.best_step], result.best_intervention.get_location())
 
 
 def test_loss_window_averages_target_error_over_final_rollout_states():

@@ -65,6 +65,13 @@ def create_impulse_id(cfg):
     return _identifier(_impulse_digest(config_to_dict(cfg)))
 
 
+def _mean_switch_time(switch_steps):
+    """Mean of the finite switch steps, or None when no rollout switched."""
+    if switch_steps is None or not np.isfinite(switch_steps).any():
+        return None
+    return float(np.nanmean(switch_steps))
+
+
 def impulse_size(intervention, states):
     """Size of an intervention applied to ``states``: energy, peak and footprint.
 
@@ -218,6 +225,16 @@ def publish_impulse_record(
             final_states=np.asarray(result.final_states),
             baseline_trajectory=np.asarray(result.baseline_trajectory),
             perturbed_trajectory=np.asarray(result.perturbed_trajectory),
+            # Centre (row, column, 0 to 1) at each optimisation step; local and patch only
+            **({} if result.location_history is None
+               else {"location_history": np.asarray(result.location_history)}),
+            # Per rollout: step from which it stays switched (NaN: did not switch)
+            **({} if result.switch_steps is None else {"switch_steps": np.asarray(result.switch_steps)}),
+            # Mean target loss of every saved evaluation frame
+            **({} if result.evaluation_loss_curve is None else {
+                "evaluation_loss_curve": np.asarray(result.evaluation_loss_curve),
+                "baseline_loss_curve": np.asarray(result.baseline_loss_curve),
+            }),
         )
         OmegaConf.save(OmegaConf.create(config), staging / "config.yaml")
         manifest = {
@@ -262,6 +279,8 @@ def publish_impulse_record(
                 "baseline_evaluation_loss": float(result.baseline_evaluation_loss),
                 "switch_rate": float(result.evaluation_switch_rate),
                 "baseline_switch_rate": float(result.baseline_switch_rate),
+                # Mean NCA step of switching, over the rollouts that switched
+                "switch_time": _mean_switch_time(result.switch_steps),
                 **impulse_size(result.best_intervention, initial_states[:1]),
                 "pixel_steps": pixel_steps(impulse.intervention),
             },

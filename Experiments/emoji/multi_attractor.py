@@ -23,11 +23,8 @@ from matplotlib.colors import hsv_to_rgb, rgb_to_hsv
 from Experiments.emoji.config_helpers import _pad_tuple, build_hidden_seeds, load_data
 from NCA.model.factory import portable_family
 
-# Labels of final states that are not one of the targets
-OTHER, DIED, DIVERGED = -1, -2, -3
-OUTCOME_NAMES = {OTHER: "other", DIED: "died", DIVERGED: "diverged"}
-# A cell is alive when its alpha is above this, as in the usual NCA convention
-ALIVE_ALPHA = 0.1
+# Outcome labels and the nearest-target rule are shared with the impulse validation
+from NCA.trainer.impulse.outcomes import ALIVE_ALPHA, DIED, DIVERGED, OTHER, OUTCOME_NAMES, classify, mse, target_gap  # noqa: F401
 
 
 def is_multi_attractor(cfg):
@@ -228,33 +225,6 @@ def rollout(model, states, targets, steps, key, frames=1, memory_gb=1.0):
         rgba.append(np.asarray(chunk_rgba))
         distances.append(np.asarray(chunk_distances))
     return np.concatenate(distances)[:count], np.concatenate(rgba)[:count]
-
-
-def mse(a, b):
-    """Mean squared error over the last three axes."""
-    return np.mean((np.asarray(a) - np.asarray(b)) ** 2, axis=(-3, -2, -1))
-
-
-def target_gap(targets):
-    """Smallest distance between two different targets (inf for one target)."""
-    gaps = [mse(targets[i], targets[j]) for i in range(len(targets)) for j in range(i + 1, len(targets))]
-    return float(min(gaps)) if gaps else float("inf")
-
-
-def classify(distances, final_rgba, threshold):
-    """Label of each final state: the index of its target when the distance is
-    below ``threshold``, else ``OTHER``; ``DIED`` when no cell is alive and
-    ``DIVERGED`` for non-finite states.
-
-    ``distances`` [..., target] are the final distances, ``final_rgba``
-    [..., 4, H, W] the final states.
-    """
-    distances = np.asarray(distances)
-    best = distances.min(axis=-1)
-    labels = np.where(best < threshold, distances.argmin(axis=-1), OTHER)
-    alive = np.nan_to_num(np.asarray(final_rgba)[..., 3, :, :], nan=1.0).max(axis=(-2, -1)) > ALIVE_ALPHA
-    labels = np.where(alive, labels, DIED)
-    return np.where(np.isfinite(best), labels, DIVERGED)
 
 
 def outcome_name(label, names):
