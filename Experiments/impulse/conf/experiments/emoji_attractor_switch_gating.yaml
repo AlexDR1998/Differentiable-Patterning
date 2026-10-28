@@ -27,15 +27,13 @@ transitions:
 
 grid:
   checkpoint.model_id:
-    - REPLACE_K2_NCA
-    - REPLACE_K2_gNCA
-    - REPLACE_K3_NCA
-    - REPLACE_K3_gNCA
-    - REPLACE_K4_NCA
-    - REPLACE_K4_gNCA
-    - REPLACE_K5_NCA
-    - REPLACE_K5_gNCA
-  impulse.iterations: [8000]
+    - 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    - 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    - 20261021T153732Z-cfg5bbef516d707-ed8a35d2
+    - 20261025T161633Z-cfg271c5c53e5b7-1fb00d10
+    - 20261022T155716Z-cfg9f6913e71d29-9a2f7f63
+    - 20261024T032207Z-cfg49e4af4e33e2-899feaed
+  impulse.iterations: [4000]
   impulse.pair_source.type: [stable_attractor]
   impulse.objective.type: [targeted]
   # impulse.rollout.steps: [256]
@@ -45,39 +43,36 @@ grid:
   impulse.intervention.channels: [all]
   impulse.intervention.spatial: [patch]
   # impulse.intervention.patch_size: [3]
-  impulse.loss.regularisers.l2: [0.0, 0.1]
+  impulse.loss.regularisers.l2: [0.0]
   impulse.repeat: [0]
 groups:
-  - impulse.intervention.patch_size: [3, 1, 6, 3, 2, 1, 9, 3, 1]
-    impulse.intervention.duration: [1, 9, 1, 4, 9, 36, 1, 9, 81]
-    impulse.intervention.budget: [9, 9, 36, 36, 36, 36, 81, 81, 81]
-  - impulse.rollout.steps: [128,256,512]
-    impulse.rollout.loss_window: [32,64,128]
-    impulse.rollout.scan_kind: [lax,lax,checkpointed]
-    impulse.rollout.checkpoints: [null, null, 512]
+  # - impulse.intervention.patch_size: [3, 1, 6, 3, 2, 1, 9, 3, 1]
+  #   impulse.intervention.duration: [1, 9, 1, 4, 9, 36, 1, 9, 81]
+  #   impulse.intervention.budget: [9, 9, 36, 36, 36, 36, 81, 81, 81]
+  - impulse.intervention.patch_size: [3, 6, 9]
+    impulse.intervention.duration: [1, 1, 1,]
+    impulse.intervention.budget: [9, 36, 81,]
+  - impulse.rollout.steps: [256,512]
+    impulse.rollout.loss_window: [64,128]
+    impulse.rollout.scan_kind: [lax,checkpointed]
+    impulse.rollout.checkpoints: [null, 512]
 # One branch per model: its transitions and W&B tags for filtering
 branches:
-  - when: {checkpoint.model_id: REPLACE_K2_NCA}
+  - when: {checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde}
     grid: {logging.wandb.tags: [[family:NCA, attractors:2]]}
     groups: [*k2]
-  - when: {checkpoint.model_id: REPLACE_K2_gNCA}
+  - when: {checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23}
     grid: {logging.wandb.tags: [[family:gNCA, attractors:2]]}
     groups: [*k2]
-  - when: {checkpoint.model_id: REPLACE_K3_NCA}
+  - when: {checkpoint.model_id: 20261021T153732Z-cfg5bbef516d707-ed8a35d2}
     grid: {logging.wandb.tags: [[family:NCA, attractors:3]]}
     groups: [*k3]
-  - when: {checkpoint.model_id: REPLACE_K3_gNCA}
+  - when: {checkpoint.model_id: 20261025T161633Z-cfg271c5c53e5b7-1fb00d10}
     grid: {logging.wandb.tags: [[family:gNCA, attractors:3]]}
     groups: [*k3]
-  - when: {checkpoint.model_id: REPLACE_K4_NCA}
+  - when: {checkpoint.model_id: 20261022T155716Z-cfg9f6913e71d29-9a2f7f63}
     grid: {logging.wandb.tags: [[family:NCA, attractors:4]]}
     groups: [*k4]
-  - when: {checkpoint.model_id: REPLACE_K4_gNCA}
+  - when: {checkpoint.model_id: 20261024T032207Z-cfg49e4af4e33e2-899feaed}
     grid: {logging.wandb.tags: [[family:gNCA, attractors:4]]}
     groups: [*k4]
-  - when: {checkpoint.model_id: REPLACE_K5_NCA}
-    grid: {logging.wandb.tags: [[family:NCA, attractors:5]]}
-    groups: [*k5]
-  - when: {checkpoint.model_id: REPLACE_K5_gNCA}
-    grid: {logging.wandb.tags: [[family:gNCA, attractors:5]]}
-    groups: [*k5]
