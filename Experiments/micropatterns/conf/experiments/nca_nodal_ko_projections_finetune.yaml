@@ -105,7 +105,7 @@ groups:
       - 20261019T230014Z-cfge1d1713ffd55-d4dc7ac3 #REPLACE_WITH_SUM_DS32_MODEL_ID
       - 20261020T130354Z-cfg804d8e6ff085-0daa4dab #REPLACE_WITH_SLICE_DS8_MODEL_ID
       - 20261020T004544Z-cfg91bbc2de4c16-873cd8a5 #REPLACE_WITH_SLICE_DS16_MODEL_ID
-      - 20261019T185541Z-cfg50d049d71cfc-442d25fc #REPLACE_WITH_SLICE_DS32_MODEL_ID
+      - 20261019T185541Z-cfg50d049d71cfc-442d25fc #REPLACE_WITH_SLICE_D
     data.micropattern.projection: [max, max, max, sum, sum, sum, slice, slice, slice]
     data.downsample: [8, 16, 32, 8, 16, 32, 8, 16, 32]
     run.t: [256, 128, 64, 256, 128, 64, 256, 128, 64]

@@ -32,6 +32,7 @@ from NCA.trainer.logging.diagnostics import (
 	extract_dense_weight_singular_values,
 	plot_channel_correlation_diagnostics,
 	plot_channel_time_grid,
+	plot_firing_activity,
 	plot_radial_intensity_diagnostics,
 	plot_radial_intensity_line_diagnostics,
 	plot_singular_value_spectrum,
@@ -475,6 +476,8 @@ class NCALogger(WandbLogger):
 
 		print("Running final trained model for "+str(total_steps)+" steps")
 		SNAPSHOTS = []
+		ACTIVITY = []
+		learned_firing = getattr(nca, "FIRING", "fixed") != "fixed"
 		for b in tqdm(range(len(x))):
 			initial_state = nca.prepare_pool_state(x[b][0])
 			knockout = self._knockout(DATA_AUGMENTER, schedule, b)
@@ -518,6 +521,8 @@ class NCALogger(WandbLogger):
 				T = jnp.stack(trajectory)
 			if write_videos:
 				self._log_rollout_videos(T, b)
+			if learned_firing:
+				ACTIVITY.append(np.asarray(jnp.mean(nca.firing_probability(T), axis=(-2, -1))))
 			frames = _frame_indices(schedule, T.shape[0]) if write_videos else 1
 			T_snapshot = _trajectory_snapshot_channels(
 				T, DATA_AUGMENTER, frames, self.diagnostic_channel_schema
@@ -536,3 +541,11 @@ class NCALogger(WandbLogger):
 			np.concatenate(SNAPSHOTS, axis=0),
 			step=None
 		)
+		if learned_firing:
+			# Dense rollouts keep every step; sampled ones only the observation steps
+			steps = np.arange(ACTIVITY[0].shape[0]) if write_videos else np.asarray(schedule.observation_steps)
+			self.log_image(
+				'TrainingRollout/firing_activity',
+				plot_firing_activity(steps, ACTIVITY, condition_labels, schedule.observation_steps),
+				step=None
+			)

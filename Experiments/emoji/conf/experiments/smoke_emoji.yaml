@@ -25,14 +25,15 @@ grid:
 
 # One entry per column: each block is zipped, not a Cartesian product.
 groups:
-  - model.family: [NCA, gNCA, NCA, gnNCA]
-    trainer.loop_autodiff: [checkpointed, lax, checkpointed, lax]
+  - model.family: [NCA, gNCA, NCA, gnNCA, aNCA]
+    trainer.loop_autodiff: [checkpointed, lax, checkpointed, lax, checkpointed]
     loss.terms:
       - [l2]
       - [l2]
       - [l2]
       - [{type: sliced_wasserstein_channel, samples: 16}]
-    data.emoji.task: [sequence, sequence, multi_attractor, sequence]
+      - [l2]
+    data.emoji.task: [sequence, sequence, multi_attractor, sequence, multi_attractor]
     data.emoji.pairs:
       - []
       - []
@@ -41,9 +42,13 @@ groups:
         - initial: {image: microbe.png, mode: patch, size: 12}
           target: microbe.png
       - []
-    data.emoji.terminal_carry.enabled: [false, true, true, false]
-    data.emoji.terminal_carry.start_iteration: [20, 20, 20, 20]
-    data.emoji.terminal_carry.schedule_iterations: [20, 20, 20, 20]
-    loss.regularisers.contiguous_growth: [1.0, 0.0, 0.0, 1.0]
-    loss.regularisers.update_sensitivity: [0.0, 0.0, 0.0, 0.1]
-    loss.regularisers.perturbation_conservation: [0.0, 0.0, 0.0, 0.1]
+      - - initial: {image: crab.png, mode: patch, size: 12}
+          target: crab.png
+    data.emoji.terminal_carry.enabled: [false, true, true, false, false]
+    data.emoji.terminal_carry.start_iteration: [20, 20, 20, 20, 20]
+    data.emoji.terminal_carry.schedule_iterations: [20, 20, 20, 20, 20]
+    loss.regularisers.contiguous_growth: [1.0, 0.0, 0.0, 1.0, 0.0]
+    loss.regularisers.update_sensitivity: [0.0, 0.0, 0.0, 0.1, 0.0]
+    loss.regularisers.perturbation_conservation: [0.0, 0.0, 0.0, 0.1, 0.0]
+    # aNCA: learned firing rate with an energy cost
+    loss.regularisers.firing_energy: [0.0, 0.0, 0.0, 0.0, 0.1]

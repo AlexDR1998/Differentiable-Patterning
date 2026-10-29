@@ -50,3 +50,29 @@ def test_training_loop_runs_and_saves_a_checkpoint(tmp_path, loop_autodiff):
     assert result.completed
     assert result.checkpoint_path is not None and result.checkpoint_path.is_file()
     assert jnp.isfinite(result.best_loss)
+
+
+def test_training_loop_runs_with_learned_firing_rate(tmp_path):
+    config = _tiny_emoji_config()
+    config = replace(
+        config,
+        model=replace(config.model, family="aNCA"),
+        loss=replace(config.loss, regularisers={**config.loss.regularisers, "firing_energy": 0.1}),
+    )
+    data = jax.random.uniform(jax.random.PRNGKey(0), (1, 3, 4, 8, 8))
+    model, _ = build_model(config.model, key=jax.random.PRNGKey(1))
+    augmenter, _ = build_data_augmenter(config.data, data, model.N_CHANNELS)
+    context = TrainerContext(
+        run_name="tiny-anca",
+        model_directory=str(tmp_path),
+        data_augmenter=augmenter,
+        storage_id="tiny-anca-run",
+        observed_channels=4,
+        data_channels=4,
+    )
+
+    result = build_trainer(config, model, data, context).train(key=jax.random.PRNGKey(2))
+
+    assert result.error_code == 0
+    assert result.completed
+    assert jnp.isfinite(result.best_loss)

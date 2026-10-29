@@ -531,3 +531,28 @@ def plot_singular_value_spectrum(singular_values, title):
 	ax.grid(True, which="both", alpha=0.25)
 	figure.tight_layout()
 	return plot_to_image(figure)
+
+
+def plot_firing_activity(steps, activities, labels, observation_steps=None):
+	"""Mean learned firing probability against rollout step (aNCA/gaNCA), one line per batch.
+
+	``activities`` is a list (one per batch) of [frames] arrays.
+	"""
+	import matplotlib.pyplot as plt
+
+	figure = plt.figure(figsize=(7,4), dpi=150)
+	ax = figure.add_subplot(111)
+	colours = plt.get_cmap("tab10")
+	for index, (activity, label) in enumerate(zip(activities, labels)):
+		ax.plot(steps, np.asarray(activity), color=colours(index % 10), linewidth=1, label=label)
+	if observation_steps is not None:
+		for step in observation_steps:
+			ax.axvline(step, color="grey", linewidth=0.5, alpha=0.5)
+	ax.set_ylim(0, 1)
+	ax.set_xlabel("Step")
+	ax.set_ylabel("Mean firing probability")
+	ax.set_title("Cell activity during rollout")
+	ax.legend(fontsize="small")
+	ax.grid(True, alpha=0.25)
+	figure.tight_layout()
+	return plot_to_image(figure)

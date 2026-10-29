@@ -34,6 +34,10 @@ class AbstractModel(eqx.Module):
 		"""
 		return state
 
+	def firing_probability(self, state):
+		"""Per-cell firing probability stored in ``state``; only models with a learned firing rate have one."""
+		raise ValueError(f"{type(self).__name__} has no learned firing probability")
+
 	def prepare_pool_state(self, state):
 		"""Prepare a pool state before it starts a new training rollout (unchanged by default).
 

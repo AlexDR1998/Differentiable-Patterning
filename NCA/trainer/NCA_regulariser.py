@@ -99,6 +99,15 @@ def contiguous_growth_regulariser(state, next_state, context, key):
     return _batch_map(_reg, state, next_state)
 
 
+def firing_energy_regulariser(state, next_state, context, key):
+    """Mean firing probability of the cells (aNCA/gaNCA): an energy cost per update.
+
+    The trainer divides by the number of steps, so the coefficient penalises the
+    average firing rate; scale it by ``run.t`` to penalise the total number of updates.
+    """
+    return _batch_map(lambda x_new: jnp.mean(context["firing_probability"](x_new)), next_state)
+
+
 def localised_hidden_regulariser(state, next_state, context, key):
     """Penalise hidden channel activity where all observed channels are low (< 0.5)."""
 

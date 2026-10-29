@@ -52,6 +52,14 @@ def _gated_noise_arguments(model_config):
     return {**_gated_arguments(model_config), **_noise_arguments(model_config)}
 
 
+def _firing_arguments(model_config):
+    return {"FIRING": model_config.firing_estimator}
+
+
+def _gated_firing_arguments(model_config):
+    return {**_gated_arguments(model_config), **_firing_arguments(model_config)}
+
+
 def _kan_arguments(model_config):
     kan_aux = asdict(model_config.kan)
     if kan_aux["hidden_features"] is None:
@@ -72,12 +80,15 @@ def _hnca_arguments(model_config):
 
 # family -> (model class, function giving its extra constructor arguments).
 # gNCA, nNCA and gnNCA are the plain NCA with its GATED and/or
-# PARAMETER_NOISE_LEVEL options switched on.
+# PARAMETER_NOISE_LEVEL options switched on; aNCA and gaNCA learn a
+# per-cell firing rate (the FIRING option).
 MODEL_FAMILIES = {
     "NCA": (NCA, _no_extra_arguments),
     "gNCA": (NCA, _gated_arguments),
     "nNCA": (NCA, _noise_arguments),
     "gnNCA": (NCA, _gated_noise_arguments),
+    "aNCA": (NCA, _firing_arguments),
+    "gaNCA": (NCA, _gated_firing_arguments),
     "FastKaNCA": (FastKaNCA, _kan_arguments),
     "HNCA": (HNCA, _hnca_arguments),
 }
@@ -116,6 +127,8 @@ def build_model_config_string(model_config, family=None):
         cfg_str += f"_ks{model_config.kernel_scale}"
     if family in {"nNCA", "gnNCA"}:
         cfg_str += f"_pn{model_config.parameter_noise_level}"
+    if family in {"aNCA", "gaNCA"}:
+        cfg_str += "_fexp" if model_config.firing_estimator == "expected" else "_fst"
     if family == "FastKaNCA":
         kan = model_config.kan
         cfg_str += f"_kb{kan.num_basis}"

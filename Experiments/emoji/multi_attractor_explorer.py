@@ -800,6 +800,84 @@ def _(
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
+    ### Cell activity (aNCA / gaNCA)
+
+    - Learned firing probability of each cell, for the colour chosen above
+    - Optional damage: a disc at the grid centre is zeroed at the chosen step
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(explore_cfg, explore_length):
+    activity_damage = mo.ui.checkbox(value=False, label="Damage")
+    activity_damage_step = mo.ui.slider(0, explore_length.value * explore_cfg.run.t - 1,
+                                        value=explore_length.value * explore_cfg.run.t // 2,
+                                        label="Damage step", show_value=True)
+    activity_radius = mo.ui.slider(1, 32, value=8, label="Damage radius", show_value=True)
+    mo.hstack([activity_damage, activity_damage_step, activity_radius], justify="start", gap=1.5)
+    return activity_damage, activity_damage_step, activity_radius
+
+
+@app.cell(hide_code=True)
+def _(
+    activity_damage,
+    activity_damage_step,
+    activity_radius,
+    base_seed,
+    eval_seed,
+    explore_cfg,
+    explore_footprint,
+    explore_id,
+    explore_length,
+    explore_names,
+    explore_targets,
+    get_model,
+    picker,
+):
+    _model = get_model(explore_id)
+    mo.stop(not ma.has_learned_firing(_model), mo.md("Only for models with a learned firing rate (aNCA, gaNCA)."))
+    _rgba = ma.hsva_to_rgba([[picker.value[_name] for _name in ("h", "s", "v", "a")]])
+    _state = ma.coloured_seeds(base_seed, explore_footprint, _rgba)[0]
+    _steps = explore_length.value * explore_cfg.run.t
+    _damage_step = activity_damage_step.value if activity_damage.value else -1
+    _frames_rgba, _activity, _distances = (np.asarray(_v) for _v in ma.activity_rollout(
+        _model, jax.numpy.asarray(_state), jax.numpy.asarray(explore_targets), _steps,
+        jr.PRNGKey(eval_seed.value), _damage_step, float(activity_radius.value)))
+
+    _frames = np.linspace(0, _steps, 9).astype(int)
+    _fig = plt.figure(figsize=(1.5 * len(_frames), 6.4))
+    _grid = _fig.add_gridspec(3, len(_frames), height_ratios=[1, 1, 1.6])
+    for _i, _frame in enumerate(_frames):
+        show_image(_fig.add_subplot(_grid[0, _i]), _frames_rgba[_frame], f"step {_frame}")
+        _ax = _fig.add_subplot(_grid[1, _i])
+        _ax.imshow(_activity[_frame], vmin=0, vmax=1, cmap="magma")
+        _ax.set_axis_off()
+    _ax = _fig.add_subplot(_grid[2, :])
+    _ax.plot(_activity.mean(axis=(1, 2)), color="black", lw=1.5, label="mean firing probability")
+    _ax.set_ylim(0, 1)
+    _ax.set_xlabel("step")
+    _ax.set_ylabel("mean firing probability")
+    _ax.axvline(explore_cfg.run.t, color="#999", ls=":", lw=1, label="run.t")
+    if _damage_step >= 0:
+        _ax.axvline(_damage_step, color="#b8001f", ls="--", lw=1, label="damage")
+    _twin = _ax.twinx()
+    for _k, _name in enumerate(explore_names):
+        _twin.plot(_distances[:, _k], color=outcome_colour(_k), lw=1, alpha=0.7, label=_name)
+    _twin.set_yscale("log")
+    _twin.set_ylabel("RGBA MSE to target")
+    _ax.legend(frameon=False, fontsize=8, loc="upper left")
+    _twin.legend(frameon=False, fontsize=8, loc="upper right")
+    style_axes(_ax)
+    _fig.suptitle("RGBA (top), firing probability (middle), activity and error (bottom)", fontsize=9)
+    _fig.tight_layout()
+    _fig
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     ### Basin map
 
     - One rollout per colour on a polar grid: angle = hue, radius = saturation (or value), the other fixed

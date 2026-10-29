@@ -24,6 +24,9 @@ def gated_linear_unit(x):
 	return jax.nn.glu(x, axis=0)
 
 
+FIRING_MODES = ("fixed", "expected", "straight_through")
+
+
 class NCA(AbstractModel):
 	layers: list
 	KERNEL_STR: list
@@ -36,6 +39,7 @@ class NCA(AbstractModel):
 	# the saved layout identical to the old gNCA/nNCA/gnNCA classes.
 	GATED: bool = eqx.field(static=True)
 	PARAMETER_NOISE_LEVEL: float = eqx.field(static=True)
+	FIRING: str = eqx.field(static=True)
 
 	def __init__(self,
 			     N_CHANNELS,
@@ -46,7 +50,8 @@ class NCA(AbstractModel):
 					 KERNEL_SCALE = 1,
 					 key=None,
 					 GATED=False,
-					 PARAMETER_NOISE_LEVEL=0.0):
+					 PARAMETER_NOISE_LEVEL=0.0,
+					 FIRING="fixed"):
 		"""
 		Parameters
 		----------
@@ -71,6 +76,15 @@ class NCA(AbstractModel):
 		PARAMETER_NOISE_LEVEL : float, optional
 			Standard deviation of Gaussian noise added to the network weights at every
 			step (previously the nNCA model). 0 turns it off. The default is 0.
+		FIRING : str, optional
+			How cells decide to update (aNCA/gaNCA when not "fixed"):
+			- "fixed": every channel of every pixel updates with probability FIRE_RATE.
+			- "expected": each cell learns a firing probability p and makes the update p*dx.
+			- "straight_through": each cell fires with its learned probability p; gradients
+			  pass through as if the update were p*dx.
+			With a learned p, the last state channel is overwritten with p every step (the
+			"activity" channel, which neighbours can see), and FIRE_RATE is the initial p.
+			The default is "fixed".
 		"""
 		
 		
@@ -82,6 +96,9 @@ class NCA(AbstractModel):
 		self.KERNEL_STR = KERNEL_STR
 		self.GATED = GATED
 		self.PARAMETER_NOISE_LEVEL = PARAMETER_NOISE_LEVEL
+		if FIRING not in FIRING_MODES:
+			raise ValueError(f"FIRING must be one of {FIRING_MODES}, got {FIRING!r}")
+		self.FIRING = FIRING
 		N_WIDTH = 1
 		self.op = Ops(PADDING=PADDING,dx=1,KERNEL_SCALE=KERNEL_SCALE,SMOOTHING=1)
 
@@ -113,6 +130,8 @@ class NCA(AbstractModel):
 		
 		# The last layer starts at zero, so a new model makes no update
 		out_channels = 2*self.N_CHANNELS if GATED else self.N_CHANNELS
+		if FIRING != "fixed":
+			out_channels += 1 # Firing logit
 		self.layers = [
 			eqx.nn.Conv2d(in_channels=self.N_FEATURES,
 						  out_channels=self.N_FEATURES,
@@ -126,6 +145,10 @@ class NCA(AbstractModel):
 						  use_bias=True,
 						  key=key2)),
 			]
+		if FIRING != "fixed":
+			# Start with firing probability FIRE_RATE (clipped so the logit is finite)
+			p0 = jnp.clip(FIRE_RATE, 0.01, 0.99)
+			self.layers[2] = eqx.tree_at(lambda l: l.bias, self.layers[2], self.layers[2].bias.at[-1].set(jnp.log(p0/(1-p0))))
 		if GATED:
 			self.layers.append(gated_linear_unit)
 
@@ -134,6 +157,8 @@ class NCA(AbstractModel):
 		name = "NCA"
 		if self.PARAMETER_NOISE_LEVEL > 0:
 			name = "nNCA"
+		if self.FIRING != "fixed":
+			name = "aNCA"
 		if self.GATED:
 			name = "g" + name
 		config = {
@@ -146,6 +171,8 @@ class NCA(AbstractModel):
 		}
 		if self.PARAMETER_NOISE_LEVEL > 0:
 			config["PARAMETER_NOISE_LEVEL"] = self.PARAMETER_NOISE_LEVEL
+		if self.FIRING != "fixed":
+			config["FIRING"] = self.FIRING
 		return config
 
 	def _noisy_layers(self, key):
@@ -184,11 +211,32 @@ class NCA(AbstractModel):
 			# A separate key, so the noise is independent of the fire mask
 			layers = self._noisy_layers(jax.random.split(key)[1])
 		dx = self.perception(x)
-		for layer in layers:
+		for layer in layers[:3]:
 			dx = layer(dx)
-		sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
+		if self.FIRING != "fixed":
+			fire_logit, dx = dx[-1], dx[:-1]
+		for layer in layers[3:]: # Gated linear unit, if GATED
+			dx = layer(dx)
+		if self.FIRING == "fixed":
+			sigma = jax.random.bernoulli(key,p=self.FIRE_RATE,shape=dx.shape)
+			return boundary_callback(x + sigma*dx)
+
+		# One firing probability per cell, shared by all channels
+		p = jax.nn.sigmoid(fire_logit)
+		if self.FIRING == "expected":
+			sigma = p
+		else:
+			fired = jax.random.bernoulli(key,p=p).astype(p.dtype)
+			sigma = fired + p - jax.lax.stop_gradient(p) # Straight-through estimator
 		x_new = x + sigma*dx
+		x_new = x_new.at[-1].set(p) # Activity channel
 		return boundary_callback(x_new)
+
+	def firing_probability(self, state):
+		"""Firing probability of each cell, read from the activity channel of ``state`` [..., C, x, y]."""
+		if self.FIRING == "fixed":
+			raise ValueError("Only models with a learned firing rate (aNCA, gaNCA) have a firing probability")
+		return state[..., -1, :, :]
 
 	def partition(self):
 		"""Like eqx.partition, but puts the fixed perception kernels in the static pytree.

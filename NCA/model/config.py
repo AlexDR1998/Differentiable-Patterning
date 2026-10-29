@@ -35,12 +35,15 @@ class ModelConfig(ConfigValue):
     # (2 * kernel_scale + 1)-wide convolution kernel.
     kernel_scale: int = 1
     parameter_noise_level: float = 0.01
+    # aNCA/gaNCA only: "straight_through" (cells fire at random with their
+    # learned probability) or "expected" (deterministic, update scaled by it).
+    firing_estimator: str = "straight_through"
 
     def __post_init__(self):
         # NCA_fast, NCA_sycl and gNCA_sycl are retired, and are kept only so
         # that old bundle configs still load (see PORTABLE_MODEL_FAMILIES).
         supported = {
-            "NCA", "gNCA", "nNCA", "gnNCA", "FastKaNCA", "HNCA",
+            "NCA", "gNCA", "nNCA", "gnNCA", "aNCA", "gaNCA", "FastKaNCA", "HNCA",
             "NCA_fast", "NCA_sycl", "gNCA_sycl",
         }
         if self.family not in supported:
@@ -48,6 +51,10 @@ class ModelConfig(ConfigValue):
         if self.channels <= 0 or not 0 <= self.fire_rate <= 1:
             raise ValueError(
                 "model channels must be positive and fire_rate must be in [0, 1]"
+            )
+        if self.firing_estimator not in {"straight_through", "expected"}:
+            raise ValueError(
+                "model.firing_estimator must be 'straight_through' or 'expected'"
             )
 
 
