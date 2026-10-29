@@ -18,7 +18,7 @@ configs:
     - 16
     impulse.rollout.steps: 8
     impulse.rollout.evaluation_steps: 16
-    logging.wandb.group: smoke_impulse-impulse-validation-logging
+    logging.wandb.group: smoke_impulse-impulse-float16-states
     impulse.objective.type: targeted
     impulse.rollout.loss_window: 1
     impulse.intervention.spatial: local
@@ -46,7 +46,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_impulse-impulse-validation-logging
+        group: smoke_impulse-impulse-float16-states
         tags: null
         tag_keys:
         - impulse.objective.type
@@ -119,7 +119,7 @@ configs:
     - 16
     impulse.rollout.steps: 8
     impulse.rollout.evaluation_steps: 16
-    logging.wandb.group: smoke_impulse-impulse-validation-logging
+    logging.wandb.group: smoke_impulse-impulse-float16-states
     impulse.objective.type: minimal_destructive
     impulse.rollout.loss_window: 4
     impulse.intervention.spatial: patch
@@ -147,7 +147,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_impulse-impulse-validation-logging
+        group: smoke_impulse-impulse-float16-states
         tags: null
         tag_keys:
         - impulse.objective.type

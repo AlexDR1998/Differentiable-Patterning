@@ -5,9 +5,9 @@
 # Fill the REPLACE_* slots with bundle IDs. Each ID appears twice: once in
 # the grid and once in its branch, which picks the transitions for its
 # attractor count. Placeholders must stay distinct until replaced.
-experiment_name: emoji_attractor_switch_gating_v1
+experiment_name: emoji_attractor_switch_gating_v2
 entrypoint: Experiments.impulse.optimise:run
-output_subdir: generated/emoji_attractor_switch_gating_v1
+output_subdir: generated/emoji_attractor_switch_gating_v2
 seed_mode: index
 
 # All ordered (source, target) pairs, as indices into data.emoji.pairs
@@ -39,6 +39,8 @@ grid:
   # impulse.rollout.steps: [256]
   # impulse.rollout.loss_window: [64]
   impulse.rollout.evaluation_steps: [1024]
+  # Keep every 32nd frame of the long evaluation rollout (smaller states.npz)
+  impulse.rollout.evaluation_frame_every: [32]
   impulse.optimiser.learn_rate: [0.01]
   impulse.intervention.channels: [all]
   impulse.intervention.spatial: [patch]
@@ -49,9 +51,9 @@ groups:
   # - impulse.intervention.patch_size: [3, 1, 6, 3, 2, 1, 9, 3, 1]
   #   impulse.intervention.duration: [1, 9, 1, 4, 9, 36, 1, 9, 81]
   #   impulse.intervention.budget: [9, 9, 36, 36, 36, 36, 81, 81, 81]
-  - impulse.intervention.patch_size: [3, 6, 9]
-    impulse.intervention.duration: [1, 1, 1,]
-    impulse.intervention.budget: [9, 36, 81,]
+  - impulse.intervention.patch_size: [ 9]
+    impulse.intervention.duration: [ 1,]
+    impulse.intervention.budget: [ 81,]
   - impulse.rollout.steps: [256,512]
     impulse.rollout.loss_window: [64,128]
     impulse.rollout.scan_kind: [lax,checkpointed]

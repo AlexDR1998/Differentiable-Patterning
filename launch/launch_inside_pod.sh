@@ -38,4 +38,5 @@ mkdir -p /workspace/writeable/data/logs/wandb/"$WANDB_DIR_NAME"/"$JOB_WORKER_IND
 
 python "$SCRIPT_PATH" --manifest "$MANIFEST_PATH"
 
-rsync -a --inplace /workspace/writeable/wandb-fast/ /workspace/writeable/data/logs/wandb/"$WANDB_DIR_NAME"/"$JOB_WORKER_INDEX"_"$JOB_COMPLETION_INDEX"/
+# The W&B cache (WANDB_CACHE_DIR) stays in the pod: only the run logs are kept
+rsync -a --inplace --exclude cache/ /workspace/writeable/wandb-fast/ /workspace/writeable/data/logs/wandb/"$WANDB_DIR_NAME"/"$JOB_WORKER_INDEX"_"$JOB_COMPLETION_INDEX"/

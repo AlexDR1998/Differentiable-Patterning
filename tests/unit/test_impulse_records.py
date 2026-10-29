@@ -5,6 +5,7 @@ from pathlib import Path
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 import pytest
 import yaml
@@ -135,6 +136,9 @@ def test_record_rebuilds_its_intervention_and_states(published):
     assert loaded.duration == 2
     assert jnp.array_equal(loaded.deltas(states), result.best_intervention.deltas(states))
     assert jnp.array_equal(saved["final_states"], result.final_states)
+    # Trajectories are saved as float16 to keep records small
+    assert saved["perturbed_trajectory"].dtype == np.float16
+    np.testing.assert_allclose(saved["perturbed_trajectory"], result.perturbed_trajectory, rtol=1e-3, atol=1e-3)
 
 
 def test_each_run_gets_its_own_record(published, tmp_path):
