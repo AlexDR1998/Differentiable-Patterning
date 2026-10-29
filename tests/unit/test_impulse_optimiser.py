@@ -6,6 +6,7 @@ import pytest
 
 from NCA.trainer.impulse.perturbation import perturbation
 from NCA.trainer.impulse import (
+    AttractorContrastObjective,
     ExternalTargetPairSource,
     MaximalPreservativeObjective,
     MinimalDestructiveObjective,
@@ -285,7 +286,12 @@ def test_targeted_optimiser_reduces_error_and_keeps_model_frozen():
     assert result.switch_steps.tolist() == [1.0, 1.0]
     assert result.evaluation_loss_curve.shape == (1,)
     assert result.evaluation_loss_curve[0] < result.baseline_loss_curve[0] == 1.0
-    norms = result.metrics["gradient_norms"]
+    # A global intervention has no centre, so no location gradient
+    parameters, _ = eqx.partition(intervention, eqx.is_inexact_array)
+    _, _, step_metrics = optimiser._make_step(1, 1)(
+        intervention, optimiser.optimiser.init(parameters), batch.initial_states, batch.target_states, jax.random.PRNGKey(7)
+    )
+    norms = step_metrics["gradient_norms"]
     assert float(norms["total"]) > 0.0 and float(norms["location"]) == 0.0
 
 
@@ -644,3 +650,125 @@ def test_intervention_must_end_before_the_loss_window():
     NCAImpulseOptimiser(intervention=_patch_impulse(1, (0.5, 0.5), duration=5), **arguments)
     with pytest.raises(ValueError, match="loss window"):
         NCAImpulseOptimiser(intervention=_patch_impulse(1, (0.5, 0.5), duration=6), **arguments)
+
+
+def _global_impulse(channels=2, lattice=4, value=0.0):
+    """A global perturbation on all channels with every value set to ``value``."""
+
+    intervention = perturbation(
+        mode={"channel": "all", "spatial": "global"},
+        CHANNELS=channels,
+        OBS_CHANNELS=channels,
+        x=jnp.zeros((1, channels, lattice, lattice)),
+        WIDTH=1.0,
+        key=jax.random.PRNGKey(0),
+    )
+    return eqx.tree_at(lambda item: item.values, intervention, jnp.full_like(intervention.values, value))
+
+
+class TrainingLogger:
+    def __init__(self):
+        self.training = []
+        self.validation = []
+
+    def log_training(self, metrics, step, log_every):
+        self.training.append(step)
+
+    def log_validation(self, values, step):
+        self.validation.append((step, values))
+
+
+def test_attractor_contrast_objective_prefers_the_target_over_the_source_and_far_states():
+    attractors = jnp.stack([jnp.zeros((4, 3, 3)), jnp.ones((4, 3, 3))])
+    objective = AttractorContrastObjective(attractors, target_index=1, temperature=0.1, contrast_weight=1.0)
+
+    def value(state, objective=objective):
+        states = jnp.broadcast_to(state, (2, 4, 3, 3))
+        target_loss = jnp.mean((states - attractors[1]) ** 2)
+        return float(objective(target_loss, 0.0, {}, states))
+
+    far = jnp.full((4, 3, 3), 5.0)
+    assert value(attractors[1]) < value(attractors[0])
+    assert value(attractors[1]) < value(far)
+    # The contrast term alone barely scores a far state that is nearer the
+    # target than the source: the target loss is what keeps it on the target.
+    contrast_only = AttractorContrastObjective(attractors, 1, 0.1, target_weight=0.0, contrast_weight=1.0)
+    assert value(far, contrast_only) < 1e-6
+    with pytest.raises(ValueError, match="rollout states"):
+        objective(0.0, 0.0, {})
+
+
+def test_curriculum_trains_on_a_quarter_to_all_of_the_rollout():
+    model = AdditiveModel(channels=2, increment=0.0)
+    initial = jnp.zeros((1, 2, 4, 4))
+    arguments = dict(
+        model=model,
+        pair_source=ExternalTargetPairSource(initial, jnp.ones_like(initial)),
+        objective=TargetedObjective(),
+        optimiser=optax.adam(0.1),
+        observed_channels=2,
+        rollout_steps=8,
+        loss_window=4,
+        loss_functions=[per_sample_l2],
+        curriculum=True,
+    )
+    optimiser = NCAImpulseOptimiser(intervention=_global_impulse(), **arguments)
+
+    stages = [optimiser._stage_rollout(index, 8) for index in range(8)]
+    assert stages == [(2, 1), (2, 1), (4, 2), (4, 2), (6, 3), (6, 3), (8, 4), (8, 4)]
+    result = optimiser.train(iterations=8, batch_size=1, key=jax.random.PRNGKey(1), evaluation_steps=8)
+    assert result.evaluation_loss < result.baseline_evaluation_loss
+    # The first stage (2 steps, window 1) leaves room for a 2-step impulse only
+    multistep = dict(arguments, model=AdditiveModel(channels=4))
+    NCAImpulseOptimiser(intervention=_patch_impulse(1, (0.5, 0.5), duration=2), **multistep)
+    with pytest.raises(ValueError, match="first curriculum stage"):
+        NCAImpulseOptimiser(intervention=_patch_impulse(1, (0.5, 0.5), duration=3), **multistep)
+
+
+def test_restarts_continue_the_start_with_the_lowest_validation_objective():
+    initial = jnp.zeros((1, 2, 4, 4))
+    logger = TrainingLogger()
+    optimiser = NCAImpulseOptimiser(
+        model=AdditiveModel(channels=2),
+        pair_source=ExternalTargetPairSource(initial, jnp.ones_like(initial)),
+        intervention=_global_impulse(value=-2.0),
+        restart_interventions=(_global_impulse(value=0.9),),
+        scout_iterations=2,
+        objective=TargetedObjective(),
+        # No updates: each start keeps its values
+        optimiser=optax.sgd(0.0),
+        observed_channels=2,
+        rollout_steps=1,
+        loss_functions=[per_sample_l2],
+        logger=logger,
+    )
+
+    result = optimiser.train(iterations=4, batch_size=1, key=jax.random.PRNGKey(1), evaluation_steps=1, log_every=1)
+
+    assert jnp.allclose(jnp.asarray(result.restart_validation_objectives), jnp.array([9.0, 0.01]))
+    assert jnp.allclose(result.best_intervention.values, 0.9)
+    # Only the chosen start is logged: its scouting steps, then the rest
+    assert logger.training == [0, 1, 2, 3]
+    assert all(abs(values["evaluation_loss"] - 0.01) < 1e-6 for _, values in logger.validation)
+
+
+def test_best_intervention_is_chosen_on_the_evaluation_rollout():
+    # Each step adds 0.5 and the target is 1. Training (1 step) wants the
+    # impulse at 0.5, but after the 2-step evaluation rollout no impulse is best.
+    initial = jnp.zeros((1, 2, 4, 4))
+    optimiser = NCAImpulseOptimiser(
+        model=AdditiveModel(channels=2, increment=0.5),
+        pair_source=ExternalTargetPairSource(initial, jnp.ones_like(initial)),
+        intervention=_global_impulse(),
+        objective=TargetedObjective(),
+        optimiser=optax.adam(0.1),
+        observed_channels=2,
+        rollout_steps=1,
+        loss_functions=[per_sample_l2],
+    )
+
+    result = optimiser.train(iterations=10, batch_size=1, key=jax.random.PRNGKey(1), evaluation_steps=2, log_every=1)
+
+    assert result.best_step == 0
+    assert result.best_validation_objective == 0.0
+    assert jnp.allclose(result.best_intervention.values, 0.0)

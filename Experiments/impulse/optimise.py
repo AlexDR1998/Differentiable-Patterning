@@ -14,6 +14,7 @@ from Experiments.impulse.config_helpers import (
     build_intervention,
     build_objective,
     build_pair_source,
+    build_restarts,
     load_impulse_data,
     loss_args_from_config,
     pixel_steps,
@@ -25,10 +26,11 @@ from NCA.trainer.logging.impulse_wandb_log import ImpulseLogger
 
 def multi_attractor_targets(data_config, impulse_cfg, trajectories, observed_channels):
     """Target patterns [K, observed channels, H, W] and names of a multi-attractor
-    model, with the source and target of this run marked; (None, None) otherwise."""
+    model, with the source and target of this run marked, and the index of this
+    run's target among them; (None, None, None) otherwise."""
 
     if data_config.emoji.task != "multi_attractor":
-        return None, None
+        return None, None, None
     pair_names = [emoji_name(pair.target) for pair in data_config.emoji.pairs]
     names = list(dict.fromkeys(pair_names))
     targets = trajectories[[pair_names.index(name) for name in names], -1, :observed_channels]
@@ -37,7 +39,8 @@ def multi_attractor_targets(data_config, impulse_cfg, trajectories, observed_cha
         pair_names[impulse_cfg.pair_source.target_index]: "target",
     }
     labels = [f"{name} ({roles[name]})" if name in roles else name for name in names]
-    return targets, labels
+    target = names.index(pair_names[impulse_cfg.pair_source.target_index])
+    return targets, labels, target
 
 
 def run(cfg):
@@ -65,7 +68,17 @@ def run(cfg):
     )
 
     impulse_cfg = cfg.impulse
-    attractors, attractor_names = multi_attractor_targets(data_config, impulse_cfg, trajectories, observed_channels)
+    attractors, attractor_names, target_attractor = multi_attractor_targets(
+        data_config, impulse_cfg, trajectories, observed_channels
+    )
+    restart_interventions, scout_iterations = build_restarts(
+        impulse_cfg.intervention,
+        impulse_cfg.iterations,
+        observed_channels,
+        model,
+        trajectories,
+        intervention_key,
+    )
     config = config_to_dict(cfg)
     # The W&B run is named after the record it will produce
     impulse_id = create_impulse_id(cfg)
@@ -87,7 +100,7 @@ def run(cfg):
         model=model,
         pair_source=pair_source,
         intervention=intervention,
-        objective=build_objective(cfg.impulse.objective),
+        objective=build_objective(cfg.impulse.objective, attractors, target_attractor),
         optimiser=build_impulse_optimiser(cfg.impulse.optimiser),
         observed_channels=observed_channels,
         rollout_steps=impulse_cfg.rollout.steps,
@@ -102,6 +115,9 @@ def run(cfg):
         evaluation_frame_every=impulse_cfg.rollout.evaluation_frame_every,
         checkpoints=impulse_cfg.rollout.checkpoints,
         attractors=attractors,
+        curriculum=impulse_cfg.rollout.curriculum,
+        restart_interventions=restart_interventions,
+        scout_iterations=scout_iterations,
         logger=logger,
     )
     result = optimiser.train(

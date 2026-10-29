@@ -12,11 +12,13 @@ from Experiments.impulse.config_helpers import (
     build_intervention,
     build_objective,
     build_pair_source,
+    build_restarts,
     intervention_from_config,
 )
 from Experiments.model_registry import create_model_id, publish_model_bundle
 from NCA.model.NCA_model import NCA
-from NCA.trainer.impulse import StableAttractorPairSource, TargetedObjective
+from NCA.trainer.impulse import AttractorContrastObjective, StableAttractorPairSource, TargetedObjective
+from NCA.trainer.impulse.outcomes import target_gap
 
 
 class ConfigDict(dict):
@@ -59,6 +61,10 @@ def _impulse_cfg():
                     "width": 1.0,
                     "patch_size": 3,
                     "duration": 1,
+                    "init_scale": 0.0,
+                    "initial_location": "random",
+                    "restarts": 1,
+                    "scout_fraction": 0.1,
                 },
                 "objective": {
                     "type": "targeted",
@@ -67,6 +73,8 @@ def _impulse_cfg():
                     "constraint_weight": 100.0,
                     "magnitude": "l2",
                     "reward_weight": 1.0,
+                    "contrast_weight": 0.1,
+                    "temperature": None,
                 },
                 "optimiser": {
                     "type": "adam",
@@ -156,6 +164,8 @@ def test_intervention_accepts_observed_channels_and_rejects_unknown_modes():
                     "width": 1.0,
                     "patch_size": patch_size,
                     "duration": duration,
+                    "init_scale": 0.0,
+                    "initial_location": "random",
                 }
             ),
             4,
@@ -205,3 +215,53 @@ def test_pair_sources_only_use_the_configured_source_and_target_patterns():
     cfg.impulse.pair_source.update(target_index=3)
     with pytest.raises(ValueError, match="outside the 3 data pairs"):
         build_pair_source(cfg.impulse, model, trajectories)
+
+
+def test_init_scale_and_initial_location_set_the_starting_intervention():
+    cfg = _impulse_cfg()
+    model = NCA(6, KERNEL_STR=["ID", "LAP"], FIRE_RATE=1.0, key=jax.random.PRNGKey(2))
+    trajectories = jnp.zeros((2, 3, 6, 6, 6))
+
+    def build(**options):
+        cfg.impulse.intervention.update(spatial="patch", **options)
+        return build_intervention(cfg.impulse.intervention, 4, model, trajectories, jax.random.PRNGKey(3))
+
+    assert jnp.all(build().values == 0.0)
+    assert float(jnp.std(build(init_scale=0.1).values)) > 0.0
+    assert jnp.allclose(build(initial_location="centre").get_location(), 0.5)
+    with pytest.raises(ValueError, match="initial_location"):
+        build(initial_location="corner")
+
+
+def test_restarts_have_their_own_centres_and_a_scouting_budget():
+    cfg = _impulse_cfg()
+    cfg.impulse.intervention.update(spatial="patch")
+    model = NCA(6, KERNEL_STR=["ID", "LAP"], FIRE_RATE=1.0, key=jax.random.PRNGKey(2))
+    trajectories = jnp.zeros((2, 3, 6, 12, 12))
+    key = jax.random.PRNGKey(3)
+
+    assert build_restarts(cfg.impulse.intervention, 100, 4, model, trajectories, key) == ((), 0)
+    cfg.impulse.intervention.update(restarts=3)
+    others, scout = build_restarts(cfg.impulse.intervention, 100, 4, model, trajectories, key)
+    first = build_intervention(cfg.impulse.intervention, 4, model, trajectories, key)
+
+    assert len(others) == 2 and scout == 10
+    centres = [tuple(item.get_location().tolist()) for item in (first, *others)]
+    assert len(set(centres)) == 3
+    cfg.impulse.intervention.update(initial_location="centre")
+    with pytest.raises(ValueError, match="identical"):
+        build_restarts(cfg.impulse.intervention, 100, 4, model, trajectories, key)
+
+
+def test_attractor_contrast_objective_needs_attractors_and_defaults_its_temperature():
+    cfg = _impulse_cfg()
+    cfg.impulse.objective.update(type="attractor_contrast")
+    attractors = jnp.stack([jnp.zeros((4, 3, 3)), jnp.ones((4, 3, 3)), jnp.full((4, 3, 3), 0.25)])
+
+    with pytest.raises(ValueError, match="multi_attractor"):
+        build_objective(cfg.impulse.objective)
+    objective = build_objective(cfg.impulse.objective, attractors, 1)
+
+    assert isinstance(objective, AttractorContrastObjective)
+    assert objective.target_index == 1
+    assert objective.temperature == target_gap(attractors) == 0.0625

@@ -62,6 +62,9 @@ impulse:
     # checkpointed only: saved states (null: equinox chooses; steps: every
     # state, so each step is rerun once in the backward pass)
     checkpoints: null
+    # Train at 1/4, 1/2, 3/4 and then all of steps and loss_window, a
+    # quarter of the iterations each (gradients vanish less on short rollouts)
+    curriculum: false
 
   intervention:
     # all, observed (or obs), hidden, or single (the first hidden channel)
@@ -75,14 +78,30 @@ impulse:
     duration: 1
     # Label for grouping runs in W&B only (not used by the run)
     budget: null
+    # Std of random initial values. 0: start at zero, where the centre has no
+    # gradient until the values have grown
+    init_scale: 0.0
+    # random (uniform over the lattice interior) or centre
+    initial_location: random
+    # Starts with different random centres and values. Each is optimised for
+    # scout_fraction of the iterations; only the best on validation continues
+    restarts: 1
+    scout_fraction: 0.1
 
   objective:
+    # targeted, minimal_destructive, maximal_preservative, or
+    # attractor_contrast (targeted plus a cross-entropy over the attractors
+    # of a multi_attractor model, which pushes away from the others)
     type: targeted
     target_weight: 1.0
     tolerance: 0.01
     constraint_weight: 100.0
     magnitude: l2
     reward_weight: 1.0
+    # attractor_contrast only. temperature null: smallest distance between
+    # two attractors
+    contrast_weight: 0.1
+    temperature: null
 
   loss:
     terms:

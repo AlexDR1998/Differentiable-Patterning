@@ -22,7 +22,12 @@ grid:
   impulse.rollout.evaluation_steps: [16]
 
 groups:
-  - impulse.objective.type: [targeted, minimal_destructive]
-    impulse.rollout.loss_window: [1, 4]
-    impulse.intervention.spatial: [local, patch]
-    impulse.intervention.duration: [1, 2]
+  # The third run covers restarts, random initial values, the rollout
+  # curriculum and the attractor contrast objective
+  - impulse.objective.type: [targeted, minimal_destructive, attractor_contrast]
+    impulse.rollout.loss_window: [1, 4, 2]
+    impulse.intervention.spatial: [local, patch, patch]
+    impulse.intervention.duration: [1, 2, 1]
+    impulse.intervention.restarts: [1, 1, 2]
+    impulse.intervention.init_scale: [0.0, 0.0, 0.05]
+    impulse.rollout.curriculum: [false, false, true]

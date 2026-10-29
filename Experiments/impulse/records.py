@@ -275,6 +275,9 @@ def publish_impulse_record(
             "results": {
                 "best_step": int(result.best_step),
                 "best_loss": float(result.best_loss),
+                "best_validation_objective": (
+                    None if result.best_validation_objective is None else float(result.best_validation_objective)
+                ),
                 "evaluation_steps": impulse.rollout.evaluation_steps,
                 "evaluation_loss": float(result.evaluation_loss),
                 "baseline_evaluation_loss": float(result.baseline_evaluation_loss),

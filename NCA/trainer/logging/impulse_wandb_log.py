@@ -153,6 +153,11 @@ class ImpulseLogger(WandbLogger):
             "Result/switch_rate": result.evaluation_switch_rate,
             "Result/baseline_switch_rate": result.baseline_switch_rate,
         }
+        if result.best_validation_objective is not None:
+            scalars["Result/best_validation_objective"] = result.best_validation_objective
+        if result.restart_validation_objectives is not None:
+            for index, value in enumerate(result.restart_validation_objectives):
+                scalars[f"Result/restart {index} validation_objective"] = float(value)
         if pixel_steps is not None:
             scalars["Result/pixel_steps"] = pixel_steps
         if result.switch_steps is not None and np.isfinite(result.switch_steps).any():

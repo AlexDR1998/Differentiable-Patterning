@@ -26,13 +26,19 @@ class perturbation(AbstractModel):
     # written to saved .eqx files and older files still load.
     PATCH_SIZE: int = eqx.field(static=True)
 
-    def __init__(self,mode,CHANNELS,OBS_CHANNELS,x,WIDTH,key,PATCH_SIZE=0,duration=1):
+    def __init__(self,mode,CHANNELS,OBS_CHANNELS,x,WIDTH,key,PATCH_SIZE=0,duration=1,init_scale=0.0,initial_location="random"):
         # The centre is sigmoid(location) in normalised (0 to 1) coordinates.
         # Store the logit of a uniform draw so the starting centre is uniform
         # over the interior of the lattice, not biased towards one corner.
+        # initial_location="centre" starts at the lattice centre instead.
         self.WIDTH = WIDTH
         self.PATCH_SIZE = PATCH_SIZE
-        self.location = jax.scipy.special.logit(jr.uniform(key,(2,),minval=0.1,maxval=0.9))
+        if initial_location == "random":
+            self.location = jax.scipy.special.logit(jr.uniform(key,(2,),minval=0.1,maxval=0.9))
+        elif initial_location == "centre":
+            self.location = np.zeros((2,))
+        else:
+            raise ValueError(f"initial_location must be 'random' or 'centre', got {initial_location!r}")
         self.mode=mode
         self.OBS_CHANNELS = OBS_CHANNELS
         self.CHANNELS = CHANNELS
@@ -50,8 +56,11 @@ class perturbation(AbstractModel):
         }[self.mode['spatial']]
         inds = CH + SP
         
-        # (duration, C_sel, ...): one delta per NCA step
-        self.values = np.zeros((duration,*x[inds].shape[1:]),dtype=x.dtype)
+        # (duration, C_sel, ...): one delta per NCA step. Zero, or Gaussian of
+        # std init_scale: a zero start gives the centre no gradient until the
+        # values have grown.
+        shape = (duration,*x[inds].shape[1:])
+        self.values = init_scale*jr.normal(jr.fold_in(key,1),shape,dtype=x.dtype)
 
     @property
     def duration(self):

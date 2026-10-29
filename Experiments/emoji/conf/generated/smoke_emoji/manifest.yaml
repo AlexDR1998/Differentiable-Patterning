@@ -18,7 +18,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-adaptive-firing-anca
+    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -155,7 +155,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-adaptive-firing-anca
+        group: smoke_emoji-impulse-restarts-curriculum-contrast
         tags: null
         tag_keys:
         - model.family
@@ -186,7 +186,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-adaptive-firing-anca
+    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
     model.family: gNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -323,7 +323,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-adaptive-firing-anca
+        group: smoke_emoji-impulse-restarts-curriculum-contrast
         tags: null
         tag_keys:
         - model.family
@@ -354,7 +354,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-adaptive-firing-anca
+    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -511,7 +511,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-adaptive-firing-anca
+        group: smoke_emoji-impulse-restarts-curriculum-contrast
         tags: null
         tag_keys:
         - model.family
@@ -542,7 +542,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-adaptive-firing-anca
+    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
     model.family: gnNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -681,7 +681,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-adaptive-firing-anca
+        group: smoke_emoji-impulse-restarts-curriculum-contrast
         tags: null
         tag_keys:
         - model.family
@@ -712,7 +712,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-adaptive-firing-anca
+    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
     model.family: aNCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -859,7 +859,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-adaptive-firing-anca
+        group: smoke_emoji-impulse-restarts-curriculum-contrast
         tags: null
         tag_keys:
         - model.family

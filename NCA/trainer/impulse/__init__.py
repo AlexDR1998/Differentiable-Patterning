@@ -1,6 +1,7 @@
 """Shared tools for optimising interventions to trained NCA models."""
 
 from NCA.trainer.impulse.objectives import (
+    AttractorContrastObjective,
     MaximalPreservativeObjective,
     MinimalDestructiveObjective,
     TargetedObjective,
@@ -16,6 +17,7 @@ from NCA.trainer.impulse.rollout import run_nca_batch, run_with_intervention
 from NCA.trainer.impulse.types import ImpulseBatch, ImpulseResult
 
 __all__ = [
+    "AttractorContrastObjective",
     "ExternalTargetPairSource",
     "ImpulseBatch",
     "ImpulseResult",

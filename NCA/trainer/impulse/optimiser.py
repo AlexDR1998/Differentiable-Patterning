@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import equinox as eqx
 import jax
@@ -11,6 +11,24 @@ from NCA.trainer.impulse.outcomes import outcome_fractions, switch_steps
 from NCA.trainer.impulse.regularisers import intervention_metrics, weighted_regulariser
 from NCA.trainer.impulse.rollout import identity_boundary, run_nca_batch, run_with_intervention
 from NCA.trainer.impulse.types import ImpulseBatch, ImpulseResult
+
+
+# Rollout-length curriculum: training runs at 1/4, 2/4, 3/4 and then all of
+# the rollout (and loss window), for an equal share of the iterations each.
+CURRICULUM_STAGES = 4
+
+
+@dataclass
+class _Start:
+    """One starting intervention: its optimisation state and the best intervention so far."""
+
+    intervention: object
+    opt_state: object
+    batch: object
+    locations: list = field(default_factory=list)
+    best: dict = field(default_factory=dict)
+    # Logger calls held back while scouting, replayed if this start is chosen
+    log: list | None = None
 
 
 def _select_channels(states, channel_mode, observed_channels):
@@ -33,6 +51,8 @@ class NCAImpulseOptimiser:
 
     Pair sources define where initial and target states come from. Objectives
     define whether the intervention targets, disrupts, or preserves an outcome.
+    The returned intervention is the one with the lowest objective on a fixed
+    validation batch after the evaluation rollout, checked every log_every steps.
     """
 
     model: object
@@ -64,6 +84,13 @@ class NCAImpulseOptimiser:
     # (see outcomes.py; tolerance as in the multi-attractor explorer).
     attractors: object = None
     attractor_tolerance: float = 0.25
+    # Train on shorter rollouts first (see CURRICULUM_STAGES)
+    curriculum: bool = False
+    # Other starting interventions (e.g. other random centres). Each start is
+    # optimised for scout_iterations, then only the one with the lowest
+    # validation objective continues.
+    restart_interventions: tuple = ()
+    scout_iterations: int = 0
     logger: object = None
 
     def __post_init__(self):
@@ -77,12 +104,19 @@ class NCAImpulseOptimiser:
             raise ValueError("loss_window cannot be longer than rollout_steps")
         if self.resample_every < 0:
             raise ValueError("resample_every must be non-negative")
-        # The intervention must end before the loss window starts
-        last_step = max(self.rollout_steps - self.loss_window + 1, 1)
+        if self.curriculum and self.rollout_steps < CURRICULUM_STAGES:
+            raise ValueError(f"A curriculum needs at least {CURRICULUM_STAGES} rollout steps")
+        if self.restart_interventions and self.scout_iterations < 1:
+            raise ValueError("scout_iterations must be positive when there are restarts")
+        # The intervention must end before the loss window starts, also in
+        # the shortest curriculum stage
+        steps, window = self._stage_rollout(0, 1)
+        last_step = max(steps - window + 1, 1)
         if self.intervention.duration > last_step:
             raise ValueError(
                 f"The intervention lasts {self.intervention.duration} steps but must end "
                 f"before the loss window: at most rollout_steps - loss_window + 1 = {last_step}"
+                + (" in the first curriculum stage" if self.curriculum else "")
             )
         if self.loss_functions is None:
             self.loss_functions = build_loss_functions(self.loss_names, self.loss_args or {})
@@ -100,6 +134,17 @@ class NCAImpulseOptimiser:
             raise ValueError("component_weights cannot be negative")
         if float(jnp.sum(self.component_weights)) == 0.0:
             raise ValueError("component_weights must contain a positive value")
+
+    def _stage_rollout(self, index, iterations):
+        """Rollout steps and loss window used at iteration ``index``."""
+
+        if not self.curriculum:
+            return self.rollout_steps, self.loss_window
+        stage = min(CURRICULUM_STAGES * index // iterations, CURRICULUM_STAGES - 1) + 1
+        return (
+            self.rollout_steps * stage // CURRICULUM_STAGES,
+            max(self.loss_window * stage // CURRICULUM_STAGES, 1),
+        )
 
     def _loss_components(self, predictions, targets, key):
         """Return one per-sample loss array for each configured loss function."""
@@ -154,9 +199,15 @@ class NCAImpulseOptimiser:
         losses = self._weighted_loss(self._loss_components(predictions, targets, key))
         return np.asarray(jnp.mean(losses.reshape((-1, frames)), axis=0))
 
-    def evaluate(self, intervention, batch, key):
-        """Evaluate an intervention without updating its parameters."""
+    def evaluate(self, intervention, batch, key, rollout_steps=None, loss_window=None):
+        """Evaluate an intervention without updating its parameters.
 
+        ``rollout_steps`` and ``loss_window`` default to the configured ones
+        (the curriculum passes shorter ones).
+        """
+
+        rollout_steps = self.rollout_steps if rollout_steps is None else rollout_steps
+        loss_window = self.loss_window if loss_window is None else loss_window
         # The first delta perturbs the initial state; later ones are added
         # during the first rollout segment.
         deltas = intervention.deltas(batch.initial_states)
@@ -167,10 +218,11 @@ class NCAImpulseOptimiser:
             scan_kind=self.scan_kind,
             checkpoints=self.checkpoints,
         )
-        if self.loss_window == 1:
+        if loss_window == 1:
             final_states = run_nca_batch(
-                self.model, perturbed, self.rollout_steps, key, forcing=forcing, **rollout
+                self.model, perturbed, rollout_steps, key, forcing=forcing, **rollout
             )
+            predictions = final_states
             components = self._loss_components(final_states, batch.target_states, key)
         else:
             # Run up to the loss window without keeping states, then keep only
@@ -178,7 +230,7 @@ class NCAImpulseOptimiser:
             states = run_nca_batch(
                 self.model,
                 perturbed,
-                self.rollout_steps - self.loss_window,
+                rollout_steps - loss_window,
                 key,
                 forcing=forcing,
                 **rollout,
@@ -186,7 +238,7 @@ class NCAImpulseOptimiser:
             final_states, window = run_nca_batch(
                 self.model,
                 states,
-                self.loss_window,
+                loss_window,
                 jax.random.fold_in(key, 1),
                 return_trajectory=True,
                 trajectory_channels=(
@@ -196,15 +248,15 @@ class NCAImpulseOptimiser:
             )
             # [batch, window, ...] -> [batch * window, ...], each target repeated window times
             predictions = window.reshape((-1, *window.shape[2:]))
-            targets = jnp.repeat(batch.target_states, self.loss_window, axis=0)
+            targets = jnp.repeat(batch.target_states, loss_window, axis=0)
             components = self._loss_components(predictions, targets, key)
-            components = components.reshape((len(components), len(perturbed), self.loss_window))
+            components = components.reshape((len(components), len(perturbed), loss_window))
             components = jnp.mean(components, axis=-1)
         per_sample_loss = self._weighted_loss(components)
         target_loss = jnp.mean(per_sample_loss)
         metrics = intervention_metrics(batch.initial_states, deltas)
         penalty = weighted_regulariser(metrics, self.regulariser_coefficients)
-        total_loss = self.objective(target_loss, penalty, metrics)
+        total_loss = self.objective(target_loss, penalty, metrics, predictions)
         return {
             "total_loss": total_loss,
             "target_loss": target_loss,
@@ -216,8 +268,8 @@ class NCAImpulseOptimiser:
             "final_states": final_states,
         }
 
-    def _make_step(self):
-        """Build the compiled intervention update function."""
+    def _make_step(self, rollout_steps, loss_window):
+        """Build the compiled intervention update function for one rollout length."""
 
         @eqx.filter_jit
         def step(intervention, opt_state, initial_states, target_states, key):
@@ -225,7 +277,7 @@ class NCAImpulseOptimiser:
 
             @eqx.filter_value_and_grad(has_aux=True)
             def loss_and_aux(candidate):
-                values = self.evaluate(candidate, batch, key)
+                values = self.evaluate(candidate, batch, key, rollout_steps, loss_window)
                 return values["total_loss"], values
 
             (_, values), gradients = loss_and_aux(intervention)
@@ -246,10 +298,11 @@ class NCAImpulseOptimiser:
     def _make_validation(self, batch, steps, key):
         """Build a function that scores an intervention on a fixed validation batch.
 
-        It returns the switch rate and target loss after a ``steps`` rollout,
-        with the same batch and key every time, so changes come from the
-        intervention only. With ``attractors``, ``outcomes`` is the fraction
-        of rollouts ending at each attractor, then other, died and diverged.
+        It returns the switch rate, target loss and objective after a
+        ``steps`` rollout, with the same batch and key every time, so changes
+        come from the intervention only. With ``attractors``, ``outcomes`` is
+        the fraction of rollouts ending at each attractor, then other, died
+        and diverged.
         """
 
         @eqx.filter_jit
@@ -262,12 +315,20 @@ class NCAImpulseOptimiser:
                 key,
                 boundary_callback=self.boundary_callback,
             )
-            loss = self._weighted_loss(self._loss_components(final_states, batch.target_states, key))
-            return final_states, jnp.mean(loss)
+            loss = jnp.mean(
+                self._weighted_loss(self._loss_components(final_states, batch.target_states, key))
+            )
+            metrics = intervention_metrics(batch.initial_states, intervention.deltas(batch.initial_states))
+            penalty = weighted_regulariser(metrics, self.regulariser_coefficients)
+            return final_states, loss, self.objective(loss, penalty, metrics, final_states)
 
         def validate(intervention):
-            final_states, loss = rollout(intervention)
-            values = {"switch_rate": self._switch_rate(final_states, batch), "evaluation_loss": float(loss)}
+            final_states, loss, objective = rollout(intervention)
+            values = {
+                "switch_rate": self._switch_rate(final_states, batch),
+                "evaluation_loss": float(loss),
+                "evaluation_objective": float(objective),
+            }
             if self.attractors is not None:
                 values["outcomes"] = outcome_fractions(
                     final_states[:, : self.observed_channels], self.attractors, self.attractor_tolerance
@@ -279,79 +340,121 @@ class NCAImpulseOptimiser:
     def train(self, iterations, batch_size, key, evaluation_steps=None, log_every=100):
         """Optimise an intervention and return its best evaluated state.
 
-        Best means the lowest configured scalar objective. Pair batches are
-        regenerated at ``resample_every`` when that value is positive.
+        Every ``log_every`` steps the current intervention is scored on a fixed
+        validation batch after an ``evaluation_steps`` rollout; best means the
+        lowest validation objective. Pair batches are regenerated at
+        ``resample_every`` when that value is positive.
         """
 
         if iterations <= 0:
             raise ValueError("iterations must be positive")
         if batch_size <= 0:
             raise ValueError("batch_size must be positive")
+        if self.restart_interventions and self.scout_iterations >= iterations:
+            raise ValueError("scout_iterations must be smaller than iterations")
 
         sample_key, train_key = jax.random.split(key)
         batch = self.pair_source.sample(batch_size, self.model, sample_key)
-        parameters, _ = eqx.partition(self.intervention, eqx.is_inexact_array)
-        opt_state = self.optimiser.init(parameters)
-        step = self._make_step()
         evaluation_steps = self.rollout_steps if evaluation_steps is None else evaluation_steps
         if evaluation_steps % self.evaluation_frame_every:
             raise ValueError(
                 f"evaluation_steps ({evaluation_steps}) must be a multiple of "
                 f"evaluation_frame_every ({self.evaluation_frame_every})"
             )
-        validate = None
-        if self.logger is not None:
-            # A separate fixed batch, scored with the evaluation rollout at each log step
-            validation_batch = self.pair_source.sample(batch_size, self.model, jax.random.fold_in(key, 1))
-            validate = self._make_validation(validation_batch, evaluation_steps, jax.random.fold_in(key, 2))
-
-        intervention = self.intervention
-        best_intervention = intervention
-        best_batch = batch
-        best_step = -1
-        best_loss = float("inf")
-        best_metrics = None
+        validation_batch = self.pair_source.sample(batch_size, self.model, jax.random.fold_in(key, 1))
+        validate = self._make_validation(validation_batch, evaluation_steps, jax.random.fold_in(key, 2))
+        # One compiled step per rollout length
+        steps = {}
         # Only local and patch interventions have a centre that moves
-        track_location = intervention.mode["spatial"] in ("local", "patch")
-        locations = []
+        track_location = self.intervention.mode["spatial"] in ("local", "patch")
 
-        for index in range(iterations):
-            step_key = jax.random.fold_in(train_key, index)
-            if self.resample_every and index > 0 and index % self.resample_every == 0:
-                batch = self.pair_source.sample(batch_size, self.model, step_key)
-            evaluated_intervention = intervention
-            if track_location:
-                locations.append(np.asarray(intervention.get_location()))
-            intervention, opt_state, metrics = step(
-                intervention,
-                opt_state,
-                batch.initial_states,
-                batch.target_states,
-                step_key,
+        def log(start, method, *arguments):
+            if self.logger is None:
+                return
+            if start.log is None:
+                getattr(self.logger, method)(*arguments)
+            else:
+                start.log.append((method, arguments))
+
+        def advance(start, first, stop):
+            """Optimise ``start`` from iteration ``first`` up to ``stop``."""
+
+            for index in range(first, stop):
+                step_key = jax.random.fold_in(train_key, index)
+                if self.resample_every and index > 0 and index % self.resample_every == 0:
+                    start.batch = self.pair_source.sample(batch_size, self.model, step_key)
+                evaluated_intervention = start.intervention
+                if track_location:
+                    start.locations.append(np.asarray(evaluated_intervention.get_location()))
+                rollout = self._stage_rollout(index, iterations)
+                if rollout not in steps:
+                    steps[rollout] = self._make_step(*rollout)
+                start.intervention, start.opt_state, metrics = steps[rollout](
+                    evaluated_intervention,
+                    start.opt_state,
+                    start.batch.initial_states,
+                    start.batch.target_states,
+                    step_key,
+                )
+                if index % log_every:
+                    continue
+                validation = validate(evaluated_intervention)
+                # The first check always counts, even if its score is NaN
+                if "intervention" not in start.best or validation["evaluation_objective"] < start.best["score"]:
+                    start.best = {
+                        "score": validation["evaluation_objective"],
+                        "intervention": evaluated_intervention,
+                        "batch": start.batch,
+                        "step": index,
+                        "loss": float(metrics["total_loss"]),
+                        "metrics": metrics,
+                    }
+                switch_rate = self._switch_rate(metrics["final_states"], start.batch)
+                log(start, "log_training", {**metrics, "switch_rate": switch_rate}, index, log_every)
+                log(start, "log_validation", validation, index)
+
+        def new_start(intervention, scouting):
+            parameters, _ = eqx.partition(intervention, eqx.is_inexact_array)
+            return _Start(intervention, self.optimiser.init(parameters), batch, log=[] if scouting else None)
+
+        candidates = [self.intervention, *self.restart_interventions]
+        restart_objectives = None
+        if len(candidates) == 1:
+            start = new_start(self.intervention, scouting=False)
+            first = 0
+        else:
+            # Scout every start for the same iterations (and batches), then
+            # continue the one with the lowest validation objective.
+            scouts = [new_start(candidate, scouting=True) for candidate in candidates]
+            for scout in scouts:
+                advance(scout, 0, self.scout_iterations)
+            restart_objectives = np.array(
+                [validate(scout.intervention)["evaluation_objective"] for scout in scouts]
             )
-            scalar_loss = float(metrics["total_loss"])
-            if scalar_loss < best_loss:
-                best_loss = scalar_loss
-                best_intervention = evaluated_intervention
-                best_batch = batch
-                best_step = index
-                best_metrics = metrics
-            if self.logger is not None and index % log_every == 0:
-                switch_rate = self._switch_rate(metrics["final_states"], batch)
-                self.logger.log_training({**metrics, "switch_rate": switch_rate}, index, log_every)
-                self.logger.log_validation(validate(evaluated_intervention), index)
+            start = scouts[int(np.argmin(restart_objectives))]
+            for method, arguments in start.log:
+                getattr(self.logger, method)(*arguments)
+            start.log = None
+            first = self.scout_iterations
+        advance(start, first, iterations)
 
+        intervention = start.intervention
         if track_location:
-            locations.append(np.asarray(intervention.get_location()))
-        final_key = jax.random.fold_in(train_key, iterations)
-        final_metrics = self.evaluate(intervention, batch, final_key)
-        final_loss = float(final_metrics["total_loss"])
-        if final_loss < best_loss:
-            best_loss = final_loss
-            best_intervention = intervention
-            best_batch = batch
-            best_step = iterations
-            best_metrics = final_metrics
+            start.locations.append(np.asarray(intervention.get_location()))
+        final_validation = validate(intervention)
+        if "intervention" not in start.best or final_validation["evaluation_objective"] < start.best["score"]:
+            final_metrics = self.evaluate(intervention, start.batch, jax.random.fold_in(train_key, iterations))
+            start.best = {
+                "score": final_validation["evaluation_objective"],
+                "intervention": intervention,
+                "batch": start.batch,
+                "step": iterations,
+                "loss": float(final_metrics["total_loss"]),
+                "metrics": final_metrics,
+            }
+        best_intervention = start.best["intervention"]
+        best_batch = start.best["batch"]
+        locations = start.locations
 
         evaluation_key = jax.random.fold_in(train_key, iterations + 1)
         perturbed = best_intervention(best_batch.initial_states)
@@ -392,9 +495,11 @@ class NCAImpulseOptimiser:
             evaluation_switch_rate=self._switch_rate(final_states, best_batch),
             baseline_switch_rate=self._switch_rate(baseline_final_states, best_batch),
             best_intervention=best_intervention,
-            best_step=best_step,
-            best_loss=best_loss,
-            metrics=best_metrics,
+            best_step=start.best["step"],
+            best_loss=start.best["loss"],
+            best_validation_objective=start.best["score"],
+            restart_validation_objectives=restart_objectives,
+            metrics=start.best["metrics"],
             initial_states=best_batch.initial_states,
             target_states=best_batch.target_states,
             perturbed_initial_states=perturbed,

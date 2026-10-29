@@ -7,9 +7,13 @@
 # Fill the REPLACE_* slots with bundle IDs. Each ID appears twice: once in
 # the grid and once in its branch, which picks the transitions for its
 # attractor count. Placeholders must stay distinct until replaced.
-experiment_name: emoji_attractor_switch_target_effect_v1
+#
+# v2: optimiser settings as in emoji_attractor_switch_gating_v3 (4 restarts,
+# small random initial values, rollout curriculum, attractor_contrast
+# objective, l2 = 0.01, batch 8).
+experiment_name: emoji_attractor_switch_target_effect_v2
 entrypoint: Experiments.impulse.optimise:run
-output_subdir: generated/emoji_attractor_switch_target_effect_v1
+output_subdir: generated/emoji_attractor_switch_target_effect_v2
 seed_mode: index
 
 # All ordered (source, target) pairs, as indices into data.emoji.pairs
@@ -48,25 +52,32 @@ grid:
     - REPLACE_GNCA_4_5  
     
   impulse.iterations: [8000]
+  impulse.batch_size: [8]
   impulse.pair_source.type: [stable_attractor]
-  impulse.objective.type: [targeted]
+  impulse.objective.type: [attractor_contrast]
+  impulse.objective.contrast_weight: [0.1]
   # impulse.rollout.steps: [256]
   # impulse.rollout.loss_window: [64]
   impulse.rollout.evaluation_steps: [1024]
+  impulse.rollout.curriculum: [true]
   impulse.optimiser.learn_rate: [0.01]
   impulse.intervention.channels: [all]
   impulse.intervention.spatial: [patch]
+  impulse.intervention.init_scale: [0.05]
+  impulse.intervention.restarts: [4]
+  impulse.intervention.scout_fraction: [0.1]
   # impulse.intervention.patch_size: [3]
-  impulse.loss.regularisers.l2: [0.0]
+  # A small l2 keeps the impulse from growing without bound
+  impulse.loss.regularisers.l2: [0.001]
   impulse.repeat: [0]
 groups:
-  - impulse.intervention.patch_size: [9, 3, 1]
-    impulse.intervention.duration: [1, 9, 81]
-    impulse.intervention.budget: [81, 81, 81]
-  - impulse.rollout.steps: [128,256,512]
-    impulse.rollout.loss_window: [32,64,128]
-    impulse.rollout.scan_kind: [lax,lax,checkpointed]
-    impulse.rollout.checkpoints: [null, null, 512]
+  - impulse.intervention.patch_size: [9]
+    impulse.intervention.duration: [1]
+    impulse.intervention.budget: [81]
+  - impulse.rollout.steps: [256, 512]
+    impulse.rollout.loss_window: [64, 128]
+    impulse.rollout.scan_kind: [lax, checkpointed]
+    impulse.rollout.checkpoints: [null, 512]
 # One branch per model: its transitions and W&B tags for filtering
 branches:
   - when: {checkpoint.model_id: REPLACE_GNCA_2_1}

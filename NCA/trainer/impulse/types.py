@@ -46,4 +46,10 @@ class ImpulseResult:
     # loss uses channels the saved trajectories do not keep.
     evaluation_loss_curve: Any = None
     baseline_loss_curve: Any = None
+    # Objective of the best intervention on the validation batch, after the
+    # evaluation rollout (how the best intervention is chosen).
+    best_validation_objective: float | None = None
+    # [restarts] validation objective of each start after scouting (None
+    # without restarts)
+    restart_validation_objectives: Any = None
 

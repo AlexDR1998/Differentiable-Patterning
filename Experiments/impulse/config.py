@@ -39,6 +39,9 @@ class ImpulseRolloutConfig(ConfigValue):
     # evaluation_steps); keeping every full state can run out of GPU memory.
     evaluation_frame_every: int = 8
     scan_kind: str = "lax"
+    # Train at 1/4, 1/2, 3/4 and then all of steps and loss_window, for a
+    # quarter of the iterations each
+    curriculum: bool = False
     # Saved states of a checkpointed rollout. null: equinox chooses a few and
     # the backward pass reruns most steps more than once; set it to steps to
     # save every state and rerun each step once (faster, more memory).
@@ -57,6 +60,16 @@ class ImpulseInterventionConfig(ConfigValue):
     # Not used by the run: a label for grouping runs in W&B, e.g. the
     # patch_size**2 * duration budget of a sweep
     budget: int | None = None
+    # Std of the random initial values (0: start at zero, where the centre
+    # has no gradient until the values have grown)
+    init_scale: float = 0.0
+    # random (uniform over the lattice interior) or centre
+    initial_location: str = "random"
+    # Number of starts (different random centres and values). Each is
+    # optimised for scout_fraction of the iterations, then only the start
+    # with the lowest validation objective continues.
+    restarts: int = 1
+    scout_fraction: float = 0.1
 
 
 @dataclass(frozen=True)
@@ -67,6 +80,10 @@ class ImpulseObjectiveConfig(ConfigValue):
     constraint_weight: float = 100.0
     magnitude: str = "l2"
     reward_weight: float = 1.0
+    # attractor_contrast only: weight of the cross-entropy over attractors,
+    # and its temperature (null: the smallest distance between two attractors)
+    contrast_weight: float = 0.1
+    temperature: float | None = None
 
 
 @dataclass(frozen=True)

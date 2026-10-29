@@ -4,8 +4,10 @@ import optax
 
 from Experiments.emoji.config_helpers import build_hidden_seeds
 from Experiments.emoji.config_helpers import load_data as load_emoji_data
+from NCA.trainer.impulse.outcomes import target_gap
 from NCA.trainer.impulse.perturbation import perturbation
 from NCA.trainer.impulse import (
+    AttractorContrastObjective,
     ExternalTargetPairSource,
     MaximalPreservativeObjective,
     MinimalDestructiveObjective,
@@ -18,6 +20,7 @@ from NCA.trainer.impulse import (
 
 INTERVENTION_CHANNELS = ("all", "obs", "hidden", "single")
 INTERVENTION_SPATIAL = ("local", "patch", "global", "flat")
+INITIAL_LOCATIONS = ("random", "centre")
 
 
 def _as_dict(value):
@@ -100,8 +103,12 @@ def build_pair_source(impulse_config, model, trajectories):
     raise ValueError(f"Unknown impulse pair source {pair_type!r}")
 
 
-def build_objective(objective_cfg):
-    """Construct the configured targeted, destructive, or preservative objective."""
+def build_objective(objective_cfg, attractors=None, target_attractor=None):
+    """Construct the configured targeted, destructive, preservative or contrast objective.
+
+    ``attractors`` [K, observed channels, H, W] and the index of the target
+    among them are needed for attractor_contrast only.
+    """
 
     if objective_cfg.type == "targeted":
         return TargetedObjective(target_weight=objective_cfg.target_weight)
@@ -114,6 +121,21 @@ def build_objective(objective_cfg):
             magnitude=objective_cfg.magnitude,
             reward_weight=objective_cfg.reward_weight,
         )
+    if objective_cfg.type == "attractor_contrast":
+        if attractors is None:
+            raise ValueError("impulse.objective.type=attractor_contrast needs a multi_attractor model")
+        temperature = objective_cfg.temperature
+        if temperature is None:
+            temperature = target_gap(attractors)
+        if not temperature > 0 or temperature == float("inf"):
+            raise ValueError(f"The contrast temperature must be positive and finite, got {temperature}")
+        return AttractorContrastObjective(
+            attractors=jnp.asarray(attractors),
+            target_index=target_attractor,
+            temperature=float(temperature),
+            target_weight=objective_cfg.target_weight,
+            contrast_weight=objective_cfg.contrast_weight,
+        )
     raise ValueError(f"Unknown impulse objective {objective_cfg.type!r}")
 
 
@@ -122,6 +144,34 @@ def build_intervention(intervention_cfg, observed_channels, model, trajectories,
 
     state_shape = (model.N_CHANNELS, *trajectories.shape[-2:])
     return intervention_from_config(intervention_cfg, observed_channels, state_shape, key)
+
+
+def build_restarts(intervention_cfg, iterations, observed_channels, model, trajectories, key):
+    """The other starting interventions and the iterations each start is scouted for.
+
+    Start i > 0 uses ``fold_in(key, i)``; the first start uses ``key`` itself
+    (see ``build_intervention``), so one start matches a run without restarts.
+    """
+
+    restarts = intervention_cfg.restarts
+    if restarts < 1:
+        raise ValueError(f"impulse.intervention.restarts must be at least 1, got {restarts}")
+    if restarts == 1:
+        return (), 0
+    if not 0 < intervention_cfg.scout_fraction < 1:
+        raise ValueError(
+            f"impulse.intervention.scout_fraction must be between 0 and 1, got {intervention_cfg.scout_fraction}"
+        )
+    if intervention_cfg.initial_location == "centre" and intervention_cfg.init_scale == 0:
+        raise ValueError(
+            "Restarts with initial_location=centre and init_scale=0 would all be identical; "
+            "set init_scale > 0 or initial_location=random"
+        )
+    others = tuple(
+        build_intervention(intervention_cfg, observed_channels, model, trajectories, jax.random.fold_in(key, index))
+        for index in range(1, restarts)
+    )
+    return others, max(int(round(intervention_cfg.scout_fraction * iterations)), 1)
 
 
 def intervention_from_config(intervention_cfg, observed_channels, state_shape, key):
@@ -153,6 +203,15 @@ def intervention_from_config(intervention_cfg, observed_channels, state_shape, k
         raise ValueError(
             f"impulse.intervention.duration must be at least 1, got {intervention_cfg.duration}"
         )
+    if intervention_cfg.initial_location not in INITIAL_LOCATIONS:
+        raise ValueError(
+            f"Unknown impulse.intervention.initial_location {intervention_cfg.initial_location!r}; "
+            f"expected one of {list(INITIAL_LOCATIONS)}"
+        )
+    if intervention_cfg.init_scale < 0:
+        raise ValueError(
+            f"impulse.intervention.init_scale must be non-negative, got {intervention_cfg.init_scale}"
+        )
     return perturbation(
         mode={
             "channel": channels,
@@ -165,6 +224,8 @@ def intervention_from_config(intervention_cfg, observed_channels, state_shape, k
         key=key,
         PATCH_SIZE=intervention_cfg.patch_size,
         duration=intervention_cfg.duration,
+        init_scale=intervention_cfg.init_scale,
+        initial_location=intervention_cfg.initial_location,
     )
 
 

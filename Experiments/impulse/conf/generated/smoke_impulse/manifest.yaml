@@ -3,7 +3,7 @@ entrypoint: Experiments.impulse.optimise:run
 base_config: null
 sweep_file: null
 output_dir: Experiments/impulse/conf/generated/smoke_impulse
-count: 2
+count: 3
 configs:
 - index: 0
   overrides:
@@ -18,11 +18,14 @@ configs:
     - 16
     impulse.rollout.steps: 8
     impulse.rollout.evaluation_steps: 16
-    logging.wandb.group: smoke_impulse-adaptive-firing-anca
+    logging.wandb.group: smoke_impulse-impulse-restarts-curriculum-contrast
     impulse.objective.type: targeted
     impulse.rollout.loss_window: 1
     impulse.intervention.spatial: local
     impulse.intervention.duration: 1
+    impulse.intervention.restarts: 1
+    impulse.intervention.init_scale: 0.0
+    impulse.rollout.curriculum: false
     experiment.name: smoke_impulse
     seed: 0
     logging.wandb.tag_keys:
@@ -30,6 +33,9 @@ configs:
     - impulse.rollout.loss_window
     - impulse.intervention.spatial
     - impulse.intervention.duration
+    - impulse.intervention.restarts
+    - impulse.intervention.init_scale
+    - impulse.rollout.curriculum
   config:
     schema_version: 9
     seed: 0
@@ -46,13 +52,16 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_impulse-adaptive-firing-anca
+        group: smoke_impulse-impulse-restarts-curriculum-contrast
         tags: null
         tag_keys:
         - impulse.objective.type
         - impulse.rollout.loss_window
         - impulse.intervention.spatial
         - impulse.intervention.duration
+        - impulse.intervention.restarts
+        - impulse.intervention.init_scale
+        - impulse.rollout.curriculum
     data: null
     impulse:
       iterations: 4
@@ -77,6 +86,7 @@ configs:
         evaluation_frame_every: 8
         scan_kind: lax
         checkpoints: null
+        curriculum: false
       intervention:
         channels: hidden
         spatial: local
@@ -84,6 +94,10 @@ configs:
         patch_size: 3
         duration: 1
         budget: null
+        init_scale: 0.0
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
       objective:
         type: targeted
         target_weight: 1.0
@@ -91,6 +105,8 @@ configs:
         constraint_weight: 100.0
         magnitude: l2
         reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
       loss:
         terms:
         - type: l2
@@ -119,11 +135,14 @@ configs:
     - 16
     impulse.rollout.steps: 8
     impulse.rollout.evaluation_steps: 16
-    logging.wandb.group: smoke_impulse-adaptive-firing-anca
+    logging.wandb.group: smoke_impulse-impulse-restarts-curriculum-contrast
     impulse.objective.type: minimal_destructive
     impulse.rollout.loss_window: 4
     impulse.intervention.spatial: patch
     impulse.intervention.duration: 2
+    impulse.intervention.restarts: 1
+    impulse.intervention.init_scale: 0.0
+    impulse.rollout.curriculum: false
     experiment.name: smoke_impulse
     seed: 0
     logging.wandb.tag_keys:
@@ -131,6 +150,9 @@ configs:
     - impulse.rollout.loss_window
     - impulse.intervention.spatial
     - impulse.intervention.duration
+    - impulse.intervention.restarts
+    - impulse.intervention.init_scale
+    - impulse.rollout.curriculum
   config:
     schema_version: 9
     seed: 0
@@ -147,13 +169,16 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_impulse-adaptive-firing-anca
+        group: smoke_impulse-impulse-restarts-curriculum-contrast
         tags: null
         tag_keys:
         - impulse.objective.type
         - impulse.rollout.loss_window
         - impulse.intervention.spatial
         - impulse.intervention.duration
+        - impulse.intervention.restarts
+        - impulse.intervention.init_scale
+        - impulse.rollout.curriculum
     data: null
     impulse:
       iterations: 4
@@ -178,6 +203,7 @@ configs:
         evaluation_frame_every: 8
         scan_kind: lax
         checkpoints: null
+        curriculum: false
       intervention:
         channels: hidden
         spatial: patch
@@ -185,6 +211,10 @@ configs:
         patch_size: 3
         duration: 2
         budget: null
+        init_scale: 0.0
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
       objective:
         type: minimal_destructive
         target_weight: 1.0
@@ -192,6 +222,125 @@ configs:
         constraint_weight: 100.0
         magnitude: l2
         reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 1.0
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.001
+        gradient_clip_norm: 1.0
+- index: 2
+  overrides:
+    checkpoint.model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+    logging.wandb.project: pipeline-smoke
+    impulse.iterations: 4
+    impulse.batch_size: 2
+    impulse.resample_every: 2
+    impulse.log_every: 1
+    impulse.pair_source.stabilisation_steps:
+    - 8
+    - 16
+    impulse.rollout.steps: 8
+    impulse.rollout.evaluation_steps: 16
+    logging.wandb.group: smoke_impulse-impulse-restarts-curriculum-contrast
+    impulse.objective.type: attractor_contrast
+    impulse.rollout.loss_window: 2
+    impulse.intervention.spatial: patch
+    impulse.intervention.duration: 1
+    impulse.intervention.restarts: 2
+    impulse.intervention.init_scale: 0.05
+    impulse.rollout.curriculum: true
+    experiment.name: smoke_impulse
+    seed: 0
+    logging.wandb.tag_keys:
+    - impulse.objective.type
+    - impulse.rollout.loss_window
+    - impulse.intervention.spatial
+    - impulse.intervention.duration
+    - impulse.intervention.restarts
+    - impulse.intervention.init_scale
+    - impulse.rollout.curriculum
+  config:
+    schema_version: 9
+    seed: 0
+    experiment:
+      name: smoke_impulse
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_impulse-impulse-restarts-curriculum-contrast
+        tags: null
+        tag_keys:
+        - impulse.objective.type
+        - impulse.rollout.loss_window
+        - impulse.intervention.spatial
+        - impulse.intervention.duration
+        - impulse.intervention.restarts
+        - impulse.intervention.init_scale
+        - impulse.rollout.curriculum
+    data: null
+    impulse:
+      iterations: 4
+      batch_size: 2
+      resample_every: 2
+      log_every: 1
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 8
+        - 16
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 8
+        loss_window: 2
+        evaluation_steps: 16
+        evaluation_frame_every: 8
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: hidden
+        spatial: patch
+        width: 0.2
+        patch_size: 3
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 2
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
       loss:
         terms:
         - type: l2
