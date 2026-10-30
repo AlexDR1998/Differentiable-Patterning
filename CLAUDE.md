@@ -41,7 +41,7 @@ Research code for differentiable patterning: neural cellular automata (NCA), bui
 
 Config rules (`docs/configuration.md`):
 - The typed config uses the same names as the YAML files: `cfg.system`, `cfg.data` (with `data.emoji|micropattern|snowmelt|pde` and `data.knockout`), `cfg.model`, `cfg.run`, `cfg.trainer`, `cfg.optimiser`, `cfg.loss`, ... So the grid key `run.t` is `cfg.run.t`. Read fields as attributes; configs have no `.get()`.
-- Current files have `schema_version: 7`. Older configs (old sweeps, manifests and older model bundles) are translated only in `Experiments/config.py:upgrade_legacy_config`. Don't add compatibility code anywhere else.
+- Current files have `schema_version: 10`. Older configs (old sweeps, manifests and older model bundles) are translated only in `Experiments/config.py:upgrade_legacy_config`. Don't add compatibility code anywhere else.
 - Conversion is strict: unknown keys and unknown model families fail early. A new option needs a field in the right dataclass. The main ones are in `Experiments/config.py`, `NCA/model/config.py`, `NCA/trainer/config.py` and `Common/trainer/config.py`.
 - Never pass OmegaConf objects into `Common/` or `NCA/`. Pass only typed configs.
 - A new loss goes into `Common/trainer/loss_table.py:LOSSES` and `Common/trainer/config.py:LOSS_TERM_CONFIGS`; an import-time check makes sure both list the same names. `Experiments/config.py` must stay importable without JAX, so it only uses `LOSS_TERM_CONFIGS`.

@@ -1,4 +1,5 @@
 import equinox as eqx
+import numpy as np
 import jax
 import jax.numpy as jnp
 import pytest
@@ -131,3 +132,52 @@ def test_fixed_firing_models_have_no_firing_probability():
 def test_config_rejects_unknown_firing_estimator():
     with pytest.raises(ValueError, match="firing_estimator"):
         _model_config("aNCA", firing_estimator="reinforce")
+
+
+def test_quiet_step_is_first_step_activity_stays_low():
+    from Experiments.emoji.adaptive_firing import quiet_step
+
+    assert quiet_step(np.array([0.5, 0.2, 0.01, 0.3, 0.01, 0.0]), 0.05) == 4
+    assert quiet_step(np.array([0.01, 0.0]), 0.05) == 0
+    assert np.isnan(quiet_step(np.array([0.5, 0.5]), 0.05))
+
+
+def test_trace_metrics_sums_updates_and_reads_errors():
+    from Experiments.emoji.adaptive_firing import trace_metrics
+
+    activity = np.array([0.5, 0.5, 0.25, 0.0, 0.0])
+    distance = np.array([4.0, 3.0, 2.0, 1.0, 1.5])
+
+    row = trace_metrics(activity, distance, t=2, threshold=0.1, damage_step=2)
+
+    assert row["updates_per_cell"] == 0.75
+    assert row["updates_to_t"] == 0.75
+    assert row["quiet_step"] == 3 and row["quiet_step_over_t"] == 1.5
+    assert row["mse_at_t"] == 2.0 and row["mse_final"] == 1.5 and row["mse_at_quiet"] == 1.0
+    assert row["mse_min"] == 1.0 and row["step_of_mse_min"] == 3
+    assert row["damage_peak_activity"] == 0.0 and row["mse_after_damage"] == 1.0
+
+
+@pytest.mark.parametrize("family", ["NCA", "aNCA"])
+def test_evaluate_seeds_matches_single_rollouts(family):
+    from Experiments.emoji import adaptive_firing as af
+
+    model = _with_update(_build(family)) if family == "aNCA" else _build(family)
+    seeds = jax.random.uniform(jax.random.PRNGKey(3), (2, 4, 9, 9))
+    targets = jnp.zeros((2, 4, 9, 9))
+    key = jax.random.PRNGKey(4)
+
+    rows, activity, distance = af.evaluate_seeds(
+        model, np.asarray(seeds), targets, np.array([0, 1]), t=3, steps=6, repeats=2, key=key,
+        threshold=0.05, damage_step=2, damage_radius=2.0, memory_gb=1e-9,
+    )
+
+    assert len(rows) == 4 and activity.shape == distance.shape == (2, 2, 7)
+    # The second rollout of seed 1 uses the fourth key, as in a single rollout
+    _, firing, single = af.activity_rollout(
+        model, seeds[1], targets, 6, jax.random.split(key, 4)[3], 2, 2.0
+    )
+    assert np.allclose(activity[1, 1], firing.mean(axis=(1, 2)), atol=1e-6)
+    assert np.allclose(distance[1, 1], single[:, 1], atol=1e-6)
+    if family == "NCA":
+        assert np.allclose(activity, model.FIRE_RATE)
