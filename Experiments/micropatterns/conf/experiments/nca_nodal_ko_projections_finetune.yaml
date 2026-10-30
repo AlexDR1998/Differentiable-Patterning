@@ -1,4 +1,4 @@
-experiment_name: nca_nodal_ko_projections_finetune_v1
+experiment_name: nca_nodal_ko_projections_finetune_v2
 entrypoint: Experiments.micropatterns.train:run
 output_subdir: generated/nca_nodal_ko_projections_finetune
 seed_mode: index
@@ -110,11 +110,11 @@ groups:
       - 20261027T152010Z-cfg6741b54c32ce-5e3b49fe #REPLACE_WITH_MAX_DS16_MODEL_ID
       - 20261027T151844Z-cfg4075ae24e245-36c9d705 #REPLACE_WITH_MAX_DS32_MODEL_ID
       - 20261027T212939Z-cfg48df3cfa8558-ac5a0126 #REPLACE_WITH_SUM_DS8_MODEL_ID
-      -  #REPLACE_WITH_SUM_DS16_MODEL_ID
-      -  #REPLACE_WITH_SUM_DS32_MODEL_ID
-      -  #REPLACE_WITH_SLICE_DS8_MODEL_ID
-      -  #REPLACE_WITH_SLICE_DS16_MODEL_ID
-      -  #REPLACE_WITH_SLICE_DS32_MODEL_ID
+      - 20261027T105046Z-cfg919d9a8e1591-fd0da6dd #REPLACE_WITH_SUM_DS16_MODEL_ID
+      - 20261027T143308Z-cfgb505b3517573-a92c347a #REPLACE_WITH_SUM_DS32_MODEL_ID
+      - 20261027T113845Z-cfgb0c60663a5e9-a4ca5424 #REPLACE_WITH_SLICE_DS8_MODEL_ID
+      - 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9 #REPLACE_WITH_SLICE_DS16_MODEL_ID
+      - 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa #REPLACE_WITH_SLICE_DS32_MODEL_ID
     data.micropattern.projection: [max, max, max, sum, sum, sum, slice, slice, slice]
     data.downsample: [8, 16, 32, 8, 16, 32, 8, 16, 32]
     run.t: [256, 128, 64, 256, 128, 64, 256, 128, 64]
@@ -126,19 +126,19 @@ groups:
       - [3, 4]
       - [3, 4]
       - [3, 4]
-      - [3, 4]
-      - [3, 4]
-      - [3, 4]
       - [1, 2]
+      - [3, 4]
+      - [3, 4]
+      - [3, 4]
       - [1, 2]
     data.micropattern.validation_replicates:
       - [1, 2]
       - [1, 2]
       - [1, 2]
       - [1, 2]
-      - [1, 2]
-      - [1, 2]
-      - [1, 2]
       - [3, 4]
+      - [1, 2]
+      - [1, 2]
+      - [1, 2]
       - [3, 4]
     run.iterations: [4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000]
