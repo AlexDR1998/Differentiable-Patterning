@@ -70,10 +70,16 @@ impulse:
     # all, observed (or obs), hidden, or single (the first hidden channel)
     channels: hidden
     # local (Gaussian of std width, learned centre), patch (square of
-    # patch_size pixels, learned centre and values), global or flat
+    # patch_size pixels, learned centre and values), sparse (grid of single
+    # pixels, see stride), global or flat
     spatial: local
     width: 0.2
     patch_size: 3
+    # patch only: number of separate squares, each with its own centre and values
+    patches: 1
+    # sparse only: one impulse pixel every stride pixels in each direction,
+    # on a centred grid (1: every pixel, as global)
+    stride: 1
     # NCA steps the impulse is applied for (a k x k x duration cuboid for patch)
     duration: 1
     # Label for grouping runs in W&B only (not used by the run)

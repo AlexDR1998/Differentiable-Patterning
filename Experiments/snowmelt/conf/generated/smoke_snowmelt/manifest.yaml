@@ -17,7 +17,7 @@ configs:
     run.checkpoint_warmup_fraction: 0.1
     optimiser.warmup_fraction: 0.2
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-iteration-fractions
+    logging.wandb.group: smoke_snowmelt-impulse-sparse-and-patches
     model.family: NCA
     data.snowmelt.target_channels:
     - SCA
@@ -133,7 +133,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-iteration-fractions
+        group: smoke_snowmelt-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - model.family
@@ -160,7 +160,7 @@ configs:
     run.checkpoint_warmup_fraction: 0.1
     optimiser.warmup_fraction: 0.2
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-iteration-fractions
+    logging.wandb.group: smoke_snowmelt-impulse-sparse-and-patches
     model.family: gNCA
     data.snowmelt.target_channels:
     - NDSI
@@ -286,7 +286,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-iteration-fractions
+        group: smoke_snowmelt-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - model.family

@@ -1,4 +1,4 @@
-experiment_name: emoji_adaptive_firing_basic
+experiment_name: emoji_adaptive_firing_basic_v2
 entrypoint: Experiments.emoji.train:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/experiments/emoji_adaptive_firing_basic.yaml
@@ -8,7 +8,6 @@ configs:
 - index: 4
   overrides:
     logging.wandb.project: nca-emoji-adaptive-firing
-    logging.wandb.group: emoji-adaptive-firing-basic
     model.family: NCA
     model.channels: 16
     model.fire_rate: 0.5
@@ -28,7 +27,9 @@ configs:
     run.repeat: 0
     loss.terms:
     - l2
-    experiment.name: emoji_adaptive_firing_basic
+    trainer.loop_autodiff: lax
+    experiment.name: emoji_adaptive_firing_basic_v2
+    logging.wandb.group: emoji_adaptive_firing_basic_v2
     seed: 321236752
     logging.wandb.tag_keys:
     - model.family
@@ -38,7 +39,7 @@ configs:
     schema_version: 10
     seed: 321236752
     experiment:
-      name: emoji_adaptive_firing_basic
+      name: emoji_adaptive_firing_basic_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -102,7 +103,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       pool_admission:
         enabled: true
@@ -150,7 +151,7 @@ configs:
       backend: wandb
       wandb:
         project: nca-emoji-adaptive-firing
-        group: emoji-adaptive-firing-basic
+        group: emoji_adaptive_firing_basic_v2
         tags: null
         tag_keys:
         - model.family
@@ -164,7 +165,6 @@ configs:
 - index: 6
   overrides:
     logging.wandb.project: nca-emoji-adaptive-firing
-    logging.wandb.group: emoji-adaptive-firing-basic
     model.family: aNCA
     model.channels: 16
     model.fire_rate: 0.5
@@ -184,9 +184,11 @@ configs:
     run.repeat: 0
     loss.terms:
     - l2
+    trainer.loop_autodiff: lax
     model.firing_estimator: straight_through
     loss.regularisers.firing_energy: 0.0
-    experiment.name: emoji_adaptive_firing_basic
+    experiment.name: emoji_adaptive_firing_basic_v2
+    logging.wandb.group: emoji_adaptive_firing_basic_v2
     seed: 498617001
     logging.wandb.tag_keys:
     - model.family
@@ -196,7 +198,7 @@ configs:
     schema_version: 10
     seed: 498617001
     experiment:
-      name: emoji_adaptive_firing_basic
+      name: emoji_adaptive_firing_basic_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -261,7 +263,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       pool_admission:
         enabled: true
@@ -309,7 +311,7 @@ configs:
       backend: wandb
       wandb:
         project: nca-emoji-adaptive-firing
-        group: emoji-adaptive-firing-basic
+        group: emoji_adaptive_firing_basic_v2
         tags: null
         tag_keys:
         - model.family
@@ -323,7 +325,6 @@ configs:
 - index: 8
   overrides:
     logging.wandb.project: nca-emoji-adaptive-firing
-    logging.wandb.group: emoji-adaptive-firing-basic
     model.family: aNCA
     model.channels: 16
     model.fire_rate: 0.5
@@ -343,9 +344,11 @@ configs:
     run.repeat: 0
     loss.terms:
     - l2
+    trainer.loop_autodiff: lax
     model.firing_estimator: straight_through
     loss.regularisers.firing_energy: 0.01
-    experiment.name: emoji_adaptive_firing_basic
+    experiment.name: emoji_adaptive_firing_basic_v2
+    logging.wandb.group: emoji_adaptive_firing_basic_v2
     seed: 1754003658
     logging.wandb.tag_keys:
     - model.family
@@ -355,7 +358,7 @@ configs:
     schema_version: 10
     seed: 1754003658
     experiment:
-      name: emoji_adaptive_firing_basic
+      name: emoji_adaptive_firing_basic_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -420,7 +423,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       pool_admission:
         enabled: true
@@ -468,7 +471,7 @@ configs:
       backend: wandb
       wandb:
         project: nca-emoji-adaptive-firing
-        group: emoji-adaptive-firing-basic
+        group: emoji_adaptive_firing_basic_v2
         tags: null
         tag_keys:
         - model.family
@@ -482,7 +485,6 @@ configs:
 - index: 7
   overrides:
     logging.wandb.project: nca-emoji-adaptive-firing
-    logging.wandb.group: emoji-adaptive-firing-basic
     model.family: aNCA
     model.channels: 16
     model.fire_rate: 0.5
@@ -502,9 +504,11 @@ configs:
     run.repeat: 0
     loss.terms:
     - l2
+    trainer.loop_autodiff: lax
     model.firing_estimator: straight_through
     loss.regularisers.firing_energy: 0.1
-    experiment.name: emoji_adaptive_firing_basic
+    experiment.name: emoji_adaptive_firing_basic_v2
+    logging.wandb.group: emoji_adaptive_firing_basic_v2
     seed: 2008486473
     logging.wandb.tag_keys:
     - model.family
@@ -514,7 +518,7 @@ configs:
     schema_version: 10
     seed: 2008486473
     experiment:
-      name: emoji_adaptive_firing_basic
+      name: emoji_adaptive_firing_basic_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -579,7 +583,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       pool_admission:
         enabled: true
@@ -627,7 +631,7 @@ configs:
       backend: wandb
       wandb:
         project: nca-emoji-adaptive-firing
-        group: emoji-adaptive-firing-basic
+        group: emoji_adaptive_firing_basic_v2
         tags: null
         tag_keys:
         - model.family
@@ -641,7 +645,6 @@ configs:
 - index: 2
   overrides:
     logging.wandb.project: nca-emoji-adaptive-firing
-    logging.wandb.group: emoji-adaptive-firing-basic
     model.family: aNCA
     model.channels: 16
     model.fire_rate: 0.5
@@ -661,9 +664,11 @@ configs:
     run.repeat: 0
     loss.terms:
     - l2
+    trainer.loop_autodiff: lax
     model.firing_estimator: straight_through
     loss.regularisers.firing_energy: 1.0
-    experiment.name: emoji_adaptive_firing_basic
+    experiment.name: emoji_adaptive_firing_basic_v2
+    logging.wandb.group: emoji_adaptive_firing_basic_v2
     seed: 1783670659
     logging.wandb.tag_keys:
     - model.family
@@ -673,7 +678,7 @@ configs:
     schema_version: 10
     seed: 1783670659
     experiment:
-      name: emoji_adaptive_firing_basic
+      name: emoji_adaptive_firing_basic_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -738,7 +743,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       pool_admission:
         enabled: true
@@ -786,7 +791,7 @@ configs:
       backend: wandb
       wandb:
         project: nca-emoji-adaptive-firing
-        group: emoji-adaptive-firing-basic
+        group: emoji_adaptive_firing_basic_v2
         tags: null
         tag_keys:
         - model.family
@@ -800,7 +805,6 @@ configs:
 - index: 1
   overrides:
     logging.wandb.project: nca-emoji-adaptive-firing
-    logging.wandb.group: emoji-adaptive-firing-basic
     model.family: aNCA
     model.channels: 16
     model.fire_rate: 0.5
@@ -820,9 +824,11 @@ configs:
     run.repeat: 0
     loss.terms:
     - l2
+    trainer.loop_autodiff: lax
     model.firing_estimator: expected
     loss.regularisers.firing_energy: 0.0
-    experiment.name: emoji_adaptive_firing_basic
+    experiment.name: emoji_adaptive_firing_basic_v2
+    logging.wandb.group: emoji_adaptive_firing_basic_v2
     seed: 1146111162
     logging.wandb.tag_keys:
     - model.family
@@ -832,7 +838,7 @@ configs:
     schema_version: 10
     seed: 1146111162
     experiment:
-      name: emoji_adaptive_firing_basic
+      name: emoji_adaptive_firing_basic_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -897,7 +903,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       pool_admission:
         enabled: true
@@ -945,7 +951,7 @@ configs:
       backend: wandb
       wandb:
         project: nca-emoji-adaptive-firing
-        group: emoji-adaptive-firing-basic
+        group: emoji_adaptive_firing_basic_v2
         tags: null
         tag_keys:
         - model.family
@@ -959,7 +965,6 @@ configs:
 - index: 5
   overrides:
     logging.wandb.project: nca-emoji-adaptive-firing
-    logging.wandb.group: emoji-adaptive-firing-basic
     model.family: aNCA
     model.channels: 16
     model.fire_rate: 0.5
@@ -979,9 +984,11 @@ configs:
     run.repeat: 0
     loss.terms:
     - l2
+    trainer.loop_autodiff: lax
     model.firing_estimator: expected
     loss.regularisers.firing_energy: 0.01
-    experiment.name: emoji_adaptive_firing_basic
+    experiment.name: emoji_adaptive_firing_basic_v2
+    logging.wandb.group: emoji_adaptive_firing_basic_v2
     seed: 1844544060
     logging.wandb.tag_keys:
     - model.family
@@ -991,7 +998,7 @@ configs:
     schema_version: 10
     seed: 1844544060
     experiment:
-      name: emoji_adaptive_firing_basic
+      name: emoji_adaptive_firing_basic_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1056,7 +1063,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       pool_admission:
         enabled: true
@@ -1104,7 +1111,7 @@ configs:
       backend: wandb
       wandb:
         project: nca-emoji-adaptive-firing
-        group: emoji-adaptive-firing-basic
+        group: emoji_adaptive_firing_basic_v2
         tags: null
         tag_keys:
         - model.family
@@ -1118,7 +1125,6 @@ configs:
 - index: 0
   overrides:
     logging.wandb.project: nca-emoji-adaptive-firing
-    logging.wandb.group: emoji-adaptive-firing-basic
     model.family: aNCA
     model.channels: 16
     model.fire_rate: 0.5
@@ -1138,9 +1144,11 @@ configs:
     run.repeat: 0
     loss.terms:
     - l2
+    trainer.loop_autodiff: lax
     model.firing_estimator: expected
     loss.regularisers.firing_energy: 0.1
-    experiment.name: emoji_adaptive_firing_basic
+    experiment.name: emoji_adaptive_firing_basic_v2
+    logging.wandb.group: emoji_adaptive_firing_basic_v2
     seed: 2095036715
     logging.wandb.tag_keys:
     - model.family
@@ -1150,7 +1158,7 @@ configs:
     schema_version: 10
     seed: 2095036715
     experiment:
-      name: emoji_adaptive_firing_basic
+      name: emoji_adaptive_firing_basic_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1215,7 +1223,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       pool_admission:
         enabled: true
@@ -1263,7 +1271,7 @@ configs:
       backend: wandb
       wandb:
         project: nca-emoji-adaptive-firing
-        group: emoji-adaptive-firing-basic
+        group: emoji_adaptive_firing_basic_v2
         tags: null
         tag_keys:
         - model.family
@@ -1277,7 +1285,6 @@ configs:
 - index: 3
   overrides:
     logging.wandb.project: nca-emoji-adaptive-firing
-    logging.wandb.group: emoji-adaptive-firing-basic
     model.family: aNCA
     model.channels: 16
     model.fire_rate: 0.5
@@ -1297,9 +1304,11 @@ configs:
     run.repeat: 0
     loss.terms:
     - l2
+    trainer.loop_autodiff: lax
     model.firing_estimator: expected
     loss.regularisers.firing_energy: 1.0
-    experiment.name: emoji_adaptive_firing_basic
+    experiment.name: emoji_adaptive_firing_basic_v2
+    logging.wandb.group: emoji_adaptive_firing_basic_v2
     seed: 1194111944
     logging.wandb.tag_keys:
     - model.family
@@ -1309,7 +1318,7 @@ configs:
     schema_version: 10
     seed: 1194111944
     experiment:
-      name: emoji_adaptive_firing_basic
+      name: emoji_adaptive_firing_basic_v2
     system:
       precision: tensorfloat32
       gpu: null
@@ -1374,7 +1383,7 @@ configs:
       grad_loss: true
       log_directory: logs/
       loss_time_channel_mask: null
-      loop_autodiff: checkpointed
+      loop_autodiff: lax
       log_every: 100
       pool_admission:
         enabled: true
@@ -1422,7 +1431,7 @@ configs:
       backend: wandb
       wandb:
         project: nca-emoji-adaptive-firing
-        group: emoji-adaptive-firing-basic
+        group: emoji_adaptive_firing_basic_v2
         tags: null
         tag_keys:
         - model.family

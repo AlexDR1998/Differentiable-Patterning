@@ -98,3 +98,13 @@ def test_impulse_logger_logs_training_scalars_and_result(logged):
     assert logged["Result/impulse centre path"].shape[-1] == 3
     assert logged["Result/intervention magnitude"].shape == (size, size, 3)
     assert logged["Result/validation outcomes"].shape[-1] == 3
+
+
+def test_location_plot_draws_one_or_several_centre_paths():
+    from NCA.trainer.logging.impulse_wandb_log import plot_location_path
+
+    state = np.zeros((4, 8, 8))
+    single = plot_location_path(np.full((5, 2), 0.5), 2, state, state)
+    several = plot_location_path(np.full((5, 3, 2), 0.5), 2, state, state)
+
+    assert single.shape == several.shape and single.ndim == 3

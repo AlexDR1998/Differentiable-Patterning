@@ -231,3 +231,23 @@ def test_graft_switch_map_shows_that_a_small_graft_stays_a_stable_mixed_state():
     assert rates.tolist() == [[0.0], [0.0], [1.0]]
     final = grow_attractors(RoundingModel(), graft(sources[:1], targets[:1], 3, (0.5, 0.5)), 4, 1, jax.random.PRNGKey(0))
     assert float(final.sum()) == 2 * 9
+
+
+def test_batched_graft_map_matches_each_graft_on_its_own():
+    # Pixel values 0 or 1 apart from a 0.4 square, so the rounding model keeps
+    # some grafted pixels and drops others: results depend on size and centre.
+    sources = jnp.zeros((3, 2, 8, 8))
+    targets = jnp.ones((3, 2, 8, 8)).at[:, :, 2:5, 2:5].set(0.4)
+    references = jnp.stack([sources[0], jnp.ones((2, 8, 8))])
+    sizes, centres = [2, 5, 7, 16], [(0.5, 0.5), (0.2, 0.8), (0.9, 0.1)]
+    key = jax.random.PRNGKey(0)
+
+    # 3 grafts per rollout: several batches, the last one padded
+    batched = graft_switch_map(RoundingModel(), sources, targets, references, 1, sizes, centres, 4, 2, key, grafts_per_rollout=3)
+
+    for i, size in enumerate(sizes):
+        for j, centre in enumerate(centres):
+            final = grow_attractors(RoundingModel(), graft(sources, targets, size, centre), 4, 1, key)[:, 0]
+            nearest = jnp.argmin(jnp.mean((final[:, None] - references[None]) ** 2, axis=(-3, -2, -1)), axis=1)
+            assert batched[i, j] == float(jnp.mean(nearest == 1))
+    assert batched[-1].tolist() == [1.0, 1.0, 1.0]

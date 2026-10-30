@@ -5,7 +5,7 @@ import optax
 from Experiments.emoji.config_helpers import build_hidden_seeds
 from Experiments.emoji.config_helpers import load_data as load_emoji_data
 from NCA.trainer.impulse.outcomes import target_gap
-from NCA.trainer.impulse.perturbation import perturbation
+from NCA.trainer.impulse.perturbation import perturbation, sparse_grid
 from NCA.trainer.impulse import (
     AttractorContrastObjective,
     ExternalTargetPairSource,
@@ -19,7 +19,7 @@ from NCA.trainer.impulse import (
 
 
 INTERVENTION_CHANNELS = ("all", "obs", "hidden", "single")
-INTERVENTION_SPATIAL = ("local", "patch", "global", "flat")
+INTERVENTION_SPATIAL = ("local", "patch", "sparse", "global", "flat")
 INITIAL_LOCATIONS = ("random", "centre")
 
 
@@ -203,6 +203,12 @@ def intervention_from_config(intervention_cfg, observed_channels, state_shape, k
         raise ValueError(
             f"impulse.intervention.duration must be at least 1, got {intervention_cfg.duration}"
         )
+    if intervention_cfg.patches < 1:
+        raise ValueError(f"impulse.intervention.patches must be at least 1, got {intervention_cfg.patches}")
+    if intervention_cfg.patches > 1 and intervention_cfg.spatial != "patch":
+        raise ValueError("impulse.intervention.patches > 1 needs impulse.intervention.spatial=patch")
+    if intervention_cfg.stride < 1:
+        raise ValueError(f"impulse.intervention.stride must be at least 1, got {intervention_cfg.stride}")
     if intervention_cfg.initial_location not in INITIAL_LOCATIONS:
         raise ValueError(
             f"Unknown impulse.intervention.initial_location {intervention_cfg.initial_location!r}; "
@@ -226,15 +232,23 @@ def intervention_from_config(intervention_cfg, observed_channels, state_shape, k
         duration=intervention_cfg.duration,
         init_scale=intervention_cfg.init_scale,
         initial_location=intervention_cfg.initial_location,
+        STRIDE=intervention_cfg.stride,
+        PATCHES=intervention_cfg.patches,
     )
 
 
-def pixel_steps(intervention_cfg):
-    """Number of perturbed (pixel, step) pairs of a patch impulse, k * k * duration (else None)."""
+def pixel_steps(intervention_cfg, state_shape=None):
+    """Number of perturbed (pixel, step) pairs: patches * k * k * duration for patch
+    impulses, grid pixels * duration for sparse ones (needs the [..., H, W]
+    ``state_shape``); None otherwise."""
 
-    if intervention_cfg.spatial != "patch":
-        return None
-    return intervention_cfg.patch_size**2 * intervention_cfg.duration
+    if intervention_cfg.spatial == "patch":
+        return intervention_cfg.patches * intervention_cfg.patch_size**2 * intervention_cfg.duration
+    if intervention_cfg.spatial == "sparse" and state_shape is not None:
+        height, width = state_shape[-2:]
+        stride = intervention_cfg.stride
+        return len(sparse_grid(height, stride)) * len(sparse_grid(width, stride)) * intervention_cfg.duration
+    return None
 
 
 def build_impulse_optimiser(optimiser_cfg):

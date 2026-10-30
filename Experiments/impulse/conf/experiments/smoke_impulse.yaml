@@ -23,11 +23,14 @@ grid:
 
 groups:
   # The third run covers restarts, random initial values, the rollout
-  # curriculum and the attractor contrast objective
-  - impulse.objective.type: [targeted, minimal_destructive, attractor_contrast]
-    impulse.rollout.loss_window: [1, 4, 2]
-    impulse.intervention.spatial: [local, patch, patch]
-    impulse.intervention.duration: [1, 2, 1]
-    impulse.intervention.restarts: [1, 1, 2]
-    impulse.intervention.init_scale: [0.0, 0.0, 0.05]
-    impulse.rollout.curriculum: [false, false, true]
+  # curriculum and the attractor contrast objective; the last two a sparse
+  # grid and two patches
+  - impulse.objective.type: [targeted, minimal_destructive, attractor_contrast, targeted, targeted]
+    impulse.rollout.loss_window: [1, 4, 2, 1, 1]
+    impulse.intervention.spatial: [local, patch, patch, sparse, patch]
+    impulse.intervention.duration: [1, 2, 1, 1, 1]
+    impulse.intervention.restarts: [1, 1, 2, 1, 1]
+    impulse.intervention.init_scale: [0.0, 0.0, 0.05, 0.0, 0.05]
+    impulse.intervention.stride: [1, 1, 1, 4, 1]
+    impulse.intervention.patches: [1, 1, 1, 1, 2]
+    impulse.rollout.curriculum: [false, false, true, false, false]

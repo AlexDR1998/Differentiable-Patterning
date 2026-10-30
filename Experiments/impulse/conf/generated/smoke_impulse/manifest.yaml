@@ -3,7 +3,7 @@ entrypoint: Experiments.impulse.optimise:run
 base_config: null
 sweep_file: null
 output_dir: Experiments/impulse/conf/generated/smoke_impulse
-count: 3
+count: 5
 configs:
 - index: 0
   overrides:
@@ -18,13 +18,15 @@ configs:
     - 16
     impulse.rollout.steps: 8
     impulse.rollout.evaluation_steps: 16
-    logging.wandb.group: smoke_impulse-iteration-fractions
+    logging.wandb.group: smoke_impulse-impulse-sparse-and-patches
     impulse.objective.type: targeted
     impulse.rollout.loss_window: 1
     impulse.intervention.spatial: local
     impulse.intervention.duration: 1
     impulse.intervention.restarts: 1
     impulse.intervention.init_scale: 0.0
+    impulse.intervention.stride: 1
+    impulse.intervention.patches: 1
     impulse.rollout.curriculum: false
     experiment.name: smoke_impulse
     seed: 0
@@ -35,6 +37,8 @@ configs:
     - impulse.intervention.duration
     - impulse.intervention.restarts
     - impulse.intervention.init_scale
+    - impulse.intervention.stride
+    - impulse.intervention.patches
     - impulse.rollout.curriculum
   config:
     schema_version: 10
@@ -52,7 +56,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_impulse-iteration-fractions
+        group: smoke_impulse-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - impulse.objective.type
@@ -61,6 +65,8 @@ configs:
         - impulse.intervention.duration
         - impulse.intervention.restarts
         - impulse.intervention.init_scale
+        - impulse.intervention.stride
+        - impulse.intervention.patches
         - impulse.rollout.curriculum
     data: null
     impulse:
@@ -92,6 +98,8 @@ configs:
         spatial: local
         width: 0.2
         patch_size: 3
+        patches: 1
+        stride: 1
         duration: 1
         budget: null
         init_scale: 0.0
@@ -135,13 +143,15 @@ configs:
     - 16
     impulse.rollout.steps: 8
     impulse.rollout.evaluation_steps: 16
-    logging.wandb.group: smoke_impulse-iteration-fractions
+    logging.wandb.group: smoke_impulse-impulse-sparse-and-patches
     impulse.objective.type: minimal_destructive
     impulse.rollout.loss_window: 4
     impulse.intervention.spatial: patch
     impulse.intervention.duration: 2
     impulse.intervention.restarts: 1
     impulse.intervention.init_scale: 0.0
+    impulse.intervention.stride: 1
+    impulse.intervention.patches: 1
     impulse.rollout.curriculum: false
     experiment.name: smoke_impulse
     seed: 0
@@ -152,6 +162,8 @@ configs:
     - impulse.intervention.duration
     - impulse.intervention.restarts
     - impulse.intervention.init_scale
+    - impulse.intervention.stride
+    - impulse.intervention.patches
     - impulse.rollout.curriculum
   config:
     schema_version: 10
@@ -169,7 +181,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_impulse-iteration-fractions
+        group: smoke_impulse-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - impulse.objective.type
@@ -178,6 +190,8 @@ configs:
         - impulse.intervention.duration
         - impulse.intervention.restarts
         - impulse.intervention.init_scale
+        - impulse.intervention.stride
+        - impulse.intervention.patches
         - impulse.rollout.curriculum
     data: null
     impulse:
@@ -209,6 +223,8 @@ configs:
         spatial: patch
         width: 0.2
         patch_size: 3
+        patches: 1
+        stride: 1
         duration: 2
         budget: null
         init_scale: 0.0
@@ -252,13 +268,15 @@ configs:
     - 16
     impulse.rollout.steps: 8
     impulse.rollout.evaluation_steps: 16
-    logging.wandb.group: smoke_impulse-iteration-fractions
+    logging.wandb.group: smoke_impulse-impulse-sparse-and-patches
     impulse.objective.type: attractor_contrast
     impulse.rollout.loss_window: 2
     impulse.intervention.spatial: patch
     impulse.intervention.duration: 1
     impulse.intervention.restarts: 2
     impulse.intervention.init_scale: 0.05
+    impulse.intervention.stride: 1
+    impulse.intervention.patches: 1
     impulse.rollout.curriculum: true
     experiment.name: smoke_impulse
     seed: 0
@@ -269,6 +287,8 @@ configs:
     - impulse.intervention.duration
     - impulse.intervention.restarts
     - impulse.intervention.init_scale
+    - impulse.intervention.stride
+    - impulse.intervention.patches
     - impulse.rollout.curriculum
   config:
     schema_version: 10
@@ -286,7 +306,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_impulse-iteration-fractions
+        group: smoke_impulse-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - impulse.objective.type
@@ -295,6 +315,8 @@ configs:
         - impulse.intervention.duration
         - impulse.intervention.restarts
         - impulse.intervention.init_scale
+        - impulse.intervention.stride
+        - impulse.intervention.patches
         - impulse.rollout.curriculum
     data: null
     impulse:
@@ -326,6 +348,8 @@ configs:
         spatial: patch
         width: 0.2
         patch_size: 3
+        patches: 1
+        stride: 1
         duration: 1
         budget: null
         init_scale: 0.05
@@ -334,6 +358,256 @@ configs:
         scout_fraction: 0.1
       objective:
         type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 1.0
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.001
+        gradient_clip_norm: 1.0
+- index: 3
+  overrides:
+    checkpoint.model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+    logging.wandb.project: pipeline-smoke
+    impulse.iterations: 4
+    impulse.batch_size: 2
+    impulse.resample_every: 2
+    impulse.log_every: 1
+    impulse.pair_source.stabilisation_steps:
+    - 8
+    - 16
+    impulse.rollout.steps: 8
+    impulse.rollout.evaluation_steps: 16
+    logging.wandb.group: smoke_impulse-impulse-sparse-and-patches
+    impulse.objective.type: targeted
+    impulse.rollout.loss_window: 1
+    impulse.intervention.spatial: sparse
+    impulse.intervention.duration: 1
+    impulse.intervention.restarts: 1
+    impulse.intervention.init_scale: 0.0
+    impulse.intervention.stride: 4
+    impulse.intervention.patches: 1
+    impulse.rollout.curriculum: false
+    experiment.name: smoke_impulse
+    seed: 0
+    logging.wandb.tag_keys:
+    - impulse.objective.type
+    - impulse.rollout.loss_window
+    - impulse.intervention.spatial
+    - impulse.intervention.duration
+    - impulse.intervention.restarts
+    - impulse.intervention.init_scale
+    - impulse.intervention.stride
+    - impulse.intervention.patches
+    - impulse.rollout.curriculum
+  config:
+    schema_version: 10
+    seed: 0
+    experiment:
+      name: smoke_impulse
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_impulse-impulse-sparse-and-patches
+        tags: null
+        tag_keys:
+        - impulse.objective.type
+        - impulse.rollout.loss_window
+        - impulse.intervention.spatial
+        - impulse.intervention.duration
+        - impulse.intervention.restarts
+        - impulse.intervention.init_scale
+        - impulse.intervention.stride
+        - impulse.intervention.patches
+        - impulse.rollout.curriculum
+    data: null
+    impulse:
+      iterations: 4
+      batch_size: 2
+      resample_every: 2
+      log_every: 1
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 8
+        - 16
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 8
+        loss_window: 1
+        evaluation_steps: 16
+        evaluation_frame_every: 8
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: hidden
+        spatial: sparse
+        width: 0.2
+        patch_size: 3
+        patches: 1
+        stride: 4
+        duration: 1
+        budget: null
+        init_scale: 0.0
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 1.0
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.001
+        gradient_clip_norm: 1.0
+- index: 4
+  overrides:
+    checkpoint.model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+    logging.wandb.project: pipeline-smoke
+    impulse.iterations: 4
+    impulse.batch_size: 2
+    impulse.resample_every: 2
+    impulse.log_every: 1
+    impulse.pair_source.stabilisation_steps:
+    - 8
+    - 16
+    impulse.rollout.steps: 8
+    impulse.rollout.evaluation_steps: 16
+    logging.wandb.group: smoke_impulse-impulse-sparse-and-patches
+    impulse.objective.type: targeted
+    impulse.rollout.loss_window: 1
+    impulse.intervention.spatial: patch
+    impulse.intervention.duration: 1
+    impulse.intervention.restarts: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.stride: 1
+    impulse.intervention.patches: 2
+    impulse.rollout.curriculum: false
+    experiment.name: smoke_impulse
+    seed: 0
+    logging.wandb.tag_keys:
+    - impulse.objective.type
+    - impulse.rollout.loss_window
+    - impulse.intervention.spatial
+    - impulse.intervention.duration
+    - impulse.intervention.restarts
+    - impulse.intervention.init_scale
+    - impulse.intervention.stride
+    - impulse.intervention.patches
+    - impulse.rollout.curriculum
+  config:
+    schema_version: 10
+    seed: 0
+    experiment:
+      name: smoke_impulse
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261009T112029Z-cfg40e6697d57a1-b0638e96
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_impulse-impulse-sparse-and-patches
+        tags: null
+        tag_keys:
+        - impulse.objective.type
+        - impulse.rollout.loss_window
+        - impulse.intervention.spatial
+        - impulse.intervention.duration
+        - impulse.intervention.restarts
+        - impulse.intervention.init_scale
+        - impulse.intervention.stride
+        - impulse.intervention.patches
+        - impulse.rollout.curriculum
+    data: null
+    impulse:
+      iterations: 4
+      batch_size: 2
+      resample_every: 2
+      log_every: 1
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 8
+        - 16
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 8
+        loss_window: 1
+        evaluation_steps: 16
+        evaluation_frame_every: 8
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: hidden
+        spatial: patch
+        width: 0.2
+        patch_size: 3
+        patches: 2
+        stride: 1
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
         target_weight: 1.0
         tolerance: 0.01
         constraint_weight: 100.0

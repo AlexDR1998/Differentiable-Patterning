@@ -1,0 +1,45 @@
+# Pixel budget, method 2: a grid of single impulse pixels, one every
+# stride pixels in each direction (stride 1 is the global impulse). See
+# emoji_attractor_switch_size for the comparison. The NCA reads 3 x 3
+# neighbourhoods, so up to stride 3 every cell sees a perturbed pixel after
+# one step. Watch the died/diverged outcomes: isolated spikes need large values.
+experiment_name: emoji_attractor_switch_sparse_v1
+output_subdir: generated/emoji_attractor_switch_sparse_v1
+entrypoint: Experiments.impulse.optimise:run
+seed_mode: index
+
+grid:
+  # The 2-attractor NCA, transition 0 -> 1 only, for a quick comparison
+  checkpoint.model_id: [20261022T142152Z-cfgcef8472c82ef-32f4ecde]
+  impulse.pair_source.source_index: [0]
+  impulse.pair_source.target_index: [1]
+  # All three pixel-budget sweeps share one W&B group; filter or group by
+  # impulse.intervention.budget (perturbed pixels) and the method tag
+  # logging.wandb.group: [emoji_attractor_switch_pixel_budget_v1]
+  logging.wandb.tags: [[family:NCA, attractors:2, method:sparse]]
+  impulse.iterations: [4000]
+  impulse.batch_size: [8]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.objective.type: [targeted, attractor_contrast]
+  impulse.objective.contrast_weight: [0.1]
+  impulse.rollout.steps: [256]
+  impulse.rollout.loss_window: [64]
+  impulse.rollout.evaluation_steps: [1024]
+  impulse.rollout.evaluation_frame_every: [32]
+  impulse.rollout.curriculum: [false]
+  impulse.optimiser.learn_rate: [0.01]
+  impulse.intervention.channels: [all]
+  impulse.intervention.duration: [1]
+  impulse.intervention.init_scale: [0.05]
+  # No size penalty: these sweeps ask what is possible, not what is cheap
+  # (l2 is an RMS over the lattice, so it would penalise larger footprints)
+  impulse.loss.regularisers.l2: [0.0]
+  impulse.repeat: [0]
+  impulse.intervention.spatial: [sparse]
+  # The grid is fixed (centred on the lattice), so restarts only change values
+  impulse.intervention.restarts: [1]
+
+groups:
+  # budget: grid pixels on the 120 x 120 lattice
+  - impulse.intervention.stride: [24, 16, 12, 8, 6, 4, 3, 2, 1]
+    impulse.intervention.budget: [25, 64, 100, 225, 400, 900, 1600, 3600, 14400]

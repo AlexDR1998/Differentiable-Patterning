@@ -132,7 +132,7 @@ def run(cfg):
     if logger is not None:
         logger.log_result(
             result,
-            pixel_steps=pixel_steps(impulse_cfg.intervention),
+            pixel_steps=pixel_steps(impulse_cfg.intervention, trajectories.shape),
             frame_every=impulse_cfg.rollout.evaluation_frame_every,
             rollout_steps=impulse_cfg.rollout.steps,
         )

@@ -55,6 +55,11 @@ class ImpulseInterventionConfig(ConfigValue):
     width: float = 0.2
     # Side length in pixels of the square impulse (spatial: patch only)
     patch_size: int = 3
+    # patch only: number of separate squares, each with its own centre and values
+    patches: int = 1
+    # sparse only: one impulse pixel every stride pixels in each direction
+    # (1: every pixel, as global)
+    stride: int = 1
     # Number of NCA steps the impulse is applied for, at the same centre
     duration: int = 1
     # Not used by the run: a label for grouping runs in W&B, e.g. the

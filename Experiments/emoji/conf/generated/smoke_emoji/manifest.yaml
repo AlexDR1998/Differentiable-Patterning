@@ -18,7 +18,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-iteration-fractions
+    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -83,14 +83,14 @@ configs:
           enabled: false
           start_fraction: 0.33
           end_fraction: 0.67
-          initial_probability: 0.5
+          initial_probability: 0.0
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_fraction: 0.0
-          end_fraction: 0.0
-          initial_probability: 1.0
-          final_probability: 1.0
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
     model:
       family: NCA
       channels: 16
@@ -139,7 +139,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
-        localised_hidden: 0.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
@@ -155,7 +155,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-iteration-fractions
+        group: smoke_emoji-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - model.family
@@ -186,7 +186,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-iteration-fractions
+    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
     model.family: gNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -251,14 +251,14 @@ configs:
           enabled: true
           start_fraction: 0.33
           end_fraction: 0.67
-          initial_probability: 0.5
+          initial_probability: 0.0
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_fraction: 0.0
-          end_fraction: 0.0
-          initial_probability: 1.0
-          final_probability: 1.0
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
     model:
       family: gNCA
       channels: 16
@@ -307,7 +307,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
-        localised_hidden: 0.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
@@ -323,7 +323,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-iteration-fractions
+        group: smoke_emoji-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - model.family
@@ -354,7 +354,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-iteration-fractions
+    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -439,14 +439,14 @@ configs:
           enabled: true
           start_fraction: 0.33
           end_fraction: 0.67
-          initial_probability: 0.5
+          initial_probability: 0.0
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_fraction: 0.0
-          end_fraction: 0.0
-          initial_probability: 1.0
-          final_probability: 1.0
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
     model:
       family: NCA
       channels: 16
@@ -495,7 +495,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
-        localised_hidden: 0.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
@@ -511,7 +511,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-iteration-fractions
+        group: smoke_emoji-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - model.family
@@ -542,7 +542,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-iteration-fractions
+    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
     model.family: gnNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -608,14 +608,14 @@ configs:
           enabled: false
           start_fraction: 0.33
           end_fraction: 0.67
-          initial_probability: 0.5
+          initial_probability: 0.0
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_fraction: 0.0
-          end_fraction: 0.0
-          initial_probability: 1.0
-          final_probability: 1.0
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
     model:
       family: gnNCA
       channels: 16
@@ -665,7 +665,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 1.0
-        localised_hidden: 0.0
+        localised_hidden: 1.0
         update_sensitivity: 0.1
         perturbation_conservation: 0.1
         hidden_state_size: 0.0
@@ -681,7 +681,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-iteration-fractions
+        group: smoke_emoji-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - model.family
@@ -712,7 +712,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-iteration-fractions
+    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
     model.family: aNCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -787,14 +787,14 @@ configs:
           enabled: false
           start_fraction: 0.33
           end_fraction: 0.67
-          initial_probability: 0.5
+          initial_probability: 0.0
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_fraction: 0.0
-          end_fraction: 0.0
-          initial_probability: 1.0
-          final_probability: 1.0
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
     model:
       family: aNCA
       channels: 16
@@ -843,7 +843,7 @@ configs:
         intermediate_state: 1.0
         boundary: 0.0
         contiguous_growth: 0.0
-        localised_hidden: 0.0
+        localised_hidden: 1.0
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
@@ -859,7 +859,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-iteration-fractions
+        group: smoke_emoji-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - model.family

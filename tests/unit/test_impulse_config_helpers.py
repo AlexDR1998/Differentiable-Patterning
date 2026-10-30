@@ -63,6 +63,8 @@ def _impulse_cfg():
                     "duration": 1,
                     "init_scale": 0.0,
                     "initial_location": "random",
+                    "patches": 1,
+                    "stride": 1,
                     "restarts": 1,
                     "scout_fraction": 0.1,
                 },
@@ -155,7 +157,7 @@ def test_intervention_accepts_observed_channels_and_rejects_unknown_modes():
     model = NCA(6, KERNEL_STR=["ID", "LAP"], FIRE_RATE=1.0, key=jax.random.PRNGKey(2))
     trajectories = jnp.zeros((2, 3, 6, 6, 6))
 
-    def build(channels, spatial="global", patch_size=3, duration=1):
+    def build(channels, spatial="global", patch_size=3, duration=1, patches=1, stride=1):
         return build_intervention(
             _cfg(
                 {
@@ -166,6 +168,8 @@ def test_intervention_accepts_observed_channels_and_rejects_unknown_modes():
                     "duration": duration,
                     "init_scale": 0.0,
                     "initial_location": "random",
+                    "patches": patches,
+                    "stride": stride,
                 }
             ),
             4,
@@ -186,6 +190,30 @@ def test_intervention_accepts_observed_channels_and_rejects_unknown_modes():
     assert build("hidden", spatial="patch", duration=4).values.shape == (4, 2, 3, 3)
     with pytest.raises(ValueError, match="duration"):
         build("hidden", duration=0)
+    # A sparse grid on the 6 x 6 lattice: every 2nd pixel, then every 4th (centred)
+    assert build("hidden", spatial="sparse", stride=2).values.shape == (1, 2, 3, 3)
+    assert build("hidden", spatial="sparse", stride=4).values.shape == (1, 2, 2, 2)
+    assert build("hidden", spatial="patch", patches=3).values.shape == (1, 3, 2, 3, 3)
+    assert build("hidden", spatial="patch", patches=3).location.shape == (3, 2)
+    with pytest.raises(ValueError, match="patches"):
+        build("hidden", spatial="local", patches=2)
+    with pytest.raises(ValueError, match="stride"):
+        build("hidden", spatial="sparse", stride=0)
+
+
+def test_pixel_steps_count_every_perturbed_pixel_and_step():
+    from Experiments.impulse.config_helpers import pixel_steps
+
+    def count(state_shape=None, **options):
+        intervention = {"spatial": "patch", "patch_size": 3, "duration": 2, "patches": 1, "stride": 1}
+        return pixel_steps(_cfg({**intervention, **options}), state_shape)
+
+    assert count() == 18
+    assert count(patches=4) == 72
+    # Rows and columns 1, 4, 7 of a 9 x 9 lattice
+    assert count((4, 9, 9), spatial="sparse", stride=3) == 18
+    assert count(spatial="sparse", stride=3) is None
+    assert count(spatial="global") is None
 
 
 def test_pair_sources_only_use_the_configured_source_and_target_patterns():

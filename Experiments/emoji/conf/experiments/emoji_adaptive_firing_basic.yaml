@@ -2,13 +2,13 @@
 # the target, and does the firing energy cost make cells go quiet afterwards?
 # Baseline: NCA with a fixed firing rate. For aNCA, model.fire_rate is only
 # the initial firing probability.
-experiment_name: emoji_adaptive_firing_basic
+experiment_name: emoji_adaptive_firing_basic_v2
 entrypoint: Experiments.emoji.train:run
 output_subdir: generated/emoji_adaptive_firing_basic
 seed_mode: index
 grid:
   logging.wandb.project: [nca-emoji-adaptive-firing]
-  logging.wandb.group: [emoji-adaptive-firing-basic]
+  # logging.wandb.group: [emoji-adaptive-firing-basic]
   model.family: [NCA, aNCA]
   model.channels: [16]
   model.fire_rate: [0.5]
@@ -24,6 +24,7 @@ grid:
   run.iterations: [16000]
   run.repeat: [0,]
   loss.terms: [[l2]]
+  trainer.loop_autodiff: [lax]
 # firing_energy only exists for models with a learned firing rate
 branches:
   - when:

@@ -1,0 +1,44 @@
+# Pixel budget, method 3: several separate 5 x 5 impulses, each with its own
+# learned centre and values. See emoji_attractor_switch_size for the
+# comparison. 1 to 64 patches give 25 to 1600 pixels, the same budgets as
+# strides 24, 12, 8, 6, 4 and 3 of emoji_attractor_switch_sparse.
+experiment_name: emoji_attractor_switch_multipatch_v1
+output_subdir: generated/emoji_attractor_switch_multipatch_v1
+entrypoint: Experiments.impulse.optimise:run
+seed_mode: index
+
+grid:
+  # The 2-attractor NCA, transition 0 -> 1 only, for a quick comparison
+  checkpoint.model_id: [20261022T142152Z-cfgcef8472c82ef-32f4ecde]
+  impulse.pair_source.source_index: [0]
+  impulse.pair_source.target_index: [1]
+  # All three pixel-budget sweeps share one W&B group; filter or group by
+  # impulse.intervention.budget (perturbed pixels) and the method tag
+  # logging.wandb.group: [emoji_attractor_switch_pixel_budget_v1]
+  logging.wandb.tags: [[family:NCA, attractors:2, method:patches]]
+  impulse.iterations: [4000]
+  impulse.batch_size: [8]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.objective.type: [targeted, attractor_contrast]
+  impulse.objective.contrast_weight: [0.1]
+  impulse.rollout.steps: [256]
+  impulse.rollout.loss_window: [64]
+  impulse.rollout.evaluation_steps: [1024]
+  impulse.rollout.evaluation_frame_every: [32]
+  impulse.rollout.curriculum: [false]
+  impulse.optimiser.learn_rate: [0.01]
+  impulse.intervention.channels: [all]
+  impulse.intervention.duration: [1]
+  impulse.intervention.init_scale: [0.05]
+  # No size penalty: these sweeps ask what is possible, not what is cheap
+  # (l2 is an RMS over the lattice, so it would penalise larger footprints)
+  impulse.loss.regularisers.l2: [0.0]
+  impulse.repeat: [0]
+  impulse.intervention.spatial: [patch]
+  impulse.intervention.patch_size: [5]
+  impulse.intervention.restarts: [4]
+
+groups:
+  # budget: patches * 25 pixels
+  - impulse.intervention.patches: [1, 4, 9, 16, 36, 64]
+    impulse.intervention.budget: [25, 100, 225, 400, 900, 1600]

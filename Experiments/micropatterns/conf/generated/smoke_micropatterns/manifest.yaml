@@ -40,7 +40,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-iteration-fractions
+    logging.wandb.group: smoke_micropatterns-impulse-sparse-and-patches
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     data.micropattern.pool_copies: 2
@@ -231,7 +231,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-iteration-fractions
+        group: smoke_micropatterns-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - model.family
@@ -281,7 +281,7 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-iteration-fractions
+    logging.wandb.group: smoke_micropatterns-impulse-sparse-and-patches
     model.family: gNCA
     trainer.loop_autodiff: lax
     data.micropattern.pool_copies: 1
@@ -478,7 +478,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-iteration-fractions
+        group: smoke_micropatterns-impulse-sparse-and-patches
         tags: null
         tag_keys:
         - model.family

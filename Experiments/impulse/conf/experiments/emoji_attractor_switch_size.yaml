@@ -1,0 +1,49 @@
+# Pixel budget, method 1: one square impulse of k x k pixels. Which method
+# (one square, a sparse grid, or several small squares) switches the
+# pattern with the fewest perturbed pixels? See also
+# emoji_attractor_switch_sparse and emoji_attractor_switch_patches.
+# Odd k close to the sparse budgets (25, 64, 100, 225, 400, 900, 1600,
+# 3600), then a global impulse as the full 120 x 120 lattice. Large patches
+# start at the centre: from a random centre they would be partly off the
+# lattice; their restarts differ by their random values only.
+experiment_name: emoji_attractor_switch_size_v1
+output_subdir: generated/emoji_attractor_switch_size_v1
+entrypoint: Experiments.impulse.optimise:run
+seed_mode: index
+
+grid:
+  # The 2-attractor NCA, transition 0 -> 1 only, for a quick comparison
+  checkpoint.model_id: [20261022T142152Z-cfgcef8472c82ef-32f4ecde]
+  impulse.pair_source.source_index: [0]
+  impulse.pair_source.target_index: [1]
+  # All three pixel-budget sweeps share one W&B group; filter or group by
+  # impulse.intervention.budget (perturbed pixels) and the method tag
+  # logging.wandb.group: [emoji_attractor_switch_pixel_budget_v1]
+  logging.wandb.tags: [[family:NCA, attractors:2, method:size]]
+  impulse.iterations: [4000]
+  impulse.batch_size: [8]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.objective.type: [targeted, attractor_contrast]
+  impulse.objective.contrast_weight: [0.1]
+  impulse.rollout.steps: [256]
+  impulse.rollout.loss_window: [64]
+  impulse.rollout.evaluation_steps: [1024]
+  impulse.rollout.evaluation_frame_every: [32]
+  impulse.rollout.curriculum: [false]
+  impulse.optimiser.learn_rate: [0.01]
+  impulse.intervention.channels: [all]
+  impulse.intervention.duration: [1]
+  impulse.intervention.init_scale: [0.05]
+  # No size penalty: these sweeps ask what is possible, not what is cheap
+  # (l2 is an RMS over the lattice, so it would penalise larger footprints)
+  impulse.loss.regularisers.l2: [0.0]
+  impulse.repeat: [0]
+
+groups:
+  # budget: perturbed pixels (k * k, or the whole lattice)
+  - impulse.intervention.spatial: [patch, patch, patch, patch, patch, patch, patch, patch, global]
+    impulse.intervention.patch_size: [5, 9, 11, 15, 21, 31, 41, 61, 3]
+    impulse.intervention.budget: [25, 81, 121, 225, 441, 961, 1681, 3721, 14400]
+    impulse.intervention.initial_location: [random, random, random, random, centre, centre, centre, centre, random]
+    # A global impulse has no centre to search
+    impulse.intervention.restarts: [4, 4, 4, 4, 4, 4, 4, 4, 1]

@@ -286,7 +286,7 @@ def publish_impulse_record(
                 # Mean NCA step of switching, over the rollouts that switched
                 "switch_time": _mean_switch_time(result.switch_steps),
                 **impulse_size(result.best_intervention, initial_states[:1]),
-                "pixel_steps": pixel_steps(impulse.intervention),
+                "pixel_steps": pixel_steps(impulse.intervention, initial_states.shape),
             },
             "provenance": {
                 "config_sha256": config_sha256,

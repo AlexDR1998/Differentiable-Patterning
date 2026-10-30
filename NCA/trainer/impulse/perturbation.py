@@ -7,14 +7,22 @@ from einops import repeat, rearrange
 
 from jaxtyping import Float,Array,Key
 from Common.model.abstract_model import AbstractModel
+
+
+def sparse_grid(size,stride):
+    """Indices of a sparse impulse along one lattice axis: every stride-th pixel, centred."""
+    return range(((size - 1) % stride) // 2, size, stride)
+
+
 class perturbation(AbstractModel):
     """Learned perturbation added to NCA states of shape (batch, C, X, Y).
 
-    The perturbation can be local (Gaussian), patch (a small square), global or
-    flat, and can act on all channels, the observed or hidden channels, or a
-    single hidden channel. The same perturbation is applied to every batch element.
-    It can last several NCA steps: values[s] is the delta for step s, all at
-    the same centre (see ``rollout.run_with_intervention``).
+    The perturbation can be local (Gaussian), patch (small squares), sparse
+    (every STRIDE-th pixel in each direction), global or flat, and can act on
+    all channels, the observed or hidden channels, or a single hidden channel.
+    The same perturbation is applied to every batch element. It can last
+    several NCA steps: values[s] is the delta for step s, all at the same
+    centre (see ``rollout.run_with_intervention``).
     """
     location: Array
     values: Array
@@ -25,18 +33,29 @@ class perturbation(AbstractModel):
     # Side length in pixels of a patch perturbation. Static, so it is not
     # written to saved .eqx files and older files still load.
     PATCH_SIZE: int = eqx.field(static=True)
+    # Pixel spacing of a sparse perturbation (1: every pixel, as global)
+    STRIDE: int = eqx.field(static=True)
+    # Number of separate patches, each with its own centre and values. With
+    # one patch, location is (2,) and values (duration, C, k, k); with P
+    # patches, (P, 2) and (duration, P, C, k, k).
+    PATCHES: int = eqx.field(static=True)
 
-    def __init__(self,mode,CHANNELS,OBS_CHANNELS,x,WIDTH,key,PATCH_SIZE=0,duration=1,init_scale=0.0,initial_location="random"):
+    def __init__(self,mode,CHANNELS,OBS_CHANNELS,x,WIDTH,key,PATCH_SIZE=0,duration=1,init_scale=0.0,initial_location="random",STRIDE=1,PATCHES=1):
         # The centre is sigmoid(location) in normalised (0 to 1) coordinates.
         # Store the logit of a uniform draw so the starting centre is uniform
         # over the interior of the lattice, not biased towards one corner.
         # initial_location="centre" starts at the lattice centre instead.
+        if PATCHES > 1 and mode['spatial'] != "patch":
+            raise ValueError("Several patches need spatial mode 'patch'")
         self.WIDTH = WIDTH
         self.PATCH_SIZE = PATCH_SIZE
+        self.STRIDE = STRIDE
+        self.PATCHES = PATCHES
+        centres = (2,) if PATCHES == 1 else (PATCHES,2)
         if initial_location == "random":
-            self.location = jax.scipy.special.logit(jr.uniform(key,(2,),minval=0.1,maxval=0.9))
+            self.location = jax.scipy.special.logit(jr.uniform(key,centres,minval=0.1,maxval=0.9))
         elif initial_location == "centre":
-            self.location = np.zeros((2,))
+            self.location = np.zeros(centres)
         else:
             raise ValueError(f"initial_location must be 'random' or 'centre', got {initial_location!r}")
         self.mode=mode
@@ -48,18 +67,21 @@ class perturbation(AbstractModel):
             "hidden":np.s_[:1,self.OBS_CHANNELS:],
             "single":np.s_[:1,self.OBS_CHANNELS:self.OBS_CHANNELS+1]
         }[self.mode['channel']]
+        H,W = x.shape[-2:]
         SP = {
             "global":np.s_[:,:],
             "local":np.s_[:,:],
             "patch":np.s_[:PATCH_SIZE,:PATCH_SIZE],
+            "sparse":np.s_[sparse_grid(H,STRIDE)[0]::STRIDE,sparse_grid(W,STRIDE)[0]::STRIDE],
             "flat":np.s_[:1,:1],
         }[self.mode['spatial']]
         inds = CH + SP
         
-        # (duration, C_sel, ...): one delta per NCA step. Zero, or Gaussian of
-        # std init_scale: a zero start gives the centre no gradient until the
-        # values have grown.
-        shape = (duration,*x[inds].shape[1:])
+        # (duration, [patch,] C_sel, ...): one delta per NCA step. Zero, or
+        # Gaussian of std init_scale: a zero start gives the centre no
+        # gradient until the values have grown.
+        patches = () if PATCHES == 1 else (PATCHES,)
+        shape = (duration,*patches,*x[inds].shape[1:])
         self.values = init_scale*jr.normal(jr.fold_in(key,1),shape,dtype=x.dtype)
 
     @property
@@ -81,7 +103,15 @@ class perturbation(AbstractModel):
         }[self.mode['channel']]
         H,W = x.shape[-2:]
         if self.mode['spatial'] == "patch":
-            values = self._place_patch(jax.nn.sigmoid(self.location),self.values,H,W)
+            # Place each patch, then add them up (overlaps add)
+            centres = jax.nn.sigmoid(self.location).reshape((-1,2))
+            patches = self.values.reshape((self.duration,len(centres),*self.values.shape[-3:]))
+            place = lambda centre,patch: self._place_patch(centre,patch,H,W)
+            values = np.sum(jax.vmap(place,in_axes=(0,1))(centres,patches),axis=0)
+        elif self.mode['spatial'] == "sparse":
+            rows,cols = sparse_grid(H,self.STRIDE),sparse_grid(W,self.STRIDE)
+            values = np.zeros((*self.values.shape[:2],H,W),dtype=x.dtype)
+            values = values.at[:,:,rows.start::self.STRIDE,cols.start::self.STRIDE].set(self.values)
         else:
             values = self._spatial_mask(jax.nn.sigmoid(self.location),np.array([self.WIDTH,self.WIDTH]),self.values)
         deltas = np.zeros((self.duration,1,*x.shape[-3:]),dtype=x.dtype)
@@ -120,7 +150,7 @@ class perturbation(AbstractModel):
         return self.values
     
     def get_location(self):
-        """Centre of a local perturbation in normalised (0 to 1) coordinates."""
+        """Centre of a local perturbation in normalised (0 to 1) coordinates: (2,), or (P, 2) for P patches."""
         return jax.nn.sigmoid(self.location)
     
     def regulariser(self,x,REG_FUNCS):

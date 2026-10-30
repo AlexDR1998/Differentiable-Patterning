@@ -34,14 +34,25 @@ def _rollout(model, intervention, states, steps, key, **kwargs):
     return rollout_with_intervention(model, intervention, states, steps, key, **kwargs)
 
 
+def load_registry_model(model_id, store_root=None, data_config=None, key=None):
+    """Model, [pattern, time, C, H, W] data and observed channel count of a registry model.
+
+    The data is what the model was trained on, unless ``data_config`` is given.
+    """
+
+    bundle = open_registry_bundle(model_id, store_root)
+    model = bundle.load_model(key=key)
+    data_config = bundle.config.data if data_config is None else data_config
+    trajectories = load_impulse_data(data_config, model)
+    return model, trajectories, data_config.emoji.observed_channels
+
+
 def load_model_and_data(cfg, store_root=None, key=None):
     """Model, [pattern, time, C, H, W] data and observed channel count for one run config."""
 
-    bundle = open_registry_bundle(cfg.checkpoint.model_id, store_root or cfg.checkpoint.store_root)
-    model = bundle.load_model(key=key)
-    data_config = bundle.config.data if cfg.data is None else cfg.data
-    trajectories = load_impulse_data(data_config, model)
-    return model, trajectories, data_config.emoji.observed_channels
+    return load_registry_model(
+        cfg.checkpoint.model_id, store_root or cfg.checkpoint.store_root, data_config=cfg.data, key=key
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -126,6 +137,8 @@ def summary_row(result):
         "width": intervention.width if intervention.spatial == "local" else None,
         "patch_size": intervention.patch_size if intervention.spatial == "patch" else None,
         "duration": intervention.duration,
+        "patches": intervention.patches if intervention.spatial == "patch" else None,
+        "stride": intervention.stride if intervention.spatial == "sparse" else None,
         "restarts": intervention.restarts,
         "init_scale": intervention.init_scale,
         "budget": pixel_steps(intervention),
@@ -211,39 +224,72 @@ def success_rate(model, interventions, states, references, target, steps, observ
     return jnp.asarray(rates)
 
 
-def graft(sources, targets, size, centre):
-    """Copy ``targets`` into a ``size`` x ``size`` window of ``sources``, all channels.
+def graft_window(height, width, size, centre):
+    """[H, W] boolean mask of the ``size`` x ``size`` window centred at ``centre``.
 
-    ``sources`` and ``targets`` are [batch, C, H, W] (or broadcastable).
     ``centre`` is (row, column) from 0 to 1, with pixel i at i / (H - 1) as
-    for patch impulses. Size 0 changes nothing. A graft is the same as a
-    one-step patch impulse of value target - source, so it shows the best
-    such an impulse can do.
+    for patch impulses. Size 0 gives an empty window.
     """
 
-    height, width = sources.shape[-2:]
     top = round(centre[0] * (height - 1)) - size // 2
     left = round(centre[1] * (width - 1)) - size // 2
     rows = (np.arange(height) >= top) & (np.arange(height) < top + size)
     columns = (np.arange(width) >= left) & (np.arange(width) < left + size)
-    inside = jnp.asarray(rows[:, None] & columns[None, :])
+    return rows[:, None] & columns[None, :]
+
+
+def graft(sources, targets, size, centre):
+    """Copy ``targets`` into a ``size`` x ``size`` window of ``sources``, all channels.
+
+    ``sources`` and ``targets`` are [batch, C, H, W] (or broadcastable); see
+    ``graft_window`` for the window. A graft is the same as a one-step patch
+    impulse of value target - source, so it shows the best such an impulse can do.
+    """
+
+    inside = jnp.asarray(graft_window(*sources.shape[-2:], size, centre))
     return jnp.where(inside, targets, sources)
 
 
-def graft_switch_map(model, sources, targets, references, target, sizes, centres, steps, observed_channels, key):
+def graft_switch_map(
+    model, sources, targets, references, target, sizes, centres, steps, observed_channels, key, grafts_per_rollout=16
+):
     """Fraction of grafted rollouts that end nearest pattern ``target``: [size, centre].
 
-    Each source state gets the window of its paired target state (see
-    ``graft``) for every size and centre, then runs ``steps`` NCA steps.
+    Each source state [batch, C, H, W] gets the window of its paired target
+    state (see ``graft``) for every size and centre, then runs ``steps`` NCA
+    steps. Windows covering the same pixels (e.g. a window larger than the
+    lattice at every centre) are run once. The grafted states run together,
+    ``grafts_per_rollout`` grafts at a time; a shorter last batch is padded so
+    the rollout compiles only once.
     """
 
-    rates = np.zeros((len(sizes), len(centres)))
+    height, width = sources.shape[-2:]
+    # Distinct windows, and which one each (size, centre) uses
+    windows, index_of = [], {}
+    which = np.zeros((len(sizes), len(centres)), dtype=int)
     for i, size in enumerate(sizes):
         for j, centre in enumerate(centres):
-            final = _rollout(model, None, graft(sources, targets, size, centre), steps, key)
-            labels = jnp.argmin(attractor_distances(final, references, observed_channels), axis=1)
-            rates[i, j] = float(jnp.mean(labels == target))
-    return rates
+            window = graft_window(height, width, size, centre)
+            if window.tobytes() not in index_of:
+                index_of[window.tobytes()] = len(windows)
+                windows.append(window)
+            which[i, j] = index_of[window.tobytes()]
+    windows = np.stack(windows)
+
+    per_rollout = min(grafts_per_rollout, len(windows))
+    samples = len(sources)
+    rates = np.zeros(len(windows))
+    for first in range(0, len(windows), per_rollout):
+        chunk = windows[first : first + per_rollout]
+        count = len(chunk)
+        chunk = np.concatenate([chunk, np.repeat(chunk[-1:], per_rollout - count, axis=0)])
+        # [graft, batch, C, H, W] -> [graft * batch, C, H, W]
+        states = jnp.where(jnp.asarray(chunk)[:, None, None], targets[None], sources[None])
+        final = _rollout(model, None, states.reshape((-1, *states.shape[2:])), steps, key)
+        labels = jnp.argmin(attractor_distances(final, references, observed_channels), axis=1)
+        switched = jnp.mean(labels.reshape((per_rollout, samples)) == target, axis=1)
+        rates[first : first + count] = np.asarray(switched)[:count]
+    return rates[which]
 
 
 def add_state_noise(states, strength, key):

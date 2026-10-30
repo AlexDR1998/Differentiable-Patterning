@@ -12,27 +12,34 @@ def _rgb(states):
 
 
 def plot_location_path(location_history, best_step, source, target):
-    """Path of the impulse centre during optimisation, drawn over the source and target.
+    """Path of each impulse centre during optimisation, drawn over the source and target.
 
-    ``location_history`` is [steps, 2] (row, column) in 0 to 1 coordinates;
-    ``source`` and ``target`` are [C, H, W] states. Returns an image array for W&B.
+    ``location_history`` is [steps, 2] (row, column) in 0 to 1 coordinates,
+    or [steps, patches, 2] for several patches; ``source`` and ``target`` are
+    [C, H, W] states. Returns an image array for W&B.
     """
     import matplotlib.pyplot as plt
 
     height, width = source.shape[-2:]
-    rows = np.asarray(location_history)[:, 0] * (height - 1)
-    cols = np.asarray(location_history)[:, 1] * (width - 1)
-    steps = np.arange(len(rows))
-    best = min(max(best_step, 0), len(rows) - 1)
+    history = np.asarray(location_history)
+    # [steps, 2] -> [steps, 1, 2]: one path per patch
+    history = history.reshape((len(history), -1, 2))
+    steps = np.arange(len(history))
+    best = min(max(best_step, 0), len(history) - 1)
 
     figure, axes = plt.subplots(1, 2, figsize=(10, 5.4), dpi=120)
     for axis, state, title in ((axes[0], source, "source"), (axes[1], target, "target")):
         axis.imshow(rearrange(_rgb(state), "C H W -> H W C"))
-        axis.plot(cols, rows, color="white", linewidth=0.8, alpha=0.6)
-        path = axis.scatter(cols, rows, c=steps, cmap="viridis", s=6, zorder=2)
-        axis.scatter(cols[0], rows[0], marker="o", s=60, facecolor="none", edgecolor="black", label="start", zorder=3)
-        axis.scatter(cols[best], rows[best], marker="*", s=120, color="red", edgecolor="black", label=f"best (step {best})", zorder=3)
-        axis.scatter(cols[-1], rows[-1], marker="X", s=60, color="white", edgecolor="black", label="final", zorder=3)
+        for patch in range(history.shape[1]):
+            rows = history[:, patch, 0] * (height - 1)
+            cols = history[:, patch, 1] * (width - 1)
+            # Label the markers of the first path only
+            first = patch == 0
+            axis.plot(cols, rows, color="white", linewidth=0.8, alpha=0.6)
+            path = axis.scatter(cols, rows, c=steps, cmap="viridis", s=6, zorder=2)
+            axis.scatter(cols[0], rows[0], marker="o", s=60, facecolor="none", edgecolor="black", label="start" if first else None, zorder=3)
+            axis.scatter(cols[best], rows[best], marker="*", s=120, color="red", edgecolor="black", label=f"best (step {best})" if first else None, zorder=3)
+            axis.scatter(cols[-1], rows[-1], marker="X", s=60, color="white", edgecolor="black", label="final" if first else None, zorder=3)
         axis.set_xlim(-0.5, width - 0.5)
         axis.set_ylim(height - 0.5, -0.5)
         axis.set_title(title)
@@ -145,7 +152,7 @@ class ImpulseLogger(WandbLogger):
     def log_result(self, result, pixel_steps=None, frame_every=1, rollout_steps=None):
         """Log the best intervention: summary losses, states and trajectories.
 
-        ``pixel_steps`` (k * k * duration of a patch impulse) groups runs by budget.
+        ``pixel_steps`` (perturbed pixels * duration of a patch or sparse impulse) groups runs by budget.
         ``frame_every`` is the step between saved evaluation frames and
         ``rollout_steps`` the training rollout length, marked on the loss curve.
         """
