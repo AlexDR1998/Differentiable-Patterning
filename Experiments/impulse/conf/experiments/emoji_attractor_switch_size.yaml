@@ -20,7 +20,7 @@ grid:
   # impulse.intervention.budget (perturbed pixels) and the method tag
   # logging.wandb.group: [emoji_attractor_switch_pixel_budget_v1]
   logging.wandb.tags: [[family:NCA, attractors:2, method:size]]
-  impulse.iterations: [4000]
+  impulse.iterations: [2000]
   impulse.batch_size: [8]
   impulse.pair_source.type: [stable_attractor]
   impulse.objective.type: [targeted, attractor_contrast]
