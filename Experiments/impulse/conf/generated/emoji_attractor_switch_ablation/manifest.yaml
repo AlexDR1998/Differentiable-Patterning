@@ -1,0 +1,4040 @@
+experiment_name: emoji_attractor_switch_ablation_v1
+entrypoint: Experiments.impulse.optimise:run
+base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/impulse/conf/base_config.yaml
+sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/impulse/conf/experiments/emoji_attractor_switch_ablation.yaml
+output_dir: Experiments/impulse/conf/generated/emoji_attractor_switch_ablation
+count: 32
+configs:
+- index: 0
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 0
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 0
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 1
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 1
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 1
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 2
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 2
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 2
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 3
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 3
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 3
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 4
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 4
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 4
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 5
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 5
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 5
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 6
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 6
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 6
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 7
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 7
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 7
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 8
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 8
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 8
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 9
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 9
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 9
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 10
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 10
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 10
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 11
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 11
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 11
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 12
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 12
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 12
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 13
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 13
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 13
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 14
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 14
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 14
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 15
+  overrides:
+    checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:NCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 15
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 15
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:NCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 16
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 16
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 16
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 17
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 17
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 17
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 18
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 18
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 18
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 19
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 19
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 19
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 20
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 20
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 20
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 21
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 21
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 21
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 22
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 22
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 22
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 23
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: targeted
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 23
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 23
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: targeted
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 24
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 24
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 24
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 25
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 25
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 25
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 26
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 26
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 26
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 27
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: false
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 27
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 27
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: false
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 28
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 28
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 28
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 29
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 1
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 29
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 29
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 1
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 30
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 0
+    impulse.pair_source.target_index: 1
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 30
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 30
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 0
+        target_index: 1
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+- index: 31
+  overrides:
+    checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+    impulse.iterations: 4000
+    impulse.batch_size: 8
+    impulse.pair_source.type: stable_attractor
+    impulse.objective.type: attractor_contrast
+    impulse.objective.contrast_weight: 0.1
+    impulse.rollout.steps: 256
+    impulse.rollout.loss_window: 64
+    impulse.rollout.evaluation_steps: 1024
+    impulse.rollout.evaluation_frame_every: 32
+    impulse.rollout.curriculum: true
+    impulse.optimiser.learn_rate: 0.01
+    impulse.intervention.channels: all
+    impulse.intervention.spatial: patch
+    impulse.intervention.patch_size: 9
+    impulse.intervention.duration: 1
+    impulse.intervention.init_scale: 0.05
+    impulse.intervention.restarts: 4
+    impulse.loss.regularisers.l2: 0.01
+    impulse.repeat: 0
+    impulse.pair_source.source_index: 1
+    impulse.pair_source.target_index: 0
+    logging.wandb.tags:
+    - family:gNCA
+    - attractors:2
+    experiment.name: emoji_attractor_switch_ablation_v1
+    logging.wandb.group: emoji_attractor_switch_ablation_v1
+    seed: 31
+    logging.wandb.tag_keys:
+    - checkpoint.model_id
+    - impulse.objective.type
+    - impulse.rollout.curriculum
+    - impulse.intervention.restarts
+    - impulse.pair_source.source_index
+    - impulse.pair_source.target_index
+    - logging.wandb.tags
+  config:
+    schema_version: 10
+    seed: 31
+    experiment:
+      name: emoji_attractor_switch_ablation_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-impulse
+        group: emoji_attractor_switch_ablation_v1
+        tags:
+        - family:gNCA
+        - attractors:2
+        tag_keys:
+        - checkpoint.model_id
+        - impulse.objective.type
+        - impulse.rollout.curriculum
+        - impulse.intervention.restarts
+        - impulse.pair_source.source_index
+        - impulse.pair_source.target_index
+        - logging.wandb.tags
+    data: null
+    impulse:
+      iterations: 4000
+      batch_size: 8
+      resample_every: 100
+      log_every: 100
+      repeat: 0
+      pair_source:
+        type: stable_attractor
+        source_index: 1
+        target_index: 0
+        stabilisation_steps:
+        - 128
+        - 256
+        target_steps: 192
+        initial_time: 0
+        target_time: -1
+      rollout:
+        steps: 256
+        loss_window: 64
+        evaluation_steps: 1024
+        evaluation_frame_every: 32
+        scan_kind: lax
+        checkpoints: null
+        curriculum: true
+      intervention:
+        channels: all
+        spatial: patch
+        width: 0.2
+        patch_size: 9
+        duration: 1
+        budget: null
+        init_scale: 0.05
+        initial_location: random
+        restarts: 4
+        scout_fraction: 0.1
+      objective:
+        type: attractor_contrast
+        target_weight: 1.0
+        tolerance: 0.01
+        constraint_weight: 100.0
+        magnitude: l2
+        reward_weight: 1.0
+        contrast_weight: 0.1
+        temperature: null
+      loss:
+        terms:
+        - type: l2
+          weight: 1.0
+          channels: observed
+        regularisers:
+          l1: 0.0
+          l2: 0.01
+          linf: 0.0
+          smoothness: 0.0
+          state_range: 0.0
+      optimiser:
+        type: adam
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+emit_files: false

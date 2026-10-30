@@ -12,6 +12,8 @@ from pathlib import Path
 from Experiments.config import config_to_dict, impulse_experiment_config_from_mapping
 from Experiments.impulse.analysis import (
     distance_over_time,
+    graft,
+    graft_switch_map,
     grow_attractors,
     load_impulse_results,
     load_saved_intervention,
@@ -202,3 +204,30 @@ def test_interventions_saved_before_patch_mode_still_load(tmp_path):
 
     assert jnp.array_equal(loaded.location, location)
     assert jnp.array_equal(loaded.values, values)
+
+
+def test_graft_copies_the_target_into_a_window_around_the_centre():
+    sources, targets = jnp.zeros((2, 2, 9, 9)), jnp.ones((2, 2, 9, 9))
+
+    grafted = graft(sources, targets, 3, (0.5, 0.5))
+
+    # Pixel i is at i / 8, so (0.5, 0.5) is pixel (4, 4)
+    expected = jnp.zeros((9, 9)).at[3:6, 3:6].set(1.0)
+    assert jnp.array_equal(grafted, jnp.broadcast_to(expected, (2, 2, 9, 9)))
+    assert jnp.array_equal(graft(sources, targets, 0, (0.5, 0.5)), sources)
+    assert jnp.array_equal(graft(sources, targets, 18, (0.0, 1.0)), targets)
+
+
+def test_graft_switch_map_shows_that_a_small_graft_stays_a_stable_mixed_state():
+    # Every pixel of the rounding model keeps its own integer, so a small
+    # graft neither spreads nor dies out: only a graft of the whole lattice switches.
+    sources, targets = jnp.zeros((2, 2, 8, 8)), jnp.ones((2, 2, 8, 8))
+    references = jnp.stack([sources[0], targets[0]])
+
+    rates = graft_switch_map(
+        RoundingModel(), sources, targets, references, 1, [0, 3, 16], [(0.5, 0.5)], 4, 2, jax.random.PRNGKey(0)
+    )
+
+    assert rates.tolist() == [[0.0], [0.0], [1.0]]
+    final = grow_attractors(RoundingModel(), graft(sources[:1], targets[:1], 3, (0.5, 0.5)), 4, 1, jax.random.PRNGKey(0))
+    assert float(final.sum()) == 2 * 9

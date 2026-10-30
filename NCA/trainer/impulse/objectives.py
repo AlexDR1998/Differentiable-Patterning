@@ -73,18 +73,23 @@ class AttractorContrastObjective:
     target_weight: float = 1.0
     contrast_weight: float = 0.1
 
-    def __call__(self, target_loss, intervention_penalty, intervention_metrics, predictions=None):
-        """Return the targeted objective plus the weighted mean cross-entropy."""
+    def contrast(self, predictions):
+        """Mean cross-entropy (unweighted) of the rollout states."""
 
-        if predictions is None:
-            raise ValueError("AttractorContrastObjective needs the rollout states")
         attractors = jnp.asarray(self.attractors)
         states = predictions[:, : attractors.shape[1]]
         # [samples, K] mean squared error to each attractor
         distances = jnp.mean((states[:, None] - attractors[None]) ** 2, axis=(-3, -2, -1))
         cross_entropy = -jax.nn.log_softmax(-distances / self.temperature, axis=-1)[:, self.target_index]
+        return jnp.mean(cross_entropy)
+
+    def __call__(self, target_loss, intervention_penalty, intervention_metrics, predictions=None):
+        """Return the targeted objective plus the weighted mean cross-entropy."""
+
+        if predictions is None:
+            raise ValueError("AttractorContrastObjective needs the rollout states")
         return (
             self.target_weight * target_loss
-            + self.contrast_weight * jnp.mean(cross_entropy)
+            + self.contrast_weight * self.contrast(predictions)
             + intervention_penalty
         )

@@ -1,0 +1,43 @@
+# Diagnostic B: which of the gating v3 changes help? The 9 x 9, one-step
+# patch of gating v3 on the 2-attractor NCA and gNCA models, with the
+# curriculum, the contrast objective and restarts each switched on or off
+# (8 combinations, 4 runs each).
+experiment_name: emoji_attractor_switch_ablation_v1
+entrypoint: Experiments.impulse.optimise:run
+output_subdir: generated/emoji_attractor_switch_ablation_v1
+seed_mode: index
+
+grid:
+  checkpoint.model_id:
+    - 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    - 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+  impulse.iterations: [4000]
+  impulse.batch_size: [8]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.objective.type: [targeted, attractor_contrast]
+  impulse.objective.contrast_weight: [0.1]
+  impulse.rollout.steps: [256]
+  impulse.rollout.loss_window: [64]
+  impulse.rollout.evaluation_steps: [1024]
+  impulse.rollout.evaluation_frame_every: [32]
+  impulse.rollout.curriculum: [false, true]
+  impulse.optimiser.learn_rate: [0.01]
+  impulse.intervention.channels: [all]
+  impulse.intervention.spatial: [patch]
+  impulse.intervention.patch_size: [9]
+  impulse.intervention.duration: [1]
+  impulse.intervention.init_scale: [0.05]
+  impulse.intervention.restarts: [1, 4]
+  impulse.loss.regularisers.l2: [0.01]
+  impulse.repeat: [0]
+
+groups:
+  # Both transitions of the two patterns
+  - impulse.pair_source.source_index: [0, 1]
+    impulse.pair_source.target_index: [1, 0]
+
+branches:
+  - when: {checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde}
+    grid: {logging.wandb.tags: [[family:NCA, attractors:2]]}
+  - when: {checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23}
+    grid: {logging.wandb.tags: [[family:gNCA, attractors:2]]}

@@ -696,6 +696,9 @@ def test_attractor_contrast_objective_prefers_the_target_over_the_source_and_far
     assert value(far, contrast_only) < 1e-6
     with pytest.raises(ValueError, match="rollout states"):
         objective(0.0, 0.0, {})
+    # The unweighted contrast term, as logged under Loss/contrast
+    states = jnp.broadcast_to(attractors[0], (2, 4, 3, 3))
+    assert jnp.isclose(objective(0.0, 0.0, {}, states), objective.contrast(states))
 
 
 def test_curriculum_trains_on_a_quarter_to_all_of_the_rollout():
@@ -716,8 +719,19 @@ def test_curriculum_trains_on_a_quarter_to_all_of_the_rollout():
 
     stages = [optimiser._stage_rollout(index, 8) for index in range(8)]
     assert stages == [(2, 1), (2, 1), (4, 2), (4, 2), (6, 3), (6, 3), (8, 4), (8, 4)]
-    result = optimiser.train(iterations=8, batch_size=1, key=jax.random.PRNGKey(1), evaluation_steps=8)
+    logged = []
+
+    class StageLogger(TrainingLogger):
+        def log_training(self, metrics, step, log_every):
+            logged.append(metrics["rollout_steps"])
+
+    optimiser.logger = StageLogger()
+    result = optimiser.train(
+        iterations=8, batch_size=1, key=jax.random.PRNGKey(1), evaluation_steps=8, log_every=2
+    )
     assert result.evaluation_loss < result.baseline_evaluation_loss
+    # The training loss is logged at the length of the current stage
+    assert logged == [2, 4, 6, 8]
     # The first stage (2 steps, window 1) leaves room for a 2-step impulse only
     multistep = dict(arguments, model=AdditiveModel(channels=4))
     NCAImpulseOptimiser(intervention=_patch_impulse(1, (0.5, 0.5), duration=2), **multistep)

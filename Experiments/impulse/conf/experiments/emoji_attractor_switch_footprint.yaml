@@ -1,0 +1,45 @@
+# Diagnostic C: how large must an impulse be to switch the whole pattern?
+# Square patches of 9 to 33 pixels and Gaussian impulses of growing width
+# on the 2-attractor NCA and gNCA models. Compare with the smallest
+# switching window of the graft test in impulse_explorer.py. Set the
+# objective (and restarts) from the result of emoji_attractor_switch_ablation.
+experiment_name: emoji_attractor_switch_footprint_v1
+entrypoint: Experiments.impulse.optimise:run
+output_subdir: generated/emoji_attractor_switch_footprint_v1
+seed_mode: index
+
+grid:
+  checkpoint.model_id:
+    - 20261022T142152Z-cfgcef8472c82ef-32f4ecde
+    - 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23
+  impulse.iterations: [4000]
+  impulse.batch_size: [8]
+  impulse.pair_source.type: [stable_attractor]
+  impulse.objective.type: [targeted]
+  impulse.rollout.steps: [256]
+  impulse.rollout.loss_window: [64]
+  impulse.rollout.evaluation_steps: [1024]
+  impulse.rollout.evaluation_frame_every: [32]
+  impulse.rollout.curriculum: [false]
+  impulse.optimiser.learn_rate: [0.01]
+  impulse.intervention.channels: [all]
+  impulse.intervention.duration: [1]
+  impulse.intervention.init_scale: [0.05]
+  impulse.intervention.restarts: [4]
+  impulse.loss.regularisers.l2: [0.01]
+  impulse.repeat: [0]
+
+groups:
+  # Patches of k x k pixels, then Gaussians of std width (patch_size unused)
+  - impulse.intervention.spatial: [patch, patch, patch, patch, local, local, local]
+    impulse.intervention.patch_size: [9, 17, 25, 33, 3, 3, 3]
+    impulse.intervention.width: [0.2, 0.2, 0.2, 0.2, 0.1, 0.2, 0.3]
+  # Both transitions of the two patterns
+  - impulse.pair_source.source_index: [0, 1]
+    impulse.pair_source.target_index: [1, 0]
+
+branches:
+  - when: {checkpoint.model_id: 20261022T142152Z-cfgcef8472c82ef-32f4ecde}
+    grid: {logging.wandb.tags: [[family:NCA, attractors:2]]}
+  - when: {checkpoint.model_id: 20261024T150505Z-cfg0d4e9d3c9d80-52c43b23}
+    grid: {logging.wandb.tags: [[family:gNCA, attractors:2]]}

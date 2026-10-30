@@ -257,7 +257,7 @@ class NCAImpulseOptimiser:
         metrics = intervention_metrics(batch.initial_states, deltas)
         penalty = weighted_regulariser(metrics, self.regulariser_coefficients)
         total_loss = self.objective(target_loss, penalty, metrics, predictions)
-        return {
+        values = {
             "total_loss": total_loss,
             "target_loss": target_loss,
             "regulariser": penalty,
@@ -267,6 +267,10 @@ class NCAImpulseOptimiser:
             "perturbed_initial_states": perturbed,
             "final_states": final_states,
         }
+        # Unweighted contrast term of an attractor_contrast objective
+        if hasattr(self.objective, "contrast"):
+            values["contrast"] = self.objective.contrast(predictions)
+        return values
 
     def _make_step(self, rollout_steps, loss_window):
         """Build the compiled intervention update function for one rollout length."""
@@ -410,7 +414,8 @@ class NCAImpulseOptimiser:
                         "metrics": metrics,
                     }
                 switch_rate = self._switch_rate(metrics["final_states"], start.batch)
-                log(start, "log_training", {**metrics, "switch_rate": switch_rate}, index, log_every)
+                training = {**metrics, "switch_rate": switch_rate, "rollout_steps": rollout[0]}
+                log(start, "log_training", training, index, log_every)
                 log(start, "log_validation", validation, index)
 
         def new_start(intervention, scouting):

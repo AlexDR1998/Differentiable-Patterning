@@ -37,6 +37,7 @@ with app.setup(hide_code=True):
     from Experiments.impulse.analysis import (
         add_state_noise,
         distance_over_time,
+        graft_switch_map,
         grow_attractors,
         load_model_and_data,
         move_intervention,
@@ -393,6 +394,75 @@ def _(
         _fig.colorbar(_image, ax=_axes[2])
     _fig.tight_layout()
     _fig
+    return
+
+
+@app.cell
+def _(pattern_count):
+    graft_source = mo.ui.number(start=0, stop=pattern_count - 1, value=0, label="Source pattern")
+    graft_target = mo.ui.number(start=0, stop=pattern_count - 1, value=min(1, pattern_count - 1), label="Target pattern")
+    graft_sizes = mo.ui.text(value="5, 9, 17, 25, 33, full", label="Window sizes (pixels)")
+    graft_grid = mo.ui.number(start=1, stop=12, value=4, label="Centre grid size")
+    run_graft = mo.ui.run_button(label="Compute graft test")
+    mo.vstack(
+        [
+            mo.md(
+                "- Graft test: copy the target's grown state into a k x k window of the grown source, then run on\n"
+                "- A k x k graft is a one-step k x k patch impulse, so it is the best such an impulse can do"
+            ),
+            mo.hstack([graft_source, graft_target, graft_sizes, graft_grid]),
+            run_graft,
+        ]
+    )
+    return graft_grid, graft_sizes, graft_source, graft_target, run_graft
+
+
+@app.cell
+def _(
+    attractors,
+    evaluation_steps,
+    graft_grid,
+    graft_sizes,
+    graft_source,
+    graft_target,
+    key,
+    model,
+    observed_channels,
+    references,
+    run_graft,
+):
+    mo.stop(not run_graft.value, mo.md("Press the button to run"))
+    # "full": a window larger than the lattice wherever it is centred
+    _full = 2 * max(attractors.shape[-2:])
+    _sizes = [_full if _value.strip() == "full" else int(_value) for _value in graft_sizes.value.split(",")]
+    _labels = ["full" if _size == _full else f"{_size} px" for _size in _sizes]
+    _n = int(graft_grid.value)
+    _positions = (np.arange(_n) + 0.5) / _n
+    _rates = graft_switch_map(
+        model,
+        attractors[int(graft_source.value)],
+        attractors[int(graft_target.value)],
+        references,
+        int(graft_target.value),
+        _sizes,
+        [(_y, _x) for _y in _positions for _x in _positions],
+        int(evaluation_steps.value),
+        observed_channels,
+        jax.random.fold_in(key, 6),
+    ).reshape((len(_sizes), _n, _n))
+    _fig, _axes = plt.subplots(1, len(_sizes), figsize=(2.6 * len(_sizes), 2.8), squeeze=False)
+    for _axis, _label, _map in zip(_axes[0], _labels, _rates):
+        _axis.imshow(_map, vmin=0, vmax=1, cmap="Blues", extent=(0, 1, 1, 0))
+        _axis.set_title(f"{_label}: best {_map.max():.2f}", fontsize=9)
+    _fig.suptitle(f"Fraction ending at pattern {int(graft_target.value)}, by window centre", fontsize=10)
+    _fig.tight_layout()
+    _switching = [_label for _label, _map in zip(_labels, _rates) if _map.max() >= 0.5]
+    mo.vstack(
+        [
+            mo.md(f"- Smallest window that switches at least half the samples: **{_switching[0] if _switching else 'none'}**"),
+            _fig,
+        ]
+    )
     return
 
 

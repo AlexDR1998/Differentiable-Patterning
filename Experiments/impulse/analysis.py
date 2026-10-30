@@ -211,6 +211,41 @@ def success_rate(model, interventions, states, references, target, steps, observ
     return jnp.asarray(rates)
 
 
+def graft(sources, targets, size, centre):
+    """Copy ``targets`` into a ``size`` x ``size`` window of ``sources``, all channels.
+
+    ``sources`` and ``targets`` are [batch, C, H, W] (or broadcastable).
+    ``centre`` is (row, column) from 0 to 1, with pixel i at i / (H - 1) as
+    for patch impulses. Size 0 changes nothing. A graft is the same as a
+    one-step patch impulse of value target - source, so it shows the best
+    such an impulse can do.
+    """
+
+    height, width = sources.shape[-2:]
+    top = round(centre[0] * (height - 1)) - size // 2
+    left = round(centre[1] * (width - 1)) - size // 2
+    rows = (np.arange(height) >= top) & (np.arange(height) < top + size)
+    columns = (np.arange(width) >= left) & (np.arange(width) < left + size)
+    inside = jnp.asarray(rows[:, None] & columns[None, :])
+    return jnp.where(inside, targets, sources)
+
+
+def graft_switch_map(model, sources, targets, references, target, sizes, centres, steps, observed_channels, key):
+    """Fraction of grafted rollouts that end nearest pattern ``target``: [size, centre].
+
+    Each source state gets the window of its paired target state (see
+    ``graft``) for every size and centre, then runs ``steps`` NCA steps.
+    """
+
+    rates = np.zeros((len(sizes), len(centres)))
+    for i, size in enumerate(sizes):
+        for j, centre in enumerate(centres):
+            final = _rollout(model, None, graft(sources, targets, size, centre), steps, key)
+            labels = jnp.argmin(attractor_distances(final, references, observed_channels), axis=1)
+            rates[i, j] = float(jnp.mean(labels == target))
+    return rates
+
+
 def add_state_noise(states, strength, key):
     """Gaussian noise of standard deviation ``strength`` on every channel."""
 

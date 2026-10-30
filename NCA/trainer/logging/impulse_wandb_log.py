@@ -121,8 +121,13 @@ class ImpulseLogger(WandbLogger):
             scalars[f"Intervention/{name}"] = float(value)
         for name, value in metrics.get("gradient_norms", {}).items():
             scalars[f"Gradient/{name}"] = float(value)
+        if "contrast" in metrics:
+            scalars["Loss/contrast"] = float(metrics["contrast"])
         if "switch_rate" in metrics:
             scalars["Training/switch_rate"] = float(metrics["switch_rate"])
+        # The curriculum stage: Loss/target jumps when it lengthens
+        if "rollout_steps" in metrics:
+            scalars["Training/rollout_steps"] = int(metrics["rollout_steps"])
         self.log_scalars(scalars, step=step)
 
     def log_validation(self, values, step):
