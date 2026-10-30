@@ -40,5 +40,5 @@ grid:
 
 groups:
   # budget: patches * 25 pixels
-  - impulse.intervention.patches: [1, 4, 9, 16, 36, 64]
-    impulse.intervention.budget: [25, 100, 225, 400, 900, 1600]
+  - impulse.intervention.patches: [1, 4, 9, 16]
+    impulse.intervention.budget: [25, 100, 225, 400]

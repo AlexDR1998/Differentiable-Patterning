@@ -41,5 +41,5 @@ grid:
 
 groups:
   # budget: grid pixels on the 120 x 120 lattice
-  - impulse.intervention.stride: [24, 16, 12, 8, 6, 4, 3, 2, 1]
-    impulse.intervention.budget: [25, 64, 100, 225, 400, 900, 1600, 3600, 14400]
+  - impulse.intervention.stride: [24, 16, 12, 8, 4, 3, 2, 1]
+    impulse.intervention.budget: [25, 64, 100, 225, 900, 1600, 3600, 14400]
