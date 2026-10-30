@@ -97,15 +97,24 @@ groups:
   # One entry per WT parent; the lists are zipped. run.t follows the
   # convective scaling t = 128 * (16 / downsample).
   - initialization.model_id:
-      - 20261020T133108Z-cfgb868f4b24ea6-a2424610 #REPLACE_WITH_MAX_DS8_MODEL_ID
-      - 20261019T234206Z-cfg759a90114671-4d3e8464 #REPLACE_WITH_MAX_DS16_MODEL_ID
-      - 20261019T194210Z-cfg32cb61b82380-99035631 #REPLACE_WITH_MAX_DS32_MODEL_ID
-      - 20261020T102205Z-cfg197ce74c1c51-fbe1028f #REPLACE_WITH_SUM_DS8_MODEL_ID
-      - 20261019T233520Z-cfg979b0cf6ca9e-5e9be5f3 #REPLACE_WITH_SUM_DS16_MODEL_ID
-      - 20261019T230014Z-cfge1d1713ffd55-d4dc7ac3 #REPLACE_WITH_SUM_DS32_MODEL_ID
-      - 20261020T130354Z-cfg804d8e6ff085-0daa4dab #REPLACE_WITH_SLICE_DS8_MODEL_ID
-      - 20261020T004544Z-cfg91bbc2de4c16-873cd8a5 #REPLACE_WITH_SLICE_DS16_MODEL_ID
-      - 20261019T185541Z-cfg50d049d71cfc-442d25fc #REPLACE_WITH_SLICE_D
+      # - 20261020T133108Z-cfgb868f4b24ea6-a2424610 #REPLACE_WITH_MAX_DS8_MODEL_ID
+      # - 20261019T234206Z-cfg759a90114671-4d3e8464 #REPLACE_WITH_MAX_DS16_MODEL_ID
+      # - 20261019T194210Z-cfg32cb61b82380-99035631 #REPLACE_WITH_MAX_DS32_MODEL_ID
+      # - 20261020T102205Z-cfg197ce74c1c51-fbe1028f #REPLACE_WITH_SUM_DS8_MODEL_ID
+      # - 20261019T233520Z-cfg979b0cf6ca9e-5e9be5f3 #REPLACE_WITH_SUM_DS16_MODEL_ID
+      # - 20261019T230014Z-cfge1d1713ffd55-d4dc7ac3 #REPLACE_WITH_SUM_DS32_MODEL_ID
+      # - 20261020T130354Z-cfg804d8e6ff085-0daa4dab #REPLACE_WITH_SLICE_DS8_MODEL_ID
+      # - 20261020T004544Z-cfg91bbc2de4c16-873cd8a5 #REPLACE_WITH_SLICE_DS16_MODEL_ID
+      # - 20261019T185541Z-cfg50d049d71cfc-442d25fc #REPLACE_WITH_SLICE_DS32_MODEL_ID
+      - 20261027T151447Z-cfg49b16c414b55-da029154 #REPLACE_WITH_MAX_DS8_MODEL_ID
+      - 20261027T152010Z-cfg6741b54c32ce-5e3b49fe #REPLACE_WITH_MAX_DS16_MODEL_ID
+      - 20261027T151844Z-cfg4075ae24e245-36c9d705 #REPLACE_WITH_MAX_DS32_MODEL_ID
+      - 20261027T212939Z-cfg48df3cfa8558-ac5a0126 #REPLACE_WITH_SUM_DS8_MODEL_ID
+      -  #REPLACE_WITH_SUM_DS16_MODEL_ID
+      -  #REPLACE_WITH_SUM_DS32_MODEL_ID
+      -  #REPLACE_WITH_SLICE_DS8_MODEL_ID
+      -  #REPLACE_WITH_SLICE_DS16_MODEL_ID
+      -  #REPLACE_WITH_SLICE_DS32_MODEL_ID
     data.micropattern.projection: [max, max, max, sum, sum, sum, slice, slice, slice]
     data.downsample: [8, 16, 32, 8, 16, 32, 8, 16, 32]
     run.t: [256, 128, 64, 256, 128, 64, 256, 128, 64]
@@ -114,8 +123,8 @@ groups:
     # Must be the parent's split.
     data.micropattern.train_replicates:
       - [3, 4]
-      - [1, 2]
-      - [1, 2]
+      - [3, 4]
+      - [3, 4]
       - [3, 4]
       - [3, 4]
       - [3, 4]
@@ -124,8 +133,8 @@ groups:
       - [1, 2]
     data.micropattern.validation_replicates:
       - [1, 2]
-      - [3, 4]
-      - [3, 4]
+      - [1, 2]
+      - [1, 2]
       - [1, 2]
       - [1, 2]
       - [1, 2]
