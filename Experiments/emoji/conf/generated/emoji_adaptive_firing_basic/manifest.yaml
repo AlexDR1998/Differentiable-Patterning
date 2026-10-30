@@ -1,0 +1,1436 @@
+experiment_name: emoji_adaptive_firing_basic
+entrypoint: Experiments.emoji.train:run
+base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/base_config.yaml
+sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/experiments/emoji_adaptive_firing_basic.yaml
+output_dir: Experiments/emoji/conf/generated/emoji_adaptive_firing_basic
+count: 9
+configs:
+- index: 4
+  overrides:
+    logging.wandb.project: nca-emoji-adaptive-firing
+    logging.wandb.group: emoji-adaptive-firing-basic
+    model.family: NCA
+    model.channels: 16
+    model.fire_rate: 0.5
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    data.emoji.target_repeats: 2
+    data.emoji.regeneration.enabled: false
+    data.batches: 2
+    data.downsample: 2
+    run.t: 256
+    run.iterations: 16000
+    run.repeat: 0
+    loss.terms:
+    - l2
+    experiment.name: emoji_adaptive_firing_basic
+    seed: 321236752
+    logging.wandb.tag_keys:
+    - model.family
+    - model.firing_estimator
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 321236752
+    experiment:
+      name: emoji_adaptive_firing_basic
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: false
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: NCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+    run:
+      t: 256
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 16000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-adaptive-firing
+        group: emoji-adaptive-firing-basic
+        tags: null
+        tag_keys:
+        - model.family
+        - model.firing_estimator
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 6
+  overrides:
+    logging.wandb.project: nca-emoji-adaptive-firing
+    logging.wandb.group: emoji-adaptive-firing-basic
+    model.family: aNCA
+    model.channels: 16
+    model.fire_rate: 0.5
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    data.emoji.target_repeats: 2
+    data.emoji.regeneration.enabled: false
+    data.batches: 2
+    data.downsample: 2
+    run.t: 256
+    run.iterations: 16000
+    run.repeat: 0
+    loss.terms:
+    - l2
+    model.firing_estimator: straight_through
+    loss.regularisers.firing_energy: 0.0
+    experiment.name: emoji_adaptive_firing_basic
+    seed: 498617001
+    logging.wandb.tag_keys:
+    - model.family
+    - model.firing_estimator
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 498617001
+    experiment:
+      name: emoji_adaptive_firing_basic
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: false
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: aNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: straight_through
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+    run:
+      t: 256
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 16000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-adaptive-firing
+        group: emoji-adaptive-firing-basic
+        tags: null
+        tag_keys:
+        - model.family
+        - model.firing_estimator
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 8
+  overrides:
+    logging.wandb.project: nca-emoji-adaptive-firing
+    logging.wandb.group: emoji-adaptive-firing-basic
+    model.family: aNCA
+    model.channels: 16
+    model.fire_rate: 0.5
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    data.emoji.target_repeats: 2
+    data.emoji.regeneration.enabled: false
+    data.batches: 2
+    data.downsample: 2
+    run.t: 256
+    run.iterations: 16000
+    run.repeat: 0
+    loss.terms:
+    - l2
+    model.firing_estimator: straight_through
+    loss.regularisers.firing_energy: 0.01
+    experiment.name: emoji_adaptive_firing_basic
+    seed: 1754003658
+    logging.wandb.tag_keys:
+    - model.family
+    - model.firing_estimator
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 1754003658
+    experiment:
+      name: emoji_adaptive_firing_basic
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: false
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: aNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: straight_through
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.01
+    run:
+      t: 256
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 16000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-adaptive-firing
+        group: emoji-adaptive-firing-basic
+        tags: null
+        tag_keys:
+        - model.family
+        - model.firing_estimator
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 7
+  overrides:
+    logging.wandb.project: nca-emoji-adaptive-firing
+    logging.wandb.group: emoji-adaptive-firing-basic
+    model.family: aNCA
+    model.channels: 16
+    model.fire_rate: 0.5
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    data.emoji.target_repeats: 2
+    data.emoji.regeneration.enabled: false
+    data.batches: 2
+    data.downsample: 2
+    run.t: 256
+    run.iterations: 16000
+    run.repeat: 0
+    loss.terms:
+    - l2
+    model.firing_estimator: straight_through
+    loss.regularisers.firing_energy: 0.1
+    experiment.name: emoji_adaptive_firing_basic
+    seed: 2008486473
+    logging.wandb.tag_keys:
+    - model.family
+    - model.firing_estimator
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 2008486473
+    experiment:
+      name: emoji_adaptive_firing_basic
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: false
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: aNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: straight_through
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.1
+    run:
+      t: 256
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 16000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-adaptive-firing
+        group: emoji-adaptive-firing-basic
+        tags: null
+        tag_keys:
+        - model.family
+        - model.firing_estimator
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 2
+  overrides:
+    logging.wandb.project: nca-emoji-adaptive-firing
+    logging.wandb.group: emoji-adaptive-firing-basic
+    model.family: aNCA
+    model.channels: 16
+    model.fire_rate: 0.5
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    data.emoji.target_repeats: 2
+    data.emoji.regeneration.enabled: false
+    data.batches: 2
+    data.downsample: 2
+    run.t: 256
+    run.iterations: 16000
+    run.repeat: 0
+    loss.terms:
+    - l2
+    model.firing_estimator: straight_through
+    loss.regularisers.firing_energy: 1.0
+    experiment.name: emoji_adaptive_firing_basic
+    seed: 1783670659
+    logging.wandb.tag_keys:
+    - model.family
+    - model.firing_estimator
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 1783670659
+    experiment:
+      name: emoji_adaptive_firing_basic
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: false
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: aNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: straight_through
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 1.0
+    run:
+      t: 256
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 16000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-adaptive-firing
+        group: emoji-adaptive-firing-basic
+        tags: null
+        tag_keys:
+        - model.family
+        - model.firing_estimator
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 1
+  overrides:
+    logging.wandb.project: nca-emoji-adaptive-firing
+    logging.wandb.group: emoji-adaptive-firing-basic
+    model.family: aNCA
+    model.channels: 16
+    model.fire_rate: 0.5
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    data.emoji.target_repeats: 2
+    data.emoji.regeneration.enabled: false
+    data.batches: 2
+    data.downsample: 2
+    run.t: 256
+    run.iterations: 16000
+    run.repeat: 0
+    loss.terms:
+    - l2
+    model.firing_estimator: expected
+    loss.regularisers.firing_energy: 0.0
+    experiment.name: emoji_adaptive_firing_basic
+    seed: 1146111162
+    logging.wandb.tag_keys:
+    - model.family
+    - model.firing_estimator
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 1146111162
+    experiment:
+      name: emoji_adaptive_firing_basic
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: false
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: aNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: expected
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+    run:
+      t: 256
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 16000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-adaptive-firing
+        group: emoji-adaptive-firing-basic
+        tags: null
+        tag_keys:
+        - model.family
+        - model.firing_estimator
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 5
+  overrides:
+    logging.wandb.project: nca-emoji-adaptive-firing
+    logging.wandb.group: emoji-adaptive-firing-basic
+    model.family: aNCA
+    model.channels: 16
+    model.fire_rate: 0.5
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    data.emoji.target_repeats: 2
+    data.emoji.regeneration.enabled: false
+    data.batches: 2
+    data.downsample: 2
+    run.t: 256
+    run.iterations: 16000
+    run.repeat: 0
+    loss.terms:
+    - l2
+    model.firing_estimator: expected
+    loss.regularisers.firing_energy: 0.01
+    experiment.name: emoji_adaptive_firing_basic
+    seed: 1844544060
+    logging.wandb.tag_keys:
+    - model.family
+    - model.firing_estimator
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 1844544060
+    experiment:
+      name: emoji_adaptive_firing_basic
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: false
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: aNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: expected
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.01
+    run:
+      t: 256
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 16000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-adaptive-firing
+        group: emoji-adaptive-firing-basic
+        tags: null
+        tag_keys:
+        - model.family
+        - model.firing_estimator
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 0
+  overrides:
+    logging.wandb.project: nca-emoji-adaptive-firing
+    logging.wandb.group: emoji-adaptive-firing-basic
+    model.family: aNCA
+    model.channels: 16
+    model.fire_rate: 0.5
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    data.emoji.target_repeats: 2
+    data.emoji.regeneration.enabled: false
+    data.batches: 2
+    data.downsample: 2
+    run.t: 256
+    run.iterations: 16000
+    run.repeat: 0
+    loss.terms:
+    - l2
+    model.firing_estimator: expected
+    loss.regularisers.firing_energy: 0.1
+    experiment.name: emoji_adaptive_firing_basic
+    seed: 2095036715
+    logging.wandb.tag_keys:
+    - model.family
+    - model.firing_estimator
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 2095036715
+    experiment:
+      name: emoji_adaptive_firing_basic
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: false
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: aNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: expected
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.1
+    run:
+      t: 256
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 16000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-adaptive-firing
+        group: emoji-adaptive-firing-basic
+        tags: null
+        tag_keys:
+        - model.family
+        - model.firing_estimator
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 3
+  overrides:
+    logging.wandb.project: nca-emoji-adaptive-firing
+    logging.wandb.group: emoji-adaptive-firing-basic
+    model.family: aNCA
+    model.channels: 16
+    model.fire_rate: 0.5
+    data.emoji.task: multi_attractor
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    data.emoji.target_repeats: 2
+    data.emoji.regeneration.enabled: false
+    data.batches: 2
+    data.downsample: 2
+    run.t: 256
+    run.iterations: 16000
+    run.repeat: 0
+    loss.terms:
+    - l2
+    model.firing_estimator: expected
+    loss.regularisers.firing_energy: 1.0
+    experiment.name: emoji_adaptive_firing_basic
+    seed: 1194111944
+    logging.wandb.tag_keys:
+    - model.family
+    - model.firing_estimator
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 1194111944
+    experiment:
+      name: emoji_adaptive_firing_basic
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: false
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: aNCA
+      channels: 16
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: expected
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 1.0
+    run:
+      t: 256
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 16000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-adaptive-firing
+        group: emoji-adaptive-firing-basic
+        tags: null
+        tag_keys:
+        - model.family
+        - model.firing_estimator
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+emit_files: false

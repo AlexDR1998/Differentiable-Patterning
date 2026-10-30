@@ -109,7 +109,7 @@ loss:
     intermediate_state: 1.0
     boundary: 0.0
     contiguous_growth: 1.0
-    localised_hidden: 0.0
+    localised_hidden: 1.0
     update_sensitivity: 0.0
     perturbation_conservation: 0.0
     hidden_state_size: 0.0

@@ -14,15 +14,15 @@ grid:
   model.fire_rate: [0.5]
   data.emoji.task: [multi_attractor]
   data.emoji.pairs:
-    - - initial: {image: crab.png, mode: patch, size: 12}
+    - - initial: {image: crab.png, mode: patch, size: 6}
         target: crab.png
   data.emoji.target_repeats: [2]
   data.emoji.regeneration.enabled: [false]
   data.batches: [2]
   data.downsample: [2]
-  run.t: [64]
+  run.t: [256]
   run.iterations: [16000]
-  run.repeat: [0, 1]
+  run.repeat: [0,]
   loss.terms: [[l2]]
 # firing_energy only exists for models with a learned firing rate
 branches:
