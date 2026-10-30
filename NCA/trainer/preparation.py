@@ -183,7 +183,7 @@ def prepare_training(trainer, *, key, timesteps=None, loss_overrides=None):
         iterations=loop.iterations,
         # Only compare losses once the loss weights have stopped changing.
         checkpoint_warmup=max(
-            loop.checkpoint_warmup,
+            round(loop.checkpoint_warmup_fraction * loop.iterations),
             final_transition_iteration(loss_config, loop.iterations) - 1,
         ),
         log_interval=trainer.trainer_config.log_every,

@@ -278,9 +278,9 @@ def run_loop(
     )
     admission_config = trainer.trainer_config.pool_admission
     admission = (
-        TimePoolAdmissionController(admission_config)
+        TimePoolAdmissionController(admission_config, setup.iterations)
         if setup.is_multi_target
-        else PoolAdmissionController(admission_config)
+        else PoolAdmissionController(admission_config, setup.iterations)
     )
     best_model = trainer.model
     trace_start = min(5, max(0, setup.iterations - 1))

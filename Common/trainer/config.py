@@ -53,7 +53,8 @@ class LossWeightScheduleConfig(ConfigValue):
 class OptimiserConfig(ConfigValue):
     type: str = "nadam"
     learn_rate: float = 1e-3
-    warmup_steps: int = 64
+    # Linear learning-rate warmup over this fraction of run.iterations.
+    warmup_fraction: float = 0.03
     decay_rate: float = 0.99
     blocknorm: bool = True
     sam: bool = False
@@ -67,8 +68,8 @@ class OptimiserConfig(ConfigValue):
     def __post_init__(self):
         if self.learn_rate <= 0:
             raise ValueError("optimiser.learn_rate must be positive")
-        if self.warmup_steps < 0:
-            raise ValueError("optimiser.warmup_steps cannot be negative")
+        if not 0 <= self.warmup_fraction < 1:
+            raise ValueError("optimiser.warmup_fraction must be in [0, 1)")
 
 
 @dataclass(frozen=True)

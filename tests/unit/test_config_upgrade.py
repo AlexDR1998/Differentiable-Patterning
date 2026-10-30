@@ -18,9 +18,24 @@ def _current_micropattern_config():
     return yaml.safe_load(Path("Experiments/micropatterns/conf/base_config.yaml").read_text())
 
 
+def _with_iteration_counts(value):
+    """Write the warmups as iteration counts, as schema version 9 and earlier did."""
+    iterations = value["run"]["iterations"]
+    value["run"]["checkpoint_warmup"] = round(
+        value["run"].pop("checkpoint_warmup_fraction") * iterations
+    )
+    value["optimiser"]["warmup_steps"] = round(
+        value["optimiser"].pop("warmup_fraction") * iterations
+    )
+    value["trainer"]["pool_admission"]["warmup"] = value["trainer"]["pool_admission"].pop(
+        "warmup_fraction"
+    )
+    return value
+
+
 def _old_sweep_layout():
     """A micropattern config written in the version-1 sweep/manifest layout."""
-    value = _current_micropattern_config()
+    value = _with_iteration_counts(_current_micropattern_config())
     value["schema_version"] = 1
     value["knockout"] = value["data"].pop("knockout")
     pool = value["trainer"].pop("pool_admission")
@@ -32,7 +47,7 @@ def _old_sweep_layout():
 
 def _old_bundle_layout():
     """The same config as a version-1 model bundle stored it."""
-    value = _current_micropattern_config()
+    value = _with_iteration_counts(_current_micropattern_config())
     data = value["data"]
     return {
         "schema_version": 1,
@@ -84,8 +99,43 @@ def test_null_pool_admission_warmup_follows_checkpoint_warmup():
 
     config = experiment_config_from_mapping(value)
 
-    assert config.run.checkpoint_warmup == 17
-    assert config.trainer.pool_admission.warmup == 17
+    assert config.run.checkpoint_warmup_fraction == 17 / config.run.iterations
+    assert config.trainer.pool_admission.warmup_fraction == 17 / config.run.iterations
+
+
+def test_version_9_iteration_counts_become_the_same_iterations():
+    value = yaml.safe_load(Path("Experiments/emoji/conf/base_config.yaml").read_text())
+    value["schema_version"] = 9
+    value["run"]["iterations"] = 7000
+    del value["run"]["checkpoint_warmup_fraction"]
+    del value["optimiser"]["warmup_fraction"]
+    del value["trainer"]["pool_admission"]["warmup_fraction"]
+    terminal = value["data"]["emoji"]["terminal_carry"]
+    del terminal["start_fraction"], terminal["end_fraction"]
+    value["run"]["checkpoint_warmup"] = 13
+    value["optimiser"]["warmup_steps"] = 64
+    value["trainer"]["pool_admission"]["warmup"] = 101
+    terminal.update(start_iteration=1000, schedule_iterations=3333)
+
+    config = experiment_config_from_mapping(value)
+
+    def iterations(fraction):
+        return round(fraction * config.run.iterations)
+
+    assert iterations(config.run.checkpoint_warmup_fraction) == 13
+    assert iterations(config.optimiser.warmup_fraction) == 64
+    assert iterations(config.trainer.pool_admission.warmup_fraction) == 101
+    assert iterations(config.data.emoji.terminal_carry.start_fraction) == 1000
+    # The ramp of 3333 iterations from 1000 ends at 4333.
+    assert iterations(config.data.emoji.terminal_carry.end_fraction) == 4333
+
+
+def test_current_layout_rejects_iteration_counts():
+    value = yaml.safe_load(Path("Experiments/emoji/conf/base_config.yaml").read_text())
+    value["data"]["emoji"]["terminal_carry"]["start_iteration"] = 1000
+
+    with pytest.raises(ValueError, match="start_iteration"):
+        experiment_config_from_mapping(value)
 
 
 def test_old_filename_mode_is_dropped():

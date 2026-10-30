@@ -14,10 +14,10 @@ configs:
     model.channels: 16
     run.t: 16
     run.iterations: 60
-    run.checkpoint_warmup: 5
-    optimiser.warmup_steps: 10
+    run.checkpoint_warmup_fraction: 0.1
+    optimiser.warmup_fraction: 0.2
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-impulse-restarts-curriculum-contrast
+    logging.wandb.group: smoke_snowmelt-iteration-fractions
     model.family: NCA
     data.snowmelt.target_channels:
     - SCA
@@ -34,7 +34,7 @@ configs:
     - run.interval_mode
     - trainer.loop_autodiff
   config:
-    schema_version: 9
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -87,7 +87,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -96,7 +96,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 10
+      warmup_fraction: 0.2
       decay_rate: 0.99
       schedule:
         type: cosine
@@ -122,7 +122,7 @@ configs:
       reference_interval: 20
       interval_steps: null
       iterations: 60
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.1
       write_images: true
       write_videos: true
     logging:
@@ -133,7 +133,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-impulse-restarts-curriculum-contrast
+        group: smoke_snowmelt-iteration-fractions
         tags: null
         tag_keys:
         - model.family
@@ -157,10 +157,10 @@ configs:
     model.channels: 16
     run.t: 16
     run.iterations: 60
-    run.checkpoint_warmup: 5
-    optimiser.warmup_steps: 10
+    run.checkpoint_warmup_fraction: 0.1
+    optimiser.warmup_fraction: 0.2
     trainer.log_every: 20
-    logging.wandb.group: smoke_snowmelt-impulse-restarts-curriculum-contrast
+    logging.wandb.group: smoke_snowmelt-iteration-fractions
     model.family: gNCA
     data.snowmelt.target_channels:
     - NDSI
@@ -182,7 +182,7 @@ configs:
     - run.interval_mode
     - trainer.loop_autodiff
   config:
-    schema_version: 9
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_snowmelt
@@ -240,7 +240,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -249,7 +249,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 10
+      warmup_fraction: 0.2
       decay_rate: 0.99
       schedule:
         type: cosine
@@ -275,7 +275,7 @@ configs:
       reference_interval: 20
       interval_steps: null
       iterations: 60
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.1
       write_images: true
       write_videos: true
     logging:
@@ -286,7 +286,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_snowmelt-impulse-restarts-curriculum-contrast
+        group: smoke_snowmelt-iteration-fractions
         tags: null
         tag_keys:
         - model.family

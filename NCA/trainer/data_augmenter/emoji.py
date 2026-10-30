@@ -16,16 +16,19 @@ from NCA.trainer.data_augmenter.transforms import (
 )
 
 
-def schedule_probability(schedule, i):
+def schedule_probability(schedule, i, total_iterations):
     """Probability at iteration ``i`` from a schedule with ``enabled``,
-    ``start_iteration``, ``schedule_iterations``, ``initial_probability`` and
-    ``final_probability`` (e.g. ``data.emoji.regeneration``)."""
+    ``start_fraction``, ``end_fraction``, ``initial_probability`` and
+    ``final_probability`` (e.g. ``data.emoji.regeneration``). The fractions
+    are of ``total_iterations``."""
     if not schedule.enabled:
         return 0.0
+    start = round(schedule.start_fraction * total_iterations)
+    end = round(schedule.end_fraction * total_iterations)
     return scheduled_probability(
         i,
-        schedule.start_iteration,
-        schedule.schedule_iterations,
+        start,
+        end - start,
         schedule.initial_probability,
         schedule.final_probability,
     )
@@ -53,8 +56,8 @@ class EmojiAugmenter(PoolAugmenter):
     * ``noise_strength``: Gaussian noise is blended in (``noise_mode`` "full",
       "observable" or "hidden" channels).
 
-    ``terminal_carry`` and ``regeneration`` are probability schedules (see
-    ``schedule_probability``). The data is repeated ``batches`` times and
+    ``terminal_carry`` and ``regeneration`` are probability schedules over
+    ``total_iterations`` training iterations (see ``schedule_probability``). The data is repeated ``batches`` times and
     padded spatially by ``pad`` = (top, bottom, left, right), or not if None.
     ``hidden_seeds`` ([trajectory, hidden channels, H, W], before padding)
     sets the hidden channels of each initial condition, which are otherwise zero.
@@ -72,6 +75,7 @@ class EmojiAugmenter(PoolAugmenter):
         noise_mode="full",
         terminal_carry=None,
         regeneration=None,
+        total_iterations=None,
         hidden_seeds=None,
     ):
         super().__init__(data, hidden_channels)
@@ -80,6 +84,9 @@ class EmojiAugmenter(PoolAugmenter):
         self.noise_mode = noise_mode
         self.terminal_carry = terminal_carry
         self.regeneration = regeneration
+        if total_iterations is None and (terminal_carry is not None or regeneration is not None):
+            raise ValueError("terminal_carry and regeneration schedules need total_iterations")
+        self.total_iterations = total_iterations
         # Key of the last shift, so it can be undone before the next step
         self.previous_key = None
         data = self.data_saved
@@ -107,7 +114,7 @@ class EmojiAugmenter(PoolAugmenter):
             x = terminal_carry(
                 x,
                 final_states,
-                schedule_probability(self.terminal_carry, i),
+                schedule_probability(self.terminal_carry, i, self.total_iterations),
                 jax.random.fold_in(key, 1),
             )
 
@@ -118,7 +125,7 @@ class EmojiAugmenter(PoolAugmenter):
             damaged = zero_random_circles(x, key)
             damage = jax.random.bernoulli(
                 jax.random.fold_in(key, 2),
-                schedule_probability(self.regeneration, i),
+                schedule_probability(self.regeneration, i, self.total_iterations),
                 (len(x),),
             )
             x = [jnp.where(damage[b], damaged[b], x[b]) for b in range(len(x))]

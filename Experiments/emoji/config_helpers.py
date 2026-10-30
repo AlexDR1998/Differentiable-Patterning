@@ -37,8 +37,8 @@ def build_data_config_string(data_config):
     default_regeneration = (
         regeneration.initial_probability == 1.0
         and regeneration.final_probability == 1.0
-        and regeneration.start_iteration == 0
-        and regeneration.schedule_iterations == 0
+        and regeneration.start_fraction == 0
+        and regeneration.end_fraction == 0
     )
     if regeneration.enabled and not default_regeneration:
         regeneration_str = (
@@ -221,8 +221,11 @@ def load_data(data_config, impath=None):
     return data, cfg_str
 
 
-def build_data_augmenter(data_config, data, model_channels):
+def build_data_augmenter(data_config, total_iterations, data, model_channels):
     """Build the emoji augmenter for ``data`` [batch, time, channels, H, W].
+
+    ``total_iterations`` (run.iterations) turns the fractions of the
+    terminal carry and regeneration schedules into iterations.
 
     The data is zero-padded to ``model_channels`` NCA channels, apart from
     the hidden channels of pixel seeds (``build_hidden_seeds``).
@@ -239,6 +242,7 @@ def build_data_augmenter(data_config, data, model_channels):
         noise_mode=emoji.noise_mode,
         terminal_carry=emoji.terminal_carry,
         regeneration=emoji.regeneration,
+        total_iterations=total_iterations,
     )
     return augmenter, "da"
 

@@ -51,18 +51,19 @@ def sam_optimiser(base_optimiser, rho=0.05, sync_period=2):
 def build_learning_rate_schedule(optimiser_config, total_steps):
     """Build the configured Optax learning-rate schedule and its name.
 
-    Every schedule starts with a linear warmup and is counted from its end,
+    Every schedule starts with a linear warmup (``warmup_fraction`` of
+    ``total_steps``) and is counted from its end,
     except the exponential schedule, whose transition length is the total
     ``run.iterations`` (as in older runs).
     """
     peak_lr = float(optimiser_config.learn_rate)
-    warmup_steps = int(optimiser_config.warmup_steps)
     total_steps = int(total_steps)
+    warmup_steps = round(optimiser_config.warmup_fraction * total_steps)
     if peak_lr <= 0:
         raise ValueError("optimiser.learn_rate must be positive")
     if not 0 <= warmup_steps < total_steps:
         raise ValueError(
-            "optimiser.warmup_steps must be non-negative and smaller than run.iterations"
+            "optimiser.warmup_fraction must leave at least one step after the warmup"
         )
 
     schedule_cfg = optimiser_config.schedule

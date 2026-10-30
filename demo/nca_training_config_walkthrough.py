@@ -450,8 +450,8 @@ def _():
 
     - `cfg.run` (`RunConfig`): `t`, the number of NCA steps between
       consecutive target images, and `iterations`, the number of gradient
-      steps. The best checkpoint is only kept after `checkpoint_warmup`
-      iterations.
+      steps. The best checkpoint is only kept after
+      `checkpoint_warmup_fraction` of the iterations.
     - `cfg.trainer` (`TrainerConfig`): how the trainer works.
       `loop_autodiff="checkpointed"` saves memory during backpropagation
       through the rollout; `"lax"` is faster but uses more memory.
@@ -508,7 +508,7 @@ def _(iteration_count, learning_rate_value, rollout_steps):
     run_config = RunConfig(
         t=int(rollout_steps.value),
         iterations=int(iteration_count.value),
-        checkpoint_warmup=0,
+        checkpoint_warmup_fraction=0.0,
         write_images=False,
         write_videos=False,
     )
@@ -519,7 +519,7 @@ def _(iteration_count, learning_rate_value, rollout_steps):
     )
     optimiser_config = OptimiserConfig(
         learn_rate=float(learning_rate_value.value),
-        warmup_steps=0,
+        warmup_fraction=0.0,
         schedule=ScheduleConfig(type="cosine", final_factor=0.2),
     )
     loss_config = LossConfig(
@@ -628,7 +628,7 @@ def _():
 
     The trainer never sees the images directly. It gets a *data augmenter*
     (`NCA/trainer/data_augmenter/`), built by each domain's
-    `build_data_augmenter(cfg.data, data, model.N_CHANNELS)`. The augmenter
+    `build_data_augmenter(cfg.data, cfg.run.iterations, data, model.N_CHANNELS)`. The augmenter
 
     - adds zero hidden channels so the data has as many channels as the NCA,
       and pads and copies the data as set in `cfg.data`;
@@ -651,7 +651,7 @@ def _(data, data_load_error, experiment_config, model, model_name):
     run_name = None
     if data_load_error is None and experiment_config is not None:
         augmenter, _augmenter_name = build_data_augmenter(
-            experiment_config.data, data, model.N_CHANNELS
+            experiment_config.data, experiment_config.run.iterations, data, model.N_CHANNELS
         )
         run_name = f"{experiment_config.experiment.name}_{model_name}"
     return augmenter, run_name
@@ -895,7 +895,10 @@ def _(data_path_base, inference_seed, inference_steps, run_inference, selected_b
     _model = selected_bundle.load_model(key=_key)
     # The augmenter adds the hidden channels and padding, as in training
     _inference_augmenter, _ = build_data_augmenter(
-        selected_bundle.config.data, _inference_data, _model.N_CHANNELS
+        selected_bundle.config.data,
+        selected_bundle.config.run.iterations,
+        _inference_data,
+        _model.N_CHANNELS,
     )
     _initial_state = _inference_augmenter.return_saved_data()[0][0]
     # model.run returns [steps + 1, channels, H, W], starting with the initial state

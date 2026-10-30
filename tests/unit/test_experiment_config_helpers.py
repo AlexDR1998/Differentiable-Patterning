@@ -349,7 +349,7 @@ def test_emoji_filename_uses_short_sequence_and_omits_runtime_noise():
     )
     data_cfg_str = build_data_config_string(cfg.data)
     data = jnp.zeros((1, 3, 4, 8, 8))
-    data_augmenter, data_augmenter_cfg_str = build_data_augmenter(cfg.data, data, 12)
+    data_augmenter, data_augmenter_cfg_str = build_data_augmenter(cfg.data, cfg.run.iterations, data, 12)
     filename = build_filename(
         cfg,
         "FastKaNCA_c12_kb16",
@@ -470,7 +470,7 @@ def test_hidden_pixel_seeds_reach_the_augmenter_and_survive_reinjection(monkeypa
     cfg = _pixel_seed_cfg(monkeypatch)
     data, _ = load_emoji_data(cfg.data, impath="/tmp/emojis/")
 
-    augmenter, _ = build_data_augmenter(cfg.data, data, model_channels=8)
+    augmenter, _ = build_data_augmenter(cfg.data, 100, data, model_channels=8)
     x, _ = augmenter.initialize_pool(jax.random.PRNGKey(0))
     x, _ = augmenter.advance_pool(x, x, 1, jax.random.PRNGKey(1))
 

@@ -1,4 +1,4 @@
-schema_version: 9
+schema_version: 10
 seed: 0
 
 experiment:
@@ -66,8 +66,8 @@ trainer:
     previous_relative_threshold: 1.10
     absolute_threshold: null
     ema_decay: 0.95
-    # null means the same as run.checkpoint_warmup.
-    warmup: null
+    # null means the same as run.checkpoint_warmup_fraction.
+    warmup_fraction: null
 
 optimiser:
   type: nadam
@@ -77,7 +77,7 @@ optimiser:
   apply_if_finite: true
   max_consecutive_errors: 8
   learn_rate: 0.001
-  warmup_steps: 64
+  warmup_fraction: 0.016
   decay_rate: 0.99
   schedule:
     type: cosine
@@ -111,8 +111,8 @@ run:
   reference_interval: 20
   interval_steps: null
   iterations: 4000
-  # The best checkpoint is only saved after this many iterations.
-  checkpoint_warmup: 64
+  # The best checkpoint is only saved after this fraction of the iterations.
+  checkpoint_warmup_fraction: 0.016
   write_images: true
   write_videos: true
 

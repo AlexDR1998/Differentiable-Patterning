@@ -59,7 +59,7 @@ from NCA.trainer.config import PoolAdmissionConfig, TrainerConfig
 from NCA.trainer.interval_schedule import INTERVAL_MODES
 
 
-CONFIG_SCHEMA_VERSION = 9
+CONFIG_SCHEMA_VERSION = 10
 
 # data.dataset -> the data section that holds its settings
 DATA_SECTIONS = {
@@ -89,8 +89,8 @@ class RunConfig(ConfigValue):
     mode: str = "train"
     t: int = 32
     iterations: int = 2000
-    # The best checkpoint is only saved after this many iterations.
-    checkpoint_warmup: int = 64
+    # The best checkpoint is only saved after this fraction of the iterations.
+    checkpoint_warmup_fraction: float = 0.03
     write_images: bool = True
     write_videos: bool = True
     # Emoji only: set t from the fire rate instead of using run.t.
@@ -106,8 +106,8 @@ class RunConfig(ConfigValue):
     def __post_init__(self):
         if self.iterations <= 0 or self.t <= 0:
             raise ValueError("run.iterations and run.t must be positive")
-        if self.checkpoint_warmup < 0:
-            raise ValueError("run.checkpoint_warmup cannot be negative")
+        if not 0 <= self.checkpoint_warmup_fraction <= 1:
+            raise ValueError("run.checkpoint_warmup_fraction must be in [0, 1]")
         if self.interval_mode not in INTERVAL_MODES:
             raise ValueError(f"run.interval_mode must be one of {INTERVAL_MODES}")
         if self.reference_interval is not None and self.reference_interval <= 0:
@@ -268,6 +268,13 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
     * Version 8 and earlier had ``data.micropattern.cleaning.knockouts_use_control_bounds``
       (a bool); version 9 has ``knockout_bounds``. ``true`` becomes
       ``"control"`` and ``false`` becomes ``"selected"``.
+    * Version 9 and earlier counted warmups and the emoji augmentation
+      schedules in iterations: ``run.checkpoint_warmup``,
+      ``trainer.pool_admission.warmup``, ``optimiser.warmup_steps`` and
+      ``data.emoji.{terminal_carry, regeneration}.{start_iteration,
+      schedule_iterations}``. Version 10 has fractions of ``run.iterations``
+      (``*_fraction``); each count is divided by ``run.iterations``. The emoji
+      ramp length ``schedule_iterations`` becomes its end point, ``end_fraction``.
     * Loss terms once had ``epsilon``, ``metric``, ``normalize``, ``tau`` and
       ``amplitude_penalty`` options that no loss uses now. They are dropped when
       they hold their old default values.
@@ -317,6 +324,8 @@ def upgrade_legacy_config(value: Mapping[str, Any]) -> dict[str, Any]:
                 cleaning = data["micropattern"]["cleaning"] = dict(micropattern["cleaning"])
                 use_control = cleaning.pop("knockouts_use_control_bounds")
                 cleaning.setdefault("knockout_bounds", "control" if use_control else "selected")
+    if version <= 9:
+        root = _iterations_to_fractions(root)
     if isinstance(root.get("trainer"), Mapping):
         root["trainer"] = dict(root["trainer"])
         root["trainer"].pop("backend", None)
@@ -346,6 +355,44 @@ def _drop_removed_loss_options(term: Any) -> Any:
         for key, item in term.items()
         if not (key in _REMOVED_LOSS_OPTIONS and item == _REMOVED_LOSS_OPTIONS[key])
     }
+
+
+def _iterations_to_fractions(root: dict[str, Any]) -> dict[str, Any]:
+    """Version 9 -> 10: iteration counts become fractions of run.iterations."""
+    run = root.get("run") or {}
+    iterations = int(run.get("iterations", RunConfig().iterations))
+
+    def to_fraction(section, old, new):
+        if old in section:
+            if new in section:
+                raise ValueError(f"Config sets both {old!r} and {new!r}")
+            count = section.pop(old)
+            section[new] = None if count is None else count / iterations
+
+    if isinstance(root.get("run"), Mapping):
+        root["run"] = dict(root["run"])
+        to_fraction(root["run"], "checkpoint_warmup", "checkpoint_warmup_fraction")
+    if isinstance(root.get("optimiser"), Mapping):
+        root["optimiser"] = dict(root["optimiser"])
+        to_fraction(root["optimiser"], "warmup_steps", "warmup_fraction")
+    trainer = root.get("trainer")
+    if isinstance(trainer, Mapping) and isinstance(trainer.get("pool_admission"), Mapping):
+        root["trainer"] = dict(trainer)
+        pool = root["trainer"]["pool_admission"] = dict(trainer["pool_admission"])
+        to_fraction(pool, "warmup", "warmup_fraction")
+    data = root.get("data")
+    if isinstance(data, Mapping) and isinstance(data.get("emoji"), Mapping):
+        root["data"] = dict(data)
+        emoji = root["data"]["emoji"] = dict(data["emoji"])
+        for name in ("terminal_carry", "regeneration"):
+            if isinstance(emoji.get(name), Mapping):
+                schedule = emoji[name] = dict(emoji[name])
+                # The ramp length becomes its end point.
+                if "schedule_iterations" in schedule:
+                    schedule["schedule_iterations"] += schedule.get("start_iteration", 0)
+                to_fraction(schedule, "start_iteration", "start_fraction")
+                to_fraction(schedule, "schedule_iterations", "end_fraction")
+    return root
 
 
 def _upgrade_from_version_1(root: dict[str, Any]) -> dict[str, Any]:
@@ -623,12 +670,12 @@ def _model_config(value: Any) -> ModelConfig:
     return _strict(ModelConfig, node, "model")
 
 
-def _trainer_config(value: Any, checkpoint_warmup: int) -> TrainerConfig:
+def _trainer_config(value: Any, checkpoint_warmup_fraction: float) -> TrainerConfig:
     node = _mapping(value, "trainer")
     pool = _mapping(node.get("pool_admission"), "trainer.pool_admission")
-    # A null pool admission warmup means "the same as run.checkpoint_warmup".
-    if pool.get("warmup") is None:
-        pool["warmup"] = checkpoint_warmup
+    # A null pool admission warmup means "the same as run.checkpoint_warmup_fraction".
+    if pool.get("warmup_fraction") is None:
+        pool["warmup_fraction"] = checkpoint_warmup_fraction
     node["pool_admission"] = _strict(PoolAdmissionConfig, pool, "trainer.pool_admission")
     return _strict(TrainerConfig, node, "trainer")
 
@@ -695,7 +742,7 @@ def experiment_config_from_mapping(value: Mapping[str, Any]) -> ExperimentConfig
         data=_data_config(root["data"]),
         model=_model_config(root["model"]),
         run=run,
-        trainer=_trainer_config(root.get("trainer"), run.checkpoint_warmup),
+        trainer=_trainer_config(root.get("trainer"), run.checkpoint_warmup_fraction),
         optimiser=_optimiser_config(root.get("optimiser")),
         loss=_loss_config(root.get("loss"), "loss"),
         logging=_logging_config(root["logging"]),

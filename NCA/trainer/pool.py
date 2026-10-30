@@ -29,9 +29,12 @@ class PoolDecision:
 
 
 class PoolAdmissionController:
-    def __init__(self, config):
+    """Admission rule for one pool; ``total_iterations`` turns
+    ``config.warmup_fraction`` into iterations."""
+
+    def __init__(self, config, total_iterations):
         self.config = config
-        self.warmup = config.warmup
+        self.warmup = round(config.warmup_fraction * total_iterations)
         self.state = PoolAdmissionState()
 
     def reset_references(self) -> None:
@@ -112,14 +115,15 @@ class PoolAdmissionController:
 class TimePoolAdmissionController:
     """Apply the admission rule separately to each time slot."""
 
-    def __init__(self, config):
+    def __init__(self, config, total_iterations):
         self.config = config
+        self.total_iterations = total_iterations
         self.controllers: list[PoolAdmissionController] = []
 
     def _ensure_size(self, size: int) -> None:
         if not self.controllers:
             self.controllers = [
-                PoolAdmissionController(self.config)
+                PoolAdmissionController(self.config, self.total_iterations)
                 for _ in range(size)
             ]
         elif len(self.controllers) != size:

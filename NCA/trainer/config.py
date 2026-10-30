@@ -13,17 +13,17 @@ class PoolAdmissionConfig(ConfigValue):
     previous_relative_threshold: float = 1.10
     absolute_threshold: float | None = None
     ema_decay: float = 0.95
-    # Admission comparisons start after this many iterations. The experiment
-    # config fills a null value in from run.checkpoint_warmup.
-    warmup: int = 64
+    # Admission comparisons start after this fraction of run.iterations. The
+    # experiment config fills a null value in from run.checkpoint_warmup_fraction.
+    warmup_fraction: float = 0.03
 
     def __post_init__(self):
         if self.relative_threshold <= 0 or self.previous_relative_threshold <= 0:
             raise ValueError("pool admission thresholds must be positive")
         if not 0 <= self.ema_decay < 1:
             raise ValueError("pool_admission.ema_decay must be in [0, 1)")
-        if self.warmup < 0:
-            raise ValueError("pool_admission.warmup cannot be negative")
+        if not 0 <= self.warmup_fraction <= 1:
+            raise ValueError("pool_admission.warmup_fraction must be in [0, 1]")
 
 
 @dataclass(frozen=True)

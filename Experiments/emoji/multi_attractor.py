@@ -183,41 +183,6 @@ def _rollout(model, state, key, targets, steps, stride):
     return frames, distances
 
 
-def has_learned_firing(model):
-    """True for aNCA/gaNCA models, which store their firing probability in the last channel."""
-    return getattr(model, "FIRING", "fixed") != "fixed"
-
-
-@eqx.filter_jit
-def activity_rollout(model, state, targets, steps, key, damage_step=-1, damage_radius=0.0):
-    """One trajectory of an aNCA/gaNCA, optionally damaged part way through.
-
-    At step ``damage_step`` every channel inside a disc of ``damage_radius``
-    pixels at the grid centre is set to zero (``-1``: no damage). Returns, for
-    every step including the seed, the RGBA [steps + 1, 4, H, W], the firing
-    probability [steps + 1, H, W] and the distance to each target [steps + 1, target].
-    """
-    data_channels = targets.shape[1]
-    height, width = state.shape[-2:]
-    rows, columns = jnp.mgrid[:height, :width]
-    damage = ((rows - (height - 1) / 2) ** 2 + (columns - (width - 1) / 2) ** 2) <= damage_radius**2
-
-    def record(state):
-        distance = jnp.mean((state[None, :data_channels] - targets) ** 2, axis=(1, 2, 3))
-        return state[:data_channels], model.firing_probability(state), distance
-
-    def step(state, index):
-        state = jnp.where((index == damage_step) & damage, 0.0, state)
-        state = model(state, lambda x: x, key=jax.random.fold_in(key, index))
-        return state, record(state)
-
-    _, (rgba, activity, distances) = jax.lax.scan(step, state, jnp.arange(steps))
-    first = record(state)
-    return tuple(
-        jnp.concatenate([start[None], rest]) for start, rest in zip(first, (rgba, activity, distances))
-    )
-
-
 @eqx.filter_jit
 def _rollout_batch(model, states, keys, targets, steps, stride):
     return jax.vmap(lambda state, key: _rollout(model, state, key, targets, steps, stride))(states, keys)

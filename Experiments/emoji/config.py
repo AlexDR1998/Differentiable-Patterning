@@ -8,13 +8,19 @@ from Common.config import ConfigValue
 
 @dataclass(frozen=True)
 class ProbabilityScheduleConfig(ConfigValue):
+    """Probability that is 0 until ``start_fraction`` of run.iterations, then
+    moves linearly from initial to final until ``end_fraction``, then stays
+    at final."""
+
     enabled: bool = False
-    start_iteration: int = 0
-    schedule_iterations: int = 0
+    start_fraction: float = 0.0
+    end_fraction: float = 0.0
     initial_probability: float = 0.0
     final_probability: float = 0.0
 
     def __post_init__(self):
+        if not 0 <= self.start_fraction <= self.end_fraction <= 1:
+            raise ValueError("schedules need 0 <= start_fraction <= end_fraction <= 1")
         if not 0 <= self.initial_probability <= 1 or not 0 <= self.final_probability <= 1:
             raise ValueError("augmentation probabilities must be in [0, 1]")
 

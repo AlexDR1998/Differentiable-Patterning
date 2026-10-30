@@ -432,7 +432,10 @@ def _(
         downsample=pool_lab_data_config.downsample,
         emoji=_augmented_emoji_config,
     )
-    _augmenter, _ = build_data_augmenter(_augmented_data_config, pool_lab_data, model_channels=8)
+    # Damage starts at iteration 0, so the run length (1 here) does not matter
+    _augmenter, _ = build_data_augmenter(
+        _augmented_data_config, 1, pool_lab_data, model_channels=8
+    )
     _key = jax.random.PRNGKey(int(pool_lab_augmenter_key.value))
     _x, _y = _augmenter.initialize_pool(_key)
     pool_lab_augmented_x, _ = _augmenter.advance_pool(_x, _y, 1, jax.random.fold_in(_key, 1))
@@ -521,8 +524,9 @@ def _(pool_lab_loss_sequence, pool_lab_previous_threshold, pool_lab_relative_thr
                 relative_threshold=float(pool_lab_relative_threshold.value),
                 previous_relative_threshold=float(pool_lab_previous_threshold.value),
                 ema_decay=0.5,
-                warmup=0,
-            )
+                warmup_fraction=0.0,
+            ),
+            total_iterations=len(_losses_admission_pool_lab),
         )
         # The same two calls the training loop makes each iteration
         _decisions_pool_lab = []
@@ -634,7 +638,7 @@ def _(
         run=RunConfig(
             t=32,
             iterations=int(pool_lab_iterations.value),
-            checkpoint_warmup=0,
+            checkpoint_warmup_fraction=0.0,
             write_images=False,
             write_videos=False,
         ),
@@ -646,12 +650,12 @@ def _(
                 relative_threshold=1.05,
                 previous_relative_threshold=1.05,
                 ema_decay=0.95,
-                warmup=10,
+                warmup_fraction=0.1,
             ),
         ),
         optimiser=OptimiserConfig(
             learn_rate=0.001,
-            warmup_steps=0,
+            warmup_fraction=0.0,
             schedule=ScheduleConfig(type="cosine", final_factor=0.2),
         ),
         loss=pool_lab_loss_config,
@@ -678,7 +682,10 @@ def _(pool_lab_data, pool_lab_experiment_config, pool_lab_run_button):
     )
     _model_pool_lab, _ = build_model(pool_lab_experiment_config.model, key=_model_key_pool_lab)
     _augmenter_pool_lab, _ = build_data_augmenter(
-        pool_lab_experiment_config.data, pool_lab_data, _model_pool_lab.N_CHANNELS
+        pool_lab_experiment_config.data,
+        pool_lab_experiment_config.run.iterations,
+        pool_lab_data,
+        _model_pool_lab.N_CHANNELS,
     )
     _context_pool_lab = TrainerContext(
         run_name="objectives_and_pool",

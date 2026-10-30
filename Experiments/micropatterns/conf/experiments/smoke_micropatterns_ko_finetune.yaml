@@ -40,9 +40,9 @@ grid:
 
   run.t: [32]
   run.iterations: [40]
-  run.checkpoint_warmup: [5]
+  run.checkpoint_warmup_fraction: [0.125]
   optimiser.learn_rate: [1e-4]
-  optimiser.warmup_steps: [10]
+  optimiser.warmup_fraction: [0.25]
   trainer.loop_autodiff: [lax]
   trainer.log_every: [20]
   trainer.validation_every: [20]

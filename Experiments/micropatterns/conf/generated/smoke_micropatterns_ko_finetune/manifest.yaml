@@ -39,9 +39,9 @@ configs:
     - ko_24h
     run.t: 32
     run.iterations: 40
-    run.checkpoint_warmup: 5
+    run.checkpoint_warmup_fraction: 0.125
     optimiser.learn_rate: 0.0001
-    optimiser.warmup_steps: 10
+    optimiser.warmup_fraction: 0.25
     trainer.loop_autodiff: lax
     trainer.log_every: 20
     trainer.validation_every: 20
@@ -53,13 +53,13 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-impulse-restarts-curriculum-contrast
+    logging.wandb.group: smoke_micropatterns_ko_finetune-iteration-fractions
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
     - data.knockout.curriculum
   config:
-    schema_version: 9
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_micropatterns_ko_finetune
@@ -186,7 +186,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -195,7 +195,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.0001
-      warmup_steps: 10
+      warmup_fraction: 0.25
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -224,7 +224,7 @@ configs:
       mode: train
       t: 32
       iterations: 40
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.125
       write_images: true
       write_videos: true
     logging:
@@ -235,7 +235,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-impulse-restarts-curriculum-contrast
+        group: smoke_micropatterns_ko_finetune-iteration-fractions
         tags: null
         tag_keys:
         - data.knockout.curriculum
@@ -282,9 +282,9 @@ configs:
     - ko_24h
     run.t: 32
     run.iterations: 40
-    run.checkpoint_warmup: 5
+    run.checkpoint_warmup_fraction: 0.125
     optimiser.learn_rate: 0.0001
-    optimiser.warmup_steps: 10
+    optimiser.warmup_fraction: 0.25
     trainer.loop_autodiff: lax
     trainer.log_every: 20
     trainer.validation_every: 20
@@ -296,13 +296,13 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-impulse-restarts-curriculum-contrast
+    logging.wandb.group: smoke_micropatterns_ko_finetune-iteration-fractions
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
     - data.knockout.curriculum
   config:
-    schema_version: 9
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_micropatterns_ko_finetune
@@ -431,7 +431,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -440,7 +440,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.0001
-      warmup_steps: 10
+      warmup_fraction: 0.25
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -469,7 +469,7 @@ configs:
       mode: train
       t: 32
       iterations: 40
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.125
       write_images: true
       write_videos: true
     logging:
@@ -480,7 +480,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-impulse-restarts-curriculum-contrast
+        group: smoke_micropatterns_ko_finetune-iteration-fractions
         tags: null
         tag_keys:
         - data.knockout.curriculum

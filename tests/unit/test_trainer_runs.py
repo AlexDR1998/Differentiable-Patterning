@@ -21,8 +21,8 @@ def _tiny_emoji_config():
     value["data"]["emoji"]["pad"] = [0, 0, 0, 0]
     value["data"]["emoji"]["shift_amount"] = 0
     value["model"]["channels"] = 8
-    value["run"].update({"t": 2, "iterations": 4, "checkpoint_warmup": 0})
-    value["optimiser"]["warmup_steps"] = 1
+    value["run"].update({"t": 2, "iterations": 4, "checkpoint_warmup_fraction": 0.0})
+    value["optimiser"]["warmup_fraction"] = 0.25
     value["logging"]["backend"] = "none"
     value["model_store"]["enabled"] = False
     return experiment_config_from_mapping(value)
@@ -34,7 +34,7 @@ def test_training_loop_runs_and_saves_a_checkpoint(tmp_path, loop_autodiff):
     config = replace(config, trainer=replace(config.trainer, loop_autodiff=loop_autodiff))
     data = jax.random.uniform(jax.random.PRNGKey(0), (1, 3, 4, 8, 8))
     model, _ = build_model(config.model, key=jax.random.PRNGKey(1))
-    augmenter, _ = build_data_augmenter(config.data, data, model.N_CHANNELS)
+    augmenter, _ = build_data_augmenter(config.data, config.run.iterations, data, model.N_CHANNELS)
     context = TrainerContext(
         run_name="tiny",
         model_directory=str(tmp_path),
@@ -61,7 +61,7 @@ def test_training_loop_runs_with_learned_firing_rate(tmp_path):
     )
     data = jax.random.uniform(jax.random.PRNGKey(0), (1, 3, 4, 8, 8))
     model, _ = build_model(config.model, key=jax.random.PRNGKey(1))
-    augmenter, _ = build_data_augmenter(config.data, data, model.N_CHANNELS)
+    augmenter, _ = build_data_augmenter(config.data, config.run.iterations, data, model.N_CHANNELS)
     context = TrainerContext(
         run_name="tiny-anca",
         model_directory=str(tmp_path),

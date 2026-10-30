@@ -15,10 +15,10 @@ configs:
     model.channels: 8
     run.t: 16
     run.iterations: 60
-    run.checkpoint_warmup: 5
-    optimiser.warmup_steps: 10
+    run.checkpoint_warmup_fraction: 0.1
+    optimiser.warmup_fraction: 0.2
     trainer.log_every: 20
-    logging.wandb.group: smoke_pde-impulse-restarts-curriculum-contrast
+    logging.wandb.group: smoke_pde-iteration-fractions
     model.family: NCA
     data.pde.model: gray_scott
     data.pde.parameters:
@@ -46,7 +46,7 @@ configs:
     - data.pde.initial_condition_offset
     - trainer.loop_autodiff
   config:
-    schema_version: 9
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_pde
@@ -102,7 +102,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -111,7 +111,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 10
+      warmup_fraction: 0.2
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -134,14 +134,14 @@ configs:
       mode: train
       t: 16
       iterations: 60
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.1
       write_images: true
       write_videos: true
     logging:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_pde-impulse-restarts-curriculum-contrast
+        group: smoke_pde-iteration-fractions
         tags: null
         tag_keys:
         - model.family
@@ -169,10 +169,10 @@ configs:
     model.channels: 8
     run.t: 16
     run.iterations: 60
-    run.checkpoint_warmup: 5
-    optimiser.warmup_steps: 10
+    run.checkpoint_warmup_fraction: 0.1
+    optimiser.warmup_fraction: 0.2
     trainer.log_every: 20
-    logging.wandb.group: smoke_pde-impulse-restarts-curriculum-contrast
+    logging.wandb.group: smoke_pde-iteration-fractions
     model.family: gNCA
     data.pde.model: cahn_hilliard
     data.pde.parameters:
@@ -198,7 +198,7 @@ configs:
     - data.pde.initial_condition_offset
     - trainer.loop_autodiff
   config:
-    schema_version: 9
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_pde
@@ -252,7 +252,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -261,7 +261,7 @@ configs:
       apply_if_finite: true
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 10
+      warmup_fraction: 0.2
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -284,14 +284,14 @@ configs:
       mode: train
       t: 16
       iterations: 60
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.1
       write_images: true
       write_videos: true
     logging:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_pde-impulse-restarts-curriculum-contrast
+        group: smoke_pde-iteration-fractions
         tags: null
         tag_keys:
         - model.family

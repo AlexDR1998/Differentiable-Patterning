@@ -32,7 +32,7 @@ grid:
   data.emoji.noise_strength: [0.005]
   run.t: [64]
   run.iterations: [8000]
-  run.checkpoint_warmup: [10]
+  run.checkpoint_warmup_fraction: [0.00125]
   run.write_images: [true]
   trainer.log_every: [200]
   trainer.loop_autodiff: [checkpointed]
@@ -44,7 +44,7 @@ grid:
   loss.regularisers.perturbation_conservation: [0.0]
   optimiser.type: [nadam,adamw] # adamw seems best
   optimiser.learn_rate: [5e-4] # 1e-4 seems best
-  optimiser.warmup_steps: [64]
+  optimiser.warmup_fraction: [0.008]
   optimiser.decay_rate: [0.99]
   optimiser.blocknorm: [false]
   optimiser.gradient_clip_norm: [1.0]

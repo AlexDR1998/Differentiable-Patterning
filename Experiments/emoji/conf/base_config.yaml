@@ -1,4 +1,4 @@
-schema_version: 7
+schema_version: 10
 seed: 0
 
 experiment:
@@ -41,20 +41,22 @@ data:
     noise_mode: full
     # Recycle terminal predictions into the terminal target->target pair. This
     # exposes the model to a geometric distribution of increasingly old states.
+    # The probability is 0 until start_fraction of run.iterations, moves
+    # linearly from initial to final until end_fraction, then stays at final.
     terminal_carry:
-      enabled: false
-      start_iteration: 1000
-      schedule_iterations: 4000
-      initial_probability: 0.5
+      enabled: true
+      start_fraction: 0.1
+      end_fraction: 0.9
+      initial_probability: 0.0
       final_probability: 0.9
     # Scheduled per-batch spatial damage. The default damages every batch
     # from the start.
     regeneration:
       enabled: true
-      start_iteration: 0
-      schedule_iterations: 0
-      initial_probability: 1.0
-      final_probability: 1.0
+      start_fraction: 0.5
+      end_fraction: 0.9
+      initial_probability: 0.0
+      final_probability: 0.8
 
 model:
   family: NCA
@@ -79,8 +81,8 @@ trainer:
     previous_relative_threshold: 1.10
     absolute_threshold: null
     ema_decay: 0.95
-    # null means the same as run.checkpoint_warmup.
-    warmup: null
+    # null means the same as run.checkpoint_warmup_fraction.
+    warmup_fraction: null
 
 optimiser:
   type: nadam
@@ -90,7 +92,7 @@ optimiser:
   apply_if_finite: false
   max_consecutive_errors: 8
   learn_rate: 0.001
-  warmup_steps: 64
+  warmup_fraction: 0.008
   decay_rate: 0.99
   schedule:
     type: exponential
@@ -118,8 +120,8 @@ run:
   derive_t_from_fire_rate: false
   fire_rate_step_numerator: null
   iterations: 8000
-  # The best checkpoint is only saved after this many iterations.
-  checkpoint_warmup: 10
+  # The best checkpoint is only saved after this fraction of the iterations.
+  checkpoint_warmup_fraction: 0.00125
   write_images: true
 
 logging:

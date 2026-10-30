@@ -16,7 +16,7 @@ grid:
   data.emoji.regeneration.enabled: [true]
   run.t: [8]
   run.iterations: [10]
-  run.checkpoint_warmup: [2]
+  run.checkpoint_warmup_fraction: [0.2]
   run.write_images: [false]
   trainer.log_every: [5]
   trainer.loop_autodiff: [checkpointed]

@@ -14,11 +14,11 @@ configs:
     data.downsample: 2
     run.t: 16
     run.iterations: 60
-    run.checkpoint_warmup: 5
+    run.checkpoint_warmup_fraction: 0.1
     run.write_images: true
     trainer.log_every: 20
-    optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
+    optimiser.warmup_fraction: 0.2
+    logging.wandb.group: smoke_emoji-iteration-fractions
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -26,8 +26,8 @@ configs:
     data.emoji.task: sequence
     data.emoji.pairs: []
     data.emoji.terminal_carry.enabled: false
-    data.emoji.terminal_carry.start_iteration: 20
-    data.emoji.terminal_carry.schedule_iterations: 20
+    data.emoji.terminal_carry.start_fraction: 0.33
+    data.emoji.terminal_carry.end_fraction: 0.67
     loss.regularisers.contiguous_growth: 1.0
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
@@ -46,7 +46,7 @@ configs:
     - loss.regularisers.perturbation_conservation
     - loss.regularisers.firing_energy
   config:
-    schema_version: 7
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_emoji
@@ -81,14 +81,14 @@ configs:
         noise_mode: full
         terminal_carry:
           enabled: false
-          start_iteration: 20
-          schedule_iterations: 20
+          start_fraction: 0.33
+          end_fraction: 0.67
           initial_probability: 0.5
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_iteration: 0
-          schedule_iterations: 0
+          start_fraction: 0.0
+          end_fraction: 0.0
           initial_probability: 1.0
           final_probability: 1.0
     model:
@@ -116,7 +116,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -125,7 +125,7 @@ configs:
       apply_if_finite: false
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 10
+      warmup_fraction: 0.2
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -149,13 +149,13 @@ configs:
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
       iterations: 60
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.1
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-restarts-curriculum-contrast
+        group: smoke_emoji-iteration-fractions
         tags: null
         tag_keys:
         - model.family
@@ -182,11 +182,11 @@ configs:
     data.downsample: 2
     run.t: 16
     run.iterations: 60
-    run.checkpoint_warmup: 5
+    run.checkpoint_warmup_fraction: 0.1
     run.write_images: true
     trainer.log_every: 20
-    optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
+    optimiser.warmup_fraction: 0.2
+    logging.wandb.group: smoke_emoji-iteration-fractions
     model.family: gNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -194,8 +194,8 @@ configs:
     data.emoji.task: sequence
     data.emoji.pairs: []
     data.emoji.terminal_carry.enabled: true
-    data.emoji.terminal_carry.start_iteration: 20
-    data.emoji.terminal_carry.schedule_iterations: 20
+    data.emoji.terminal_carry.start_fraction: 0.33
+    data.emoji.terminal_carry.end_fraction: 0.67
     loss.regularisers.contiguous_growth: 0.0
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
@@ -214,7 +214,7 @@ configs:
     - loss.regularisers.perturbation_conservation
     - loss.regularisers.firing_energy
   config:
-    schema_version: 7
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_emoji
@@ -249,14 +249,14 @@ configs:
         noise_mode: full
         terminal_carry:
           enabled: true
-          start_iteration: 20
-          schedule_iterations: 20
+          start_fraction: 0.33
+          end_fraction: 0.67
           initial_probability: 0.5
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_iteration: 0
-          schedule_iterations: 0
+          start_fraction: 0.0
+          end_fraction: 0.0
           initial_probability: 1.0
           final_probability: 1.0
     model:
@@ -284,7 +284,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -293,7 +293,7 @@ configs:
       apply_if_finite: false
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 10
+      warmup_fraction: 0.2
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -317,13 +317,13 @@ configs:
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
       iterations: 60
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.1
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-restarts-curriculum-contrast
+        group: smoke_emoji-iteration-fractions
         tags: null
         tag_keys:
         - model.family
@@ -350,11 +350,11 @@ configs:
     data.downsample: 2
     run.t: 16
     run.iterations: 60
-    run.checkpoint_warmup: 5
+    run.checkpoint_warmup_fraction: 0.1
     run.write_images: true
     trainer.log_every: 20
-    optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
+    optimiser.warmup_fraction: 0.2
+    logging.wandb.group: smoke_emoji-iteration-fractions
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -372,8 +372,8 @@ configs:
         size: 12
       target: microbe.png
     data.emoji.terminal_carry.enabled: true
-    data.emoji.terminal_carry.start_iteration: 20
-    data.emoji.terminal_carry.schedule_iterations: 20
+    data.emoji.terminal_carry.start_fraction: 0.33
+    data.emoji.terminal_carry.end_fraction: 0.67
     loss.regularisers.contiguous_growth: 0.0
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
@@ -392,7 +392,7 @@ configs:
     - loss.regularisers.perturbation_conservation
     - loss.regularisers.firing_energy
   config:
-    schema_version: 7
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_emoji
@@ -437,14 +437,14 @@ configs:
         noise_mode: full
         terminal_carry:
           enabled: true
-          start_iteration: 20
-          schedule_iterations: 20
+          start_fraction: 0.33
+          end_fraction: 0.67
           initial_probability: 0.5
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_iteration: 0
-          schedule_iterations: 0
+          start_fraction: 0.0
+          end_fraction: 0.0
           initial_probability: 1.0
           final_probability: 1.0
     model:
@@ -472,7 +472,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -481,7 +481,7 @@ configs:
       apply_if_finite: false
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 10
+      warmup_fraction: 0.2
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -505,13 +505,13 @@ configs:
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
       iterations: 60
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.1
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-restarts-curriculum-contrast
+        group: smoke_emoji-iteration-fractions
         tags: null
         tag_keys:
         - model.family
@@ -538,11 +538,11 @@ configs:
     data.downsample: 2
     run.t: 16
     run.iterations: 60
-    run.checkpoint_warmup: 5
+    run.checkpoint_warmup_fraction: 0.1
     run.write_images: true
     trainer.log_every: 20
-    optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
+    optimiser.warmup_fraction: 0.2
+    logging.wandb.group: smoke_emoji-iteration-fractions
     model.family: gnNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -551,8 +551,8 @@ configs:
     data.emoji.task: sequence
     data.emoji.pairs: []
     data.emoji.terminal_carry.enabled: false
-    data.emoji.terminal_carry.start_iteration: 20
-    data.emoji.terminal_carry.schedule_iterations: 20
+    data.emoji.terminal_carry.start_fraction: 0.33
+    data.emoji.terminal_carry.end_fraction: 0.67
     loss.regularisers.contiguous_growth: 1.0
     loss.regularisers.update_sensitivity: 0.1
     loss.regularisers.perturbation_conservation: 0.1
@@ -571,7 +571,7 @@ configs:
     - loss.regularisers.perturbation_conservation
     - loss.regularisers.firing_energy
   config:
-    schema_version: 7
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_emoji
@@ -606,14 +606,14 @@ configs:
         noise_mode: full
         terminal_carry:
           enabled: false
-          start_iteration: 20
-          schedule_iterations: 20
+          start_fraction: 0.33
+          end_fraction: 0.67
           initial_probability: 0.5
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_iteration: 0
-          schedule_iterations: 0
+          start_fraction: 0.0
+          end_fraction: 0.0
           initial_probability: 1.0
           final_probability: 1.0
     model:
@@ -641,7 +641,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -650,7 +650,7 @@ configs:
       apply_if_finite: false
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 10
+      warmup_fraction: 0.2
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -675,13 +675,13 @@ configs:
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
       iterations: 60
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.1
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-restarts-curriculum-contrast
+        group: smoke_emoji-iteration-fractions
         tags: null
         tag_keys:
         - model.family
@@ -708,11 +708,11 @@ configs:
     data.downsample: 2
     run.t: 16
     run.iterations: 60
-    run.checkpoint_warmup: 5
+    run.checkpoint_warmup_fraction: 0.1
     run.write_images: true
     trainer.log_every: 20
-    optimiser.warmup_steps: 10
-    logging.wandb.group: smoke_emoji-impulse-restarts-curriculum-contrast
+    optimiser.warmup_fraction: 0.2
+    logging.wandb.group: smoke_emoji-iteration-fractions
     model.family: aNCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -725,8 +725,8 @@ configs:
         size: 12
       target: crab.png
     data.emoji.terminal_carry.enabled: false
-    data.emoji.terminal_carry.start_iteration: 20
-    data.emoji.terminal_carry.schedule_iterations: 20
+    data.emoji.terminal_carry.start_fraction: 0.33
+    data.emoji.terminal_carry.end_fraction: 0.67
     loss.regularisers.contiguous_growth: 0.0
     loss.regularisers.update_sensitivity: 0.0
     loss.regularisers.perturbation_conservation: 0.0
@@ -745,7 +745,7 @@ configs:
     - loss.regularisers.perturbation_conservation
     - loss.regularisers.firing_energy
   config:
-    schema_version: 7
+    schema_version: 10
     seed: 0
     experiment:
       name: smoke_emoji
@@ -785,14 +785,14 @@ configs:
         noise_mode: full
         terminal_carry:
           enabled: false
-          start_iteration: 20
-          schedule_iterations: 20
+          start_fraction: 0.33
+          end_fraction: 0.67
           initial_probability: 0.5
           final_probability: 0.9
         regeneration:
           enabled: true
-          start_iteration: 0
-          schedule_iterations: 0
+          start_fraction: 0.0
+          end_fraction: 0.0
           initial_probability: 1.0
           final_probability: 1.0
     model:
@@ -820,7 +820,7 @@ configs:
         previous_relative_threshold: 1.1
         absolute_threshold: null
         ema_decay: 0.95
-        warmup: null
+        warmup_fraction: null
     optimiser:
       type: nadam
       blocknorm: true
@@ -829,7 +829,7 @@ configs:
       apply_if_finite: false
       max_consecutive_errors: 8
       learn_rate: 0.001
-      warmup_steps: 10
+      warmup_fraction: 0.2
       decay_rate: 0.99
       schedule:
         type: exponential
@@ -853,13 +853,13 @@ configs:
       derive_t_from_fire_rate: false
       fire_rate_step_numerator: null
       iterations: 60
-      checkpoint_warmup: 5
+      checkpoint_warmup_fraction: 0.1
       write_images: true
     logging:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-restarts-curriculum-contrast
+        group: smoke_emoji-iteration-fractions
         tags: null
         tag_keys:
         - model.family

@@ -37,9 +37,9 @@ def test_pool_admission_state_is_explicit():
         previous_relative_threshold=1.1,
         absolute_threshold=None,
         ema_decay=0.5,
-        warmup=0,
+        warmup_fraction=0.0,
     )
-    controller = PoolAdmissionController(config)
+    controller = PoolAdmissionController(config, total_iterations=10)
 
     first = controller.decide(1.0, iteration=0)
     controller.update(first, 1.0)
@@ -58,9 +58,9 @@ def test_pool_admission_reference_reset_preserves_counts():
         previous_relative_threshold=1.1,
         absolute_threshold=None,
         ema_decay=0.5,
-        warmup=0,
+        warmup_fraction=0.0,
     )
-    controller = PoolAdmissionController(config)
+    controller = PoolAdmissionController(config, total_iterations=10)
     first = controller.decide(1.0, iteration=0)
     controller.update(first, 1.0)
 
@@ -79,9 +79,9 @@ def test_time_pool_admission_tracks_each_transition_independently():
         previous_relative_threshold=1.1,
         absolute_threshold=None,
         ema_decay=0.5,
-        warmup=0,
+        warmup_fraction=0.0,
     )
-    controller = TimePoolAdmissionController(config)
+    controller = TimePoolAdmissionController(config, total_iterations=10)
     initial = controller.decide((1.0, 10.0), iteration=0)
     controller.update(initial, (1.0, 10.0))
 

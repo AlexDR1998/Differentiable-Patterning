@@ -19,8 +19,9 @@ grid:
   data.emoji.target_repeats: [2]
   data.emoji.regeneration.enabled: [false]
   data.batches: [2]
+  data.downsample: [2]
   run.t: [64]
-  run.iterations: [8000]
+  run.iterations: [16000]
   run.repeat: [0, 1]
   loss.terms: [[l2]]
 # firing_energy only exists for models with a learned firing rate

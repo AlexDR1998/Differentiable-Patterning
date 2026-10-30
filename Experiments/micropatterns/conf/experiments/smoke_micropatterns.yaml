@@ -26,9 +26,9 @@ grid:
   model.channels: [32]
   run.t: [32]
   run.iterations: [60]
-  # Checkpoint warmup: must be below run.iterations so a bundle is published.
-  run.checkpoint_warmup: [5]
-  optimiser.warmup_steps: [10]
+  # Checkpoint warmup: must end before run.iterations so a bundle is published.
+  run.checkpoint_warmup_fraction: [0.1]
+  optimiser.warmup_fraction: [0.2]
   trainer.log_every: [20]
   trainer.validation_every: [20]
   trainer.validation_rollout: [true]

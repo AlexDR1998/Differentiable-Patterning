@@ -16,7 +16,7 @@ ExperimentConfig                 (Experiments/config.py)
 │   ├── emoji | micropattern | snowmelt | pde   (whichever matches data.dataset)
 │   └── knockout: KnockoutConfig          curriculum, channel, mode, time
 ├── model: ModelConfig           (NCA/model/config.py)
-├── run: RunConfig               t, iterations, checkpoint_warmup, ...
+├── run: RunConfig               t, iterations, checkpoint_warmup_fraction, ...
 ├── trainer: TrainerConfig       (NCA/trainer/config.py), incl. pool_admission
 ├── optimiser: OptimiserConfig   (Common/trainer/config.py)
 ├── loss: LossConfig             terms, regularisers, schedule_label
@@ -36,10 +36,22 @@ before JAX starts. Every field has a value after conversion, so read fields as
 attributes (`cfg.run.t`), never with `.get(key, default)`. To add an option,
 add a field (with a default) to the right dataclass.
 
-Two warmups exist: `run.checkpoint_warmup` (the best checkpoint is only saved
-after this many iterations) and `trainer.pool_admission.warmup` (pool
-admission starts after this many). A null pool admission warmup means the same
-as `run.checkpoint_warmup`.
+Settings that depend on how far training has got are fractions of
+`run.iterations`, so they scale with the run length (0.1 of a 10,000-iteration
+run is the first 1,000 iterations):
+
+- `run.checkpoint_warmup_fraction`: the best checkpoint is only saved after it;
+- `trainer.pool_admission.warmup_fraction`: pool admission starts after it
+  (null means the same as `run.checkpoint_warmup_fraction`);
+- `optimiser.warmup_fraction`: length of the linear learning-rate warmup;
+- `data.emoji.{terminal_carry, regeneration}.{start_fraction, end_fraction}`:
+  the probability is 0 before `start_fraction`, moves linearly from
+  `initial_probability` to `final_probability` until `end_fraction`, then
+  stays at `final_probability`;
+- the loss weight schedules, `optimiser.schedule.transition_fraction` and
+  `data.micropattern.intermediate_reinjection_decay_start_fraction`.
+
+Each is turned into iterations with `round(fraction * run.iterations)`.
 
 ## W&B tags
 
@@ -54,11 +66,17 @@ registry always keeps the full tags.
 
 ## Older configs
 
-Current files have `schema_version: 9`. Older configs are translated when read
+Current files have `schema_version: 10`. Older configs are translated when read
 by `upgrade_legacy_config`, the only place old spellings are handled. Each
 upgrade fills in the values the code used before, so old runs and bundles load
 the same data they were trained on:
 
+- **9** counted `run.checkpoint_warmup`, `trainer.pool_admission.warmup`,
+  `optimiser.warmup_steps` and `data.emoji.{terminal_carry,
+  regeneration}.{start_iteration, schedule_iterations}` in iterations.
+  Version 10 replaced them with `*_fraction` fields (see above); older counts
+  are divided by `run.iterations`, which gives back the same iterations. The
+  emoji ramp length `schedule_iterations` becomes the end point `end_fraction`.
 - **8** removed `impulse.output` (a folder for loose impulse result files).
   Impulse runs now save records in the model store
   (`docs/model_registry.md`); older impulse configs just drop the section.

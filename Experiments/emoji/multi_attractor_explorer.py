@@ -43,6 +43,7 @@ with app.setup(hide_code=True):
     from matplotlib.colors import ListedColormap
     from matplotlib.patches import Patch
 
+    from Experiments.emoji import adaptive_firing as af
     from Experiments.emoji import multi_attractor as ma
     from Experiments.model_registry import ModelRegistry, open_model_bundle, verify_evaluation_input
 
@@ -836,12 +837,12 @@ def _(
     picker,
 ):
     _model = get_model(explore_id)
-    mo.stop(not ma.has_learned_firing(_model), mo.md("Only for models with a learned firing rate (aNCA, gaNCA)."))
+    mo.stop(not af.has_learned_firing(_model), mo.md("Only for models with a learned firing rate (aNCA, gaNCA)."))
     _rgba = ma.hsva_to_rgba([[picker.value[_name] for _name in ("h", "s", "v", "a")]])
     _state = ma.coloured_seeds(base_seed, explore_footprint, _rgba)[0]
     _steps = explore_length.value * explore_cfg.run.t
     _damage_step = activity_damage_step.value if activity_damage.value else -1
-    _frames_rgba, _activity, _distances = (np.asarray(_v) for _v in ma.activity_rollout(
+    _frames_rgba, _activity, _distances = (np.asarray(_v) for _v in af.activity_rollout(
         _model, jax.numpy.asarray(_state), jax.numpy.asarray(explore_targets), _steps,
         jr.PRNGKey(eval_seed.value), _damage_step, float(activity_radius.value)))
 

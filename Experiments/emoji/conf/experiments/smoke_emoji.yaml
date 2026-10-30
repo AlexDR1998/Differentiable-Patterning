@@ -17,11 +17,11 @@ grid:
   data.downsample: [2]
   run.t: [16]
   run.iterations: [60]
-  # Checkpoint warmup: must be below run.iterations so a bundle is published.
-  run.checkpoint_warmup: [5]
+  # Checkpoint warmup: must end before run.iterations so a bundle is published.
+  run.checkpoint_warmup_fraction: [0.1]
   run.write_images: [true]
   trainer.log_every: [20]
-  optimiser.warmup_steps: [10]
+  optimiser.warmup_fraction: [0.2]
 
 # One entry per column: each block is zipped, not a Cartesian product.
 groups:
@@ -45,8 +45,8 @@ groups:
       - - initial: {image: crab.png, mode: patch, size: 12}
           target: crab.png
     data.emoji.terminal_carry.enabled: [false, true, true, false, false]
-    data.emoji.terminal_carry.start_iteration: [20, 20, 20, 20, 20]
-    data.emoji.terminal_carry.schedule_iterations: [20, 20, 20, 20, 20]
+    data.emoji.terminal_carry.start_fraction: [0.33, 0.33, 0.33, 0.33, 0.33]
+    data.emoji.terminal_carry.end_fraction: [0.67, 0.67, 0.67, 0.67, 0.67]
     loss.regularisers.contiguous_growth: [1.0, 0.0, 0.0, 1.0, 0.0]
     loss.regularisers.update_sensitivity: [0.0, 0.0, 0.0, 0.1, 0.0]
     loss.regularisers.perturbation_conservation: [0.0, 0.0, 0.0, 0.1, 0.0]

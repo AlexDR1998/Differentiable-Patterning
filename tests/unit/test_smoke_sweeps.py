@@ -37,7 +37,7 @@ def test_smoke_sweep_is_short_and_publishes(domain, sweep_name, tmp_path):
         loop = cfg.run
         assert loop.iterations <= 100
         # A checkpoint is only saved after the warmup, and bundles need one.
-        assert cfg.run.checkpoint_warmup < loop.iterations
+        assert round(cfg.run.checkpoint_warmup_fraction * loop.iterations) < loop.iterations
         assert cfg.model_store.enabled
         assert cfg.model_store.collection == SMOKE_COLLECTION
 
