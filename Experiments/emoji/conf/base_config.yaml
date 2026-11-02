@@ -115,6 +115,8 @@ loss:
     hidden_state_size: 0.0
     # aNCA/gaNCA only: cost per cell update (mean learned firing probability).
     firing_energy: 0.0
+    # sNCA/gsNCA only: cost of grown signalling structure (mean of the main gate).
+    wire_cost: 0.0
 run:
   t: 64
   derive_t_from_fire_rate: false

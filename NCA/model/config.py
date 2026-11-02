@@ -44,6 +44,7 @@ class ModelConfig(ConfigValue):
         # that old bundle configs still load (see PORTABLE_MODEL_FAMILIES).
         supported = {
             "NCA", "gNCA", "nNCA", "gnNCA", "aNCA", "gaNCA", "FastKaNCA", "HNCA",
+            "sNCA", "gsNCA",
             "NCA_fast", "NCA_sycl", "gNCA_sycl",
         }
         if self.family not in supported:
@@ -82,3 +83,42 @@ class HNCAModelConfig(ModelConfig):
             raise ValueError("model.scale must be a positive integer")
         if not 0 <= self.obs_channels < self.channels:
             raise ValueError("model.obs_channels must be in [0, model.channels)")
+
+
+@dataclass(frozen=True)
+class SignalModelConfig(ModelConfig):
+    """Configuration for NCAs with grown signalling structures (sNCA, gsNCA)."""
+
+    # cable, axon, steady, excitable, broadcast or pointer (see NCA/model/NCA_signalling.py)
+    signal_mode: str = "cable"
+    # Must be even for excitable (voltage and recovery halves)
+    signal_channels: int = 4
+    # Propagation sub-steps per NCA step (solver iterations for steady)
+    signal_substeps: int = 8
+    # Diffusion rate of each cable or excitable sub-step, in (0, 0.25]
+    signal_diffusion: float = 0.25
+    # steady only: screening rate; smaller values spread signals further
+    signal_screening: float = 0.01
+    # broadcast: widest kernel; pointer: furthest reach (cells)
+    signal_range: int = 16
+
+    def __post_init__(self):
+        super().__post_init__()
+        structure_channels = {
+            "cable": 1, "axon": 3, "steady": 1, "excitable": 1, "broadcast": 2, "pointer": 3,
+        }
+        if self.signal_mode not in structure_channels:
+            raise ValueError(f"model.signal_mode must be one of {tuple(structure_channels)}")
+        if not 1 <= self.signal_channels < self.channels - structure_channels[self.signal_mode]:
+            raise ValueError(
+                "model.signal_channels must be at least 1 and leave room for the "
+                "structure channels within model.channels"
+            )
+        if self.signal_mode == "excitable" and self.signal_channels % 2:
+            raise ValueError("model.signal_channels must be even for signal_mode 'excitable'")
+        if self.signal_screening <= 0 or self.signal_range < 1:
+            raise ValueError("model.signal_screening must be positive and model.signal_range at least 1")
+        if self.signal_substeps < 1:
+            raise ValueError("model.signal_substeps must be a positive integer")
+        if not 0 < self.signal_diffusion <= 0.25:
+            raise ValueError("model.signal_diffusion must be in (0, 0.25]")

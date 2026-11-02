@@ -108,6 +108,11 @@ def firing_energy_regulariser(state, next_state, context, key):
     return _batch_map(lambda x_new: jnp.mean(context["firing_probability"](x_new)), next_state)
 
 
+def wire_cost_regulariser(state, next_state, context, key):
+    """Mean conductance of the cells (sNCA/gsNCA): a cost on the amount of grown wiring."""
+    return _batch_map(lambda x_new: jnp.mean(context["conductance"](x_new)), next_state)
+
+
 def localised_hidden_regulariser(state, next_state, context, key):
     """Penalise hidden channel activity where all observed channels are low (< 0.5)."""
 

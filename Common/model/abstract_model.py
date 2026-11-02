@@ -38,6 +38,10 @@ class AbstractModel(eqx.Module):
 		"""Per-cell firing probability stored in ``state``; only models with a learned firing rate have one."""
 		raise ValueError(f"{type(self).__name__} has no learned firing probability")
 
+	def conductance(self, state):
+		"""Per-cell conductance of grown signalling structures in ``state``; only signalling NCAs (sNCA, gsNCA) have one."""
+		raise ValueError(f"{type(self).__name__} has no signalling structure")
+
 	def prepare_pool_state(self, state):
 		"""Prepare a pool state before it starts a new training rollout (unchanged by default).
 

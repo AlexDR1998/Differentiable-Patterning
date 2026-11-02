@@ -149,6 +149,7 @@ def run_nca_steps(
             "model": batched_model,
             "boundary_state_selector": model.boundary_regulariser_state,
             "firing_probability": model.firing_probability,
+            "conductance": model.conductance,
         }
         if active_steps is not None:
             active = j < active_steps

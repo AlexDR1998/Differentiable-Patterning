@@ -93,6 +93,7 @@ def _regularisers(coefficients):
         "perturbation_conservation": regularisers.perturbation_conservation_regulariser,
         "hidden_state_size": regularisers.hidden_state_size_regulariser,
         "firing_energy": regularisers.firing_energy_regulariser,
+        "wire_cost": regularisers.wire_cost_regulariser,
     }
     active = {name: float(value) for name, value in coefficients.items() if value}
     unknown = set(active) - set(available)

@@ -10,6 +10,7 @@ import yaml
 
 from Experiments.config import experiment_config_from_mapping
 from Experiments.emoji.config_helpers import build_data_augmenter
+from NCA.model.config import SignalModelConfig
 from NCA.model.factory import build_model
 from NCA.trainer.context import TrainerContext
 from NCA.trainer.trainer import build_trainer
@@ -67,6 +68,39 @@ def test_training_loop_runs_with_learned_firing_rate(tmp_path):
         model_directory=str(tmp_path),
         data_augmenter=augmenter,
         storage_id="tiny-anca-run",
+        observed_channels=4,
+        data_channels=4,
+    )
+
+    result = build_trainer(config, model, data, context).train(key=jax.random.PRNGKey(2))
+
+    assert result.error_code == 0
+    assert result.completed
+    assert jnp.isfinite(result.best_loss)
+
+
+# steady (a solver inside the rollout) and broadcast (its own trainable kernel
+# weights) differ most from the other modes in how they are trained
+@pytest.mark.parametrize("mode", ["axon", "steady", "broadcast"])
+def test_training_loop_runs_with_signalling_wires(tmp_path, mode):
+    config = _tiny_emoji_config()
+    model_config = SignalModelConfig(
+        **{**vars(config.model), "family": "sNCA", "channels": 12},
+        signal_mode=mode, signal_channels=2, signal_substeps=3, signal_range=4,
+    )
+    config = replace(
+        config,
+        model=model_config,
+        loss=replace(config.loss, regularisers={**config.loss.regularisers, "wire_cost": 0.1}),
+    )
+    data = jax.random.uniform(jax.random.PRNGKey(0), (1, 3, 4, 8, 8))
+    model, _ = build_model(config.model, key=jax.random.PRNGKey(1))
+    augmenter, _ = build_data_augmenter(config.data, config.run.iterations, data, model.N_CHANNELS)
+    context = TrainerContext(
+        run_name="tiny-snca",
+        model_directory=str(tmp_path),
+        data_augmenter=augmenter,
+        storage_id="tiny-snca-run",
         observed_channels=4,
         data_channels=4,
     )

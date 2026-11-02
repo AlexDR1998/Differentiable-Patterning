@@ -12,6 +12,7 @@ import jax
 from NCA.model.NCA_fast_KAN_model import FastKaNCA
 from NCA.model.NCA_hierarchical import HNCA
 from NCA.model.NCA_model import NCA
+from NCA.model.NCA_signalling import SignalNCA
 
 
 # Retired model families, and the family that now builds them. Their saved
@@ -60,6 +61,21 @@ def _gated_firing_arguments(model_config):
     return {**_gated_arguments(model_config), **_firing_arguments(model_config)}
 
 
+def _signal_arguments(model_config):
+    return {
+        "MODE": model_config.signal_mode,
+        "SIGNAL_CHANNELS": model_config.signal_channels,
+        "SUBSTEPS": model_config.signal_substeps,
+        "DIFFUSION": model_config.signal_diffusion,
+        "SCREENING": model_config.signal_screening,
+        "RANGE": model_config.signal_range,
+    }
+
+
+def _gated_signal_arguments(model_config):
+    return {**_gated_arguments(model_config), **_signal_arguments(model_config)}
+
+
 def _kan_arguments(model_config):
     kan_aux = asdict(model_config.kan)
     if kan_aux["hidden_features"] is None:
@@ -81,7 +97,8 @@ def _hnca_arguments(model_config):
 # family -> (model class, function giving its extra constructor arguments).
 # gNCA, nNCA and gnNCA are the plain NCA with its GATED and/or
 # PARAMETER_NOISE_LEVEL options switched on; aNCA and gaNCA learn a
-# per-cell firing rate (the FIRING option).
+# per-cell firing rate (the FIRING option). sNCA and gsNCA add signal
+# channels that move along structures grown by the NCA.
 MODEL_FAMILIES = {
     "NCA": (NCA, _no_extra_arguments),
     "gNCA": (NCA, _gated_arguments),
@@ -89,6 +106,8 @@ MODEL_FAMILIES = {
     "gnNCA": (NCA, _gated_noise_arguments),
     "aNCA": (NCA, _firing_arguments),
     "gaNCA": (NCA, _gated_firing_arguments),
+    "sNCA": (SignalNCA, _signal_arguments),
+    "gsNCA": (SignalNCA, _gated_signal_arguments),
     "FastKaNCA": (FastKaNCA, _kan_arguments),
     "HNCA": (HNCA, _hnca_arguments),
 }
@@ -129,6 +148,14 @@ def build_model_config_string(model_config, family=None):
         cfg_str += f"_pn{model_config.parameter_noise_level}"
     if family in {"aNCA", "gaNCA"}:
         cfg_str += "_fexp" if model_config.firing_estimator == "expected" else "_fst"
+    if family in {"sNCA", "gsNCA"}:
+        cfg_str += f"_sig{model_config.signal_mode}{model_config.signal_channels}x{model_config.signal_substeps}"
+        if model_config.signal_mode in {"cable", "excitable"} and model_config.signal_diffusion != 0.25:
+            cfg_str += f"_D{model_config.signal_diffusion}"
+        if model_config.signal_mode == "steady" and model_config.signal_screening != 0.01:
+            cfg_str += f"_scr{model_config.signal_screening}"
+        if model_config.signal_mode in {"broadcast", "pointer"} and model_config.signal_range != 16:
+            cfg_str += f"_r{model_config.signal_range}"
     if family == "FastKaNCA":
         kan = model_config.kan
         cfg_str += f"_kb{kan.num_basis}"

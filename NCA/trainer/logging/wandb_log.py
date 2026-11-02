@@ -33,6 +33,7 @@ from NCA.trainer.logging.diagnostics import (
 	plot_channel_correlation_diagnostics,
 	plot_channel_time_grid,
 	plot_firing_activity,
+	plot_wiring,
 	plot_radial_intensity_diagnostics,
 	plot_radial_intensity_line_diagnostics,
 	plot_singular_value_spectrum,
@@ -478,6 +479,8 @@ class NCALogger(WandbLogger):
 		SNAPSHOTS = []
 		ACTIVITY = []
 		learned_firing = getattr(nca, "FIRING", "fixed") != "fixed"
+		WIRING = []
+		signalling = hasattr(nca, "SIGNAL_CHANNELS")
 		for b in tqdm(range(len(x))):
 			initial_state = nca.prepare_pool_state(x[b][0])
 			knockout = self._knockout(DATA_AUGMENTER, schedule, b)
@@ -521,6 +524,8 @@ class NCALogger(WandbLogger):
 				T = jnp.stack(trajectory)
 			if write_videos:
 				self._log_rollout_videos(T, b)
+			if signalling:
+				WIRING.append(np.asarray(nca.conductance(T[-1])))
 			if learned_firing:
 				ACTIVITY.append(np.asarray(jnp.mean(nca.firing_probability(T), axis=(-2, -1))))
 			frames = _frame_indices(schedule, T.shape[0]) if write_videos else 1
@@ -549,3 +554,5 @@ class NCALogger(WandbLogger):
 				plot_firing_activity(steps, ACTIVITY, condition_labels, schedule.observation_steps),
 				step=None
 			)
+		if signalling:
+			self.log_image('TrainingRollout/wiring', plot_wiring(WIRING, condition_labels), step=None)

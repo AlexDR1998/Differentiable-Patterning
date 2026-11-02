@@ -1,0 +1,43 @@
+# Compares the signalling NCA mechanisms (sNCA, NCA/model/NCA_signalling.py)
+# against a plain NCA, on two emoji tasks:
+#   - sequence: alien_monster -> microbe -> rooster
+#   - multi_attractor: a crab patch grows into the crab, a microbe patch into the microbe
+# Each sNCA mode has its own number of sub-steps (solver iterations for
+# steady); broadcast and pointer act once per NCA step.
+experiment_name: emoji_signalling_mechanisms_v1
+entrypoint: Experiments.emoji.train:run
+output_subdir: generated/emoji_signalling_mechanisms
+seed_mode: index
+
+grid:
+  logging.wandb.project: [nca-emoji-signalling]
+  run.repeat: [0]
+  model.channels: [32]
+  model.fire_rate: [0.5]
+  data.downsample: [2]
+  run.t: [128]
+  run.iterations: [8000]
+  loss.terms: [[l2]]
+  trainer.loop_autodiff: [checkpointed]
+  # Each task only reads its own one of these
+  data.emoji.sequence: [[alien_monster.png, microbe.png, rooster.png]]
+  data.emoji.pairs:
+    - - initial: {image: crab.png, mode: patch, size: 6}
+        target: crab.png
+      - initial: {image: microbe.png, mode: patch, size: 6}
+        target: microbe.png
+  model.family: [NCA, sNCA]
+
+groups:
+  - data.emoji.task: [sequence, multi_attractor]
+    data.batches: [4, 2]
+
+branches:
+  - when:
+      model.family: sNCA
+    grid:
+      model.signal_channels: [4]
+      loss.regularisers.wire_cost: [0.0, 0.01]
+    groups:
+      - model.signal_mode: [cable, axon, steady, excitable, broadcast, pointer]
+        model.signal_substeps: [8, 8, 32, 16, 1, 1]

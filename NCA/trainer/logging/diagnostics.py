@@ -533,6 +533,23 @@ def plot_singular_value_spectrum(singular_values, title):
 	return plot_to_image(figure)
 
 
+def plot_wiring(conductances, labels):
+	"""Conductance maps of the grown signalling structures (sNCA/gsNCA), one panel per batch.
+
+	``conductances`` is a list (one per batch) of [x, y] arrays in [0, 1].
+	"""
+	import matplotlib.pyplot as plt
+
+	count = len(conductances)
+	figure, axes = plt.subplots(1, count, figsize=(3*count, 3.2), dpi=150, squeeze=False)
+	for ax, conductance, label in zip(axes[0], conductances, labels):
+		image = ax.imshow(np.asarray(conductance), vmin=0, vmax=1, cmap="magma")
+		ax.set_title(label, fontsize="small")
+		ax.axis("off")
+	figure.colorbar(image, ax=axes[0].tolist(), shrink=0.8, label="Conductance")
+	return plot_to_image(figure)
+
+
 def plot_firing_activity(steps, activities, labels, observation_steps=None):
 	"""Mean learned firing probability against rollout step (aNCA/gaNCA), one line per batch.
 

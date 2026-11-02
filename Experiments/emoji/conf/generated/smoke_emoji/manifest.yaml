@@ -18,7 +18,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
+    logging.wandb.group: smoke_emoji-signal-nca-all-modes
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -144,6 +144,7 @@ configs:
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
         firing_energy: 0.0
+        wire_cost: 0.0
     run:
       t: 16
       derive_t_from_fire_rate: false
@@ -155,7 +156,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-sparse-and-patches
+        group: smoke_emoji-signal-nca-all-modes
         tags: null
         tag_keys:
         - model.family
@@ -186,7 +187,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
+    logging.wandb.group: smoke_emoji-signal-nca-all-modes
     model.family: gNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -312,6 +313,7 @@ configs:
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
         firing_energy: 0.0
+        wire_cost: 0.0
     run:
       t: 16
       derive_t_from_fire_rate: false
@@ -323,7 +325,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-sparse-and-patches
+        group: smoke_emoji-signal-nca-all-modes
         tags: null
         tag_keys:
         - model.family
@@ -354,7 +356,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
+    logging.wandb.group: smoke_emoji-signal-nca-all-modes
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -500,6 +502,7 @@ configs:
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
         firing_energy: 0.0
+        wire_cost: 0.0
     run:
       t: 16
       derive_t_from_fire_rate: false
@@ -511,7 +514,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-sparse-and-patches
+        group: smoke_emoji-signal-nca-all-modes
         tags: null
         tag_keys:
         - model.family
@@ -542,7 +545,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
+    logging.wandb.group: smoke_emoji-signal-nca-all-modes
     model.family: gnNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -670,6 +673,7 @@ configs:
         perturbation_conservation: 0.1
         hidden_state_size: 0.0
         firing_energy: 0.0
+        wire_cost: 0.0
     run:
       t: 16
       derive_t_from_fire_rate: false
@@ -681,7 +685,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-sparse-and-patches
+        group: smoke_emoji-signal-nca-all-modes
         tags: null
         tag_keys:
         - model.family
@@ -712,7 +716,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-impulse-sparse-and-patches
+    logging.wandb.group: smoke_emoji-signal-nca-all-modes
     model.family: aNCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -848,6 +852,7 @@ configs:
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
         firing_energy: 0.1
+        wire_cost: 0.0
     run:
       t: 16
       derive_t_from_fire_rate: false
@@ -859,7 +864,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-impulse-sparse-and-patches
+        group: smoke_emoji-signal-nca-all-modes
         tags: null
         tag_keys:
         - model.family

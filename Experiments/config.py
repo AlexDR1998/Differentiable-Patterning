@@ -54,6 +54,7 @@ from NCA.model.config import (
     KANConfig,
     KANModelConfig,
     ModelConfig,
+    SignalModelConfig,
 )
 from NCA.trainer.config import PoolAdmissionConfig, TrainerConfig
 from NCA.trainer.interval_schedule import INTERVAL_MODES
@@ -667,6 +668,8 @@ def _model_config(value: Any) -> ModelConfig:
         return _strict(KANModelConfig, node, "model")
     if node.get("family") == "HNCA":
         return _strict(HNCAModelConfig, node, "model")
+    if node.get("family") in {"sNCA", "gsNCA"}:
+        return _strict(SignalModelConfig, node, "model")
     return _strict(ModelConfig, node, "model")
 
 
