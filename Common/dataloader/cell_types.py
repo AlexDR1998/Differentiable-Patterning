@@ -309,8 +309,11 @@ def cell_type_fractions(labels, mask=None):
     return {name: float(np.sum(label)) / max(area, 1) for name, label in labels.items()}
 
 
-def save_cell_type_rules(path, cell_type_rules):
-    """Write a cell type file (YAML, readable and easy to compare in git)."""
+def save_cell_type_rules(path, cell_type_rules, made_with="Experiments/micropatterns/data_cleaning.py"):
+    """Write a cell type file (YAML, readable and easy to compare in git).
+
+    ``made_with`` names the notebook the rules were tuned in, for the header.
+    """
     content = {
         "format": CELL_TYPES_FORMAT,
         "hour": int(cell_type_rules.hour),
@@ -342,7 +345,7 @@ def save_cell_type_rules(path, cell_type_rules):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as file:
         file.write(
-            "# Cell-type rules made with Experiments/micropatterns/data_cleaning.py.\n"
+            f"# Cell-type rules made with {made_with}.\n"
             "# A marker is high where its normalised (0-1) value is above its\n"
             "# threshold; a cell type needs every listed marker state (any = not\n"
             "# checked) of at least one of its clauses (a list means \"or\"),\n"

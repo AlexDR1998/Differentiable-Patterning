@@ -194,6 +194,10 @@ def test_cell_type_file_round_trip(tmp_path):
     save_cell_type_rules(path, with_clauses)
     assert load_cell_type_rules(path) == with_clauses
 
+    save_cell_type_rules(path, rules, made_with="nodal_ko_eval.py")
+    assert path.read_text().startswith("# Cell-type rules made with nodal_ko_eval.py.")
+    assert load_cell_type_rules(path) == rules
+
     # Files from before clauses and stains still load.
     old = tmp_path / "old.yaml"
     old.write_text(
