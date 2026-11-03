@@ -10,7 +10,7 @@
 # emoji_signalling_mechanisms (run.t = 128) is the easy version.
 # Check TrainingRollout/signal_knockout_change: how much the final pattern
 # changes when signalling is switched off (0 = signalling unused).
-experiment_name: emoji_signalling_speed_limit_v1
+experiment_name: emoji_signalling_speed_limit_v2
 entrypoint: Experiments.emoji.train:run
 output_subdir: generated/emoji_signalling_speed_limit
 seed_mode: index
@@ -22,11 +22,12 @@ grid:
   model.fire_rate: [0.5]
   data.downsample: [2]
   run.t: [24]
-  run.iterations: [8000]
+  run.iterations: [12000]
   loss.terms: [[l2]]
-  trainer.loop_autodiff: [checkpointed]
+  trainer.loop_autodiff: [lax]
   # Each task only reads its own one of these
   data.emoji.sequence: [[alien_monster.png, microbe.png, rooster.png]]
+  data.emoji.regeneration.enabled: [false]
   data.emoji.pairs:
     - - initial: {image: crab.png, mode: patch, size: 6}
         target: crab.png
