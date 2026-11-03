@@ -69,6 +69,7 @@ def _signal_arguments(model_config):
         "DIFFUSION": model_config.signal_diffusion,
         "SCREENING": model_config.signal_screening,
         "RANGE": model_config.signal_range,
+        "OPEN_AT_REST": model_config.signal_open_at_rest,
     }
 
 
@@ -156,6 +157,8 @@ def build_model_config_string(model_config, family=None):
             cfg_str += f"_scr{model_config.signal_screening}"
         if model_config.signal_mode in {"broadcast", "pointer"} and model_config.signal_range != 16:
             cfg_str += f"_r{model_config.signal_range}"
+        if model_config.signal_open_at_rest:
+            cfg_str += "_open"
     if family == "FastKaNCA":
         kan = model_config.kan
         cfg_str += f"_kb{kan.num_basis}"

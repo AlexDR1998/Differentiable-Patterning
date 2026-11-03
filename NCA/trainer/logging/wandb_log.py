@@ -8,6 +8,7 @@ rollout of the trained model at the end. The plots themselves are made in
 
 import os
 
+import jax
 import jax.numpy as jnp
 import jax.random as jr
 import numpy as np
@@ -33,7 +34,6 @@ from NCA.trainer.logging.diagnostics import (
 	plot_channel_correlation_diagnostics,
 	plot_channel_time_grid,
 	plot_firing_activity,
-	plot_wiring,
 	plot_radial_intensity_diagnostics,
 	plot_radial_intensity_line_diagnostics,
 	plot_singular_value_spectrum,
@@ -56,6 +56,20 @@ def _trajectory_snapshot_channels(T, data_augmenter, t, channel_schema=None):
 	if schema is not None:
 		return T_snapshot[:, np.asarray(schema.target_to_state)]
 	return T_snapshot[:,:data_augmenter.OBS_CHANNELS]
+
+
+def _signalling_panels(nca, T, frame_count=8):
+	"""[frames, 1 + signal channels, x, y] of the first structure gate and the signal channels of an sNCA rollout ``T``.
+
+	Uses ``frame_count`` evenly spaced frames. Each channel is divided by its
+	largest absolute value, so faint signals are still visible.
+	"""
+	frames = np.unique(np.linspace(0, T.shape[0] - 1, num=min(frame_count, T.shape[0])).astype(int))
+	T = T[frames]
+	signals = T[:, nca.signal_start:nca.structure_start]
+	panels = np.concatenate([np.asarray(nca.conductance(T))[:, None], np.asarray(signals)], axis=1)
+	scale = np.max(np.abs(panels), axis=(0, 2, 3), keepdims=True)
+	return panels / np.maximum(scale, 1e-8), frames
 
 
 def _rollout_schedule(t, number_of_images):
@@ -479,7 +493,10 @@ class NCALogger(WandbLogger):
 		SNAPSHOTS = []
 		ACTIVITY = []
 		learned_firing = getattr(nca, "FIRING", "fixed") != "fixed"
-		WIRING = []
+		SIGNAL_GRIDS = []
+		MOVEMENT = []
+		KNOCKOUT_SNAPSHOTS = []
+		KNOCKOUT_CHANGE = []
 		signalling = hasattr(nca, "SIGNAL_CHANNELS")
 		for b in tqdm(range(len(x))):
 			initial_state = nca.prepare_pool_state(x[b][0])
@@ -525,7 +542,20 @@ class NCALogger(WandbLogger):
 			if write_videos:
 				self._log_rollout_videos(T, b)
 			if signalling:
-				WIRING.append(np.asarray(nca.conductance(T[-1])))
+				panels, panel_frames = _signalling_panels(nca, T)
+				gate_name = {"broadcast": "transmitter gate", "pointer": "reach gate"}.get(nca.MODE, "conductance")
+				SIGNAL_GRIDS.append(plot_channel_time_grid(
+					panels,
+					[gate_name] + [f"signal {k + 1}" for k in range(nca.SIGNAL_CHANNELS)],
+					[f"frame {frame}" for frame in panel_frames],
+					f"Signalling ({nca.MODE}, each row scaled to its max) · {condition_labels[b]} · batch {b + 1}",
+				))
+				MOVEMENT.append(np.asarray(jax.vmap(nca.signal_movement)(T)))
+				if write_videos:
+					# Every step: the gate, then the size of each signal channel, side by side
+					video_panels, _ = _signalling_panels(nca, T, frame_count=T.shape[0])
+					video = rearrange(np.abs(video_panels), "T C x y -> T () x (C y)")
+					self.log_video(f"TrainingRollout/signalling_batch_{b + 1}", repeat(video, "T () x y -> T 3 x y"), step=None)
 			if learned_firing:
 				ACTIVITY.append(np.asarray(jnp.mean(nca.firing_probability(T), axis=(-2, -1))))
 			frames = _frame_indices(schedule, T.shape[0]) if write_videos else 1
@@ -538,6 +568,25 @@ class NCALogger(WandbLogger):
 				timepoint_labels(self.timepoint_names, T_snapshot.shape[0]),
 				f"NCA predictions · {condition_labels[b]} · batch {b + 1}",
 			))
+			if signalling and knockout is None:
+				# Same rollout with the signalling switched off: the inner NCA on its own
+				if write_videos:
+					T_off = nca.nca.run(total_steps, initial_state, boundary_callback[b])
+				else:
+					T_off = rollout_model_sampled(
+						nca.nca, initial_state, boundary_mask, mode,
+						jr.fold_in(key, b), total_steps, observation_steps,
+					)
+				T_off_snapshot = _trajectory_snapshot_channels(
+					T_off, DATA_AUGMENTER, frames, self.diagnostic_channel_schema
+				)
+				KNOCKOUT_SNAPSHOTS.append(plot_channel_time_grid(
+					T_off_snapshot,
+					self.channel_names,
+					timepoint_labels(self.timepoint_names, T_off_snapshot.shape[0]),
+					f"NCA predictions without signalling · {condition_labels[b]} · batch {b + 1}",
+				))
+				KNOCKOUT_CHANGE.append(float(jnp.mean(jnp.abs(T_off_snapshot[-1] - T_snapshot[-1]))))
 			if SAVE_TRAJECTORY:
 				np.save(f"{PVC_PATH}output/{self.wandb_config['name']}_trajectory_{b}.npy",T[frames if write_videos else slice(None),:3])  # type: ignore
 
@@ -555,4 +604,21 @@ class NCALogger(WandbLogger):
 				step=None
 			)
 		if signalling:
-			self.log_image('TrainingRollout/wiring', plot_wiring(WIRING, condition_labels), step=None)
+			self.log_image('TrainingRollout/signalling', np.concatenate(SIGNAL_GRIDS, axis=0), step=None)
+			steps = np.arange(MOVEMENT[0].shape[0]) if write_videos else np.asarray(schedule.observation_steps)
+			self.log_image(
+				'TrainingRollout/signal_movement',
+				plot_firing_activity(
+					steps, MOVEMENT, condition_labels, schedule.observation_steps,
+					ylabel="Mean |signal change| per step", title="Signal movement during rollout", ylim=None,
+				),
+				step=None
+			)
+			if KNOCKOUT_SNAPSHOTS:
+				self.log_image(
+					'TrainingRollout/signal_knockout_snapshot',
+					np.concatenate(KNOCKOUT_SNAPSHOTS, axis=0),
+					step=None
+				)
+				# Mean change of the final observed state when signalling is switched off
+				self.log_scalar('TrainingRollout/signal_knockout_change', float(np.mean(KNOCKOUT_CHANGE)))

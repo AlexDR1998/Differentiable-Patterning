@@ -1,4 +1,5 @@
 import equinox as eqx
+import numpy as np
 import jax
 import jax.numpy as jnp
 import pytest
@@ -12,7 +13,9 @@ from NCA.model.NCA_signalling import (
     broadcast_scales,
     cable_step,
     conductance_from_channel,
+    direction_from_channels,
     excitable_step,
+    offset_from_channels,
     pointer_read,
     steady_cable,
 )
@@ -136,6 +139,25 @@ def test_broadcast_blur_conserves_signal_when_periodic():
     assert received[0, 5, 1] < 1.0 and received[0, 0, 7] > 0  # spread out, including far away
 
 
+def test_structure_channels_are_read_on_the_unit_interval():
+    assert conductance_from_channel(0.0) == 0.0 and conductance_from_channel(1.0) == 1.0
+    assert jnp.allclose(conductance_from_channel(0.5), 0.5)
+    assert jax.grad(conductance_from_channel)(0.0) > 0  # a closed cell can still learn to open
+    assert jnp.allclose(conductance_from_channel(0.0, open_at_rest=True), conductance_from_channel(1.0))
+    raw = jnp.stack([jnp.full((2, 2), 0.5), jnp.full((2, 2), 1.0)])
+    assert jnp.allclose(direction_from_channels(raw)[:, 0, 0], jnp.array([0.0, 1.0]))
+    assert jnp.allclose(direction_from_channels(jnp.zeros((2, 2, 2)))[:, 0, 0], jnp.array([-0.5, -0.5]))
+    assert jnp.allclose(offset_from_channels(raw, 8)[:, 0, 0], jnp.array([0.0, 8.0]))
+
+
+def test_a_wire_written_within_the_unit_interval_conducts():
+    # The intermediate_state regulariser keeps states in [0, 1]; a wire at 1 must conduct
+    raw = jnp.where(_wire() > 0, 1.0, 0.0)
+    s = _run(lambda x: cable_step(x, conductance_from_channel(raw), "ZEROS", 0.25), _pulse(), 300)
+    assert s[0, 5, 8] > 0.1  # close to the wire mean (1/8) at the far end
+    assert jnp.allclose(s[0] * (raw == 0), 0.0)  # nothing leaks off the wire
+
+
 def test_broadcast_scales():
     assert broadcast_scales(16) == (1, 2, 4, 8, 16)
     assert broadcast_scales(1) == (1,)
@@ -160,6 +182,7 @@ def _model_config(**overrides):
         ({"signal_mode": "excitable"}, "sNCA_c10_sigexcitable2x6", False),
         ({"signal_mode": "broadcast", "signal_range": 4}, "sNCA_c10_sigbroadcast2x6_r4", False),
         ({"signal_mode": "pointer"}, "sNCA_c10_sigpointer2x6", False),
+        ({"signal_open_at_rest": True}, "sNCA_c10_sigcable2x6_open", False),
     ],
 )
 def test_build_signal_families(overrides, cfg_str, gated):
@@ -201,7 +224,8 @@ def test_model_step_moves_signals_along_the_grown_wire():
     x = x.at[model.signal_start].set(_pulse(size, col=1)[0])
     # Structure channels: strong conductance on the wire, direction pointing right
     x = x.at[model.structure_start].set(jnp.where(_wire() > 0, 20.0, -20.0))
-    x = x.at[model.structure_start + 2].set(20.0)
+    x = x.at[model.structure_start + 1].set(0.5)  # no movement along rows
+    x = x.at[model.structure_start + 2].set(1.0)  # full speed to the right
     y = model(x, key=jax.random.PRNGKey(1))
     # The new model makes no NCA update, so only the signal moves (6 substeps)
     assert jnp.allclose(y[model.signal_start], _pulse(size, col=7)[0], atol=1e-3)
@@ -232,6 +256,15 @@ def test_gradient_reaches_the_update_network_through_propagation(mode):
         assert jnp.any(grads.kernel_logits != 0)
 
 
+def test_open_at_rest_lets_signals_cross_empty_tissue():
+    closed, _ = build_model(_model_config(), key=jax.random.PRNGKey(0))
+    opened, _ = build_model(_model_config(signal_open_at_rest=True), key=jax.random.PRNGKey(0))
+    x = jnp.zeros((10, 12, 12)).at[closed.signal_start, 5, 5].set(1.0)
+    assert closed.signal_movement(x) == 0.0
+    assert opened.signal_movement(x) > 0.0
+    assert opened.get_config()["SIGNAL_OPEN_AT_REST"] is True
+
+
 @pytest.mark.parametrize("mode", ["cable", "broadcast"])
 def test_save_and_load_round_trip(tmp_path, mode):
     model, _ = build_model(_model_config(signal_mode=mode), key=jax.random.PRNGKey(0))
@@ -247,6 +280,47 @@ def test_save_and_load_round_trip(tmp_path, mode):
 
 def test_wire_cost_is_mean_conductance():
     model, _ = build_model(_model_config(), key=jax.random.PRNGKey(0))
-    states = [jnp.zeros((2, 10, 3, 3)), jnp.zeros((2, 10, 3, 3)).at[:, -1].set(4.0)]
+    states = [jnp.zeros((2, 10, 3, 3)), jnp.zeros((2, 10, 3, 3)).at[:, -1].set(0.5)]
     cost = wire_cost_regulariser(None, states, {"conductance": model.conductance}, None)
     assert jnp.allclose(cost, jnp.asarray([conductance_from_channel(0.0), 0.5]))
+
+
+@pytest.mark.parametrize("write_videos", [False, True])
+def test_training_end_logs_signalling_diagnostics(write_videos):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from unittest.mock import patch
+
+    from Experiments.emoji.config import EmojiDataConfig
+    from Experiments.config import DataConfig
+    from Experiments.emoji.config_helpers import build_data_augmenter
+    from NCA.trainer.logging.wandb_log import NCALogger
+
+    model, _ = build_model(_model_config(signal_mode="axon"), key=jax.random.PRNGKey(0))
+    data = jax.random.uniform(jax.random.PRNGKey(1), (1, 3, 4, 8, 8))
+    data_config = DataConfig(
+        dataset="emojis", batches=1, downsample=1,
+        emoji=EmojiDataConfig(sequence=("a.png",), pad=(0, 0, 0, 0), shift_amount=0),
+    )
+    augmenter, _ = build_data_augmenter(data_config, 4, data, model.N_CHANNELS)
+
+    logger = object.__new__(NCALogger)
+    logger.knockout_time = None
+    logger.diagnostic_channel_schema = None
+    logger.channel_names = None
+    logger.timepoint_names = ["t1", "t2"]
+    logger.wandb_config = {"name": "test"}
+    logged = {}
+    record = lambda tag, value, step=None: logged.setdefault(tag, value)
+    with patch.object(NCALogger, "log_image", side_effect=record), \
+            patch.object(NCALogger, "log_video", side_effect=record), \
+            patch.object(NCALogger, "log_scalar", side_effect=record):
+        logger.log_training_end(
+            model, augmenter, 2, [lambda x: x], write_videos=write_videos, key=jax.random.PRNGKey(2)
+        )
+
+    for tag in ["signalling", "signal_movement", "signal_knockout_snapshot", "signal_knockout_change"]:
+        assert f"TrainingRollout/{tag}" in logged
+    assert ("TrainingRollout/signalling_batch_1" in logged) == write_videos
+    assert np.isfinite(logged["TrainingRollout/signal_knockout_change"])

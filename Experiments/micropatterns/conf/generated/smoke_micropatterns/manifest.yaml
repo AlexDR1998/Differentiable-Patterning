@@ -3,7 +3,7 @@ entrypoint: Experiments.micropatterns.train:run
 base_config: null
 sweep_file: null
 output_dir: Experiments/micropatterns/conf/generated/smoke_micropatterns
-count: 2
+count: 3
 configs:
 - index: 0
   overrides:
@@ -40,11 +40,12 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-impulse-sparse-and-patches
+    logging.wandb.group: smoke_micropatterns-signal-nca-unit-gates
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     data.micropattern.pool_copies: 2
     logging.singular_values.enabled: true
+    loss.regularisers.wire_cost: 0.0
     data.knockout.curriculum: null
     experiment.name: smoke_micropatterns
     seed: 0
@@ -53,6 +54,7 @@ configs:
     - trainer.loop_autodiff
     - data.micropattern.pool_copies
     - logging.singular_values.enabled
+    - loss.regularisers.wire_cost
     - data.knockout.curriculum
   config:
     schema_version: 10
@@ -216,6 +218,7 @@ configs:
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
+        wire_cost: 0.0
     run:
       mode: train
       t: 32
@@ -231,13 +234,14 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-impulse-sparse-and-patches
+        group: smoke_micropatterns-signal-nca-unit-gates
         tags: null
         tag_keys:
         - model.family
         - trainer.loop_autodiff
         - data.micropattern.pool_copies
         - logging.singular_values.enabled
+        - loss.regularisers.wire_cost
         - data.knockout.curriculum
     model_store:
       enabled: true
@@ -281,11 +285,12 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.1
     loss.terms.0.multi_target_weights.radial: 0.1
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns-impulse-sparse-and-patches
+    logging.wandb.group: smoke_micropatterns-signal-nca-unit-gates
     model.family: gNCA
     trainer.loop_autodiff: lax
     data.micropattern.pool_copies: 1
     logging.singular_values.enabled: false
+    loss.regularisers.wire_cost: 0.0
     data.knockout.curriculum:
     - baseline
     - ko_0h
@@ -297,6 +302,7 @@ configs:
     - trainer.loop_autodiff
     - data.micropattern.pool_copies
     - logging.singular_values.enabled
+    - loss.regularisers.wire_cost
     - data.knockout.curriculum
   config:
     schema_version: 10
@@ -463,6 +469,7 @@ configs:
         update_sensitivity: 0.0
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
+        wire_cost: 0.0
     run:
       mode: train
       t: 32
@@ -478,13 +485,259 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns-impulse-sparse-and-patches
+        group: smoke_micropatterns-signal-nca-unit-gates
         tags: null
         tag_keys:
         - model.family
         - trainer.loop_autodiff
         - data.micropattern.pool_copies
         - logging.singular_values.enabled
+        - loss.regularisers.wire_cost
+        - data.knockout.curriculum
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 2
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    data.dataset: micropatterns_260726
+    data.micropattern.data_channels: 13
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    - cell_fate_s2
+    - rna_expression
+    - protein_response
+    data.downsample: 16
+    data.batches: 2
+    data.micropattern.train_replicates:
+    - 1
+    - 2
+    data.micropattern.validation_replicates:
+    - 3
+    - 4
+    data.knockout.channel: Nodal
+    model.channels: 32
+    run.t: 32
+    run.iterations: 60
+    run.checkpoint_warmup_fraction: 0.1
+    optimiser.warmup_fraction: 0.2
+    trainer.log_every: 20
+    trainer.validation_every: 20
+    trainer.validation_rollout: true
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.1
+    loss.terms.0.multi_target_weights.correlation: 0.1
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.random_channel_shuffle: true
+    logging.wandb.group: smoke_micropatterns-signal-nca-unit-gates
+    model.family: sNCA
+    trainer.loop_autodiff: checkpointed
+    data.micropattern.pool_copies: 1
+    logging.singular_values.enabled: false
+    loss.regularisers.wire_cost: 0.01
+    data.knockout.curriculum: null
+    experiment.name: smoke_micropatterns
+    seed: 0
+    logging.wandb.tag_keys:
+    - model.family
+    - trainer.loop_autodiff
+    - data.micropattern.pool_copies
+    - logging.singular_values.enabled
+    - loss.regularisers.wire_cost
+    - data.knockout.curriculum
+  config:
+    schema_version: 10
+    seed: 0
+    experiment:
+      name: smoke_micropatterns
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: null
+    data:
+      dataset: micropatterns_260726
+      batches: 2
+      downsample: 16
+      micropattern:
+        pool_copies: 1
+        train_replicates:
+        - 1
+        - 2
+        validation_replicates:
+        - 3
+        - 4
+        experiment_groups:
+        - cell_fate_s1
+        - cell_fate_s2
+        - rna_expression
+        - protein_response
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 13
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 0.5
+        intermediate_reinjection_probability_end: 0.5
+        intermediate_reinjection_decay_start_fraction: 0.25
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - DIFF
+      fire_rate: 0.5
+      padding: CIRCULAR
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 20
+      validation_every: 20
+      validation_rollout: true
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.2
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.1
+          correlation: 0.1
+          radial: 0.1
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 5.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.01
+    run:
+      mode: train
+      t: 32
+      iterations: 60
+      checkpoint_warmup_fraction: 0.1
+      write_images: true
+      write_videos: true
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: pipeline-smoke
+        group: smoke_micropatterns-signal-nca-unit-gates
+        tags: null
+        tag_keys:
+        - model.family
+        - trainer.loop_autodiff
+        - data.micropattern.pool_copies
+        - logging.singular_values.enabled
+        - loss.regularisers.wire_cost
         - data.knockout.curriculum
     model_store:
       enabled: true

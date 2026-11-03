@@ -1,0 +1,4802 @@
+experiment_name: emoji_signalling_speed_limit_v1
+entrypoint: Experiments.emoji.train:run
+base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/base_config.yaml
+sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/emoji/conf/experiments/emoji_signalling_speed_limit.yaml
+output_dir: Experiments/emoji/conf/generated/emoji_signalling_speed_limit
+count: 26
+configs:
+- index: 0
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: NCA
+    data.emoji.task: sequence
+    data.batches: 4
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 0
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 0
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 1
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: NCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 1
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 1
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: NCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 2
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: cable
+    model.signal_substeps: 32
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 2
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 2
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: cable
+      signal_substeps: 32
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 3
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: axon
+    model.signal_substeps: 8
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 3
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 3
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: axon
+      signal_substeps: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 4
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: steady
+    model.signal_substeps: 32
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 4
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 4
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: steady
+      signal_substeps: 32
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 5
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: excitable
+    model.signal_substeps: 16
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 5
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 5
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: excitable
+      signal_substeps: 16
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 6
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: broadcast
+    model.signal_substeps: 1
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 6
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 6
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: broadcast
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 7
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: pointer
+    model.signal_substeps: 1
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 7
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 7
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: pointer
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 8
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: cable
+    model.signal_substeps: 32
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 8
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 8
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: cable
+      signal_substeps: 32
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 9
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: axon
+    model.signal_substeps: 8
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 9
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 9
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: axon
+      signal_substeps: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 10
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: steady
+    model.signal_substeps: 32
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 10
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 10
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: steady
+      signal_substeps: 32
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 11
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: excitable
+    model.signal_substeps: 16
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 11
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 11
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: excitable
+      signal_substeps: 16
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 12
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: broadcast
+    model.signal_substeps: 1
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 12
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 12
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: broadcast
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 13
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: sequence
+    data.batches: 4
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: pointer
+    model.signal_substeps: 1
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 13
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 13
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 4
+      downsample: 2
+      emoji:
+        task: sequence
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: pointer
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 14
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: cable
+    model.signal_substeps: 32
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 14
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 14
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: cable
+      signal_substeps: 32
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 15
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: axon
+    model.signal_substeps: 8
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 15
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 15
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: axon
+      signal_substeps: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 16
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: steady
+    model.signal_substeps: 32
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 16
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 16
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: steady
+      signal_substeps: 32
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 17
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: excitable
+    model.signal_substeps: 16
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 17
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 17
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: excitable
+      signal_substeps: 16
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 18
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: broadcast
+    model.signal_substeps: 1
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 18
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 18
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: broadcast
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 19
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: false
+    model.signal_mode: pointer
+    model.signal_substeps: 1
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 19
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 19
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: false
+      signal_mode: pointer
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 20
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: cable
+    model.signal_substeps: 32
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 20
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 20
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: cable
+      signal_substeps: 32
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 21
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: axon
+    model.signal_substeps: 8
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 21
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 21
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: axon
+      signal_substeps: 8
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 22
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: steady
+    model.signal_substeps: 32
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 22
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 22
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: steady
+      signal_substeps: 32
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 23
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: excitable
+    model.signal_substeps: 16
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 23
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 23
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: excitable
+      signal_substeps: 16
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 24
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: broadcast
+    model.signal_substeps: 1
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 24
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 24
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: broadcast
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+- index: 25
+  overrides:
+    logging.wandb.project: nca-emoji-signalling
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    data.downsample: 2
+    run.t: 24
+    run.iterations: 8000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    data.emoji.sequence:
+    - alien_monster.png
+    - microbe.png
+    - rooster.png
+    data.emoji.pairs:
+    - initial:
+        image: crab.png
+        mode: patch
+        size: 6
+      target: crab.png
+    - initial:
+        image: microbe.png
+        mode: patch
+        size: 6
+      target: microbe.png
+    model.family: sNCA
+    data.emoji.task: multi_attractor
+    data.batches: 2
+    model.signal_channels: 4
+    model.signal_open_at_rest: true
+    model.signal_mode: pointer
+    model.signal_substeps: 1
+    experiment.name: emoji_signalling_speed_limit_v1
+    logging.wandb.group: emoji_signalling_speed_limit_v1
+    seed: 25
+    logging.wandb.tag_keys:
+    - model.family
+    - data.emoji.task
+    - data.batches
+    - model.signal_channels
+    - model.signal_open_at_rest
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 25
+    experiment:
+      name: emoji_signalling_speed_limit_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: emojis
+      batches: 2
+      downsample: 2
+      emoji:
+        task: multi_attractor
+        sequence:
+        - alien_monster.png
+        - microbe.png
+        - rooster.png
+        pairs:
+        - initial:
+            image: crab.png
+            mode: patch
+            size: 6
+          target: crab.png
+        - initial:
+            image: microbe.png
+            mode: patch
+            size: 6
+          target: microbe.png
+        target_repeats: 2
+        timesteps: null
+        observed_channels: 4
+        data_channels: 4
+        crop_square: false
+        pad:
+        - 10
+        - 10
+        - 10
+        - 10
+        shift_amount: 2
+        noise_strength: 0.005
+        noise_mode: full
+        terminal_carry:
+          enabled: true
+          start_fraction: 0.1
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.9
+        regeneration:
+          enabled: true
+          start_fraction: 0.5
+          end_fraction: 0.9
+          initial_probability: 0.0
+          final_probability: 0.8
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 4
+      signal_open_at_rest: true
+      signal_mode: pointer
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: null
+      apply_if_finite: false
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 1.0
+        localised_hidden: 1.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      t: 24
+      derive_t_from_fire_rate: false
+      fire_rate_step_numerator: null
+      iterations: 8000
+      checkpoint_warmup_fraction: 0.00125
+      write_images: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-emoji-signalling
+        group: emoji_signalling_speed_limit_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.emoji.task
+        - data.batches
+        - model.signal_channels
+        - model.signal_open_at_rest
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-emoji
+      model_factory: NCA.model.factory:build_model
+emit_files: false

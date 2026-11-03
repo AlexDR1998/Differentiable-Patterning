@@ -1,0 +1,51 @@
+# Signalling NCAs (sNCA) on emoji tasks that a local NCA struggles with:
+# only run.t = 24 steps between images, so with fire_rate 0.5 information
+# spreads about 12-24 cells by local updates, less than the ~25 cell radius
+# of an emoji grown from a central patch.
+#   - sequence: alien_monster -> microbe -> rooster
+#   - multi_attractor: a crab patch grows into the crab, a microbe patch into the microbe
+# signal_open_at_rest: with false, wires must be grown (also only ~1 cell per
+# step); with true, empty tissue conducts and the NCA grows insulation, so a
+# signal from the seed can reach cells that have not been reached yet.
+# emoji_signalling_mechanisms (run.t = 128) is the easy version.
+# Check TrainingRollout/signal_knockout_change: how much the final pattern
+# changes when signalling is switched off (0 = signalling unused).
+experiment_name: emoji_signalling_speed_limit_v1
+entrypoint: Experiments.emoji.train:run
+output_subdir: generated/emoji_signalling_speed_limit
+seed_mode: index
+
+grid:
+  logging.wandb.project: [nca-emoji-signalling]
+  run.repeat: [0]
+  model.channels: [32]
+  model.fire_rate: [0.5]
+  data.downsample: [2]
+  run.t: [24]
+  run.iterations: [8000]
+  loss.terms: [[l2]]
+  trainer.loop_autodiff: [checkpointed]
+  # Each task only reads its own one of these
+  data.emoji.sequence: [[alien_monster.png, microbe.png, rooster.png]]
+  data.emoji.pairs:
+    - - initial: {image: crab.png, mode: patch, size: 6}
+        target: crab.png
+      - initial: {image: microbe.png, mode: patch, size: 6}
+        target: microbe.png
+  model.family: [NCA, sNCA]
+
+groups:
+  - data.emoji.task: [sequence, multi_attractor]
+    data.batches: [4, 2]
+
+branches:
+  - when:
+      model.family: sNCA
+    grid:
+      model.signal_channels: [4]
+      model.signal_open_at_rest: [false, true]
+    # Enough sub-steps per mode to cross the emoji in a few NCA steps
+    # (cable spreads by diffusion, so it needs the most)
+    groups:
+      - model.signal_mode: [cable, axon, steady, excitable, broadcast, pointer]
+        model.signal_substeps: [32, 8, 32, 16, 1, 1]

@@ -9,10 +9,16 @@ and grow the structure. After each NCA update, a fixed rule moves the signal
 channels through the structure. Signals can therefore travel far in one NCA
 step, but only where (and how) the NCA has grown a structure for them.
 
-Modes and their structure channels (gates are sigmoid(channel - 4), so an
-empty channel is nearly closed):
+Structure channels are read on [0, 1], the range the intermediate_state
+regulariser keeps states in. A gate is its channel value clipped to [0, 1]
+(or 1 minus that with OPEN_AT_REST, so that empty tissue conducts and the NCA
+has to write insulation). Directions and offsets map 0..1 to -1..1. The edge
+between two cells has conductance g_i g_j, so a closed cell (gate 0) lets no
+signal through at all.
+
+Modes and their structure channels:
 - "cable" [conductance g]: SUBSTEPS diffusion steps along edges weighted by
-  g_i * g_j. Symmetric, like a dendrite network or gap-junction coupled cells.
+  g_i g_j. Symmetric, like a dendrite network or gap-junction coupled cells.
 - "axon" [g, direction (2)]: SUBSTEPS upwind transport steps along a learned
   direction. Directed; a signal piles up at the end of a wire.
 - "steady" [g]: the steady state of the cable, with screening rate
@@ -48,9 +54,6 @@ from NCA.model.NCA_model import NCA
 # Number of structure channels written by the NCA for each mode
 STRUCTURE_CHANNELS = {"cable": 1, "axon": 3, "steady": 1, "excitable": 1, "broadcast": 2, "pointer": 3}
 
-# Added to gate channels before the sigmoid, so that a cell whose channel is 0
-# (e.g. an empty initial state) is nearly closed (gate ~ 0.02).
-CONDUCTANCE_BIAS = -4.0
 
 # Excitable dynamics: du = gain u(1-u)(u-threshold) - w, dw = recovery_rate (u - w).
 # Rest is u = w = 0, a pulse takes u to about 1 and travels ~0.3 cells per
@@ -82,15 +85,35 @@ def _neighbours(x, padding, wall=False):
     }
 
 
-def conductance_from_channel(raw):
-    """Gate in (0, 1) from a raw structure channel."""
-    return jax.nn.sigmoid(raw + CONDUCTANCE_BIAS)
+def conductance_from_channel(raw, open_at_rest=False):
+    """Gate in [0, 1] from a raw structure channel: closed at 0 and open at 1 (reversed if ``open_at_rest``).
+
+    A smooth (sigmoid) gate is never fully closed, and over many sub-steps
+    most of a signal leaks out of a wire through the cells around it.
+    """
+    gate = jnp.clip(raw, 0.0, 1.0)
+    return 1.0 - gate if open_at_rest else gate
 
 
 def direction_from_channels(raw):
-    """Direction [2, x, y] (row, column) from 2 raw channels, with |v_row| + |v_col| <= 1."""
-    v = jnp.tanh(raw)
+    """Direction [2, x, y] (row, column) from 2 raw channels on [0, 1], with |v_row| + |v_col| <= 1.
+
+    A channel at 0.5 means no movement along that axis; 0 and 1 mean full speed
+    up/left and down/right.
+    """
+    v = 2 * raw - 1
     return v / jnp.maximum(1.0, jnp.sum(jnp.abs(v), axis=0))
+
+
+def offset_from_channels(raw, signal_range):
+    """Pointer offset [2, x, y] in cells from 2 raw channels on [0, 1]: 0.5 is no offset."""
+    return signal_range * (2 * raw - 1)
+
+
+def _edges(g, padding):
+    """Conductance g_i g_j of the edge to each of the 4 neighbours j, as a dict."""
+    g_n = _neighbours(g, padding, wall=True)
+    return {d: g * g_n[d] for d in g_n}
 
 
 def broadcast_scales(signal_range):
@@ -102,16 +125,16 @@ def broadcast_scales(signal_range):
 
 
 def _graph_flux(s, g, padding):
-    """sum_j g_i g_j (s_j - s_i) over the 4 neighbours j: minus the conductance-weighted graph Laplacian."""
-    g_n = _neighbours(g, padding, wall=True)
+    """sum_j c_ij (s_j - s_i) over the 4 neighbours j: minus the conductance-weighted graph Laplacian."""
+    c = _edges(g, padding)
     s_n = _neighbours(s, padding)
-    return sum(g * g_n[d] * (s_n[d] - s) for d in s_n)
+    return sum(c[d] * (s_n[d] - s) for d in s_n)
 
 
 def cable_step(s, g, padding, diffusion):
     """One explicit diffusion step of signals ``s`` [K, x, y] through conductance ``g`` [x, y].
 
-    The flux between two neighbouring cells is weighted by g_i * g_j. Stable for
+    The flux between two neighbouring cells is weighted by g_i g_j. Stable for
     ``diffusion <= 0.25``.
     """
     return s + diffusion * _graph_flux(s, g, padding)
@@ -121,16 +144,15 @@ def axon_step(s, g, v, padding):
     """One upwind transport step of signals ``s`` [K, x, y] along direction ``v`` [2, x, y].
 
     Each cell sends the fraction |v| of its signal to the neighbour(s) that v
-    points at, scaled by the edge conductance g_i * g_j. With |v_row| + |v_col| <= 1
+    points at, scaled by the edge conductance g_i g_j. With |v_row| + |v_col| <= 1
     a cell never sends more than it has, and v = (0, 1) on a wire moves a
     signal exactly one cell per step.
     """
-    g_n = _neighbours(g, padding, wall=True)
+    c = _edges(g, padding)
     s_n = _neighbours(s, padding)
     v_row_n = _neighbours(v[0], padding)
     v_col_n = _neighbours(v[1], padding)
     relu = jax.nn.relu
-    c = {d: g * g_n[d] for d in g_n}
     sent = s * (
         c["down"] * relu(v[0]) + c["up"] * relu(-v[0])
         + c["right"] * relu(v[1]) + c["left"] * relu(-v[1])
@@ -232,6 +254,7 @@ class SignalNCA(AbstractModel):
     DIFFUSION: float = eqx.field(static=True)
     SCREENING: float = eqx.field(static=True)
     RANGE: int = eqx.field(static=True)
+    OPEN_AT_REST: bool = eqx.field(static=True)
 
     def __init__(self,
                  N_CHANNELS,
@@ -247,7 +270,8 @@ class SignalNCA(AbstractModel):
                  SUBSTEPS=8,
                  DIFFUSION=0.25,
                  SCREENING=0.01,
-                 RANGE=16):
+                 RANGE=16,
+                 OPEN_AT_REST=False):
         """
         Parameters
         ----------
@@ -269,6 +293,9 @@ class SignalNCA(AbstractModel):
             signals further along a wire.
         RANGE : int
             Widest broadcast kernel, or the furthest pointer reach, in cells.
+        OPEN_AT_REST : bool
+            If True, gates are open where their channel is 0 and closed at 1, so
+            signals can cross empty tissue and the NCA learns where to block them.
         """
         if MODE not in STRUCTURE_CHANNELS:
             raise ValueError(f"MODE must be one of {tuple(STRUCTURE_CHANNELS)}, got {MODE!r}")
@@ -300,6 +327,7 @@ class SignalNCA(AbstractModel):
         self.DIFFUSION = DIFFUSION
         self.SCREENING = SCREENING
         self.RANGE = RANGE
+        self.OPEN_AT_REST = OPEN_AT_REST
         # Starts as an equal blend of all kernel widths and the global mean
         self.kernel_logits = (
             jnp.zeros((SIGNAL_CHANNELS, len(broadcast_scales(RANGE)) + 1))
@@ -341,6 +369,7 @@ class SignalNCA(AbstractModel):
             "SIGNAL_DIFFUSION": self.DIFFUSION,
             "SIGNAL_SCREENING": self.SCREENING,
             "SIGNAL_RANGE": self.RANGE,
+            "SIGNAL_OPEN_AT_REST": self.OPEN_AT_REST,
         })
         return config
 
@@ -350,7 +379,7 @@ class SignalNCA(AbstractModel):
         This is the conductance (cable, axon, steady, excitable), the
         transmitter gate (broadcast) or the reach gate (pointer).
         """
-        return conductance_from_channel(state[..., self.structure_start, :, :])
+        return conductance_from_channel(state[..., self.structure_start, :, :], self.OPEN_AT_REST)
 
     def direction(self, state):
         """Axon direction [..., 2, x, y] of each cell (only for MODE="axon")."""
@@ -363,7 +392,7 @@ class SignalNCA(AbstractModel):
         """Move the signal channels of ``x`` [C, x, y] through its structure."""
         padding = self.nca.op.PADDING
         structure = x[self.structure_start:]
-        g = conductance_from_channel(structure[0])
+        g = conductance_from_channel(structure[0], self.OPEN_AT_REST)
         s = x[self.signal_start:self.structure_start]
         if self.MODE == "cable":
             s = _repeat(lambda s: cable_step(s, g, padding, self.DIFFUSION), s, self.SUBSTEPS)
@@ -375,12 +404,20 @@ class SignalNCA(AbstractModel):
         elif self.MODE == "excitable":
             s = _repeat(lambda s: excitable_step(s, g, padding, self.DIFFUSION), s, self.SUBSTEPS)
         elif self.MODE == "broadcast":
-            receive = conductance_from_channel(structure[1])
+            receive = conductance_from_channel(structure[1], self.OPEN_AT_REST)
             s = broadcast(s, g, receive, self.kernel_logits, broadcast_scales(self.RANGE), padding)
         else:  # pointer
-            offset = self.RANGE * jnp.tanh(structure[1:3])
+            offset = offset_from_channels(structure[1:3], self.RANGE)
             s = pointer_read(s, g, offset, padding)
         return x.at[self.signal_start:self.structure_start].set(s)
+
+    def signal_movement(self, x):
+        """Mean absolute change of the signal channels made by one ``propagate`` of ``x`` [C, x, y].
+
+        0 means the signalling does nothing in this state.
+        """
+        moved = self.propagate(x) - x
+        return jnp.mean(jnp.abs(moved[self.signal_start:self.structure_start]))
 
     def __call__(self,
                  x: Float[Array, "C x y"],

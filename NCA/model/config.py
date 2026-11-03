@@ -101,6 +101,9 @@ class SignalModelConfig(ModelConfig):
     signal_screening: float = 0.01
     # broadcast: widest kernel; pointer: furthest reach (cells)
     signal_range: int = 16
+    # If true, gates are open where their channel is 0, so signals can cross
+    # empty tissue and the NCA has to grow insulation instead of wires
+    signal_open_at_rest: bool = False
 
     def __post_init__(self):
         super().__post_init__()

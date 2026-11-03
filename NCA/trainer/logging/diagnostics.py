@@ -533,27 +533,13 @@ def plot_singular_value_spectrum(singular_values, title):
 	return plot_to_image(figure)
 
 
-def plot_wiring(conductances, labels):
-	"""Conductance maps of the grown signalling structures (sNCA/gsNCA), one panel per batch.
+def plot_firing_activity(steps, activities, labels, observation_steps=None,
+		ylabel="Mean firing probability", title="Cell activity during rollout", ylim=(0, 1)):
+	"""A per-step quantity against rollout step, one line per batch.
 
-	``conductances`` is a list (one per batch) of [x, y] arrays in [0, 1].
-	"""
-	import matplotlib.pyplot as plt
-
-	count = len(conductances)
-	figure, axes = plt.subplots(1, count, figsize=(3*count, 3.2), dpi=150, squeeze=False)
-	for ax, conductance, label in zip(axes[0], conductances, labels):
-		image = ax.imshow(np.asarray(conductance), vmin=0, vmax=1, cmap="magma")
-		ax.set_title(label, fontsize="small")
-		ax.axis("off")
-	figure.colorbar(image, ax=axes[0].tolist(), shrink=0.8, label="Conductance")
-	return plot_to_image(figure)
-
-
-def plot_firing_activity(steps, activities, labels, observation_steps=None):
-	"""Mean learned firing probability against rollout step (aNCA/gaNCA), one line per batch.
-
-	``activities`` is a list (one per batch) of [frames] arrays.
+	By default the mean learned firing probability (aNCA/gaNCA); also used for
+	the signal movement of sNCA. ``activities`` is a list (one per batch) of
+	[frames] arrays. ``ylim=None`` scales the y axis to the data.
 	"""
 	import matplotlib.pyplot as plt
 
@@ -565,10 +551,11 @@ def plot_firing_activity(steps, activities, labels, observation_steps=None):
 	if observation_steps is not None:
 		for step in observation_steps:
 			ax.axvline(step, color="grey", linewidth=0.5, alpha=0.5)
-	ax.set_ylim(0, 1)
+	if ylim is not None:
+		ax.set_ylim(*ylim)
 	ax.set_xlabel("Step")
-	ax.set_ylabel("Mean firing probability")
-	ax.set_title("Cell activity during rollout")
+	ax.set_ylabel(ylabel)
+	ax.set_title(title)
 	ax.legend(fontsize="small")
 	ax.grid(True, alpha=0.25)
 	figure.tight_layout()
