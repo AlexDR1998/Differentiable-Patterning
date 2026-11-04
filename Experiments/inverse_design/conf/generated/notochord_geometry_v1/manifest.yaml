@@ -9,6 +9,7 @@ configs:
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 2
     inverse_design.geometry.repeat: 0
     inverse_design.objective.maximise: true
@@ -87,10 +88,13 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 - index: 5
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 2
     inverse_design.geometry.repeat: 1
     inverse_design.objective.maximise: true
@@ -169,10 +173,13 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 - index: 1
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 2
     inverse_design.geometry.repeat: 2
     inverse_design.objective.maximise: true
@@ -251,10 +258,13 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 - index: 9
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 3
     inverse_design.geometry.repeat: 0
     inverse_design.objective.maximise: true
@@ -333,10 +343,13 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 - index: 8
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 3
     inverse_design.geometry.repeat: 1
     inverse_design.objective.maximise: true
@@ -415,10 +428,13 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 - index: 4
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 3
     inverse_design.geometry.repeat: 2
     inverse_design.objective.maximise: true
@@ -497,10 +513,13 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 - index: 3
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 4
     inverse_design.geometry.repeat: 0
     inverse_design.objective.maximise: true
@@ -579,10 +598,13 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 - index: 6
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 4
     inverse_design.geometry.repeat: 1
     inverse_design.objective.maximise: true
@@ -661,10 +683,13 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 - index: 0
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 4
     inverse_design.geometry.repeat: 2
     inverse_design.objective.maximise: true
@@ -743,10 +768,13 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 - index: 7
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
+    rollout.scan_kind: lax
     inverse_design.geometry.harmonics: 3
     inverse_design.geometry.repeat: 0
     inverse_design.objective.maximise: false
@@ -825,4 +853,6 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
+    rollout:
+      scan_kind: lax
 emit_files: false

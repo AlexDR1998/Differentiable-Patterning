@@ -24,7 +24,7 @@ grid:
     # - 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9 #REPLACE_WITH_SLICE_DS16_MODEL_ID
     - 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa #REPLACE_WITH_SLICE_DS32_MODEL_ID
   logging.wandb.project: [NCA-inverse-design]
-
+  rollout.scan_kind: [lax]
 groups:
   - inverse_design.geometry.harmonics: [2, 2, 2, 3, 3, 3, 4, 4, 4, 3]
     inverse_design.geometry.repeat: [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
