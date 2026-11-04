@@ -234,15 +234,20 @@ class SectorHandle:
 
 @app.class_definition(hide_code=True)
 class SectorHandler(HandlerBase):
-    """Draws a SectorHandle as a small disc with its sector filled."""
+    """Draws a SectorHandle as a small disc with its sector filled
+    (colours suit a black legend by default)."""
+
+    def __init__(self, fill="#dddddd", edge="#999999", **kwargs):
+        super().__init__(**kwargs)
+        self.fill, self.edge = fill, edge
 
     def create_artists(self, legend, handle, xdescent, ydescent, width, height, fontsize, trans):
         centre = (width / 2 - xdescent, height / 2 - ydescent)
         radius = 0.75 * height
         start, stop = sector_angles(handle.index, handle.count)
         return [
-            Circle(centre, radius, fill=False, edgecolor="#999999", lw=0.6, transform=trans),
-            Wedge(centre, radius, start, stop, facecolor="#dddddd", edgecolor="none", transform=trans),
+            Circle(centre, radius, fill=False, edgecolor=self.edge, lw=0.6, transform=trans),
+            Wedge(centre, radius, start, stop, facecolor=self.fill, edgecolor="none", transform=trans),
         ]
 
 

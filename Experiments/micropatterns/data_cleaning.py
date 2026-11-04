@@ -5985,9 +5985,9 @@ def _(image_geometry, image_source, overview, place_image):
 @app.cell(hide_code=True)
 def _(
     CHANNEL_SOURCE,
+    condition_bins,
     flagged_indices,
     high_percentiles,
-    condition_bins,
     inside_only,
     knockout_bounds,
     loaded_names,

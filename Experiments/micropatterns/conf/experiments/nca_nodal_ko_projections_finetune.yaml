@@ -1,7 +1,12 @@
-experiment_name: nca_nodal_ko_projections_finetune_v2
+experiment_name: nca_nodal_ko_projections_finetune_v3_sum
 entrypoint: Experiments.micropatterns.train:run
-output_subdir: generated/nca_nodal_ko_projections_finetune
+output_subdir: generated/nca_nodal_ko_projections_finetune_v3_sum
 seed_mode: index
+
+# v3_sum: v2 left out the stripe filter that the sum WT parents were trained
+# with, so the sum models are fine-tuned again with it. The v2 max and slice
+# models are kept (no stripe filter, as their parents); their entries are
+# commented out below.
 
 # Nodal knockout fine-tuning of the WT models from
 # micropattern_projections_training_sweep.yaml, one per projection (max, sum,
@@ -13,7 +18,7 @@ seed_mode: index
 # on, so the validation replicates stay held out. The run stops early if the
 # parent's projection or model settings differ from its entry here.
 #
-# Total jobs: 3 projections * 3 resolutions * 8 repeats = 72.
+# Total jobs: 1 projection (sum) * 3 resolutions * 8 repeats = 24.
 #
 # The parent model IDs below are old 14-channel bundles. The data now leaves
 # out cell_fate_s2/SOX17 (base_config), so replace them with baselines trained
@@ -106,39 +111,33 @@ groups:
       # - 20261020T130354Z-cfg804d8e6ff085-0daa4dab #REPLACE_WITH_SLICE_DS8_MODEL_ID
       # - 20261020T004544Z-cfg91bbc2de4c16-873cd8a5 #REPLACE_WITH_SLICE_DS16_MODEL_ID
       # - 20261019T185541Z-cfg50d049d71cfc-442d25fc #REPLACE_WITH_SLICE_DS32_MODEL_ID
-      - 20261027T151447Z-cfg49b16c414b55-da029154 #REPLACE_WITH_MAX_DS8_MODEL_ID
-      - 20261027T152010Z-cfg6741b54c32ce-5e3b49fe #REPLACE_WITH_MAX_DS16_MODEL_ID
-      - 20261027T151844Z-cfg4075ae24e245-36c9d705 #REPLACE_WITH_MAX_DS32_MODEL_ID
+      # - 20261027T151447Z-cfg49b16c414b55-da029154 #REPLACE_WITH_MAX_DS8_MODEL_ID
+      # - 20261027T152010Z-cfg6741b54c32ce-5e3b49fe #REPLACE_WITH_MAX_DS16_MODEL_ID
+      # - 20261027T151844Z-cfg4075ae24e245-36c9d705 #REPLACE_WITH_MAX_DS32_MODEL_ID
       - 20261027T212939Z-cfg48df3cfa8558-ac5a0126 #REPLACE_WITH_SUM_DS8_MODEL_ID
       - 20261027T105046Z-cfg919d9a8e1591-fd0da6dd #REPLACE_WITH_SUM_DS16_MODEL_ID
       - 20261027T143308Z-cfgb505b3517573-a92c347a #REPLACE_WITH_SUM_DS32_MODEL_ID
-      - 20261027T113845Z-cfgb0c60663a5e9-a4ca5424 #REPLACE_WITH_SLICE_DS8_MODEL_ID
-      - 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9 #REPLACE_WITH_SLICE_DS16_MODEL_ID
-      - 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa #REPLACE_WITH_SLICE_DS32_MODEL_ID
-    data.micropattern.projection: [max, max, max, sum, sum, sum, slice, slice, slice]
-    data.downsample: [8, 16, 32, 8, 16, 32, 8, 16, 32]
-    run.t: [256, 128, 64, 256, 128, 64, 256, 128, 64]
-    trainer.loop_autodiff: [checkpointed, lax, lax, checkpointed, lax, lax, checkpointed, lax, lax]
-    data.batches: [2, 2, 2, 2, 2, 2, 2, 2, 2]
+      # - 20261027T113845Z-cfgb0c60663a5e9-a4ca5424 #REPLACE_WITH_SLICE_DS8_MODEL_ID
+      # - 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9 #REPLACE_WITH_SLICE_DS16_MODEL_ID
+      # - 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa #REPLACE_WITH_SLICE_DS32_MODEL_ID
+    data.micropattern.projection: [sum, sum, sum]
+    # Must be the parent's cleaning (as in micropattern_projections_training_sweep.yaml).
+    data.micropattern.cleaning.horizontal_stripe_widths:
+      - {cell_fate_s1/TBXT: 10, cell_fate_s2/TBXT: 10}
+      - {cell_fate_s1/TBXT: 10, cell_fate_s2/TBXT: 10}
+      - {cell_fate_s1/TBXT: 10, cell_fate_s2/TBXT: 10}
+    data.micropattern.cleaning.stripe_block: [270, 270, 270]
+    data.downsample: [8, 16, 32]
+    run.t: [256, 128, 64]
+    trainer.loop_autodiff: [checkpointed, lax, lax]
+    data.batches: [2, 2, 2]
     # Must be the parent's split.
     data.micropattern.train_replicates:
       - [3, 4]
-      - [3, 4]
-      - [3, 4]
-      - [3, 4]
       - [1, 2]
       - [3, 4]
-      - [3, 4]
-      - [3, 4]
-      - [1, 2]
     data.micropattern.validation_replicates:
       - [1, 2]
-      - [1, 2]
-      - [1, 2]
-      - [1, 2]
       - [3, 4]
       - [1, 2]
-      - [1, 2]
-      - [1, 2]
-      - [3, 4]
-    run.iterations: [4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000]
+    run.iterations: [4000, 4000, 4000]
