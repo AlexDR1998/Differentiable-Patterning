@@ -19,13 +19,14 @@ output_subdir: generated/notochord_geometry_v1
 seed_mode: index
 
 grid:
-  checkpoint.model_id:
-    # - 20261027T113845Z-cfgb0c60663a5e9-a4ca5424 #REPLACE_WITH_SLICE_DS8_MODEL_ID
-    # - 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9 #REPLACE_WITH_SLICE_DS16_MODEL_ID
-    - 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa #REPLACE_WITH_SLICE_DS32_MODEL_ID
   logging.wandb.project: [NCA-inverse-design]
-  rollout.scan_kind: [lax]
+  
 groups:
   - inverse_design.geometry.harmonics: [2, 2, 2, 3, 3, 3, 4, 4, 4, 3]
     inverse_design.geometry.repeat: [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
     inverse_design.objective.maximise: [true, true, true, true, true, true, true, true, true, false]
+  - checkpoint.model_id:
+    - 20261027T113845Z-cfgb0c60663a5e9-a4ca5424 #REPLACE_WITH_SLICE_DS8_MODEL_ID
+    - 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9 #REPLACE_WITH_SLICE_DS16_MODEL_ID
+    - 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa #REPLACE_WITH_SLICE_DS32_MODEL_ID
+    inverse_design.rollout.scan_kind: [checkpointed, lax, lax]
