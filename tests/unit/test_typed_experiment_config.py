@@ -6,9 +6,12 @@ import yaml
 from Experiments.config import (
     ExperimentConfig,
     ImpulseExperimentConfig,
+    InverseDesignExperimentConfig,
     config_to_dict,
     experiment_config_from_mapping,
     impulse_experiment_config_from_mapping,
+    inverse_design_experiment_config_from_mapping,
+    load_experiment_config,
 )
 
 
@@ -227,3 +230,35 @@ def test_impulse_config_accepts_an_explicit_data_section():
     config = impulse_experiment_config_from_mapping(value)
 
     assert config.data.dataset == "emojis"
+
+
+INVERSE_DESIGN_BASE = Path("Experiments/inverse_design/conf/base_config.yaml")
+
+
+def test_inverse_design_workflow_has_a_separate_typed_root():
+    value = yaml.safe_load(INVERSE_DESIGN_BASE.read_text())
+
+    config = load_experiment_config(value)
+
+    assert isinstance(config, InverseDesignExperimentConfig)
+    assert config.inverse_design.objective.target == "Notochord"
+    assert config.inverse_design.baseline_ellipses == (0.15, 0.3)
+    assert inverse_design_experiment_config_from_mapping(config_to_dict(config)) == config
+    assert Path(config.inverse_design.cell_types_file).is_file()
+
+
+@pytest.mark.parametrize("section", ["geometry", "texture"])
+def test_inverse_design_rejects_unknown_keys(section):
+    value = yaml.safe_load(INVERSE_DESIGN_BASE.read_text())
+    value["inverse_design"][section]["unknown_option"] = 1
+
+    with pytest.raises(ValueError, match=f"inverse_design.{section}"):
+        inverse_design_experiment_config_from_mapping(value)
+
+
+def test_inverse_design_takes_model_and_data_from_the_bundle():
+    value = yaml.safe_load(INVERSE_DESIGN_BASE.read_text())
+    value["data"] = {"dataset": "micropatterns_260726"}
+
+    with pytest.raises(ValueError, match="checkpoint.model_id"):
+        inverse_design_experiment_config_from_mapping(value)

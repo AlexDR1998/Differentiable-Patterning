@@ -1,0 +1,28 @@
+# Pipeline smoke test: optimise a colony geometry for an existing trained
+# micropatterns_260726 model for a few iterations. A run passes when it exits
+# cleanly (it publishes no bundle, only an inverse design record).
+#
+# Set checkpoint.model_id to a slice-projection micropattern bundle that
+# exists in the model store both locally and on the cluster. Until the
+# placeholder is replaced, pipeline_smoke_test.py skips this sweep.
+experiment_name: smoke_inverse_design
+entrypoint: Experiments.inverse_design.optimise:run
+output_subdir: generated/smoke_inverse_design
+seed_mode: fixed
+
+grid:
+  checkpoint.model_id: [REPLACE_WITH_PARENT_MODEL_ID]
+  logging.wandb.project: [pipeline-smoke]
+  inverse_design.iterations: [3]
+  inverse_design.batch_size: [2]
+  inverse_design.log_every: [2]
+  inverse_design.evaluation_seeds: [2]
+  inverse_design.baseline_ellipses: [[0.15]]
+  inverse_design.rollout.hours: [12]
+  inverse_design.texture.bank_size: [2]
+
+groups:
+  # The second run covers the lax scan, a free radius and the minimise control
+  - inverse_design.rollout.scan_kind: [checkpointed, lax]
+    inverse_design.geometry.fixed_radius: [true, false]
+    inverse_design.objective.maximise: [true, false]

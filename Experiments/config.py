@@ -41,6 +41,16 @@ from Experiments.impulse.config import (
     ImpulsePairSourceConfig,
     ImpulseRolloutConfig,
 )
+from Experiments.inverse_design.config import (
+    InverseDesignConfig,
+    InverseDesignGeometryConfig,
+    InverseDesignObjectiveConfig,
+    InverseDesignOptimiserConfig,
+    InverseDesignPenaltyConfig,
+    InverseDesignRolloutConfig,
+    MaskSoftnessConfig,
+    TextureConfig,
+)
 from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
 from Experiments.pde.config import PdeDataConfig
 from Experiments.signalling.config import SignalTaskDataConfig
@@ -240,6 +250,19 @@ class ImpulseExperimentConfig(ConfigValue):
     impulse: ImpulseConfig
     logging: LoggingConfig
     data: DataConfig | None = None
+
+
+@dataclass(frozen=True)
+class InverseDesignExperimentConfig(ConfigValue):
+    schema_version: int
+    seed: int
+    experiment: ExperimentMetadataConfig
+    system: SystemConfig
+    # The model, and the data its initial textures come from, are those of
+    # the registry bundle named by checkpoint.model_id.
+    checkpoint: CheckpointLoadConfig
+    inverse_design: InverseDesignConfig
+    logging: LoggingConfig
 
 
 # ---------------------------------------------------------------------------
@@ -805,6 +828,45 @@ def impulse_experiment_config_from_mapping(
     )
 
 
+def inverse_design_experiment_config_from_mapping(
+    value: Mapping[str, Any],
+) -> InverseDesignExperimentConfig:
+    root = _current_layout(value)
+    allowed = {field_.name for field_ in fields(InverseDesignExperimentConfig)}
+    unknown = set(root) - allowed
+    if unknown & {"model", "data"}:
+        raise ValueError(
+            "Inverse design configs take the model and data from checkpoint.model_id; "
+            "remove the model and data sections"
+        )
+    if unknown:
+        raise ValueError(f"Unknown top-level inverse design configuration fields: {sorted(unknown)}")
+
+    node = _mapping(root["inverse_design"], "inverse_design")
+    sections = {
+        "geometry": InverseDesignGeometryConfig,
+        "objective": InverseDesignObjectiveConfig,
+        "penalties": InverseDesignPenaltyConfig,
+        "mask_softness": MaskSoftnessConfig,
+        "optimiser": InverseDesignOptimiserConfig,
+        "rollout": InverseDesignRolloutConfig,
+        "texture": TextureConfig,
+    }
+    for name, cls in sections.items():
+        node[name] = _strict(cls, node.get(name), f"inverse_design.{name}")
+    return InverseDesignExperimentConfig(
+        schema_version=CONFIG_SCHEMA_VERSION,
+        seed=int(root.get("seed", 0)),
+        experiment=_strict(ExperimentMetadataConfig, root["experiment"], "experiment"),
+        system=_strict(SystemConfig, root.get("system"), "system", xla_flags=_tuple),
+        checkpoint=_strict(CheckpointLoadConfig, root.get("checkpoint"), "checkpoint"),
+        inverse_design=_strict(
+            InverseDesignConfig, node, "inverse_design", baseline_ellipses=_tuple
+        ),
+        logging=_logging_config(root["logging"]),
+    )
+
+
 def config_to_dict(config: ConfigValue) -> dict[str, Any]:
     if not is_dataclass(config):
         raise TypeError("config_to_dict expects a configuration dataclass")
@@ -828,7 +890,9 @@ def config_to_dict(config: ConfigValue) -> dict[str, Any]:
     return serialise(config)
 
 
-def load_experiment_config(cfg: Any) -> ExperimentConfig | ImpulseExperimentConfig:
+def load_experiment_config(
+    cfg: Any,
+) -> ExperimentConfig | ImpulseExperimentConfig | InverseDesignExperimentConfig:
     """Convert an OmegaConf config (or plain mapping) into a typed experiment config."""
     from omegaconf import OmegaConf
 
@@ -837,11 +901,14 @@ def load_experiment_config(cfg: Any) -> ExperimentConfig | ImpulseExperimentConf
         raise TypeError("Experiment configuration must resolve to a mapping")
     if "impulse" in value:
         return impulse_experiment_config_from_mapping(value)
+    if "inverse_design" in value:
+        return inverse_design_experiment_config_from_mapping(value)
     return experiment_config_from_mapping(value)
 
 
 __all__ = [name for name in globals() if name.endswith("Config")] + [
     "CONFIG_SCHEMA_VERSION", "DATA_SECTIONS", "config_to_dict",
     "experiment_config_from_mapping", "impulse_experiment_config_from_mapping",
+    "inverse_design_experiment_config_from_mapping",
     "load_experiment_config", "upgrade_legacy_config",
 ]

@@ -1,0 +1,44 @@
+# Micropattern geometry optimisation
+
+Finds the colony shape for which a trained micropattern NCA makes the most
+of one cell type (e.g. notochord). The NCA is frozen and only the shape changes.
+
+## Pieces
+
+| Piece | Where |
+| --- | --- |
+| Shape | `NCA/inverse_design/geometry.py`: `FourierRadialGeometry`, r(θ) = R exp(Σ aₖ cos kθ + bₖ sin kθ), rescaled so the area stays πR². With `fixed_radius` only the shape is learned. |
+| Mask → NCA | `initial_state.build_initial_state` (texture × mask, and the mask channel for soft boundaries) and `rollout.rollout_final` (mask re-imposed after every step). |
+| Objective | `objectives.CellTypeShareObjective.from_rules`: the target's share of the colony, using the rules of a cell type file (`Common/dataloader/cell_types.py`). Each marker threshold becomes a sigmoid of width `temperature`. "Or" clauses, clause weights, "Several" and "Other" count as in `pixel_label_shares`, and match it exactly with `hard=True`. |
+| Optimiser | `optimise.optimise_geometry`: a batch of initial textures with training-strength noise, adam with gradient clipping, and a mask edge that sharpens over the run. |
+| Evaluation | `optimise.evaluate_binary`: rollouts on the binary mask (as in training), scored with the hard rules. These are the scores to report. The best geometry is chosen by them. |
+| Experiment | `Experiments/inverse_design/`: `optimise.py:run`, `config.py`, `records.py`, `wandb_log.py`, `conf/`. |
+
+## A run
+
+1. Load the bundle (`checkpoint.model_id`), the cell type file, and the 0 h
+   training colonies (`Experiments/micropatterns/reference.py`).
+2. Check that the rules were tuned on the model's projection.
+3. Synthesise `texture.bank_size` 0 h textures on a grid `geometry.grid_scale`
+   times the training grid. Training colonies nearly fill their grid, so
+   the extra space leaves room for new shapes.
+4. Score the circle of the training colonies' area, and same-area ellipses,
+   with the same random numbers as every later evaluation.
+5. Optimise, evaluating every `log_every` iterations.
+6. Save a record in `<store>/inverse_design/<experiment>/<id>/`: the best
+   geometry, the config, and `summary.yaml` with the baseline and optimised
+   shares of every label. `records.load_geometry` reads the geometry back.
+
+```bash
+python Experiments/generate_configs.py Experiments/inverse_design \
+    Experiments/inverse_design/conf/base_config.yaml Experiments/inverse_design/conf/generated
+```
+
+## Caveats
+
+- The models only saw binary circles of one size. Read optimised shapes as
+  hypotheses, and compare against `Baseline/circle` and the ellipses, not
+  against the soft training score.
+- `Binary/border_fraction` above 0 means the colony reaches the grid edge,
+  which wraps round under circular padding.
+- The thresholds hold only for the projection and hour they were tuned on.

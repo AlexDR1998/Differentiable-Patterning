@@ -37,7 +37,6 @@ with app.setup(hide_code=True):
     import io
     import os
     import base64
-    from dataclasses import replace
     from pathlib import Path
 
     repository_root = Path(__file__).resolve().parents[2]
@@ -51,6 +50,8 @@ with app.setup(hide_code=True):
 
     from Experiments.model_registry import ModelRegistry, load_selection
     from Experiments.micropatterns.mask_canvas import MaskCanvas, decode_mask, encode_mask
+    from Experiments.micropatterns.reference import combine_reference
+    from Experiments.micropatterns.reference import load_reference as load_bundle_reference
     from Experiments.micropatterns.rendering import render_cmy_composite, render_fate_cmy
     from Experiments.micropatterns.texture_synthesis import (
         normalise_histograms_and_covariance,
@@ -68,64 +69,12 @@ with app.setup(hide_code=True):
     _REFERENCE_CACHE = {}
 
     def load_reference(bundle, data_root):
-        """0 h measurements of the model's training replicates, scaled as in training.
+        """0 h reference colonies of a model (see ``reference.load_reference``), cached."""
 
-        Returns measurements ``[B, C, H, W]``, which measurements were taken
-        ``[B, C]``, colony masks ``[B, H, W]``, the channel schema and the
-        replicate labels.
-        """
-
-        from Experiments.micropatterns.config_helpers import load_data
-
-        data_config = replace(
-            bundle.config.data,
-            knockout=replace(bundle.config.data.knockout, curriculum=("baseline",)),
-        )
-        cache_key = (repr(data_config), str(data_root))
+        cache_key = (repr(bundle.config.data), str(data_root))
         if cache_key not in _REFERENCE_CACHE:
-            train_replicates = data_config.micropattern.train_replicates
-            if train_replicates is None:
-                train_replicates = tuple(range(1, data_config.batches + 1))
-            data, aux, _, boundary, _, _ = load_data(
-                data_config,
-                impath=str(data_root),
-                replicate_indices=tuple(index - 1 for index in train_replicates),
-                pool_copies_override=1,
-            )
-            _REFERENCE_CACHE[cache_key] = {
-                "measurements": np.asarray(data)[:, 0],
-                "available": np.asarray(aux["measurement_mask"])[:, 0],
-                "support": np.asarray(boundary)[:, 0] > 0.5,
-                "schema": aux["channel_schema"],
-                "replicates": tuple(aux.get("batch_replicates", train_replicates)),
-            }
+            _REFERENCE_CACHE[cache_key] = load_bundle_reference(bundle.config.data, data_root)
         return _REFERENCE_CACHE[cache_key]
-
-    def combine_reference(reference, mode, sample, seed):
-        """One reference colony ``[C, H, W]`` and its mask ``[H, W]``.
-
-        ``"fixed"`` uses one replicate. ``"sample_groups"`` takes each staining
-        panel from a random replicate that measured it, as in
-        ``boundary_mask_explorer.py``.
-        """
-
-        measurements = reference["measurements"]
-        if mode == "fixed":
-            index = int(sample) % measurements.shape[0]
-            return measurements[index], reference["support"][index]
-        rng = np.random.default_rng(int(seed))
-        combined = np.zeros_like(measurements[0])
-        for name, indices in zip(
-            reference["schema"].group_names,
-            reference["schema"].group_measurement_indices,
-        ):
-            indices = np.asarray(indices, dtype=int)
-            eligible = np.flatnonzero(np.all(reference["available"][:, indices], axis=1))
-            if not len(eligible):
-                raise ValueError(f"No training replicate measures {name!r} at 0 h")
-            combined[indices] = measurements[int(rng.choice(eligible)), indices]
-        support = reference["support"][int(rng.choice(measurements.shape[0]))]
-        return combined, support
 
     def fate_rgb(states, names):
         """SOX2/TBXT/SOX17 composite ``[T, H, W, 3]``, or the first channel in grey."""

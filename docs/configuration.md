@@ -212,7 +212,7 @@ exported as a cell type file (**Export and load cell types**, by default
 the channel and threshold of each marker, the high/low/any rule of each cell
 type, and the `data.micropattern` settings the thresholds were tuned with,
 since they only hold for images normalised that way. Training does not read
-it; other code loads it with `Common.dataloader.cell_types.load_cell_type_rules`
+it, but geometry optimisation does (`docs/inverse_design.md`); other code loads it with `Common.dataloader.cell_types.load_cell_type_rules`
 and labels normalised images with `classify_cell_types` (`marker_values`
 picks the markers out of a channel stack by measurement or marker name).
 

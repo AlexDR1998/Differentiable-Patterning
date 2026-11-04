@@ -6,10 +6,12 @@ runs. A run passes when it exits cleanly and publishes a complete model bundle.
 The runs go one after another on a single GPU, each in a fresh process through
 ``Experiments.run_config``, exactly as the cluster launchers run them.
 
-The Nodal knockout fine-tuning sweep and the impulse sweep start from an
-existing trained model, set by hand in ``smoke_micropatterns_ko_finetune.yaml``
-and ``smoke_impulse.yaml``. Each is skipped until its placeholder is replaced.
-Impulse runs publish no bundle, so for them a clean exit is enough.
+The Nodal knockout fine-tuning, impulse and inverse design sweeps start from
+an existing trained model, set by hand in
+``smoke_micropatterns_ko_finetune.yaml``, ``smoke_impulse.yaml`` and
+``smoke_inverse_design.yaml``. Each is skipped until its placeholder is
+replaced. Impulse and inverse design runs publish no bundle, so for them a
+clean exit is enough.
 
 Usage (from the repository root, on a GPU machine):
 
@@ -55,11 +57,12 @@ STAGES = [
     ("pde", "smoke_pde"),
     ("signalling", "smoke_signalling"),
     ("impulse", "smoke_impulse"),
+    ("inverse_design", "smoke_inverse_design"),
 ]
 # Sweeps that use a trained model rather than publish one.
-NO_BUNDLE_SWEEPS = {"smoke_impulse"}
+NO_BUNDLE_SWEEPS = {"smoke_impulse", "smoke_inverse_design"}
 # Label for the code version being tested; used in the W&B group of every run.
-SMOKE_VERSION = "impulse-developmental-time"
+SMOKE_VERSION = "inverse-design-notochord"
 PARENT_PLACEHOLDER = "REPLACE_WITH_PARENT_MODEL_ID"
 SMOKE_COLLECTION = "pipeline-smoke"
 
@@ -87,7 +90,7 @@ def run_entry(manifest_path: Path, index: int, env: dict[str, str], log_dir: Pat
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
-        "--only", nargs="+", choices=["emoji", "micropatterns", "snowmelt", "pde", "signalling"],
+        "--only", nargs="+", choices=["emoji", "micropatterns", "snowmelt", "pde", "signalling", "impulse", "inverse_design"],
         help="Run only these domains (default: all)",
     )
     parser.add_argument(

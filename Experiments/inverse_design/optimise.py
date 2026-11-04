@@ -1,0 +1,280 @@
+"""Optimise the colony geometry of a trained micropattern NCA for a cell type.
+
+Loads a model bundle and its 0 h training data, synthesises initial textures
+over a grid ``geometry.grid_scale`` times larger than the training one, and
+optimises a fixed-area Fourier-radial shape so that the model's share of the
+target cell type (rules from a cell type file) after ``rollout.hours`` is as
+high as possible. The circle and a few ellipses of the same area are scored
+first with the same random numbers. The result is saved as a record in the
+model store (``Experiments/inverse_design/records.py``).
+"""
+
+from pathlib import Path
+
+import equinox as eqx
+import jax
+import jax.numpy as jnp
+import numpy as np
+
+from Common.dataloader.cell_types import load_cell_type_rules
+from Experiments.config import config_to_dict
+from Experiments.config_helpers import build_wandb_tags, open_registry_bundle, resolve_store_root
+from Experiments.inverse_design.records import create_run_id, publish_inverse_design_record
+from Experiments.micropatterns.reference import combine_reference, load_reference
+from Experiments.micropatterns.texture_synthesis import (
+    normalise_histograms_and_covariance,
+    synthesise_patch_texture,
+    synthesise_reference_texture,
+)
+from NCA.inverse_design import (
+    CellTypeShareObjective,
+    FourierRadialGeometry,
+    GeometryPenalties,
+    OptimisationConfig,
+    evaluate_binary,
+    optimise_geometry,
+)
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+RADIUS_RANGE = (0.1, 0.95)
+
+
+def check_projection(cell_type_rules, data_config):
+    """The thresholds only hold for images projected as they were tuned on."""
+
+    rules_projection = str(cell_type_rules.preprocessing.get("projection", "max"))
+    data_projection = str(data_config.micropattern.projection)
+    if rules_projection != data_projection:
+        raise ValueError(
+            f"The cell type file was tuned on {rules_projection!r} projections, "
+            f"but the model was trained on {data_projection!r}"
+        )
+
+
+def rollout_steps(hours, steps_per_12h):
+    steps = hours * steps_per_12h / 12
+    if steps != int(steps):
+        raise ValueError(f"{hours} h is not a whole number of NCA steps ({steps_per_12h} per 12 h)")
+    return int(steps)
+
+
+def scaled_grid_shape(shape, grid_scale):
+    """Training grid shape times ``grid_scale``, rounded to odd sizes so the grid has a centre pixel."""
+
+    return tuple(int(2 * round(size * grid_scale / 2) + 1) for size in shape)
+
+
+def reference_radius(support, grid_shape):
+    """Mean radius of the reference colonies (pixels), in ``coordinate_grid`` units."""
+
+    pixels = np.sqrt(np.mean(np.sum(support, axis=(-2, -1))) / np.pi)
+    return float(pixels * 2.0 / (np.mean(grid_shape) - 1.0))
+
+
+def texture_bank(reference, texture, grid_shape, seed):
+    """``[K, state channels, H, W]`` 0 h textures over the whole grid.
+
+    Each texture takes every staining panel from a random training replicate
+    and is synthesised as in ``drawn_mask_explorer.py``.
+    """
+
+    schema = reference["schema"]
+    groups = tuple(tuple(group) for group in schema.group_measurement_indices)
+    full = np.ones(grid_shape, dtype=bool)
+    bank = []
+    for index in range(texture.bank_size):
+        texture_seed = seed * 100003 + index
+        measurements, support = combine_reference(reference, "sample_groups", 0, texture_seed)
+        if texture.mode == "patch":
+            tile, *_ = synthesise_patch_texture(
+                measurements, support, grid_shape, groups,
+                texture.patch_size, texture.patch_overlap, texture.interior_fraction,
+                texture.patch_jitter, texture.candidates, texture_seed,
+            )
+        elif texture.mode == "iaaft":
+            tile = synthesise_reference_texture(
+                measurements, support, grid_shape, full, texture.iaaft_iterations, texture_seed
+            )
+        else:
+            raise ValueError(f"Unknown texture mode {texture.mode!r}; use patch or iaaft")
+        if texture.normalise:
+            tile = normalise_histograms_and_covariance(tile, measurements, support, full, groups, 4)
+        bank.append(np.asarray(tile, dtype=np.float32)[np.asarray(schema.primary_measurements)])
+    return np.stack(bank)
+
+
+def baseline_geometries(radius, amplitudes):
+    """The circle, and harmonic-2 ellipses at 0 and 45 degrees, all of area pi R^2."""
+
+    baselines = {"circle": FourierRadialGeometry(1, radius=radius, radius_range=RADIUS_RANGE)}
+    for amplitude in amplitudes:
+        for degrees in (0, 45):
+            geometry = FourierRadialGeometry(
+                2, radius=radius, radius_range=RADIUS_RANGE, coefficient_limit=1.0,
+                angle=np.deg2rad(degrees),
+            )
+            geometry = eqx.tree_at(
+                lambda g: g.raw_cos, geometry, jnp.asarray([0.0, np.arctanh(amplitude)])
+            )
+            baselines[f"ellipse_{amplitude:g}_{degrees}deg"] = geometry
+    return baselines
+
+
+def run(cfg):
+    """Optimise a colony geometry for a trained micropattern model and save the record."""
+
+    design = cfg.inverse_design
+    key = jax.random.PRNGKey(cfg.seed)
+    model_key, geometry_key, optimise_key, evaluation_key = jax.random.split(key, 4)
+    bundle = open_registry_bundle(cfg.checkpoint.model_id, cfg.checkpoint.store_root)
+    model = bundle.load_model(key=model_key)
+    data_config = bundle.config.data
+    if data_config.dataset != "micropatterns_260726":
+        raise ValueError("Inverse design needs a model trained on micropatterns_260726")
+
+    cell_types_path = Path(design.cell_types_file)
+    if not cell_types_path.is_absolute():
+        cell_types_path = REPOSITORY_ROOT / cell_types_path
+    cell_type_rules = load_cell_type_rules(cell_types_path)
+    check_projection(cell_type_rules, data_config)
+    if design.rollout.hours != cell_type_rules.hour:
+        print(
+            f"Warning: the cell type thresholds were tuned at {cell_type_rules.hour} h, "
+            f"the rollout is scored at {design.rollout.hours} h"
+        )
+
+    reference = load_reference(data_config)
+    state_channel_names = tuple(reference["schema"].state_channels)
+    training_shape = reference["measurements"].shape[-2:]
+    grid_shape = scaled_grid_shape(training_shape, design.geometry.grid_scale)
+    biology_bank = texture_bank(reference, design.texture, grid_shape, cfg.seed)
+    radius = reference_radius(reference["support"], grid_shape) * design.geometry.radius_scale
+    print(f"Grid {grid_shape} (training {tuple(training_shape)}), colony radius {radius:.3f}")
+
+    boundary_mode = bundle.config.trainer.boundary_mode
+    total_steps = rollout_steps(design.rollout.hours, bundle.config.run.t)
+    objective = CellTypeShareObjective.from_rules(
+        cell_type_rules,
+        state_channel_names,
+        design.objective.target,
+        temperature=design.objective.temperature,
+        amount_weight=design.objective.amount_weight,
+        maximise=design.objective.maximise,
+    )
+    penalties = GeometryPenalties(
+        perimeter_weight=design.penalties.perimeter_weight,
+        coefficient_weight=design.penalties.coefficient_weight,
+        border_weight=design.penalties.border_weight,
+    )
+    optimisation_config = OptimisationConfig(
+        iterations=design.iterations,
+        learning_rate=design.optimiser.learn_rate,
+        total_steps=total_steps,
+        batch_size=design.batch_size,
+        mask_softness=design.mask_softness.start,
+        final_mask_softness=design.mask_softness.end,
+        noise_strength=data_config.micropattern.noise_strength,
+        boundary_mode=boundary_mode,
+        gradient_clip=design.optimiser.gradient_clip_norm,
+        fixed_radius=design.geometry.fixed_radius,
+        log_every=design.log_every,
+        evaluation_seeds=design.evaluation_seeds,
+        scan_kind=design.rollout.scan_kind,
+        checkpoints=design.rollout.checkpoints,
+    )
+    geometry = FourierRadialGeometry(
+        design.geometry.harmonics,
+        radius=radius,
+        radius_range=RADIUS_RANGE,
+        coefficient_limit=design.geometry.coefficient_limit,
+        key=geometry_key,
+        initial_scale=design.geometry.initial_scale,
+    )
+    geometry_settings = {
+        "harmonics": design.geometry.harmonics,
+        "radius_range": list(RADIUS_RANGE),
+        "coefficient_limit": design.geometry.coefficient_limit,
+    }
+    share_maps = jax.jit(jax.vmap(lambda state: objective.probability(state, hard=True)))
+
+    # Every evaluation uses evaluation_key, so the baselines and the optimised
+    # shapes see the same textures, noise and NCA updates.
+    baselines = {}
+    for name, baseline in baseline_geometries(radius, design.baseline_ellipses).items():
+        evaluation = evaluate_binary(
+            model, baseline, biology_bank, evaluation_key, objective, optimisation_config
+        )
+        baselines[name] = (baseline, evaluation)
+        print(f"{name}: {design.objective.target} share {evaluation.mean:.4f} ± {evaluation.std:.4f}")
+
+    run_id = create_run_id(cfg)
+    logger = None
+    if cfg.logging.backend == "wandb":
+        from Experiments.inverse_design.wandb_log import GeometryLogger
+
+        logger = GeometryLogger(
+            wandb_config={
+                "project": cfg.logging.wandb.project,
+                "group": cfg.logging.wandb.group,
+                # The model's resolution, tagged as in its training run
+                "tags": [*build_wandb_tags(cfg), f"data.downsample:{data_config.downsample}"],
+                "name": run_id,
+                "config": config_to_dict(cfg),
+            },
+            state_channel_names=state_channel_names,
+        )
+        logger.log_baselines(
+            baselines,
+            {name: share_maps(evaluation.final_states) for name, (_, evaluation) in baselines.items()},
+        )
+
+    def log_fn(iteration, metrics, evaluation):
+        if evaluation is not None:
+            print(
+                f"[{iteration}] binary {design.objective.target} share "
+                f"{evaluation.mean:.4f} ± {evaluation.std:.4f}, border {evaluation.border_fraction:.3f}"
+            )
+        if logger is not None:
+            maps = None if evaluation is None else share_maps(evaluation.final_states)
+            logger.log_iteration(iteration, metrics, evaluation, maps)
+
+    result = optimise_geometry(
+        model,
+        geometry,
+        biology_bank,
+        optimise_key,
+        objective,
+        optimisation_config,
+        penalties,
+        log_fn=log_fn,
+        evaluation_key=evaluation_key,
+    )
+
+    wandb_run_id = None
+    if logger is not None:
+        logger.log_result(result)
+        wandb_run_id = getattr(logger.run, "id", None)
+        logger.finish()
+
+    path = publish_inverse_design_record(
+        store_root=resolve_store_root(cfg.checkpoint.store_root),
+        run_id=run_id,
+        cfg=cfg,
+        bundle=bundle,
+        cell_types_path=cell_types_path,
+        cell_type_rules=cell_type_rules,
+        state_channel_names=state_channel_names,
+        geometry_settings=geometry_settings,
+        total_steps=total_steps,
+        boundary_mode=boundary_mode,
+        baselines=baselines,
+        result=result,
+        biology_bank=biology_bank,
+        wandb_run_id=wandb_run_id,
+    )
+    print(
+        f"Best {design.objective.target} share {result.best_evaluation.mean:.4f} "
+        f"(iteration {result.best_iteration}), circle {baselines['circle'][1].mean:.4f}"
+    )
+    print(f"Saved inverse design record to {path}")
+    return result

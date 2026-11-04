@@ -55,3 +55,12 @@ def test_finetune_sweep_starts_from_a_parent(tmp_path):
     for cfg in _typed_configs("micropatterns", "smoke_micropatterns_ko_finetune", tmp_path):
         assert cfg.initialization.model_id is not None
         assert cfg.data.knockout.curriculum is not None
+
+
+def test_inverse_design_smoke_sweep_is_short(tmp_path):
+    configs = _typed_configs("inverse_design", "smoke_inverse_design", tmp_path)
+    assert configs
+    for cfg in configs:
+        assert cfg.inverse_design.iterations <= 10
+        assert cfg.inverse_design.rollout.hours <= 12
+        assert cfg.logging.wandb.project == SMOKE_COLLECTION

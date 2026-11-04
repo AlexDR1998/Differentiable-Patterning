@@ -1,0 +1,85 @@
+schema_version: 10
+seed: 0
+
+experiment:
+  name: nca_inverse_design_template
+
+system:
+  precision: highest
+  gpu: null
+  xla_flags: null
+
+checkpoint:
+  # Registry ID or alias of a trained micropatterns_260726 model. The model,
+  # its boundary mode, run.t and the data its 0 h textures come from are all
+  # taken from its bundle.
+  model_id: REPLACE_WITH_MODEL_ID
+  # null: MODEL_STORE_ROOT, then ./models
+  store_root: null
+
+logging:
+  backend: wandb
+  wandb:
+    project: NCA-inverse-design
+    group: base-config
+    tags: null
+    tag_keys: null
+
+inverse_design:
+  # Relative to the repository root. Its projection must match the model's
+  # data.micropattern.projection.
+  cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
+  iterations: 400
+  batch_size: 4
+  log_every: 25
+  evaluation_seeds: 16
+  # Same-area ellipses scored before optimising (harmonic-2 amplitudes, each
+  # at 0 and 45 degrees); the circle is always scored
+  baseline_ellipses: [0.15, 0.3]
+
+  geometry:
+    harmonics: 3
+    coefficient_limit: 0.3
+    # 0 starts from the circle
+    initial_scale: 0.05
+    fixed_radius: true
+    radius_scale: 1.0
+    grid_scale: 1.5
+    # Sweep over this to restart from other initial shapes
+    repeat: 0
+
+  objective:
+    target: Notochord
+    temperature: 0.03
+    # false minimises the target share (a control)
+    maximise: true
+    amount_weight: 0.0
+
+  penalties:
+    perimeter_weight: 0.0
+    coefficient_weight: 0.0
+    border_weight: 1.0
+
+  mask_softness:
+    start: 0.08
+    end: 0.02
+
+  optimiser:
+    learn_rate: 0.01
+    gradient_clip_norm: 1.0
+
+  rollout:
+    hours: 48
+    scan_kind: checkpointed
+    checkpoints: null
+
+  texture:
+    bank_size: 16
+    mode: patch
+    patch_size: 11
+    patch_overlap: 7
+    patch_jitter: 3
+    interior_fraction: 0.8
+    candidates: 24
+    iaaft_iterations: 25
+    normalise: false

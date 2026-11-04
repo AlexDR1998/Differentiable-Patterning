@@ -1,0 +1,31 @@
+# First notochord geometry sweep: does any fixed-area shape beat the circle?
+#
+# Each run optimises a Fourier-radial colony shape (area fixed at the
+# training colonies') for the notochord share at 48 h, from a small random
+# initial shape, and scores the circle and four ellipses first with the same
+# random numbers. Compare Optimised/target_share with Baseline/circle/*.
+#
+# Use slice-projection WT models: 260726_cell_types_sliced_nca.yaml is the
+# only cell type file tuned on NCA rollouts. Pick them in
+# model_registry_explorer.py.
+#
+# Main grid: 3 models * 3 harmonic counts * 3 restarts = 27 runs.
+# Control: minimise the notochord share, 3 harmonics, one run per model = 3 runs.
+# If maximised and minimised shapes look alike, or neither moves the binary
+# score away from the circle's, the gradient carries no useful signal.
+experiment_name: notochord_geometry_v1
+entrypoint: Experiments.inverse_design.optimise:run
+output_subdir: generated/notochord_geometry_v1
+seed_mode: index
+
+grid:
+  checkpoint.model_id:
+    - 20261027T113845Z-cfgb0c60663a5e9-a4ca5424 #REPLACE_WITH_SLICE_DS8_MODEL_ID
+    - 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9 #REPLACE_WITH_SLICE_DS16_MODEL_ID
+    - 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa #REPLACE_WITH_SLICE_DS32_MODEL_ID
+  logging.wandb.project: [NCA-inverse-design]
+
+groups:
+  - inverse_design.geometry.harmonics: [2, 2, 2, 3, 3, 3, 4, 4, 4, 3]
+    inverse_design.geometry.repeat: [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
+    inverse_design.objective.maximise: [true, true, true, true, true, true, true, true, true, false]
