@@ -1,0 +1,53 @@
+# Signalling NCAs (sNCA, NCA/model/NCA_signalling.py) against a plain NCA on
+# the procedural tasks in Experiments/signalling/tasks.py. The tissue is there
+# from the start and the cues are random, so the task can't be solved by
+# growing or memorising a shape. The distances are longer than run.t, so a
+# local NCA can't carry the information in time.
+#   - remote_switch:     calibration; every mode should pass
+#   - majority_vote:     global average; broadcast, steady
+#   - french_flag:       relative position; steady, cable
+#   - mirror_copy:       point to point, many bits; pointer, axon
+#   - winding_relay:     long path without fading; excitable
+#   - connected_routing: follow the tissue; cable/steady/excitable/axon pass,
+#                        broadcast/pointer leak to the other comb
+# Check TaskEvaluation/difficulty (accuracy against distance; a local NCA
+# should fail beyond about run.t * fire_rate), TaskEvaluation/accuracy_x1 and
+# TrainingRollout/signal_knockout_change.
+experiment_name: signalling_task_suite_v1
+entrypoint: Experiments.signalling.train:run
+output_subdir: generated/signalling_task_suite
+seed_mode: index
+
+grid:
+  logging.wandb.project: [nca-signalling-tasks]
+  run.repeat: [0]
+  model.channels: [32]
+  model.fire_rate: [0.5]
+  run.iterations: [6000]
+  loss.terms: [[l2]]
+  trainer.loop_autodiff: [checkpointed]
+  model.family: [NCA, sNCA]
+
+# The relay and routing paths are longer, so they get more steps (still far
+# fewer than their path lengths)
+groups:
+  - data.signal_task.task: [remote_switch, majority_vote, french_flag, mirror_copy, winding_relay, connected_routing]
+    data.signal_task.params:
+      - {}
+      - {}
+      - {}
+      - {}
+      - {turns: [2, 4]}
+      - {}
+    run.t: [12, 12, 12, 12, 32, 24]
+
+branches:
+  - when:
+      model.family: sNCA
+    grid:
+      model.signal_channels: [4]
+      model.signal_open_at_rest: [false, true]
+    groups:
+      - model.signal_mode: [cable, axon, steady, excitable, broadcast, pointer]
+        model.signal_substeps: [32, 8, 32, 16, 1, 1]
+        model.signal_range: [16, 16, 16, 16, 32, 32]

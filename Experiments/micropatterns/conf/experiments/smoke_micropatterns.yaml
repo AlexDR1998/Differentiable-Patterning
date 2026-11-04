@@ -43,10 +43,13 @@ grid:
 
 # One entry per column: each block is zipped, not a Cartesian product.
 groups:
-  - model.family: [NCA, gNCA]
-    trainer.loop_autodiff: [checkpointed, lax]
-    data.micropattern.pool_copies: [2, 1]
-    logging.singular_values.enabled: [true, false]
+  # sNCA: signal channels moving along grown wires, with the wire_cost regulariser
+  - model.family: [NCA, gNCA, sNCA]
+    trainer.loop_autodiff: [checkpointed, lax, checkpointed]
+    data.micropattern.pool_copies: [2, 1, 1]
+    logging.singular_values.enabled: [true, false, false]
+    loss.regularisers.wire_cost: [0.0, 0.0, 0.01]
     data.knockout.curriculum:
       - null
       - [baseline, ko_0h, ko_24h]
+      - null

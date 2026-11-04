@@ -240,6 +240,26 @@ ignores all of these settings.
 - `conf/experiments/nca_pde_benchmark.yaml` holds working `dx`, `dt`,
   `t_end` and initial conditions for every PDE.
 
+## Signalling task data
+
+`data.dataset: signal_tasks` trains on random instances of a task from
+`Experiments/signalling/tasks.py` (`Experiments/signalling/train.py`,
+settings in `Experiments/signalling/config.py`). Each task needs
+information to travel further than `run.t` cells, and is meant to tell
+signalling mechanisms (sNCA) and learned firing rates (aNCA) apart:
+
+- `data.signal_task.task` names the task. `params` sets the arguments of the
+  task function; keys must be its parameter names. Leave `params` empty in
+  base configs.
+- The pool holds `data.batches` instances. After every step,
+  `resample_fraction` of them are replaced by fresh random instances
+  (`NCA/trainer/data_augmenter/procedural.py`). Pool admission is off, so
+  fresh instances always get in.
+- At the end of training the model is measured on `evaluation_samples`
+  held-out instances, each rolled out `evaluation_repeats` times for each of
+  the `evaluation_horizons` (multiples of the trained rollout). The results
+  are logged as `TaskEvaluation/*` (`Experiments/signalling/evaluation.py`).
+
 ## Loss weight schedules
 
 Any loss term's `weight` can be multiplied by a schedule, and so can each

@@ -1,0 +1,124 @@
+schema_version: 10
+seed: 0
+
+experiment:
+  name: nca_signalling_task_template
+
+system:
+  precision: tensorfloat32
+  gpu: null
+  xla_flags: null
+
+data:
+  dataset: signal_tasks
+  # Trajectories in the training pool
+  batches: 8
+  downsample: 1
+  signal_task:
+    # remote_switch, majority_vote, french_flag, mirror_copy, winding_relay or
+    # connected_routing (Experiments/signalling/tasks.py)
+    task: remote_switch
+    size: 64
+    # Settings of the task function, e.g. {length: [10, 56]} or {front_step: 8, frames: 3}.
+    # Keep this empty here: sweeps merge into it, so keys set here cannot be removed by a sweep.
+    params: {}
+    # [initial, target, target]: the repeat trains persistence
+    target_repeats: 2
+    # Fraction of the pool replaced by fresh random instances after every step
+    resample_fraction: 0.5
+    noise_strength: 0.0
+    seed: 0
+    # Held-out instances, rollouts of each, and rollout lengths (multiples of
+    # the trained rollout) measured at the end of training
+    evaluation_samples: 16
+    evaluation_repeats: 4
+    evaluation_horizons: [1, 2, 4]
+
+model:
+  family: NCA
+  channels: 32
+  kernel_str: [ID, LAP, GRAD]
+  activation: relu
+  fire_rate: 0.5
+  padding: REPLICATE
+  kernel_scale: 1
+  parameter_noise_level: 0.01
+
+trainer:
+  boundary_mode: soft
+  grad_loss: true
+  log_directory: logs/
+  loss_time_channel_mask: null
+  loop_autodiff: checkpointed
+  log_every: 100
+  # Off: every pool update is kept, so fresh random instances always enter the pool
+  pool_admission:
+    enabled: false
+    relative_threshold: 1.25
+    previous_relative_threshold: 1.10
+    absolute_threshold: null
+    ema_decay: 0.95
+    # null means the same as run.checkpoint_warmup_fraction.
+    warmup_fraction: null
+
+optimiser:
+  type: nadam
+  blocknorm: true
+  sam: false
+  gradient_clip_norm: 1.0
+  apply_if_finite: true
+  max_consecutive_errors: 8
+  learn_rate: 0.001
+  warmup_fraction: 0.008
+  decay_rate: 0.99
+  schedule:
+    type: exponential
+    warmup_init_lr: 1e-6
+    final_factor: 0.1
+    transition_fraction: 0.75
+
+loss:
+  terms:
+    - type: l2
+      weight: 1.0
+
+  # The tissue is there from the start, so the growth regularisers are off
+  regularisers:
+    intermediate_state: 1.0
+    boundary: 0.0
+    contiguous_growth: 0.0
+    localised_hidden: 0.0
+    update_sensitivity: 0.0
+    perturbation_conservation: 0.0
+    hidden_state_size: 0.0
+    # aNCA/gaNCA only: cost per cell update (mean learned firing probability).
+    firing_energy: 0.0
+    # sNCA/gsNCA only: cost of grown signalling structure (mean of the main gate).
+    wire_cost: 0.0
+
+run:
+  mode: train
+  # NCA steps between frames: shorter than the distances in the tasks, so a
+  # local NCA can't carry the information in time
+  t: 12
+  iterations: 6000
+  # The best checkpoint is only saved after this fraction of the iterations.
+  checkpoint_warmup_fraction: 0.01
+  write_images: true
+  write_videos: true
+
+logging:
+  backend: wandb
+  wandb:
+    project: nca-signalling-tasks
+    group: base-config
+    tags: null
+    # Settings whose values become automatic tags. Generated sweeps set this
+    # to the settings their runs differ in; null tags every setting.
+    tag_keys: null
+
+model_store:
+  enabled: true
+  root: models
+  collection: ${logging.wandb.project}
+  model_factory: NCA.model.factory:build_model

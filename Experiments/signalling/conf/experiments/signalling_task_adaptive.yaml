@@ -1,0 +1,54 @@
+# Is a learned per-cell firing rate (aNCA, gaNCA) better than a fixed one (NCA)
+# on the signalling tasks? Each task tests one possible advantage:
+#   - remote_switch, t = 64: every bar length can be reached. Does the model
+#     go quiet sooner on short bars? (TaskEvaluation/corr_difficulty_quiet_step,
+#     updates_per_cell)
+#   - connected_routing, t = 64: the other comb and the background must not
+#     change. Does it fire only along the comb with the cue? (updates_per_cell,
+#     TrainingRollout/firing_activity)
+#   - timed remote_switch / winding_relay, t = 12: the colour must move 8 cells
+#     per frame, about 0.67 cells per step. A fixed fire rate of 0.5 is too slow
+#     on average and gives jittery arrival times; a learned rate can go to 1 on
+#     the path. (accuracy_frame_k, arrival_spread)
+#   - all: does activity stop once the target is reached, so the pattern
+#     doesn't drift at 2x and 4x the trained rollout? (accuracy_x2,
+#     accuracy_x4, updates_per_cell_after)
+# firing_energy is scaled with run.t as in emoji_adaptive_firing_t_sweep
+# (0.1 at t = 64), so each single update costs the same at every t.
+experiment_name: signalling_task_adaptive_v1
+entrypoint: Experiments.signalling.train:run
+output_subdir: generated/signalling_task_adaptive
+seed_mode: index
+
+grid:
+  logging.wandb.project: [nca-signalling-tasks]
+  run.repeat: [0]
+  model.channels: [32]
+  model.fire_rate: [0.5]
+  run.iterations: [6000]
+  loss.terms: [[l2]]
+  trainer.loop_autodiff: [checkpointed]
+  model.family: [NCA, aNCA, gaNCA]
+
+groups:
+  - data.signal_task.task: [remote_switch, connected_routing, remote_switch, winding_relay]
+    data.signal_task.params:
+      - {}
+      - {}
+      - {length: [10, 32], front_step: 8, frames: 4}
+      - {turns: [2, 4], front_step: 8, frames: 4}
+    run.t: [64, 64, 12, 12]
+
+branches:
+  - when: {model.family: aNCA, run.t: 64}
+    grid:
+      loss.regularisers.firing_energy: [0.0, 0.1, 0.2]
+  - when: {model.family: gaNCA, run.t: 64}
+    grid:
+      loss.regularisers.firing_energy: [0.0, 0.1, 0.2]
+  - when: {model.family: aNCA, run.t: 12}
+    grid:
+      loss.regularisers.firing_energy: [0.0, 0.02, 0.04]
+  - when: {model.family: gaNCA, run.t: 12}
+    grid:
+      loss.regularisers.firing_energy: [0.0, 0.02, 0.04]

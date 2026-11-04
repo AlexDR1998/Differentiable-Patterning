@@ -1,0 +1,43 @@
+# Pipeline smoke test: three very short signalling task runs on 32x32 grids,
+# covering a plain, a signalling and an adaptive NCA, a timed target, the
+# end-of-training task evaluation and bundle publication.
+# Run all smoke tests with:
+#   python Experiments/pipeline_smoke_test.py
+experiment_name: smoke_signalling
+entrypoint: Experiments.signalling.train:run
+output_subdir: generated/smoke_signalling
+seed_mode: fixed
+
+grid:
+  logging.wandb.project: [pipeline-smoke]
+  model_store.collection: [pipeline-smoke]
+  data.batches: [4]
+  data.signal_task.size: [32]
+  data.signal_task.evaluation_samples: [4]
+  data.signal_task.evaluation_repeats: [2]
+  model.channels: [12]
+  run.t: [4]
+  run.iterations: [60]
+  # Checkpoint warmup: must end before run.iterations so a bundle is published.
+  run.checkpoint_warmup_fraction: [0.1]
+  optimiser.warmup_fraction: [0.2]
+  trainer.log_every: [20]
+
+# One entry per column: each block is zipped, not a Cartesian product.
+groups:
+  - model.family: [NCA, sNCA, aNCA]
+    data.signal_task.task: [remote_switch, connected_routing, remote_switch]
+    data.signal_task.params:
+      - {}
+      - {}
+      - {front_step: 4, frames: 2}
+    loss.regularisers.firing_energy: [0.0, 0.0, 0.01]
+    trainer.loop_autodiff: [checkpointed, lax, checkpointed]
+
+branches:
+  - when:
+      model.family: sNCA
+    grid:
+      model.signal_channels: [2]
+      model.signal_mode: [cable]
+      model.signal_substeps: [4]

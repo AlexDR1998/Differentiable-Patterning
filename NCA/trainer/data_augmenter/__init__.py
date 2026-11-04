@@ -2,7 +2,8 @@
 
 * ``base.PoolAugmenter`` holds the data; the domain augmenters build on it:
   ``emoji.EmojiAugmenter``, ``micropattern.MicropatternAugmenter``,
-  ``snowmelt.SnowmeltAugmenter`` and ``pde.PdeAugmenter``.
+  ``snowmelt.SnowmeltAugmenter``, ``pde.PdeAugmenter`` and
+  ``procedural.ProceduralTaskAugmenter`` (random task instances).
 * ``transforms.py`` and ``trajectory.py`` hold the pure functions they use
   (reinjection, noise, shifts, damage, padding). Each takes an explicit key.
 """

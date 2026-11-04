@@ -37,6 +37,8 @@ def data_channel_count(cfg):
         return len(cfg.data.snowmelt.target_channels)
     if cfg.data.dataset == "pde":
         return len(cfg.data.pde.channel_names)
+    if cfg.data.dataset == "signal_tasks":
+        return 4
     return cfg.data.micropattern.data_channels
 
 

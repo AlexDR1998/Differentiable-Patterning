@@ -43,6 +43,7 @@ from Experiments.impulse.config import (
 )
 from Common.dataloader.micropattern_cleaning import MicropatternCleaningConfig
 from Experiments.pde.config import PdeDataConfig
+from Experiments.signalling.config import SignalTaskDataConfig
 from Experiments.snowmelt.config import SnowmeltDataConfig
 from Experiments.micropatterns.config import (
     KnockoutConfig,
@@ -69,6 +70,7 @@ DATA_SECTIONS = {
     "micropatterns_260726": "micropattern",
     "snowmelt": "snowmelt",
     "pde": "pde",
+    "signal_tasks": "signal_task",
 }
 
 
@@ -130,6 +132,7 @@ class DataConfig(ConfigValue):
     micropattern: MicropatternDataConfig | None = None
     snowmelt: SnowmeltDataConfig | None = None
     pde: PdeDataConfig | None = None
+    signal_task: SignalTaskDataConfig | None = None
     knockout: KnockoutConfig = field(default_factory=KnockoutConfig)
 
     def __post_init__(self):
@@ -138,7 +141,7 @@ class DataConfig(ConfigValue):
         if self.downsample <= 0:
             raise ValueError("data.downsample must be positive")
         expected = DATA_SECTIONS[self.dataset]
-        for section in ("emoji", "micropattern", "snowmelt", "pde"):
+        for section in ("emoji", "micropattern", "snowmelt", "pde", "signal_task"):
             if (getattr(self, section) is not None) != (section == expected):
                 raise ValueError(
                     f"data.dataset={self.dataset!r} needs data.{expected} settings "
@@ -645,6 +648,14 @@ def _data_config(value: Any) -> DataConfig:
             observed_channels=_tuple,
             parameters=lambda x: {str(k): float(v) for k, v in (x or {}).items()},
             dx=float, dt=float, t_end=float,
+        ),
+        "signal_task": lambda raw: _strict(
+            SignalTaskDataConfig, raw, "data.signal_task",
+            params=lambda x: {
+                str(k): tuple(v) if isinstance(v, (list, tuple)) else v
+                for k, v in (x or {}).items()
+            },
+            evaluation_horizons=lambda x: tuple(int(h) for h in x),
         ),
     }
     return _strict(

@@ -1,0 +1,3080 @@
+experiment_name: signal_nca_micropattern_sweep_v1
+entrypoint: Experiments.micropatterns.train:run
+base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/base_config.yaml
+sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/micropatterns/conf/experiments/signal_nca_micropattern_sweep.yaml
+output_dir: Experiments/micropatterns/conf/generated/signal_nca_micropattern_sweep
+count: 12
+configs:
+- index: 0
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: cable
+    model.signal_channels: 4
+    model.signal_substeps: 1
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.0
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 0
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 0
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: cable
+      signal_channels: 4
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 1
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: cable
+    model.signal_channels: 4
+    model.signal_substeps: 1
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.01
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 1
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 1
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: cable
+      signal_channels: 4
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.01
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 2
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: cable
+    model.signal_channels: 4
+    model.signal_substeps: 4
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.0
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 2
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 2
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: cable
+      signal_channels: 4
+      signal_substeps: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 3
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: cable
+    model.signal_channels: 4
+    model.signal_substeps: 4
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.01
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 3
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 3
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: cable
+      signal_channels: 4
+      signal_substeps: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.01
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 4
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: cable
+    model.signal_channels: 4
+    model.signal_substeps: 16
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.0
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 4
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 4
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: cable
+      signal_channels: 4
+      signal_substeps: 16
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 5
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: cable
+    model.signal_channels: 4
+    model.signal_substeps: 16
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.01
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 5
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 5
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: cable
+      signal_channels: 4
+      signal_substeps: 16
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.01
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 6
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: axon
+    model.signal_channels: 4
+    model.signal_substeps: 1
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.0
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 6
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 6
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: axon
+      signal_channels: 4
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 7
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: axon
+    model.signal_channels: 4
+    model.signal_substeps: 1
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.01
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 7
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 7
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: axon
+      signal_channels: 4
+      signal_substeps: 1
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.01
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 8
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: axon
+    model.signal_channels: 4
+    model.signal_substeps: 4
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.0
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 8
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 8
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: axon
+      signal_channels: 4
+      signal_substeps: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 9
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: axon
+    model.signal_channels: 4
+    model.signal_substeps: 4
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.01
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 9
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 9
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: axon
+      signal_channels: 4
+      signal_substeps: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.01
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 10
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: axon
+    model.signal_channels: 4
+    model.signal_substeps: 16
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.0
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 10
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 10
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: axon
+      signal_channels: 4
+      signal_substeps: 16
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+- index: 11
+  overrides:
+    labels.gpu: H100
+    labels.scaling: convective
+    system.precision: highest
+    model.family: sNCA
+    model.channels: 32
+    model.kernel_str:
+    - ID
+    - GRAD
+    - LAP
+    model.fire_rate: 0.5
+    model.signal_mode: axon
+    model.signal_channels: 4
+    model.signal_substeps: 16
+    run.iterations: 12000
+    run.repeat: 0
+    run.t: 128
+    trainer.loop_autodiff: checkpointed
+    trainer.pool_admission.previous_relative_threshold: 1.0
+    trainer.log_every: 200
+    logging.wandb.project: signal_nca_micropatterns
+    loss.terms: multi_target
+    loss.terms.0.multi_target_weights.l2: 1.0
+    loss.terms.0.multi_target_weights.texture: 1.0
+    loss.terms.0.multi_target_weights.channel_mean: 0.0
+    loss.terms.0.multi_target_weights.correlation: 0.0
+    loss.terms.0.multi_target_weights.radial: 0.1
+    loss.terms.0.assignment: hard
+    loss.terms.0.random_crop: false
+    loss.terms.0.random_channel_shuffle: true
+    loss.regularisers.intermediate_state: 10.0
+    loss.regularisers.boundary: 10.0
+    loss.regularisers.wire_cost: 0.01
+    data.micropattern.task: micropattern_single_replicate
+    data.batches: 1
+    data.downsample: 16
+    data.micropattern.pool_copies: 4
+    data.micropattern.intermediate_reinjection_probability: 1.0
+    data.micropattern.intermediate_reinjection_probability_end: 0.0
+    data.micropattern.intermediate_reinjection_decay_start_fraction: 0.01
+    data.dataset: micropatterns_260726
+    data.micropattern.duplicate_final_timestep: false
+    data.micropattern.data_channels: 4
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    data.knockout.mode: null
+    data.knockout.time: null
+    data.knockout.channel: Nodal
+    optimiser.type: nadam
+    optimiser.learn_rate: 0.001
+    optimiser.decay_rate: 0.1
+    optimiser.schedule.type: cosine
+    optimiser.schedule.final_factor: 0.5
+    optimiser.schedule.transition_fraction: 0.75
+    optimiser.gradient_clip_norm: 1.0
+    optimiser.apply_if_finite: true
+    optimiser.max_consecutive_errors: 16
+    experiment.name: signal_nca_micropattern_sweep_v1
+    logging.wandb.group: signal_nca_micropattern_sweep_v1
+    seed: 11
+    logging.wandb.tag_keys:
+    - model.signal_mode
+    - model.signal_substeps
+    - loss.regularisers.wire_cost
+  config:
+    schema_version: 10
+    seed: 11
+    experiment:
+      name: signal_nca_micropattern_sweep_v1
+    system:
+      precision: highest
+      xla_flags: null
+    labels:
+      scaling: convective
+      gpu: H100
+    data:
+      dataset: micropatterns_260726
+      batches: 1
+      downsample: 16
+      micropattern:
+        pool_copies: 4
+        train_replicates: null
+        validation_replicates: null
+        experiment_groups:
+        - cell_fate_s1
+        excluded_measurements:
+        - cell_fate_s2/SOX17
+        timesteps:
+        - 0
+        - 12
+        - 24
+        - 36
+        - 48
+        data_channels: 4
+        pad_multiple: null
+        noise_strength: 0.005
+        projection: max
+        intermediate_reinjection_probability: 1.0
+        intermediate_reinjection_probability_end: 0.0
+        intermediate_reinjection_decay_start_fraction: 0.01
+        histogram_percentiles:
+        - 0.0
+        - 99.5
+        intensity_factors:
+          cell_fate_s1/SOX17:
+            0: 0.3
+          cell_fate_s2/SOX17:
+            0: 0.15
+            12: 0.5
+          cell_fate_s2/FOXA2:
+            0: 0.02
+        cleaning:
+          enabled: true
+          hot_pixel_window: 5
+          hot_pixel_thresholds:
+            cell_fate_s1/SOX17: 30.0
+            cell_fate_s1/SOX2: 30.0
+            cell_fate_s1/TBXT: 30.0
+            cell_fate_s1/LMBR: 0.0
+            cell_fate_s2/SOX17: 30.0
+            cell_fate_s2/FOXA2: 30.0
+            cell_fate_s2/TBXT: 30.0
+            cell_fate_s2/LMBR: 0.0
+            rna_expression/CER1: 30.0
+            rna_expression/LEFTY: 30.0
+            rna_expression/NODAL: 30.0
+            protein_response/LEF1: 30.0
+            protein_response/LMBR: 0.0
+            protein_response/SMAD23: 30.0
+          background_shrink: 4
+          background_radii:
+            cell_fate_s1/SOX17: 10
+            cell_fate_s1/SOX2: 10
+            cell_fate_s1/TBXT: 10
+            cell_fate_s1/LMBR: 0
+            cell_fate_s2/SOX17: 10
+            cell_fate_s2/FOXA2: 10
+            cell_fate_s2/TBXT: 10
+            cell_fate_s2/LMBR: 0
+            rna_expression/CER1: 0
+            rna_expression/LEFTY: 0
+            rna_expression/NODAL: 0
+            protein_response/LEF1: 10
+            protein_response/LMBR: 0
+            protein_response/SMAD23: 0
+          horizontal_stripe_widths: {}
+          vertical_stripe_widths: {}
+          stripe_block: 0
+          alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+          mask_radius_scale: 1.0
+          normalisation: per_replicate
+          channel_percentiles: {}
+          percentiles_inside_mask: true
+          knockout_bounds: joint
+        quality_flags_file: Experiments/micropatterns/conf/quality/260726_quality_flags.yaml
+        duplicate_final_timestep: false
+        task: micropattern_single_replicate
+      knockout:
+        mode: null
+        time: null
+        channel: Nodal
+        curriculum: null
+    model:
+      family: sNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - GRAD
+      - LAP
+      fire_rate: 0.5
+      padding: CIRCULAR
+      signal_mode: axon
+      signal_channels: 4
+      signal_substeps: 16
+    trainer:
+      boundary_mode: soft
+      grad_loss: false
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 200
+      validation_every: null
+      validation_rollout: false
+      pool_admission:
+        enabled: true
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.0
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 16
+      learn_rate: 0.001
+      warmup_fraction: 0.032
+      decay_rate: 0.1
+      schedule:
+        type: cosine
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.5
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: multi_target
+        multi_target_weights:
+          l2: 1.0
+          texture: 1.0
+          channel_mean: 0.0
+          correlation: 0.0
+          radial: 0.1
+        assignment: hard
+        random_crop: false
+        random_channel_shuffle: true
+      regularisers:
+        intermediate_state: 10.0
+        boundary: 10.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        wire_cost: 0.01
+    run:
+      mode: train
+      t: 128
+      iterations: 12000
+      checkpoint_warmup_fraction: 0.032
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      singular_values:
+        enabled: false
+        plot_spectra: true
+        epsilon: 1.0e-08
+      wandb:
+        project: signal_nca_micropatterns
+        group: signal_nca_micropattern_sweep_v1
+        tags: null
+        tag_keys:
+        - model.signal_mode
+        - model.signal_substeps
+        - loss.regularisers.wire_cost
+    model_store:
+      enabled: true
+      root: models
+      collection: NCA-micropattern
+      model_factory: NCA.model.factory:build_model
+    initialization:
+      model_id: null
+emit_files: false

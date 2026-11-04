@@ -622,3 +622,11 @@ class NCALogger(WandbLogger):
 				)
 				# Mean change of the final observed state when signalling is switched off
 				self.log_scalar('TrainingRollout/signal_knockout_change', float(np.mean(KNOCKOUT_CHANGE)))
+		# Task measures supplied by the augmenter (e.g. the signalling tasks)
+		evaluate = getattr(DATA_AUGMENTER, "evaluate", None)
+		if evaluate is not None:
+			print("Evaluating on held-out task instances")
+			scalars, images = evaluate(nca, jr.fold_in(key, 1))
+			self.log_scalars({f"TaskEvaluation/{name}": value for name, value in scalars.items()}, step=None)
+			for name, image in images.items():
+				self.log_image(f"TaskEvaluation/{name}", image, step=None)

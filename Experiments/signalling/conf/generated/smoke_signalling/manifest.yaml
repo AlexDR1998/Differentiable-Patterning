@@ -1,0 +1,438 @@
+experiment_name: smoke_signalling
+entrypoint: Experiments.signalling.train:run
+base_config: null
+sweep_file: null
+output_dir: Experiments/signalling/conf/generated/smoke_signalling
+count: 3
+configs:
+- index: 0
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    data.batches: 4
+    data.signal_task.size: 32
+    data.signal_task.evaluation_samples: 4
+    data.signal_task.evaluation_repeats: 2
+    model.channels: 12
+    run.t: 4
+    run.iterations: 60
+    run.checkpoint_warmup_fraction: 0.1
+    optimiser.warmup_fraction: 0.2
+    trainer.log_every: 20
+    logging.wandb.group: smoke_signalling-signal-task-suite
+    model.family: NCA
+    data.signal_task.task: remote_switch
+    data.signal_task.params: {}
+    loss.regularisers.firing_energy: 0.0
+    trainer.loop_autodiff: checkpointed
+    experiment.name: smoke_signalling
+    seed: 0
+    logging.wandb.tag_keys:
+    - model.family
+    - data.signal_task.task
+    - data.signal_task.params
+    - loss.regularisers.firing_energy
+    - trainer.loop_autodiff
+    - model.signal_channels
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 0
+    experiment:
+      name: smoke_signalling
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: signal_tasks
+      batches: 4
+      downsample: 1
+      signal_task:
+        task: remote_switch
+        size: 32
+        params: {}
+        target_repeats: 2
+        resample_fraction: 0.5
+        noise_strength: 0.0
+        seed: 0
+        evaluation_samples: 4
+        evaluation_repeats: 2
+        evaluation_horizons:
+        - 1
+        - 2
+        - 4
+    model:
+      family: NCA
+      channels: 12
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 20
+      pool_admission:
+        enabled: false
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.2
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 4
+      iterations: 60
+      checkpoint_warmup_fraction: 0.1
+      write_images: true
+      write_videos: true
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_signalling-signal-task-suite
+        tags: null
+        tag_keys:
+        - model.family
+        - data.signal_task.task
+        - data.signal_task.params
+        - loss.regularisers.firing_energy
+        - trainer.loop_autodiff
+        - model.signal_channels
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: NCA.model.factory:build_model
+- index: 1
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    data.batches: 4
+    data.signal_task.size: 32
+    data.signal_task.evaluation_samples: 4
+    data.signal_task.evaluation_repeats: 2
+    model.channels: 12
+    run.t: 4
+    run.iterations: 60
+    run.checkpoint_warmup_fraction: 0.1
+    optimiser.warmup_fraction: 0.2
+    trainer.log_every: 20
+    logging.wandb.group: smoke_signalling-signal-task-suite
+    model.family: sNCA
+    data.signal_task.task: connected_routing
+    data.signal_task.params: {}
+    loss.regularisers.firing_energy: 0.0
+    trainer.loop_autodiff: lax
+    model.signal_channels: 2
+    model.signal_mode: cable
+    model.signal_substeps: 4
+    experiment.name: smoke_signalling
+    seed: 0
+    logging.wandb.tag_keys:
+    - model.family
+    - data.signal_task.task
+    - data.signal_task.params
+    - loss.regularisers.firing_energy
+    - trainer.loop_autodiff
+    - model.signal_channels
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 0
+    experiment:
+      name: smoke_signalling
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: signal_tasks
+      batches: 4
+      downsample: 1
+      signal_task:
+        task: connected_routing
+        size: 32
+        params: {}
+        target_repeats: 2
+        resample_fraction: 0.5
+        noise_strength: 0.0
+        seed: 0
+        evaluation_samples: 4
+        evaluation_repeats: 2
+        evaluation_horizons:
+        - 1
+        - 2
+        - 4
+    model:
+      family: sNCA
+      channels: 12
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      signal_channels: 2
+      signal_mode: cable
+      signal_substeps: 4
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: lax
+      log_every: 20
+      pool_admission:
+        enabled: false
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.2
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 4
+      iterations: 60
+      checkpoint_warmup_fraction: 0.1
+      write_images: true
+      write_videos: true
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_signalling-signal-task-suite
+        tags: null
+        tag_keys:
+        - model.family
+        - data.signal_task.task
+        - data.signal_task.params
+        - loss.regularisers.firing_energy
+        - trainer.loop_autodiff
+        - model.signal_channels
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: NCA.model.factory:build_model
+- index: 2
+  overrides:
+    logging.wandb.project: pipeline-smoke
+    model_store.collection: pipeline-smoke
+    data.batches: 4
+    data.signal_task.size: 32
+    data.signal_task.evaluation_samples: 4
+    data.signal_task.evaluation_repeats: 2
+    model.channels: 12
+    run.t: 4
+    run.iterations: 60
+    run.checkpoint_warmup_fraction: 0.1
+    optimiser.warmup_fraction: 0.2
+    trainer.log_every: 20
+    logging.wandb.group: smoke_signalling-signal-task-suite
+    model.family: aNCA
+    data.signal_task.task: remote_switch
+    data.signal_task.params:
+      front_step: 4
+      frames: 2
+    loss.regularisers.firing_energy: 0.01
+    trainer.loop_autodiff: checkpointed
+    experiment.name: smoke_signalling
+    seed: 0
+    logging.wandb.tag_keys:
+    - model.family
+    - data.signal_task.task
+    - data.signal_task.params
+    - loss.regularisers.firing_energy
+    - trainer.loop_autodiff
+    - model.signal_channels
+    - model.signal_mode
+    - model.signal_substeps
+  config:
+    schema_version: 10
+    seed: 0
+    experiment:
+      name: smoke_signalling
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: signal_tasks
+      batches: 4
+      downsample: 1
+      signal_task:
+        task: remote_switch
+        size: 32
+        params:
+          front_step: 4
+          frames: 2
+        target_repeats: 2
+        resample_fraction: 0.5
+        noise_strength: 0.0
+        seed: 0
+        evaluation_samples: 4
+        evaluation_repeats: 2
+        evaluation_horizons:
+        - 1
+        - 2
+        - 4
+    model:
+      family: aNCA
+      channels: 12
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 20
+      pool_admission:
+        enabled: false
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.2
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - type: l2
+        weight: 1.0
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.01
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 4
+      iterations: 60
+      checkpoint_warmup_fraction: 0.1
+      write_images: true
+      write_videos: true
+    logging:
+      backend: wandb
+      wandb:
+        project: pipeline-smoke
+        group: smoke_signalling-signal-task-suite
+        tags: null
+        tag_keys:
+        - model.family
+        - data.signal_task.task
+        - data.signal_task.params
+        - loss.regularisers.firing_energy
+        - trainer.loop_autodiff
+        - model.signal_channels
+        - model.signal_mode
+        - model.signal_substeps
+    model_store:
+      enabled: true
+      root: models
+      collection: pipeline-smoke
+      model_factory: NCA.model.factory:build_model
+emit_files: false
