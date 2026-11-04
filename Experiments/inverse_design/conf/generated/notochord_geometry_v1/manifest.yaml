@@ -3,866 +3,25 @@ entrypoint: Experiments.inverse_design.optimise:run
 base_config: /home/alex/PhD/Differentiable-Patterning/Experiments/inverse_design/conf/base_config.yaml
 sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/inverse_design/conf/experiments/notochord_geometry_v1.yaml
 output_dir: Experiments/inverse_design/conf/generated/notochord_geometry_v1
-count: 30
+count: 10
 configs:
-- index: 20
-  overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 2
-    inverse_design.geometry.repeat: 0
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 577090037
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 577090037
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 2
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 0
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 22
-  overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 2
-    inverse_design.geometry.repeat: 1
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 271041745
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 271041745
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 2
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 1
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 12
-  overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 2
-    inverse_design.geometry.repeat: 2
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 1095513148
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 1095513148
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 2
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 2
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 23
-  overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 3
-    inverse_design.geometry.repeat: 0
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 506456969
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 506456969
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 3
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 0
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 4
-  overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 3
-    inverse_design.geometry.repeat: 1
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 2127877499
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 2127877499
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 3
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 1
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 29
-  overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 3
-    inverse_design.geometry.repeat: 2
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 1930549411
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 1930549411
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 3
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 2
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
 - index: 2
   overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 4
-    inverse_design.geometry.repeat: 0
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 2028277857
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 2028277857
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 4
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 0
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 18
-  overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 4
-    inverse_design.geometry.repeat: 1
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 1630434966
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 1630434966
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 4
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 1
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 10
-  overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 4
-    inverse_design.geometry.repeat: 2
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 901749037
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 901749037
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 4
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 2
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 6
-  overrides:
-    checkpoint.model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 3
-    inverse_design.geometry.repeat: 0
-    inverse_design.objective.maximise: false
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 403123852
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 403123852
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 3
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 0
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: false
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 8
-  overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
+    checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
     inverse_design.geometry.harmonics: 2
     inverse_design.geometry.repeat: 0
     inverse_design.objective.maximise: true
     experiment.name: notochord_geometry_v1
     logging.wandb.group: notochord_geometry_v1
-    seed: 2095328386
+    seed: 577090037
     logging.wandb.tag_keys:
-    - checkpoint.model_id
     - inverse_design.geometry.harmonics
     - inverse_design.geometry.repeat
     - inverse_design.objective.maximise
   config:
     schema_version: 10
-    seed: 2095328386
+    seed: 577090037
     experiment:
       name: notochord_geometry_v1
     system:
@@ -870,7 +29,7 @@ configs:
       gpu: null
       xla_flags: null
     checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
+      model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
       store_root: null
     logging:
       backend: wandb
@@ -879,7 +38,6 @@ configs:
         group: notochord_geometry_v1
         tags: null
         tag_keys:
-        - checkpoint.model_id
         - inverse_design.geometry.harmonics
         - inverse_design.geometry.repeat
         - inverse_design.objective.maximise
@@ -900,426 +58,6 @@ configs:
         radius_scale: 1.0
         grid_scale: 1.5
         repeat: 0
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 19
-  overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 2
-    inverse_design.geometry.repeat: 1
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 121751464
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 121751464
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 2
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 1
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 16
-  overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 2
-    inverse_design.geometry.repeat: 2
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 1674216077
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 1674216077
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 2
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 2
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 26
-  overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 3
-    inverse_design.geometry.repeat: 0
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 1858720390
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 1858720390
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 3
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 0
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 1
-  overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 3
-    inverse_design.geometry.repeat: 1
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 9045414
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 9045414
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 3
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 1
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 24
-  overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 3
-    inverse_design.geometry.repeat: 2
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 1912923437
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 1912923437
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 3
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 2
       objective:
         target: Notochord
         temperature: 0.03
@@ -1351,106 +89,21 @@ configs:
         normalise: false
 - index: 5
   overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
+    checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 4
-    inverse_design.geometry.repeat: 0
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 1143881027
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 1143881027
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 4
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 0
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 3
-  overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 4
+    inverse_design.geometry.harmonics: 2
     inverse_design.geometry.repeat: 1
     inverse_design.objective.maximise: true
     experiment.name: notochord_geometry_v1
     logging.wandb.group: notochord_geometry_v1
-    seed: 982526257
+    seed: 271041745
     logging.wandb.tag_keys:
-    - checkpoint.model_id
     - inverse_design.geometry.harmonics
     - inverse_design.geometry.repeat
     - inverse_design.objective.maximise
   config:
     schema_version: 10
-    seed: 982526257
+    seed: 271041745
     experiment:
       name: notochord_geometry_v1
     system:
@@ -1458,7 +111,7 @@ configs:
       gpu: null
       xla_flags: null
     checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
+      model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
       store_root: null
     logging:
       backend: wandb
@@ -1467,7 +120,6 @@ configs:
         group: notochord_geometry_v1
         tags: null
         tag_keys:
-        - checkpoint.model_id
         - inverse_design.geometry.harmonics
         - inverse_design.geometry.repeat
         - inverse_design.objective.maximise
@@ -1481,7 +133,7 @@ configs:
       - 0.15
       - 0.3
       geometry:
-        harmonics: 4
+        harmonics: 2
         coefficient_limit: 0.3
         initial_scale: 0.05
         fixed_radius: true
@@ -1517,192 +169,23 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
-- index: 28
-  overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 4
-    inverse_design.geometry.repeat: 2
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 439062303
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 439062303
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 4
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 2
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 13
-  overrides:
-    checkpoint.model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 3
-    inverse_design.geometry.repeat: 0
-    inverse_design.objective.maximise: false
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 1363349907
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 1363349907
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 3
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 0
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: false
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 0
+- index: 1
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
     inverse_design.geometry.harmonics: 2
-    inverse_design.geometry.repeat: 0
+    inverse_design.geometry.repeat: 2
     inverse_design.objective.maximise: true
     experiment.name: notochord_geometry_v1
     logging.wandb.group: notochord_geometry_v1
-    seed: 131383004
+    seed: 1095513148
     logging.wandb.tag_keys:
-    - checkpoint.model_id
     - inverse_design.geometry.harmonics
     - inverse_design.geometry.repeat
     - inverse_design.objective.maximise
   config:
     schema_version: 10
-    seed: 131383004
+    seed: 1095513148
     experiment:
       name: notochord_geometry_v1
     system:
@@ -1719,7 +202,6 @@ configs:
         group: notochord_geometry_v1
         tags: null
         tag_keys:
-        - checkpoint.model_id
         - inverse_design.geometry.harmonics
         - inverse_design.geometry.repeat
         - inverse_design.objective.maximise
@@ -1739,7 +221,7 @@ configs:
         fixed_radius: true
         radius_scale: 1.0
         grid_scale: 1.5
-        repeat: 0
+        repeat: 2
       objective:
         target: Notochord
         temperature: 0.03
@@ -1773,188 +255,19 @@ configs:
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 2
-    inverse_design.geometry.repeat: 1
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 95872739
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 95872739
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 2
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 1
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 14
-  overrides:
-    checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 2
-    inverse_design.geometry.repeat: 2
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 109289145
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 109289145
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 2
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 2
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 25
-  overrides:
-    checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
-    logging.wandb.project: NCA-inverse-design
     inverse_design.geometry.harmonics: 3
     inverse_design.geometry.repeat: 0
     inverse_design.objective.maximise: true
     experiment.name: notochord_geometry_v1
     logging.wandb.group: notochord_geometry_v1
-    seed: 39534911
+    seed: 506456969
     logging.wandb.tag_keys:
-    - checkpoint.model_id
     - inverse_design.geometry.harmonics
     - inverse_design.geometry.repeat
     - inverse_design.objective.maximise
   config:
     schema_version: 10
-    seed: 39534911
+    seed: 506456969
     experiment:
       name: notochord_geometry_v1
     system:
@@ -1971,7 +284,6 @@ configs:
         group: notochord_geometry_v1
         tags: null
         tag_keys:
-        - checkpoint.model_id
         - inverse_design.geometry.harmonics
         - inverse_design.geometry.repeat
         - inverse_design.objective.maximise
@@ -2021,7 +333,7 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
-- index: 21
+- index: 8
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
@@ -2030,15 +342,14 @@ configs:
     inverse_design.objective.maximise: true
     experiment.name: notochord_geometry_v1
     logging.wandb.group: notochord_geometry_v1
-    seed: 1637259727
+    seed: 2127877499
     logging.wandb.tag_keys:
-    - checkpoint.model_id
     - inverse_design.geometry.harmonics
     - inverse_design.geometry.repeat
     - inverse_design.objective.maximise
   config:
     schema_version: 10
-    seed: 1637259727
+    seed: 2127877499
     experiment:
       name: notochord_geometry_v1
     system:
@@ -2055,7 +366,6 @@ configs:
         group: notochord_geometry_v1
         tags: null
         tag_keys:
-        - checkpoint.model_id
         - inverse_design.geometry.harmonics
         - inverse_design.geometry.repeat
         - inverse_design.objective.maximise
@@ -2105,7 +415,7 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
-- index: 27
+- index: 4
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
@@ -2114,15 +424,14 @@ configs:
     inverse_design.objective.maximise: true
     experiment.name: notochord_geometry_v1
     logging.wandb.group: notochord_geometry_v1
-    seed: 930287327
+    seed: 1930549411
     logging.wandb.tag_keys:
-    - checkpoint.model_id
     - inverse_design.geometry.harmonics
     - inverse_design.geometry.repeat
     - inverse_design.objective.maximise
   config:
     schema_version: 10
-    seed: 930287327
+    seed: 1930549411
     experiment:
       name: notochord_geometry_v1
     system:
@@ -2139,7 +448,6 @@ configs:
         group: notochord_geometry_v1
         tags: null
         tag_keys:
-        - checkpoint.model_id
         - inverse_design.geometry.harmonics
         - inverse_design.geometry.repeat
         - inverse_design.objective.maximise
@@ -2189,7 +497,7 @@ configs:
         candidates: 24
         iaaft_iterations: 25
         normalise: false
-- index: 11
+- index: 3
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
@@ -2198,15 +506,14 @@ configs:
     inverse_design.objective.maximise: true
     experiment.name: notochord_geometry_v1
     logging.wandb.group: notochord_geometry_v1
-    seed: 1812976885
+    seed: 2028277857
     logging.wandb.tag_keys:
-    - checkpoint.model_id
     - inverse_design.geometry.harmonics
     - inverse_design.geometry.repeat
     - inverse_design.objective.maximise
   config:
     schema_version: 10
-    seed: 1812976885
+    seed: 2028277857
     experiment:
       name: notochord_geometry_v1
     system:
@@ -2223,7 +530,6 @@ configs:
         group: notochord_geometry_v1
         tags: null
         tag_keys:
-        - checkpoint.model_id
         - inverse_design.geometry.harmonics
         - inverse_design.geometry.repeat
         - inverse_design.objective.maximise
@@ -2244,6 +550,170 @@ configs:
         radius_scale: 1.0
         grid_scale: 1.5
         repeat: 0
+      objective:
+        target: Notochord
+        temperature: 0.03
+        maximise: true
+        amount_weight: 0.0
+      penalties:
+        perimeter_weight: 0.0
+        coefficient_weight: 0.0
+        border_weight: 1.0
+      mask_softness:
+        start: 0.08
+        end: 0.02
+      optimiser:
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+      rollout:
+        hours: 48
+        scan_kind: checkpointed
+        checkpoints: null
+      texture:
+        bank_size: 16
+        mode: patch
+        patch_size: 11
+        patch_overlap: 7
+        patch_jitter: 3
+        interior_fraction: 0.8
+        candidates: 24
+        iaaft_iterations: 25
+        normalise: false
+- index: 6
+  overrides:
+    checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
+    logging.wandb.project: NCA-inverse-design
+    inverse_design.geometry.harmonics: 4
+    inverse_design.geometry.repeat: 1
+    inverse_design.objective.maximise: true
+    experiment.name: notochord_geometry_v1
+    logging.wandb.group: notochord_geometry_v1
+    seed: 1630434966
+    logging.wandb.tag_keys:
+    - inverse_design.geometry.harmonics
+    - inverse_design.geometry.repeat
+    - inverse_design.objective.maximise
+  config:
+    schema_version: 10
+    seed: 1630434966
+    experiment:
+      name: notochord_geometry_v1
+    system:
+      precision: highest
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-inverse-design
+        group: notochord_geometry_v1
+        tags: null
+        tag_keys:
+        - inverse_design.geometry.harmonics
+        - inverse_design.geometry.repeat
+        - inverse_design.objective.maximise
+    inverse_design:
+      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
+      iterations: 400
+      batch_size: 4
+      log_every: 25
+      evaluation_seeds: 16
+      baseline_ellipses:
+      - 0.15
+      - 0.3
+      geometry:
+        harmonics: 4
+        coefficient_limit: 0.3
+        initial_scale: 0.05
+        fixed_radius: true
+        radius_scale: 1.0
+        grid_scale: 1.5
+        repeat: 1
+      objective:
+        target: Notochord
+        temperature: 0.03
+        maximise: true
+        amount_weight: 0.0
+      penalties:
+        perimeter_weight: 0.0
+        coefficient_weight: 0.0
+        border_weight: 1.0
+      mask_softness:
+        start: 0.08
+        end: 0.02
+      optimiser:
+        learn_rate: 0.01
+        gradient_clip_norm: 1.0
+      rollout:
+        hours: 48
+        scan_kind: checkpointed
+        checkpoints: null
+      texture:
+        bank_size: 16
+        mode: patch
+        patch_size: 11
+        patch_overlap: 7
+        patch_jitter: 3
+        interior_fraction: 0.8
+        candidates: 24
+        iaaft_iterations: 25
+        normalise: false
+- index: 0
+  overrides:
+    checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
+    logging.wandb.project: NCA-inverse-design
+    inverse_design.geometry.harmonics: 4
+    inverse_design.geometry.repeat: 2
+    inverse_design.objective.maximise: true
+    experiment.name: notochord_geometry_v1
+    logging.wandb.group: notochord_geometry_v1
+    seed: 901749037
+    logging.wandb.tag_keys:
+    - inverse_design.geometry.harmonics
+    - inverse_design.geometry.repeat
+    - inverse_design.objective.maximise
+  config:
+    schema_version: 10
+    seed: 901749037
+    experiment:
+      name: notochord_geometry_v1
+    system:
+      precision: highest
+      gpu: null
+      xla_flags: null
+    checkpoint:
+      model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
+      store_root: null
+    logging:
+      backend: wandb
+      wandb:
+        project: NCA-inverse-design
+        group: notochord_geometry_v1
+        tags: null
+        tag_keys:
+        - inverse_design.geometry.harmonics
+        - inverse_design.geometry.repeat
+        - inverse_design.objective.maximise
+    inverse_design:
+      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
+      iterations: 400
+      batch_size: 4
+      log_every: 25
+      evaluation_seeds: 16
+      baseline_ellipses:
+      - 0.15
+      - 0.3
+      geometry:
+        harmonics: 4
+        coefficient_limit: 0.3
+        initial_scale: 0.05
+        fixed_radius: true
+        radius_scale: 1.0
+        grid_scale: 1.5
+        repeat: 2
       objective:
         target: Notochord
         temperature: 0.03
@@ -2277,188 +747,19 @@ configs:
   overrides:
     checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
     logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 4
-    inverse_design.geometry.repeat: 1
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 124729223
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 124729223
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 4
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 1
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 17
-  overrides:
-    checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
-    logging.wandb.project: NCA-inverse-design
-    inverse_design.geometry.harmonics: 4
-    inverse_design.geometry.repeat: 2
-    inverse_design.objective.maximise: true
-    experiment.name: notochord_geometry_v1
-    logging.wandb.group: notochord_geometry_v1
-    seed: 952158461
-    logging.wandb.tag_keys:
-    - checkpoint.model_id
-    - inverse_design.geometry.harmonics
-    - inverse_design.geometry.repeat
-    - inverse_design.objective.maximise
-  config:
-    schema_version: 10
-    seed: 952158461
-    experiment:
-      name: notochord_geometry_v1
-    system:
-      precision: highest
-      gpu: null
-      xla_flags: null
-    checkpoint:
-      model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
-      store_root: null
-    logging:
-      backend: wandb
-      wandb:
-        project: NCA-inverse-design
-        group: notochord_geometry_v1
-        tags: null
-        tag_keys:
-        - checkpoint.model_id
-        - inverse_design.geometry.harmonics
-        - inverse_design.geometry.repeat
-        - inverse_design.objective.maximise
-    inverse_design:
-      cell_types_file: Experiments/micropatterns/conf/cell_types/260726_cell_types_sliced_nca.yaml
-      iterations: 400
-      batch_size: 4
-      log_every: 25
-      evaluation_seeds: 16
-      baseline_ellipses:
-      - 0.15
-      - 0.3
-      geometry:
-        harmonics: 4
-        coefficient_limit: 0.3
-        initial_scale: 0.05
-        fixed_radius: true
-        radius_scale: 1.0
-        grid_scale: 1.5
-        repeat: 2
-      objective:
-        target: Notochord
-        temperature: 0.03
-        maximise: true
-        amount_weight: 0.0
-      penalties:
-        perimeter_weight: 0.0
-        coefficient_weight: 0.0
-        border_weight: 1.0
-      mask_softness:
-        start: 0.08
-        end: 0.02
-      optimiser:
-        learn_rate: 0.01
-        gradient_clip_norm: 1.0
-      rollout:
-        hours: 48
-        scan_kind: checkpointed
-        checkpoints: null
-      texture:
-        bank_size: 16
-        mode: patch
-        patch_size: 11
-        patch_overlap: 7
-        patch_jitter: 3
-        interior_fraction: 0.8
-        candidates: 24
-        iaaft_iterations: 25
-        normalise: false
-- index: 15
-  overrides:
-    checkpoint.model_id: 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
-    logging.wandb.project: NCA-inverse-design
     inverse_design.geometry.harmonics: 3
     inverse_design.geometry.repeat: 0
     inverse_design.objective.maximise: false
     experiment.name: notochord_geometry_v1
     logging.wandb.group: notochord_geometry_v1
-    seed: 1880712864
+    seed: 403123852
     logging.wandb.tag_keys:
-    - checkpoint.model_id
     - inverse_design.geometry.harmonics
     - inverse_design.geometry.repeat
     - inverse_design.objective.maximise
   config:
     schema_version: 10
-    seed: 1880712864
+    seed: 403123852
     experiment:
       name: notochord_geometry_v1
     system:
@@ -2475,7 +776,6 @@ configs:
         group: notochord_geometry_v1
         tags: null
         tag_keys:
-        - checkpoint.model_id
         - inverse_design.geometry.harmonics
         - inverse_design.geometry.repeat
         - inverse_design.objective.maximise
