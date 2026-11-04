@@ -117,6 +117,10 @@ def test_record_links_its_model_conditions_and_provenance(published):
     assert (store / manifest.model.path).resolve() == bundle.path
     assert (manifest.conditions.source_pattern, manifest.conditions.target_pattern) == ("crab.png", "lizard.png")
     assert manifest.conditions.data == "bundle"
+    # The impulse acted on the mature source, so no separate source is saved
+    assert manifest.conditions.impulse_time is None
+    assert "source_states" not in record.load_states()
+    assert manifest.model.training_t == bundle.config.run.t
     assert manifest.results.switch_rate == result.evaluation_switch_rate
     assert manifest.results.pixel_steps == 18
     assert list(manifest.artifact.state_shape) == [6, 8, 8]

@@ -176,18 +176,18 @@ class ImpulseLogger(WandbLogger):
             # Mean over the rollouts that switched
             scalars["Result/switch_time"] = float(np.nanmean(result.switch_steps))
         self.log_scalars(scalars)
-        states = np.stack(
-            [
-                result.initial_states[0],
-                result.perturbed_initial_states[0],
-                result.final_states[0],
-                result.target_states[0],
-            ]
-        )
-        self.log_image(
-            "Result/source | perturbed | final | target",
-            rearrange(_rgb(states), "S C H W -> H (S W) C"),
-        )
+        states = [
+            result.initial_states[0],
+            result.perturbed_initial_states[0],
+            result.final_states[0],
+            result.target_states[0],
+        ]
+        title = "Result/source | perturbed | final | target"
+        if result.source_states is not None:
+            # Impulse during development: also show the mature source
+            states.append(result.source_states[0])
+            title += " | mature source"
+        self.log_image(title, rearrange(_rgb(np.stack(states)), "S C H W -> H (S W) C"))
         # Size of the applied change, summed over channels, scaled to [0, 1].
         # The intervention is the same for every batch element, so show the first.
         delta = np.abs(

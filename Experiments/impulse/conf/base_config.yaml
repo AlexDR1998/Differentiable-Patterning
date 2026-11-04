@@ -50,6 +50,13 @@ impulse:
     target_steps: 192
     initial_time: 0
     target_time: -1
+    # stable_attractor only. NCA steps the source grows before the impulse
+    # (null: as for the target, a step count from stabilisation_steps). When
+    # set, stabilisation_steps only grows the mature source and target.
+    impulse_time: null
+    # Unit of impulse_time and stabilisation_steps: steps, or training_t
+    # (multiples of the model's run.t)
+    time_unit: steps
 
   rollout:
     steps: 64

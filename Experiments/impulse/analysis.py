@@ -148,6 +148,9 @@ def summary_row(result):
         "loss_window": impulse.rollout.loss_window,
         "curriculum": impulse.rollout.curriculum,
         "iterations": impulse.iterations,
+        # Growth before the impulse, in time_unit (None: the mature source)
+        "impulse_time": impulse.pair_source.impulse_time,
+        "time_unit": impulse.pair_source.time_unit,
         "repeat": impulse.repeat,
         "switch_rate": summary.get("evaluation_switch_rate"),
         "baseline_switch_rate": summary.get("baseline_switch_rate"),

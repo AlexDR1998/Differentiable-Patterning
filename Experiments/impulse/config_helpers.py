@@ -21,6 +21,7 @@ from NCA.trainer.impulse import (
 INTERVENTION_CHANNELS = ("all", "obs", "hidden", "single")
 INTERVENTION_SPATIAL = ("local", "patch", "sparse", "global", "flat")
 INITIAL_LOCATIONS = ("random", "centre")
+TIME_UNITS = ("steps", "training_t")
 
 
 def _as_dict(value):
@@ -64,11 +65,42 @@ def load_impulse_data(data_config, model, impath=None):
     return data
 
 
-def build_pair_source(impulse_config, model, trajectories):
-    """Construct the configured initial-state/target-state provider."""
+def pair_source_steps(pair_cfg, training_t=None):
+    """``impulse_time`` (None when unset) and ``stabilisation_steps`` in NCA steps.
+
+    With ``time_unit: training_t`` both are multiples of the model's ``run.t``
+    (``training_t``) and are rounded to whole steps.
+    """
+
+    if pair_cfg.time_unit not in TIME_UNITS:
+        raise ValueError(
+            f"Unknown impulse.pair_source.time_unit {pair_cfg.time_unit!r}; expected one of {list(TIME_UNITS)}"
+        )
+    scale = 1
+    if pair_cfg.time_unit == "training_t":
+        if training_t is None:
+            raise ValueError("impulse.pair_source.time_unit=training_t needs the model's run.t")
+        scale = training_t
+    impulse_time = pair_cfg.impulse_time
+    if impulse_time is not None:
+        if impulse_time < 0:
+            raise ValueError(f"impulse.pair_source.impulse_time must be non-negative, got {impulse_time}")
+        impulse_time = int(round(impulse_time * scale))
+    stabilisation_steps = tuple(int(round(step * scale)) for step in pair_cfg.stabilisation_steps)
+    return impulse_time, stabilisation_steps
+
+
+def build_pair_source(impulse_config, model, trajectories, training_t=None):
+    """Construct the configured initial-state/target-state provider.
+
+    ``training_t`` is the model's ``run.t``, used by ``time_unit: training_t``.
+    """
 
     pair_cfg = impulse_config.pair_source
     pair_type = pair_cfg.type
+    impulse_time, stabilisation_steps = pair_source_steps(pair_cfg, training_t)
+    if impulse_time is not None and pair_type != "stable_attractor":
+        raise ValueError("impulse.pair_source.impulse_time needs impulse.pair_source.type=stable_attractor")
     source, target = pair_cfg.source_index, pair_cfg.target_index
     for name, index in (("source_index", source), ("target_index", target)):
         if not 0 <= index < len(trajectories):
@@ -97,8 +129,9 @@ def build_pair_source(impulse_config, model, trajectories):
             trajectories[:, 0],
             source_index=pair_cfg.source_index,
             target_index=pair_cfg.target_index,
-            stabilisation_steps=tuple(pair_cfg.stabilisation_steps),
+            stabilisation_steps=stabilisation_steps,
             scan_kind=impulse_config.rollout.scan_kind,
+            impulse_time=impulse_time,
         )
     raise ValueError(f"Unknown impulse pair source {pair_type!r}")
 

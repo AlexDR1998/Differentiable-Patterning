@@ -52,6 +52,7 @@ with app.setup(hide_code=True):
     SETTINGS = (
         "sweep", "objective", "channels", "spatial", "width", "patch_size", "duration",
         "budget", "l2", "learn_rate", "rollout_steps", "loss_window", "iterations",
+        "impulse_time", "time_unit",
     )
     # Columns that can be plotted: column -> axis label
     METRICS = {
@@ -399,7 +400,8 @@ def _(chosen_run, results, saved, shown):
     _frames = {"impulse": saved["perturbed_trajectory"][shown], "no impulse": saved["baseline_trajectory"][shown]}
     _references = {
         "target": saved["target_states"][shown, :_observed],
-        "source": saved["initial_states"][shown, :_observed],
+        # The mature source when the impulse acts during development
+        "source": saved.get("source_states", saved["initial_states"])[shown, :_observed],
     }
     _times = _every * np.arange(1, len(_frames["impulse"]) + 1)
     _fig, _ax = plt.subplots(figsize=(6.5, 3.2), constrained_layout=True)

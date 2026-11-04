@@ -11,6 +11,15 @@ class ImpulseBatch:
     initial_states: Array
     target_states: Array
     metadata: dict[str, Any] = field(default_factory=dict)
+    # Source state a switch is scored against (None: initial_states). Set when
+    # the impulse acts before the source pattern has fully grown.
+    source_states: Array | None = None
+
+    @property
+    def switch_sources(self):
+        """States a rollout must move away from to count as switched."""
+
+        return self.initial_states if self.source_states is None else self.source_states
 
 
 @dataclass
@@ -52,4 +61,7 @@ class ImpulseResult:
     # [restarts] validation objective of each start after scouting (None
     # without restarts)
     restart_validation_objectives: Any = None
+    # Mature source states the switch is scored against, when the impulse
+    # acts during development (None: initial_states)
+    source_states: Any = None
 

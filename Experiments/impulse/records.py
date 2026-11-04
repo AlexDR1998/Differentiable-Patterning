@@ -28,7 +28,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from Experiments.config import config_to_dict, load_experiment_config
 from Experiments.config_helpers import build_wandb_tags
-from Experiments.impulse.config_helpers import intervention_from_config, pixel_steps
+from Experiments.impulse.config_helpers import intervention_from_config, pair_source_steps, pixel_steps
 from Experiments.model_registry import (
     CONFIG_ID_LENGTH,
     _config_digest,
@@ -213,6 +213,8 @@ def publish_impulse_record(
     repo = Path(repository_root or Path(__file__).resolve().parents[2])
     impulse = cfg.impulse
     initial_states = jnp.asarray(result.initial_states)
+    training_t = bundle.config.run.t
+    impulse_time, _ = pair_source_steps(impulse.pair_source, training_t)
 
     staging = Path(tempfile.mkdtemp(prefix=f".{impulse_id}.", dir=parent))
     try:
@@ -223,6 +225,9 @@ def publish_impulse_record(
             target_states=np.asarray(result.target_states),
             perturbed_initial_states=np.asarray(result.perturbed_initial_states),
             final_states=np.asarray(result.final_states),
+            # Mature source the switch is scored against, when the impulse
+            # acts during development
+            **({} if result.source_states is None else {"source_states": np.asarray(result.source_states)}),
             # Saved as float16 to keep records small (observed channels are in [0, 1])
             baseline_trajectory=np.asarray(result.baseline_trajectory, dtype=np.float16),
             perturbed_trajectory=np.asarray(result.perturbed_trajectory, dtype=np.float16),
@@ -260,6 +265,8 @@ def publish_impulse_record(
                 "collection": str(bundle.manifest.collection),
                 "experiment": bundle.manifest.get("experiment"),
                 "family": bundle.manifest.model.get("family"),
+                # run.t the model was trained with
+                "training_t": int(training_t),
                 "checkpoint_sha256": str(bundle.manifest.artifact.sha256),
                 "path": _relative_to(bundle.path, store_root),
             },
@@ -269,6 +276,8 @@ def publish_impulse_record(
                 "target_index": impulse.pair_source.target_index,
                 "source_pattern": _pattern_name(data_config, impulse.pair_source.source_index),
                 "target_pattern": _pattern_name(data_config, impulse.pair_source.target_index),
+                # NCA steps of growth before the impulse (null: the mature source)
+                "impulse_time": impulse_time,
                 # bundle: the data the model was trained on; override: cfg.data
                 "data": "bundle" if cfg.data is None else "override",
             },

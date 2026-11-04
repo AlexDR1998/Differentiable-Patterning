@@ -99,7 +99,13 @@ class TrajectoryStatePairSource:
 
 @dataclass
 class StableAttractorPairSource:
-    """Generate source and target attractors from condition-specific initial states."""
+    """Generate source and target attractors from condition-specific initial states.
+
+    With ``impulse_time``, the impulse acts on the source grown for exactly
+    that many steps, while the target and the source it is scored against
+    (``ImpulseBatch.source_states``) are still the mature attractors grown for
+    ``stabilisation_steps``.
+    """
 
     condition_states: object
     source_index: int
@@ -107,6 +113,7 @@ class StableAttractorPairSource:
     stabilisation_steps: tuple[int, int]
     boundary_callback: object = identity_boundary
     scan_kind: str = "lax"
+    impulse_time: int | None = None
 
     def sample(self, batch_size, model, key):
         """Generate a stochastic pool and select source and target conditions."""
@@ -121,11 +128,15 @@ class StableAttractorPairSource:
         minimum, maximum = self.stabilisation_steps
         if minimum < 0 or maximum <= minimum:
             raise ValueError("stabilisation_steps must be an increasing [minimum, maximum) range")
+        if self.impulse_time is not None and self.impulse_time < 0:
+            raise ValueError("impulse_time must be non-negative")
 
         # One step count per batch item, shared by its source and target, as
         # if both conditions had been grown for the same time.
         steps_key, rollout_key = jax.random.split(key)
         steps = jax.random.randint(steps_key, (batch_size,), minimum, maximum)
+        if self.impulse_time is not None:
+            return self._sample_developing(model, conditions, steps, maximum, rollout_key)
         pair = conditions[jnp.asarray([self.source_index, self.target_index])]
         # [batch, 2, C, H, W] -> [batch * 2, C, H, W], to run as one batch
         initial = jnp.broadcast_to(pair, (batch_size, *pair.shape)).reshape((-1, *pair.shape[1:]))
@@ -142,4 +153,28 @@ class StableAttractorPairSource:
             stable[:, 0],
             stable[:, 1],
             {"stabilisation_steps": steps},
+        )
+
+    def _sample_developing(self, model, conditions, steps, maximum, key):
+        """Source grown for impulse_time steps; mature source and target grown for ``steps``."""
+
+        batch_size = len(steps)
+        # Per batch item: source at the impulse time, mature source, mature target
+        triple = conditions[jnp.asarray([self.source_index, self.source_index, self.target_index])]
+        initial = jnp.broadcast_to(triple, (batch_size, *triple.shape)).reshape((-1, *triple.shape[1:]))
+        impulse_steps = jnp.full((batch_size,), self.impulse_time)
+        grown = run_nca_batch_to_steps(
+            model,
+            initial,
+            jnp.stack([impulse_steps, steps, steps], axis=1).reshape(-1),
+            max(maximum - 1, self.impulse_time),
+            key,
+            boundary_callback=self.boundary_callback,
+            scan_kind=self.scan_kind,
+        ).reshape((batch_size, *triple.shape))
+        return ImpulseBatch(
+            grown[:, 0],
+            grown[:, 2],
+            {"stabilisation_steps": steps, "impulse_time": self.impulse_time},
+            source_states=grown[:, 1],
         )

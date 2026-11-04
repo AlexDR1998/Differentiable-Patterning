@@ -14,6 +14,7 @@ from Experiments.impulse.config_helpers import (
     build_pair_source,
     build_restarts,
     intervention_from_config,
+    pair_source_steps,
 )
 from Experiments.model_registry import create_model_id, publish_model_bundle
 from NCA.model.NCA_model import NCA
@@ -53,6 +54,8 @@ def _impulse_cfg():
                     "target_steps": 2,
                     "initial_time": 0,
                     "target_time": -1,
+                    "impulse_time": None,
+                    "time_unit": "steps",
                 },
                 "rollout": {"scan_kind": "lax"},
                 "intervention": {
@@ -243,6 +246,37 @@ def test_pair_sources_only_use_the_configured_source_and_target_patterns():
     cfg.impulse.pair_source.update(target_index=3)
     with pytest.raises(ValueError, match="outside the 3 data pairs"):
         build_pair_source(cfg.impulse, model, trajectories)
+
+
+def test_impulse_time_can_be_given_in_steps_or_multiples_of_the_training_time():
+    cfg = _impulse_cfg()
+    pair_cfg = cfg.impulse.pair_source
+    assert pair_source_steps(pair_cfg) == (None, (2, 3))
+    pair_cfg.update(impulse_time=0.5, stabilisation_steps=[1.5, 2.0], time_unit="training_t")
+    assert pair_source_steps(pair_cfg, training_t=64) == (32, (96, 128))
+    with pytest.raises(ValueError, match="run.t"):
+        pair_source_steps(pair_cfg)
+    pair_cfg.update(time_unit="seconds")
+    with pytest.raises(ValueError, match="time_unit"):
+        pair_source_steps(pair_cfg, training_t=64)
+    pair_cfg.update(time_unit="steps", impulse_time=-1)
+    with pytest.raises(ValueError, match="non-negative"):
+        pair_source_steps(pair_cfg)
+
+
+def test_impulse_time_builds_a_developing_stable_attractor_source():
+    trajectories = jnp.stack([jnp.zeros((2, 2, 3, 3)), jnp.ones((2, 2, 3, 3))])
+    model = NCA(2, KERNEL_STR=["ID"], FIRE_RATE=1.0, key=jax.random.PRNGKey(0))
+    cfg = _impulse_cfg()
+    cfg.impulse.pair_source.update(impulse_time=0.25, stabilisation_steps=[1, 2], time_unit="training_t")
+
+    source = build_pair_source(cfg.impulse, model, trajectories, training_t=8)
+
+    assert isinstance(source, StableAttractorPairSource)
+    assert (source.impulse_time, source.stabilisation_steps) == (2, (8, 16))
+    cfg.impulse.pair_source.update(type="model_future")
+    with pytest.raises(ValueError, match="stable_attractor"):
+        build_pair_source(cfg.impulse, model, trajectories, training_t=8)
 
 
 def test_init_scale_and_initial_location_set_the_starting_intervention():

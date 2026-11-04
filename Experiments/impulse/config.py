@@ -22,11 +22,19 @@ class ImpulsePairSourceConfig(ConfigValue):
     # the target pattern. Every pair source only uses these two patterns.
     source_index: int = 0
     target_index: int = 1
-    stabilisation_steps: tuple[int, ...] = (128, 256)
+    stabilisation_steps: tuple[float, ...] = (128, 256)
     target_steps: int = 192
     # Time indices into the source trajectory, for trajectory_state
     initial_time: int = 0
     target_time: int = -1
+    # stable_attractor only. NCA steps the source is grown before the impulse
+    # (null: a step count from stabilisation_steps, as for the target). When
+    # set, stabilisation_steps only grows the mature source and target that
+    # the impulse is scored against.
+    impulse_time: float | None = None
+    # Unit of impulse_time and stabilisation_steps: steps, or training_t
+    # (multiples of the model's run.t, rounded to whole steps)
+    time_unit: str = "steps"
 
 
 @dataclass(frozen=True)

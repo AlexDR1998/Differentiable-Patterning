@@ -155,6 +155,71 @@ def test_stable_attractor_source_runs_each_item_for_its_own_step_count():
     assert jnp.allclose(batch.target_states, 0.5 * steps)
 
 
+def test_stable_attractor_source_can_impulse_during_development():
+    model = AdditiveModel(increment=0.5)
+    conditions = jnp.stack([jnp.zeros((2, 3, 3)), jnp.ones((2, 3, 3))])
+
+    def sample(impulse_time):
+        source = StableAttractorPairSource(
+            conditions,
+            source_index=0,
+            target_index=1,
+            stabilisation_steps=(4, 8),
+            impulse_time=impulse_time,
+        )
+        return source.sample(16, model, jax.random.PRNGKey(3))
+
+    seed = sample(0)
+    steps = seed.metadata["stabilisation_steps"][:, None, None, None]
+    # The impulse acts on the seed; the target and the switch reference are mature
+    assert jnp.allclose(seed.initial_states, 0.0)
+    assert jnp.allclose(seed.source_states, 0.5 * steps)
+    assert jnp.allclose(seed.target_states, 1.0 + 0.5 * steps)
+    assert jnp.allclose(seed.switch_sources, seed.source_states)
+    # Longer than the mature growth: the compiled rollout covers it
+    late = sample(10)
+    assert jnp.allclose(late.initial_states, 5.0)
+    assert late.metadata["impulse_time"] == 10
+    # Without an impulse time the switch is scored against the start state
+    unset = sample(None)
+    assert unset.source_states is None
+    assert jnp.array_equal(unset.switch_sources, unset.initial_states)
+    with pytest.raises(ValueError, match="impulse_time"):
+        sample(-1)
+
+
+def test_switch_rate_uses_the_mature_source_when_impulsing_during_development():
+    from NCA.trainer.impulse.types import ImpulseBatch
+
+    model = AdditiveModel(channels=2)
+    initial = jnp.zeros((2, 2, 4, 4))
+    intervention = perturbation(
+        mode={"channel": "all", "spatial": "global"},
+        CHANNELS=2,
+        OBS_CHANNELS=2,
+        x=initial,
+        WIDTH=1.0,
+        key=jax.random.PRNGKey(0),
+    )
+    optimiser = NCAImpulseOptimiser(
+        model=model,
+        pair_source=ExternalTargetPairSource(initial, initial + 1.0),
+        intervention=intervention,
+        objective=TargetedObjective(),
+        optimiser=optax.adam(0.1),
+        observed_channels=2,
+        rollout_steps=1,
+        loss_functions=[per_sample_l2],
+    )
+    # Final states at 0.7 are nearer the target (1) than the seed (0), but
+    # nearer the mature source (0.8) than the target
+    final = jnp.full_like(initial, 0.7)
+    target = jnp.ones_like(initial)
+    assert optimiser._switch_rate(final, ImpulseBatch(initial, target)) == 1.0
+    mature = ImpulseBatch(initial, target, source_states=jnp.full_like(initial, 0.8))
+    assert optimiser._switch_rate(final, mature) == 0.0
+
+
 def test_local_perturbation_starts_anywhere_in_the_lattice_interior():
     centres = jnp.stack(
         [

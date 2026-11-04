@@ -169,8 +169,9 @@ class NCAImpulseOptimiser:
         """Fraction of final states nearer the target than the source state.
 
         Distances are the mean squared error of the observed channels. For
-        stable_attractor pairs the source is the grown source attractor; for
-        the other pair sources it is the start state.
+        stable_attractor pairs the source is the grown source attractor (also
+        when the impulse acts earlier in development); for the other pair
+        sources it is the start state.
         """
 
         def distance(states, references):
@@ -178,7 +179,7 @@ class NCAImpulseOptimiser:
             return jnp.mean(difference**2, axis=(-3, -2, -1))
 
         nearer_target = distance(final_states, batch.target_states) < distance(
-            final_states, batch.initial_states
+            final_states, batch.switch_sources
         )
         return float(jnp.mean(nearer_target))
 
@@ -506,6 +507,7 @@ class NCAImpulseOptimiser:
             restart_validation_objectives=restart_objectives,
             metrics=start.best["metrics"],
             initial_states=best_batch.initial_states,
+            source_states=best_batch.source_states,
             target_states=best_batch.target_states,
             perturbed_initial_states=perturbed,
             final_states=final_states,
@@ -516,7 +518,7 @@ class NCAImpulseOptimiser:
             location_history=np.stack(locations) if track_location else None,
             switch_steps=switch_steps(
                 perturbed_trajectory,
-                best_batch.initial_states,
+                best_batch.switch_sources,
                 best_batch.target_states,
                 self.evaluation_frame_every,
             ),

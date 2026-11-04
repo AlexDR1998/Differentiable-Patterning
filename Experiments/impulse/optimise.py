@@ -58,7 +58,7 @@ def run(cfg):
     data_config = bundle.config.data if cfg.data is None else cfg.data
     observed_channels = data_config.emoji.observed_channels
     trajectories = load_impulse_data(data_config, model)
-    pair_source = build_pair_source(cfg.impulse, model, trajectories)
+    pair_source = build_pair_source(cfg.impulse, model, trajectories, training_t=bundle.config.run.t)
     intervention = build_intervention(
         cfg.impulse.intervention,
         observed_channels,
