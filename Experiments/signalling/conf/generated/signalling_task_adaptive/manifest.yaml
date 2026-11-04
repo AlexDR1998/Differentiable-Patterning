@@ -5,7 +5,7 @@ sweep_file: /home/alex/PhD/Differentiable-Patterning/Experiments/signalling/conf
 output_dir: Experiments/signalling/conf/generated/signalling_task_adaptive
 count: 28
 configs:
-- index: 0
+- index: 18
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -21,7 +21,7 @@ configs:
     run.t: 64
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 0
+    seed: 577090037
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -30,7 +30,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 0
+    seed: 577090037
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -134,7 +134,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 1
+- index: 23
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -150,7 +150,7 @@ configs:
     run.t: 64
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 1
+    seed: 271041745
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -159,7 +159,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 1
+    seed: 271041745
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -263,7 +263,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 2
+- index: 22
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -284,7 +284,7 @@ configs:
     run.t: 12
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 2
+    seed: 1095513148
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -293,7 +293,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 2
+    seed: 1095513148
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -423,7 +423,7 @@ configs:
     run.t: 12
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 3
+    seed: 506456969
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -432,7 +432,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 3
+    seed: 506456969
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -541,7 +541,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 4
+- index: 12
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -558,7 +558,7 @@ configs:
     loss.regularisers.firing_energy: 0.0
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 4
+    seed: 2127877499
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -567,7 +567,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 4
+    seed: 2127877499
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -645,6 +645,136 @@ configs:
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
         firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 64
+      iterations: 6000
+      checkpoint_warmup_fraction: 0.01
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-signalling-tasks
+        group: signalling_task_adaptive_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.signal_task.task
+        - data.signal_task.params
+        - run.t
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: nca-signalling-tasks
+      model_factory: NCA.model.factory:build_model
+- index: 27
+  overrides:
+    logging.wandb.project: nca-signalling-tasks
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    run.iterations: 6000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    model.family: aNCA
+    data.signal_task.task: remote_switch
+    data.signal_task.params: {}
+    run.t: 64
+    loss.regularisers.firing_energy: 0.1
+    experiment.name: signalling_task_adaptive_v1
+    logging.wandb.group: signalling_task_adaptive_v1
+    seed: 1930549411
+    logging.wandb.tag_keys:
+    - model.family
+    - data.signal_task.task
+    - data.signal_task.params
+    - run.t
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 1930549411
+    experiment:
+      name: signalling_task_adaptive_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: signal_tasks
+      batches: 8
+      downsample: 1
+      signal_task:
+        task: remote_switch
+        size: 64
+        params: {}
+        target_repeats: 2
+        resample_fraction: 0.5
+        noise_strength: 0.0
+        seed: 0
+        evaluation_samples: 16
+        evaluation_repeats: 4
+        evaluation_horizons:
+        - 1
+        - 2
+        - 4
+    model:
+      family: aNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: false
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.1
         wire_cost: 0.0
     run:
       mode: train
@@ -685,140 +815,10 @@ configs:
     data.signal_task.task: remote_switch
     data.signal_task.params: {}
     run.t: 64
-    loss.regularisers.firing_energy: 0.1
-    experiment.name: signalling_task_adaptive_v1
-    logging.wandb.group: signalling_task_adaptive_v1
-    seed: 5
-    logging.wandb.tag_keys:
-    - model.family
-    - data.signal_task.task
-    - data.signal_task.params
-    - run.t
-    - loss.regularisers.firing_energy
-  config:
-    schema_version: 10
-    seed: 5
-    experiment:
-      name: signalling_task_adaptive_v1
-    system:
-      precision: tensorfloat32
-      gpu: null
-      xla_flags: null
-    data:
-      dataset: signal_tasks
-      batches: 8
-      downsample: 1
-      signal_task:
-        task: remote_switch
-        size: 64
-        params: {}
-        target_repeats: 2
-        resample_fraction: 0.5
-        noise_strength: 0.0
-        seed: 0
-        evaluation_samples: 16
-        evaluation_repeats: 4
-        evaluation_horizons:
-        - 1
-        - 2
-        - 4
-    model:
-      family: aNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      activation: relu
-      fire_rate: 0.5
-      padding: REPLICATE
-      kernel_scale: 1
-      parameter_noise_level: 0.01
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      log_every: 100
-      pool_admission:
-        enabled: false
-        relative_threshold: 1.25
-        previous_relative_threshold: 1.1
-        absolute_threshold: null
-        ema_decay: 0.95
-        warmup_fraction: null
-    optimiser:
-      type: nadam
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.001
-      warmup_fraction: 0.008
-      decay_rate: 0.99
-      schedule:
-        type: exponential
-        warmup_init_lr: 1.0e-06
-        final_factor: 0.1
-        transition_fraction: 0.75
-    loss:
-      terms:
-      - l2
-      regularisers:
-        intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 0.0
-        localised_hidden: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        hidden_state_size: 0.0
-        firing_energy: 0.1
-        wire_cost: 0.0
-    run:
-      mode: train
-      t: 64
-      iterations: 6000
-      checkpoint_warmup_fraction: 0.01
-      write_images: true
-      write_videos: true
-      repeat: 0
-    logging:
-      backend: wandb
-      wandb:
-        project: nca-signalling-tasks
-        group: signalling_task_adaptive_v1
-        tags: null
-        tag_keys:
-        - model.family
-        - data.signal_task.task
-        - data.signal_task.params
-        - run.t
-        - loss.regularisers.firing_energy
-    model_store:
-      enabled: true
-      root: models
-      collection: nca-signalling-tasks
-      model_factory: NCA.model.factory:build_model
-- index: 6
-  overrides:
-    logging.wandb.project: nca-signalling-tasks
-    run.repeat: 0
-    model.channels: 32
-    model.fire_rate: 0.5
-    run.iterations: 6000
-    loss.terms:
-    - l2
-    trainer.loop_autodiff: checkpointed
-    model.family: aNCA
-    data.signal_task.task: remote_switch
-    data.signal_task.params: {}
-    run.t: 64
     loss.regularisers.firing_energy: 0.2
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 6
+    seed: 2028277857
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -827,7 +827,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 6
+    seed: 2028277857
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -931,7 +931,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 7
+- index: 20
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -948,7 +948,7 @@ configs:
     loss.regularisers.firing_energy: 0.0
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 7
+    seed: 1630434966
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -957,7 +957,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 7
+    seed: 1630434966
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -1061,7 +1061,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 8
+- index: 4
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -1078,7 +1078,7 @@ configs:
     loss.regularisers.firing_energy: 0.1
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 8
+    seed: 901749037
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -1087,7 +1087,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 8
+    seed: 901749037
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -1191,7 +1191,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 9
+- index: 2
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -1208,7 +1208,7 @@ configs:
     loss.regularisers.firing_energy: 0.2
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 9
+    seed: 403123852
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -1217,7 +1217,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 9
+    seed: 403123852
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -1321,7 +1321,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 10
+- index: 1
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -1343,7 +1343,7 @@ configs:
     loss.regularisers.firing_energy: 0.0
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 10
+    seed: 2095328386
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -1352,7 +1352,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 10
+    seed: 2095328386
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -1461,7 +1461,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 11
+- index: 10
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -1483,7 +1483,7 @@ configs:
     loss.regularisers.firing_energy: 0.02
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 11
+    seed: 121751464
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -1492,7 +1492,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 11
+    seed: 121751464
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -1601,7 +1601,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 12
+- index: 8
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -1623,7 +1623,7 @@ configs:
     loss.regularisers.firing_energy: 0.04
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 12
+    seed: 1674216077
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -1632,7 +1632,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 12
+    seed: 1674216077
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -1763,7 +1763,7 @@ configs:
     loss.regularisers.firing_energy: 0.0
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 13
+    seed: 1858720390
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -1772,7 +1772,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 13
+    seed: 1858720390
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -1881,7 +1881,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 14
+- index: 6
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -1903,7 +1903,7 @@ configs:
     loss.regularisers.firing_energy: 0.02
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 14
+    seed: 9045414
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -1912,7 +1912,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 14
+    seed: 9045414
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -2021,7 +2021,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 15
+- index: 0
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -2043,7 +2043,7 @@ configs:
     loss.regularisers.firing_energy: 0.04
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 15
+    seed: 1912923437
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -2052,7 +2052,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 15
+    seed: 1912923437
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -2161,7 +2161,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 16
+- index: 9
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -2178,7 +2178,7 @@ configs:
     loss.regularisers.firing_energy: 0.0
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 16
+    seed: 1143881027
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -2187,7 +2187,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 16
+    seed: 1143881027
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -2291,7 +2291,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 17
+- index: 25
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -2308,7 +2308,7 @@ configs:
     loss.regularisers.firing_energy: 0.1
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 17
+    seed: 982526257
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -2317,7 +2317,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 17
+    seed: 982526257
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -2421,7 +2421,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 18
+- index: 19
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -2438,7 +2438,7 @@ configs:
     loss.regularisers.firing_energy: 0.2
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 18
+    seed: 439062303
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -2447,7 +2447,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 18
+    seed: 439062303
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -2525,266 +2525,6 @@ configs:
         perturbation_conservation: 0.0
         hidden_state_size: 0.0
         firing_energy: 0.2
-        wire_cost: 0.0
-    run:
-      mode: train
-      t: 64
-      iterations: 6000
-      checkpoint_warmup_fraction: 0.01
-      write_images: true
-      write_videos: true
-      repeat: 0
-    logging:
-      backend: wandb
-      wandb:
-        project: nca-signalling-tasks
-        group: signalling_task_adaptive_v1
-        tags: null
-        tag_keys:
-        - model.family
-        - data.signal_task.task
-        - data.signal_task.params
-        - run.t
-        - loss.regularisers.firing_energy
-    model_store:
-      enabled: true
-      root: models
-      collection: nca-signalling-tasks
-      model_factory: NCA.model.factory:build_model
-- index: 19
-  overrides:
-    logging.wandb.project: nca-signalling-tasks
-    run.repeat: 0
-    model.channels: 32
-    model.fire_rate: 0.5
-    run.iterations: 6000
-    loss.terms:
-    - l2
-    trainer.loop_autodiff: checkpointed
-    model.family: gaNCA
-    data.signal_task.task: connected_routing
-    data.signal_task.params: {}
-    run.t: 64
-    loss.regularisers.firing_energy: 0.0
-    experiment.name: signalling_task_adaptive_v1
-    logging.wandb.group: signalling_task_adaptive_v1
-    seed: 19
-    logging.wandb.tag_keys:
-    - model.family
-    - data.signal_task.task
-    - data.signal_task.params
-    - run.t
-    - loss.regularisers.firing_energy
-  config:
-    schema_version: 10
-    seed: 19
-    experiment:
-      name: signalling_task_adaptive_v1
-    system:
-      precision: tensorfloat32
-      gpu: null
-      xla_flags: null
-    data:
-      dataset: signal_tasks
-      batches: 8
-      downsample: 1
-      signal_task:
-        task: connected_routing
-        size: 64
-        params: {}
-        target_repeats: 2
-        resample_fraction: 0.5
-        noise_strength: 0.0
-        seed: 0
-        evaluation_samples: 16
-        evaluation_repeats: 4
-        evaluation_horizons:
-        - 1
-        - 2
-        - 4
-    model:
-      family: gaNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      activation: relu
-      fire_rate: 0.5
-      padding: REPLICATE
-      kernel_scale: 1
-      parameter_noise_level: 0.01
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      log_every: 100
-      pool_admission:
-        enabled: false
-        relative_threshold: 1.25
-        previous_relative_threshold: 1.1
-        absolute_threshold: null
-        ema_decay: 0.95
-        warmup_fraction: null
-    optimiser:
-      type: nadam
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.001
-      warmup_fraction: 0.008
-      decay_rate: 0.99
-      schedule:
-        type: exponential
-        warmup_init_lr: 1.0e-06
-        final_factor: 0.1
-        transition_fraction: 0.75
-    loss:
-      terms:
-      - l2
-      regularisers:
-        intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 0.0
-        localised_hidden: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        hidden_state_size: 0.0
-        firing_energy: 0.0
-        wire_cost: 0.0
-    run:
-      mode: train
-      t: 64
-      iterations: 6000
-      checkpoint_warmup_fraction: 0.01
-      write_images: true
-      write_videos: true
-      repeat: 0
-    logging:
-      backend: wandb
-      wandb:
-        project: nca-signalling-tasks
-        group: signalling_task_adaptive_v1
-        tags: null
-        tag_keys:
-        - model.family
-        - data.signal_task.task
-        - data.signal_task.params
-        - run.t
-        - loss.regularisers.firing_energy
-    model_store:
-      enabled: true
-      root: models
-      collection: nca-signalling-tasks
-      model_factory: NCA.model.factory:build_model
-- index: 20
-  overrides:
-    logging.wandb.project: nca-signalling-tasks
-    run.repeat: 0
-    model.channels: 32
-    model.fire_rate: 0.5
-    run.iterations: 6000
-    loss.terms:
-    - l2
-    trainer.loop_autodiff: checkpointed
-    model.family: gaNCA
-    data.signal_task.task: connected_routing
-    data.signal_task.params: {}
-    run.t: 64
-    loss.regularisers.firing_energy: 0.1
-    experiment.name: signalling_task_adaptive_v1
-    logging.wandb.group: signalling_task_adaptive_v1
-    seed: 20
-    logging.wandb.tag_keys:
-    - model.family
-    - data.signal_task.task
-    - data.signal_task.params
-    - run.t
-    - loss.regularisers.firing_energy
-  config:
-    schema_version: 10
-    seed: 20
-    experiment:
-      name: signalling_task_adaptive_v1
-    system:
-      precision: tensorfloat32
-      gpu: null
-      xla_flags: null
-    data:
-      dataset: signal_tasks
-      batches: 8
-      downsample: 1
-      signal_task:
-        task: connected_routing
-        size: 64
-        params: {}
-        target_repeats: 2
-        resample_fraction: 0.5
-        noise_strength: 0.0
-        seed: 0
-        evaluation_samples: 16
-        evaluation_repeats: 4
-        evaluation_horizons:
-        - 1
-        - 2
-        - 4
-    model:
-      family: gaNCA
-      channels: 32
-      kernel_str:
-      - ID
-      - LAP
-      - GRAD
-      activation: relu
-      fire_rate: 0.5
-      padding: REPLICATE
-      kernel_scale: 1
-      parameter_noise_level: 0.01
-    trainer:
-      boundary_mode: soft
-      grad_loss: true
-      log_directory: logs/
-      loss_time_channel_mask: null
-      loop_autodiff: checkpointed
-      log_every: 100
-      pool_admission:
-        enabled: false
-        relative_threshold: 1.25
-        previous_relative_threshold: 1.1
-        absolute_threshold: null
-        ema_decay: 0.95
-        warmup_fraction: null
-    optimiser:
-      type: nadam
-      blocknorm: true
-      sam: false
-      gradient_clip_norm: 1.0
-      apply_if_finite: true
-      max_consecutive_errors: 8
-      learn_rate: 0.001
-      warmup_fraction: 0.008
-      decay_rate: 0.99
-      schedule:
-        type: exponential
-        warmup_init_lr: 1.0e-06
-        final_factor: 0.1
-        transition_fraction: 0.75
-    loss:
-      terms:
-      - l2
-      regularisers:
-        intermediate_state: 1.0
-        boundary: 0.0
-        contiguous_growth: 0.0
-        localised_hidden: 0.0
-        update_sensitivity: 0.0
-        perturbation_conservation: 0.0
-        hidden_state_size: 0.0
-        firing_energy: 0.1
         wire_cost: 0.0
     run:
       mode: train
@@ -2825,10 +2565,10 @@ configs:
     data.signal_task.task: connected_routing
     data.signal_task.params: {}
     run.t: 64
-    loss.regularisers.firing_energy: 0.2
+    loss.regularisers.firing_energy: 0.0
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 21
+    seed: 1363349907
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -2837,7 +2577,267 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 21
+    seed: 1363349907
+    experiment:
+      name: signalling_task_adaptive_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: signal_tasks
+      batches: 8
+      downsample: 1
+      signal_task:
+        task: connected_routing
+        size: 64
+        params: {}
+        target_repeats: 2
+        resample_fraction: 0.5
+        noise_strength: 0.0
+        seed: 0
+        evaluation_samples: 16
+        evaluation_repeats: 4
+        evaluation_horizons:
+        - 1
+        - 2
+        - 4
+    model:
+      family: gaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: false
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.0
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 64
+      iterations: 6000
+      checkpoint_warmup_fraction: 0.01
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-signalling-tasks
+        group: signalling_task_adaptive_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.signal_task.task
+        - data.signal_task.params
+        - run.t
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: nca-signalling-tasks
+      model_factory: NCA.model.factory:build_model
+- index: 11
+  overrides:
+    logging.wandb.project: nca-signalling-tasks
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    run.iterations: 6000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    model.family: gaNCA
+    data.signal_task.task: connected_routing
+    data.signal_task.params: {}
+    run.t: 64
+    loss.regularisers.firing_energy: 0.1
+    experiment.name: signalling_task_adaptive_v1
+    logging.wandb.group: signalling_task_adaptive_v1
+    seed: 131383004
+    logging.wandb.tag_keys:
+    - model.family
+    - data.signal_task.task
+    - data.signal_task.params
+    - run.t
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 131383004
+    experiment:
+      name: signalling_task_adaptive_v1
+    system:
+      precision: tensorfloat32
+      gpu: null
+      xla_flags: null
+    data:
+      dataset: signal_tasks
+      batches: 8
+      downsample: 1
+      signal_task:
+        task: connected_routing
+        size: 64
+        params: {}
+        target_repeats: 2
+        resample_fraction: 0.5
+        noise_strength: 0.0
+        seed: 0
+        evaluation_samples: 16
+        evaluation_repeats: 4
+        evaluation_horizons:
+        - 1
+        - 2
+        - 4
+    model:
+      family: gaNCA
+      channels: 32
+      kernel_str:
+      - ID
+      - LAP
+      - GRAD
+      activation: relu
+      fire_rate: 0.5
+      padding: REPLICATE
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+    trainer:
+      boundary_mode: soft
+      grad_loss: true
+      log_directory: logs/
+      loss_time_channel_mask: null
+      loop_autodiff: checkpointed
+      log_every: 100
+      pool_admission:
+        enabled: false
+        relative_threshold: 1.25
+        previous_relative_threshold: 1.1
+        absolute_threshold: null
+        ema_decay: 0.95
+        warmup_fraction: null
+    optimiser:
+      type: nadam
+      blocknorm: true
+      sam: false
+      gradient_clip_norm: 1.0
+      apply_if_finite: true
+      max_consecutive_errors: 8
+      learn_rate: 0.001
+      warmup_fraction: 0.008
+      decay_rate: 0.99
+      schedule:
+        type: exponential
+        warmup_init_lr: 1.0e-06
+        final_factor: 0.1
+        transition_fraction: 0.75
+    loss:
+      terms:
+      - l2
+      regularisers:
+        intermediate_state: 1.0
+        boundary: 0.0
+        contiguous_growth: 0.0
+        localised_hidden: 0.0
+        update_sensitivity: 0.0
+        perturbation_conservation: 0.0
+        hidden_state_size: 0.0
+        firing_energy: 0.1
+        wire_cost: 0.0
+    run:
+      mode: train
+      t: 64
+      iterations: 6000
+      checkpoint_warmup_fraction: 0.01
+      write_images: true
+      write_videos: true
+      repeat: 0
+    logging:
+      backend: wandb
+      wandb:
+        project: nca-signalling-tasks
+        group: signalling_task_adaptive_v1
+        tags: null
+        tag_keys:
+        - model.family
+        - data.signal_task.task
+        - data.signal_task.params
+        - run.t
+        - loss.regularisers.firing_energy
+    model_store:
+      enabled: true
+      root: models
+      collection: nca-signalling-tasks
+      model_factory: NCA.model.factory:build_model
+- index: 26
+  overrides:
+    logging.wandb.project: nca-signalling-tasks
+    run.repeat: 0
+    model.channels: 32
+    model.fire_rate: 0.5
+    run.iterations: 6000
+    loss.terms:
+    - l2
+    trainer.loop_autodiff: checkpointed
+    model.family: gaNCA
+    data.signal_task.task: connected_routing
+    data.signal_task.params: {}
+    run.t: 64
+    loss.regularisers.firing_energy: 0.2
+    experiment.name: signalling_task_adaptive_v1
+    logging.wandb.group: signalling_task_adaptive_v1
+    seed: 95872739
+    logging.wandb.tag_keys:
+    - model.family
+    - data.signal_task.task
+    - data.signal_task.params
+    - run.t
+    - loss.regularisers.firing_energy
+  config:
+    schema_version: 10
+    seed: 95872739
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -2941,7 +2941,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 22
+- index: 17
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -2963,7 +2963,7 @@ configs:
     loss.regularisers.firing_energy: 0.0
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 22
+    seed: 109289145
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -2972,7 +2972,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 22
+    seed: 109289145
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -3081,7 +3081,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 23
+- index: 15
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -3103,7 +3103,7 @@ configs:
     loss.regularisers.firing_energy: 0.02
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 23
+    seed: 39534911
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -3112,7 +3112,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 23
+    seed: 39534911
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -3221,7 +3221,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 24
+- index: 14
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -3243,7 +3243,7 @@ configs:
     loss.regularisers.firing_energy: 0.04
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 24
+    seed: 1637259727
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -3252,7 +3252,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 24
+    seed: 1637259727
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -3361,7 +3361,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 25
+- index: 24
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -3383,7 +3383,7 @@ configs:
     loss.regularisers.firing_energy: 0.0
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 25
+    seed: 930287327
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -3392,7 +3392,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 25
+    seed: 930287327
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -3501,7 +3501,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 26
+- index: 7
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -3523,7 +3523,7 @@ configs:
     loss.regularisers.firing_energy: 0.02
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 26
+    seed: 1812976885
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -3532,7 +3532,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 26
+    seed: 1812976885
     experiment:
       name: signalling_task_adaptive_v1
     system:
@@ -3641,7 +3641,7 @@ configs:
       root: models
       collection: nca-signalling-tasks
       model_factory: NCA.model.factory:build_model
-- index: 27
+- index: 16
   overrides:
     logging.wandb.project: nca-signalling-tasks
     run.repeat: 0
@@ -3663,7 +3663,7 @@ configs:
     loss.regularisers.firing_energy: 0.04
     experiment.name: signalling_task_adaptive_v1
     logging.wandb.group: signalling_task_adaptive_v1
-    seed: 27
+    seed: 124729223
     logging.wandb.tag_keys:
     - model.family
     - data.signal_task.task
@@ -3672,7 +3672,7 @@ configs:
     - loss.regularisers.firing_energy
   config:
     schema_version: 10
-    seed: 27
+    seed: 124729223
     experiment:
       name: signalling_task_adaptive_v1
     system:
