@@ -5,6 +5,7 @@ set -euo pipefail
 usage() {
     echo "Usage: $0 --cluster {eidf|dawn} [--port PORT] [--no-reindex]"
     echo "  --port is required when --cluster eidf is selected."
+    echo "  Copies Models/bundles and Models/impulses into ./models."
     echo "  --no-reindex skips rebuilding models/registry.sqlite after the copy."
 }
 
@@ -47,7 +48,9 @@ case "$cluster" in
             usage >&2
             exit 1
         fi
-        rsync -a -e "ssh -J eidf-1 -p $port" root@localhost:/data/Models/bundles/ ./models/bundles/
+        for folder in bundles impulses; do
+            rsync -a -e "ssh -J eidf-1 -p $port" "root@localhost:/data/Models/$folder/" "./models/$folder/"
+        done
         ;;
     dawn)
         if [[ -n "$port" ]]; then
@@ -55,7 +58,9 @@ case "$cluster" in
             usage >&2
             exit 1
         fi
-        rsync -r -e ssh rc-rich1@login-dawn.hpc.cam.ac.uk:/home/rc-rich1/rds/rds-airr-p100-NQDJLHPwRqs/Models/bundles/ ./models/bundles/
+        for folder in bundles impulses; do
+            rsync -r -e ssh "rc-rich1@login-dawn.hpc.cam.ac.uk:/home/rc-rich1/rds/rds-airr-p100-NQDJLHPwRqs/Models/$folder/" "./models/$folder/"
+        done
         ;;
     *)
         echo "--cluster must be either 'eidf' or 'dawn'." >&2

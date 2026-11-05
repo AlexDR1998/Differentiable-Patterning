@@ -4,7 +4,8 @@ Run with:
     marimo edit Experiments/micropatterns/schematics.py
 
 The 3D stack path is read from ``MICROPATTERN_3D_STACK`` (e.g. in ``.env``)
-or typed into the notebook.
+or typed into the notebook. The model section reads ``MODEL_STORE_ROOT`` and
+``DATA_PATH_BASE``.
 """
 
 import marimo
@@ -22,9 +23,12 @@ with app.setup:
     import numpy as np
     import tifffile
     from dotenv import load_dotenv
-    from matplotlib.patches import ConnectionPatch, Polygon, Rectangle
+    from matplotlib.patches import ConnectionPatch, Patch, Polygon, Rectangle, Wedge
     from matplotlib.colors import is_color_like
     from matplotlib.transforms import Affine2D
+
+    # Colony discs with one sector per experiment group, as in the NODAL-KO figures
+    from Experiments.micropatterns import nodal_ko_schematic as ko_drawing
 
     load_dotenv()
 
@@ -68,6 +72,11 @@ with app.setup:
         "max": ("Max projection", r"$\max_z\, I(x, y, z)$"),
         "sum": ("Sum projection", r"$\sum_z\, I(x, y, z)$"),
     }
+
+    # Outline colours of the zoom boxes, visible on the black colonies and a white page
+    ZOOM_COLOURS = ("#ff7f0e", "#e41a1c", "#2ca02c", "#1e90ff")
+
+    LEGEND_STYLES = {"White, boxed colours": "white", "Black, like the images": "black"}
 
 
 @app.function(hide_code=True)
@@ -313,12 +322,249 @@ def draw_profile(ax, profile, z_um, mode, z_slice_um, colours, names, theme):
     ax.set_xticks([])
 
 
+@app.function(hide_code=True)
+def legend_swatch(colour, style):
+    """Legend handle of a channel colour: a black-edged box on a white legend, a line on a black one."""
+    if style == "white":
+        return Patch(facecolor=colour, edgecolor="black", lw=0.6)
+    return plt.Line2D([], [], color=colour, lw=2)
+
+
+@app.function(hide_code=True)
+def legend_options(style):
+    """``figure.legend`` keyword arguments of a white or black legend style."""
+    white = style == "white"
+    return {
+        "labelcolor": "#222222" if white else "white",
+        "frameon": True,
+        "fancybox": False,
+        "facecolor": "white" if white else "black",
+        "edgecolor": "white" if white else "black",
+        "framealpha": 1.0,
+        "handler_map": {ko_drawing.SectorHandle: (
+            ko_drawing.SectorHandler(fill="#666666", edge="#222222") if white else ko_drawing.SectorHandler()
+        )},
+    }
+
+
+@app.function(hide_code=True)
+def load_selection_records(path, store_root):
+    """Models of a selection exported by ``model_registry_explorer.py``, with each model's
+    projection and downsample (from its bundle config) and a picker label."""
+    import Experiments.micropatterns.nodal_ko_eval as ko_eval
+    from Experiments.model_registry import ModelRegistry, load_selection
+
+    records = load_selection(path)
+    settings = ko_eval.read_model_settings(
+        ModelRegistry(Path(store_root).expanduser()), [r["model_id"] for r in records]
+    )
+    return [
+        {**r, **settings[r["model_id"]], "option_label": ko_eval.model_option_label({**r, **settings[r["model_id"]]})}
+        for r in records
+    ]
+
+
+@app.function(hide_code=True)
+def baseline_rollout(store_root, model_id, data_root, replicate, seed):
+    """Baseline (no KO) rollout of a registry model from the 0h state of ``replicate`` (one-based),
+    with that replicate's data loaded and scaled as in the model's training."""
+    import jax.random as jr
+
+    import Experiments.micropatterns.nodal_ko_eval as ko_eval
+    from Experiments.model_registry import ModelRegistry
+
+    bundle = ModelRegistry(Path(store_root).expanduser()).get(model_id)
+    model = bundle.load_model(key=jr.PRNGKey(seed), implementation="portable")
+    root = Path(data_root).expanduser()
+    bins = ko_eval.load_training_histogram_bins(bundle, root)
+    data = ko_eval.load_condition_data(bundle, root, "baseline", replicate, bins)
+    prediction, time_labels = ko_eval.evaluate_condition(model, bundle, data, "baseline", seed)
+    return {
+        "prediction": prediction,
+        "target": data["target"],
+        "measured": data["measured"],
+        "channel_names": data["channel_names"],
+        "time_labels": time_labels,
+        "boundary": np.asarray(data["boundary"]).squeeze().astype(bool),
+        "train_replicates": tuple(bundle.config.data.micropattern.train_replicates or ()),
+    }
+
+
+@app.function(hide_code=True)
+def group_colours(names, group):
+    """Marker colour of each channel of ``group`` (None: other groups, and LMBR)."""
+    return [
+        ko_drawing.COLOURS[ko_drawing.MARKER_COLOURS.get(n.rsplit("/", 1)[-1], "grey")]
+        if n.split("/")[0] == group else None
+        for n in names
+    ]
+
+
+@app.function(hide_code=True)
+def trajectory_tile(rollout, source, i, groups, gamma):
+    """RGBA disc of time index i with one sector per group, and which sectors were not measured."""
+    names = rollout["channel_names"]
+    rgbas = [
+        ko_drawing.colony_rgba(rollout[source][i], rollout["boundary"], group_colours(names, g), gamma)
+        for g in groups
+    ]
+    unmeasured = [
+        source == "target" and not any(f for n, f in zip(names, rollout["measured"][i]) if n.split("/")[0] == g)
+        for g in groups
+    ]
+    return ko_drawing.sliced_rgba(rgbas), unmeasured
+
+
+@app.function(hide_code=True)
+def trajectory_figure(rollouts, blocks, groups, gamma, colony_size, font, hatch, zoom=None, width=7.0,
+                      legend_style="white"):
+    """Trajectories as rows of colony discs (one sector per group), with a bracketed label per block.
+
+    ``blocks`` are (label, colour, rows), and each row is (rollout key, source,
+    row label, row label colour). Positions are in hours of the time axis.
+    ``zoom``, if given, adds magnified squares right of the trajectories: a dict
+    with ``time`` (index), ``centres`` ((x, y) as fractions of the disc, y down),
+    ``width`` (fraction of the disc), ``colours`` (one per centre) and ``title``.
+    With ``pixels`` ({rollout key: n}) each box is instead n x n whole pixels of
+    that rollout, on its pixel grid. ``legend_style`` is "white" or "black".
+    """
+    theme = ko_drawing.THEMES["light"]
+    first = next(iter(rollouts.values()))
+    names = list(first["channel_names"])
+    times = [float(t.rstrip("h")) for t in first["time_labels"]]
+    s, text = colony_size, font / 7.0
+    row_step, block_gap = s + 1.5, 3.0
+    placed, y = [], 0.0
+    for label, colour, rows in blocks:
+        ys = [y - k * row_step for k in range(len(rows))]
+        placed.append((label, colour, list(zip(rows, ys))))
+        y = ys[-1] - s - block_gap
+    label_lines = max(label.count("\n") + 1 for label, _, _ in blocks)
+    left = times[0] - s / 2 - 6.0 * text - 1.8 * text * (label_lines - 1) - 0.5
+    zoom_x = []
+    if zoom is not None:
+        zoom_x = [times[-1] + s + 3.0 + k * (s + 1.5) for k in range(len(zoom["centres"]))]
+    right = (zoom_x[-1] if zoom_x else times[-1]) + s / 2 + 2.0
+    bottom = placed[-1][2][-1][1] - s / 2 - 1.0
+    axis_y = s / 2 + 1.5
+    top = axis_y + 3.0 * text
+    unit = width / (right - left)  # inches per hour
+    legend_height = 0.2 * (len(groups) + 1) + 0.15  # inches
+    panel_height = unit * (top - bottom)
+    hatched = False
+
+    def zoom_box(zx, zy, rgba, key):
+        """(left, top, width, height) of a zoom box, as fractions of the disc image."""
+        if zoom.get("pixels") is None:
+            return zx - zoom["width"] / 2, zy - zoom["width"] / 2, zoom["width"], zoom["width"]
+        n = zoom["pixels"][key]
+        rows, cols = rgba.shape[:2]
+        col = int(np.clip(round(zx * cols - n / 2), 0, max(cols - n, 0)))
+        row = int(np.clip(round(zy * rows - n / 2), 0, max(rows - n, 0)))
+        return col / cols, row / rows, n / cols, n / rows
+
+    with plt.rc_context({"font.size": font, "font.family": "sans-serif", "mathtext.fontset": "dejavusans",
+                         "text.color": theme["fg"]}):
+        figure = plt.figure(figsize=(width, panel_height + legend_height), facecolor=theme["bg"], dpi=200)
+        ax = figure.add_axes((0.0, legend_height / (panel_height + legend_height), 1.0,
+                              panel_height / (panel_height + legend_height)))
+        ax.set_xlim(left, right)
+        ax.set_ylim(bottom, top)
+        ax.set_aspect("equal")
+        ax.axis("off")
+        ax.plot([times[0] - s / 2, times[-1] + s / 2], [axis_y] * 2, color=theme["fg"], lw=0.7)
+        for t in times:
+            ax.plot([t, t], [axis_y, axis_y + 0.8], color=theme["fg"], lw=0.7)
+            ax.text(t, axis_y + 1.2, f"{t:g}h", ha="center", va="bottom")
+        if zoom_x:
+            ax.plot([zoom_x[0] - s / 2, zoom_x[-1] + s / 2], [axis_y] * 2, color=theme["fg"], lw=0.7)
+            ax.text((zoom_x[0] + zoom_x[-1]) / 2, axis_y + 1.2, zoom["title"], ha="center", va="bottom")
+
+        x_row = times[0] - s / 2 - text
+        x_bracket = x_row - 2.4 * text
+        for label, colour, rows in placed:
+            for (key, source, row_label, row_colour), row_y in rows:
+                ax.text(x_row, row_y, row_label, rotation=90, ha="right", va="center", fontsize=font - 0.5,
+                        color=row_colour)
+                rollout = rollouts[key]
+                for i, t in enumerate(times[:len(rollout[source])]):
+                    centre = (t, row_y)
+                    rgba, unmeasured = trajectory_tile(rollout, source, i, groups, gamma)
+                    ko_drawing.draw_colony(ax, rgba, centre, s, theme)
+                    for k, missing in enumerate(unmeasured):
+                        start, stop = ko_drawing.sector_angles(k, len(unmeasured))
+                        if missing and hatch:
+                            hatched = True
+                            ax.add_patch(Wedge(centre, s / 2, start, stop, facecolor="#d9d9d9",
+                                               edgecolor="#8c8c8c", hatch="////", lw=0, zorder=4.5))
+                        if len(unmeasured) > 1:
+                            ax.plot([centre[0], centre[0] + s / 2 * np.cos(np.radians(start))],
+                                    [centre[1], centre[1] + s / 2 * np.sin(np.radians(start))],
+                                    color="white", lw=0.6, zorder=5)
+                    if zoom is None or i != zoom["time"]:
+                        continue
+                    # Boxes on the disc, and the disc magnified so each box fills its
+                    # square, with nearest-pixel drawing so the grid of the data shows
+                    for (zx, zy), zoom_colour, x in zip(zoom["centres"], zoom["colours"], zoom_x):
+                        fx, fy, fw, fh = zoom_box(zx, zy, rgba, key)
+                        ax.add_patch(Rectangle((t + (fx - 0.5) * s, row_y + (0.5 - fy - fh) * s), fw * s, fh * s,
+                                               fill=False, edgecolor=zoom_colour, lw=0.8, zorder=6))
+                        tile = Rectangle((x - s / 2, row_y - s / 2), s, s, transform=ax.transData)
+                        ax.add_patch(Rectangle((x - s / 2, row_y - s / 2), s, s, facecolor="black", lw=0,
+                                               zorder=3))
+                        image_left = x - s / 2 - fx * s / fw
+                        image_top = row_y + s / 2 + fy * s / fh
+                        image = ax.imshow(rgba, extent=(image_left, image_left + s / fw, image_top - s / fh,
+                                                        image_top),
+                                          origin="upper", interpolation="nearest", zorder=4)
+                        image.set_clip_path(tile)
+                        ax.add_patch(Rectangle((x - s / 2, row_y - s / 2), s, s, fill=False,
+                                               edgecolor=zoom_colour, lw=1.0, zorder=6))
+            ys = [row_y for _, row_y in rows]
+            ax.plot([x_bracket, x_bracket], [ys[-1] - s / 2 + 0.5, ys[0] + s / 2 - 0.5], color=colour, lw=0.7)
+            ax.text(x_bracket - 0.6 * text, (ys[0] + ys[-1]) / 2, label, rotation=90, ha="right", va="center",
+                    multialignment="center", fontsize=font + 0.5, color=colour)
+        # Limits again, since imshow resets them
+        ax.set_xlim(left, right)
+        ax.set_ylim(bottom, top)
+
+        # A legend row per group: its sector, then its channel colours
+        legend_rows = [
+            [(ko_drawing.SectorHandle(k, len(groups)) if len(groups) > 1 else plt.Line2D([], [], lw=0),
+              ko_drawing.GROUP_LABELS.get(g, g))]
+            + [(legend_swatch(c, legend_style), n.rsplit("/", 1)[-1])
+               for n, c in zip(names, group_colours(names, g)) if c is not None]
+            for k, g in enumerate(groups)
+        ]
+        if hatched:
+            legend_rows.append([(Patch(facecolor="#d9d9d9", edgecolor="#8c8c8c",
+                                       hatch="////", lw=0), "not measured")])
+        length = max(len(r) for r in legend_rows)
+        padded = [r + [(plt.Line2D([], [], lw=0), "")] * (length - len(r)) for r in legend_rows]
+        # Legend columns fill top to bottom, so entries go in column by column
+        entries = [r[c] for c in range(length) for r in padded]
+        figure.legend(
+            [h for h, _ in entries], [l for _, l in entries], ncol=length, loc="lower center",
+            bbox_to_anchor=(0.5, 0.0), fontsize=font - 0.5, handlelength=1.2, columnspacing=0.8,
+            **legend_options(legend_style),
+        )
+    return figure
+
+
+@app.function(hide_code=True)
+def colour_or(text, default):
+    """``text`` if it is a matplotlib colour, else ``default``."""
+    return text.strip() if is_color_like(text.strip()) else default
+
+
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
     # Schematics
 
     - 3D confocal stack → 2D slice, max and sum projections
+    - Baseline NCA trajectories trained on each projection, against their data
+    - Baseline NCA trajectories at several resolutions of one projection, with zoomed snapshots
     - Figures are saved to `figures/schematics/`
     """)
     return
@@ -419,12 +665,13 @@ def _():
     # Any matplotlib colour: a name ("orange") or hex code ("#d62728")
     slice_colour = mo.ui.text(value="#d62728", label="z₀ / probe line colour")
     column_colour = mo.ui.text(value="white", label="Column outline colour")
+    legend_style = mo.ui.dropdown(options=LEGEND_STYLES, value="White, boxed colours", label="Legend style")
     mo.vstack([
         mo.md("**Display**"),
         mo.hstack([background, low_percentile, high_percentile, gamma], justify="start"),
         mo.hstack([n_planes, plane_opacity, stack_height, z_exaggeration], justify="start"),
         mo.hstack([scale_bar_um, figure_width, figure_height], justify="start"),
-        mo.hstack([slice_colour, column_colour], justify="start"),
+        mo.hstack([slice_colour, column_colour, legend_style], justify="start"),
     ])
     return (
         background,
@@ -433,6 +680,7 @@ def _():
         figure_width,
         gamma,
         high_percentile,
+        legend_style,
         low_percentile,
         n_planes,
         plane_opacity,
@@ -570,6 +818,7 @@ def _(
     figure_height,
     figure_width,
     gamma,
+    legend_style,
     limits,
     n_planes,
     plane_opacity,
@@ -720,12 +969,10 @@ def _(
                     arrowstyle="-|>", color=_theme["muted"], lw=0.9, mutation_scale=9,
                 ))
 
-        # Image colours on black, like the images themselves
-        _handles = [plt.Line2D([], [], color=c, lw=2) for c in _colours if c is not None]
+        _handles = [legend_swatch(c, legend_style.value) for c in _colours if c is not None]
         _labels = [n for n, c in zip(channel_names, _colours) if c is not None]
         _legend = schematic.legend(_handles, _labels, loc="upper right", ncol=max(1, len(_labels)), fontsize=7,
-                                   bbox_to_anchor=(0.98, 1.0), labelcolor="white", frameon=True, fancybox=False,
-                                   facecolor="black", edgecolor="black", framealpha=1.0)
+                                   bbox_to_anchor=(0.98, 1.0), **legend_options(legend_style.value))
     mo.vstack([z_slice, mo.hstack([probe_x, probe_y], widths="equal"), schematic])
     return (schematic,)
 
@@ -747,6 +994,473 @@ def _(figure_name, save_figure, schematic):
         schematic.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400,
                           facecolor=schematic.get_facecolor())
     mo.md(f"Saved `{figure_name.value}.pdf` and `.png` to `{_directory}`")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Baseline NCA trajectories per projection
+
+    - One baseline (no KO) model per projection, from a selection exported by `model_registry_explorer.py`
+    - Each model starts from the 0h state of the chosen replicate, loaded and scaled as for its training
+    - Rows: true data and NCA for each projection; one sector per experiment group
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    projection_selection_path = mo.ui.text(
+        placeholder="/path/to/model_registry_selection.yaml",
+        label="Exported registry selection",
+        full_width=True,
+    )
+    projection_store_root = mo.ui.text(
+        value=os.getenv("MODEL_STORE_ROOT", str(Path(mo.notebook_dir()).parents[1] / "models")),
+        label="Model store",
+        full_width=True,
+    )
+    projection_data_root = mo.ui.text(
+        value=os.getenv("DATA_PATH_BASE", ""),
+        label="Data root (contains 260726_nca_dataset)",
+        full_width=True,
+    )
+    mo.vstack([projection_selection_path, projection_store_root, projection_data_root])
+    return projection_data_root, projection_selection_path, projection_store_root
+
+
+@app.cell(hide_code=True)
+def _(projection_selection_path, projection_store_root):
+    _path = Path(projection_selection_path.value).expanduser()
+    mo.stop(not projection_selection_path.value.strip(), mo.md("Choose an exported model selection YAML file."))
+    mo.stop(not _path.is_file(), mo.callout(f"Selection file not found: `{_path}`", kind="danger"))
+    _records = load_selection_records(_path, projection_store_root.value)
+    _options = {
+        _projection: {_r["option_label"]: _r["model_id"] for _r in _records if _r["projection"] == _projection}
+        for _projection in PROJECTION_LABELS
+    }
+    mo.stop(not any(_options.values()), mo.callout("The selection has no slice, max or sum models.", kind="warn"))
+    # One model per projection; projections without a model are left out of the figure
+    projection_models = mo.ui.dictionary({
+        _projection: mo.ui.dropdown(options=_o, value=next(iter(_o)), label=PROJECTION_LABELS[_projection][0],
+                                    full_width=True)
+        for _projection, _o in _options.items() if _o
+    })
+    projection_replicate = mo.ui.number(start=1, stop=999, step=1, value=1, label="Replicate (one-based)")
+    projection_seed = mo.ui.number(start=0, stop=2**31 - 1, step=1, value=0, label="Rollout seed")
+    run_projection_rollouts = mo.ui.run_button(label="Roll out models")
+    mo.vstack([
+        projection_models,
+        mo.hstack([projection_replicate, projection_seed, run_projection_rollouts], justify="start"),
+    ])
+    return (
+        projection_models,
+        projection_replicate,
+        projection_seed,
+        run_projection_rollouts,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    projection_data_root,
+    projection_models,
+    projection_replicate,
+    projection_seed,
+    projection_store_root,
+    run_projection_rollouts,
+):
+    mo.stop(not run_projection_rollouts.value, mo.md("Choose the models, then roll them out."))
+    mo.stop(not projection_data_root.value.strip(), mo.callout("Set the data root first.", kind="warn"))
+    _replicate = int(projection_replicate.value)
+    projection_rollouts = {}
+    with mo.status.progress_bar(total=len(projection_models.value), title="Loading data and rolling out") as _bar:
+        for _index, (_projection, _model_id) in enumerate(projection_models.value.items()):
+            projection_rollouts[_projection] = baseline_rollout(
+                projection_store_root.value, _model_id, projection_data_root.value, _replicate,
+                int(projection_seed.value) + _index,
+            )
+            _bar.update()
+    _in_training = [_p for _p, _r in projection_rollouts.items() if _replicate in _r["train_replicates"]]
+    mo.md(
+        f"Replicate {_replicate} is in the training split of: {', '.join(_in_training)}"
+        if _in_training else f"Replicate {_replicate} is held out from every model's training split."
+    )
+    return (projection_rollouts,)
+
+
+@app.cell(hide_code=True)
+def _(projection_rollouts):
+    _names = next(iter(projection_rollouts.values()))["channel_names"]
+    _groups = list(dict.fromkeys(_n.split("/")[0] for _n in _names if "/" in _n))
+    projection_groups = mo.ui.multiselect(
+        options=_groups,
+        value=[_g for _g in _groups if _g.startswith("cell_fate")] or _groups[:1],
+        label="Experiment groups (one sector each)",
+    )
+    projection_gamma = mo.ui.slider(0.3, 2.0, step=0.05, value=1.0, show_value=True, label="Gamma (1 = linear)")
+    projection_row_order = mo.ui.dropdown(
+        options={"True and NCA per projection": "projection", "True data, then NCA": "source"},
+        value="True and NCA per projection",
+        label="Rows",
+    )
+    projection_colony_size = mo.ui.slider(5.0, 11.5, step=0.5, value=9.0, show_value=True, label="Colony size (h)")
+    projection_font_size = mo.ui.slider(4.0, 12.0, step=0.5, value=7.0, show_value=True, label="Font size (pt)")
+    projection_hatch = mo.ui.checkbox(value=True, label="Hatch unmeasured groups")
+    # Any matplotlib colour; invalid text keeps the default
+    projection_true_colour = mo.ui.text(value="#4646c8", label="True data label colour")
+    projection_model_colour = mo.ui.text(value="#d97706", label="NCA label colour")
+    projection_legend_style = mo.ui.dropdown(options=LEGEND_STYLES, value="White, boxed colours",
+                                             label="Legend style")
+    mo.vstack([
+        mo.hstack([projection_groups, projection_gamma, projection_row_order], justify="start"),
+        mo.hstack([projection_colony_size, projection_font_size, projection_hatch], justify="start"),
+        mo.hstack([projection_true_colour, projection_model_colour, projection_legend_style], justify="start"),
+    ])
+    return (
+        projection_colony_size,
+        projection_font_size,
+        projection_gamma,
+        projection_groups,
+        projection_hatch,
+        projection_legend_style,
+        projection_model_colour,
+        projection_row_order,
+        projection_true_colour,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    projection_colony_size,
+    projection_font_size,
+    projection_gamma,
+    projection_groups,
+    projection_hatch,
+    projection_legend_style,
+    projection_model_colour,
+    projection_rollouts,
+    projection_row_order,
+    projection_true_colour,
+):
+    mo.stop(not projection_groups.value, mo.callout("Select at least one experiment group.", kind="warn"))
+    _names = next(iter(projection_rollouts.values()))["channel_names"]
+    _groups = [_g for _g in dict.fromkeys(_n.split("/")[0] for _n in _names if "/" in _n)
+               if _g in projection_groups.value]
+    _fg = ko_drawing.THEMES["light"]["fg"]
+    _source_names = {"target": "True data", "prediction": "NCA"}
+    _source_colours = {
+        "target": colour_or(projection_true_colour.value, "#4646c8"),
+        "prediction": colour_or(projection_model_colour.value, "#d97706"),
+    }
+    # Blocks of rows, each with a bracketed label: (label, colour, rows), and a
+    # row is (projection, source, row label, row label colour).
+    _projections = [_p for _p in PROJECTION_LABELS if _p in projection_rollouts]
+    if projection_row_order.value == "projection":
+        _blocks = [
+            (f"{PROJECTION_LABELS[_p][0]}\n{PROJECTION_LABELS[_p][1]}", _fg,
+             [(_p, _src, _source_names[_src], _source_colours[_src]) for _src in _source_names])
+            for _p in _projections
+        ]
+    else:
+        _blocks = [
+            (_source_names[_src], _source_colours[_src],
+             [(_p, _src, PROJECTION_LABELS[_p][0], _fg) for _p in _projections])
+            for _src in _source_names
+        ]
+    projection_trajectories = trajectory_figure(
+        projection_rollouts, _blocks, _groups, projection_gamma.value, projection_colony_size.value,
+        projection_font_size.value, projection_hatch.value, legend_style=projection_legend_style.value,
+    )
+    projection_trajectories
+    return (projection_trajectories,)
+
+
+@app.cell(hide_code=True)
+def _():
+    projection_figure_name = mo.ui.text(value="projection_trajectories", label="File name")
+    save_projection_figure = mo.ui.run_button(label="Save PDF + PNG")
+    mo.hstack([projection_figure_name, save_projection_figure], justify="start")
+    return projection_figure_name, save_projection_figure
+
+
+@app.cell
+def _(projection_figure_name, projection_trajectories, save_projection_figure):
+    mo.stop(not save_projection_figure.value)
+    _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
+    _directory.mkdir(parents=True, exist_ok=True)
+    for _suffix in ("pdf", "png"):
+        projection_trajectories.savefig(_directory / f"{projection_figure_name.value}.{_suffix}", dpi=400,
+                                        facecolor=projection_trajectories.get_facecolor())
+    mo.md(f"Saved `{projection_figure_name.value}.pdf` and `.png` to `{_directory}`")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## NCA at different resolutions
+
+    - Baseline models of one projection at several downsampling ratios, from an exported selection
+    - Model store and data root are set in the section above
+    - Zoom squares magnify the same part of each colony at one timepoint, drawn pixel by pixel
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    resolution_selection_path = mo.ui.text(
+        placeholder="/path/to/model_registry_selection.yaml",
+        label="Exported registry selection",
+        full_width=True,
+    )
+    resolution_selection_path
+    return (resolution_selection_path,)
+
+
+@app.cell(hide_code=True)
+def _(projection_store_root, resolution_selection_path):
+    _path = Path(resolution_selection_path.value).expanduser()
+    mo.stop(not resolution_selection_path.value.strip(), mo.md("Choose an exported model selection YAML file."))
+    mo.stop(not _path.is_file(), mo.callout(f"Selection file not found: `{_path}`", kind="danger"))
+    resolution_records = load_selection_records(_path, projection_store_root.value)
+    _present = [_p for _p in PROJECTION_LABELS if any(_r["projection"] == _p for _r in resolution_records)]
+    mo.stop(not _present, mo.callout("The selection has no slice, max or sum models.", kind="warn"))
+    resolution_projection = mo.ui.dropdown(
+        options={PROJECTION_LABELS[_p][0]: _p for _p in _present},
+        value=PROJECTION_LABELS[_present[0]][0],
+        label="Projection",
+    )
+    resolution_projection
+    return resolution_projection, resolution_records
+
+
+@app.cell(hide_code=True)
+def _(resolution_projection, resolution_records):
+    _records = [_r for _r in resolution_records if _r["projection"] == resolution_projection.value]
+    # One model per downsampling ratio, finest first
+    _options = {}
+    for _downsample in sorted({_r["downsample"] for _r in _records}):
+        _options[str(_downsample)] = {
+            _r["option_label"]: _r["model_id"] for _r in _records if _r["downsample"] == _downsample
+        }
+    resolution_models = mo.ui.dictionary({
+        _downsample: mo.ui.dropdown(options=_o, value=next(iter(_o)), label=f"Δ = {_downsample}",
+                                    full_width=True)
+        for _downsample, _o in _options.items()
+    })
+    resolution_replicate = mo.ui.number(start=1, stop=999, step=1, value=1, label="Replicate (one-based)")
+    resolution_seed = mo.ui.number(start=0, stop=2**31 - 1, step=1, value=0, label="Rollout seed")
+    run_resolution_rollouts = mo.ui.run_button(label="Roll out models")
+    mo.vstack([
+        resolution_models,
+        mo.hstack([resolution_replicate, resolution_seed, run_resolution_rollouts], justify="start"),
+    ])
+    return (
+        resolution_models,
+        resolution_replicate,
+        resolution_seed,
+        run_resolution_rollouts,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    projection_data_root,
+    projection_store_root,
+    resolution_models,
+    resolution_replicate,
+    resolution_seed,
+    run_resolution_rollouts,
+):
+    mo.stop(not run_resolution_rollouts.value, mo.md("Choose the models, then roll them out."))
+    mo.stop(not projection_data_root.value.strip(), mo.callout("Set the data root first.", kind="warn"))
+    _replicate = int(resolution_replicate.value)
+    resolution_rollouts = {}
+    with mo.status.progress_bar(total=len(resolution_models.value), title="Loading data and rolling out") as _bar:
+        for _index, (_downsample, _model_id) in enumerate(resolution_models.value.items()):
+            resolution_rollouts[int(_downsample)] = baseline_rollout(
+                projection_store_root.value, _model_id, projection_data_root.value, _replicate,
+                int(resolution_seed.value) + _index,
+            )
+            _bar.update()
+    _in_training = [str(_d) for _d, _r in resolution_rollouts.items() if _replicate in _r["train_replicates"]]
+    mo.md(
+        f"Replicate {_replicate} is in the training split of downsample: {', '.join(_in_training)}"
+        if _in_training else f"Replicate {_replicate} is held out from every model's training split."
+    )
+    return (resolution_rollouts,)
+
+
+@app.cell(hide_code=True)
+def _(resolution_rollouts):
+    _first = next(iter(resolution_rollouts.values()))
+    _groups = list(dict.fromkeys(_n.split("/")[0] for _n in _first["channel_names"] if "/" in _n))
+    resolution_groups = mo.ui.multiselect(
+        options=_groups,
+        value=[_g for _g in _groups if _g.startswith("cell_fate")] or _groups[:1],
+        label="Experiment groups (one sector each)",
+    )
+    resolution_gamma = mo.ui.slider(0.3, 2.0, step=0.05, value=1.0, show_value=True, label="Gamma (1 = linear)")
+    resolution_row_order = mo.ui.dropdown(
+        options={"True and NCA per resolution": "resolution", "True data, then NCA": "source"},
+        value="True and NCA per resolution",
+        label="Rows",
+    )
+    resolution_colony_size = mo.ui.slider(5.0, 11.5, step=0.5, value=9.0, show_value=True, label="Colony size (h)")
+    resolution_font_size = mo.ui.slider(4.0, 12.0, step=0.5, value=7.0, show_value=True, label="Font size (pt)")
+    resolution_width = mo.ui.slider(5.0, 14.0, step=0.25, value=9.0, show_value=True, label="Width (in)")
+    resolution_hatch = mo.ui.checkbox(value=True, label="Hatch unmeasured groups")
+    # Any matplotlib colour; invalid text keeps the default
+    resolution_true_colour = mo.ui.text(value="#4646c8", label="True data label colour")
+    resolution_model_colour = mo.ui.text(value="#d97706", label="NCA label colour")
+    resolution_zoom_time = mo.ui.dropdown(
+        options={_t: _i for _i, _t in enumerate(_first["time_labels"])},
+        value=_first["time_labels"][-1],
+        label="Zoom timepoint",
+    )
+    resolution_zoom_count = mo.ui.slider(0, len(ZOOM_COLOURS), step=1, value=2, show_value=True, label="Zooms")
+    resolution_zoom_width = mo.ui.slider(0.05, 0.5, step=0.01, value=0.2, show_value=True,
+                                         label="Zoom box (fraction of colony)")
+    # Whole-pixel boxes: N x N pixels at the coarsest resolution, 2N x 2N at the next, ...
+    resolution_zoom_lock = mo.ui.checkbox(value=True, label="Lock zoom boxes to whole pixels")
+    resolution_zoom_pixels = mo.ui.slider(1, 32, step=1, value=6, show_value=True,
+                                          label="Pixels per box side, coarsest resolution")
+    resolution_legend_style = mo.ui.dropdown(options=LEGEND_STYLES, value="White, boxed colours",
+                                             label="Legend style")
+    mo.vstack([
+        mo.hstack([resolution_groups, resolution_gamma, resolution_row_order], justify="start"),
+        mo.hstack([resolution_colony_size, resolution_font_size, resolution_width, resolution_hatch],
+                  justify="start"),
+        mo.hstack([resolution_true_colour, resolution_model_colour, resolution_legend_style], justify="start"),
+        mo.hstack([resolution_zoom_time, resolution_zoom_count], justify="start"),
+        mo.hstack([resolution_zoom_lock, resolution_zoom_pixels, resolution_zoom_width], justify="start"),
+    ])
+    return (
+        resolution_colony_size,
+        resolution_font_size,
+        resolution_gamma,
+        resolution_groups,
+        resolution_hatch,
+        resolution_legend_style,
+        resolution_model_colour,
+        resolution_row_order,
+        resolution_true_colour,
+        resolution_width,
+        resolution_zoom_count,
+        resolution_zoom_lock,
+        resolution_zoom_pixels,
+        resolution_zoom_time,
+        resolution_zoom_width,
+    )
+
+
+@app.cell(hide_code=True)
+def _(resolution_zoom_count):
+    # Zoom centres as fractions of the colony (x right, y down)
+    _defaults = [(0.5, 0.5), (0.5, 0.12), (0.2, 0.5), (0.8, 0.5)]
+    resolution_zoom_centres = mo.ui.array([
+        mo.ui.dictionary({
+            "x": mo.ui.slider(0.0, 1.0, step=0.01, value=_x, show_value=True, label="x"),
+            "y": mo.ui.slider(0.0, 1.0, step=0.01, value=_y, show_value=True, label="y"),
+        })
+        for _x, _y in _defaults[:resolution_zoom_count.value]
+    ])
+    mo.hstack([
+        mo.vstack([mo.md(f"<span style='color:{_c}'>■</span> Zoom {_k + 1}"), _centre])
+        for _k, (_c, _centre) in enumerate(zip(ZOOM_COLOURS, resolution_zoom_centres))
+    ], justify="start")
+    return (resolution_zoom_centres,)
+
+
+@app.cell(hide_code=True)
+def _(
+    resolution_colony_size,
+    resolution_font_size,
+    resolution_gamma,
+    resolution_groups,
+    resolution_hatch,
+    resolution_legend_style,
+    resolution_model_colour,
+    resolution_rollouts,
+    resolution_row_order,
+    resolution_true_colour,
+    resolution_width,
+    resolution_zoom_centres,
+    resolution_zoom_lock,
+    resolution_zoom_pixels,
+    resolution_zoom_time,
+    resolution_zoom_width,
+):
+    mo.stop(not resolution_groups.value, mo.callout("Select at least one experiment group.", kind="warn"))
+    _names = next(iter(resolution_rollouts.values()))["channel_names"]
+    _groups = [_g for _g in dict.fromkeys(_n.split("/")[0] for _n in _names if "/" in _n)
+               if _g in resolution_groups.value]
+    _fg = ko_drawing.THEMES["light"]["fg"]
+    _source_names = {"target": "True data", "prediction": "NCA"}
+    _source_colours = {
+        "target": colour_or(resolution_true_colour.value, "#4646c8"),
+        "prediction": colour_or(resolution_model_colour.value, "#d97706"),
+    }
+
+    # Blocks of rows as in the projection figure, keyed by downsampling ratio
+    _downsamples = sorted(resolution_rollouts)
+    if resolution_row_order.value == "resolution":
+        _blocks = [
+            (f"Δ = {_d}", _fg,
+             [(_d, _src, _source_names[_src], _source_colours[_src]) for _src in _source_names])
+            for _d in _downsamples
+        ]
+    else:
+        _blocks = [
+            (_source_names[_src], _source_colours[_src],
+             [(_d, _src, f"Δ = {_d}", _fg) for _d in _downsamples])
+            for _src in _source_names
+        ]
+    _zoom = None
+    if resolution_zoom_centres.value:
+        _time_label = next(iter(resolution_rollouts.values()))["time_labels"][resolution_zoom_time.value]
+        _zoom = {
+            "time": resolution_zoom_time.value,
+            "centres": [(_c["x"], _c["y"]) for _c in resolution_zoom_centres.value],
+            "width": resolution_zoom_width.value,
+            "colours": ZOOM_COLOURS,
+            "title": f"Zoom ×{1 / resolution_zoom_width.value:.1f} at {_time_label}",
+        }
+        if resolution_zoom_lock.value:
+            # Downsampling ratios are powers of 2, so each finer one has a whole multiple of the pixels
+            _coarsest = max(_downsamples)
+            _n = resolution_zoom_pixels.value
+            _zoom["pixels"] = {_d: _n * _coarsest // _d for _d in _downsamples}
+            _zoom["title"] = f"Zoom at {_time_label}, {_n}×{_n} px at Δ = {_coarsest}"
+    resolution_trajectories = trajectory_figure(
+        resolution_rollouts, _blocks, _groups, resolution_gamma.value, resolution_colony_size.value,
+        resolution_font_size.value, resolution_hatch.value, zoom=_zoom, width=resolution_width.value,
+        legend_style=resolution_legend_style.value,
+    )
+    resolution_trajectories
+    return (resolution_trajectories,)
+
+
+@app.cell(hide_code=True)
+def _():
+    resolution_figure_name = mo.ui.text(value="resolution_trajectories", label="File name")
+    save_resolution_figure = mo.ui.run_button(label="Save PDF + PNG")
+    mo.hstack([resolution_figure_name, save_resolution_figure], justify="start")
+    return resolution_figure_name, save_resolution_figure
+
+
+@app.cell
+def _(resolution_figure_name, resolution_trajectories, save_resolution_figure):
+    mo.stop(not save_resolution_figure.value)
+    _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
+    _directory.mkdir(parents=True, exist_ok=True)
+    for _suffix in ("pdf", "png"):
+        resolution_trajectories.savefig(_directory / f"{resolution_figure_name.value}.{_suffix}", dpi=400,
+                                        facecolor=resolution_trajectories.get_facecolor())
+    mo.md(f"Saved `{resolution_figure_name.value}.pdf` and `.png` to `{_directory}`")
     return
 
 

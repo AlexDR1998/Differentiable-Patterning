@@ -1,10 +1,22 @@
 """CMY composites of micropattern NCA states.
 
 Each panel shows three state channels as cyan, magenta and yellow, so a
-pixel high in one marker takes that colour and overlaps mix.
+pixel high in one marker takes that colour and overlaps mix. Cell type
+maps colour each pixel by its label shares from a cell type file.
 """
 
 import numpy as np
+
+from Common.dataloader.cell_types import label_names, marker_values, pixel_label_shares
+
+# As in nodal_ko_eval.py; labels not listed are drawn black
+CELL_TYPE_COLOURS = {
+    "Notochord": (0.4, 0.7, 0.6),
+    "Endoderm": (0.9, 0.9, 0.3),
+    "Mesoderm": (1.0, 0.0, 0.0),
+    "Several": (0.0, 0.0, 1.0),
+    "Other": (0.5, 0.5, 0.5),
+}
 
 
 def render_cmy_composite(states, state_channel_names):
@@ -70,3 +82,31 @@ def render_fate_cmy(states, state_channel_names, renormalise=False):
         ),
         axis=-1,
     )
+
+
+def render_cell_types(states, state_channel_names, cell_type_rules, mask):
+    """RGB ``[..., H, W, 3]`` of model states ``[..., C, H, W]`` coloured by cell type.
+
+    Each pixel blends the ``CELL_TYPE_COLOURS`` of its label shares
+    (``pixel_label_shares``); outside ``mask`` ``[H, W]`` it is black.
+    """
+
+    values = marker_values(states, state_channel_names, cell_type_rules, axis=-3)
+    shares = pixel_label_shares(values, cell_type_rules, mask)
+    rgb = sum(
+        shares[label][..., None] * np.asarray(CELL_TYPE_COLOURS.get(label, (0.0, 0.0, 0.0)))
+        for label in label_names(cell_type_rules)
+    )
+    return np.clip(rgb, 0.0, 1.0)
+
+
+def cell_type_prevalences(states, state_channel_names, cell_type_rules, mask):
+    """``{label: share of the colony}`` of each state ``[..., C, H, W]``, as arrays ``[...]``."""
+
+    values = marker_values(states, state_channel_names, cell_type_rules, axis=-3)
+    mask = np.asarray(mask, dtype=bool)
+    shares = pixel_label_shares(values, cell_type_rules, mask)
+    return {
+        label: share.sum(axis=(-2, -1)) / max(mask.sum(), 1)
+        for label, share in shares.items()
+    }
