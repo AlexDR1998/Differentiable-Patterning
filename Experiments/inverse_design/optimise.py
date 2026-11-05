@@ -7,8 +7,15 @@ target cell type (rules from a cell type file) after ``rollout.hours`` is as
 high as possible. The circle and a few ellipses of the same area are scored
 first with the same random numbers. The result is saved as a record in the
 model store (``Experiments/inverse_design/records.py``).
+
+With ``density.mode`` fixed or optimise, the textures are made from the
+training colonies with their gaps filled in, and gaps for a cell density
+(the share of the colony covered by cells) are added to each rollout's
+texture (``NCA/inverse_design/density.py``). With optimise the density is
+learned together with the shape.
 """
 
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import equinox as eqx
@@ -20,13 +27,20 @@ from Common.dataloader.cell_types import load_cell_type_rules
 from Experiments.config import config_to_dict
 from Experiments.config_helpers import build_wandb_tags, open_registry_bundle, resolve_store_root
 from Experiments.inverse_design.records import create_run_id, publish_inverse_design_record
-from Experiments.micropatterns.reference import combine_reference, load_reference
+from Experiments.micropatterns.reference import (
+    combine_reference,
+    fill_reference_gaps,
+    load_reference,
+)
+from Experiments.micropatterns.texture_settings import load_texture_settings, scaled_patch_geometry
 from Experiments.micropatterns.texture_synthesis import (
     normalise_histograms_and_covariance,
     synthesise_patch_texture,
     synthesise_reference_texture,
 )
 from NCA.inverse_design import (
+    CellDensity,
+    CellGaps,
     CellTypeShareObjective,
     FourierRadialGeometry,
     GeometryPenalties,
@@ -72,16 +86,33 @@ def reference_radius(support, grid_shape):
     return float(pixels * 2.0 / (np.mean(grid_shape) - 1.0))
 
 
-def texture_bank(reference, texture, grid_shape, seed):
+def resolve_texture(texture, projection):
+    """The texture settings to use: from ``texture.file`` for ``projection`` if set."""
+
+    if texture.file is None:
+        return texture
+    path = Path(texture.file)
+    if not path.is_absolute():
+        path = REPOSITORY_ROOT / path
+    return replace(texture, file=None, **load_texture_settings(path, projection))
+
+
+def texture_bank(reference, texture, grid_shape, seed, downsample):
     """``[K, state channels, H, W]`` 0 h textures over the whole grid.
 
     Each texture takes every staining panel from a random training replicate
-    and is synthesised as in ``drawn_mask_explorer.py``.
+    and is synthesised as in ``boundary_mask_explorer.py``. ``texture`` is
+    resolved (``resolve_texture``); its patch sizes are rescaled to the data's
+    ``downsample``.
     """
 
     schema = reference["schema"]
     groups = tuple(tuple(group) for group in schema.group_measurement_indices)
     full = np.ones(grid_shape, dtype=bool)
+    patch_size, patch_overlap, patch_jitter = scaled_patch_geometry(
+        texture.patch_size, texture.patch_overlap, texture.patch_jitter,
+        texture.patch_downsample, downsample,
+    )
     bank = []
     for index in range(texture.bank_size):
         texture_seed = seed * 100003 + index
@@ -89,8 +120,8 @@ def texture_bank(reference, texture, grid_shape, seed):
         if texture.mode == "patch":
             tile, *_ = synthesise_patch_texture(
                 measurements, support, grid_shape, groups,
-                texture.patch_size, texture.patch_overlap, texture.interior_fraction,
-                texture.patch_jitter, texture.candidates, texture_seed,
+                patch_size, patch_overlap, texture.interior_fraction,
+                patch_jitter, texture.candidates, texture_seed,
             )
         elif texture.mode == "iaaft":
             tile = synthesise_reference_texture(
@@ -99,9 +130,26 @@ def texture_bank(reference, texture, grid_shape, seed):
         else:
             raise ValueError(f"Unknown texture mode {texture.mode!r}; use patch or iaaft")
         if texture.normalise:
-            tile = normalise_histograms_and_covariance(tile, measurements, support, full, groups, 4)
+            tile = normalise_histograms_and_covariance(
+                tile, measurements, support, full, groups, texture.normalise_iterations
+            )
         bank.append(np.asarray(tile, dtype=np.float32)[np.asarray(schema.primary_measurements)])
     return np.stack(bank)
+
+
+def texture_summary(texture_config, texture, projection, downsample):
+    """The texture settings a run used, for its record and W&B config."""
+
+    patch_size, patch_overlap, patch_jitter = scaled_patch_geometry(
+        texture.patch_size, texture.patch_overlap, texture.patch_jitter,
+        texture.patch_downsample, downsample,
+    )
+    return {
+        "file": texture_config.file,
+        "projection": projection,
+        **asdict(texture),
+        "used_patch_pixels": {"size": patch_size, "overlap": patch_overlap, "jitter": patch_jitter},
+    }
 
 
 def baseline_geometries(radius, amplitudes):
@@ -119,6 +167,35 @@ def baseline_geometries(radius, amplitudes):
             )
             baselines[f"ellipse_{amplitude:g}_{degrees}deg"] = geometry
     return baselines
+
+
+def density_model(reference, density_config, grid_shape):
+    """``(filled reference, CellGaps, starting density, coverage rows)`` for the cell density textures."""
+
+    gaps = fill_reference_gaps(reference, density_config.markers, grid_shape)
+    initial = density_config.initial if density_config.initial is not None else gaps["density"]
+    cell_gaps = CellGaps(
+        gap_values=jnp.asarray(gaps["gap_values"]),
+        amplitude=jnp.asarray(gaps["amplitude"]),
+        edge_width=density_config.edge_width,
+    )
+    return gaps["reference"], cell_gaps, float(initial), gaps["coverage"]
+
+
+def baseline_designs(radius, amplitudes, initial_density, density_multiples):
+    """Baseline ``{name: (geometry, density or None)}``: circle and ellipses at the
+    starting density (None: no density model), and circles at other densities."""
+
+    density = None if initial_density is None else CellDensity(initial_density)
+    designs = {
+        name: (geometry, density)
+        for name, geometry in baseline_geometries(radius, amplitudes).items()
+    }
+    if initial_density is not None:
+        for multiple in density_multiples:
+            value = float(np.clip(multiple * initial_density, 0.01, 0.99))
+            designs[f"circle_density_{multiple:g}x"] = (designs["circle"][0], CellDensity(value))
+    return designs
 
 
 def run(cfg):
@@ -148,7 +225,20 @@ def run(cfg):
     state_channel_names = tuple(reference["schema"].state_channels)
     training_shape = reference["measurements"].shape[-2:]
     grid_shape = scaled_grid_shape(training_shape, design.geometry.grid_scale)
-    biology_bank = texture_bank(reference, design.texture, grid_shape, cfg.seed)
+    gaps = initial_density = coverage_rows = None
+    texture_reference = reference
+    if design.density.mode != "none":
+        texture_reference, gaps, initial_density, coverage_rows = density_model(
+            reference, design.density, grid_shape
+        )
+        print(f"Cell density: starting at {initial_density:.3f} of the colony covered")
+        for row in coverage_rows:
+            print(f"  replicate {row['replicate']} {row['panel']}: covered {row['coverage']:.3f}")
+    projection = str(data_config.micropattern.projection)
+    texture = resolve_texture(design.texture, projection)
+    texture_settings = texture_summary(design.texture, texture, projection, data_config.downsample)
+    print(f"Texture settings ({design.texture.file or 'config'}, {projection}): {texture_settings}")
+    biology_bank = texture_bank(texture_reference, texture, grid_shape, cfg.seed, data_config.downsample)
     radius = reference_radius(reference["support"], grid_shape) * design.geometry.radius_scale
     print(f"Grid {grid_shape} (training {tuple(training_shape)}), colony radius {radius:.3f}")
 
@@ -178,6 +268,8 @@ def run(cfg):
         boundary_mode=boundary_mode,
         gradient_clip=design.optimiser.gradient_clip_norm,
         fixed_radius=design.geometry.fixed_radius,
+        optimise_geometry=design.geometry.optimise,
+        optimise_density=design.density.mode == "optimise",
         log_every=design.log_every,
         evaluation_seeds=design.evaluation_seeds,
         scan_kind=design.rollout.scan_kind,
@@ -199,11 +291,15 @@ def run(cfg):
     share_maps = jax.jit(jax.vmap(lambda state: objective.probability(state, hard=True)))
 
     # Every evaluation uses evaluation_key, so the baselines and the optimised
-    # shapes see the same textures, noise and NCA updates.
+    # shapes see the same textures, gap patterns, noise and NCA updates.
     baselines = {}
-    for name, baseline in baseline_geometries(radius, design.baseline_ellipses).items():
+    designs = baseline_designs(
+        radius, design.baseline_ellipses, initial_density, design.density.baselines
+    )
+    for name, (baseline, density) in designs.items():
         evaluation = evaluate_binary(
-            model, baseline, biology_bank, evaluation_key, objective, optimisation_config
+            model, baseline, biology_bank, evaluation_key, objective, optimisation_config,
+            None if density is None else gaps, density,
         )
         baselines[name] = (baseline, evaluation)
         print(f"{name}: {design.objective.target} share {evaluation.mean:.4f} ± {evaluation.std:.4f}")
@@ -220,11 +316,13 @@ def run(cfg):
                 # The model's resolution, tagged as in its training run
                 "tags": [*build_wandb_tags(cfg), f"data.downsample:{data_config.downsample}"],
                 "name": run_id,
-                "config": config_to_dict(cfg),
+                "config": {**config_to_dict(cfg), "texture_used": texture_settings},
             },
             state_channel_names=state_channel_names,
             cell_type_rules=cell_type_rules,
         )
+        if coverage_rows is not None:
+            logger.log_density_reference(coverage_rows, initial_density)
         logger.log_baselines(
             baselines,
             {name: share_maps(evaluation.final_states) for name, (_, evaluation) in baselines.items()},
@@ -232,9 +330,11 @@ def run(cfg):
 
     def log_fn(iteration, metrics, evaluation):
         if evaluation is not None:
+            density_text = "" if evaluation.density is None else f", density {evaluation.density:.3f}"
             print(
                 f"[{iteration}] binary {design.objective.target} share "
                 f"{evaluation.mean:.4f} ± {evaluation.std:.4f}, border {evaluation.border_fraction:.3f}"
+                f"{density_text}"
             )
         if logger is not None:
             maps = None if evaluation is None else share_maps(evaluation.final_states)
@@ -250,6 +350,8 @@ def run(cfg):
         penalties,
         log_fn=log_fn,
         evaluation_key=evaluation_key,
+        gaps=gaps,
+        density=None if initial_density is None else CellDensity(initial_density),
     )
 
     wandb_run_id = None
@@ -261,6 +363,7 @@ def run(cfg):
             mask, trajectories = binary_trajectories(
                 model, result.best_geometry, biology_bank, evaluation_key,
                 optimisation_config, min(design.video_seeds, design.evaluation_seeds),
+                gaps, result.best_density,
             )
             logger.log_trajectories(mask, trajectories, step=design.iterations)
         wandb_run_id = getattr(logger.run, "id", None)
@@ -281,10 +384,16 @@ def run(cfg):
         result=result,
         biology_bank=biology_bank,
         wandb_run_id=wandb_run_id,
+        gaps=gaps,
+        coverage_rows=coverage_rows,
+        texture_settings=texture_settings,
+    )
+    density_text = (
+        "" if result.best_density is None else f", density {float(result.best_density.value):.3f}"
     )
     print(
         f"Best {design.objective.target} share {result.best_evaluation.mean:.4f} "
-        f"(iteration {result.best_iteration}), circle {baselines['circle'][1].mean:.4f}"
+        f"(iteration {result.best_iteration}{density_text}), circle {baselines['circle'][1].mean:.4f}"
     )
     print(f"Saved inverse design record to {path}")
     return result

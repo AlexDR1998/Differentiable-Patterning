@@ -102,6 +102,16 @@ class GeometryLogger(WandbLogger):
         )
         return {f"{prefix}/{label}": float(np.mean(share)) for label, share in shares.items()}
 
+    def log_density_reference(self, coverage_rows, initial_density):
+        """Covered fraction of each training colony panel, and the starting density."""
+
+        table = wandb.Table(
+            columns=["replicate", "panel", "coverage", "from_markers"],
+            data=[[str(row["replicate"]), row["panel"], row["coverage"], row["from_markers"]] for row in coverage_rows],
+        )
+        wandb.log({"Density/replicate_coverage": table}, step=0)
+        self.run.summary["Density/initial"] = initial_density
+
     def _panel(self, evaluation, share_maps):
         return evaluation_panel(evaluation, share_maps, self.state_channel_names, self.cell_type_rules)
 
@@ -113,6 +123,8 @@ class GeometryLogger(WandbLogger):
         for name, (_, evaluation) in baselines.items():
             scalars[f"Baseline/{name}/target_share"] = evaluation.mean
             scalars[f"Baseline/{name}/target_share_std"] = evaluation.std
+            if evaluation.density is not None:
+                scalars[f"Baseline/{name}/density"] = evaluation.density
             scalars.update(self._prevalences(f"Baseline/{name}/cell_types", evaluation))
             self.log_image_single(f"Baseline/{name}", self._panel(evaluation, share_maps[name]), step=0)
         self.log_scalars(scalars, step=0)
@@ -123,6 +135,8 @@ class GeometryLogger(WandbLogger):
             scalars["Binary/target_share"] = evaluation.mean
             scalars["Binary/target_share_std"] = evaluation.std
             scalars["Binary/border_fraction"] = evaluation.border_fraction
+            if evaluation.density is not None:
+                scalars["Binary/density"] = evaluation.density
             if self.circle_share is not None:
                 scalars["Binary/gain_over_circle"] = evaluation.mean - self.circle_share
             scalars.update(self._prevalences("CellTypes", evaluation))
@@ -137,6 +151,10 @@ class GeometryLogger(WandbLogger):
             "Optimised/best_iteration": result.best_iteration,
             "Optimised/target_share": result.best_evaluation.mean,
             "Optimised/target_share_std": result.best_evaluation.std,
+            **(
+                {} if result.best_evaluation.density is None
+                else {"Optimised/density": result.best_evaluation.density}
+            ),
             **self._prevalences("Optimised/cell_types", result.best_evaluation),
         }
         self.log_scalars(scalars, step=step)

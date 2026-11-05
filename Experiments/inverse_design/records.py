@@ -5,11 +5,14 @@ to the model bundles it used:
 
     <store>/inverse_design/<experiment>/<run-id>/
         geometry.eqx    best geometry (by binary-mask score)
+        density.eqx     its cell density (only with the cell density model)
         config.yaml     resolved inverse design config
         summary.yaml    model link, cell type file, baseline and optimised
                         cell-type shares, evaluation history, provenance
         states.npz      masks and final states of the baselines and the best
                         geometry, the mask at each evaluation, the textures
+                        (and with the cell density model, the gap values and
+                        spectrum)
 
 Records are never edited once written. They are not indexed by the registry.
 """
@@ -32,10 +35,11 @@ from Experiments.model_registry import (
     _utc_now,
     _write_yaml,
 )
-from NCA.inverse_design import FourierRadialGeometry
+from NCA.inverse_design import CellDensity, FourierRadialGeometry
 
 INVERSE_DESIGN_SCHEMA_VERSION = 1
 GEOMETRY_FILE = "geometry.eqx"
+DENSITY_FILE = "density.eqx"
 STATES_FILE = "states.npz"
 
 
@@ -69,6 +73,19 @@ def load_geometry(path):
     return eqx.tree_deserialise_leaves(path / GEOMETRY_FILE, geometry_template(summary["geometry"]))
 
 
+def load_density(path):
+    """The best cell density of a record folder, or None if it used no density model."""
+
+    path = Path(path)
+    if not (path / DENSITY_FILE).exists():
+        return None
+    return eqx.tree_deserialise_leaves(path / DENSITY_FILE, CellDensity(0.5))
+
+
+def _density(density):
+    return None if density is None else float(density.value)
+
+
 def describe_geometry(geometry):
     """Constrained parameters of a geometry, for reading in ``summary.yaml``."""
 
@@ -99,6 +116,7 @@ def evaluation_summary(evaluation, cell_type_rules, state_channel_names):
         "target_share_mean": evaluation.mean,
         "target_share_std": evaluation.std,
         "border_fraction": evaluation.border_fraction,
+        "density": evaluation.density,
         "area_pixels": int(np.sum(np.asarray(evaluation.mask) > 0.5)),
         "labels": label_fractions(evaluation, cell_type_rules, state_channel_names),
     }
@@ -121,11 +139,17 @@ def publish_inverse_design_record(
     biology_bank,
     wandb_run_id=None,
     repository_root=None,
+    gaps=None,
+    coverage_rows=None,
+    texture_settings=None,
 ):
     """Write a finished run as a new record in ``<store_root>/inverse_design/``.
 
-    ``baselines`` maps a name to ``(geometry, BinaryEvaluation)``. The files
-    are written to a hidden folder that is renamed into place at the end.
+    ``baselines`` maps a name to ``(geometry, BinaryEvaluation)``. ``gaps``
+    (``CellGaps``) and ``coverage_rows`` (from ``fill_reference_gaps``) are
+    given with the cell density model; ``texture_settings`` are the texture
+    settings used (``optimise.texture_summary``). The files are written to a hidden
+    folder that is renamed into place at the end.
     """
 
     repository_root = Path(repository_root or Path(__file__).resolve().parents[2])
@@ -137,6 +161,8 @@ def publish_inverse_design_record(
     staging.mkdir(parents=True)
     try:
         eqx.tree_serialise_leaves(staging / GEOMETRY_FILE, result.best_geometry)
+        if result.best_density is not None:
+            eqx.tree_serialise_leaves(staging / DENSITY_FILE, result.best_density)
         _write_yaml(staging / "config.yaml", config_to_dict(cfg))
         best = result.best_evaluation
         summary = {
@@ -161,10 +187,18 @@ def publish_inverse_design_record(
                 "boundary_mode": boundary_mode,
                 "grid_shape": [int(size) for size in biology_bank.shape[-2:]],
             },
+            "texture": texture_settings,
             "geometry": {
                 **geometry_settings,
                 "best": describe_geometry(result.best_geometry),
                 "final": describe_geometry(result.geometry),
+            },
+            "density": None if gaps is None else {
+                "mode": cfg.inverse_design.density.mode,
+                "best": _density(result.best_density),
+                "final": _density(result.density),
+                "edge_width": float(gaps.edge_width),
+                "training_colonies": coverage_rows,
             },
             "best_iteration": int(result.best_iteration),
             "optimised": evaluation_summary(best, cell_type_rules, state_channel_names),
@@ -179,13 +213,19 @@ def publish_inverse_design_record(
                 "iterations": [int(iteration) for iteration in result.evaluation_iterations],
                 "target_share_mean": [evaluation.mean for evaluation in result.evaluations],
                 "target_share_std": [evaluation.std for evaluation in result.evaluations],
+                "density": [evaluation.density for evaluation in result.evaluations],
             },
             "wandb_run_id": wandb_run_id,
             "provenance": _git_provenance(repository_root),
         }
         _write_yaml(staging / "summary.yaml", summary)
+        density_arrays = {} if gaps is None else {
+            "gap_values": np.asarray(gaps.gap_values),
+            "gap_amplitude": np.asarray(gaps.amplitude),
+        }
         np.savez_compressed(
             staging / STATES_FILE,
+            **density_arrays,
             best_mask=np.asarray(best.mask),
             best_final_states=np.asarray(best.final_states),
             evaluation_iterations=np.asarray(result.evaluation_iterations),

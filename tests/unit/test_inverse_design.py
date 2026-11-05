@@ -5,6 +5,13 @@ import numpy as np
 
 from Common.dataloader.cell_types import CellTypeRules, label_names, pixel_label_shares
 
+from NCA.inverse_design.density import (
+    CellDensity,
+    CellGaps,
+    apply_density,
+    cell_coverage,
+    coverage_field,
+)
 from NCA.inverse_design.geometry import FourierRadialGeometry, coordinate_grid
 from NCA.inverse_design.initial_state import (
     PatchSamplingConfig,
@@ -231,3 +238,82 @@ def test_binary_evaluation_counts_mask_pixels():
     assert set(np.unique(np.asarray(high.mask))) == {0.0, 1.0}
     assert np.allclose(high.scores, 1.0) and np.allclose(low.scores, 0.0)
     assert high.border_fraction == 0.0
+
+
+def _flat_gaps(shape, edge_width=0.1, gap_values=(0.0,)):
+    # A flat spectrum: white-noise gaps, so the covered fraction is close to the density
+    return CellGaps(
+        gap_values=jnp.asarray(gap_values),
+        amplitude=jnp.ones((shape[0], shape[1] // 2 + 1)),
+        edge_width=edge_width,
+    )
+
+
+def test_cell_coverage_follows_the_density_and_has_a_gradient():
+    field = coverage_field(jnp.ones((64, 33)), (64, 64), jax.random.PRNGKey(0))
+
+    def covered(density):
+        return jnp.mean(cell_coverage(field, density, 0.1))
+
+    for density in (0.2, 0.5, 0.8):
+        assert abs(float(covered(density)) - density) < 0.02
+    assert float(jax.grad(covered)(0.5)) > 0.5
+
+
+def test_density_changes_the_gaps_not_the_brightness_of_cells():
+    texture = jnp.broadcast_to(jnp.linspace(0.3, 0.9, 32)[None, None, :], (2, 32, 32))
+    gaps = _flat_gaps((32, 32), edge_width=1.0e-3, gap_values=(0.05, 0.0))
+    key = jax.random.PRNGKey(1)
+
+    sparse = gaps.apply(texture, CellDensity(0.3), key)
+    dense = gaps.apply(texture, CellDensity(0.8), key)
+
+    for image in (sparse, dense):
+        cells = jnp.isclose(image, texture, atol=1.0e-4).all(axis=0)
+        empty = jnp.isclose(image, jnp.asarray([0.05, 0.0])[:, None, None], atol=1.0e-4).all(axis=0)
+        # Apart from the few pixels on a cell edge
+        assert float(jnp.mean(cells | empty)) > 0.99
+    assert float(jnp.mean(jnp.isclose(dense, texture).all(axis=0))) > float(
+        jnp.mean(jnp.isclose(sparse, texture).all(axis=0))
+    )
+    coverage = jnp.asarray([[1.0, 0.0]])
+    assert jnp.allclose(
+        apply_density(jnp.ones((1, 1, 2)), jnp.asarray([0.2]), coverage), jnp.asarray([[[1.0, 0.2]]])
+    )
+
+
+def test_optimiser_learns_the_density_and_can_keep_the_geometry():
+    # Channel 0 is high wherever there are cells, so more cells score more.
+    initial = FourierRadialGeometry(2, radius=0.45, key=jax.random.PRNGKey(0), initial_scale=0.1)
+    biology = jnp.ones((2, 1, 15, 15))
+    config = OptimisationConfig(
+        iterations=3, learning_rate=0.2, total_steps=1, batch_size=2,
+        fixed_radius=True, optimise_geometry=False, evaluation_seeds=2,
+    )
+    logged = []
+
+    result = optimise_geometry(
+        _IdentityNCA(), initial, biology, jax.random.PRNGKey(8), _first_channel_objective(), config,
+        log_fn=lambda iteration, metrics, evaluation: logged.append(metrics),
+        gaps=_flat_gaps((15, 15)), density=CellDensity(0.4),
+    )
+
+    assert float(result.density.value) > 0.4
+    assert jnp.array_equal(result.geometry.raw_cos, initial.raw_cos)
+    assert result.best_density is not None and result.best_evaluation.density is not None
+    assert "density" in logged[0]
+
+
+def test_density_needs_both_parts_and_something_to_optimise():
+    import pytest
+
+    geometry = FourierRadialGeometry(1, radius=0.5)
+    biology = jnp.ones((1, 1, 9, 9))
+    config = OptimisationConfig(iterations=1, learning_rate=1.0, total_steps=1, optimise_geometry=False)
+    with pytest.raises(ValueError, match="Nothing to optimise"):
+        optimise_geometry(_IdentityNCA(), geometry, biology, jax.random.PRNGKey(0), _first_channel_objective(), config)
+    with pytest.raises(ValueError, match="both"):
+        evaluate_binary(
+            _IdentityNCA(), geometry, biology, jax.random.PRNGKey(0), _first_channel_objective(),
+            config, density=CellDensity(0.5),
+        )

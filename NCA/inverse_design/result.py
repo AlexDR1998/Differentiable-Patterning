@@ -14,13 +14,15 @@ class BinaryEvaluation:
     ``scores`` holds the hard target share of each rollout, ``final_states``
     the states ``[seeds, C, H, W]`` and ``border_fraction`` the share of the
     outermost two pixels covered by the mask (above 0, the colony reaches the
-    edge of the grid, which wraps round with circular padding).
+    edge of the grid, which wraps round with circular padding). ``density``
+    is the cell density of the textures (None: the texture's own gaps).
     """
 
     mask: Array
     final_states: Array
     scores: Array
     border_fraction: float
+    density: float | None = None
 
     @property
     def mean(self) -> float:
@@ -41,6 +43,9 @@ class OptimisationResult:
     # Binary evaluations at iterations 0, log_every, 2 log_every, ... and the end
     evaluation_iterations: tuple[int, ...]
     evaluations: tuple[BinaryEvaluation, ...]
+    # CellDensity after the last update and with the best score (None without the density model)
+    density: Any = None
+    best_density: Any = None
 
     @property
     def best_evaluation(self) -> BinaryEvaluation:

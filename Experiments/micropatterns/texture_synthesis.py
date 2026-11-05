@@ -3,6 +3,11 @@
 Builds synthetic 0 h biology for a new colony geometry from a measured
 circular reference colony. Used by ``boundary_mask_explorer.py`` and
 ``drawn_mask_explorer.py``. NumPy and SciPy only.
+
+The cell density helpers at the end split a colony into where cells are
+(``cell_coverage``) and what they look like with the gaps filled in
+(``filled_reference``), for the cell density texture model in
+``NCA/inverse_design/density.py``.
 """
 
 import numpy as np
@@ -333,3 +338,84 @@ def normalise_histograms_and_covariance(
             _channel[_output_mask] = _values[_local_index]
             _result[_measurement_index] = _channel
     return _result
+
+
+def otsu_threshold(values, bins=256):
+    """Threshold that best splits ``values`` into two groups (Otsu's method)."""
+
+    values = np.asarray(values, dtype=np.float64).ravel()
+    counts, edges = np.histogram(values, bins=bins)
+    centres = 0.5 * (edges[:-1] + edges[1:])
+    weight_low = np.cumsum(counts)
+    weight_high = weight_low[-1] - weight_low
+    sum_low = np.cumsum(counts * centres)
+    mean_low = sum_low / np.maximum(weight_low, 1)
+    mean_high = (sum_low[-1] - sum_low) / np.maximum(weight_high, 1)
+    between = weight_low * weight_high * (mean_low - mean_high) ** 2
+    return float(edges[np.argmax(between) + 1])
+
+
+def cell_coverage(measurements, support, marker_indices):
+    """Pixels covered by cells ``[H, W]`` (bool) and the threshold used.
+
+    A pixel is covered when the largest of the generic cell markers
+    (``marker_indices`` into ``measurements`` ``[C, H, W]``) is above the
+    Otsu threshold of that value inside the colony ``support``.
+    """
+
+    support = np.asarray(support, dtype=bool)
+    if not np.any(support):
+        raise ValueError("The colony support is empty")
+    signal = np.max(np.asarray(measurements)[np.asarray(marker_indices, dtype=int)], axis=0)
+    threshold = otsu_threshold(signal[support])
+    return (signal > threshold) & support, threshold
+
+
+def filled_reference(measurements, support, coverage):
+    """The colony with the gaps between cells filled in, and the gap values.
+
+    Each channel's gaps inside ``support`` are filled from the surrounding
+    cells by ``extend_masked_texture``; pixels outside the colony stay as
+    they were. Returns the filled ``[C, H, W]`` and each channel's median
+    over the gaps ``[C]`` (0 when there are no gaps).
+    """
+
+    measurements = np.asarray(measurements, dtype=np.float32)
+    support = np.asarray(support, dtype=bool)
+    coverage = np.asarray(coverage, dtype=bool) & support
+    gaps = support & ~coverage
+    if not np.any(coverage):
+        raise ValueError("No pixel of the colony is covered by cells")
+    filled = measurements.copy()
+    gap_values = np.zeros(len(measurements), dtype=np.float32)
+    for index, channel in enumerate(measurements):
+        if np.any(gaps):
+            gap_values[index] = np.median(channel[gaps])
+            extended = extend_masked_texture(channel, coverage)
+            filled[index][gaps] = extended[gaps]
+    return filled, gap_values
+
+
+def coverage_spectrum(coverage, support, output_shape):
+    """Amplitude spectrum ``[H, W // 2 + 1]`` of a colony's cell/gap pattern on ``output_shape``.
+
+    The coverage, less its mean, is smoothly continued outside the colony
+    and centred in a zero grid of ``output_shape`` (cropped if smaller), so
+    gaps keep their size in pixels. The mean (zero frequency) is set to 0.
+    """
+
+    support = np.asarray(support, dtype=bool)
+    coverage = np.asarray(coverage, dtype=np.float32)
+    centred = coverage - np.mean(coverage[support])
+    extended = extend_masked_texture(np.where(support, centred, 0.0), support)
+    placed = np.zeros(output_shape, dtype=np.float32)
+    source, target = [], []
+    for size, out in zip(extended.shape, output_shape):
+        length = min(size, out)
+        start_in, start_out = (size - length) // 2, (out - length) // 2
+        source.append(slice(start_in, start_in + length))
+        target.append(slice(start_out, start_out + length))
+    placed[tuple(target)] = extended[tuple(source)]
+    amplitude = np.abs(np.fft.rfft2(placed))
+    amplitude[0, 0] = 0.0
+    return amplitude.astype(np.float32)

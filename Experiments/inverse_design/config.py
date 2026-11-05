@@ -22,6 +22,8 @@ class InverseDesignGeometryConfig(ConfigValue):
     grid_scale: float = 1.5
     # Sweep over this to repeat a config from other initial shapes (with seed_mode: index)
     repeat: int = 0
+    # false keeps the initial shape (a density-only control)
+    optimise: bool = True
 
 
 @dataclass(frozen=True)
@@ -70,20 +72,72 @@ class InverseDesignRolloutConfig(ConfigValue):
 
 @dataclass(frozen=True)
 class TextureConfig(ConfigValue):
-    """Synthetic 0 h textures, as in ``drawn_mask_explorer.py``."""
+    """Synthetic 0 h textures, as in ``boundary_mask_explorer.py``.
+
+    With ``file`` set, every setting except ``bank_size`` comes from that
+    file's section for the model's projection
+    (``Experiments/micropatterns/texture_settings.py``), and the other fields
+    here must keep their defaults.
+    """
 
     # Number of textures; each batch draws from them
     bank_size: int = 16
+    # Texture settings file (relative to the repository root); null: the fields below
+    file: str | None = None
     # patch (multichannel patch resampling) or iaaft
     mode: str = "patch"
+    # Patch sizes in pixels at patch_downsample, rescaled to the model's
+    # data.downsample; null: in the model's pixels
     patch_size: int = 11
     patch_overlap: int = 7
     patch_jitter: int = 3
+    patch_downsample: int | None = None
     interior_fraction: float = 0.8
     candidates: int = 24
     iaaft_iterations: int = 25
     # Match the reference histograms and panel covariances afterwards
     normalise: bool = False
+    normalise_iterations: int = 4
+
+    def __post_init__(self):
+        if self.mode not in ("patch", "iaaft"):
+            raise ValueError(f"Unknown texture mode {self.mode!r}; use patch or iaaft")
+        if self.file is not None:
+            defaults = TextureConfig()
+            changed = [
+                name for name in self.__dataclass_fields__
+                if name not in ("bank_size", "file") and getattr(self, name) != getattr(defaults, name)
+            ]
+            if changed:
+                raise ValueError(
+                    f"inverse_design.texture.file is set, so texture.{changed} would be ignored; "
+                    "change them in the file, or set texture.file: null"
+                )
+
+
+@dataclass(frozen=True)
+class InverseDesignDensityConfig(ConfigValue):
+    """Cell density: the share of the colony covered by cells (NCA/inverse_design/density.py)."""
+
+    # none: textures keep the reference colonies' own gaps (as before);
+    # fixed: gaps for the density `initial`; optimise: learn the density
+    mode: str = "none"
+    # Starting density in (0, 1); null: the mean of the training colonies
+    initial: float | None = None
+    # Generic cell markers that tell cells from gaps
+    markers: tuple[str, ...] = ("LMBR", "SOX2")
+    # Sharpness of the cell/gap edge, in standard deviations of the random field
+    edge_width: float = 0.1
+    # Circles also scored at these multiples of the starting density
+    baselines: tuple[float, ...] = (0.5, 0.75, 1.25)
+
+    def __post_init__(self):
+        if self.mode not in ("none", "fixed", "optimise"):
+            raise ValueError(f"Unknown density mode {self.mode!r}; use none, fixed or optimise")
+        if self.initial is not None and not 0.0 < self.initial < 1.0:
+            raise ValueError("density.initial must be between 0 and 1")
+        if self.edge_width <= 0:
+            raise ValueError("density.edge_width must be positive")
 
 
 @dataclass(frozen=True)
@@ -108,3 +162,4 @@ class InverseDesignConfig(ConfigValue):
     optimiser: InverseDesignOptimiserConfig = field(default_factory=InverseDesignOptimiserConfig)
     rollout: InverseDesignRolloutConfig = field(default_factory=InverseDesignRolloutConfig)
     texture: TextureConfig = field(default_factory=TextureConfig)
+    density: InverseDesignDensityConfig = field(default_factory=InverseDesignDensityConfig)

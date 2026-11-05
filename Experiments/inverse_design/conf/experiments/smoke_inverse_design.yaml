@@ -22,7 +22,10 @@ grid:
   inverse_design.texture.bank_size: [2]
 
 groups:
-  # The second run covers the lax scan, a free radius and the minimise control
-  - inverse_design.rollout.scan_kind: [checkpointed, lax]
-    inverse_design.geometry.fixed_radius: [true, false]
-    inverse_design.objective.maximise: [true, false]
+  # The second run covers the lax scan, a free radius and the minimise
+  # control; the third the cell density model, learning only the density
+  - inverse_design.rollout.scan_kind: [checkpointed, lax, lax]
+    inverse_design.geometry.fixed_radius: [true, false, true]
+    inverse_design.objective.maximise: [true, false, true]
+    inverse_design.density.mode: [none, none, optimise]
+    inverse_design.geometry.optimise: [true, true, false]

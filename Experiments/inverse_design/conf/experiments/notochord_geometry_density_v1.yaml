@@ -1,0 +1,33 @@
+# Notochord share at 48 h from colony shape and cell density together.
+#
+# Density is the share of the colony covered by cells (cells keep their
+# brightness; the gaps between them change). Every arm uses the same cell
+# density texture model, so they differ only in what is learned:
+#   shape only     - density fixed at the training colonies' mean
+#   shape+density  - both learned
+#   density only   - circle kept fixed, density learned
+#   minimise       - shape+density, minimising the notochord share (a control)
+# Compare Optimised/target_share with Baseline/circle (training density) and
+# Baseline/circle_density_*x (the circle at other densities).
+#
+# 3 models * (3 + 3 + 3 + 1) = 30 runs.
+experiment_name: notochord_geometry_density_v1
+entrypoint: Experiments.inverse_design.optimise:run
+output_subdir: generated/notochord_geometry_density_v1
+seed_mode: index
+
+grid:
+  logging.wandb.project: [NCA-inverse-design]
+  inverse_design.geometry.harmonics: [3]
+
+groups:
+  - inverse_design.density.mode: [fixed, fixed, fixed, optimise, optimise, optimise, optimise, optimise, optimise, optimise]
+    inverse_design.geometry.optimise: [true, true, true, true, true, true, false, false, false, true]
+    inverse_design.geometry.initial_scale: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.0, 0.0, 0.0, 0.05]
+    inverse_design.geometry.repeat: [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
+    inverse_design.objective.maximise: [true, true, true, true, true, true, true, true, true, false]
+  - checkpoint.model_id:
+    - 20261027T113845Z-cfgb0c60663a5e9-a4ca5424
+    - 20261027T183257Z-cfg8fb6db8c673b-1e38e5a9
+    - 20261027T160315Z-cfg190c2fb3f5a4-4d68bcfa
+    inverse_design.rollout.scan_kind: [checkpointed, lax, lax]

@@ -1,0 +1,52 @@
+max:
+  mode: patch
+  patch_size: 11
+  patch_overlap: 7
+  patch_jitter: 3
+  patch_downsample: 8
+  interior_fraction: 0.8
+  candidates: 24
+  iaaft_iterations: 25
+  normalise: true
+  normalise_iterations: 4
+  tuned_on:
+    condition: ctrl
+    downsample: 8
+    replicates: 3
+    replicate_mode: sample_groups
+    replicate_seed: 0
+    texture_seed: 0
+    saved: '2026-11-05T19:41:24Z'
+sum:
+  mode: patch
+  patch_size: 11
+  patch_overlap: 7
+  patch_jitter: 3
+  patch_downsample: null
+  interior_fraction: 0.8
+  candidates: 24
+  iaaft_iterations: 25
+  normalise: false
+  normalise_iterations: 4
+  tuned_on:
+    note: defaults from inverse_design base_config.yaml
+    not tuned: null
+slice:
+  mode: patch
+  patch_size: 11
+  patch_overlap: 7
+  patch_jitter: 3
+  patch_downsample: 8
+  interior_fraction: 0.8
+  candidates: 24
+  iaaft_iterations: 25
+  normalise: true
+  normalise_iterations: 4
+  tuned_on:
+    condition: ctrl
+    downsample: 8
+    replicates: 3
+    replicate_mode: sample_groups
+    replicate_seed: 0
+    texture_seed: 0
+    saved: '2026-11-05T19:44:41Z'

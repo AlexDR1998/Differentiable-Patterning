@@ -83,7 +83,7 @@ def test_texture_bank_has_one_texture_per_slot_in_state_channel_order():
         ),
     }
 
-    bank = texture_bank(reference, TextureConfig(bank_size=2, patch_size=5, patch_overlap=2), (21, 21), 0)
+    bank = texture_bank(reference, TextureConfig(bank_size=2, patch_size=5, patch_overlap=2), (21, 21), 0, 8)
 
     assert bank.shape == (2, 2, 21, 21)
     assert not np.array_equal(bank[0], bank[1])
@@ -148,7 +148,7 @@ class _DecayNCA(eqx.Module):
         return boundary_callback(0.95 * state + 0.01 * jax.random.normal(key, state.shape))
 
 
-def test_run_wires_bundle_rules_textures_and_record(tmp_path, monkeypatch):
+def _fake_run_setup(tmp_path, monkeypatch, density_mode="none", texture_file=None):
     import Experiments.inverse_design.optimise as entrypoint
 
     value = yaml.safe_load(Path("Experiments/inverse_design/conf/base_config.yaml").read_text())
@@ -158,11 +158,16 @@ def test_run_wires_bundle_rules_textures_and_record(tmp_path, monkeypatch):
         iterations=2, batch_size=2, log_every=1, evaluation_seeds=2, baseline_ellipses=[0.15]
     )
     value["inverse_design"]["rollout"].update(hours=12, scan_kind="lax")
-    value["inverse_design"]["texture"].update(bank_size=2, patch_size=5, patch_overlap=2)
+    if texture_file is None:
+        value["inverse_design"]["texture"].update(file=None, bank_size=2, patch_size=5, patch_overlap=2)
+    else:
+        value["inverse_design"]["texture"].update(file=str(texture_file), bank_size=2)
+    value["inverse_design"]["density"].update(mode=density_mode, baselines=[0.5])
     cfg = load_experiment_config(value)
 
     data_config = SimpleNamespace(
         dataset="micropatterns_260726",
+        downsample=8,
         micropattern=SimpleNamespace(projection="slice", noise_strength=0.005),
     )
     bundle = SimpleNamespace(
@@ -176,21 +181,32 @@ def test_run_wires_bundle_rules_textures_and_record(tmp_path, monkeypatch):
         ),
         load_model=lambda key=None: _DecayNCA(),
     )
+    monkeypatch.setattr(entrypoint, "open_registry_bundle", lambda model_id, store_root: bundle)
+    monkeypatch.setattr(entrypoint, "load_reference", lambda data_config: _fake_reference())
+    return entrypoint, cfg
+
+
+def _fake_reference():
     y, x = np.mgrid[:25, :25]
     support = np.repeat((np.hypot(y - 12, x - 12) < 8)[None], 2, axis=0)
-    reference = {
+    names = ("TBXT", "SOX17", "SOX2", "FOXA2")
+    return {
         "measurements": np.random.default_rng(0).uniform(size=(2, 4, 25, 25)).astype(np.float32),
         "available": np.ones((2, 4), dtype=bool),
         "support": support,
+        "replicates": (1, 2),
         "schema": SimpleNamespace(
-            state_channels=("TBXT", "SOX17", "SOX2", "FOXA2"),
+            state_channels=names,
+            measurement_channels=tuple(SimpleNamespace(marker=name) for name in names),
             group_names=("s1", "s2"),
             group_measurement_indices=((0, 1, 2), (3,)),
             primary_measurements=(0, 1, 2, 3),
         ),
     }
-    monkeypatch.setattr(entrypoint, "open_registry_bundle", lambda model_id, store_root: bundle)
-    monkeypatch.setattr(entrypoint, "load_reference", lambda data_config: reference)
+
+
+def test_run_wires_bundle_rules_textures_and_record(tmp_path, monkeypatch):
+    entrypoint, cfg = _fake_run_setup(tmp_path, monkeypatch)
 
     result = entrypoint.run(cfg)
 
@@ -200,7 +216,74 @@ def test_run_wires_bundle_rules_textures_and_record(tmp_path, monkeypatch):
     assert set(summary["baselines"]) == {"circle", "ellipse_0.15_0deg", "ellipse_0.15_45deg"}
     assert summary["rollout"]["grid_shape"] == [39, 39]
     assert summary["rollout"]["total_steps"] == 2
+    assert summary["density"] is None
     assert result.evaluation_iterations == (0, 1, 2)
+    assert result.best_density is None
+
+
+def test_run_with_density_learns_it_and_records_it(tmp_path, monkeypatch):
+    from Experiments.inverse_design.records import load_density
+
+    entrypoint, cfg = _fake_run_setup(tmp_path, monkeypatch, density_mode="optimise")
+
+    result = entrypoint.run(cfg)
+
+    record = next((tmp_path / "inverse_design").glob("*/*/summary.yaml")).parent
+    summary = yaml.safe_load((record / "summary.yaml").read_text())
+    assert "circle_density_0.5x" in summary["baselines"]
+    assert summary["baselines"]["circle_density_0.5x"]["density"] < summary["baselines"]["circle"]["density"]
+    assert np.isclose(summary["density"]["best"], float(result.best_density.value))
+    assert len(summary["density"]["training_colonies"]) == 4
+    assert np.isclose(float(load_density(record).value), summary["density"]["best"])
+    assert set(np.load(record / "states.npz")) >= {"gap_values", "gap_amplitude"}
+
+
+def test_density_config_converts_and_rejects_unknown_keys():
+    value = yaml.safe_load(Path("Experiments/inverse_design/conf/base_config.yaml").read_text())
+    cfg = load_experiment_config(value)
+    assert cfg.inverse_design.density.mode == "none"
+    assert cfg.inverse_design.density.markers == ("LMBR", "SOX2")
+    assert cfg.inverse_design.geometry.optimise
+
+    del value["inverse_design"]["density"]
+    assert load_experiment_config(value).inverse_design.density.mode == "none"
+
+    value["inverse_design"]["density"] = {"mode": "optimise", "gain": 2.0}
+    with pytest.raises(ValueError, match="gain"):
+        load_experiment_config(value)
+    value["inverse_design"]["density"] = {"mode": "sometimes"}
+    with pytest.raises(ValueError, match="density mode"):
+        load_experiment_config(value)
+
+
+def test_filled_reference_closes_the_gaps_and_keeps_the_cells():
+    from Experiments.micropatterns.texture_synthesis import cell_coverage, filled_reference
+
+    support = np.ones((20, 20), dtype=bool)
+    cells = np.ones((20, 20), dtype=bool)
+    cells[5:8, 5:8] = cells[12:14, 3:6] = False
+    colony = np.stack([np.where(cells, 0.8, 0.05), np.where(cells, 0.4, 0.0)]).astype(np.float32)
+
+    coverage, _ = cell_coverage(colony, support, [0])
+    filled, gap_values = filled_reference(colony, support, coverage)
+
+    assert np.array_equal(coverage, cells)
+    assert np.allclose(filled, np.asarray([0.8, 0.4])[:, None, None], atol=1.0e-3)
+    assert np.allclose(gap_values, [0.05, 0.0])
+
+
+def test_fill_reference_gaps_measures_each_panel():
+    from Experiments.micropatterns.reference import fill_reference_gaps
+
+    reference = _fake_reference()
+    filled = fill_reference_gaps(reference, ("SOX2",), (31, 31))
+
+    assert filled["reference"]["measurements"].shape == reference["measurements"].shape
+    assert filled["gap_values"].shape == (4,)
+    assert filled["measurement_gap_values"].shape == (4,)
+    assert filled["amplitude"].shape == (31, 16)
+    assert 0.0 < filled["density"] < 1.0
+    assert [row["from_markers"] for row in filled["coverage"]] == [True, False, True, False]
 
 
 def test_evaluation_panel_shows_mask_fates_cell_types_and_share_per_rollout():
@@ -266,3 +349,82 @@ def test_cell_type_legend_is_an_rgb_image():
     legend = cell_type_legend(load_cell_type_rules(CELL_TYPES))
 
     assert legend.ndim == 3 and legend.shape[-1] == 3 and legend.dtype == np.uint8
+
+
+def test_trajectory_with_density_ends_on_the_evaluation():
+    from NCA.inverse_design import CellDensity, CellGaps, binary_trajectories, evaluate_binary
+
+    names = ("SOX2", "TBXT", "SOX17", "FOXA2", "mask", "hidden")
+    rules = load_cell_type_rules(CELL_TYPES)
+    geometry = FourierRadialGeometry(1, radius=0.5)
+    biology = jax.random.uniform(jax.random.PRNGKey(0), (2, 4, 11, 11))
+    config = OptimisationConfig(iterations=1, learning_rate=1.0, total_steps=2, evaluation_seeds=2)
+    objective = CellTypeShareObjective.from_rules(rules, names, "Notochord")
+    gaps = CellGaps(gap_values=jnp.zeros(4), amplitude=jnp.ones((11, 6)))
+    density = CellDensity(0.6)
+    key = jax.random.PRNGKey(4)
+
+    evaluation = evaluate_binary(_DecayNCA(), geometry, biology, key, objective, config, gaps, density)
+    _, trajectories = binary_trajectories(_DecayNCA(), geometry, biology, key, config, 2, gaps, density)
+
+    assert np.isclose(evaluation.density, 0.6)
+    assert np.allclose(trajectories[:, -1], np.asarray(evaluation.final_states), atol=1.0e-5)
+
+
+def test_texture_settings_are_saved_per_projection_and_rescaled(tmp_path):
+    from Experiments.micropatterns.texture_settings import (
+        DEFAULT_TEXTURE_SETTINGS_FILE,
+        TEXTURE_SETTING_KEYS,
+        load_texture_settings,
+        save_texture_settings,
+        scaled_patch_geometry,
+    )
+
+    # The file keys are TextureConfig's, apart from the bank size and the file itself
+    assert set(TEXTURE_SETTING_KEYS) == set(TextureConfig.__dataclass_fields__) - {"bank_size", "file"}
+    for projection in ("max", "sum", "slice"):
+        load_texture_settings(DEFAULT_TEXTURE_SETTINGS_FILE, projection)
+
+    path = tmp_path / "textures.yaml"
+    settings = {**load_texture_settings(DEFAULT_TEXTURE_SETTINGS_FILE, "max"), "patch_downsample": 4}
+    save_texture_settings(path, "max", settings, note={"downsample": 4})
+    save_texture_settings(path, "slice", {**settings, "patch_size": 21}, note={"downsample": 4})
+    assert load_texture_settings(path, "max") == settings
+    assert load_texture_settings(path, "slice")["patch_size"] == 21
+    with pytest.raises(KeyError, match="sum"):
+        load_texture_settings(path, "sum")
+    # 11 px at downsample 4 is about 5 px at 8 (always odd and at least 3)
+    assert scaled_patch_geometry(11, 7, 3, 4, 8) == (5, 4, 2)
+    assert scaled_patch_geometry(11, 7, 3, None, 8) == (11, 7, 3)
+    assert scaled_patch_geometry(5, 2, 1, 4, 32)[0] == 3
+
+
+def test_texture_file_and_config_values_cannot_both_be_set():
+    value = yaml.safe_load(Path("Experiments/inverse_design/conf/base_config.yaml").read_text())
+    value["inverse_design"]["texture"]["patch_size"] = 9
+    with pytest.raises(ValueError, match="patch_size"):
+        load_experiment_config(value)
+    value["inverse_design"]["texture"]["file"] = None
+    assert load_experiment_config(value).inverse_design.texture.patch_size == 9
+
+
+def test_run_takes_the_texture_settings_for_the_model_projection(tmp_path, monkeypatch):
+    from Experiments.micropatterns.texture_settings import (
+        DEFAULT_TEXTURE_SETTINGS_FILE,
+        load_texture_settings,
+        save_texture_settings,
+    )
+
+    path = tmp_path / "textures.yaml"
+    settings = load_texture_settings(DEFAULT_TEXTURE_SETTINGS_FILE, "max")
+    save_texture_settings(path, "max", settings)
+    save_texture_settings(path, "slice", {**settings, "patch_size": 9, "patch_downsample": 4})
+    entrypoint, cfg = _fake_run_setup(tmp_path, monkeypatch, texture_file=path)
+
+    entrypoint.run(cfg)
+
+    summary = yaml.safe_load(next((tmp_path / "inverse_design").glob("*/*/summary.yaml")).read_text())
+    assert summary["texture"]["projection"] == "slice"
+    assert summary["texture"]["patch_size"] == 9
+    # 9 px at downsample 4 is 5 px at the model's downsample 8
+    assert summary["texture"]["used_patch_pixels"]["size"] == 5

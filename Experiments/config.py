@@ -43,6 +43,7 @@ from Experiments.impulse.config import (
 )
 from Experiments.inverse_design.config import (
     InverseDesignConfig,
+    InverseDesignDensityConfig,
     InverseDesignGeometryConfig,
     InverseDesignObjectiveConfig,
     InverseDesignOptimiserConfig,
@@ -854,6 +855,10 @@ def inverse_design_experiment_config_from_mapping(
     }
     for name, cls in sections.items():
         node[name] = _strict(cls, node.get(name), f"inverse_design.{name}")
+    node["density"] = _strict(
+        InverseDesignDensityConfig, node.get("density"), "inverse_design.density",
+        markers=_tuple, baselines=_tuple,
+    )
     return InverseDesignExperimentConfig(
         schema_version=CONFIG_SCHEMA_VERSION,
         seed=int(root.get("seed", 0)),
