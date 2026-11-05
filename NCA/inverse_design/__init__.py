@@ -13,11 +13,12 @@ from NCA.inverse_design.objectives import (
 )
 from NCA.inverse_design.optimise import (
     OptimisationConfig,
+    binary_trajectories,
     evaluate_binary,
     optimise_geometry,
 )
 from NCA.inverse_design.result import BinaryEvaluation, OptimisationResult
-from NCA.inverse_design.rollout import rollout_final
+from NCA.inverse_design.rollout import rollout_final, rollout_trajectory
 
 __all__ = (
     "BinaryEvaluation",
@@ -27,11 +28,13 @@ __all__ = (
     "OptimisationConfig",
     "OptimisationResult",
     "PatchSamplingConfig",
+    "binary_trajectories",
     "build_initial_state",
     "coordinate_grid",
     "evaluate_binary",
     "geometry_loss",
     "optimise_geometry",
     "rollout_final",
+    "rollout_trajectory",
     "sample_circular_patches",
 )

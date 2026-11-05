@@ -12,6 +12,7 @@ of one cell type (e.g. notochord). The NCA is frozen and only the shape changes.
 | Objective | `objectives.CellTypeShareObjective.from_rules`: the target's share of the colony, using the rules of a cell type file (`Common/dataloader/cell_types.py`). Each marker threshold becomes a sigmoid of width `temperature`. "Or" clauses, clause weights, "Several" and "Other" count as in `pixel_label_shares`, and match it exactly with `hard=True`. |
 | Optimiser | `optimise.optimise_geometry`: a batch of initial textures with training-strength noise, adam with gradient clipping, and a mask edge that sharpens over the run. |
 | Evaluation | `optimise.evaluate_binary`: rollouts on the binary mask (as in training), scored with the hard rules. These are the scores to report. The best geometry is chosen by them. |
+| Logging | `Experiments/inverse_design/wandb_log.py`: each evaluation logs the binary score, its gain over the circle, the colony share of every label (`CellTypes/*`) and panels of mask, fates, cell type map (colours in `CellTypes/legend`) and target share. At the end, a video of `video_seeds` rollouts of the best geometry (`optimise.binary_trajectories`, same random numbers as the evaluations). |
 | Experiment | `Experiments/inverse_design/`: `optimise.py:run`, `config.py`, `records.py`, `wandb_log.py`, `conf/`. |
 
 ## A run

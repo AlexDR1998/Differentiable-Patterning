@@ -31,6 +31,7 @@ from NCA.inverse_design import (
     FourierRadialGeometry,
     GeometryPenalties,
     OptimisationConfig,
+    binary_trajectories,
     evaluate_binary,
     optimise_geometry,
 )
@@ -222,6 +223,7 @@ def run(cfg):
                 "config": config_to_dict(cfg),
             },
             state_channel_names=state_channel_names,
+            cell_type_rules=cell_type_rules,
         )
         logger.log_baselines(
             baselines,
@@ -252,7 +254,15 @@ def run(cfg):
 
     wandb_run_id = None
     if logger is not None:
-        logger.log_result(result)
+        logger.log_result(result, step=design.iterations)
+        if design.video_seeds > 0:
+            # Same random numbers as the evaluations, so the last frames are
+            # the best evaluation's final states
+            mask, trajectories = binary_trajectories(
+                model, result.best_geometry, biology_bank, evaluation_key,
+                optimisation_config, min(design.video_seeds, design.evaluation_seeds),
+            )
+            logger.log_trajectories(mask, trajectories, step=design.iterations)
         wandb_run_id = getattr(logger.run, "id", None)
         logger.finish()
 

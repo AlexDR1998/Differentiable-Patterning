@@ -17,7 +17,7 @@ from NCA.inverse_design.optimise import (
     evaluate_binary,
     optimise_geometry,
 )
-from NCA.inverse_design.rollout import rollout_final
+from NCA.inverse_design.rollout import rollout_final, rollout_trajectory
 
 
 def test_fourier_geometry_has_gradients_for_every_parameter():
@@ -156,6 +156,19 @@ def test_checkpointed_rollout_matches_lax_rollout():
 
     assert jnp.allclose(lax_value, checkpointed_value)
     assert jnp.allclose(lax_gradient, checkpointed_gradient)
+
+
+def test_trajectory_ends_on_the_final_rollout_state():
+    state = jax.random.uniform(jax.random.PRNGKey(2), (3, 9, 9))
+    mask = jnp.ones((1, 9, 9))
+    key = jax.random.PRNGKey(3)
+
+    trajectory = rollout_trajectory(_DecayNCA(), state, mask, "soft", key, 4)
+    final = rollout_final(_DecayNCA(), state, mask, "soft", key, 4)
+
+    assert trajectory.shape == (5, 3, 9, 9)
+    assert jnp.allclose(trajectory[0], state)
+    assert jnp.allclose(trajectory[-1], final)
 
 
 def _first_channel_objective(**options):

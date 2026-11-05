@@ -96,6 +96,8 @@ class InverseDesignConfig(ConfigValue):
     # Binary-mask evaluation and image logging every log_every iterations
     log_every: int = 25
     evaluation_seeds: int = 16
+    # Rollouts of the best geometry shown in the final W&B video (0: no video)
+    video_seeds: int = 2
     # Fixed-area ellipses scored before optimising: harmonic-2 amplitudes,
     # each at 0 and 45 degrees (the circle is always scored)
     baseline_ellipses: tuple[float, ...] = (0.15, 0.3)

@@ -203,15 +203,66 @@ def test_run_wires_bundle_rules_textures_and_record(tmp_path, monkeypatch):
     assert result.evaluation_iterations == (0, 1, 2)
 
 
-def test_evaluation_panel_shows_mask_fates_and_share_per_rollout():
+def test_evaluation_panel_shows_mask_fates_cell_types_and_share_per_rollout():
     from Experiments.inverse_design.wandb_log import evaluation_panel
     from NCA.inverse_design import BinaryEvaluation
 
-    names = ("SOX2", "TBXT", "SOX17")
+    rules = load_cell_type_rules(CELL_TYPES)
+    names = ("SOX2", "TBXT", "SOX17", "FOXA2")
     evaluation = BinaryEvaluation(
         mask=np.ones((8, 9)), final_states=np.zeros((3, 5, 8, 9)), scores=np.zeros(3), border_fraction=0.0
     )
 
-    panel = evaluation_panel(evaluation, np.zeros((3, 8, 9)), names, rows=2)
+    panel = evaluation_panel(evaluation, np.zeros((3, 8, 9)), names, rules, rows=2)
 
-    assert panel.shape == (16, 27, 3)
+    assert panel.shape == (16, 36, 3)
+
+
+def test_cell_type_prevalences_sum_to_one_over_the_colony():
+    from Experiments.micropatterns.rendering import cell_type_prevalences, render_cell_types
+
+    rules = load_cell_type_rules(CELL_TYPES)
+    names = ("SOX2", "TBXT", "SOX17", "FOXA2")
+    states = np.random.default_rng(0).uniform(size=(3, 4, 10, 10))
+    mask = np.zeros((10, 10))
+    mask[2:8, 2:8] = 1.0
+
+    prevalences = cell_type_prevalences(states, names, rules, mask)
+    image = render_cell_types(states, names, rules, mask)
+
+    assert np.allclose(sum(prevalences.values()), 1.0)
+    assert image.shape == (3, 10, 10, 3)
+    assert np.all(image[:, 0, 0] == 0.0)
+
+
+def test_trajectory_video_ends_on_the_best_evaluation():
+    from Experiments.inverse_design.wandb_log import trajectory_video
+    from NCA.inverse_design import binary_trajectories, evaluate_binary
+
+    rules = load_cell_type_rules(CELL_TYPES)
+    names = ("SOX2", "TBXT", "SOX17", "FOXA2")
+    geometry = FourierRadialGeometry(1, radius=0.5)
+    biology = jax.random.uniform(jax.random.PRNGKey(0), (2, 4, 11, 11))
+    config = OptimisationConfig(
+        iterations=1, learning_rate=1.0, total_steps=3, evaluation_seeds=3, noise_strength=0.01
+    )
+    objective = CellTypeShareObjective.from_rules(rules, (*names, "mask", "hidden"), "Notochord")
+    model = _DecayNCA()
+    key = jax.random.PRNGKey(4)
+
+    evaluation = evaluate_binary(model, geometry, biology, key, objective, config)
+    mask, trajectories = binary_trajectories(model, geometry, biology, key, config, seeds=2)
+    video = trajectory_video(mask, trajectories, (*names, "mask", "hidden"), rules)
+
+    assert trajectories.shape == (2, 4, 6, 11, 11)
+    assert np.allclose(mask, evaluation.mask)
+    assert np.allclose(trajectories[:, -1], np.asarray(evaluation.final_states)[:2], atol=1.0e-5)
+    assert video.shape == (4, 3, 22, 22)
+
+
+def test_cell_type_legend_is_an_rgb_image():
+    from Experiments.inverse_design.wandb_log import cell_type_legend
+
+    legend = cell_type_legend(load_cell_type_rules(CELL_TYPES))
+
+    assert legend.ndim == 3 and legend.shape[-1] == 3 and legend.dtype == np.uint8

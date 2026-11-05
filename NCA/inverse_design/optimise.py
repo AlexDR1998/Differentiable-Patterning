@@ -17,7 +17,7 @@ from NCA.inverse_design.objectives import (
     geometry_loss,
 )
 from NCA.inverse_design.result import BinaryEvaluation, OptimisationResult
-from NCA.inverse_design.rollout import rollout_final
+from NCA.inverse_design.rollout import rollout_final, rollout_trajectory
 from NCA.trainer.data_augmenter.transforms import add_noise
 
 
@@ -122,10 +122,14 @@ def _train_step(geometry, optimiser_state, model, biology, keys, softness, *, ob
     return geometry, optimiser_state, components
 
 
+def _binary_mask(geometry, biology):
+    grid = coordinate_grid(biology.shape[-2:], dtype=biology.dtype)
+    return (geometry.level_set(grid) < 0).astype(biology.dtype)
+
+
 @eqx.filter_jit
 def _binary_rollouts(model, geometry, biology, keys, *, objective, config):
-    grid = coordinate_grid(biology.shape[-2:], dtype=biology.dtype)
-    mask = (geometry.level_set(grid) < 0).astype(biology.dtype)
+    mask = _binary_mask(geometry, biology)
 
     def single(biology, key):
         final_state = _rollout(model, mask, biology, key, config, "lax", None)
@@ -155,6 +159,38 @@ def evaluate_binary(model, geometry, biology_bank, key, objective, config) -> Bi
         scores=np.asarray(scores),
         border_fraction=float(border_fraction(mask)),
     )
+
+
+@eqx.filter_jit
+def _binary_trajectory(model, mask, biology, key, *, config):
+    noise_key, rollout_key = jax.random.split(key)
+    state = _initial_state(model, mask, biology, noise_key, config)
+    return rollout_trajectory(
+        model, state, mask[None], config.boundary_mode, rollout_key, config.total_steps
+    )
+
+
+def binary_trajectories(model, geometry, biology_bank, key, config, seeds):
+    """Every state of the first ``seeds`` rollouts of ``evaluate_binary``.
+
+    Uses the same textures and random numbers as ``evaluate_binary`` with
+    this ``key``, so the last frames are that evaluation's final states.
+    Returns the mask ``[H, W]`` and the states ``[seeds, total_steps + 1,
+    C, H, W]`` as numpy arrays. Rollouts run one at a time to save memory.
+    """
+
+    if not 1 <= seeds <= config.evaluation_seeds:
+        raise ValueError("seeds must be between 1 and config.evaluation_seeds")
+    biology_bank = jnp.asarray(biology_bank)
+    mask = _binary_mask(geometry, biology_bank[0])
+    keys = jax.random.split(key, config.evaluation_seeds)
+    trajectories = [
+        np.asarray(
+            _binary_trajectory(model, mask, biology_bank[index % len(biology_bank)], keys[index], config=config)
+        )
+        for index in range(seeds)
+    ]
+    return np.asarray(mask), np.stack(trajectories)
 
 
 def optimise_geometry(

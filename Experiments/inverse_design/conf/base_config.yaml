@@ -33,6 +33,8 @@ inverse_design:
   batch_size: 4
   log_every: 25
   evaluation_seeds: 16
+  # Rollouts of the best geometry shown in the final W&B video (0: no video)
+  video_seeds: 2
   # Same-area ellipses scored before optimising (harmonic-2 amplitudes, each
   # at 0 and 45 degrees); the circle is always scored
   baseline_ellipses: [0.15, 0.3]
