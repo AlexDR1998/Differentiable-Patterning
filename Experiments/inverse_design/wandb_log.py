@@ -103,11 +103,14 @@ class GeometryLogger(WandbLogger):
         return {f"{prefix}/{label}": float(np.mean(share)) for label, share in shares.items()}
 
     def log_density_reference(self, coverage_rows, initial_density):
-        """Covered fraction of each training colony panel, and the starting density."""
+        """Covered fraction and whole cells of each training colony panel, and the starting density."""
 
         table = wandb.Table(
-            columns=["replicate", "panel", "coverage", "from_markers"],
-            data=[[str(row["replicate"]), row["panel"], row["coverage"], row["from_markers"]] for row in coverage_rows],
+            columns=["replicate", "panel", "coverage", "cells", "from_markers"],
+            data=[
+                [str(row["replicate"]), row["panel"], row["coverage"], row["cells"], row["from_markers"]]
+                for row in coverage_rows
+            ],
         )
         wandb.log({"Density/replicate_coverage": table}, step=0)
         self.run.summary["Density/initial"] = initial_density

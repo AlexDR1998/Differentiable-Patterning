@@ -119,10 +119,10 @@ def build_initial_state(
     sampled_biology = jnp.asarray(sampled_biology)
     if sampled_biology.shape[-2:] != occupancy.shape:
         raise ValueError("biology and occupancy spatial shapes differ")
-    required = sampled_biology.shape[0] + (boundary_mode == "soft")
+    required = sampled_biology.shape[0] + (boundary_mode in ("soft", "uniform"))
     if total_channels < required:
         raise ValueError("total_channels cannot hold biology and boundary channels")
-    if boundary_mode not in ("none", "hard", "soft"):
+    if boundary_mode not in ("none", "hard", "soft", "uniform"):
         raise ValueError(f"unknown boundary mode {boundary_mode!r}")
     state = jnp.zeros((total_channels, *occupancy.shape), dtype=sampled_biology.dtype)
     state = state.at[: sampled_biology.shape[0]].set(
@@ -130,4 +130,6 @@ def build_initial_state(
     )
     if boundary_mode == "soft":
         state = state.at[-1].set(occupancy)
+    elif boundary_mode == "uniform":
+        state = state.at[-1].set(1.0)
     return state

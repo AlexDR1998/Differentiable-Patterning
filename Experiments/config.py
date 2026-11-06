@@ -203,6 +203,8 @@ class ModelStoreConfig(ConfigValue):
 class LabelsConfig(ConfigValue):
     scaling: str | None = None
     gpu: str | None = None
+    # Names the condition of an ablation sweep (e.g. "baseline", "nca").
+    ablation: str | None = None
 
 
 @dataclass(frozen=True)

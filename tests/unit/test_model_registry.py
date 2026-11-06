@@ -348,6 +348,40 @@ def test_annotations_are_separate_and_queryable(tmp_path):
     assert not (bundle.path / "annotations.yaml").exists()
 
 
+def test_annotate_updates_index_without_full_reindex(tmp_path, monkeypatch):
+    checkpoint = tmp_path / "source.eqx"
+    checkpoint.write_bytes(b"checkpoint")
+    bundle = publish_model_bundle(
+        store_root=tmp_path,
+        collection="tests",
+        model_id=create_model_id(_config()),
+        display_name="model",
+        checkpoint_path=checkpoint,
+        cfg=_config(),
+        training_result=TrainingResult(checkpoint, 2, 1.5, True),
+        repository_root=tmp_path,
+    )
+    registry = ModelRegistry(tmp_path)
+    registry.reindex()
+
+    def fail(*args, **kwargs):
+        raise AssertionError("annotate should not rebuild the whole index")
+
+    monkeypatch.setattr(registry, "reindex", fail)
+    monkeypatch.setattr(registry, "get", fail)
+    registry.annotate(bundle.id, tags=["first"], notes="First note")
+    registry.annotate(bundle.id, notes="Second note")
+
+    annotations = registry.annotations_df()
+    assert annotations["notes"].tolist() == ["Second note"]
+    assert registry.tags_df()["tag"].tolist() == ["first"]
+    assert len(registry.models_df()) == 1
+
+    monkeypatch.undo()
+    with pytest.raises(KeyError):
+        registry.annotate("missing-model", notes="x")
+
+
 def test_selection_round_trips_through_yaml(tmp_path):
     from omegaconf import OmegaConf
 

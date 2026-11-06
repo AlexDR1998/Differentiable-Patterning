@@ -5,7 +5,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from einops import rearrange
 
-from Common.model.boundary import hard_boundary, model_boundary
+from Common.model.boundary import build_boundary_callback
 from NCA.trainer.variation_metrics import grouped_variation_metrics
 from NCA.trainer.step import batch_loss, batch_model, multi_target_losses, run_nca_steps
 
@@ -25,13 +25,11 @@ class ValidationEvaluator:
         self.key = key
         self.batch_count = data.shape[0]
         self.boundary_mask = boundary_mask
-        callback_type = (
-            model_boundary
-            if trainer.trainer_config.boundary_mode == "soft"
-            else hard_boundary
-        )
         self.boundary_callbacks = [
-            callback_type(boundary_mask[index]) for index in range(self.batch_count)
+            build_boundary_callback(
+                trainer.trainer_config.boundary_mode, boundary_mask[index]
+            )
+            for index in range(self.batch_count)
         ]
         self.loss_masks = list(rearrange(jnp.asarray(loss_mask), "b n c -> b n c () ()"))
         schema = trainer.channel_schema

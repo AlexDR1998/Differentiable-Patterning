@@ -40,7 +40,7 @@ with app.setup:
     from Common.dataloader.micropattern_260726 import load_micropattern_260726
     from Experiments.model_registry import ModelRegistry, load_selection
     from Common.dataloader.micropattern_projections import PROJECTIONS
-    from Experiments.micropatterns.reference import fill_reference_gaps
+    from Experiments.micropatterns.reference import cell_library
     from Experiments.micropatterns.texture_settings import (
         DEFAULT_TEXTURE_SETTINGS_FILE,
         load_texture_settings,
@@ -52,10 +52,11 @@ with app.setup:
         cell_coverage as measure_cell_coverage,
         extend_masked_texture,
         normalise_histograms_and_covariance,
+        place_cells,
         synthesise_patch_texture,
         synthesise_reference_texture,
     )
-    from NCA.inverse_design.density import apply_density, cell_coverage, coverage_field
+    from NCA.inverse_design.density import CellDensity, CellGaps, pack_cells
     from NCA.trainer.intervention import rollout_model_sampled
 
     FATE_MARKERS = ("TBXT", "SOX17", "SOX2", "FOXA2")
@@ -250,127 +251,155 @@ def _():
 
 
 @app.cell(hide_code=True)
+def _():
+    # Cached, so switching back to settings already seen does not reload from disk
+    @mo.lru_cache(maxsize=4)
+    def load_reference_dataset(root, condition, projection, downsample, replicates):
+        return load_micropattern_260726(
+            root=root,
+            conditions=(condition,),
+            projection=projection,
+            timesteps=(0, 12, 24, 36, 48),
+            downsample=downsample,
+            replicate_count=replicates,
+            experiment_groups=(
+                "cell_fate_s1",
+                "cell_fate_s2",
+                "rna_expression",
+                "protein_response",
+            ),
+        )
+
+    return (load_reference_dataset,)
+
+
+@app.cell(hide_code=True)
 def _(
+    load_reference_dataset,
     micropattern_root,
     profile_mode,
     reference_condition,
-    reference_replicate_mode,
-    reference_replicate_seed,
     reference_replicates,
-    reference_sample,
-    reference_time,
     texture_downsample,
     texture_projection,
 ):
-    reference_channels = None
-    reference_measurements = None
-    reference_support = None
+    # Only loading settings here: picking a sample or time does not reload
+    reference_dataset = None
+    dataset_error = None
+    if profile_mode.value != "Uniform":
+        try:
+            with mo.status.spinner("Loading the micropattern dataset"):
+                reference_dataset = load_reference_dataset(
+                    str(Path(micropattern_root.value).expanduser()),
+                    reference_condition.value,
+                    texture_projection.value,
+                    int(texture_downsample.value),
+                    int(reference_replicates.value),
+                )
+        except (OSError, ValueError, IndexError, KeyError) as _error:
+            dataset_error = str(_error)
+    return dataset_error, reference_dataset
+
+
+@app.cell(hide_code=True)
+def _(reference_dataset, reference_time):
+    # Every loaded colony at the chosen time (for the cell density model)
+    reference_colonies = None
     reference_channel_names = None
     reference_measurement_names = None
     reference_measurement_groups = None
     reference_primary_measurements = None
-    reference_group_replicates = None
     reference_spatial_shape = None
-    # Every loaded colony (for the cell density model) and the colony each
-    # measurement channel of the reference was taken from
-    reference_colonies = None
-    reference_sources = None
-    dataset_error = None
-    if profile_mode.value != "Uniform":
-        try:
-            _dataset = load_micropattern_260726(
-                root=str(Path(micropattern_root.value).expanduser()),
-                conditions=(reference_condition.value,),
-                projection=texture_projection.value,
-                timesteps=(0, 12, 24, 36, 48),
-                downsample=int(texture_downsample.value),
-                replicate_count=int(reference_replicates.value),
-                experiment_groups=(
-                    "cell_fate_s1",
-                    "cell_fate_s2",
-                    "rna_expression",
-                    "protein_response",
-                ),
-            )
-            _time = int(reference_time.value)
-            _schema = _dataset.aux["channel_schema"]
-            _all_measurements = np.asarray(_dataset.data[:, _time])
-            _availability = np.asarray(_dataset.measurement_mask[:, _time])
-            _replicate_labels = tuple(
-                _dataset.aux.get(
+    if reference_dataset is not None:
+        _time = int(reference_time.value)
+        _schema = reference_dataset.aux["channel_schema"]
+        _all_measurements = np.asarray(reference_dataset.data[:, _time])
+        reference_colonies = {
+            "measurements": _all_measurements,
+            "available": np.asarray(reference_dataset.measurement_mask[:, _time]),
+            "support": np.asarray(reference_dataset.boundary_mask[:, 0], dtype=bool),
+            "schema": _schema,
+            "replicates": tuple(
+                reference_dataset.aux.get(
                     "batch_replicates", range(1, _all_measurements.shape[0] + 1)
                 )
-            )
-            _group_indices = tuple(
-                tuple(_group) for _group in _schema.group_measurement_indices
-            )
-            if reference_replicate_mode.value == "sample_groups":
-                _rng = np.random.default_rng(int(reference_replicate_seed.value))
-                reference_measurements = np.zeros_like(_all_measurements[0])
-                reference_sources = np.zeros(_all_measurements.shape[1], dtype=int)
-                _assignments = []
-                for _group_name, _indices_tuple in zip(
-                    _schema.group_names, _group_indices
-                ):
-                    _indices = np.asarray(_indices_tuple, dtype=int)
-                    _eligible = np.flatnonzero(
-                        np.all(_availability[:, _indices], axis=1)
+            ),
+        }
+        reference_channel_names = tuple(_schema.state_channels)
+        reference_measurement_names = tuple(_schema.measurement_names)
+        reference_measurement_groups = tuple(
+            tuple(_group) for _group in _schema.group_measurement_indices
+        )
+        reference_primary_measurements = tuple(_schema.primary_measurements)
+        reference_spatial_shape = tuple(_all_measurements.shape[-2:])
+    return (
+        reference_channel_names,
+        reference_colonies,
+        reference_measurement_groups,
+        reference_measurement_names,
+        reference_primary_measurements,
+        reference_spatial_shape,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    dataset_error,
+    reference_colonies,
+    reference_replicate_mode,
+    reference_replicate_seed,
+    reference_sample,
+):
+    # The reference colony: one sample, or each staining panel from a random replicate
+    reference_channels = None
+    reference_measurements = None
+    reference_support = None
+    reference_group_replicates = None
+    reference_error = dataset_error
+    if reference_colonies is not None:
+        _all_measurements = reference_colonies["measurements"]
+        _availability = reference_colonies["available"]
+        _schema = reference_colonies["schema"]
+        _replicate_labels = reference_colonies["replicates"]
+        if reference_replicate_mode.value == "sample_groups":
+            _rng = np.random.default_rng(int(reference_replicate_seed.value))
+            reference_measurements = np.zeros_like(_all_measurements[0])
+            _assignments = []
+            for _group_name, _indices_tuple in zip(
+                _schema.group_names, _schema.group_measurement_indices
+            ):
+                _indices = np.asarray(_indices_tuple, dtype=int)
+                _eligible = np.flatnonzero(np.all(_availability[:, _indices], axis=1))
+                if not len(_eligible):
+                    reference_error = (
+                        f"No loaded replicate measures {_group_name!r} at the selected time"
                     )
-                    if not len(_eligible):
-                        raise ValueError(
-                            f"No loaded replicate measures {_group_name!r} at the selected time"
-                        )
-                    _chosen = int(_rng.choice(_eligible))
-                    reference_measurements[_indices] = _all_measurements[
-                        _chosen, _indices
-                    ]
-                    reference_sources[_indices] = _chosen
-                    _assignments.append(
-                        (_group_name, _replicate_labels[_chosen])
-                    )
-                reference_group_replicates = tuple(_assignments)
-                _support_sample = int(_rng.choice(_all_measurements.shape[0]))
-            else:
-                _sample = int(reference_sample.value) % _all_measurements.shape[0]
-                reference_measurements = _all_measurements[_sample]
-                reference_sources = np.full(_all_measurements.shape[1], _sample)
-                reference_group_replicates = tuple(
-                    (_group_name, _replicate_labels[_sample])
-                    for _group_name in _schema.group_names
-                )
-                _support_sample = _sample
+                    break
+                _chosen = int(_rng.choice(_eligible))
+                reference_measurements[_indices] = _all_measurements[_chosen, _indices]
+                _assignments.append((_group_name, _replicate_labels[_chosen]))
+            reference_group_replicates = tuple(_assignments)
+            _support_sample = int(_rng.choice(_all_measurements.shape[0]))
+        else:
+            _sample = int(reference_sample.value) % _all_measurements.shape[0]
+            reference_measurements = _all_measurements[_sample]
+            reference_group_replicates = tuple(
+                (_group_name, _replicate_labels[_sample])
+                for _group_name in _schema.group_names
+            )
+            _support_sample = _sample
+        if reference_error is None:
             reference_channels = reference_measurements[
                 np.asarray(_schema.primary_measurements)
             ]
-            reference_support = np.asarray(
-                _dataset.boundary_mask[_support_sample, 0], dtype=bool
-            )
-            reference_channel_names = tuple(_schema.state_channels)
-            reference_measurement_names = tuple(_schema.measurement_names)
-            reference_measurement_groups = _group_indices
-            reference_primary_measurements = tuple(_schema.primary_measurements)
-            reference_spatial_shape = reference_channels.shape[-2:]
-            reference_colonies = {
-                "measurements": _all_measurements,
-                "available": _availability,
-                "support": np.asarray(_dataset.boundary_mask[:, 0], dtype=bool),
-                "schema": _schema,
-                "replicates": _replicate_labels,
-            }
-        except (OSError, ValueError, IndexError, KeyError) as _error:
-            dataset_error = str(_error)
+            reference_support = reference_colonies["support"][_support_sample]
+        else:
+            reference_measurements = reference_group_replicates = None
     return (
-        dataset_error,
-        reference_channel_names,
         reference_channels,
-        reference_colonies,
+        reference_error,
         reference_group_replicates,
-        reference_measurement_groups,
-        reference_measurement_names,
         reference_measurements,
-        reference_primary_measurements,
-        reference_sources,
-        reference_spatial_shape,
         reference_support,
     )
 
@@ -496,9 +525,9 @@ def _():
 
 @app.cell(hide_code=True)
 def _(
-    dataset_error,
     profile_mode,
     reference_channel_names,
+    reference_error,
     reference_group_replicates,
     reference_measurement_names,
     reference_spatial_shape,
@@ -506,8 +535,8 @@ def _(
 ):
     if profile_mode.value == "Uniform":
         _dataset_status = mo.md("Reference dataset loading is inactive.")
-    elif dataset_error is not None:
-        _dataset_status = mo.callout(dataset_error, kind="danger")
+    elif reference_error is not None:
+        _dataset_status = mo.callout(reference_error, kind="danger")
     else:
         _assignment_text = ", ".join(
             f"{_group}→replicate {_replicate}"
@@ -584,25 +613,29 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(grid_size, profile_mode, reference_spatial_shape):
+    # The design grid: the reference grid with measured textures, else the grid size slider.
+    # Textures depend only on this shape, not on the mask, so shape sliders do not resynthesise them.
+    design_shape = (
+        tuple(reference_spatial_shape)
+        if profile_mode.value != "Uniform" and reference_spatial_shape is not None
+        else (grid_size.value, grid_size.value)
+    )
+    return (design_shape,)
+
+
+@app.cell(hide_code=True)
 def _(
     binary_threshold,
     coordinate_grid,
+    design_shape,
     geometry,
-    grid_size,
     make_level_set,
     mask_parameters,
-    profile_mode,
-    reference_spatial_shape,
     soft_occupancy,
     softness,
 ):
-    _design_shape = (
-        reference_spatial_shape
-        if profile_mode.value != "Uniform"
-        and reference_spatial_shape is not None
-        else (grid_size.value, grid_size.value)
-    )
-    _x_grid, _y_grid = coordinate_grid(_design_shape)
+    _x_grid, _y_grid = coordinate_grid(design_shape)
     selected_level_set = make_level_set(
         geometry.value, _x_grid, _y_grid, mask_parameters
     )
@@ -620,15 +653,12 @@ def _(
         )
         _best = None
         _lower_scale, _upper_scale = 1.0e-4, 64.0
+        # The Fourier boundary scales linearly with the radius, so the level set
+        # for radius scale s is (level set + 1) / s - 1, without rebuilding it
+        _unit_ratio = selected_level_set + 1.0
         for _ in range(64):
             _candidate_scale = 0.5 * (_lower_scale + _upper_scale)
-            _candidate_parameters = dict(mask_parameters)
-            _candidate_parameters["radius"] = (
-                float(mask_parameters["radius"]) * _candidate_scale
-            )
-            _candidate_level_set = make_level_set(
-                "Fourier radial", _x_grid, _y_grid, _candidate_parameters
-            )
+            _candidate_level_set = _unit_ratio / _candidate_scale - 1.0
             _candidate_mask = soft_occupancy(
                 _candidate_level_set, softness.value
             )
@@ -675,7 +705,7 @@ def _(
             _flat_level_set[_chosen] = _threshold_level + (
                 -_epsilon if _pixel_delta > 0 else _epsilon
             )
-            selected_level_set = _flat_level_set.reshape(_design_shape)
+            selected_level_set = _flat_level_set.reshape(design_shape)
             area_pixel_corrections = int(abs(_pixel_delta))
     selected_mask = soft_occupancy(selected_level_set, softness.value)
     if area_reference_pixels is not None:
@@ -698,16 +728,50 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _():
+    # Cached, so returning to settings already seen (e.g. a previous seed) is instant
+    @mo.lru_cache(maxsize=8)
+    def synthesise_texture(
+        mode, measurements, support, shape, groups, patch_geometry, interior_fraction,
+        candidates, iterations, normalise_iterations, seed,
+    ):
+        """Synthetic measurements over the whole design grid, as inverse design makes them."""
+
+        _full = np.ones(shape, dtype=bool)
+        _patch_info = (None, None, None)
+        if mode == "Multichannel patch resampling":
+            _patch_size, _patch_overlap, _patch_jitter = patch_geometry
+            _texture, *_patch_info = synthesise_patch_texture(
+                measurements, support, shape, groups, _patch_size, _patch_overlap,
+                interior_fraction, _patch_jitter, candidates, seed,
+            )
+        else:
+            _texture = synthesise_reference_texture(
+                measurements, support, shape, _full, iterations, seed
+            )
+        if normalise_iterations:
+            _texture = normalise_histograms_and_covariance(
+                _texture, measurements, support, _full, groups, normalise_iterations
+            )
+        return _texture, tuple(_patch_info)
+
+    return (synthesise_texture,)
+
+
+@app.cell(hide_code=True)
 def _(
-    dataset_error,
+    design_shape,
     profile_mode,
+    reference_error,
     reference_measurement_groups,
+    reference_measurements,
     reference_support,
-    selected_mask,
+    synthesise_texture,
     texture_downsample,
     texture_histogram_normalisation,
     texture_interior_fraction,
     texture_iterations,
+    texture_model,
     texture_normalisation_iterations,
     texture_patch_candidates,
     texture_patch_jitter,
@@ -716,69 +780,51 @@ def _(
     texture_patch_size,
     texture_scale_patch_geometry,
     texture_seed,
-    texture_source_measurements,
 ):
-    # The texture before any cell density gaps (the next cell adds them)
+    # The patch or IAAFT texture (not used by the cell density model)
     base_synthetic_measurements = None
     effective_patch_size = None
     effective_patch_overlap = None
     effective_patch_jitter = None
-    synthesis_error = dataset_error
-    if profile_mode.value != "Uniform":
-        if synthesis_error is None:
-            try:
-                if profile_mode.value == "Multichannel patch resampling":
-                    # As inverse design rescales saved settings (texture_settings.py)
-                    _scaled_patch_size, _scaled_patch_overlap, _scaled_patch_jitter = (
-                        scaled_patch_geometry(
-                            texture_patch_size.value,
-                            texture_patch_overlap.value,
-                            texture_patch_jitter.value,
-                            texture_patch_reference_downsample.value
-                            if texture_scale_patch_geometry.value
-                            else None,
-                            texture_downsample.value,
-                        )
-                    )
-                    (
-                        base_synthetic_measurements,
-                        effective_patch_size,
-                        effective_patch_overlap,
-                        effective_patch_jitter,
-                    ) = (
-                        synthesise_patch_texture(
-                            texture_source_measurements,
-                            reference_support,
-                            selected_mask.shape,
-                            reference_measurement_groups,
-                            _scaled_patch_size,
-                            _scaled_patch_overlap,
-                            float(texture_interior_fraction.value),
-                            _scaled_patch_jitter,
-                            int(texture_patch_candidates.value),
-                            int(texture_seed.value),
-                        )
-                    )
-                else:
-                    base_synthetic_measurements = synthesise_reference_texture(
-                        texture_source_measurements,
-                        reference_support,
-                        selected_mask.shape,
-                        selected_mask,
-                        int(texture_iterations.value),
-                        int(texture_seed.value),
-                    )
-                if texture_histogram_normalisation.value:
-                    base_synthetic_measurements = normalise_histograms_and_covariance(
-                        base_synthetic_measurements,
-                        texture_source_measurements,
-                        reference_support,
-                        selected_mask,
-                        reference_measurement_groups,
-                        int(texture_normalisation_iterations.value),
-                    )
-            except ValueError as _error:
-                synthesis_error = str(_error)
+    synthesis_error = reference_error
+    if (
+        profile_mode.value != "Uniform"
+        and texture_model.value != "density"
+        and synthesis_error is None
+    ):
+        # As inverse design rescales saved settings (texture_settings.py)
+        _patch_geometry = scaled_patch_geometry(
+            texture_patch_size.value,
+            texture_patch_overlap.value,
+            texture_patch_jitter.value,
+            texture_patch_reference_downsample.value
+            if texture_scale_patch_geometry.value
+            else None,
+            texture_downsample.value,
+        )
+        try:
+            with mo.status.spinner("Synthesising the texture"):
+                base_synthetic_measurements, (
+                    effective_patch_size,
+                    effective_patch_overlap,
+                    effective_patch_jitter,
+                ) = synthesise_texture(
+                    profile_mode.value,
+                    reference_measurements,
+                    reference_support,
+                    tuple(design_shape),
+                    reference_measurement_groups,
+                    tuple(_patch_geometry),
+                    float(texture_interior_fraction.value),
+                    int(texture_patch_candidates.value),
+                    int(texture_iterations.value),
+                    int(texture_normalisation_iterations.value)
+                    if texture_histogram_normalisation.value
+                    else 0,
+                    int(texture_seed.value),
+                )
+        except ValueError as _error:
+            synthesis_error = str(_error)
     return (
         base_synthetic_measurements,
         effective_patch_jitter,
@@ -790,61 +836,69 @@ def _(
 
 @app.cell(hide_code=True)
 def _(
+    density_attempts,
+    density_layers,
     density_reference,
-    reference_measurements,
-    reference_sources,
+    density_seed,
+    design_shape,
 ):
-    # With the cell density model, textures come from the same colonies with their gaps filled
-    if density_reference is None or reference_measurements is None:
-        texture_source_measurements = reference_measurements
-    else:
-        texture_source_measurements = density_reference["reference"]["measurements"][
-            reference_sources, np.arange(len(reference_sources))
-        ]
-    return (texture_source_measurements,)
+    # Whole cells placed at random over the design grid, as in inverse design
+    # (Experiments/inverse_design/optimise.py:density_model)
+    placed_cells = None
+    if density_reference is not None:
+        _channel_count = len(density_reference["measurement_gap_values"])
+        with mo.status.spinner("Placing cells"):
+            _textures, _ranks, _coverage = place_cells(
+                density_reference["panels"], _channel_count,
+                tuple(design_shape), int(density_layers.value),
+                int(density_attempts.value), int(density_seed.value),
+            )
+        _channel_panels = np.zeros(_channel_count, dtype=int)
+        for _panel, (_indices, _) in enumerate(density_reference["panels"]):
+            _channel_panels[_indices] = _panel
+        placed_cells = {
+            "packed": pack_cells(jnp.asarray(_textures), jnp.asarray(_ranks)),
+            "textures": _textures,
+            "layer_coverage": _coverage,
+            "channel_panels": _channel_panels,
+        }
+    return (placed_cells,)
 
 
 @app.cell(hide_code=True)
 def _(
     base_synthetic_measurements,
-    density_edge_width,
     density_error,
-    density_gap_seed,
     density_reference,
+    density_seed,
+    density_softness,
     density_value,
+    placed_cells,
     reference_primary_measurements,
-    selected_mask,
     synthesis_error,
 ):
-    # Gaps for the chosen cell density, as in inverse design (NCA/inverse_design/density.py).
-    # One coverage map for every measurement channel: a gap is empty in every stain.
+    # Cells kept for the chosen density, as in inverse design (NCA/inverse_design/density.py)
     synthetic_measurements = base_synthetic_measurements
     synthetic_coverage = None
     texture_error = synthesis_error if synthesis_error is not None else density_error
-    if texture_error is None and base_synthetic_measurements is not None and density_reference is not None:
-        _shape = tuple(selected_mask.shape)
-        if tuple(density_reference["amplitude"].shape) != (_shape[0], _shape[1] // 2 + 1):
-            texture_error = "The cell/gap spectrum does not match the design grid"
-        else:
-            _field = coverage_field(
-                jnp.asarray(density_reference["amplitude"]), _shape, jr.PRNGKey(int(density_gap_seed.value))
-            )
-            synthetic_coverage = np.asarray(
-                cell_coverage(_field, float(density_value.value), float(density_edge_width.value))
-            )
-            synthetic_measurements = np.asarray(apply_density(
-                jnp.asarray(base_synthetic_measurements),
-                jnp.asarray(density_reference["measurement_gap_values"]),
-                jnp.asarray(synthetic_coverage),
-            ))
+    if texture_error is None and placed_cells is not None:
+        _gaps = CellGaps(
+            gap_values=jnp.asarray(density_reference["measurement_gap_values"]),
+            channel_panels=jnp.asarray(placed_cells["channel_panels"]),
+            layer_coverage=jnp.asarray(placed_cells["layer_coverage"]),
+            panels=len(density_reference["panels"]),
+            softness=float(density_softness.value),
+        )
+        _density = CellDensity(float(density_value.value))
+        _key = jr.PRNGKey(int(density_seed.value))
+        synthetic_measurements = np.asarray(_gaps.apply(placed_cells["packed"], _density, _key))
+        # Covered by cells of any panel
+        synthetic_coverage = np.max(np.asarray(_gaps.coverage(placed_cells["packed"], _density, _key)), axis=0)
     synthetic_initial_channels = None
-    synthetic_full_initial_condition = None
     if texture_error is None and synthetic_measurements is not None:
         synthetic_initial_channels = synthetic_measurements[np.asarray(reference_primary_measurements)]
-        synthetic_full_initial_condition = synthetic_measurements * selected_mask[None]
     return (
         synthetic_coverage,
-        synthetic_full_initial_condition,
         synthetic_initial_channels,
         synthetic_measurements,
         texture_error,
@@ -1204,7 +1258,6 @@ def _(cell_type_score_outputs):
         )
         _map_output = _figure
     _map_output
-    plt.show()
     return
 
 
@@ -1534,21 +1587,39 @@ def _(reference_channel_names):
         value=[_m for _m in ("LMBR", "SOX2") if _m in _names],
         label="Cell markers",
     )
+    density_split_distance = mo.ui.number(0, 20, value=2, step=1, label="Split distance (px)")
+    density_min_area = mo.ui.number(1, 100, value=2, step=1, label="Min cell area (px)")
+    density_interior = mo.ui.slider(0.3, 1.0, value=0.8, step=0.05, label="Cell source radius")
     mo.vstack([
         mo.md(
             "### Cell density\n\n"
             "- Reference gaps: textures keep the measured colonies' own gaps between cells\n"
-            "- Cell density: textures from the same colonies with their gaps filled, then gaps "
-            "for a chosen share of the colony covered by cells (as in inverse design)\n"
-            "- Cells are told from gaps by the cell markers (Otsu threshold inside the colony)"
+            "- Cell density: whole cells cut out of the loaded colonies, placed at random; "
+            "the density sets how many are kept (as in inverse design)\n"
+            "- Cells: pixels above the Otsu threshold of the cell markers, split at marker "
+            "maxima at least the split distance apart (0: not split)"
         ),
         mo.hstack([texture_model, density_markers], justify="start"),
+        mo.hstack([density_split_distance, density_min_area, density_interior], justify="start"),
     ])
-    return density_markers, texture_model
+    return (
+        density_interior,
+        density_markers,
+        density_min_area,
+        density_split_distance,
+        texture_model,
+    )
 
 
 @app.cell(hide_code=True)
-def _(density_markers, reference_colonies, reference_spatial_shape, texture_model):
+def _(
+    density_interior,
+    density_markers,
+    density_min_area,
+    density_split_distance,
+    reference_colonies,
+    texture_model,
+):
     density_reference = None
     density_error = None
     if texture_model.value == "density" and reference_colonies is not None:
@@ -1556,9 +1627,13 @@ def _(density_markers, reference_colonies, reference_spatial_shape, texture_mode
             density_error = "Pick at least one cell marker."
         else:
             try:
-                with mo.status.spinner("Filling the gaps between cells"):
-                    density_reference = fill_reference_gaps(
-                        reference_colonies, tuple(density_markers.value), tuple(reference_spatial_shape)
+                with mo.status.spinner("Cutting out cells"):
+                    density_reference = cell_library(
+                        reference_colonies,
+                        tuple(density_markers.value),
+                        int(density_split_distance.value),
+                        float(density_interior.value),
+                        int(density_min_area.value),
                     )
             except ValueError as _error:
                 density_error = str(_error)
@@ -1572,8 +1647,10 @@ def _(density_error, density_reference):
         0.05, 0.99, value=float(np.clip(round(_initial, 2), 0.05, 0.99)), step=0.01,
         label="Cell density (covered share)",
     )
-    density_edge_width = mo.ui.slider(0.01, 0.5, value=0.1, step=0.01, label="Cell edge width")
-    density_gap_seed = mo.ui.number(0, 100000, value=0, step=1, label="Gap seed")
+    density_softness = mo.ui.slider(0.001, 0.2, value=0.02, step=0.001, label="Softness (rank)")
+    density_layers = mo.ui.number(1, 4, value=2, step=1, label="Layers")
+    density_attempts = mo.ui.number(1, 50, value=10, step=1, label="Attempts per cell")
+    density_seed = mo.ui.number(0, 100000, value=0, step=1, label="Cell seed")
     if density_error is not None:
         _view = mo.callout(density_error, kind="danger")
     elif density_reference is None:
@@ -1581,11 +1658,18 @@ def _(density_error, density_reference):
     else:
         _view = mo.vstack([
             mo.md(f"- Loaded colonies: {density_reference['density']:.3f} covered on average"),
-            mo.hstack([density_value, density_edge_width, density_gap_seed], justify="start"),
+            mo.hstack([density_value, density_softness], justify="start"),
+            mo.hstack([density_layers, density_attempts, density_seed], justify="start"),
             mo.accordion({"Covered share per colony": mo.ui.table(density_reference["coverage"])}),
         ])
     _view
-    return density_edge_width, density_gap_seed, density_value
+    return (
+        density_attempts,
+        density_layers,
+        density_seed,
+        density_softness,
+        density_value,
+    )
 
 
 @app.cell(hide_code=True)
@@ -1663,7 +1747,6 @@ def _(
         )
         _output = mo.vstack([_figure, _metrics])
     _output
-    plt.show()
     return
 
 
@@ -1676,95 +1759,99 @@ def _(
     selected_channel,
     synthetic_initial_channels,
 ):
-    if synthetic_initial_channels is None:
-        _comparison = mo.md(
-            "Select a measured-texture mode to inspect texture-matching diagnostics."
-        )
-    else:
-        _channel = min(
-            int(selected_channel.value),
-            int(observed_channels.value) - 1,
-            reference_channels.shape[0] - 1,
-        )
-        _reference_values = reference_channels[_channel][reference_support]
-        _synthetic_values = synthetic_initial_channels[_channel][binary_mask]
-        _reference_filled = extend_masked_texture(
-            reference_channels[_channel], reference_support
-        )
-        _reference_display = np.where(
-            reference_support, reference_channels[_channel], np.nan
-        )
-        _reference_cmap = plt.get_cmap("magma").copy()
-        _reference_cmap.set_bad(color="#d9d9d9")
-        _synthetic_filled = extend_masked_texture(
-            synthetic_initial_channels[_channel], binary_mask
-        )
-        _reference_power = np.log1p(
-            np.abs(np.fft.fftshift(np.fft.fft2(_reference_filled))) ** 2
-        )
-        _synthetic_power = np.log1p(
-            np.abs(np.fft.fftshift(np.fft.fft2(_synthetic_filled))) ** 2
-        )
-        def _high_frequency_fraction(_image):
-            _centred = _image - np.mean(_image)
-            _power = np.abs(np.fft.fft2(_centred)) ** 2
-            _frequency_y = np.fft.fftfreq(_image.shape[0])[:, None]
-            _frequency_x = np.fft.fftfreq(_image.shape[1])[None, :]
-            _radius = np.sqrt(_frequency_x**2 + _frequency_y**2)
-            _total = np.sum(_power)
-            return float(np.sum(_power[_radius >= 0.25]) / max(_total, 1.0e-12))
+    def _render():
+        if synthetic_initial_channels is None:
+            _comparison = mo.md(
+                "Select a measured-texture mode to inspect texture-matching diagnostics."
+            )
+        else:
+            _channel = min(
+                int(selected_channel.value),
+                int(observed_channels.value) - 1,
+                reference_channels.shape[0] - 1,
+            )
+            _reference_values = reference_channels[_channel][reference_support]
+            _synthetic_values = synthetic_initial_channels[_channel][binary_mask]
+            _reference_filled = extend_masked_texture(
+                reference_channels[_channel], reference_support
+            )
+            _reference_display = np.where(
+                reference_support, reference_channels[_channel], np.nan
+            )
+            _reference_cmap = plt.get_cmap("magma").copy()
+            _reference_cmap.set_bad(color="#d9d9d9")
+            _synthetic_filled = extend_masked_texture(
+                synthetic_initial_channels[_channel], binary_mask
+            )
+            _reference_power = np.log1p(
+                np.abs(np.fft.fftshift(np.fft.fft2(_reference_filled))) ** 2
+            )
+            _synthetic_power = np.log1p(
+                np.abs(np.fft.fftshift(np.fft.fft2(_synthetic_filled))) ** 2
+            )
+            def _high_frequency_fraction(_image):
+                _centred = _image - np.mean(_image)
+                _power = np.abs(np.fft.fft2(_centred)) ** 2
+                _frequency_y = np.fft.fftfreq(_image.shape[0])[:, None]
+                _frequency_x = np.fft.fftfreq(_image.shape[1])[None, :]
+                _radius = np.sqrt(_frequency_x**2 + _frequency_y**2)
+                _total = np.sum(_power)
+                return float(np.sum(_power[_radius >= 0.25]) / max(_total, 1.0e-12))
 
-        _reference_high_frequency = _high_frequency_fraction(_reference_filled)
-        _synthetic_high_frequency = _high_frequency_fraction(_synthetic_filled)
-        _frequency_kind = (
-            "warn"
-            if _synthetic_high_frequency > 1.2 * _reference_high_frequency
-            else "success"
-        )
-        _frequency_note = mo.callout(
-            "High-frequency power is within 20% of the reference."
-            if _frequency_kind == "success"
-            else "Synthetic high-frequency power exceeds the reference by more "
-            "than 20%; adjust patch width/overlap or IAAFT iterations and inspect "
-            "this channel before rollout.",
-            kind=_frequency_kind,
-        )
-        _figure, _axes = plt.subplots(1, 4, figsize=(15, 3.4))
-        _axes[0].hist(
-            _reference_values, bins=50, density=True, alpha=0.55, label="reference"
-        )
-        _axes[0].hist(
-            _synthetic_values, bins=50, density=True, alpha=0.55, label="synthetic"
-        )
-        _axes[0].set_title(f"Channel {_channel} distribution")
-        _axes[0].legend()
-        _axes[1].imshow(_reference_display, cmap=_reference_cmap, origin="lower")
-        _axes[1].set_title("Measured circular reference")
-        _axes[2].imshow(_reference_power, cmap="viridis", origin="lower")
-        _axes[2].set_title("Reference log power")
-        _axes[3].imshow(_synthetic_power, cmap="viridis", origin="lower")
-        _axes[3].set_title("Synthetic log power")
-        for _axis in _axes[1:]:
-            _axis.set_xticks([])
-            _axis.set_yticks([])
-        _figure.tight_layout()
-        _comparison = mo.vstack(
-            [
-                mo.md("### Reference-texture diagnostics"),
-                _figure,
-                mo.md(
-                    f"Reference mean/std: `{np.mean(_reference_values):.4f}` / "
-                    f"`{np.std(_reference_values):.4f}` · Synthetic mean/std: "
-                    f"`{np.mean(_synthetic_values):.4f}` / "
-                    f"`{np.std(_synthetic_values):.4f}`  \n"
-                    f"Power above 0.5 Nyquist — reference: "
-                    f"`{_reference_high_frequency:.3%}` · synthetic: "
-                    f"`{_synthetic_high_frequency:.3%}`"
-                ),
-                _frequency_note,
-            ]
-        )
-    _comparison
+            _reference_high_frequency = _high_frequency_fraction(_reference_filled)
+            _synthetic_high_frequency = _high_frequency_fraction(_synthetic_filled)
+            _frequency_kind = (
+                "warn"
+                if _synthetic_high_frequency > 1.2 * _reference_high_frequency
+                else "success"
+            )
+            _frequency_note = mo.callout(
+                "High-frequency power is within 20% of the reference."
+                if _frequency_kind == "success"
+                else "Synthetic high-frequency power exceeds the reference by more "
+                "than 20%; adjust patch width/overlap or IAAFT iterations and inspect "
+                "this channel before rollout.",
+                kind=_frequency_kind,
+            )
+            _figure, _axes = plt.subplots(1, 4, figsize=(15, 3.4))
+            _axes[0].hist(
+                _reference_values, bins=50, density=True, alpha=0.55, label="reference"
+            )
+            _axes[0].hist(
+                _synthetic_values, bins=50, density=True, alpha=0.55, label="synthetic"
+            )
+            _axes[0].set_title(f"Channel {_channel} distribution")
+            _axes[0].legend()
+            _axes[1].imshow(_reference_display, cmap=_reference_cmap, origin="lower")
+            _axes[1].set_title("Measured circular reference")
+            _axes[2].imshow(_reference_power, cmap="viridis", origin="lower")
+            _axes[2].set_title("Reference log power")
+            _axes[3].imshow(_synthetic_power, cmap="viridis", origin="lower")
+            _axes[3].set_title("Synthetic log power")
+            for _axis in _axes[1:]:
+                _axis.set_xticks([])
+                _axis.set_yticks([])
+            _figure.tight_layout()
+            _comparison = mo.vstack(
+                [
+                    _figure,
+                    mo.md(
+                        f"Reference mean/std: `{np.mean(_reference_values):.4f}` / "
+                        f"`{np.std(_reference_values):.4f}` · Synthetic mean/std: "
+                        f"`{np.mean(_synthetic_values):.4f}` / "
+                        f"`{np.std(_synthetic_values):.4f}`  \n"
+                        f"Power above 0.5 Nyquist — reference: "
+                        f"`{_reference_high_frequency:.3%}` · synthetic: "
+                        f"`{_synthetic_high_frequency:.3%}`"
+                    ),
+                    _frequency_note,
+                ]
+            )
+        plt.close("all")
+        return _comparison
+
+    # Drawn only when opened, so it does not slow down the sliders
+    mo.accordion({"Texture diagnostics: histograms and power spectra": mo.lazy(_render, show_loading_indicator=True)})
     return
 
 
@@ -1779,107 +1866,113 @@ def _(
     reference_measurement_names,
     reference_measurements,
     reference_support,
-    synthetic_full_initial_condition,
+    selected_mask,
     synthetic_measurements,
     texture_histogram_normalisation,
     texture_interior_fraction,
     texture_patch_candidates,
     texture_scale_patch_geometry,
 ):
-    if synthetic_measurements is None:
-        _full_measurement_output = mo.md(
-            "Select a measured-texture mode to inspect all measurement channels."
-        )
-    else:
-        _figure, _axes = plt.subplots(2, 7, figsize=(18, 5.4))
-        for _index, _axis in enumerate(_axes.flat):
-            _axis.imshow(
-                synthetic_full_initial_condition[_index],
-                cmap="magma",
-                origin="lower",
+    def _render():
+        if synthetic_measurements is None or binary_mask is None:
+            _full_measurement_output = mo.md(
+                "Select a measured-texture mode to inspect all measurement channels."
             )
-            _axis.set_title(reference_measurement_names[_index], fontsize=8)
-            _axis.set_xticks([])
-            _axis.set_yticks([])
-        _figure.suptitle("Synthetic 14-channel measurement tensor (duplicates retained)")
-        _figure.tight_layout()
+        else:
+            _full_initial_condition = synthetic_measurements * selected_mask[None]
+            _figure, _axes = plt.subplots(2, 7, figsize=(18, 5.4))
+            for _index, _axis in enumerate(_axes.flat):
+                _axis.imshow(
+                    _full_initial_condition[_index],
+                    cmap="magma",
+                    origin="lower",
+                )
+                _axis.set_title(reference_measurement_names[_index], fontsize=8)
+                _axis.set_xticks([])
+                _axis.set_yticks([])
+            _figure.suptitle("Synthetic 14-channel measurement tensor (duplicates retained)")
+            _figure.tight_layout()
 
-        _reference_correlation = np.full((14, 14), np.nan, dtype=np.float32)
-        _synthetic_correlation = np.full((14, 14), np.nan, dtype=np.float32)
-        for _group in reference_measurement_groups:
-            _indices = np.asarray(_group, dtype=int)
-            _reference_group = reference_measurements[_indices][:, reference_support]
-            _synthetic_group = synthetic_measurements[_indices][:, binary_mask]
-            _reference_correlation[np.ix_(_indices, _indices)] = np.corrcoef(
-                _reference_group
-            )
-            _synthetic_correlation[np.ix_(_indices, _indices)] = np.corrcoef(
-                _synthetic_group
-            )
-        _correlation_figure, _correlation_axes = plt.subplots(1, 3, figsize=(13, 3.8))
-        _correlation_images = (
-            (_reference_correlation, "Co-measured reference correlation", "coolwarm", -1, 1),
-            (_synthetic_correlation, "Synthetic correlation", "coolwarm", -1, 1),
-            (
-                _synthetic_correlation - _reference_correlation,
-                "Synthetic − reference",
-                "coolwarm",
-                -0.5,
-                0.5,
-            ),
-        )
-        for _axis, (_matrix, _title, _cmap, _minimum, _maximum) in zip(
-            _correlation_axes, _correlation_images
-        ):
-            _artist = _axis.imshow(
-                _matrix, cmap=_cmap, vmin=_minimum, vmax=_maximum
-            )
-            _axis.set_title(_title, fontsize=9)
-            _axis.set_xlabel("Measurement channel")
-            _axis.set_ylabel("Measurement channel")
-            _correlation_figure.colorbar(_artist, ax=_axis, fraction=0.046)
-        _correlation_figure.tight_layout()
-        _patch_note = (
-            f" Effective patch width: **{effective_patch_size} px**; every source "
-            f"patch lies within the central **{texture_interior_fraction.value:.0%}** "
-            f"of the reference radius. Effective overlap: "
-            f"**{effective_patch_overlap} px**; effective placement jitter: "
-            f"**±{effective_patch_jitter} px** (capped by overlap to prevent gaps); "
-            f"**{texture_patch_candidates.value}** candidates per placement. "
-            f"Resolution scaling is **{'enabled' if texture_scale_patch_geometry.value else 'disabled'}**."
-            if profile_mode.value == "Multichannel patch resampling"
-            else ""
-        )
-        _normalisation_note = (
-            " Joint marginal-histogram/covariance normalisation is **enabled**."
-            if texture_histogram_normalisation.value
-            else " Joint marginal-histogram/covariance normalisation is **disabled**."
-        )
-        _full_measurement_output = mo.vstack(
-            [
-                mo.md(
-                    "### Full synthetic biological measurements\n\n"
-                    "Correlation blocks are shown only within genuinely co-measured "
-                    f"staining panels; cross-panel entries are intentionally blank.{_patch_note}  \n"
-                    f"{_normalisation_note}  \n"
-                    f"Full measurement initial condition shape: "
-                    f"`{synthetic_full_initial_condition.shape}`"
+            _reference_correlation = np.full((14, 14), np.nan, dtype=np.float32)
+            _synthetic_correlation = np.full((14, 14), np.nan, dtype=np.float32)
+            for _group in reference_measurement_groups:
+                _indices = np.asarray(_group, dtype=int)
+                _reference_group = reference_measurements[_indices][:, reference_support]
+                _synthetic_group = synthetic_measurements[_indices][:, binary_mask]
+                _reference_correlation[np.ix_(_indices, _indices)] = np.corrcoef(
+                    _reference_group
+                )
+                _synthetic_correlation[np.ix_(_indices, _indices)] = np.corrcoef(
+                    _synthetic_group
+                )
+            _correlation_figure, _correlation_axes = plt.subplots(1, 3, figsize=(13, 3.8))
+            _correlation_images = (
+                (_reference_correlation, "Co-measured reference correlation", "coolwarm", -1, 1),
+                (_synthetic_correlation, "Synthetic correlation", "coolwarm", -1, 1),
+                (
+                    _synthetic_correlation - _reference_correlation,
+                    "Synthetic − reference",
+                    "coolwarm",
+                    -0.5,
+                    0.5,
                 ),
-                _figure,
-                _correlation_figure,
-            ]
-        )
-    _full_measurement_output
+            )
+            for _axis, (_matrix, _title, _cmap, _minimum, _maximum) in zip(
+                _correlation_axes, _correlation_images
+            ):
+                _artist = _axis.imshow(
+                    _matrix, cmap=_cmap, vmin=_minimum, vmax=_maximum
+                )
+                _axis.set_title(_title, fontsize=9)
+                _axis.set_xlabel("Measurement channel")
+                _axis.set_ylabel("Measurement channel")
+                _correlation_figure.colorbar(_artist, ax=_axis, fraction=0.046)
+            _correlation_figure.tight_layout()
+            _patch_note = (
+                f" Effective patch width: **{effective_patch_size} px**; every source "
+                f"patch lies within the central **{texture_interior_fraction.value:.0%}** "
+                f"of the reference radius. Effective overlap: "
+                f"**{effective_patch_overlap} px**; effective placement jitter: "
+                f"**±{effective_patch_jitter} px** (capped by overlap to prevent gaps); "
+                f"**{texture_patch_candidates.value}** candidates per placement. "
+                f"Resolution scaling is **{'enabled' if texture_scale_patch_geometry.value else 'disabled'}**."
+                if profile_mode.value == "Multichannel patch resampling"
+                else ""
+            )
+            _normalisation_note = (
+                " Joint marginal-histogram/covariance normalisation is **enabled**."
+                if texture_histogram_normalisation.value
+                else " Joint marginal-histogram/covariance normalisation is **disabled**."
+            )
+            _full_measurement_output = mo.vstack(
+                [
+                    mo.md(
+                        "### Full synthetic biological measurements\n\n"
+                        "Correlation blocks are shown only within genuinely co-measured "
+                        f"staining panels; cross-panel entries are intentionally blank.{_patch_note}  \n"
+                        f"{_normalisation_note}  \n"
+                        f"Full measurement initial condition shape: "
+                        f"`{_full_initial_condition.shape}`"
+                    ),
+                    _figure,
+                    _correlation_figure,
+                ]
+            )
+        plt.close("all")
+        return _full_measurement_output
+
+    # Drawn only when opened, so it does not slow down the sliders
+    mo.accordion({"All measurement channels and correlations": mo.lazy(_render, show_loading_indicator=True)})
     return
 
 
 @app.cell(hide_code=True)
 def _(
-    base_synthetic_measurements,
     binary_mask,
     density_markers,
     density_reference,
     density_value,
+    placed_cells,
     reference_channel_names,
     reference_channels,
     reference_primary_measurements,
@@ -1887,50 +1980,57 @@ def _(
     synthetic_coverage,
     synthetic_initial_channels,
 ):
-    # The cell density texture against the measured reference colony
-    if density_reference is None or synthetic_coverage is None or synthetic_initial_channels is None:
-        _density_output = mo.md("- Pick **Cell density** above to compare it with the measured colony")
-    else:
-        _markers = [reference_channel_names.index(_m) for _m in density_markers.value]
-        _base_channels = base_synthetic_measurements[np.asarray(reference_primary_measurements)]
-        _reference_signal = np.max(reference_channels[_markers], axis=0)
-        _reference_cells, _ = measure_cell_coverage(reference_channels, reference_support, _markers)
-        _synthetic_signal = np.max(synthetic_initial_channels[_markers], axis=0)
-        _synthetic_cells, _ = measure_cell_coverage(synthetic_initial_channels, binary_mask, _markers)
-        _figure, _axes = plt.subplots(1, 5, figsize=(18, 3.6))
-        _panels = (
-            (np.where(reference_support, _reference_signal, np.nan), "Measured: cell markers"),
-            (np.where(reference_support, _reference_cells, np.nan), "Measured: cells (Otsu)"),
-            (np.where(binary_mask, np.max(_base_channels[_markers], axis=0), np.nan), "Synthetic: gaps filled"),
-            (np.where(binary_mask, synthetic_coverage, np.nan), "Synthetic: cell coverage"),
-            (np.where(binary_mask, _synthetic_signal, np.nan), "Synthetic: with gaps"),
-        )
-        _cmap = plt.get_cmap("magma").copy()
-        _cmap.set_bad(color="#d9d9d9")
-        for _axis, (_image, _title) in zip(_axes, _panels):
-            _axis.imshow(_image, cmap=_cmap, origin="lower", vmin=0.0, vmax=1.0)
-            _axis.set_title(_title, fontsize=9)
-            _axis.set_xticks([])
-            _axis.set_yticks([])
-        _figure.tight_layout()
+    def _render():
+        # The cell density texture against the measured reference colony
+        if density_reference is None or synthetic_coverage is None or synthetic_initial_channels is None:
+            _density_output = mo.md("- Pick **Cell density** above to compare it with the measured colony")
+        else:
+            _markers = [reference_channel_names.index(_m) for _m in density_markers.value]
+            _placed_channels = placed_cells["textures"][0][np.asarray(reference_primary_measurements)]
+            _reference_signal = np.max(reference_channels[_markers], axis=0)
+            _reference_cells, _ = measure_cell_coverage(reference_channels, reference_support, _markers)
+            _synthetic_signal = np.max(synthetic_initial_channels[_markers], axis=0)
+            _synthetic_cells, _ = measure_cell_coverage(synthetic_initial_channels, binary_mask, _markers)
+            _figure, _axes = plt.subplots(1, 5, figsize=(18, 3.6))
+            _panels = (
+                (np.where(reference_support, _reference_signal, np.nan), "Measured: cell markers"),
+                (np.where(reference_support, _reference_cells, np.nan), "Measured: cells (Otsu)"),
+                (np.where(binary_mask, np.max(_placed_channels[_markers], axis=0), np.nan), "Synthetic: layer 0, all cells"),
+                (np.where(binary_mask, synthetic_coverage, np.nan), "Synthetic: cell coverage"),
+                (np.where(binary_mask, _synthetic_signal, np.nan), "Synthetic: cells kept"),
+            )
+            _cmap = plt.get_cmap("magma").copy()
+            _cmap.set_bad(color="#d9d9d9")
+            for _axis, (_image, _title) in zip(_axes, _panels):
+                _axis.imshow(_image, cmap=_cmap, origin="lower", vmin=0.0, vmax=1.0)
+                _axis.set_title(_title, fontsize=9)
+                _axis.set_xticks([])
+                _axis.set_yticks([])
+            _figure.tight_layout()
 
-        def _cell_brightness(_signal, _cells):
-            return float(np.mean(_signal[_cells])) if np.any(_cells) else float("nan")
+            def _cell_brightness(_signal, _cells):
+                return float(np.mean(_signal[_cells])) if np.any(_cells) else float("nan")
 
-        _density_output = mo.vstack([
-            mo.md("### Cell density diagnostics"),
-            _figure,
-            mo.md(
-                f"- Covered share, measured colony: {float(np.mean(_reference_cells[reference_support])):.3f} "
-                f"(all loaded colonies: {density_reference['density']:.3f})\n"
-                f"- Covered share, synthetic: {float(density_value.value):.3f} set, "
-                f"{float(np.mean(synthetic_coverage[binary_mask])):.3f} drawn, "
-                f"{float(np.mean(_synthetic_cells[binary_mask])):.3f} measured (Otsu)\n"
-                f"- Marker level in cells: measured {_cell_brightness(_reference_signal, _reference_cells):.3f}, "
-                f"synthetic {_cell_brightness(_synthetic_signal, _synthetic_cells):.3f}"
-            ),
-        ])
-    _density_output
+            _density_output = mo.vstack([
+                _figure,
+                mo.md(
+                    f"- Covered share, measured colony: {float(np.mean(_reference_cells[reference_support])):.3f} "
+                    f"(all loaded colonies: {density_reference['density']:.3f})\n"
+                    f"- Covered share, synthetic: {float(density_value.value):.3f} set, "
+                    f"{float(np.mean(synthetic_coverage[binary_mask])):.3f} drawn, "
+                    f"{float(np.mean(_synthetic_cells[binary_mask])):.3f} measured (Otsu)\n"
+                    f"- Whole cells cut out: {sum(len(_cells) for _, _cells in density_reference['panels'])} "
+                    f"over {len(density_reference['panels'])} panels; layers cover "
+                    f"{', '.join(f'{_c:.3f}' for _c in placed_cells['layer_coverage'])} of the grid\n"
+                    f"- Marker level in cells: measured {_cell_brightness(_reference_signal, _reference_cells):.3f}, "
+                    f"synthetic {_cell_brightness(_synthetic_signal, _synthetic_cells):.3f}"
+                ),
+            ])
+        plt.close("all")
+        return _density_output
+
+    # Drawn only when opened, so it does not slow down the sliders
+    mo.accordion({"Cell density diagnostics": mo.lazy(_render, show_loading_indicator=True)})
     return
 
 
@@ -2271,6 +2371,8 @@ def _(
                 _state[:_n_biological] = _biology
                 if _boundary_mode == "soft":
                     _state[-_boundary.shape[0]:] = _boundary
+                elif _boundary_mode == "uniform":
+                    _state[-_boundary.shape[0]:] = 1.0
                 return jnp.asarray(_state)
 
             _steps_per_12h = int(_bundle.config.run.t)
@@ -2382,7 +2484,6 @@ def _(rollout_comparison, rollout_display_channels):
             *_figures,
         ])
     _output
-    plt.show()
     return
 
 

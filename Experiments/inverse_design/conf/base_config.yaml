@@ -95,17 +95,29 @@ inverse_design:
     normalise: false
     normalise_iterations: 4
 
-  # Cell density: the share of the colony covered by cells. Cells keep their
-  # brightness; the gaps between them grow or shrink.
+  # Cell density: the share of the colony covered by cells. Textures are
+  # whole cells cut out of the training colonies and placed at random; the
+  # density sets how many are kept, and so the space between them.
   density:
-    # none: textures keep the reference colonies' own gaps; fixed: gaps for
-    # the density `initial`; optimise: learn the density with the shape
+    # none: patch textures that keep the reference colonies' own gaps;
+    # fixed: cells for the density `initial`; optimise: learn the density
+    # with the shape. With fixed or optimise, only texture.bank_size is used.
     mode: none
     # null: the mean covered fraction of the training colonies
     initial: null
     # Generic cell markers that tell cells from gaps
     markers: [LMBR, SOX2]
-    # Sharpness of the cell/gap edge (standard deviations of the random field)
-    edge_width: 0.1
+    # Cells are split at marker maxima at least this many pixels apart (0: not split)
+    split_distance: 2
+    # Smaller cells (pixels) are dropped
+    min_cell_area: 2
+    # Cells are only taken from within this fraction of the colony radius
+    interior_fraction: 0.8
+    # Layers of non-overlapping cells; later layers fill the space between cells
+    layers: 2
+    # Random places tried per cell that would fit in the grid
+    attempts: 10
+    # Share of a layer's cells faded at the density cut (gives the density a gradient)
+    softness: 0.02
     # Circles also scored at these multiples of the starting density
     baselines: [0.5, 0.75, 1.25]

@@ -107,6 +107,8 @@ def _apply_boundary(state, boundary_mask, boundary_mode):
         )
     if boundary_mode == "soft":
         return state.at[-boundary_mask.shape[0]:].set(boundary_mask)
+    if boundary_mode == "uniform":
+        return state.at[-boundary_mask.shape[0]:].set(1.0)
     raise ValueError(f"Unknown boundary mode {boundary_mode!r}")
 
 

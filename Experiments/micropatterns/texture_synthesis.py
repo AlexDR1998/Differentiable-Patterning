@@ -4,9 +4,9 @@ Builds synthetic 0 h biology for a new colony geometry from a measured
 circular reference colony. Used by ``boundary_mask_explorer.py`` and
 ``drawn_mask_explorer.py``. NumPy and SciPy only.
 
-The cell density helpers at the end split a colony into where cells are
-(``cell_coverage``) and what they look like with the gaps filled in
-(``filled_reference``), for the cell density texture model in
+The cell density helpers at the end cut whole cells out of measured
+colonies (``cell_coverage``, ``segment_cells``) and place them at random
+over a new grid (``place_cells``), for the cell density texture model in
 ``NCA/inverse_design/density.py``.
 """
 
@@ -29,6 +29,18 @@ def resize_image(image, output_shape):
          for _column in range(_rows.shape[1])],
         axis=1,
     )
+
+
+def evenly_spaced_quantiles(samples, count):
+    """``count`` quantiles of ``samples`` from 0 to 1, as ``np.quantile`` gives them.
+
+    Sorting once and interpolating is much faster than ``np.quantile`` with
+    thousands of quantile levels.
+    """
+
+    _sorted = np.sort(np.asarray(samples).ravel())
+    _positions = np.linspace(0.0, 1.0, int(count)) * (_sorted.size - 1)
+    return np.interp(_positions, np.arange(_sorted.size), _sorted).astype(np.float32)
 
 
 def extend_masked_texture(image, mask):
@@ -95,10 +107,7 @@ def synthesise_reference_texture(
             * np.exp(1j * (np.angle(_target_fft) + _shared_phase)),
             s=output_shape,
         )
-        _quantiles = np.quantile(
-            _samples,
-            np.linspace(0.0, 1.0, _current.size, dtype=np.float32),
-        )
+        _quantiles = evenly_spaced_quantiles(_samples, _current.size)
         for _ in range(max(int(iterations), 0)):
             _current_fft = np.fft.rfft2(_current)
             _spectral_projection = np.fft.irfft2(
@@ -112,10 +121,7 @@ def synthesise_reference_texture(
         # Enforce the empirical distribution where cells actually exist.
         _inside_count = np.count_nonzero(_target_inside)
         if _inside_count:
-            _inside_quantiles = np.quantile(
-                _samples,
-                np.linspace(0.0, 1.0, _inside_count, dtype=np.float32),
-            )
+            _inside_quantiles = evenly_spaced_quantiles(_samples, _inside_count)
             _inside_values = _current[_target_inside]
             _inside_order = np.argsort(_inside_values)
             _ranked = np.empty_like(_inside_values, dtype=np.float32)
@@ -300,10 +306,7 @@ def normalise_histograms_and_covariance(
     def _quantile_project(values, targets):
         _projected = np.empty_like(values, dtype=np.float32)
         for _channel in range(values.shape[0]):
-            _quantiles = np.quantile(
-                targets[_channel],
-                np.linspace(0.0, 1.0, values.shape[1], dtype=np.float32),
-            )
+            _quantiles = evenly_spaced_quantiles(targets[_channel], values.shape[1])
             _order = np.argsort(values[_channel])
             _projected[_channel, _order] = _quantiles
         return _projected
@@ -371,51 +374,122 @@ def cell_coverage(measurements, support, marker_indices):
     return (signal > threshold) & support, threshold
 
 
-def filled_reference(measurements, support, coverage):
-    """The colony with the gaps between cells filled in, and the gap values.
+def interior_mask(support, fraction):
+    """Pixels of ``support`` within ``fraction`` of its largest radius from its centre."""
 
-    Each channel's gaps inside ``support`` are filled from the surrounding
-    cells by ``extend_masked_texture``; pixels outside the colony stay as
-    they were. Returns the filled ``[C, H, W]`` and each channel's median
-    over the gaps ``[C]`` (0 when there are no gaps).
+    support = np.asarray(support, dtype=bool)
+    coordinates = np.argwhere(support)
+    centre_y, centre_x = np.mean(coordinates, axis=0)
+    grid_y, grid_x = np.indices(support.shape)
+    distance = np.hypot(grid_y - centre_y, grid_x - centre_x)
+    return support & (distance <= float(fraction) * np.max(distance[support]))
+
+
+def segment_cells(measurements, support, coverage, signal, split_distance, interior_fraction, min_area):
+    """Whole cells of one colony, as a list of ``(mask [h, w], values [C, h, w])``.
+
+    Covered pixels (``coverage``) are split into cells by a watershed of the
+    marker ``signal`` ``[H, W]``, started from its local maxima at least
+    ``split_distance`` pixels apart (0: each connected patch of covered
+    pixels is one cell). Only cells that lie wholly within
+    ``interior_fraction`` of the colony radius (away from edge artefacts)
+    and have at least ``min_area`` pixels are kept. ``values`` are the
+    cell's bounding box of ``measurements`` ``[C, H, W]``.
     """
 
+    from skimage.feature import peak_local_max
+    from skimage.segmentation import watershed
+
+    coverage = np.asarray(coverage, dtype=bool) & np.asarray(support, dtype=bool)
+    patches, count = ndi.label(coverage)
+    if split_distance > 0 and count:
+        seeds = np.zeros_like(patches)
+        peaks = peak_local_max(
+            np.asarray(signal, dtype=np.float32), min_distance=int(split_distance),
+            labels=patches, exclude_border=False,
+        )
+        seeds[tuple(peaks.T)] = np.arange(1, len(peaks) + 1)
+        # Patches without a maximum (flat ones) start from their brightest pixel
+        seeded = set(np.unique(patches[seeds > 0]))
+        for patch in range(1, count + 1):
+            if patch not in seeded:
+                pixels = np.argwhere(patches == patch)
+                brightest = pixels[np.argmax(signal[tuple(pixels.T)])]
+                seeds[tuple(brightest)] = seeds.max() + 1
+        labels = watershed(-np.asarray(signal, dtype=np.float32), seeds, mask=coverage)
+    else:
+        labels = patches
+    outside = ~interior_mask(support, interior_fraction)
     measurements = np.asarray(measurements, dtype=np.float32)
-    support = np.asarray(support, dtype=bool)
-    coverage = np.asarray(coverage, dtype=bool) & support
-    gaps = support & ~coverage
-    if not np.any(coverage):
-        raise ValueError("No pixel of the colony is covered by cells")
-    filled = measurements.copy()
-    gap_values = np.zeros(len(measurements), dtype=np.float32)
-    for index, channel in enumerate(measurements):
-        if np.any(gaps):
-            gap_values[index] = np.median(channel[gaps])
-            extended = extend_masked_texture(channel, coverage)
-            filled[index][gaps] = extended[gaps]
-    return filled, gap_values
+    cells = []
+    for label, box in enumerate(ndi.find_objects(labels), start=1):
+        if box is None:
+            continue
+        mask = labels[box] == label
+        if np.count_nonzero(mask) < min_area or np.any(outside[box] & mask):
+            continue
+        cells.append((mask, measurements[(slice(None), *box)].copy()))
+    return cells
 
 
-def coverage_spectrum(coverage, support, output_shape):
-    """Amplitude spectrum ``[H, W // 2 + 1]`` of a colony's cell/gap pattern on ``output_shape``.
+def _turned(image, turns, flip):
+    image = np.rot90(image, turns, axes=(-2, -1))
+    return image[..., ::-1] if flip else image
 
-    The coverage, less its mean, is smoothly continued outside the colony
-    and centred in a zero grid of ``output_shape`` (cropped if smaller), so
-    gaps keep their size in pixels. The mean (zero frequency) is set to 0.
+
+def place_cells(panels, channel_count, output_shape, layers, attempts, seed):
+    """Whole measured cells at random places, in ``layers`` independent layers.
+
+    ``panels`` holds, for each staining panel, ``(channel indices, cells)``
+    with cells from ``segment_cells`` (values in that panel's channels).
+    Each layer is filled by trying random places in turn: at each place
+    every panel draws one of its cells, randomly turned and flipped, centred
+    on the place. They are added if all fit in the grid and none overlaps a
+    cell of that panel already in the layer, so cells are never cut. About
+    ``attempts`` places are tried per cell that would fit in the grid. Each
+    added place gets a random rank in [0, 1), shared by its panels.
+
+    Returns ``textures`` ``[layers, channel_count, H, W]`` (the cells'
+    values, 0 elsewhere), ``ranks`` ``[layers, panels, H, W]`` (the rank of
+    the cell on each pixel, -1 where there is none) and ``coverage``
+    ``[layers]``, the share of the grid each layer covers (a band at the
+    grid edge as wide as half the largest cell is left out, since cells
+    there would not fit).
     """
 
-    support = np.asarray(support, dtype=bool)
-    coverage = np.asarray(coverage, dtype=np.float32)
-    centred = coverage - np.mean(coverage[support])
-    extended = extend_masked_texture(np.where(support, centred, 0.0), support)
-    placed = np.zeros(output_shape, dtype=np.float32)
-    source, target = [], []
-    for size, out in zip(extended.shape, output_shape):
-        length = min(size, out)
-        start_in, start_out = (size - length) // 2, (out - length) // 2
-        source.append(slice(start_in, start_in + length))
-        target.append(slice(start_out, start_out + length))
-    placed[tuple(target)] = extended[tuple(source)]
-    amplitude = np.abs(np.fft.rfft2(placed))
-    amplitude[0, 0] = 0.0
-    return amplitude.astype(np.float32)
+    rng = np.random.default_rng(seed)
+    height, width = output_shape
+    if not panels or any(not cells for _, cells in panels):
+        raise ValueError("Every panel needs at least one cell")
+    mean_area = np.mean([np.mean([mask.sum() for mask, _ in cells]) for _, cells in panels])
+    tries = int(np.ceil(attempts * height * width / mean_area))
+    textures = np.zeros((layers, channel_count, height, width), dtype=np.float32)
+    ranks = np.full((layers, len(panels), height, width), -1.0, dtype=np.float32)
+    for layer in range(layers):
+        for _ in range(tries):
+            centre = rng.integers(0, height), rng.integers(0, width)
+            drawn = []
+            for panel, (_, cells) in enumerate(panels):
+                mask, values = cells[rng.integers(len(cells))]
+                turns, flip = int(rng.integers(4)), bool(rng.integers(2))
+                mask, values = _turned(mask, turns, flip), _turned(values, turns, flip)
+                top = centre[0] - mask.shape[0] // 2
+                left = centre[1] - mask.shape[1] // 2
+                if top < 0 or left < 0 or top + mask.shape[0] > height or left + mask.shape[1] > width:
+                    break
+                box = (slice(top, top + mask.shape[0]), slice(left, left + mask.shape[1]))
+                if np.any(ranks[(layer, panel, *box)][mask] >= 0):
+                    break
+                drawn.append((panel, box, mask, values))
+            else:
+                rank = rng.random()
+                for panel, box, mask, values in drawn:
+                    indices = np.asarray(panels[panel][0], dtype=int)
+                    region = textures[(layer, slice(None), *box)]
+                    region[indices] = np.where(mask, values, region[indices])
+                    ranks[(layer, panel, *box)][mask] = rank
+    margin = max(max(mask.shape) for _, cells in panels for mask, _ in cells) // 2
+    margin = min(margin, (min(height, width) - 1) // 2)
+    inner = (slice(None), slice(None), slice(margin, height - margin), slice(margin, width - margin))
+    coverage = np.mean(ranks[inner] >= 0, axis=(1, 2, 3))
+    return textures, ranks, coverage.astype(np.float32)

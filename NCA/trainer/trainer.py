@@ -19,7 +19,7 @@ from NCA.trainer.logging.kan_wandb_log import (
 )
 from NCA.trainer.context import TrainerContext
 from einops import repeat, rearrange
-from Common.model.boundary import model_boundary, hard_boundary, no_boundary
+from Common.model.boundary import build_boundary_callback, no_boundary
 
 
 def describe_batch_shapes(value):
@@ -116,12 +116,9 @@ class NcaTrainer:
 		self.boundary_callbacks = []
 		for b in range(self.batch_count):
 			if boundary_mask is not None:
-				if trainer_config.boundary_mode == "soft":
-					self.boundary_callbacks.append(model_boundary(boundary_mask[b]))
-				elif trainer_config.boundary_mode == "hard":
-					self.boundary_callbacks.append(hard_boundary(boundary_mask[b]))
-				else:
-					raise ValueError("trainer.boundary_mode must be 'soft' or 'hard'")
+				self.boundary_callbacks.append(
+					build_boundary_callback(trainer_config.boundary_mode, boundary_mask[b])
+				)
 			else:
 				self.boundary_callbacks.append(no_boundary())
 		

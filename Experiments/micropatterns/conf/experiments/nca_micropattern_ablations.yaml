@@ -1,0 +1,245 @@
+experiment_name: nca_micropattern_ablations_v1
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/nca_micropattern_ablations
+seed_mode: index
+
+# One-at-a-time ablations around a reference regime:
+#   gNCA, downsample 8 (run.t 256), slice projection, soft adhesion mask,
+#   2 training + 2 validation replicates, control data (no knockout),
+#   16000 iterations, texture + radial loss with the reverse cosine
+#   curriculum (texture first, radial later).
+# Each labels.ablation value below is one condition. "baseline" is the
+# reference; every other value has a branch that changes only its own keys.
+#
+# Total jobs: 22 conditions * 2 replicate splits * 2 repeats = 88.
+grid:
+  labels.ablation:
+    - baseline
+    # Loss components
+    - loss_texture_only
+    - loss_radial_only
+    - loss_l2_not_radial
+    - loss_add_l2
+    - loss_add_summary
+    # Curricula
+    - curriculum_static
+    - curriculum_macro_first
+    - curriculum_reinjection_decay
+    # Model
+    - model_nca
+    # Spatial resolution (convective scaling: t = 256 * 8 / downsample)
+    - downsample_16
+    - downsample_32
+    # Adhesion mask
+    - mask_uniform
+    # Regularisers
+    - no_intermediate_state_reg
+    - no_boundary_reg
+    - no_regularisers
+    # Number of training replicates (experiments)
+    - train_replicates_1
+    - train_replicates_3
+    - train_replicates_4
+    # Projections
+    - projection_max
+    - projection_sum
+  run.repeat: [0,1]
+
+  labels.gpu: [H200]
+  labels.scaling: [convective]
+  system.precision: [bfloat16]
+  logging.wandb.project: [nca_micropattern_ablations]
+
+  model.family: [gNCA]
+  model.channels: [48]
+
+  data.dataset: [micropatterns_260726]
+  data.micropattern.task: [micropattern_multi_replicate]
+  data.micropattern.data_channels: [13]  # 14 minus cell_fate_s2/SOX17 (excluded in base_config)
+  data.micropattern.experiment_groups:
+    - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+  data.micropattern.pool_copies: [1]
+  data.micropattern.projection: [slice]
+  data.micropattern.cleaning.horizontal_stripe_widths: [{}]
+  data.micropattern.cleaning.stripe_block: [0]
+  data.micropattern.intermediate_reinjection_probability: [0.5]
+  data.micropattern.intermediate_reinjection_probability_end: [0.5]
+  data.micropattern.intermediate_reinjection_decay_start_fraction: [0.25]
+  data.knockout.mode: [null]
+  data.knockout.time: [null]
+  data.knockout.curriculum: [null]
+
+  data.downsample: [8]
+  run.t: [256]
+  trainer.loop_autodiff: [lax]
+  trainer.boundary_mode: [soft]
+
+  run.iterations: [16000]
+  run.write_videos: [false]
+  trainer.log_every: [200]
+  trainer.validation_every: [500]
+  trainer.validation_rollout: [true]
+
+  optimiser.learn_rate: [1e-4]
+  optimiser.type: [nadam]
+  optimiser.gradient_clip_norm: [1.0]
+
+  loss.regularisers.intermediate_state: [1.0]
+  loss.regularisers.boundary: [5.0]
+
+  loss.terms: [multi_target]
+  loss.terms.0.random_channel_shuffle: [true]
+  loss.terms.0.multi_target_weights:
+    - {l2: 0.0, texture: 1.0, channel_mean: 0.0, correlation: 0.0, radial: 1.0}
+  # Reverse cosine curriculum: texture first, radial structure later.
+  loss.schedule_label: [cos_reverse]
+  loss.terms.0.multi_target_schedules.l2:
+    - {type: cosine, initial_factor: 0.05, final_factor: 1.0, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+  loss.terms.0.multi_target_schedules.texture:
+    - {type: cosine, initial_factor: 1.0, final_factor: 0.25, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+  loss.terms.0.multi_target_schedules.channel_mean:
+    - {type: cosine, initial_factor: 0.05, final_factor: 1.0, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+  loss.terms.0.multi_target_schedules.correlation:
+    - {type: cosine, initial_factor: 0.05, final_factor: 1.0, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+  loss.terms.0.multi_target_schedules.radial:
+    - {type: cosine, initial_factor: 0.05, final_factor: 1.0, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+
+groups:
+  # Train on each two-replicate partition and validate on its complement.
+  - data.batches: [2, 2]
+    data.micropattern.train_replicates:
+      - [1, 2]
+      - [3, 4]
+    data.micropattern.validation_replicates:
+      - [3, 4]
+      - [1, 2]
+
+branches:
+  # Loss components (the curriculum stays as in the baseline)
+  - when: {labels.ablation: loss_texture_only}
+    grid:
+      loss.terms.0.multi_target_weights:
+        - {l2: 0.0, texture: 1.0, channel_mean: 0.0, correlation: 0.0, radial: 0.0}
+  - when: {labels.ablation: loss_radial_only}
+    grid:
+      loss.terms.0.multi_target_weights:
+        - {l2: 0.0, texture: 0.0, channel_mean: 0.0, correlation: 0.0, radial: 1.0}
+  - when: {labels.ablation: loss_l2_not_radial}
+    grid:
+      loss.terms.0.multi_target_weights:
+        - {l2: 1.0, texture: 1.0, channel_mean: 0.0, correlation: 0.0, radial: 0.0}
+  - when: {labels.ablation: loss_add_l2}
+    grid:
+      loss.terms.0.multi_target_weights:
+        - {l2: 1.0, texture: 1.0, channel_mean: 0.0, correlation: 0.0, radial: 1.0}
+  - when: {labels.ablation: loss_add_summary}
+    grid:
+      loss.terms.0.multi_target_weights:
+        - {l2: 0.0, texture: 1.0, channel_mean: 1.0, correlation: 1.0, radial: 1.0}
+
+  # Curricula
+  - when: {labels.ablation: curriculum_static}
+    grid:
+      loss.schedule_label: [static]
+      loss.terms.0.multi_target_schedules.l2: [{type: constant}]
+      loss.terms.0.multi_target_schedules.texture: [{type: constant}]
+      loss.terms.0.multi_target_schedules.channel_mean: [{type: constant}]
+      loss.terms.0.multi_target_schedules.correlation: [{type: constant}]
+      loss.terms.0.multi_target_schedules.radial: [{type: constant}]
+  - when: {labels.ablation: curriculum_macro_first}
+    grid:
+      loss.schedule_label: [cos_macro]
+      loss.terms.0.multi_target_schedules.l2:
+        - {type: cosine, initial_factor: 1.0, final_factor: 0.25, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+      loss.terms.0.multi_target_schedules.texture:
+        - {type: cosine, initial_factor: 0.05, final_factor: 1.0, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+      loss.terms.0.multi_target_schedules.channel_mean:
+        - {type: cosine, initial_factor: 1.0, final_factor: 0.25, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+      loss.terms.0.multi_target_schedules.correlation:
+        - {type: cosine, initial_factor: 1.0, final_factor: 0.25, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+      loss.terms.0.multi_target_schedules.radial:
+        - {type: cosine, initial_factor: 1.0, final_factor: 0.25, start_fraction: 0.30, end_fraction: 0.75, stages: 8}
+  # Intermediate timepoints always reinjected at first, then never.
+  - when: {labels.ablation: curriculum_reinjection_decay}
+    grid:
+      data.micropattern.intermediate_reinjection_probability: [1.0]
+      data.micropattern.intermediate_reinjection_probability_end: [0.0]
+      data.micropattern.intermediate_reinjection_decay_start_fraction: [0.01]
+
+  # Model
+  - when: {labels.ablation: model_nca}
+    grid:
+      model.family: [NCA]
+
+  # Spatial resolution
+  - when: {labels.ablation: downsample_4}
+    grid:
+      data.downsample: [4]
+      run.t: [512]
+      trainer.loop_autodiff: [checkpointed]
+  - when: {labels.ablation: downsample_16}
+    grid:
+      data.downsample: [16]
+      run.t: [128]
+  - when: {labels.ablation: downsample_32}
+    grid:
+      data.downsample: [32]
+      run.t: [64]
+
+  # Adhesion mask: the model's mask channel is 1 everywhere, so it gets no
+  # colony geometry. Losses and metrics still use the colony mask; the
+  # boundary regulariser has nothing outside the mask to penalise.
+  - when: {labels.ablation: mask_uniform}
+    grid:
+      trainer.boundary_mode: [uniform]
+
+  # Regularisers
+  - when: {labels.ablation: no_intermediate_state_reg}
+    grid:
+      loss.regularisers.intermediate_state: [0.0]
+  - when: {labels.ablation: no_boundary_reg}
+    grid:
+      loss.regularisers.boundary: [0.0]
+  - when: {labels.ablation: no_regularisers}
+    grid:
+      loss.regularisers.intermediate_state: [0.0]
+      loss.regularisers.boundary: [0.0]
+
+  # Number of training replicates. Each baseline split (train 1,2 / train
+  # 3,4) keeps its validation set where it can. Three replicates leave one for
+  # validation (no replicate-variation metrics); four leave none, so both
+  # splits are the same run with different seeds.
+  - when: {labels.ablation: train_replicates_1, data.micropattern.train_replicates: [1, 2]}
+    grid:
+      data.batches: [1]
+      data.micropattern.train_replicates: [[1]]
+  - when: {labels.ablation: train_replicates_1, data.micropattern.train_replicates: [3, 4]}
+    grid:
+      data.batches: [1]
+      data.micropattern.train_replicates: [[3]]
+  - when: {labels.ablation: train_replicates_3, data.micropattern.train_replicates: [1, 2]}
+    grid:
+      data.batches: [3]
+      data.micropattern.train_replicates: [[1, 2, 3]]
+      data.micropattern.validation_replicates: [[4]]
+  - when: {labels.ablation: train_replicates_3, data.micropattern.train_replicates: [3, 4]}
+    grid:
+      data.batches: [3]
+      data.micropattern.train_replicates: [[1, 3, 4]]
+      data.micropattern.validation_replicates: [[2]]
+  - when: {labels.ablation: train_replicates_4}
+    grid:
+      data.batches: [4]
+      data.micropattern.train_replicates: [[1, 2, 3, 4]]
+      data.micropattern.validation_replicates: [null]
+
+  # Projections (sum needs the TBXT stitching seams removed)
+  - when: {labels.ablation: projection_max}
+    grid:
+      data.micropattern.projection: [max]
+  - when: {labels.ablation: projection_sum}
+    grid:
+      data.micropattern.projection: [sum]
+      data.micropattern.cleaning.horizontal_stripe_widths:
+        - {cell_fate_s1/TBXT: 10, cell_fate_s2/TBXT: 10}
+      data.micropattern.cleaning.stripe_block: [270]

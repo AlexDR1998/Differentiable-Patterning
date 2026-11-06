@@ -11,8 +11,9 @@ to the model bundles it used:
                         cell-type shares, evaluation history, provenance
         states.npz      masks and final states of the baselines and the best
                         geometry, the mask at each evaluation, the textures
-                        (and with the cell density model, the gap values and
-                        spectrum)
+                        (with the cell density model, packed cell textures
+                        as in NCA/inverse_design/density.py, and the gap
+                        values, panel of each channel and layer coverage)
 
 Records are never edited once written. They are not indexed by the registry.
 """
@@ -146,7 +147,7 @@ def publish_inverse_design_record(
     """Write a finished run as a new record in ``<store_root>/inverse_design/``.
 
     ``baselines`` maps a name to ``(geometry, BinaryEvaluation)``. ``gaps``
-    (``CellGaps``) and ``coverage_rows`` (from ``fill_reference_gaps``) are
+    (``CellGaps``) and ``coverage_rows`` (from ``cell_library``) are
     given with the cell density model; ``texture_settings`` are the texture
     settings used (``optimise.texture_summary``). The files are written to a hidden
     folder that is renamed into place at the end.
@@ -197,7 +198,8 @@ def publish_inverse_design_record(
                 "mode": cfg.inverse_design.density.mode,
                 "best": _density(result.best_density),
                 "final": _density(result.density),
-                "edge_width": float(gaps.edge_width),
+                "softness": float(gaps.softness),
+                "layer_coverage": [float(value) for value in np.asarray(gaps.layer_coverage)],
                 "training_colonies": coverage_rows,
             },
             "best_iteration": int(result.best_iteration),
@@ -221,7 +223,8 @@ def publish_inverse_design_record(
         _write_yaml(staging / "summary.yaml", summary)
         density_arrays = {} if gaps is None else {
             "gap_values": np.asarray(gaps.gap_values),
-            "gap_amplitude": np.asarray(gaps.amplitude),
+            "channel_panels": np.asarray(gaps.channel_panels),
+            "layer_coverage": np.asarray(gaps.layer_coverage),
         }
         np.savez_compressed(
             staging / STATES_FILE,

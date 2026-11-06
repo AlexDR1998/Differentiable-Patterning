@@ -40,8 +40,8 @@ class TrainerConfig(ConfigValue):
     pool_admission: PoolAdmissionConfig = field(default_factory=PoolAdmissionConfig)
 
     def __post_init__(self):
-        if self.boundary_mode not in {"soft", "hard"}:
-            raise ValueError("trainer.boundary_mode must be 'soft' or 'hard'")
+        if self.boundary_mode not in {"soft", "uniform", "hard"}:
+            raise ValueError("trainer.boundary_mode must be 'soft', 'uniform' or 'hard'")
         if self.loop_autodiff not in {"checkpointed", "lax"}:
             raise ValueError("trainer.loop_autodiff must be 'checkpointed' or 'lax'")
         if self.log_every < 1:

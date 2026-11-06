@@ -68,8 +68,9 @@ class OptimisationConfig:
 
 
 def _initial_state(model, occupancy, biology, key, config, gaps=None, density=None):
-    """Masked texture, hidden channels and noise. With ``density``, the
-    texture first gets gaps between cells (``CellGaps.apply``)."""
+    """Masked texture, hidden channels and noise. With ``density``, ``biology``
+    is a packed cell texture whose cells are first chosen for that density
+    (``CellGaps.apply``)."""
 
     if density is not None:
         key, coverage_key = jax.random.split(key)
@@ -168,9 +169,10 @@ def evaluate_binary(
     """Roll the model out ``config.evaluation_seeds`` times on the binary mask.
 
     Rollout ``i`` starts from texture ``i mod K`` of ``biology_bank``
-    ``[K, C, H, W]``, with gaps between cells for ``density`` if given.
-    Pass the same ``key`` to compare geometries (and densities) on the same
-    textures, gap patterns, noise and NCA updates.
+    ``[K, C, H, W]`` (with ``density``, packed cell textures ``pack_cells``,
+    with cells kept for that density). Pass the same ``key`` to compare
+    geometries (and densities) on the same textures, cell choices, noise and
+    NCA updates.
     """
 
     _check_density(gaps, density)
@@ -241,9 +243,10 @@ def optimise_geometry(
 
     ``biology_bank`` ``[K, C, H, W]`` holds initial textures over the whole
     grid; each iteration draws ``config.batch_size`` of them with new noise
-    and NCA keys. With ``gaps`` and ``density`` the textures are the filled
-    ones of ``fill_reference_gaps`` and get new gap patterns each iteration;
-    ``config.optimise_density`` says whether the density is learned. The
+    and NCA keys. With ``gaps`` and ``density`` the textures are packed cell
+    textures (``pack_cells``) and each rollout keeps a new random set of
+    their cells for the density; ``config.optimise_density`` says whether
+    the density is learned. The
     geometry (and density) with the best binary-mask score among the
     evaluations is returned as ``best_geometry`` (``best_density``).
 

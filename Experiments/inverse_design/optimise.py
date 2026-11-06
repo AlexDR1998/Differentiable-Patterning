@@ -8,11 +8,11 @@ high as possible. The circle and a few ellipses of the same area are scored
 first with the same random numbers. The result is saved as a record in the
 model store (``Experiments/inverse_design/records.py``).
 
-With ``density.mode`` fixed or optimise, the textures are made from the
-training colonies with their gaps filled in, and gaps for a cell density
-(the share of the colony covered by cells) are added to each rollout's
-texture (``NCA/inverse_design/density.py``). With optimise the density is
-learned together with the shape.
+With ``density.mode`` fixed or optimise, the textures are made of whole
+cells cut out of the training colonies and placed at random, and each
+rollout keeps enough of them for a cell density (the share of the colony
+covered by cells; ``NCA/inverse_design/density.py``). With optimise the
+density is learned together with the shape.
 """
 
 from dataclasses import asdict, replace
@@ -27,14 +27,11 @@ from Common.dataloader.cell_types import load_cell_type_rules
 from Experiments.config import config_to_dict
 from Experiments.config_helpers import build_wandb_tags, open_registry_bundle, resolve_store_root
 from Experiments.inverse_design.records import create_run_id, publish_inverse_design_record
-from Experiments.micropatterns.reference import (
-    combine_reference,
-    fill_reference_gaps,
-    load_reference,
-)
+from Experiments.micropatterns.reference import cell_library, combine_reference, load_reference
 from Experiments.micropatterns.texture_settings import load_texture_settings, scaled_patch_geometry
 from Experiments.micropatterns.texture_synthesis import (
     normalise_histograms_and_covariance,
+    place_cells,
     synthesise_patch_texture,
     synthesise_reference_texture,
 )
@@ -48,6 +45,7 @@ from NCA.inverse_design import (
     binary_trajectories,
     evaluate_binary,
     optimise_geometry,
+    pack_cells,
 )
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -169,17 +167,40 @@ def baseline_geometries(radius, amplitudes):
     return baselines
 
 
-def density_model(reference, density_config, grid_shape):
-    """``(filled reference, CellGaps, starting density, coverage rows)`` for the cell density textures."""
+def density_model(reference, density_config, grid_shape, bank_size, seed):
+    """``(texture bank, CellGaps, starting density, coverage rows)`` for the cell density textures.
 
-    gaps = fill_reference_gaps(reference, density_config.markers, grid_shape)
-    initial = density_config.initial if density_config.initial is not None else gaps["density"]
-    cell_gaps = CellGaps(
-        gap_values=jnp.asarray(gaps["gap_values"]),
-        amplitude=jnp.asarray(gaps["amplitude"]),
-        edge_width=density_config.edge_width,
+    Whole cells are cut out of the training colonies (``cell_library``) and
+    each of the ``bank_size`` textures places them at random over the grid
+    (``place_cells``), packed as ``NCA/inverse_design/density.py`` expects.
+    """
+
+    library = cell_library(
+        reference, density_config.markers, density_config.split_distance,
+        density_config.interior_fraction, density_config.min_cell_area,
     )
-    return gaps["reference"], cell_gaps, float(initial), gaps["coverage"]
+    schema = reference["schema"]
+    primary = np.asarray(schema.primary_measurements, dtype=int)
+    panel_of = {
+        int(index): panel for panel, (indices, _) in enumerate(library["panels"]) for index in indices
+    }
+    bank, coverages = [], []
+    for index in range(bank_size):
+        textures, ranks, coverage = place_cells(
+            library["panels"], reference["measurements"].shape[1], grid_shape,
+            density_config.layers, density_config.attempts, seed * 100003 + index,
+        )
+        bank.append(np.asarray(pack_cells(jnp.asarray(textures[:, primary]), jnp.asarray(ranks))))
+        coverages.append(coverage)
+    cell_gaps = CellGaps(
+        gap_values=jnp.asarray(library["gap_values"]),
+        channel_panels=jnp.asarray([panel_of[int(index)] for index in primary]),
+        layer_coverage=jnp.asarray(np.mean(coverages, axis=0)),
+        panels=len(library["panels"]),
+        softness=density_config.softness,
+    )
+    initial = density_config.initial if density_config.initial is not None else library["density"]
+    return np.stack(bank), cell_gaps, float(initial), library["coverage"]
 
 
 def baseline_designs(radius, amplitudes, initial_density, density_multiples):
@@ -225,20 +246,30 @@ def run(cfg):
     state_channel_names = tuple(reference["schema"].state_channels)
     training_shape = reference["measurements"].shape[-2:]
     grid_shape = scaled_grid_shape(training_shape, design.geometry.grid_scale)
-    gaps = initial_density = coverage_rows = None
-    texture_reference = reference
-    if design.density.mode != "none":
-        texture_reference, gaps, initial_density, coverage_rows = density_model(
-            reference, design.density, grid_shape
+    gaps = initial_density = coverage_rows = texture_settings = None
+    if design.density.mode == "none":
+        projection = str(data_config.micropattern.projection)
+        texture = resolve_texture(design.texture, projection)
+        texture_settings = texture_summary(design.texture, texture, projection, data_config.downsample)
+        print(f"Texture settings ({design.texture.file or 'config'}, {projection}): {texture_settings}")
+        biology_bank = texture_bank(reference, texture, grid_shape, cfg.seed, data_config.downsample)
+    else:
+        # Whole measured cells placed at random; the patch texture settings are not used
+        biology_bank, gaps, initial_density, coverage_rows = density_model(
+            reference, design.density, grid_shape, design.texture.bank_size, cfg.seed
         )
-        print(f"Cell density: starting at {initial_density:.3f} of the colony covered")
         for row in coverage_rows:
-            print(f"  replicate {row['replicate']} {row['panel']}: covered {row['coverage']:.3f}")
-    projection = str(data_config.micropattern.projection)
-    texture = resolve_texture(design.texture, projection)
-    texture_settings = texture_summary(design.texture, texture, projection, data_config.downsample)
-    print(f"Texture settings ({design.texture.file or 'config'}, {projection}): {texture_settings}")
-    biology_bank = texture_bank(texture_reference, texture, grid_shape, cfg.seed, data_config.downsample)
+            print(
+                f"  replicate {row['replicate']} {row['panel']}: covered {row['coverage']:.3f}, "
+                f"{row['cells']} whole cells"
+            )
+        layer_coverage = ", ".join(f"{value:.3f}" for value in np.asarray(gaps.layer_coverage))
+        print(
+            f"Cell density: starting at {initial_density:.3f} of the colony covered; "
+            f"layers cover {layer_coverage}, at most {float(gaps.max_density):.3f} together"
+        )
+        if initial_density > float(gaps.max_density):
+            print("Warning: the starting density is above what the layers can cover; add layers")
     radius = reference_radius(reference["support"], grid_shape) * design.geometry.radius_scale
     print(f"Grid {grid_shape} (training {tuple(training_shape)}), colony radius {radius:.3f}")
 
@@ -291,7 +322,7 @@ def run(cfg):
     share_maps = jax.jit(jax.vmap(lambda state: objective.probability(state, hard=True)))
 
     # Every evaluation uses evaluation_key, so the baselines and the optimised
-    # shapes see the same textures, gap patterns, noise and NCA updates.
+    # shapes see the same textures, cell choices, noise and NCA updates.
     baselines = {}
     designs = baseline_designs(
         radius, design.baseline_ellipses, initial_density, design.density.baselines

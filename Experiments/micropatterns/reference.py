@@ -8,11 +8,7 @@ from dataclasses import replace
 
 import numpy as np
 
-from Experiments.micropatterns.texture_synthesis import (
-    cell_coverage,
-    coverage_spectrum,
-    filled_reference,
-)
+from Experiments.micropatterns.texture_synthesis import cell_coverage, segment_cells
 
 
 def load_reference(data_config, data_root=None):
@@ -76,59 +72,69 @@ def combine_reference(reference, mode, sample, seed):
     return combined, support
 
 
-def fill_reference_gaps(reference, markers, output_shape):
-    """The reference with the gaps between cells filled, and its cell/gap statistics.
+def cell_library(reference, markers, split_distance=2, interior_fraction=0.8, min_area=2):
+    """Whole cells cut out of the reference colonies, and their cell/gap statistics.
 
-    Each staining panel of each replicate is a separate colony, so its gaps
+    Each staining panel of each replicate is a separate colony, so its cells
     are found from its own generic cell markers (``markers``, e.g. LMBR and
-    SOX2), or from all its channels if it has none. Returns a dict with
+    SOX2), or from all its channels if it has none: covered pixels are those
+    above the Otsu threshold, split into cells by ``segment_cells``. Returns
+    a dict with
 
-    - ``reference``: a copy of ``reference`` with filled measurements
+    - ``panels``: for each panel, ``(measurement indices, cells)`` with the
+      cells of every replicate that measured it (for ``place_cells``)
     - ``gap_values``: each state channel's value in the gaps ``[C]``
     - ``measurement_gap_values``: the same for every measurement channel
-    - ``amplitude``: the cell/gap amplitude spectrum on ``output_shape``,
-      averaged (as power) over the panels with generic markers
-    - ``density``: their mean covered fraction of the colony
+    - ``density``: the mean covered share of the colonies, over the panels
+      with generic markers
     - ``coverage``: one row per panel and replicate (``replicate``, ``panel``,
-      ``coverage``, ``from_markers``)
+      ``coverage``, ``cells``, ``from_markers``)
     """
 
     schema = reference["schema"]
     channel_markers = [channel.marker for channel in schema.measurement_channels]
     measured = np.asarray(reference["measurements"], dtype=np.float32)
-    filled = measured.copy()
     replicates = reference.get("replicates", tuple(range(1, len(measured) + 1)))
     gap_sum = np.zeros(measured.shape[1], dtype=np.float64)
     gap_count = np.zeros(measured.shape[1], dtype=np.float64)
-    power, fractions, rows = [], [], []
+    panels = [(np.asarray(indices, dtype=int), []) for indices in schema.group_measurement_indices]
+    fractions, rows = [], []
     for index, (colony, support) in enumerate(zip(measured, reference["support"])):
-        for name, indices in zip(schema.group_names, schema.group_measurement_indices):
-            indices = np.asarray(indices, dtype=int)
+        for name, (indices, cells) in zip(schema.group_names, panels):
             if not np.all(reference["available"][index, indices]):
                 continue
             marker_indices = [i for i in indices if channel_markers[i] in markers]
-            coverage, _ = cell_coverage(colony, support, marker_indices or indices)
-            filled[index, indices], gaps = filled_reference(colony[indices], support, coverage)
-            gap_sum[indices] += gaps
-            gap_count[indices] += 1
+            used = marker_indices or list(indices)
+            coverage, _ = cell_coverage(colony, support, used)
+            gaps = support & ~coverage
+            if np.any(gaps):
+                gap_sum[indices] += np.median(colony[indices][:, gaps], axis=1)
+                gap_count[indices] += 1
+            found = segment_cells(
+                colony[indices], support, coverage, np.max(colony[used], axis=0),
+                split_distance, interior_fraction, min_area,
+            )
+            cells.extend(found)
             fraction = float(np.mean(coverage[support]))
             rows.append({
                 "replicate": replicates[index],
                 "panel": name,
                 "coverage": fraction,
+                "cells": len(found),
                 "from_markers": bool(marker_indices),
             })
             if marker_indices:
                 fractions.append(fraction)
-                power.append(coverage_spectrum(coverage, support, output_shape) ** 2)
     if not fractions:
         raise ValueError(f"No measured panel has any of the markers {list(markers)}")
+    for name, (_, cells) in zip(schema.group_names, panels):
+        if not cells:
+            raise ValueError(f"No whole cell was found in panel {name!r}")
     measurement_gap_values = (gap_sum / np.maximum(gap_count, 1)).astype(np.float32)
     return {
-        "reference": {**reference, "measurements": filled},
+        "panels": panels,
         "gap_values": measurement_gap_values[np.asarray(schema.primary_measurements)],
         "measurement_gap_values": measurement_gap_values,
-        "amplitude": np.sqrt(np.mean(power, axis=0)).astype(np.float32),
         "density": float(np.mean(fractions)),
         "coverage": rows,
     }

@@ -3,9 +3,9 @@
 from NCA.inverse_design.density import (
     CellDensity,
     CellGaps,
-    apply_density,
-    cell_coverage,
-    coverage_field,
+    fill_level,
+    kept_cells,
+    pack_cells,
 )
 from NCA.inverse_design.geometry import FourierRadialGeometry, coordinate_grid
 from NCA.inverse_design.initial_state import (
@@ -37,15 +37,15 @@ __all__ = (
     "OptimisationConfig",
     "OptimisationResult",
     "PatchSamplingConfig",
-    "apply_density",
     "binary_trajectories",
     "build_initial_state",
-    "cell_coverage",
     "coordinate_grid",
-    "coverage_field",
     "evaluate_binary",
+    "fill_level",
     "geometry_loss",
+    "kept_cells",
     "optimise_geometry",
+    "pack_cells",
     "rollout_final",
     "rollout_trajectory",
     "sample_circular_patches",

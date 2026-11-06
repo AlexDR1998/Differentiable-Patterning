@@ -54,3 +54,26 @@ def test_no_boundary_has_zero_penalty():
     state = jnp.ones((2, 3, 4, 5), dtype=jnp.float32)
     actual = _evaluate([state], [no_boundary()])
     assert jnp.array_equal(actual, jnp.zeros((1,), dtype=state.dtype))
+
+
+def test_uniform_boundary_gives_the_model_no_geometry():
+    from Common.model.boundary import build_boundary_callback
+    from NCA.inverse_design.initial_state import build_initial_state
+    from NCA.trainer.config import TrainerConfig
+    from NCA.trainer.intervention import _apply_boundary
+
+    mask = jnp.asarray([[[1.0, 0.0], [0.0, 1.0]]])
+    state = jnp.full((3, 2, 2), 0.5, dtype=jnp.float32)
+
+    callback = build_boundary_callback("uniform", mask)
+    expected = state.at[-1].set(1.0)
+    assert jnp.array_equal(callback(state), expected)
+    assert jnp.array_equal(_apply_boundary(state, mask, "uniform"), expected)
+    # Nothing lies outside a uniform mask, so the regulariser is zero.
+    assert jnp.all(_evaluate([callback(state)[None]], [callback]) == 0.0)
+
+    initial = build_initial_state(
+        jnp.ones((1, 2, 2)), mask[0], 3, boundary_mode="uniform"
+    )
+    assert jnp.array_equal(initial[-1], jnp.ones((2, 2)))
+    assert TrainerConfig(boundary_mode="uniform").boundary_mode == "uniform"

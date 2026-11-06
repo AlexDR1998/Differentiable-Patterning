@@ -120,14 +120,27 @@ class InverseDesignDensityConfig(ConfigValue):
     """Cell density: the share of the colony covered by cells (NCA/inverse_design/density.py)."""
 
     # none: textures keep the reference colonies' own gaps (as before);
-    # fixed: gaps for the density `initial`; optimise: learn the density
+    # fixed: whole cells kept for the density `initial`; optimise: learn the density
     mode: str = "none"
     # Starting density in (0, 1); null: the mean of the training colonies
     initial: float | None = None
     # Generic cell markers that tell cells from gaps
     markers: tuple[str, ...] = ("LMBR", "SOX2")
-    # Sharpness of the cell/gap edge, in standard deviations of the random field
-    edge_width: float = 0.1
+    # Covered pixels are split into cells at marker maxima at least this many
+    # pixels apart (at the model's resolution); 0: connected patches are not split
+    split_distance: int = 2
+    # Smaller cells (pixels) are dropped
+    min_cell_area: int = 2
+    # Cells are only taken from within this fraction of the colony radius
+    interior_fraction: float = 0.8
+    # Layers of non-overlapping cells. One layer can only cover part of the
+    # grid; later layers fill the space between cells, partly under them.
+    layers: int = 2
+    # Random places tried per cell that would fit in the grid
+    attempts: int = 10
+    # Width of the cut in cell rank (a share of a layer's cells): the cells
+    # at the cut are faded, which gives the density a gradient
+    softness: float = 0.02
     # Circles also scored at these multiples of the starting density
     baselines: tuple[float, ...] = (0.5, 0.75, 1.25)
 
@@ -136,8 +149,14 @@ class InverseDesignDensityConfig(ConfigValue):
             raise ValueError(f"Unknown density mode {self.mode!r}; use none, fixed or optimise")
         if self.initial is not None and not 0.0 < self.initial < 1.0:
             raise ValueError("density.initial must be between 0 and 1")
-        if self.edge_width <= 0:
-            raise ValueError("density.edge_width must be positive")
+        if self.split_distance < 0 or self.min_cell_area < 1:
+            raise ValueError("density.split_distance must be nonnegative and min_cell_area positive")
+        if not 0.0 < self.interior_fraction <= 1.0:
+            raise ValueError("density.interior_fraction must be in (0, 1]")
+        if self.layers < 1 or self.attempts < 1:
+            raise ValueError("density.layers and density.attempts must be positive")
+        if self.softness <= 0:
+            raise ValueError("density.softness must be positive")
 
 
 @dataclass(frozen=True)

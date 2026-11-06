@@ -650,8 +650,13 @@ class ModelRegistry:
         tags: Optional[Iterable[str]] = None,
         notes: Optional[str] = None,
     ) -> Path:
-        """Set the alias, tags or notes of a bundle (stored outside the bundle)."""
-        self.get(model_id)
+        """Set the alias, tags or notes of a bundle (stored outside the bundle).
+
+        Only the annotation tables of the index are rewritten, so saving a note
+        does not re-read every bundle.
+        """
+        if not self._indexed_model_exists(model_id):
+            self.get(model_id)  # Slow check of the bundles; raises if unknown.
         annotations = self._read_annotations()
         current = annotations.models.get(model_id, {})
         value = {
@@ -664,8 +669,39 @@ class ModelRegistry:
         temporary = self.annotations_path.with_suffix(f".yaml.{uuid.uuid4().hex}.tmp")
         OmegaConf.save(annotations, temporary)
         os.replace(temporary, self.annotations_path)
-        self.reindex()
+        self._refresh_annotation_index()
         return self.annotations_path
+
+    def _indexed_model_exists(self, model_id: str) -> bool:
+        if not self.database_path.is_file():
+            return False
+        try:
+            with sqlite3.connect(self.database_path) as connection:
+                row = connection.execute(
+                    "SELECT 1 FROM models WHERE model_id = ?", (model_id,)
+                ).fetchone()
+        except sqlite3.Error:
+            return False
+        return row is not None
+
+    def _refresh_annotation_index(self) -> None:
+        """Rewrite the annotation tables from annotations.yaml (full reindex if no index)."""
+        if not self.database_path.is_file():
+            self.reindex()
+            return
+        connection = sqlite3.connect(self.database_path)
+        try:
+            with connection:  # One transaction: readers never see empty tables.
+                connection.execute("DELETE FROM model_annotations")
+                connection.execute("DELETE FROM model_tags")
+                self._index_annotations(connection)
+            outdated_index = False
+        except sqlite3.OperationalError:
+            outdated_index = True  # Older index without these tables.
+        finally:
+            connection.close()
+        if outdated_index:
+            self.reindex()
 
     def get(self, identifier: str) -> ModelBundle:
         aliases = {

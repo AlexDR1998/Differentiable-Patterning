@@ -56,3 +56,24 @@ class hard_boundary(object):
 		
 		x_masked = einsum(x,self.MASK,'... C H W, H W -> ... C H W')
 		return x_masked
+
+
+BOUNDARY_MODES = ("soft", "uniform", "hard")
+
+
+def build_boundary_callback(mode, mask):
+	"""
+		Boundary callback applied to the NCA state after each step.
+
+		soft:    the mask is written into the last state channel(s)
+		uniform: as soft, but that channel is 1 everywhere, so the model is
+		         given no geometry (ablation of the adhesion mask)
+		hard:    every channel is multiplied by the mask
+	"""
+	if mode == "soft":
+		return model_boundary(mask)
+	if mode == "uniform":
+		return model_boundary(jnp.ones_like(mask))
+	if mode == "hard":
+		return hard_boundary(mask)
+	raise ValueError(f"boundary mode must be one of {BOUNDARY_MODES}, got {mode!r}")

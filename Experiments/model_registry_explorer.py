@@ -1061,10 +1061,7 @@ def _(
                 _boundary_mode = "none"
             else:
                 _boundary_state = jnp.asarray(_boundary)
-                if _bundle.config.trainer.boundary_mode == "hard":
-                    _boundary_mode = "hard"
-                else:
-                    _boundary_mode = "soft"
+                _boundary_mode = _bundle.config.trainer.boundary_mode
             if str(_bundle.config.data.dataset).startswith("micropatterns"):
                 _time_labels = tuple(
                     f"{int(_hour)}h"

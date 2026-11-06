@@ -235,7 +235,7 @@ def test_run_with_density_learns_it_and_records_it(tmp_path, monkeypatch):
     assert np.isclose(summary["density"]["best"], float(result.best_density.value))
     assert len(summary["density"]["training_colonies"]) == 4
     assert np.isclose(float(load_density(record).value), summary["density"]["best"])
-    assert set(np.load(record / "states.npz")) >= {"gap_values", "gap_amplitude"}
+    assert set(np.load(record / "states.npz")) >= {"gap_values", "channel_panels", "layer_coverage"}
 
 
 def test_density_config_converts_and_rejects_unknown_keys():
@@ -256,34 +256,59 @@ def test_density_config_converts_and_rejects_unknown_keys():
         load_experiment_config(value)
 
 
-def test_filled_reference_closes_the_gaps_and_keeps_the_cells():
-    from Experiments.micropatterns.texture_synthesis import cell_coverage, filled_reference
+def test_segment_cells_splits_patches_and_keeps_only_whole_interior_cells():
+    from Experiments.micropatterns.texture_synthesis import segment_cells
 
-    support = np.ones((20, 20), dtype=bool)
-    cells = np.ones((20, 20), dtype=bool)
-    cells[5:8, 5:8] = cells[12:14, 3:6] = False
-    colony = np.stack([np.where(cells, 0.8, 0.05), np.where(cells, 0.4, 0.0)]).astype(np.float32)
+    y, x = np.mgrid[:30, :30]
+    support = np.hypot(y - 14.5, x - 14.5) < 15
+    signal = np.zeros((30, 30), dtype=np.float32)
+    # Two touching bright blobs, one lone blob and one on the colony edge
+    for centre_y, centre_x in ((10, 10), (10, 14), (20, 20), (1, 15)):
+        signal += np.exp(-((y - centre_y) ** 2 + (x - centre_x) ** 2) / 3.0)
+    coverage = signal > 0.2
+    measurements = np.stack([signal, 2.0 * signal])
 
-    coverage, _ = cell_coverage(colony, support, [0])
-    filled, gap_values = filled_reference(colony, support, coverage)
+    split = segment_cells(measurements, support, coverage, signal, 2, 0.8, 2)
+    whole = segment_cells(measurements, support, coverage, signal, 0, 0.8, 2)
 
-    assert np.array_equal(coverage, cells)
-    assert np.allclose(filled, np.asarray([0.8, 0.4])[:, None, None], atol=1.0e-3)
-    assert np.allclose(gap_values, [0.05, 0.0])
+    assert len(split) == 3 and len(whole) == 2
+    for mask, values in split:
+        assert values.shape == (2, *mask.shape)
+        assert np.allclose(values[1][mask], 2.0 * values[0][mask])
 
 
-def test_fill_reference_gaps_measures_each_panel():
-    from Experiments.micropatterns.reference import fill_reference_gaps
+def test_place_cells_never_overlaps_or_cuts_cells():
+    from Experiments.micropatterns.texture_synthesis import place_cells
+
+    square = (np.ones((3, 3), dtype=bool), np.full((2, 3, 3), 0.7, dtype=np.float32))
+    plus = (np.asarray([[0, 1, 0], [1, 1, 1], [0, 1, 0]], dtype=bool), np.full((1, 3, 3), 0.4, dtype=np.float32))
+    panels = [(np.asarray([0, 2]), [square]), (np.asarray([1]), [plus])]
+
+    textures, ranks, coverage = place_cells(panels, 3, (40, 40), 2, 10, seed=0)
+
+    assert textures.shape == (2, 3, 40, 40) and ranks.shape == (2, 2, 40, 40)
+    assert np.all((coverage > 0.3) & (coverage < 1.0))
+    for layer in range(2):
+        # Each panel holds only its own cells, and every placed square is whole
+        assert np.allclose(textures[layer, 0][ranks[layer, 0] >= 0], 0.7)
+        assert np.allclose(textures[layer, 1][ranks[layer, 1] >= 0], 0.4)
+        assert np.count_nonzero(ranks[layer, 0] >= 0) % 9 == 0
+        # Both panels of a place share its rank
+        assert set(np.unique(ranks[layer, 0])) == set(np.unique(ranks[layer, 1]))
+
+
+def test_cell_library_collects_cells_and_gap_values_per_panel():
+    from Experiments.micropatterns.reference import cell_library
 
     reference = _fake_reference()
-    filled = fill_reference_gaps(reference, ("SOX2",), (31, 31))
+    library = cell_library(reference, ("SOX2",), split_distance=1, min_area=1)
 
-    assert filled["reference"]["measurements"].shape == reference["measurements"].shape
-    assert filled["gap_values"].shape == (4,)
-    assert filled["measurement_gap_values"].shape == (4,)
-    assert filled["amplitude"].shape == (31, 16)
-    assert 0.0 < filled["density"] < 1.0
-    assert [row["from_markers"] for row in filled["coverage"]] == [True, False, True, False]
+    assert [list(indices) for indices, _ in library["panels"]] == [[0, 1, 2], [3]]
+    assert all(cells for _, cells in library["panels"])
+    assert library["gap_values"].shape == (4,)
+    assert library["measurement_gap_values"].shape == (4,)
+    assert 0.0 < library["density"] < 1.0
+    assert [row["from_markers"] for row in library["coverage"]] == [True, False, True, False]
 
 
 def test_evaluation_panel_shows_mask_fates_cell_types_and_share_per_rollout():
@@ -352,15 +377,20 @@ def test_cell_type_legend_is_an_rgb_image():
 
 
 def test_trajectory_with_density_ends_on_the_evaluation():
-    from NCA.inverse_design import CellDensity, CellGaps, binary_trajectories, evaluate_binary
+    from NCA.inverse_design import CellDensity, CellGaps, binary_trajectories, evaluate_binary, pack_cells
 
     names = ("SOX2", "TBXT", "SOX17", "FOXA2", "mask", "hidden")
     rules = load_cell_type_rules(CELL_TYPES)
     geometry = FourierRadialGeometry(1, radius=0.5)
-    biology = jax.random.uniform(jax.random.PRNGKey(0), (2, 4, 11, 11))
+    textures = jax.random.uniform(jax.random.PRNGKey(0), (2, 1, 4, 11, 11))
+    ranks = jax.random.uniform(jax.random.PRNGKey(1), (2, 1, 1, 11, 11))
+    biology = jnp.stack([pack_cells(texture, rank) for texture, rank in zip(textures, ranks)])
     config = OptimisationConfig(iterations=1, learning_rate=1.0, total_steps=2, evaluation_seeds=2)
     objective = CellTypeShareObjective.from_rules(rules, names, "Notochord")
-    gaps = CellGaps(gap_values=jnp.zeros(4), amplitude=jnp.ones((11, 6)))
+    gaps = CellGaps(
+        gap_values=jnp.zeros(4), channel_panels=jnp.zeros(4, dtype=int),
+        layer_coverage=jnp.ones(1), panels=1,
+    )
     density = CellDensity(0.6)
     key = jax.random.PRNGKey(4)
 

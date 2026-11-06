@@ -8,9 +8,8 @@ from Common.dataloader.cell_types import CellTypeRules, label_names, pixel_label
 from NCA.inverse_design.density import (
     CellDensity,
     CellGaps,
-    apply_density,
-    cell_coverage,
-    coverage_field,
+    fill_level,
+    pack_cells,
 )
 from NCA.inverse_design.geometry import FourierRadialGeometry, coordinate_grid
 from NCA.inverse_design.initial_state import (
@@ -240,52 +239,79 @@ def test_binary_evaluation_counts_mask_pixels():
     assert high.border_fraction == 0.0
 
 
-def _flat_gaps(shape, edge_width=0.1, gap_values=(0.0,)):
-    # A flat spectrum: white-noise gaps, so the covered fraction is close to the density
-    return CellGaps(
-        gap_values=jnp.asarray(gap_values),
-        amplitude=jnp.ones((shape[0], shape[1] // 2 + 1)),
-        edge_width=edge_width,
+def _lattice_cells(size, layers=1, softness=1.0e-3, seed=0):
+    # 2x2 cells on a 3-pixel lattice (4/9 of the grid covered per layer), one
+    # random value and rank per cell; the gaps are 0
+    rng = np.random.default_rng(seed)
+    textures = np.zeros((layers, 1, size, size), dtype=np.float32)
+    ranks = np.full((layers, 1, size, size), -1.0, dtype=np.float32)
+    for layer in range(layers):
+        # Each layer's lattice is shifted by one pixel, so the next fills gaps
+        for top in range(layer, size - 1 - layer, 3):
+            for left in range(layer, size - 1 - layer, 3):
+                textures[layer, 0, top:top + 2, left:left + 2] = rng.uniform(0.5, 1.0)
+                ranks[layer, 0, top:top + 2, left:left + 2] = rng.random()
+    gaps = CellGaps(
+        gap_values=jnp.zeros(1),
+        channel_panels=jnp.zeros(1, dtype=int),
+        layer_coverage=jnp.full(layers, float(np.mean(ranks[0] >= 0))),
+        panels=1,
+        softness=softness,
     )
+    return pack_cells(jnp.asarray(textures), jnp.asarray(ranks)), gaps
 
 
-def test_cell_coverage_follows_the_density_and_has_a_gradient():
-    field = coverage_field(jnp.ones((64, 33)), (64, 64), jax.random.PRNGKey(0))
+def test_fill_level_fills_the_layers_in_turn():
+    coverage = jnp.asarray([0.5, 0.4])
 
-    def covered(density):
-        return jnp.mean(cell_coverage(field, density, 0.1))
-
-    for density in (0.2, 0.5, 0.8):
-        assert abs(float(covered(density)) - density) < 0.02
-    assert float(jax.grad(covered)(0.5)) > 0.5
+    assert np.isclose(float(fill_level(0.25, coverage)), 0.5)
+    assert np.isclose(float(fill_level(0.5, coverage)), 1.0)
+    assert np.isclose(float(fill_level(0.6, coverage)), 1.5)
+    assert np.isclose(float(fill_level(0.95, coverage)), 2.0)
 
 
-def test_density_changes_the_gaps_not_the_brightness_of_cells():
-    texture = jnp.broadcast_to(jnp.linspace(0.3, 0.9, 32)[None, None, :], (2, 32, 32))
-    gaps = _flat_gaps((32, 32), edge_width=1.0e-3, gap_values=(0.05, 0.0))
+def test_density_keeps_whole_cells_and_has_a_gradient():
+    packed, gaps = _lattice_cells(60)
+    textures, _ = gaps.unpack(packed)
     key = jax.random.PRNGKey(1)
 
-    sparse = gaps.apply(texture, CellDensity(0.3), key)
-    dense = gaps.apply(texture, CellDensity(0.8), key)
+    for density in (0.15, 0.3):
+        image = gaps.apply(packed, CellDensity(density), key)[0]
+        assert abs(float(jnp.mean(image > 0)) - density) < 0.04
+        # Every cell is either kept whole with its own values or left out
+        cells = np.asarray(image).reshape(20, 3, 20, 3)[:, :2, :, :2]
+        values = np.asarray(textures[0, 0]).reshape(20, 3, 20, 3)[:, :2, :, :2]
+        kept = np.all(np.isclose(cells, values, atol=1.0e-3), axis=(1, 3))
+        empty = np.all(np.abs(cells) < 1.0e-3, axis=(1, 3))
+        assert np.mean(kept | empty) > 0.98
+    sparse = gaps.apply(packed, CellDensity(0.15), key)
+    dense = gaps.apply(packed, CellDensity(0.3), key)
+    assert bool(jnp.all((sparse > 0) <= (dense > 0)))
+    assert not jnp.array_equal(sparse, gaps.apply(packed, CellDensity(0.15), jax.random.PRNGKey(2)))
 
-    for image in (sparse, dense):
-        cells = jnp.isclose(image, texture, atol=1.0e-4).all(axis=0)
-        empty = jnp.isclose(image, jnp.asarray([0.05, 0.0])[:, None, None], atol=1.0e-4).all(axis=0)
-        # Apart from the few pixels on a cell edge
-        assert float(jnp.mean(cells | empty)) > 0.99
-    assert float(jnp.mean(jnp.isclose(dense, texture).all(axis=0))) > float(
-        jnp.mean(jnp.isclose(sparse, texture).all(axis=0))
-    )
-    coverage = jnp.asarray([[1.0, 0.0]])
-    assert jnp.allclose(
-        apply_density(jnp.ones((1, 1, 2)), jnp.asarray([0.2]), coverage), jnp.asarray([[[1.0, 0.2]]])
-    )
+    soft_packed, soft_gaps = _lattice_cells(60, softness=0.05)
+    gradient = jax.grad(
+        lambda raw: jnp.mean(soft_gaps.apply(soft_packed, eqx.tree_at(lambda d: d.raw, CellDensity(0.3), raw), key))
+    )(CellDensity(0.3).raw)
+    assert float(gradient) > 0.0
+
+
+def test_second_layer_fills_between_the_first():
+    packed, gaps = _lattice_cells(60, layers=2)
+
+    covered = gaps.coverage(packed, CellDensity(0.6), jax.random.PRNGKey(0))
+
+    assert float(gaps.max_density) > 0.6
+    # The shifted lattices are not quite independent, so only roughly 0.6
+    assert abs(float(jnp.mean(covered)) - 0.6) < 0.08
+    assert float(jnp.mean(covered)) > float(gaps.layer_coverage[0])
 
 
 def test_optimiser_learns_the_density_and_can_keep_the_geometry():
     # Channel 0 is high wherever there are cells, so more cells score more.
     initial = FourierRadialGeometry(2, radius=0.45, key=jax.random.PRNGKey(0), initial_scale=0.1)
-    biology = jnp.ones((2, 1, 15, 15))
+    packed, gaps = _lattice_cells(15, softness=0.1)
+    biology = jnp.stack([packed, packed])
     config = OptimisationConfig(
         iterations=3, learning_rate=0.2, total_steps=1, batch_size=2,
         fixed_radius=True, optimise_geometry=False, evaluation_seeds=2,
@@ -295,10 +321,10 @@ def test_optimiser_learns_the_density_and_can_keep_the_geometry():
     result = optimise_geometry(
         _IdentityNCA(), initial, biology, jax.random.PRNGKey(8), _first_channel_objective(), config,
         log_fn=lambda iteration, metrics, evaluation: logged.append(metrics),
-        gaps=_flat_gaps((15, 15)), density=CellDensity(0.4),
+        gaps=gaps, density=CellDensity(0.3),
     )
 
-    assert float(result.density.value) > 0.4
+    assert float(result.density.value) > 0.3
     assert jnp.array_equal(result.geometry.raw_cos, initial.raw_cos)
     assert result.best_density is not None and result.best_evaluation.density is not None
     assert "density" in logged[0]
