@@ -40,3 +40,4 @@ run_*.yml
 *:Zone.Identifier
 *.egg-info/*
 output/*
+figures/*
