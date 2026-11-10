@@ -12,7 +12,7 @@
 # run.t (e.g. 32, 64, 128, 256; NCA and gNCA). Each ID appears twice: once in
 # the grid and once in its branch. Placeholders must stay distinct until
 # replaced. Copy a slot and its branch for more models.
-experiment_name: emoji_attractor_switch_critical_time_v1
+experiment_name: emoji_attractor_switch_critical_time_v2
 entrypoint: Experiments.impulse.optimise:run
 output_subdir: generated/emoji_attractor_switch_critical_time
 seed_mode: index
@@ -25,7 +25,7 @@ transitions:
 grid:
   checkpoint.model_id:
     - 20261012T170018Z-cfg870b44681de6-b96926b9  # rooster alien
-  impulse.iterations: [2000]
+  impulse.iterations: [4000]
   impulse.batch_size: [8]
   impulse.pair_source.type: [stable_attractor]
   impulse.pair_source.time_unit: [training_t]
@@ -37,13 +37,16 @@ grid:
   impulse.objective.contrast_weight: [0.1]
   impulse.rollout.steps: [256]
   impulse.rollout.loss_window: [64]
+  # Rollout curriculum: train at 1/4, 1/2, 3/4 then all of steps and
+  # loss_window (64/16 -> 256/64), a quarter of the iterations each
+  impulse.rollout.curriculum: [true]
   impulse.rollout.evaluation_steps: [1024]
   impulse.rollout.evaluation_frame_every: [32]
   impulse.optimiser.learn_rate: [0.01]
   impulse.intervention.channels: [all]
   impulse.repeat: [0]
   impulse.intervention.spatial: [patch]
-  impulse.intervention.patch_size: [1, 3, 5, 9]
+  impulse.intervention.patch_size: [5, 9]
   
 
 # One branch per model: its transitions and W&B tags for filtering

@@ -16,8 +16,8 @@ grid:
   labels.ablation:
     # - baseline
     # Loss components
-    # - loss_texture_only
-    # - loss_radial_only
+    - loss_texture_only
+    - loss_radial_only
     # - loss_l2_not_radial
     - loss_l2_only
     # - loss_add_l2
@@ -117,18 +117,24 @@ groups:
 
 branches:
   # Loss components (the curriculum stays as in the baseline)
+  # Texture at full weight throughout (only texture is weighted, so no curriculum)
   - when: {labels.ablation: loss_texture_only}
     grid:
       loss.terms.0.multi_target_weights:
         - {l2: 0.0, texture: 1.0, channel_mean: 0.0, correlation: 0.0, radial: 0.0}
+      loss.terms.0.multi_target_schedules.texture: [{type: constant}]
+  # Radial at full weight from the start (only radial is weighted, so no curriculum)
   - when: {labels.ablation: loss_radial_only}
     grid:
       loss.terms.0.multi_target_weights:
         - {l2: 0.0, texture: 0.0, channel_mean: 0.0, correlation: 0.0, radial: 1.0}
+      loss.terms.0.multi_target_schedules.radial: [{type: constant}]
+  # L2 at full weight from the start (only L2 is weighted, so no curriculum)
   - when: {labels.ablation: loss_l2_only}
     grid:
       loss.terms.0.multi_target_weights:
         - {l2: 1.0, texture: 0.0, channel_mean: 0.0, correlation: 0.0, radial: 0.0}
+      loss.terms.0.multi_target_schedules.l2: [{type: constant}]
   - when: {labels.ablation: loss_l2_not_radial}
     grid:
       loss.terms.0.multi_target_weights:
