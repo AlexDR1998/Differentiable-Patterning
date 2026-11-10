@@ -492,6 +492,35 @@ def read_micropattern_260726_image(record):
     return channels, colony_foreground(raw, record.group)
 
 
+def read_raw_channels(path, group):
+    """``(channels [X, Y, M], names, nuclear stain [X, Y])`` of one raw image.
+
+    ``channels`` are the measurement channels of ``group`` in schema order
+    (as ``read_micropattern_260726_image``), ``names`` their measurement
+    names, and the nuclear stain is ``read_nuclear_channel``'s. No
+    processing is applied.
+    """
+    raw = _read_multichannel_image(path, group)
+    group_channels = _schema_group(group).channels
+    channels = np.stack([raw[..., channel.source_index] for channel in group_channels], axis=-1)
+    return (
+        channels.astype(np.float32),
+        tuple(channel.name for channel in group_channels),
+        raw[..., _STRUCTURAL_SOURCE_CHANNEL[group]].astype(np.float32),
+    )
+
+
+def read_nuclear_channel(path, group):
+    """The raw nuclear stain ``[X, Y]`` of one image, for counting cells.
+
+    This is the structural channel of the group: LMBR for the cell-fate and
+    protein-response panels, DAPI for the RNA panel (DAPI is otherwise
+    dropped). No processing is applied.
+    """
+    raw = _read_multichannel_image(path, group)
+    return raw[..., _STRUCTURAL_SOURCE_CHANNEL[group]].astype(np.float32)
+
+
 def _align_image_and_mask(image, mask):
     centre = ndi.center_of_mass(mask)
     target = ((mask.shape[0] - 1) / 2.0, (mask.shape[1] - 1) / 2.0)

@@ -14,35 +14,36 @@ seed_mode: index
 # Total jobs: 22 conditions * 2 replicate splits * 2 repeats = 88.
 grid:
   labels.ablation:
-    - baseline
+    # - baseline
     # Loss components
-    - loss_texture_only
-    - loss_radial_only
-    - loss_l2_not_radial
-    - loss_add_l2
-    - loss_add_summary
+    # - loss_texture_only
+    # - loss_radial_only
+    # - loss_l2_not_radial
+    - loss_l2_only
+    # - loss_add_l2
+    # - loss_add_summary
     # Curricula
-    - curriculum_static
-    - curriculum_macro_first
-    - curriculum_reinjection_decay
+    # - curriculum_static
+    # - curriculum_macro_first
+    # - curriculum_reinjection_decay
     # Model
-    - model_nca
+    # - model_nca
     # Spatial resolution (convective scaling: t = 256 * 8 / downsample)
-    - downsample_16
-    - downsample_32
+    # - downsample_16
+    # - downsample_32
     # Adhesion mask
-    - mask_uniform
+    # - mask_uniform
     # Regularisers
-    - no_intermediate_state_reg
-    - no_boundary_reg
-    - no_regularisers
+    # - no_intermediate_state_reg
+    # - no_boundary_reg
+    # - no_regularisers
     # Number of training replicates (experiments)
-    - train_replicates_1
-    - train_replicates_3
-    - train_replicates_4
+    # - train_replicates_1
+    # - train_replicates_3
+    # - train_replicates_4
     # Projections
-    - projection_max
-    - projection_sum
+    # - projection_max
+    # - projection_sum
   run.repeat: [0,1]
 
   labels.gpu: [H200]
@@ -124,6 +125,10 @@ branches:
     grid:
       loss.terms.0.multi_target_weights:
         - {l2: 0.0, texture: 0.0, channel_mean: 0.0, correlation: 0.0, radial: 1.0}
+  - when: {labels.ablation: loss_l2_only}
+    grid:
+      loss.terms.0.multi_target_weights:
+        - {l2: 1.0, texture: 0.0, channel_mean: 0.0, correlation: 0.0, radial: 0.0}
   - when: {labels.ablation: loss_l2_not_radial}
     grid:
       loss.terms.0.multi_target_weights:
