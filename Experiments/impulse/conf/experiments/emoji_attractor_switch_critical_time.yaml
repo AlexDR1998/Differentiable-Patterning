@@ -12,7 +12,7 @@
 # run.t (e.g. 32, 64, 128, 256; NCA and gNCA). Each ID appears twice: once in
 # the grid and once in its branch. Placeholders must stay distinct until
 # replaced. Copy a slot and its branch for more models.
-experiment_name: emoji_attractor_switch_critical_time
+experiment_name: emoji_attractor_switch_critical_time_v1
 entrypoint: Experiments.impulse.optimise:run
 output_subdir: generated/emoji_attractor_switch_critical_time
 seed_mode: index
@@ -24,7 +24,7 @@ transitions:
 
 grid:
   checkpoint.model_id:
-    - MODEL_ID
+    - 20261012T170018Z-cfg870b44681de6-b96926b9  # rooster alien
   impulse.iterations: [2000]
   impulse.batch_size: [8]
   impulse.pair_source.type: [stable_attractor]
@@ -48,7 +48,7 @@ grid:
 
 # One branch per model: its transitions and W&B tags for filtering
 branches:
-  - when: {checkpoint.model_id: MODEL_ID}
+  - when: {checkpoint.model_id: 20261012T170018Z-cfg870b44681de6-b96926b9}
     grid: {logging.wandb.tags: [[attractors:2,]]}
     groups: [*k2]
   
