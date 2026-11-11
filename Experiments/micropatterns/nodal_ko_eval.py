@@ -28,6 +28,7 @@ app = marimo.App(width="full")
 
 with app.setup(hide_code=True):
     from dataclasses import replace
+    import json
     import os
     import sys
     import time
@@ -76,9 +77,22 @@ with app.setup(hide_code=True):
     from Common.save_to_video import save_to_video_rgb
     # Cell density initial conditions, as in inverse design
     from Experiments.inverse_design.config import InverseDesignDensityConfig
-    from Experiments.micropatterns.reference import cell_library
-    from Experiments.micropatterns.texture_synthesis import place_cells
-    from NCA.inverse_design.density import CellDensity, CellGaps, pack_cells
+    from Experiments.micropatterns.cell_counts import CELL_EXPANSION_UM
+    # Density × KO sweep (run here or as a remote job), and the data loading
+    # it shares with this notebook
+    from Experiments.micropatterns.density_ko_sweep import (
+        DensityKoSettings,
+        format_density,
+        job_configs,
+        load_condition_data,
+        load_density_ko_results,
+        load_training_histogram_bins,
+        model_pattern_counts,
+        record_label,
+        run_density_ko_sweep,
+        save_density_ko_results,
+    )
+    from Experiments.notebook_jobs import write_job_manifest
     from Experiments.micropatterns.rendering import (
         render_cmy_composite,
         render_fate_cmy,
@@ -130,15 +144,6 @@ with app.setup(hide_code=True):
     # Edge colours that tell the true-data projections apart in prevalence plots.
     PROJECTION_EDGE_COLOURS = {"max": "black", "sum": "#8c2d9c", "slice": "#1f77b4"}
 
-    def record_label(record):
-        """Short name of a selected model: its notes, alias, name or ID."""
-        return str(
-            record.get("notes")
-            or record.get("alias")
-            or record.get("display_name")
-            or record["model_id"]
-        )
-
     def model_option_label(record):
         """Model picker label, with the projection and a short ID."""
         return (
@@ -186,17 +191,6 @@ with app.setup(hide_code=True):
         stains = [tuple(_channels) for _channels in rule_stains(cell_type_rules).values()]
         return stain_counts_from_patterns(full_counts, cell_type_rules.markers, stains)
 
-    def model_pattern_counts(image, channel_names, cell_type_rules, colony, n_rings):
-        """Pixels of each marker pattern in each ring ``[rings, patterns]`` of one model state ``[C, H, W]``."""
-        values = marker_values(image, channel_names, cell_type_rules, axis=0)
-        markers = cell_type_rules.markers
-        return pattern_counts(
-            np.stack([np.ravel(values[_m]) for _m in markers]),
-            [cell_type_rules.thresholds[_m] for _m in markers],
-            radial_rings(colony, n_rings).ravel(),
-            n_rings,
-        )
-
     def model_label_shares(
         image, channel_names, cell_type_rules, colony, n_rings, resolve_several=0.0
     ):
@@ -232,95 +226,6 @@ with app.setup(hide_code=True):
                 ),
             ))
         return colony_label_shares(stain_counts, cell_type_rules, resolve_several=resolve_several)
-
-    def load_training_histogram_bins(bundle, root):
-        """Fit scaling once from the model's configured baseline train split."""
-
-        from Experiments.micropatterns.config_helpers import load_data
-
-        baseline_config = replace(
-            bundle.config.data,
-            knockout=replace(
-                bundle.config.data.knockout,
-                curriculum=("baseline",),
-            ),
-        )
-        train_replicates = baseline_config.micropattern.train_replicates
-        if train_replicates is None:
-            train_replicates = tuple(range(1, baseline_config.batches + 1))
-        baseline_data = load_data(
-            baseline_config,
-            impath=str(root / "260726_nca_dataset"),
-            replicate_indices=tuple(index - 1 for index in train_replicates),
-            pool_copies_override=1,
-        )
-        return baseline_data[1]["histogram_bins"]
-
-    def load_condition_data(bundle, root, condition, replicate, histogram_bins):
-        """Load one matching experimental condition using training scaling."""
-
-        if bundle.config.data.dataset != "micropatterns_260726":
-            raise ValueError(
-                f"{bundle.id} uses {bundle.config.data.dataset!r}; NODAL-KO evaluation "
-                "requires 'micropatterns_260726'."
-            )
-
-        from Experiments.micropatterns.config_helpers import load_data
-
-        data_config = replace(
-            bundle.config.data,
-            knockout=replace(
-                bundle.config.data.knockout,
-                curriculum=(condition,),
-            ),
-        )
-        data_path = root / "260726_nca_dataset"
-        if not data_path.is_dir():
-            raise FileNotFoundError(
-                f"NODAL-KO dataset not found at {data_path}. Set Data root to the "
-                "directory containing 260726_nca_dataset."
-            )
-
-        loaded_data = load_data(
-            data_config,
-            impath=str(data_path),
-            replicate_indices=(replicate - 1,),
-            histogram_bins=histogram_bins,
-            pool_copies_override=1,
-        )
-        data, aux, channel_names, boundary, _, _ = loaded_data
-        channel_schema = aux.get("channel_schema")
-        if channel_schema is None or "NODAL" not in channel_schema.state_channels:
-            raise ValueError(f"{bundle.id} has no NODAL channel in its data schema.")
-
-        initial_measurements = np.asarray(data)[0, 0]
-        initial_state = initial_measurements[
-            np.asarray(channel_schema.primary_measurements)
-        ]
-        output_channels = tuple(channel_schema.target_to_state)
-        displayed_count = len(output_channels)
-        names = list(channel_names[:displayed_count])
-        names.extend(
-            f"Channel {index + 1}"
-            for index in range(len(names), displayed_count)
-        )
-        return {
-            "initial_state": initial_state,
-            "boundary": np.asarray(boundary)[0],
-            "target": np.asarray(data)[0],
-            # [T, channels]: False where the image was not measured
-            "measured": np.asarray(
-                aux.get("measurement_mask", np.ones(np.asarray(data).shape[:3], dtype=bool))
-            )[0],
-            "target_state": np.asarray(data)[0][
-                :, np.asarray(channel_schema.primary_measurements)
-            ],
-            "output_channels": output_channels,
-            "channel_names": tuple(names),
-            "nodal_channel": channel_schema.state_channels.index("NODAL"),
-            "state_channel_names": tuple(channel_schema.state_channels),
-            "channel_schema": channel_schema,
-        }
 
     def evaluate_condition(model, bundle, condition_data, condition, seed):
         """Roll out one model, blocking recurrent NODAL reads when requested."""
@@ -457,83 +362,12 @@ with app.setup(hide_code=True):
             raise ValueError("Replicates must contain positive one-based indices.")
         return tuple(indices)
 
-    def stacked_colonies(condition_data_list, replicates):
-        """The 0h colonies of several replicates (``load_condition_data``), as ``cell_library`` reads them."""
-        return {
-            "measurements": np.stack([_data["target"][0] for _data in condition_data_list]),
-            "available": np.stack([_data["measured"][0] for _data in condition_data_list]),
-            "support": np.stack([
-                np.asarray(_data["boundary"]).squeeze() > 0.5 for _data in condition_data_list
-            ]),
-            "schema": condition_data_list[0]["channel_schema"],
-            "replicates": tuple(replicates),
-        }
-
-    def replicate_cell_library(colonies, index, density_config):
-        """Whole cells of colony ``index``. Staining panels it did not measure
-        at 0h take their cells from the other colonies."""
-        available = np.array(colonies["available"], dtype=bool)
-        others = np.arange(len(available)) != index
-        for indices in colonies["schema"].group_measurement_indices:
-            indices = np.asarray(indices, dtype=int)
-            if np.all(available[index, indices]):
-                available[np.ix_(others, indices)] = False
-        library = cell_library(
-            {**colonies, "available": available},
-            density_config.markers,
-            density_config.split_distance,
-            density_config.interior_fraction,
-            density_config.min_cell_area,
-        )
-        own = [
-            _row["coverage"] for _row in library["coverage"]
-            if _row["replicate"] == colonies["replicates"][index] and _row["from_markers"]
-        ]
-        # The colony's own covered share (else that of the colonies used)
-        measured_density = float(np.mean(own)) if own else library["density"]
-        return library, measured_density
-
-    def circle_mask(shape, area):
-        """Centred disc of about ``area`` pixels on a grid ``shape``."""
-        rows, cols = np.indices(shape)
-        distance = np.hypot(rows - (shape[0] - 1) / 2, cols - (shape[1] - 1) / 2)
-        return distance <= np.sqrt(area / np.pi)
-
-    def placed_cell_texture(library, schema, shape, density_config, seed):
-        """``(packed texture, CellGaps)``: whole cells placed at random over
-        ``shape``, in state channel order (``NCA/inverse_design/density.py``).
-
-        Cells are placed over a margin around the grid and cropped, so the
-        grid edge has as many cells as the centre.
-        """
-        panels = library["panels"]
-        margin = max(max(_mask.shape) for _, _cells in panels for _mask, _ in _cells)
-        textures, ranks, coverage = place_cells(
-            panels,
-            len(library["measurement_gap_values"]),
-            (shape[0] + 2 * margin, shape[1] + 2 * margin),
-            density_config.layers,
-            density_config.attempts,
-            seed,
-        )
-        crop = (
-            slice(None), slice(None),
-            slice(margin, margin + shape[0]), slice(margin, margin + shape[1]),
-        )
-        primary = np.asarray(schema.primary_measurements, dtype=int)
-        panel_of = {
-            int(_index): _panel
-            for _panel, (_indices, _) in enumerate(panels) for _index in _indices
-        }
-        gaps = CellGaps(
-            gap_values=jnp.asarray(library["gap_values"]),
-            channel_panels=jnp.asarray([panel_of[int(_index)] for _index in primary]),
-            layer_coverage=jnp.asarray(coverage),
-            panels=len(panels),
-            softness=density_config.softness,
-        )
-        packed = pack_cells(jnp.asarray(textures[crop][:, primary]), jnp.asarray(ranks[crop]))
-        return packed, gaps
+    # How the density × KO sweep sets the density (old results: covered share)
+    DENSITY_UNITS = {
+        "per_mm2": "Initial cells per mm²",
+        "per_colony": "Initial total cells in the colony",
+        "share": "Initial pixel coverage (covered share of the colony)",
+    }
 
     def uncertainty_band(samples, mode):
         """Mean and band of ``samples`` (``std``, ``sem``, ``percentile`` or
@@ -3392,18 +3226,19 @@ def _(
 
 @app.cell(hide_code=True)
 def _():
+    save_overview_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
     save_overview_panels = mo.ui.run_button(label="Save for overview figure")
     mo.vstack([
         mo.md(
             "### Overview figure\n\n"
-            "- Saves the prevalence curves (CSV, plus PNG/PDF as shown) and the "
+            "- Saves the prevalence curves (CSV, plus PNG/PDF/optional SVG as shown) and the "
             "cell-type snapshots (shares of the first shown model run, every Nth KO "
             "time as displayed) to `figures/overview/`\n"
             "- Read by `overview_figure.py`"
         ),
-        save_overview_panels,
+        mo.hstack([save_overview_svg, save_overview_panels], justify="start"),
     ])
-    return (save_overview_panels,)
+    return save_overview_panels, save_overview_svg
 
 
 @app.cell(hide_code=True)
@@ -3415,6 +3250,7 @@ def _(
     fine_prevalence_summary,
     fine_true_cell_type_prevalence,
     save_overview_panels,
+    save_overview_svg,
 ):
     mo.stop(not save_overview_panels.value)
     mo.stop(
@@ -3431,19 +3267,23 @@ def _(
     ):
         _table.to_csv(_directory / _name, index=False)
         _saved.append(_name)
-    if fine_prevalence_figure is not None:
-        for _suffix in ("png", "pdf"):
-            fine_prevalence_figure.savefig(
-                _directory / f"nodal_ko_prevalence.{_suffix}", dpi=600,
-                bbox_inches="tight", facecolor="white",
-            )
-        _saved.append("nodal_ko_prevalence.png/.pdf")
-    for _index, _figure in enumerate(fine_cell_map_figures):
-        _figure.savefig(
-            _directory / f"nodal_ko_cell_maps_{_index}.png", dpi=600,
-            bbox_inches="tight", facecolor="white",
-        )
-        _saved.append(f"nodal_ko_cell_maps_{_index}.png")
+    _svg = ("svg",) if save_overview_svg.value else ()
+    # svg.fonttype "none" keeps text as editable text in Inkscape
+    with plt.rc_context({"svg.fonttype": "none"}):
+        if fine_prevalence_figure is not None:
+            for _suffix in ("png", "pdf") + _svg:
+                fine_prevalence_figure.savefig(
+                    _directory / f"nodal_ko_prevalence.{_suffix}", dpi=600,
+                    bbox_inches="tight", facecolor="white",
+                )
+                _saved.append(f"nodal_ko_prevalence.{_suffix}")
+        for _index, _figure in enumerate(fine_cell_map_figures):
+            for _suffix in ("png",) + _svg:
+                _figure.savefig(
+                    _directory / f"nodal_ko_cell_maps_{_index}.{_suffix}", dpi=600,
+                    bbox_inches="tight", facecolor="white",
+                )
+                _saved.append(f"nodal_ko_cell_maps_{_index}.{_suffix}")
     if fine_cell_map_export is not None:
         np.savez_compressed(_directory / "nodal_ko_cell_maps.npz", **fine_cell_map_export)
         _saved.append("nodal_ko_cell_maps.npz")
@@ -3698,7 +3538,34 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(selection_records):
+def _():
+    dko_density_unit = mo.ui.dropdown(
+        options={
+            "Cells per mm²": "per_mm2",
+            "Total cells in the colony": "per_colony",
+            "Pixel coverage": "share",
+        },
+        value="Cells per mm²",
+        label="Sweep density as",
+    )
+    return (dko_density_unit,)
+
+
+@app.cell(hide_code=True)
+def _(dko_density_unit):
+    # Cells: nuclei counted in the raw 0h images set the scale (cell_counts.py)
+    _low, _high, _start, _stop, _step = {
+        "per_mm2": (0, 50000, 1000, 8000, 50),
+        "per_colony": (0, 20000, 200, 1600, 10),
+        "share": (0.02, 0.98, 0.2, 0.8, 0.01),
+    }[dko_density_unit.value]
+    dko_density_start = mo.ui.number(_low, _high, value=_start, step=_step, label="Lowest density")
+    dko_density_stop = mo.ui.number(_low, _high, value=_stop, step=_step, label="Highest density")
+    return dko_density_start, dko_density_stop
+
+
+@app.cell(hide_code=True)
+def _(dko_density_start, dko_density_stop, dko_density_unit, selection_records):
     _dko_model_options = {
         model_option_label(_record): _record["model_id"]
         for _record in selection_records
@@ -3710,8 +3577,6 @@ def _(selection_records):
         label="Models",
         full_width=True,
     )
-    dko_density_start = mo.ui.number(0.02, 0.98, value=0.2, step=0.01, label="Lowest density")
-    dko_density_stop = mo.ui.number(0.02, 0.98, value=0.8, step=0.01, label="Highest density")
     dko_density_count = mo.ui.number(2, 50, value=7, step=1, label="Densities")
     dko_ko_start = mo.ui.number(0, 48, value=0, step=0.5, label="First KO time (h)")
     dko_ko_stop = mo.ui.number(0, 48, value=48, step=0.5, label="Last KO time (h)")
@@ -3726,34 +3591,48 @@ def _(selection_records):
     dko_min_cell_area = mo.ui.number(
         1, 100, value=_dko_defaults.min_cell_area, step=1, label="Min cell area (px)"
     )
-    dko_layers = mo.ui.number(1, 4, value=_dko_defaults.layers, step=1, label="Cell layers")
-    dko_softness = mo.ui.number(
-        0.001, 0.2, value=_dko_defaults.softness, step=0.001, label="Density cut softness"
+    # More layers are added when the highest density needs them
+    dko_layers = mo.ui.number(1, 10, value=_dko_defaults.layers, step=1, label="Min cell layers")
+    dko_piece_source = mo.ui.dropdown(
+        options={"Real cells (from nuclei)": "nuclei", "Segments (model resolution)": "segments"},
+        value="Real cells (from nuclei)",
+        label="Pieces placed",
     )
+    dko_expansion = mo.ui.number(
+        0.0, 10.0, value=CELL_EXPANSION_UM, step=0.5, label="Cell reach beyond nucleus (µm)"
+    )
+    dko_softness = mo.ui.number(
+        0.05, 5.0, value=0.5, step=0.05, label="Density cut softness (cells)"
+    )
+    # Rollouts sent to the GPU together (lower it if memory runs out)
+    dko_max_batch = mo.ui.number(1, 4096, value=64, step=1, label="Rollouts per GPU batch")
     run_dko_sweep = mo.ui.run_button(label="Run density × KO sweep")
     mo.vstack([
         dko_models,
-        mo.hstack([dko_density_start, dko_density_stop, dko_density_count]),
+        mo.hstack([dko_density_unit, dko_density_start, dko_density_stop, dko_density_count]),
         mo.hstack([dko_ko_start, dko_ko_stop, dko_ko_interval, dko_endpoint]),
         mo.accordion({
             "Cell placement (defaults as in inverse design)": mo.hstack(
-                [dko_split_distance, dko_min_cell_area, dko_layers, dko_softness]
+                [dko_piece_source, dko_expansion, dko_split_distance, dko_min_cell_area,
+                 dko_layers, dko_softness]
             ),
+            "Compute": dko_max_batch,
         }),
         mo.hstack([dko_replicates, dko_seed, dko_duplicate_runs, run_dko_sweep]),
     ])
     return (
         dko_density_count,
-        dko_density_start,
-        dko_density_stop,
         dko_duplicate_runs,
         dko_endpoint,
+        dko_expansion,
         dko_ko_interval,
         dko_ko_start,
         dko_ko_stop,
         dko_layers,
+        dko_max_batch,
         dko_min_cell_area,
         dko_models,
+        dko_piece_source,
         dko_replicates,
         dko_seed,
         dko_softness,
@@ -3763,205 +3642,104 @@ def _(selection_records):
 
 
 @app.cell(hide_code=True)
+def _():
+    # The latest results, from a run or a loaded file
+    get_dko_results, set_dko_results = mo.state(None)
+    return get_dko_results, set_dko_results
+
+
+@app.cell(hide_code=True)
 def _(
+    cell_type_files,
     cell_type_rings,
-    cell_type_rules_by_projection,
     data_root,
     dko_density_count,
     dko_density_start,
     dko_density_stop,
+    dko_density_unit,
     dko_duplicate_runs,
     dko_endpoint,
+    dko_expansion,
     dko_ko_interval,
     dko_ko_start,
     dko_ko_stop,
     dko_layers,
+    dko_max_batch,
     dko_min_cell_area,
     dko_models,
+    dko_piece_source,
     dko_replicates,
     dko_seed,
     dko_softness,
     dko_split_distance,
-    run_dko_sweep,
     selection_records,
     store_root,
 ):
-    if not run_dko_sweep.value:
-        dko_results = None
-        _dko_status = mo.md("Configure the sweep, then run it.")
-    else:
-        if not dko_models.value:
-            raise ValueError("Choose at least one exported model from the selection.")
-        if not data_root.value.strip():
-            raise ValueError("Set Data root before running the density sweep.")
-        if dko_density_stop.value < dko_density_start.value:
-            raise ValueError("Highest density must be at or above the lowest.")
-        if dko_ko_stop.value < dko_ko_start.value:
-            raise ValueError("Last KO time must be at or after first KO time.")
-        if dko_ko_stop.value > dko_endpoint.value:
-            raise ValueError("KO times cannot be later than the snapshot time.")
+    # Everything the sweep reads, for a run here or a remote job
+    def _repository_relative(_path):
+        _path = Path(_path).resolve()
+        return str(_path.relative_to(repository_root)) if _path.is_relative_to(repository_root) else str(_path)
 
-        _dko_density_config = replace(
-            InverseDesignDensityConfig(),
-            split_distance=int(dko_split_distance.value),
-            min_cell_area=int(dko_min_cell_area.value),
-            layers=int(dko_layers.value),
-            softness=float(dko_softness.value),
-        )
-        _dko_densities = np.linspace(
-            float(dko_density_start.value),
-            float(dko_density_stop.value),
-            int(dko_density_count.value),
-        )
-        _dko_ko_hours = np.arange(
-            float(dko_ko_start.value),
-            float(dko_ko_stop.value) + 0.5 * float(dko_ko_interval.value),
-            float(dko_ko_interval.value),
-        )
-        _dko_registry = ModelRegistry(Path(store_root.value).expanduser())
-        _dko_root = Path(data_root.value).expanduser()
-        _dko_records = {_record["model_id"]: _record for _record in selection_records}
-        _dko_replicates = parse_one_based_indices(dko_replicates.value)
-        _dko_runs = int(dko_duplicate_runs.value)
-        _dko_rings = int(cell_type_rings.value)
-        _dko_progress = tqdm(
-            total=len(dko_models.value) * len(_dko_replicates) * _dko_runs
-            * len(_dko_densities) * len(_dko_ko_hours),
+    dko_settings = DensityKoSettings(
+        data_root=data_root.value.strip(),
+        store_root=store_root.value.strip(),
+        cell_type_files={
+            _projection: _repository_relative(_path)
+            for _projection, _path in cell_type_files.value.items() if _path is not None
+        },
+        rings=int(cell_type_rings.value),
+        density_unit=dko_density_unit.value,
+        density_start=float(dko_density_start.value),
+        density_stop=float(dko_density_stop.value),
+        density_count=int(dko_density_count.value),
+        ko_start=float(dko_ko_start.value),
+        ko_stop=float(dko_ko_stop.value),
+        ko_interval=float(dko_ko_interval.value),
+        snapshot_hour=float(dko_endpoint.value),
+        replicates=parse_one_based_indices(dko_replicates.value),
+        seed=int(dko_seed.value),
+        duplicate_runs=int(dko_duplicate_runs.value),
+        piece_source=dko_piece_source.value,
+        expansion_um=float(dko_expansion.value),
+        split_distance=int(dko_split_distance.value),
+        min_cell_area=int(dko_min_cell_area.value),
+        layers=int(dko_layers.value),
+        softness_cells=float(dko_softness.value),
+        max_batch=int(dko_max_batch.value),
+    )
+    _records = {_record["model_id"]: _record for _record in selection_records}
+    dko_records = tuple(_records[_model_id] for _model_id in dko_models.value)
+    return dko_records, dko_settings
+
+
+@app.cell(hide_code=True)
+def _(dko_records, dko_settings, run_dko_sweep, set_dko_results):
+    if not run_dko_sweep.value:
+        _dko_status = mo.md("Configure the sweep, then run it here, export it as a remote job, or load saved results below.")
+    else:
+        if not dko_records:
+            raise ValueError("Choose at least one exported model from the selection.")
+        with tqdm(
+            total=dko_settings.trajectories(len(dko_records)),
             desc="Running density × KO trajectories",
             unit="trajectory",
-        )
-        _dko_results = []
-        _dko_job_index = 0
-        _dko_warnings = []
-        for _dko_model_id in dko_models.value:
-            _dko_record = _dko_records[_dko_model_id]
-            _dko_projection = _dko_record["projection"]
-            _dko_rules = cell_type_rules_by_projection[_dko_projection]
-            _dko_bundle = _dko_registry.get(_dko_model_id)
-            _dko_model = _dko_bundle.load_model(
-                key=jr.PRNGKey(int(dko_seed.value)), implementation="portable"
+        ) as _dko_progress:
+            _dko_results, _dko_warnings = run_density_ko_sweep(
+                dko_settings, dko_records, progress=_dko_progress.update
             )
-            _dko_bins = load_training_histogram_bins(_dko_bundle, _dko_root)
-            _dko_data = [
-                load_condition_data(_dko_bundle, _dko_root, "baseline", _replicate, _dko_bins)
-                for _replicate in _dko_replicates
-            ]
-            _dko_colonies = stacked_colonies(_dko_data, _dko_replicates)
-            # One circle for every replicate: the geometry stays fixed
-            _dko_shape = _dko_colonies["support"].shape[-2:]
-            _dko_mask = circle_mask(
-                _dko_shape, float(np.mean(np.sum(_dko_colonies["support"], axis=(1, 2))))
-            )
-            _dko_boundary = jnp.broadcast_to(
-                jnp.asarray(_dko_mask, dtype=jnp.asarray(_dko_data[0]["boundary"]).dtype),
-                jnp.asarray(_dko_data[0]["boundary"]).shape,
-            )
-            _dko_names = _dko_data[0]["state_channel_names"]
-            _dko_channels = int(_dko_model.N_CHANNELS)
-            _dko_steps_per_12h = int(_dko_bundle.config.run.t)
-            _dko_total_steps = int(round(float(dko_endpoint.value) * _dko_steps_per_12h / 12.0))
-            _dko_observation_steps = jnp.asarray([_dko_total_steps], dtype=jnp.int32)
-            _dko_ko_steps = [
-                int(round(float(_hour) * _dko_steps_per_12h / 12.0)) for _hour in _dko_ko_hours
-            ]
-            _dko_curriculum = tuple(_dko_bundle.config.data.knockout.curriculum or ("baseline",))
-            _dko_label = record_label(_dko_record)
-            for _dko_replicate_index, _dko_replicate in enumerate(_dko_replicates):
-                _dko_library, _dko_measured_density = replicate_cell_library(
-                    _dko_colonies, _dko_replicate_index, _dko_density_config
-                )
-                for _dko_run_index in range(_dko_runs):
-                    _dko_run_seed = int(dko_seed.value) + _dko_job_index * _dko_runs + _dko_run_index
-                    _dko_packed, _dko_gaps = placed_cell_texture(
-                        _dko_library, _dko_colonies["schema"], _dko_shape,
-                        _dko_density_config, _dko_run_seed,
-                    )
-                    _dko_max_density = float(_dko_gaps.max_density)
-                    if _dko_densities[-1] > _dko_max_density:
-                        _dko_warnings.append(
-                            f"{_dko_label}, replicate {_dko_replicate}, run {_dko_run_index}: "
-                            f"the layers cover at most {_dko_max_density:.2f}"
-                        )
-                    _dko_counts = []
-                    _dko_initial_states = []
-                    for _dko_density in _dko_densities:
-                        _dko_initial = np.asarray(_dko_gaps.apply(
-                            _dko_packed, CellDensity(float(_dko_density)), jr.PRNGKey(_dko_run_seed)
-                        )) * _dko_mask[None]
-                        _dko_initial_states.append(_dko_initial)
-                        _dko_state = jnp.pad(
-                            jnp.asarray(_dko_initial),
-                            ((0, _dko_channels - _dko_initial.shape[0]), (0, 0), (0, 0)),
-                        )
-                        _dko_density_counts = []
-                        for _dko_ko_step in _dko_ko_steps:
-                            _dko_snapshot = rollout_model_with_blocked_channel_sampled(
-                                _dko_model,
-                                _dko_state,
-                                _dko_boundary,
-                                _dko_bundle.config.trainer.boundary_mode,
-                                jr.PRNGKey(_dko_run_seed),
-                                _dko_total_steps,
-                                _dko_data[0]["nodal_channel"],
-                                jnp.asarray(_dko_ko_step, dtype=jnp.int32),
-                                _dko_observation_steps,
-                            )
-                            _dko_density_counts.append(model_pattern_counts(
-                                np.asarray(_dko_snapshot)[0, :len(_dko_names)],
-                                _dko_names, _dko_rules, _dko_mask, _dko_rings,
-                            ))
-                            _dko_progress.update(1)
-                        _dko_counts.append(np.stack(_dko_density_counts))
-                    _dko_results.append({
-                        "model_id": _dko_bundle.id,
-                        "label": _dko_label,
-                        "projection": _dko_projection,
-                        "downsample": _dko_record["downsample"],
-                        "replicate": _dko_replicate,
-                        "run_index": _dko_run_index,
-                        "seed": _dko_run_seed,
-                        "groups": {
-                            "projection": _dko_projection,
-                            "projection_resolution": (
-                                f"{_dko_projection} · ds{_dko_record['downsample']}"
-                            ),
-                            "curriculum": " + ".join(map(str, _dko_curriculum)),
-                            "experiment": str(_dko_record.get("experiment") or "Unlabelled"),
-                            "family": str(_dko_record.get("family") or "Unlabelled"),
-                            "notes": str(_dko_record.get("notes") or "Unlabelled"),
-                            "individual": _dko_label,
-                            "all": "All selected models",
-                        },
-                        "densities": _dko_densities,
-                        "max_density": _dko_max_density,
-                        "measured_density": _dko_measured_density,
-                        "requested_ko_hours": _dko_ko_hours,
-                        "realised_ko_hours": np.asarray(
-                            [12.0 * _step / _dko_steps_per_12h for _step in _dko_ko_steps]
-                        ),
-                        "snapshot_hour": float(dko_endpoint.value),
-                        # [densities, KO times, rings, patterns]
-                        "pattern_counts": np.stack(_dko_counts),
-                        # Kept for the first run only, to show the initial states
-                        "initial_states": (
-                            np.stack(_dko_initial_states) if not _dko_results else None
-                        ),
-                        "state_channel_names": _dko_names,
-                        "colony": _dko_mask,
-                    })
-                _dko_job_index += 1
-        _dko_progress.close()
-        dko_results = tuple(_dko_results)
+        set_dko_results(_dko_results)
         _dko_status = mo.vstack([
             mo.callout(
-                f"Completed {len(_dko_densities)} densities × {len(_dko_ko_hours)} KO times for "
-                f"{len(dko_models.value)} models × {len(_dko_replicates)} replicates × "
-                f"{_dko_runs} runs.",
+                f"Completed {len(dko_settings.densities())} densities × "
+                f"{len(dko_settings.ko_hours())} KO times for "
+                f"{len(dko_records)} models × {len(dko_settings.replicates)} replicates × "
+                f"{dko_settings.duplicate_runs} runs.",
                 kind="success",
             ),
             *(
                 [mo.callout(
-                    "Densities above what the cell layers cover are cut to it; add layers:\n\n"
+                    "Even the most cell layers (10) cannot hold the highest density, "
+                    "so it is cut to what they hold (or nuclei could not be counted):\n\n"
                     + "\n".join(f"- {_warning}" for _warning in _dko_warnings),
                     kind="warn",
                 )]
@@ -3969,12 +3747,187 @@ def _(
             ),
         ])
     _dko_status
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    dko_job_name = mo.ui.text("density_ko", label="Job name", full_width=True)
+    dko_job_split = mo.ui.dropdown(
+        options={"One per model": "model", "One per model and replicate": "replicate"},
+        value="One per model",
+        label="Parts (one pod each)",
+    )
+    dko_job_output = mo.ui.text(
+        "/workspace/writeable/output/nodal_ko_eval",
+        label="Results folder on the cluster (the job name is added)",
+        full_width=True,
+    )
+    export_dko_job = mo.ui.run_button(label="Export remote job")
+    mo.vstack([
+        mo.md(
+            "### Run the sweep remotely\n\n"
+            "- Writes a job manifest with the settings above and the chosen models\n"
+            "- Each part writes `part_<i>.npz`; load the copied-back folder below\n"
+            "- See `docs/remote_notebook_jobs.md`"
+        ),
+        mo.hstack([dko_job_name, dko_job_split]),
+        dko_job_output,
+        export_dko_job,
+    ])
+    return dko_job_name, dko_job_output, dko_job_split, export_dko_job
+
+
+@app.cell(hide_code=True)
+def _(
+    dko_job_name,
+    dko_job_output,
+    dko_job_split,
+    dko_records,
+    dko_settings,
+    export_dko_job,
+):
+    if not export_dko_job.value:
+        _dko_job_status = mo.md("")
+    elif not dko_records:
+        _dko_job_status = mo.callout("Choose at least one model.", kind="warn")
+    else:
+        dko_settings.check()
+        _name = dko_job_name.value.strip() or "density_ko"
+        _output = f"{dko_job_output.value.strip().rstrip('/')}/{_name}"
+        # Next to the training manifests, so a git checkout on the cluster has it
+        _manifest = write_job_manifest(
+            repository_root / "Experiments/micropatterns/conf/generated/density_ko" / _name / "manifest.yaml",
+            f"density_ko_{_name}",
+            job_configs(dko_settings, dko_records, _output, split=dko_job_split.value),
+        )
+        _relative = _manifest.relative_to(repository_root)
+        _local = f"output/nodal_ko_eval/{_name}"
+        _dko_job_status = mo.callout(
+            mo.md(
+                f"Wrote {_relative}. On the cluster, from the repository root:\n\n"
+                f"```bash\nbash launch/launch_batch_multi_job.sh "
+                f"Experiments/micropatterns/density_ko_sweep.py {_relative} <workers> H200\n```\n\n"
+                f"Then copy `{_output}/` back to `{_local}/` and load that folder below. "
+                f"Test one part locally with `python Experiments/micropatterns/density_ko_sweep.py "
+                f"--manifest {_relative} --index 0`."
+            ),
+            kind="success",
+        )
+    _dko_job_status
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    dko_results_path = mo.ui.text(
+        "output/nodal_ko_eval/density_ko_results.npz",
+        label="Results file, or folder of a remote job's parts (relative to the repository root)",
+        full_width=True,
+    )
+    save_dko_results = mo.ui.run_button(label="Save results")
+    load_dko_results = mo.ui.run_button(label="Load results")
+    dko_overwrite = mo.ui.checkbox(value=False, label="Overwrite an existing file")
+    mo.vstack([
+        mo.md(
+            "### Save or load density × KO results\n\n"
+            "- Saves the pattern counts of every run, so the plots below can be "
+            "remade without rerunning the sweep\n"
+            "- Cell types are recomputed on loading; the file records the "
+            "thresholds and rings they need"
+        ),
+        dko_results_path,
+        mo.hstack([save_dko_results, dko_overwrite, load_dko_results], justify="start"),
+    ])
+    return dko_overwrite, dko_results_path, load_dko_results, save_dko_results
+
+
+@app.cell(hide_code=True)
+def _(
+    dko_overwrite,
+    dko_results_path,
+    get_dko_results,
+    load_dko_results,
+    save_dko_results,
+    set_dko_results,
+):
+    _path = Path(dko_results_path.value.strip()).expanduser()
+    if not _path.is_absolute():
+        _path = repository_root / _path
+    if save_dko_results.value:
+        if get_dko_results() is None:
+            _dko_file_status = mo.callout("Run the sweep (or load results) first.", kind="warn")
+        elif _path.exists() and not dko_overwrite.value:
+            _dko_file_status = mo.callout(
+                f"{_path} exists; choose another name or tick Overwrite.", kind="warn"
+            )
+        else:
+            save_density_ko_results(_path, get_dko_results())
+            _dko_file_status = mo.callout(f"Saved to {_path}", kind="success")
+    elif load_dko_results.value:
+        if not _path.exists():
+            _dko_file_status = mo.callout(f"No file or folder at {_path}", kind="danger")
+        else:
+            set_dko_results(load_density_ko_results(_path))
+            _dko_file_status = mo.callout(f"Loaded {_path}", kind="success")
+    else:
+        _dko_file_status = mo.md("")
+    _dko_file_status
+    return
+
+
+@app.cell(hide_code=True)
+def _(cell_type_rings, cell_type_rules_by_projection, get_dko_results):
+    _all_results = get_dko_results() or ()
+    # Results need a cell type file of their projection
+    _no_rules = sorted({
+        _result["projection"] for _result in _all_results
+        if _result["projection"] not in cell_type_rules_by_projection
+    })
+    dko_results = tuple(
+        _result for _result in _all_results
+        if _result["projection"] in cell_type_rules_by_projection
+    ) or None
+
+    def _thresholds(_rules):
+        return {_marker: float(_rules.thresholds[_marker]) for _marker in _rules.markers}
+
+    # Saved counts only hold for the thresholds and rings they were made with
+    _mismatches = sorted({
+        f"{_result['label']} ({_result['projection']})"
+        for _result in dko_results or ()
+        if _result.get("rings") != int(cell_type_rings.value)
+        or _result.get("cell_type_thresholds")
+        != _thresholds(cell_type_rules_by_projection[_result["projection"]])
+    })
+    _warnings = []
+    if len({_result["density_unit"] for _result in dko_results or ()}) > 1:
+        _warnings.append(mo.callout(
+            "These results sweep the density in different units, so they are not plotted together "
+            "correctly; load or run them separately.",
+            kind="warn",
+        ))
+    if _no_rules:
+        _warnings.append(mo.callout(
+            "Not shown, as no cell type file is chosen for their projection: "
+            + ", ".join(_no_rules),
+            kind="warn",
+        ))
+    if _mismatches:
+        _warnings.append(mo.callout(
+            "These results were made with other cell type thresholds or rings than "
+            "the ones chosen above, so their cell types may not match: "
+            + ", ".join(_mismatches),
+            kind="warn",
+        ))
+    mo.vstack(_warnings)
     return (dko_results,)
 
 
 @app.cell(hide_code=True)
 def _(cell_type_labels, dko_results):
     _dko_densities = [] if not dko_results else [float(_d) for _d in dko_results[0]["densities"]]
+    _dko_unit = "share" if not dko_results else dko_results[0]["density_unit"]
     _dko_ko_hours = [] if not dko_results else [float(_h) for _h in dko_results[0]["requested_ko_hours"]]
     _dko_snapshot_hour = 48.0 if not dko_results else dko_results[0]["snapshot_hour"]
     _dko_measured = (
@@ -4013,9 +3966,9 @@ def _(cell_type_labels, dko_results):
     )
     # Slices default to the measured density and the KO time nearest 24h
     dko_fixed_density = mo.ui.dropdown(
-        options={f"{_d:.2f}": _d for _d in _dko_densities},
+        options={format_density(_d, _dko_unit): _d for _d in _dko_densities},
         value=(
-            f"{min(_dko_densities, key=lambda _d: abs(_d - _dko_measured)):.2f}"
+            format_density(min(_dko_densities, key=lambda _d: abs(_d - _dko_measured)), _dko_unit)
             if _dko_densities else None
         ),
         label="Fixed density (KO sweep)",
@@ -4073,6 +4026,16 @@ def _(
                         "seed": _result["seed"],
                         "group": _result["groups"][dko_group_by.value],
                         "density": float(_density),
+                        "density_unit": _result["density_unit"],
+                        "covered_share": float(_result["covered_shares"][_density_index]),
+                        "cells_per_mm2": (
+                            float(_result["cells_per_mm2"][_density_index])
+                            if _result["cells_per_mm2"] is not None else float("nan")
+                        ),
+                        "cells_per_colony": (
+                            float(_result["cells_per_colony"][_density_index])
+                            if _result["cells_per_colony"] is not None else float("nan")
+                        ),
                         "measured_density": _result["measured_density"],
                         "max_density": _result["max_density"],
                         "knockout_hour": float(_ko_hour),
@@ -4105,14 +4068,14 @@ def _(
 
 @app.cell(hide_code=True)
 def _(dko_results):
-    # Synthetic initial states of the first run, LMBR inside the colony
+    # Synthetic initial states of the first run, SOX2 inside the colony
     if not dko_results:
         _dko_initial_view = mo.md("")
     else:
         _first = dko_results[0]
         _channel = (
-            _first["state_channel_names"].index("LMBR")
-            if "LMBR" in _first["state_channel_names"] else 0
+            _first["state_channel_names"].index("SOX2")
+            if "SOX2" in _first["state_channel_names"] else 0
         )
         _densities = _first["densities"]
         _figure, _axes = plt.subplots(
@@ -4120,16 +4083,20 @@ def _(dko_results):
         )
         _cmap = plt.get_cmap("magma").copy()
         _cmap.set_bad(color="#d9d9d9")
-        for _axis, _density, _state in zip(_axes[0], _densities, _first["initial_states"]):
+        for _axis, _density, _share, _state in zip(
+            _axes[0], _densities, _first["covered_shares"], _first["initial_states"]
+        ):
             _axis.imshow(
                 np.where(_first["colony"], _state[_channel], np.nan),
                 cmap=_cmap, vmin=0.0, vmax=1.0, origin="lower",
             )
-            _axis.set_title(f"density {_density:.2f}", fontsize=9)
+            _axis.set_title(
+                f"{format_density(_density, _first['density_unit'])} · share {_share:.2f}", fontsize=9
+            )
             _axis.set_xticks([])
             _axis.set_yticks([])
         _figure.suptitle(
-            f"Synthetic 0h {_first['state_channel_names'][_channel]} · {_first['label']} · "
+            f"Synthetic 0h {_first['state_channel_names'][_channel]} · "
             f"replicate {_first['replicate']} · seed {_first['seed']}",
             fontsize=10,
         )
@@ -4137,8 +4104,20 @@ def _(dko_results):
         _dko_initial_view = mo.vstack([
             _figure,
             mo.md(
-                f"- Measured covered share of the replicate's colony: "
-                f"{_first['measured_density']:.3f}; the layers cover at most {_first['max_density']:.3f}"
+                f"- Sweep: {DENSITY_UNITS[_first['density_unit']]}; the layers hold at most "
+                f"{format_density(_first['max_density'], _first['density_unit'])}\n"
+                f"- Measured in the replicate's 0h colony (estimates of the true values): "
+                + (
+                    f"{_first['measured_cells_per_mm2'] * _first['colony_mm2']:.0f} cells in a colony "
+                    f"of this size, {_first['measured_cells_per_mm2']:.0f} cells/mm², "
+                    if "colony_mm2" in _first else ""
+                )
+                + f"pixel coverage {_first['measured_covered_share']:.2f}"
+                + (
+                    f"\n- Pieces placed: {_first.get('piece_source', 'segments')}, "
+                    f"{_first['cells_per_segment']:.2f} cells each"
+                    if "cells_per_segment" in _first else ""
+                )
             ),
         ])
     _dko_initial_view
@@ -4192,8 +4171,9 @@ def _(
             _measured, 0.98, " measured", color="gray", fontsize=8, va="top",
             transform=_density_axis.get_xaxis_transform(),
         )
+        _unit = dko_results[0]["density_unit"]
         _density_axis.set(
-            xlabel="Initial cell density (covered share of the colony)",
+            xlabel=DENSITY_UNITS[_unit],
             title=f"Density sweep · KO {ko_time_label(dko_fixed_ko.value, _snapshot_hour)}",
         )
         _plot_slice(_ko_axis, "density", dko_fixed_density.value, "knockout_hour")
@@ -4202,7 +4182,7 @@ def _(
             xlabel="NODAL knockout time (h)",
             xticks=_ticks,
             xticklabels=_tick_labels,
-            title=f"KO sweep · density {dko_fixed_density.value:.2f}",
+            title=f"KO sweep · density {format_density(dko_fixed_density.value, _unit)}",
         )
         _ko_axis.legend(fontsize="small", ncol=2)
         _figure.suptitle(f"Predicted cell-type prevalence at {_snapshot_hour:g}h")
@@ -4269,7 +4249,7 @@ def _(
             _ticks, _tick_labels = ko_time_ticks(_snapshot_hour)
             _axis.set(
                 xlabel="NODAL knockout time (h)",
-                ylabel="Initial cell density",
+                ylabel=DENSITY_UNITS[dko_results[0]["density_unit"]],
                 xticks=_ticks,
                 xticklabels=_tick_labels,
                 title=_cell_type,

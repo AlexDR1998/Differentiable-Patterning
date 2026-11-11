@@ -493,3 +493,32 @@ def place_cells(panels, channel_count, output_shape, layers, attempts, seed):
     inner = (slice(None), slice(None), slice(margin, height - margin), slice(margin, width - margin))
     coverage = np.mean(ranks[inner] >= 0, axis=(1, 2, 3))
     return textures, ranks, coverage.astype(np.float32)
+
+
+def layer_cell_counts(ranks, mask, kept=None):
+    """How many placed cells of each layer lie in ``mask`` ``[H, W]``, as ``[layers]``.
+
+    ``ranks`` ``[layers, panels, H, W]`` comes from ``place_cells``. Every
+    placed cell has its own rank, shared by its panels, so cells are told
+    apart by the rank map of panel 0. A cell counts by the share of its
+    pixels inside ``mask``, so cells cut by the mask edge count in part.
+    Pass the uncropped rank maps (with ``mask`` on the same grid) so that
+    cells at the grid edge keep their whole area. With ``kept`` ``[layers,
+    H, W]`` (how much each pixel is kept, ``CellGaps.kept`` of panel 0),
+    cells count only as much as they are kept.
+    """
+
+    mask = np.asarray(mask, dtype=bool)
+    counts = np.zeros(ranks.shape[0], dtype=np.float32)
+    for layer, rank_map in enumerate(np.asarray(ranks)[:, 0]):
+        placed = rank_map >= 0
+        if not np.any(placed):
+            continue
+        _, cell = np.unique(rank_map[placed], return_inverse=True)
+        area = np.bincount(cell)
+        weights = mask[placed].astype(np.float64)
+        if kept is not None:
+            weights = weights * np.asarray(kept[layer], dtype=np.float64)[placed]
+        inside = np.bincount(cell, weights=weights, minlength=len(area))
+        counts[layer] = float(np.sum(inside / area))
+    return counts

@@ -8,7 +8,10 @@ from Common.dataloader.cell_types import CellTypeRules, label_names, pixel_label
 from NCA.inverse_design.density import (
     CellDensity,
     CellGaps,
+    density_for_level,
     fill_level,
+    kept_cell_count,
+    level_for_cell_count,
     pack_cells,
 )
 from NCA.inverse_design.geometry import FourierRadialGeometry, coordinate_grid
@@ -268,6 +271,23 @@ def test_fill_level_fills_the_layers_in_turn():
     assert np.isclose(float(fill_level(0.5, coverage)), 1.0)
     assert np.isclose(float(fill_level(0.6, coverage)), 1.5)
     assert np.isclose(float(fill_level(0.95, coverage)), 2.0)
+
+
+def test_density_and_cell_count_invert_the_fill_level():
+    coverage = jnp.asarray([0.5, 0.4, 0.3])
+    cells = jnp.asarray([100.0, 80.0, 60.0])
+
+    for density in (0.1, 0.5, 0.6, 0.75):
+        level = fill_level(density, coverage)
+        assert np.isclose(float(density_for_level(level, coverage)), density, atol=1e-5)
+    for level in (0.0, 0.3, 1.0, 1.7, 2.5):
+        count = kept_cell_count(level, cells)
+        assert np.isclose(float(level_for_cell_count(count, cells)), level, atol=1e-5)
+    assert np.isclose(float(kept_cell_count(1.5, cells)), 140.0)
+    # More cells than all layers hold fill every layer
+    assert np.isclose(float(level_for_cell_count(1000.0, cells)), 3.0)
+    counts = [float(kept_cell_count(fill_level(d, coverage), cells)) for d in (0.1, 0.3, 0.5, 0.7)]
+    assert np.all(np.diff(counts) > 0)
 
 
 def test_density_keeps_whole_cells_and_has_a_gradient():

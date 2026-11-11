@@ -980,20 +980,24 @@ def _(
 @app.cell(hide_code=True)
 def _():
     figure_name = mo.ui.text(value="projection_schematic", label="File name")
-    save_figure = mo.ui.run_button(label="Save PDF + PNG")
-    mo.hstack([figure_name, save_figure], justify="start")
-    return figure_name, save_figure
+    save_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
+    save_figure = mo.ui.run_button(label="Save figure")
+    mo.hstack([figure_name, save_svg, save_figure], justify="start")
+    return figure_name, save_figure, save_svg
 
 
 @app.cell
-def _(figure_name, save_figure, schematic):
+def _(figure_name, save_figure, schematic, save_svg):
     mo.stop(not save_figure.value)
     _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
     _directory.mkdir(parents=True, exist_ok=True)
-    for _suffix in ("pdf", "png"):
-        schematic.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400,
-                          facecolor=schematic.get_facecolor())
-    mo.md(f"Saved `{figure_name.value}.pdf` and `.png` to `{_directory}`")
+    _suffixes = ("pdf", "png", "svg") if save_svg.value else ("pdf", "png")
+    # svg.fonttype "none" keeps text as editable text in Inkscape
+    with plt.rc_context({"svg.fonttype": "none"}):
+        for _suffix in _suffixes:
+            schematic.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400,
+                              facecolor=schematic.get_facecolor())
+    mo.md(f"Saved `{figure_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
     return
 
 
@@ -1180,20 +1184,24 @@ def _(
 @app.cell(hide_code=True)
 def _():
     projection_figure_name = mo.ui.text(value="projection_trajectories", label="File name")
-    save_projection_figure = mo.ui.run_button(label="Save PDF + PNG")
-    mo.hstack([projection_figure_name, save_projection_figure], justify="start")
-    return projection_figure_name, save_projection_figure
+    save_projection_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
+    save_projection_figure = mo.ui.run_button(label="Save figure")
+    mo.hstack([projection_figure_name, save_projection_svg, save_projection_figure], justify="start")
+    return projection_figure_name, save_projection_figure, save_projection_svg
 
 
 @app.cell
-def _(projection_figure_name, projection_trajectories, save_projection_figure):
+def _(projection_figure_name, projection_trajectories, save_projection_figure, save_projection_svg):
     mo.stop(not save_projection_figure.value)
     _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
     _directory.mkdir(parents=True, exist_ok=True)
-    for _suffix in ("pdf", "png"):
-        projection_trajectories.savefig(_directory / f"{projection_figure_name.value}.{_suffix}", dpi=400,
-                                        facecolor=projection_trajectories.get_facecolor())
-    mo.md(f"Saved `{projection_figure_name.value}.pdf` and `.png` to `{_directory}`")
+    _suffixes = ("pdf", "png", "svg") if save_projection_svg.value else ("pdf", "png")
+    # svg.fonttype "none" keeps text as editable text in Inkscape
+    with plt.rc_context({"svg.fonttype": "none"}):
+        for _suffix in _suffixes:
+            projection_trajectories.savefig(_directory / f"{projection_figure_name.value}.{_suffix}", dpi=400,
+                                            facecolor=projection_trajectories.get_facecolor())
+    mo.md(f"Saved `{projection_figure_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
     return
 
 
@@ -1447,20 +1455,24 @@ def _(
 @app.cell(hide_code=True)
 def _():
     resolution_figure_name = mo.ui.text(value="resolution_trajectories", label="File name")
-    save_resolution_figure = mo.ui.run_button(label="Save PDF + PNG")
-    mo.hstack([resolution_figure_name, save_resolution_figure], justify="start")
-    return resolution_figure_name, save_resolution_figure
+    save_resolution_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
+    save_resolution_figure = mo.ui.run_button(label="Save figure")
+    mo.hstack([resolution_figure_name, save_resolution_svg, save_resolution_figure], justify="start")
+    return resolution_figure_name, save_resolution_figure, save_resolution_svg
 
 
 @app.cell
-def _(resolution_figure_name, resolution_trajectories, save_resolution_figure):
+def _(resolution_figure_name, resolution_trajectories, save_resolution_figure, save_resolution_svg):
     mo.stop(not save_resolution_figure.value)
     _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
     _directory.mkdir(parents=True, exist_ok=True)
-    for _suffix in ("pdf", "png"):
-        resolution_trajectories.savefig(_directory / f"{resolution_figure_name.value}.{_suffix}", dpi=400,
-                                        facecolor=resolution_trajectories.get_facecolor())
-    mo.md(f"Saved `{resolution_figure_name.value}.pdf` and `.png` to `{_directory}`")
+    _suffixes = ("pdf", "png", "svg") if save_resolution_svg.value else ("pdf", "png")
+    # svg.fonttype "none" keeps text as editable text in Inkscape
+    with plt.rc_context({"svg.fonttype": "none"}):
+        for _suffix in _suffixes:
+            resolution_trajectories.savefig(_directory / f"{resolution_figure_name.value}.{_suffix}", dpi=400,
+                                            facecolor=resolution_trajectories.get_facecolor())
+    mo.md(f"Saved `{resolution_figure_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
     return
 
 

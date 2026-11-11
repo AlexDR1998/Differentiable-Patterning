@@ -1358,29 +1358,34 @@ def _(
 def _():
     figure_name = mo.ui.text(value="micropattern_overview", label="File name")
     save_panels = mo.ui.checkbox(value=False, label="Also each panel separately")
-    save_figure = mo.ui.run_button(label="Save PDF + PNG")
-    mo.hstack([figure_name, save_panels, save_figure], justify="start")
-    return figure_name, save_figure, save_panels
+    save_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
+    save_figure = mo.ui.run_button(label="Save figure")
+    mo.hstack([figure_name, save_panels, save_svg, save_figure], justify="start")
+    return figure_name, save_figure, save_panels, save_svg
 
 
 @app.cell(hide_code=True)
-def _(figure_name, overview, overview_axes, save_figure, save_panels):
+def _(figure_name, overview, overview_axes, save_figure, save_panels, save_svg):
     mo.stop(not save_figure.value)
     FIGURE_DIRECTORY.mkdir(parents=True, exist_ok=True)
     _saved = []
-    for _suffix in ("pdf", "png"):
-        overview.savefig(FIGURE_DIRECTORY / f"{figure_name.value}.{_suffix}", dpi=600,
-                         facecolor=overview.get_facecolor())
-        _saved.append(f"{figure_name.value}.{_suffix}")
-    if save_panels.value:
-        # Each panel's area of the full figure, so panels match the composite
-        overview.canvas.draw()
-        _renderer = overview.canvas.get_renderer()
-        for _key, _ax in overview_axes.items():
-            _box = _ax.get_tightbbox(_renderer).transformed(overview.dpi_scale_trans.inverted()).padded(0.04)
-            overview.savefig(FIGURE_DIRECTORY / f"{figure_name.value}_{_key}.png", dpi=600, bbox_inches=_box,
+    _suffixes = ("pdf", "png", "svg") if save_svg.value else ("pdf", "png")
+    # svg.fonttype "none" keeps text as editable text in Inkscape
+    with plt.rc_context({"svg.fonttype": "none"}):
+        for _suffix in _suffixes:
+            overview.savefig(FIGURE_DIRECTORY / f"{figure_name.value}.{_suffix}", dpi=600,
                              facecolor=overview.get_facecolor())
-            _saved.append(f"{figure_name.value}_{_key}.png")
+            _saved.append(f"{figure_name.value}.{_suffix}")
+        if save_panels.value:
+            # Each panel's area of the full figure, so panels match the composite
+            overview.canvas.draw()
+            _renderer = overview.canvas.get_renderer()
+            for _key, _ax in overview_axes.items():
+                _box = _ax.get_tightbbox(_renderer).transformed(overview.dpi_scale_trans.inverted()).padded(0.04)
+                for _suffix in ("png", "svg") if save_svg.value else ("png",):
+                    overview.savefig(FIGURE_DIRECTORY / f"{figure_name.value}_{_key}.{_suffix}", dpi=600,
+                                     bbox_inches=_box, facecolor=overview.get_facecolor())
+                    _saved.append(f"{figure_name.value}_{_key}.{_suffix}")
     mo.md(f"Saved to `{FIGURE_DIRECTORY}`:\n\n" + "\n".join(f"- `{_n}`" for _n in _saved))
     return
 

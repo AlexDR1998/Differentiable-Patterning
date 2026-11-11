@@ -15,6 +15,10 @@ keeps a different random set of cells. To give the density a gradient, the
 cut is a sigmoid of width ``softness`` in rank: the few cells at the cut are
 faded rather than kept or dropped.
 
+Cells are kept in rank order, so a density also sets an expected number of
+cells (``kept_cell_count``). Notebooks use this to set the density by cell
+number (``Experiments/micropatterns/cell_counts.py``).
+
 The texture of one colony is stored as one array ``[L * (C + P), H, W]``
 (``pack_cells``): for each of the ``L`` layers, the ``C`` state channels and
 then the rank maps of the ``P`` staining panels (cells of different panels
@@ -47,6 +51,41 @@ def fill_level(density: Array, layer_coverage: Array) -> Array:
 
     uncovered = jnp.cumprod(jnp.concatenate([jnp.ones(1), 1.0 - layer_coverage[:-1]]))
     share = (1.0 - (1.0 - density) / uncovered) / layer_coverage
+    return jnp.sum(jnp.clip(share, 0.0, 1.0))
+
+
+def density_for_level(level: Array, layer_coverage: Array) -> Array:
+    """The covered share for a fill ``level`` (the inverse of ``fill_level``).
+
+    With layers ``0 .. k-1`` full and share ``f`` of layer ``k`` kept, the
+    covered share is ``1 - prod_j (1 - c_j)``, where ``c_j`` is the layer
+    coverage times how full layer ``j`` is.
+    """
+
+    layers = jnp.arange(layer_coverage.shape[0], dtype=layer_coverage.dtype)
+    filled = jnp.clip(level - layers, 0.0, 1.0)
+    return 1.0 - jnp.prod(1.0 - filled * layer_coverage)
+
+
+def kept_cell_count(level: Array, layer_cells: Array) -> Array:
+    """The expected number of cells kept at a fill ``level``.
+
+    Ranks are uniform, so filling share ``f`` of layer ``k`` keeps share
+    ``f`` of its ``layer_cells[k]`` cells.
+    """
+
+    layers = jnp.arange(layer_cells.shape[0], dtype=layer_cells.dtype)
+    return jnp.sum(jnp.clip(level - layers, 0.0, 1.0) * layer_cells)
+
+
+def level_for_cell_count(count: Array, layer_cells: Array) -> Array:
+    """The fill level that keeps ``count`` cells (the inverse of ``kept_cell_count``).
+
+    Counts above the cells of all layers give ``L``.
+    """
+
+    before = jnp.concatenate([jnp.zeros(1), jnp.cumsum(layer_cells)[:-1]])
+    share = (count - before) / jnp.maximum(layer_cells, 1e-12)
     return jnp.sum(jnp.clip(share, 0.0, 1.0))
 
 
@@ -98,6 +137,12 @@ class CellGaps(eqx.Module):
         layers, channels = self.layer_coverage.shape[0], self.gap_values.shape[0]
         packed = packed.reshape(layers, channels + self.panels, *packed.shape[-2:])
         return packed[:, :channels], packed[:, channels:]
+
+    def kept(self, packed: Array, density: CellDensity, key: Array) -> Array:
+        """How much each cell pixel is kept (0 to 1), ``[L, P, H, W]``."""
+
+        _, ranks = self.unpack(packed)
+        return self._kept(ranks, density, key)
 
     def coverage(self, packed: Array, density: CellDensity, key: Array) -> Array:
         """How much each pixel is covered by cells of each panel ``[P, H, W]``."""

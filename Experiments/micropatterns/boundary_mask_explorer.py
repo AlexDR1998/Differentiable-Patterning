@@ -27,6 +27,7 @@ __generated_with = "0.23.10"
 app = marimo.App(width="columns")
 
 with app.setup:
+    import io
     import os
     from pathlib import Path
     import marimo as mo
@@ -40,6 +41,18 @@ with app.setup:
     from Common.dataloader.micropattern_260726 import load_micropattern_260726
     from Experiments.model_registry import ModelRegistry, load_selection
     from Common.dataloader.micropattern_projections import PROJECTIONS
+    from Common.dataloader.disk_cache import cache_dir_from_environment
+    from Experiments.micropatterns.cell_counts import (
+        CELL_EXPANSION_UM,
+        cells_to_density,
+        default_alignment,
+        density_to_cells,
+        nuclear_cell_library,
+        rank_softness,
+        reference_cell_counts,
+        summarise_counts,
+        um_per_pixel,
+    )
     from Experiments.micropatterns.reference import cell_library
     from Experiments.micropatterns.texture_settings import (
         DEFAULT_TEXTURE_SETTINGS_FILE,
@@ -51,6 +64,7 @@ with app.setup:
     from Experiments.micropatterns.texture_synthesis import (
         cell_coverage as measure_cell_coverage,
         extend_masked_texture,
+        layer_cell_counts,
         normalise_histograms_and_covariance,
         place_cells,
         synthesise_patch_texture,
@@ -324,6 +338,8 @@ def _(reference_dataset, reference_time):
                     "batch_replicates", range(1, _all_measurements.shape[0] + 1)
                 )
             ),
+            # [B, groups]: the raw image of each staining panel (for nuclei)
+            "source_files": np.asarray(reference_dataset.aux["source_files"])[:, _time],
         }
         reference_channel_names = tuple(_schema.state_channels)
         reference_measurement_names = tuple(_schema.measurement_names)
@@ -859,6 +875,7 @@ def _(
         placed_cells = {
             "packed": pack_cells(jnp.asarray(_textures), jnp.asarray(_ranks)),
             "textures": _textures,
+            "ranks": _ranks,
             "layer_coverage": _coverage,
             "channel_panels": _channel_panels,
         }
@@ -867,12 +884,64 @@ def _(
 
 @app.cell(hide_code=True)
 def _(
+    binary_threshold,
+    cell_count_summary,
+    cells_per_segment,
+    density_amount,
+    density_unit,
+    model_pixel_um,
+    placed_cells,
+    selected_mask,
+):
+    # The chosen amount as a covered share, and the cells it keeps in the mask (cell_counts.py)
+    density_setting = None
+    density_setting_error = None
+    if placed_cells is not None:
+        _mask = np.asarray(selected_mask) >= binary_threshold.value
+        # Placed pieces per layer in the mask, each cells_per_segment real cells
+        _layer_pieces = layer_cell_counts(placed_cells["ranks"], _mask)
+        _coverage = placed_cells["layer_coverage"]
+        _counted = cell_count_summary is not None
+        _per_piece = cells_per_segment if _counted else float("nan")
+        _mask_mm2 = np.count_nonzero(_mask) * model_pixel_um**2 * 1e-6 if _counted else float("nan")
+        _amount = float(density_amount.value)
+        if density_unit.value == "share":
+            _density = _amount
+        elif not _counted:
+            _density = None
+            density_setting_error = "No nuclear counts: set the density as a covered share."
+        else:
+            _cells = _amount * _mask_mm2 if density_unit.value == "per_mm2" else _amount
+            _most = float(np.sum(_layer_pieces)) * _per_piece
+            if _cells > _most:
+                density_setting_error = (
+                    f"The placed layers hold about {_most:.0f} cells in the mask "
+                    f"({_most / max(_mask_mm2, 1e-12):.0f} per mm²); add layers."
+                )
+            _density = cells_to_density(_cells, _layer_pieces, _coverage, _per_piece)
+        if _density is not None:
+            _density = float(np.clip(_density, 1e-3, 0.999))
+            _cells = density_to_cells(_density, _layer_pieces, _coverage, _per_piece)
+            density_setting = {
+                "density": _density,
+                "cells": _cells,
+                "pieces": _cells / _per_piece,
+                "cells_per_piece": _per_piece,
+                "cells_per_mm2": _cells / _mask_mm2 if _counted else float("nan"),
+                "mask_mm2": _mask_mm2,
+            }
+    return density_setting, density_setting_error
+
+
+@app.cell(hide_code=True)
+def _(
     base_synthetic_measurements,
     density_error,
     density_reference,
     density_seed,
+    density_setting,
+    density_setting_error,
     density_softness,
-    density_value,
     placed_cells,
     reference_primary_measurements,
     synthesis_error,
@@ -880,16 +949,18 @@ def _(
     # Cells kept for the chosen density, as in inverse design (NCA/inverse_design/density.py)
     synthetic_measurements = base_synthetic_measurements
     synthetic_coverage = None
-    texture_error = synthesis_error if synthesis_error is not None else density_error
-    if texture_error is None and placed_cells is not None:
+    texture_error = next(
+        (_e for _e in (synthesis_error, density_error, density_setting_error) if _e is not None), None
+    )
+    if texture_error is None and placed_cells is not None and density_setting is not None:
         _gaps = CellGaps(
             gap_values=jnp.asarray(density_reference["measurement_gap_values"]),
             channel_panels=jnp.asarray(placed_cells["channel_panels"]),
             layer_coverage=jnp.asarray(placed_cells["layer_coverage"]),
             panels=len(density_reference["panels"]),
-            softness=float(density_softness.value),
+            softness=rank_softness(float(density_softness.value), placed_cells["ranks"]),
         )
-        _density = CellDensity(float(density_value.value))
+        _density = CellDensity(density_setting["density"])
         _key = jr.PRNGKey(int(density_seed.value))
         synthetic_measurements = np.asarray(_gaps.apply(placed_cells["packed"], _density, _key))
         # Covered by cells of any panel
@@ -1590,22 +1661,39 @@ def _(reference_channel_names):
     density_split_distance = mo.ui.number(0, 20, value=2, step=1, label="Split distance (px)")
     density_min_area = mo.ui.number(1, 100, value=2, step=1, label="Min cell area (px)")
     density_interior = mo.ui.slider(0.3, 1.0, value=0.8, step=0.05, label="Cell source radius")
+    density_piece_source = mo.ui.dropdown(
+        options={"Real cells (from nuclei)": "nuclei", "Segments (model resolution)": "segments"},
+        value="Real cells (from nuclei)",
+        label="Pieces",
+    )
+    density_expansion = mo.ui.number(
+        0.0, 10.0, value=CELL_EXPANSION_UM, step=0.5, label="Cell reach beyond nucleus (µm)"
+    )
     mo.vstack([
         mo.md(
             "### Cell density\n\n"
             "- Reference gaps: textures keep the measured colonies' own gaps between cells\n"
             "- Cell density: whole cells cut out of the loaded colonies, placed at random; "
             "the density sets how many are kept (as in inverse design)\n"
-            "- Cells: pixels above the Otsu threshold of the cell markers, split at marker "
-            "maxima at least the split distance apart (0: not split)"
+            "- Pieces placed:\n"
+            "    - Real cells: nuclei found in the raw images (LMBR or DAPI), grown into cells and "
+            "shrunk to model resolution; one piece is one cell\n"
+            "    - Segments: pixels above the Otsu threshold of the cell markers at model resolution, "
+            "split at marker maxima at least the split distance apart (0: not split); one segment "
+            "often holds several cells, so cell numbers use the measured cells per segment"
         ),
-        mo.hstack([texture_model, density_markers], justify="start"),
-        mo.hstack([density_split_distance, density_min_area, density_interior], justify="start"),
+        mo.hstack([texture_model, density_piece_source, density_markers], justify="start"),
+        mo.hstack(
+            [density_split_distance, density_min_area, density_interior, density_expansion],
+            justify="start",
+        ),
     ])
     return (
+        density_expansion,
         density_interior,
         density_markers,
         density_min_area,
+        density_piece_source,
         density_split_distance,
         texture_model,
     )
@@ -1613,11 +1701,15 @@ def _(reference_channel_names):
 
 @app.cell(hide_code=True)
 def _(
+    density_expansion,
     density_interior,
     density_markers,
     density_min_area,
+    density_piece_source,
     density_split_distance,
+    micropattern_root,
     reference_colonies,
+    texture_downsample,
     texture_model,
 ):
     density_reference = None
@@ -1627,27 +1719,132 @@ def _(
             density_error = "Pick at least one cell marker."
         else:
             try:
-                with mo.status.spinner("Cutting out cells"):
-                    density_reference = cell_library(
-                        reference_colonies,
-                        tuple(density_markers.value),
-                        int(density_split_distance.value),
-                        float(density_interior.value),
-                        int(density_min_area.value),
-                    )
-            except ValueError as _error:
+                if density_piece_source.value == "nuclei":
+                    with mo.status.spinner("Cutting out cells from the nuclei of the raw images"):
+                        density_reference = nuclear_cell_library(
+                            reference_colonies,
+                            reference_colonies["source_files"],
+                            Path(micropattern_root.value).expanduser(),
+                            default_alignment(),
+                            int(texture_downsample.value),
+                            tuple(density_markers.value),
+                            int(density_split_distance.value),
+                            float(density_interior.value),
+                            int(density_min_area.value),
+                            expansion_um=float(density_expansion.value),
+                            cache_dir=cache_dir_from_environment(),
+                        )
+                else:
+                    with mo.status.spinner("Cutting out segments"):
+                        density_reference = cell_library(
+                            reference_colonies,
+                            tuple(density_markers.value),
+                            int(density_split_distance.value),
+                            float(density_interior.value),
+                            int(density_min_area.value),
+                        )
+            except (OSError, ValueError, KeyError) as _error:
                 density_error = str(_error)
     return density_error, density_reference
 
 
 @app.cell(hide_code=True)
-def _(density_error, density_reference):
-    _initial = 0.5 if density_reference is None else density_reference["density"]
-    density_value = mo.ui.slider(
-        0.05, 0.99, value=float(np.clip(round(_initial, 2), 0.05, 0.99)), step=0.01,
-        label="Cell density (covered share)",
+def _(
+    density_markers,
+    density_min_area,
+    density_reference,
+    density_split_distance,
+    micropattern_root,
+    reference_dataset,
+    texture_downsample,
+):
+    # Nuclei counted in the raw 0 h images, to set the density by cell number (cell_counts.py)
+    cell_count_rows = None
+    cell_count_summary = None
+    cell_count_error = None
+    model_pixel_um = None
+    # Real cells per placed piece: 1 for real cells, else measured per segment
+    cells_per_segment = None
+    if density_reference is not None:
+        try:
+            _alignment = default_alignment()
+            _colonies = {
+                "measurements": np.asarray(reference_dataset.data[:, 0]),
+                "available": np.asarray(reference_dataset.measurement_mask[:, 0]),
+                "support": np.asarray(reference_dataset.boundary_mask[:, 0], dtype=bool),
+                "schema": reference_dataset.aux["channel_schema"],
+                "replicates": tuple(reference_dataset.aux["batch_replicates"]),
+            }
+            with mo.status.spinner("Counting nuclei in the raw 0 h images"):
+                cell_count_rows = reference_cell_counts(
+                    _colonies,
+                    np.asarray(reference_dataset.aux["source_files"])[:, 0],
+                    Path(micropattern_root.value).expanduser(),
+                    _alignment,
+                    tuple(density_markers.value),
+                    int(density_split_distance.value),
+                    int(density_min_area.value),
+                    cache_dir=cache_dir_from_environment(),
+                )
+            cell_count_summary = summarise_counts(cell_count_rows)
+            model_pixel_um = um_per_pixel(_alignment.pattern_radius, int(texture_downsample.value))
+            cells_per_segment = density_reference.get(
+                "cells_per_segment", cell_count_summary["cells_per_segment"]
+            )
+        except (OSError, ValueError, KeyError) as _error:
+            cell_count_error = str(_error)
+    return (
+        cell_count_error,
+        cell_count_rows,
+        cell_count_summary,
+        cells_per_segment,
+        model_pixel_um,
     )
-    density_softness = mo.ui.slider(0.001, 0.2, value=0.02, step=0.001, label="Softness (rank)")
+
+
+@app.cell(hide_code=True)
+def _(cell_count_summary):
+    density_unit = mo.ui.dropdown(
+        options={
+            "Cells per mm²": "per_mm2",
+            "Total cells in the mask": "per_colony",
+            "Pixel coverage": "share",
+        },
+        value="Cells per mm²" if cell_count_summary is not None else "Pixel coverage",
+        label="Set density as",
+    )
+    return (density_unit,)
+
+
+@app.cell(hide_code=True)
+def _(cell_count_summary, density_reference, density_unit):
+    # Starts at the measured value in the chosen unit
+    if density_unit.value == "per_mm2":
+        _start = round(cell_count_summary["cells_per_mm2"], -1) if cell_count_summary else 3000.0
+        density_amount = mo.ui.number(0, 50000, value=_start, step=10, label="Cells per mm²")
+    elif density_unit.value == "per_colony":
+        _start = round(cell_count_summary["cells_per_colony"]) if cell_count_summary else 500
+        density_amount = mo.ui.number(0, 20000, value=_start, step=5, label="Total cells in the mask")
+    else:
+        _initial = 0.5 if density_reference is None else density_reference["density"]
+        density_amount = mo.ui.slider(
+            0.01, 0.99, value=float(np.clip(round(_initial, 2), 0.01, 0.99)), step=0.01,
+            label="Pixel coverage",
+        )
+    return (density_amount,)
+
+
+@app.cell(hide_code=True)
+def _(
+    cell_count_error,
+    cell_count_rows,
+    cell_count_summary,
+    density_amount,
+    density_error,
+    density_reference,
+    density_unit,
+):
+    density_softness = mo.ui.slider(0.05, 5.0, value=0.5, step=0.05, label="Cut softness (cells)")
     density_layers = mo.ui.number(1, 4, value=2, step=1, label="Layers")
     density_attempts = mo.ui.number(1, 50, value=10, step=1, label="Attempts per cell")
     density_seed = mo.ui.number(0, 100000, value=0, step=1, label="Cell seed")
@@ -1656,11 +1853,28 @@ def _(density_error, density_reference):
     elif density_reference is None:
         _view = mo.md("")
     else:
+        _piece_text = (
+            "real cells (one cell each)" if "cells_per_segment" in density_reference
+            else "segments (cells per segment as measured)"
+        )
+        if cell_count_summary is not None:
+            _counts = mo.md(
+                f"- Measured 0 h cells (nuclei): {cell_count_summary['cells_per_mm2']:.0f} per mm², "
+                f"{cell_count_summary['cells_per_colony']:.0f} per colony, "
+                f"{cell_count_summary['cells_per_segment']:.2f} per model-resolution segment\n"
+                f"- Pieces placed: {_piece_text}"
+            )
+        else:
+            _counts = mo.callout(f"No nuclear counts: {cell_count_error}", kind="warn")
+        _tables = {"Covered share per colony": mo.ui.table(density_reference["coverage"])}
+        if cell_count_rows:
+            _tables["Cells and segments per colony"] = mo.ui.table(cell_count_rows)
         _view = mo.vstack([
             mo.md(f"- Loaded colonies: {density_reference['density']:.3f} covered on average"),
-            mo.hstack([density_value, density_softness], justify="start"),
+            _counts,
+            mo.hstack([density_unit, density_amount, density_softness], justify="start"),
             mo.hstack([density_layers, density_attempts, density_seed], justify="start"),
-            mo.accordion({"Covered share per colony": mo.ui.table(density_reference["coverage"])}),
+            mo.accordion(_tables),
         ])
     _view
     return (
@@ -1668,7 +1882,6 @@ def _(density_error, density_reference):
         density_layers,
         density_seed,
         density_softness,
-        density_value,
     )
 
 
@@ -1971,7 +2184,7 @@ def _(
     binary_mask,
     density_markers,
     density_reference,
-    density_value,
+    density_setting,
     placed_cells,
     reference_channel_names,
     reference_channels,
@@ -2016,10 +2229,13 @@ def _(
                 mo.md(
                     f"- Covered share, measured colony: {float(np.mean(_reference_cells[reference_support])):.3f} "
                     f"(all loaded colonies: {density_reference['density']:.3f})\n"
-                    f"- Covered share, synthetic: {float(density_value.value):.3f} set, "
+                    f"- Cells, synthetic: {density_setting['cells']:.0f} in the mask "
+                    f"({density_setting['cells_per_mm2']:.0f} per mm², mask {density_setting['mask_mm2']:.3f} mm²); "
+                    f"{density_setting['pieces']:.0f} pieces × {density_setting['cells_per_piece']:.2f} cells each\n"
+                    f"- Covered share, synthetic: {density_setting['density']:.3f} set, "
                     f"{float(np.mean(synthetic_coverage[binary_mask])):.3f} drawn, "
                     f"{float(np.mean(_synthetic_cells[binary_mask])):.3f} measured (Otsu)\n"
-                    f"- Whole cells cut out: {sum(len(_cells) for _, _cells in density_reference['panels'])} "
+                    f"- Whole pieces cut out: {sum(len(_cells) for _, _cells in density_reference['panels'])} "
                     f"over {len(density_reference['panels'])} panels; layers cover "
                     f"{', '.join(f'{_c:.3f}' for _c in placed_cells['layer_coverage'])} of the grid\n"
                     f"- Marker level in cells: measured {_cell_brightness(_reference_signal, _reference_cells):.3f}, "
@@ -2031,6 +2247,216 @@ def _(
 
     # Drawn only when opened, so it does not slow down the sliders
     mo.accordion({"Cell density diagnostics": mo.lazy(_render, show_loading_indicator=True)})
+    return
+
+
+@app.cell(hide_code=True)
+def _(cell_count_summary):
+    # Default: multiples of the measured 0 h density
+    _measured = cell_count_summary["cells_per_mm2"] if cell_count_summary else 4000.0
+    density_series_values = mo.ui.text(
+        ", ".join(f"{round(_f * _measured, -1):.0f}" for _f in (0.1, 0.25, 0.5, 1.0, 1.5)),
+        label="Cells per mm²",
+        full_width=True,
+    )
+    density_series_channel = mo.ui.dropdown(
+        options={"Cell markers": "markers", "Cell coverage": "coverage"},
+        value="Cell markers",
+        label="Show",
+    )
+    density_series_measured = mo.ui.checkbox(value=True, label="Include measured colonies")
+    run_density_series = mo.ui.run_button(label="Draw density series")
+    mo.vstack([
+        mo.md(
+            "### Cell density series\n\n"
+            "- Circular colonies the size of the loaded ones, with cells placed as above "
+            "(markers, softness, attempts and seed)\n"
+            "- Labels: real cells drawn (partly faded pieces count in part), cells per mm², "
+            "mean covered share of the colony's pixels; with segments, also segments × cells per segment\n"
+            "- Otsu: covered share measured as for the real colonies (Otsu threshold of the cell markers)\n"
+            "- Measured colonies (optional, first): each loaded replicate at the reference time and "
+            "model resolution, with its counted cells (nuclei, mean over its staining panels)"
+        ),
+        density_series_values,
+        mo.hstack(
+            [density_series_channel, density_series_measured, run_density_series], justify="start"
+        ),
+    ])
+    return (
+        density_series_channel,
+        density_series_measured,
+        density_series_values,
+        run_density_series,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    cell_count_error,
+    cell_count_rows,
+    cell_count_summary,
+    cells_per_segment,
+    density_attempts,
+    density_markers,
+    density_reference,
+    density_seed,
+    density_series_channel,
+    density_series_measured,
+    density_series_values,
+    model_pixel_um,
+    reference_channel_names,
+    reference_colonies,
+    reference_primary_measurements,
+    reference_spatial_shape,
+    reference_time,
+    run_density_series,
+    density_softness,
+):
+    def _density_series():
+        _shape = tuple(reference_spatial_shape)
+        # Circle of the loaded colonies' mean area
+        _area = float(np.mean(np.sum(reference_colonies["support"], axis=(1, 2))))
+        _rows, _cols = np.indices(_shape)
+        _circle = np.hypot(_rows - (_shape[0] - 1) / 2, _cols - (_shape[1] - 1) / 2) <= np.sqrt(_area / np.pi)
+        _circle_mm2 = np.count_nonzero(_circle) * model_pixel_um**2 * 1e-6
+        _per_piece = cells_per_segment
+        _real_cells = "cells_per_segment" in density_reference
+        _targets = sorted(float(_v) for _v in density_series_values.value.replace(",", " ").split())
+        if not _targets or _targets[0] <= 0:
+            raise ValueError("Give one or more cell densities above zero.")
+        _panels = density_reference["panels"]
+        _channel_count = len(density_reference["measurement_gap_values"])
+
+        def _place(_layers):
+            return place_cells(
+                _panels, _channel_count, _shape, _layers,
+                int(density_attempts.value), int(density_seed.value),
+            )
+
+        # One layer first, then as many as the densest colony needs (at most 10)
+        _textures, _ranks, _coverage = _place(1)
+        _per_layer = float(layer_cell_counts(_ranks, _circle)[0])
+        _needed = int(np.ceil(1.02 * _targets[-1] * _circle_mm2 / _per_piece / max(_per_layer, 1.0)))
+        if _needed > 1:
+            _textures, _ranks, _coverage = _place(min(_needed, 10))
+        _layer_pieces = layer_cell_counts(_ranks, _circle)
+        _channel_panels = np.zeros(_channel_count, dtype=int)
+        for _panel, (_indices, _) in enumerate(_panels):
+            _channel_panels[_indices] = _panel
+        _gaps = CellGaps(
+            gap_values=jnp.asarray(density_reference["measurement_gap_values"]),
+            channel_panels=jnp.asarray(_channel_panels),
+            layer_coverage=jnp.asarray(_coverage),
+            panels=len(_panels),
+            softness=rank_softness(float(density_softness.value), _ranks),
+        )
+        _packed = pack_cells(jnp.asarray(_textures), jnp.asarray(_ranks))
+        _key = jr.PRNGKey(int(density_seed.value))
+        _markers = [reference_channel_names.index(_m) for _m in density_markers.value]
+        _primary = np.asarray(reference_primary_measurements)
+        _cmap = plt.get_cmap("magma").copy()
+        _cmap.set_bad(color="#d9d9d9")
+
+        # Loaded colonies whose marker channels were all measured
+        _measured = []
+        if density_series_measured.value:
+            for _index, _replicate in enumerate(reference_colonies["replicates"]):
+                if np.all(reference_colonies["available"][_index, _primary[_markers]]):
+                    _measured.append((_index, _replicate))
+        _count = len(_measured) + len(_targets)
+        _figure, _axes = plt.subplots(
+            1, _count, figsize=(2.8 * _count, 3.3 if _real_cells else 3.6), dpi=150, squeeze=False,
+        )
+
+        def _show(_axis, _image, _mask, _title, _colour="black"):
+            _axis.imshow(np.where(_mask, _image, np.nan), cmap=_cmap, vmin=0.0, vmax=1.0, origin="lower")
+            _axis.set_title(_title, fontsize=9, color=_colour)
+            _axis.set_xticks([])
+            _axis.set_yticks([])
+
+        for _axis, (_index, _replicate) in zip(_axes[0], _measured):
+            _support = np.asarray(reference_colonies["support"][_index], dtype=bool)
+            _state = np.asarray(reference_colonies["measurements"][_index])[_primary]
+            _otsu, _ = measure_cell_coverage(_state, _support, _markers)
+            _image = _otsu if density_series_channel.value == "coverage" else np.max(_state[_markers], axis=0)
+            # Cells counted in the replicate's raw images (mean over its staining panels)
+            _rows = [_row for _row in cell_count_rows or () if _row["replicate"] == _replicate]
+            _counts = (
+                f"{np.mean([_r['cells'] for _r in _rows]):.0f} cells (nuclei)\n"
+                f"{np.mean([_r['cells_per_mm2'] for _r in _rows]):.0f} cells/mm²"
+                if _rows else "not counted\n"
+            )
+            _show(
+                _axis, _image, _support,
+                f"Measured · replicate {_replicate}\n{_counts}\n"
+                f"Otsu {float(np.mean(_otsu[_support])):.2f}"
+                + ("" if _real_cells else "\n"),
+                "#1f5fa8",
+            )
+
+        _capped = []
+        for _axis, _target in zip(_axes[0][len(_measured):], _targets):
+            _share = cells_to_density(_target * _circle_mm2, _layer_pieces, _coverage, _per_piece)
+            _share = float(np.clip(_share, 1e-3, min(float(_gaps.max_density), 0.999)))
+            if _target * _circle_mm2 > float(np.sum(_layer_pieces)) * _per_piece:
+                _capped.append(_target)
+            _density = CellDensity(_share)
+            _kept = np.asarray(_gaps.kept(_packed, _density, _key))
+            # Pieces as drawn: each counts as much as it is kept
+            _pieces = float(np.sum(layer_cell_counts(_ranks, _circle, _kept[:, 0])))
+            _cells = _pieces * _per_piece
+            _covered = np.max(1.0 - np.prod(1.0 - _kept, axis=0), axis=0)
+            _state = np.asarray(_gaps.apply(_packed, _density, _key))[_primary]
+            _otsu, _ = measure_cell_coverage(_state, _circle, _markers)
+            _image = _covered if density_series_channel.value == "coverage" else np.max(_state[_markers], axis=0)
+            _show(
+                _axis, _image, _circle,
+                (f"{_cells:.0f} cells" if _real_cells
+                 else f"{_cells:.0f} cells (est.)\n= {_pieces:.0f} segments × {_per_piece:.2f}")
+                + f"\n{_cells / _circle_mm2:.0f} cells/mm²\n"
+                f"coverage {float(np.mean(_covered[_circle])):.2f} · Otsu {float(np.mean(_otsu[_circle])):.2f}",
+            )
+        _figure.suptitle(
+            f"Synthetic 0 h colonies · {2 * np.sqrt(_circle_mm2 / np.pi) * 1e3:.0f} µm diameter · "
+            f"measured {cell_count_summary['cells_per_mm2']:.0f} cells/mm²"
+            + (
+                " · measured colonies in blue (cell counts from their 0 h images)"
+                if _measured and int(reference_time.value) != 0
+                else " · measured colonies in blue" if _measured else ""
+            ),
+            fontsize=10,
+        )
+        _figure.tight_layout()
+        _buffer = io.BytesIO()
+        _figure.savefig(_buffer, format="png", bbox_inches="tight")
+        plt.close(_figure)
+        _notes = []
+        if _capped:
+            _notes.append(mo.callout(
+                "10 layers cannot hold " + ", ".join(f"{_t:.0f}" for _t in _capped)
+                + " cells/mm²; those colonies hold as many as fit.",
+                kind="warn",
+            ))
+        return mo.vstack([
+            _figure,
+            *_notes,
+            mo.download(_buffer.getvalue(), filename="cell_density_series.png", mimetype="image/png",
+                        label="Download PNG"),
+        ])
+
+    if not run_density_series.value:
+        _series_view = mo.md("")
+    elif density_reference is None or reference_spatial_shape is None:
+        _series_view = mo.callout("Pick **Cell density** above first.", kind="warn")
+    elif cell_count_summary is None:
+        _series_view = mo.callout(f"No nuclear counts: {cell_count_error}", kind="warn")
+    else:
+        try:
+            with mo.status.spinner("Placing cells"):
+                _series_view = _density_series()
+        except ValueError as _error:
+            _series_view = mo.callout(str(_error), kind="danger")
+    _series_view
     return
 
 

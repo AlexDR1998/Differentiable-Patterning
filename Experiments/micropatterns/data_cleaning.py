@@ -83,17 +83,31 @@ def _():
     from Common.dataloader.quality_flags import load_quality_flags, save_quality_flags
     from Common.dataloader.stripes import remove_stripes, remove_stripes_per_channel
 
+    # Channel colours, group labels, sectors and legend style shared with the other figures
+    from Experiments.micropatterns.nodal_ko_schematic import (
+        COLOURS,
+        GROUP_LABELS,
+        MARKER_COLOURS,
+        SectorHandle,
+        sector_map,
+    )
+    from Experiments.micropatterns.schematics import legend_options, legend_swatch
+
     return (
         BANDS,
+        COLOURS,
         CellTypeRules,
         ColonyAlignment,
         DEFAULT_260726_HISTOGRAM_PERCENTILES,
         DEFAULT_260726_INTENSITY_FACTORS,
+        GROUP_LABELS,
         KNOCKOUT_BOUNDS,
+        MARKER_COLOURS,
         MICROPATTERN_260726_SCHEMA,
         MicropatternCleaningConfig,
         NORMALISATION_MODES,
         Path,
+        SectorHandle,
         Wedge,
         anywidget,
         band_margins,
@@ -112,6 +126,8 @@ def _():
         grid_position,
         io,
         label_names,
+        legend_options,
+        legend_swatch,
         load_cell_type_rules,
         load_colony_alignment,
         load_micropattern_260726,
@@ -133,6 +149,7 @@ def _():
         save_cell_type_rules,
         save_colony_alignment,
         save_quality_flags,
+        sector_map,
         share_estimator,
         source_condition,
         subtract_background,
@@ -6267,7 +6284,7 @@ def _(image_key, mo, raw_images, trajectories):
     steps_replicate = mo.ui.dropdown(
         options={str(_r + 1): _r for _r in _choices(1)}, value=str(_start[1] + 1), label="Replicate"
     )
-    steps_group = mo.ui.dropdown(options=_choices(2), value=_start[2], label="Experiment group")
+    steps_group = mo.ui.multiselect(options=_choices(2), value=[_start[2]], label="Experiment groups")
     steps_hour = mo.ui.dropdown(
         options={f"{_h}h": _h for _h in _choices(3)}, value=f"{_start[3]}h", label="Timestep"
     )
@@ -6277,6 +6294,7 @@ def _(image_key, mo, raw_images, trajectories):
             mo.md(
                 "- One image after each pre-processing step, with the current settings\n"
                 "- The last two panels need **Clean all loaded images** (section 5)\n"
+                "- Several groups: extra rows, or one circular section each (options below)\n"
                 + (
                     ""
                     if _default
@@ -6299,9 +6317,14 @@ def _(image_key, mo, raw_images, trajectories):
 
 
 @app.cell(hide_code=True)
-def _(GROUP_CHANNELS, mo, steps_group):
-    _names = list(GROUP_CHANNELS[steps_group.value])
-    steps_channels = mo.ui.multiselect(options=_names, value=_names, label="Channels")
+def _(GROUP_CHANNELS, GROUP_LABELS, MARKER_COLOURS, mo, steps_group):
+    _names = [_name for _group in steps_group.value for _name in GROUP_CHANNELS[_group]]
+    # Channels turned off in the standard colours (LMBR) start unselected
+    steps_channels = mo.ui.multiselect(
+        options=_names,
+        value=[_n for _n in _names if MARKER_COLOURS.get(_n.rsplit("/", 1)[-1]) != "off"],
+        label="Channels",
+    )
     steps_layout = mo.ui.dropdown(
         options={"One composite": "composite", "One row per channel": "rows"},
         value="One composite",
@@ -6316,8 +6339,20 @@ def _(GROUP_CHANNELS, mo, steps_group):
         value="Each panel its own",
         label="Display scale",
     )
-    steps_percentiles = mo.ui.range_slider(
-        start=0.0, stop=100.0, step=0.1, value=[0.5, 99.5], label="Display percentiles", show_value=True
+    # Display percentiles of each group's panels before normalisation
+    steps_percentiles = mo.ui.dictionary(
+        {
+            _group: mo.ui.range_slider(
+                start=0.0,
+                stop=100.0,
+                step=0.1,
+                value=[0.5, 99.5],
+                label="Display percentiles"
+                + (f" ({GROUP_LABELS.get(_group, _group)})" if len(steps_group.value) > 1 else ""),
+                show_value=True,
+            )
+            for _group in steps_group.value
+        }
     )
     steps_show_background = mo.ui.checkbox(value=False, label="Show background estimate")
     steps_show_normalised = mo.ui.checkbox(value=True, label="Show normalised panel")
@@ -6341,23 +6376,56 @@ def _(GROUP_CHANNELS, mo, steps_group):
     steps_zoom_size = mo.ui.slider(0.02, 0.5, step=0.005, value=0.1, label="Zoom size", show_value=True)
     steps_zoom_colour = mo.ui.text(value="red", label="Zoom outline colour (name or hex)")
     steps_name = mo.ui.text(value="cleaning_steps", label="File name")
-    steps_save = mo.ui.run_button(label="Save PDF + PNG")
+    steps_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
+    steps_save = mo.ui.run_button(label="Save figure")
+    # Several experiment groups: one block of rows each, or one circular
+    # sector each of a shared composite (as in the NODAL-KO figures: the first
+    # sector starts at the top, the rest follow anticlockwise)
+    steps_group_layout = mo.ui.dropdown(
+        options={"Extra rows": "rows", "Circular sections": "sections"}, value="Extra rows", label="Groups as"
+    )
+    steps_section_lines = mo.ui.checkbox(value=False, label="Lines between sections")
+    # Rotation of each group's images (anticlockwise, about the image centre)
+    steps_rotations = mo.ui.dictionary(
+        {
+            _group: mo.ui.dropdown(
+                options={"0°": 0, "90°": 90, "180°": 180, "270°": 270},
+                value="0°",
+                label=f"Rotate {GROUP_LABELS.get(_group, _group)}",
+            )
+            for _group in steps_group.value
+        }
+    )
+    _group_controls = (
+        [
+            mo.hstack([steps_group_layout, steps_section_lines], justify="start"),
+            mo.hstack([steps_rotations[_group] for _group in steps_group.value], justify="start", wrap=True),
+            mo.md(
+                "- Circular sections always use one composite\n"
+                "- With sections or a rotation, the full-resolution panels are centred too, "
+                "so every panel shows the same frame"
+            ),
+        ]
+        if len(steps_group.value) > 1
+        else []
+    )
     mo.vstack(
         [
+            *_group_controls,
             mo.hstack([steps_channels, steps_layout, steps_scale], justify="start"),
-            mo.hstack(
-                [steps_percentiles, steps_show_background, steps_show_normalised, steps_mark_hot], justify="start"
-            ),
+            mo.hstack([steps_percentiles[_group] for _group in steps_group.value], justify="start", wrap=True),
+            mo.hstack([steps_show_background, steps_show_normalised, steps_mark_hot], justify="start"),
             mo.hstack([steps_pixel_um, steps_scale_bar, steps_panel_size, steps_downsample], justify="start"),
             mo.hstack([steps_page, steps_histograms, steps_log_counts], justify="start"),
             mo.hstack([steps_zoom, steps_zoom_colour], justify="start"),
             mo.hstack([steps_zoom_x, steps_zoom_y, steps_zoom_size], justify="start"),
-            mo.hstack([steps_name, steps_save], justify="start"),
+            mo.hstack([steps_name, steps_svg, steps_save], justify="start"),
         ]
     )
     return (
         steps_channels,
         steps_downsample,
+        steps_group_layout,
         steps_histograms,
         steps_layout,
         steps_log_counts,
@@ -6367,9 +6435,12 @@ def _(GROUP_CHANNELS, mo, steps_group):
         steps_panel_size,
         steps_percentiles,
         steps_pixel_um,
+        steps_rotations,
         steps_save,
         steps_scale,
         steps_scale_bar,
+        steps_section_lines,
+        steps_svg,
         steps_show_background,
         steps_show_normalised,
         steps_zoom,
@@ -6402,71 +6473,158 @@ def _(
     steps_run,
 ):
     mo.stop(not steps_run.value, mo.md("Press **Draw cleaning steps** to draw the figure."))
-    _key = (steps_condition.value, steps_replicate.value, steps_group.value, steps_hour.value)
+    mo.stop(not steps_group.value, mo.md("Pick at least one experiment group."))
+    _keys = {
+        _group: (steps_condition.value, steps_replicate.value, _group, steps_hour.value)
+        for _group in steps_group.value
+    }
+    _missing = [_group for _group, _key in _keys.items() if _key not in steps_images]
     mo.stop(
-        _key not in steps_images,
+        len(_missing) == len(_keys),
         mo.callout("This combination was not loaded; pick another one.", kind="warn"),
     )
-    _index = steps_images[_key]
-    _record = raw_images[_index]["record"]
-    _names = GROUP_CHANNELS[steps_group.value]
-    _steps = clean_image(raw_images[_index], cleaning_settings)
 
-    # Centring, mask and normalisation as in section 5, at the training resolution
-    _shift, _mask = image_geometry[_index]
-    _masked = place_image(overview["images"][_index]["cleaned"], _shift) * _mask[..., None]
-    _normalised = []
-    for _name in _names:
-        _result = normalised_image(_name, _key[:2], _key[3])
-        _normalised.append(np.zeros(_mask.shape) if _result is None else _result[0])
+    # The cleaning steps of each group's image
+    _groups = []
+    for _group, _key in _keys.items():
+        if _group in _missing:
+            continue
+        _index = steps_images[_key]
+        _record = raw_images[_index]["record"]
+        _names = GROUP_CHANNELS[_group]
+        _steps = clean_image(raw_images[_index], cleaning_settings)
+        # Centring, mask and normalisation as in section 5, at the training resolution
+        _shift, _mask = image_geometry[_index]
+        _masked = place_image(overview["images"][_index]["cleaned"], _shift) * _mask[..., None]
+        _normalised = []
+        for _name in _names:
+            _result = normalised_image(_name, _key[:2], _key[3])
+            _normalised.append(np.zeros(_mask.shape) if _result is None else _result[0])
+        _groups.append(
+            {
+                "group": _group,
+                "record": _record,
+                "names": _names,
+                "hot": _steps["hot"],
+                # Centring shift (rows, columns) at the training resolution, or None
+                "shift": _shift,
+                "scaled": any(
+                    intensity_factor(cleaning_settings["scales"], _name, _record.timestep) != 1.0
+                    for _name in _names
+                ),
+                "striped": any(
+                    cleaning_settings["h_stripes"].get(_name, 0) or cleaning_settings["v_stripes"].get(_name, 0)
+                    for _name in _names
+                ),
+                "values": {
+                    "raw": _steps["scaled"],
+                    "despeckled": _steps["despeckled"],
+                    "destriped": _steps["destriped"],
+                    "background": _steps["background"],
+                    "cleaned": _steps["cleaned"],
+                    "masked": _masked,
+                    "normalised": np.stack(_normalised, axis=-1),
+                },
+            }
+        )
 
-    _scaled = any(
-        intensity_factor(cleaning_settings["scales"], _name, _record.timestep) != 1.0 for _name in _names
-    )
-    _striped = any(
-        cleaning_settings["h_stripes"].get(_name, 0) or cleaning_settings["v_stripes"].get(_name, 0)
-        for _name in _names
-    )
-    # Each panel: title, [X, Y, C] values, downsampling, kind and the centring
-    # shift (rows, columns) it went through (None if not moved)
+    # Panels shared by all groups: key into each group's values, title,
+    # downsampling and kind
     _panels = [
-        ("raw × intensity factor" if _scaled else "raw", _steps["scaled"], 1, "raw", None),
-        ("hot pixels replaced", _steps["despeckled"], 1, "step", None),
+        (
+            "raw",
+            "raw × intensity factor" if any(_g["scaled"] for _g in _groups) else "raw",
+            1,
+            "raw",
+        ),
+        ("despeckled", "hot pixels replaced", 1, "step"),
     ]
-    if _striped:
-        _panels.append(("stripes removed", _steps["destriped"], 1, "step", None))
+    if any(_g["striped"] for _g in _groups):
+        _panels.append(("destriped", "stripes removed", 1, "step"))
     _panels += [
-        ("background estimate", _steps["background"], 1, "background", None),
-        ("background removed", _steps["cleaned"], 1, "step", None),
-        ("centred, masked and downsampled", _masked, DISPLAY_DOWNSAMPLE, "step", _shift),
-        ("normalised", np.stack(_normalised, axis=-1), DISPLAY_DOWNSAMPLE, "normalised", _shift),
+        ("background", "background estimate", 1, "background"),
+        ("cleaned", "background removed", 1, "step"),
+        ("masked", "centred, masked and downsampled", DISPLAY_DOWNSAMPLE, "step"),
+        ("normalised", "normalised", DISPLAY_DOWNSAMPLE, "normalised"),
     ]
     cleaning_steps = {
-        "record": _record,
-        "names": _names,
-        "hot": _steps["hot"],
-        "panels": [
-            {"title": _t, "values": _v, "downsample": _d, "kind": _k, "shift": _s}
-            for _t, _v, _d, _k, _s in _panels
-        ],
+        "groups": _groups,
+        "missing": _missing,
+        "panels": [{"key": _k, "title": _t, "downsample": _d, "kind": _kind} for _k, _t, _d, _kind in _panels],
     }
     return (cleaning_steps,)
 
 
 @app.cell(hide_code=True)
+def _(DISPLAY_DOWNSAMPLE, cleaning_steps, ndi, np, steps_group_layout, steps_rotations):
+    _groups = cleaning_steps["groups"]
+    _sections = steps_group_layout.value == "sections" and len(_groups) > 1
+    _angles = {_g["group"]: steps_rotations.value.get(_g["group"], 0) for _g in _groups}
+    # With sections or a rotation, every panel is put in one centred frame;
+    # otherwise the panels stay as cleaned, with the full-resolution ones uncentred
+    _common_frame = _sections or any(_angles.values())
+
+    def _fit(values, shape):
+        """Crop or zero-pad ``[X, Y, ...]`` values about their centre to ``shape``."""
+        out = np.zeros((*shape, *values.shape[2:]), dtype=values.dtype)
+        rows, columns = min(shape[0], values.shape[0]), min(shape[1], values.shape[1])
+        r_in, c_in = (values.shape[0] - rows) // 2, (values.shape[1] - columns) // 2
+        r_out, c_out = (shape[0] - rows) // 2, (shape[1] - columns) // 2
+        out[r_out : r_out + rows, c_out : c_out + columns] = values[r_in : r_in + rows, c_in : c_in + columns]
+        return out
+
+    def _to_frame(values, downsample, shift, angle, shape, order=1):
+        """Centre (full resolution only; the downsampled panels already are), rotate
+        by quarter turns (anticlockwise, exact) and fit to ``shape``."""
+        if downsample == 1 and shift is not None:
+            scaled_shift = (shift[0] * DISPLAY_DOWNSAMPLE, shift[1] * DISPLAY_DOWNSAMPLE)
+            values = ndi.shift(values, (*scaled_shift, *([0] * (values.ndim - 2))), order=order,
+                               mode="constant", cval=0.0, prefilter=False)
+        return _fit(np.rot90(values, k=angle // 90, axes=(0, 1)), shape)
+
+    # Each group: its values per panel, its hot pixel map and the centring
+    # shift of each panel still to be applied (used to place the zoom square)
+    _frames = []
+    for _g in _groups:
+        _values = [_g["values"][_p["key"]] for _p in cleaning_steps["panels"]]
+        _hot = _g["hot"]
+        _shifts = [_g["shift"] if _p["downsample"] > 1 else None for _p in cleaning_steps["panels"]]
+        if _common_frame:
+            # Sections need the same shape in every group: the first group's, unrotated
+            _shapes = [_groups[0]["values"][_p["key"]].shape[:2] for _p in cleaning_steps["panels"]]
+            _values = [
+                _to_frame(_v, _p["downsample"], _g["shift"], _angles[_g["group"]], _shape)
+                for _v, _p, _shape in zip(_values, cleaning_steps["panels"], _shapes)
+            ]
+            _hot = _to_frame(_hot.astype(np.float32), 1, _g["shift"], _angles[_g["group"]], _shapes[0], order=0) > 0.5
+            _shifts = [None] * len(_values)
+        _frames.append({**_g, "panel_values": _values, "hot": _hot, "panel_shifts": _shifts})
+    steps_frames = {"groups": _frames, "panels": cleaning_steps["panels"], "sections": _sections,
+                    "missing": cleaning_steps["missing"]}
+    return (steps_frames,)
+
+
+@app.cell(hide_code=True)
 def _(
+    COLOURS,
     DISPLAY_DOWNSAMPLE,
+    GROUP_LABELS,
+    MARKER_COLOURS,
     MICROPATTERN_260726_SCHEMA,
+    SectorHandle,
     block_mean,
-    cleaning_steps,
+    legend_options,
+    legend_swatch,
     mo,
     np,
     plt,
     record_label,
+    sector_map,
     selection,
     show_figure,
     steps_channels,
     steps_downsample,
+    steps_frames,
     steps_histograms,
     steps_layout,
     steps_log_counts,
@@ -6477,6 +6635,7 @@ def _(
     steps_pixel_um,
     steps_scale,
     steps_scale_bar,
+    steps_section_lines,
     steps_show_background,
     steps_show_normalised,
     steps_zoom,
@@ -6488,21 +6647,18 @@ def _(
     from matplotlib.colors import is_color_like as _is_color_like
     from matplotlib.patches import Rectangle as _Rectangle
 
-    # Marker colours as in the 3D -> 2D schematic; other markers take the
-    # spare colours in schema order
-    _marker_colours = {
-        "SOX2": (0.0, 0.78, 0.9),
-        "SOX17": (1.0, 0.78, 0.0),
-        "TBXT": (0.92, 0.12, 0.72),
-        "LMBR": (1.0, 1.0, 1.0),
-    }
-    _spare_colours = [(0.0, 0.78, 0.9), (0.92, 0.12, 0.72), (1.0, 0.78, 0.0), (1.0, 0.5, 0.0), (0.15, 0.8, 0.2)]
+    # Marker colours as in the other figures (nodal_ko_schematic.py). Markers
+    # turned off there (LMBR) are drawn white when picked.
     _markers = {_c.name: _c.marker for _c in MICROPATTERN_260726_SCHEMA.measurement_channels}
-    _names = cleaning_steps["names"]
-    _fixed = {_n: _marker_colours[_markers[_n]] for _n in _names if _markers[_n] in _marker_colours}
-    _spare = iter([_c for _c in _spare_colours if _c not in _fixed.values()])
-    _colours = {_n: _fixed.get(_n) or next(_spare) for _n in _names}
-    _shown = [_n for _n in _names if _n in steps_channels.value]
+    _groups = steps_frames["groups"]
+    _colours = {
+        _n: COLOURS[MARKER_COLOURS.get(_markers[_n], "grey")] or COLOURS["white"]
+        for _g in _groups
+        for _n in _g["names"]
+    }
+    # Channels shown of each group
+    _shown = {_g["group"]: [_n for _n in _g["names"] if _n in steps_channels.value] for _g in _groups}
+    _groups = [_g for _g in _groups if _shown[_g["group"]]]
     # Images stay on black; the page around them can be white or black
     _page = steps_page.value
     _text = "black" if _page == "white" else "white"
@@ -6510,11 +6666,13 @@ def _(
     _line_colours = {
         _n: (0.4, 0.4, 0.4) if _page == "white" and min(_c) > 0.85 else _c for _n, _c in _colours.items()
     }
-    mo.stop(not _shown, mo.md("Pick at least one channel."))
+    mo.stop(not _groups, mo.md("Pick at least one channel."))
+    _sections = steps_frames["sections"] and len(_groups) > 1
+    _several = len(_groups) > 1
 
-    _panels = [
-        _p
-        for _p in cleaning_steps["panels"]
+    _kept = [
+        _i
+        for _i, _p in enumerate(steps_frames["panels"])
         if (_p["kind"] != "background" or steps_show_background.value)
         and (_p["kind"] != "normalised" or steps_show_normalised.value)
     ]
@@ -6523,196 +6681,291 @@ def _(
     # chosen downsampling. "extra" is that further factor.
     _extra = max(1, steps_downsample.value // DISPLAY_DOWNSAMPLE)
     _panels = [
-        {**_p, "values": block_mean(_p["values"], _extra), "extra": _extra}
-        if _p["downsample"] > 1 and _extra > 1
-        else {**_p, "extra": 1}
-        for _p in _panels
+        {**steps_frames["panels"][_i], "extra": _extra if steps_frames["panels"][_i]["downsample"] > 1 else 1}
+        for _i in _kept
     ]
-    _low, _high = steps_percentiles.value
+    # Each group's values and centring shift of every panel shown
+    _values = {
+        _g["group"]: [
+            block_mean(_g["panel_values"][_i], _p["extra"]) if _p["extra"] > 1 else _g["panel_values"][_i]
+            for _i, _p in zip(_kept, _panels)
+        ]
+        for _g in _groups
+    }
+    _shifts = {_g["group"]: [_g["panel_shifts"][_i] for _i in _kept] for _g in _groups}
+    # Display percentiles of each group (groups missing from the controls,
+    # until the figure is redrawn, use the defaults)
+    _percentiles = {_g["group"]: steps_percentiles.value.get(_g["group"], (0.5, 99.5)) for _g in _groups}
+    _intensity_columns = [_c for _c, _p in enumerate(_panels) if _p["kind"] != "normalised"]
     # With one scale for all, each channel runs from 0 to the high percentile of
     # its brightest panel (normalised values keep their own 0 to 1)
-    _intensity_panels = [_p for _p in _panels if _p["kind"] != "normalised"]
     _shared_high = (
         {
-            _c: max(float(np.percentile(_p["values"][..., _c], _high)) for _p in _intensity_panels)
-            for _c in range(len(_names))
+            (_g["group"], _c): max(
+                float(np.percentile(_values[_g["group"]][_column][..., _c], _percentiles[_g["group"]][1]))
+                for _column in _intensity_columns
+            )
+            for _g in _groups
+            for _c in range(len(_g["names"]))
         }
-        if steps_scale.value == "all" and _intensity_panels
+        if steps_scale.value == "all" and _intensity_columns
         else {}
     )
 
-    def _limits(values, channel):
-        return np.percentile(values[..., channel], (_low, _high))
-
-    _raw = cleaning_steps["panels"][0]["values"]
-
-    def _scaled(panel, channel):
-        """One channel of a panel in [0, 1] for display."""
-        values = panel["values"][..., channel]
-        if panel["kind"] == "normalised":
+    def _scaled(group, column, channel):
+        """One channel of a group's panel in [0, 1] for display."""
+        values = _values[group][column][..., channel]
+        if _panels[column]["kind"] == "normalised":
             return np.clip(values, 0.0, 1.0)
         if steps_scale.value == "all":
-            lo, hi = 0.0, _shared_high[channel]
+            lo, hi = 0.0, _shared_high[(group, channel)]
         else:
-            lo, hi = _limits(_raw if steps_scale.value == "raw" else panel["values"], channel)
+            reference = _values[group][0 if steps_scale.value == "raw" else column]
+            lo, hi = np.percentile(reference[..., channel], _percentiles[group])
         return np.clip((values - lo) / max(hi - lo, 1e-6), 0.0, 1.0)
 
-    def _rgb(panel, channels):
-        """Composite of some channels of a panel, on black."""
+    def _rgb(g, column, channels):
+        """Composite of some channels of a group's panel, on black."""
         return np.clip(
-            sum(_scaled(panel, _names.index(n))[..., None] * np.asarray(_colours[n]) for n in channels), 0.0, 1.0
+            sum(
+                _scaled(g["group"], column, g["names"].index(n))[..., None] * np.asarray(_colours[n])
+                for n in channels
+            ),
+            0.0,
+            1.0,
         )
+
+    def _section_of(shape):
+        """Section of each pixel, as in the NODAL-KO figures (first at the top, then anticlockwise)."""
+        return sector_map(shape, len(_groups))
+
+    def _sectioned(column, channels_of):
+        """Composite with each group in its own circular section."""
+        images = [_rgb(_g, column, channels_of[_g["group"]]) for _g in _groups]
+        section = _section_of(images[0].shape[:2])
+        return sum((section == _k)[..., None] * _image for _k, _image in enumerate(images))
 
     _zoom_colour = steps_zoom_colour.value.strip() if _is_color_like(steps_zoom_colour.value.strip()) else "red"
 
-    def _zoom_window(panel):
+    def _zoom_window(g, index):
         """(top, bottom, left, right) of the zoom square in a panel's pixel coordinates.
 
-        The square is placed on the raw image. Downsampled panels average
-        blocks of ``downsample`` pixels, may then be shifted by centring, and
-        then average blocks of ``extra`` of those pixels.
+        The square is placed on the full-resolution image. Downsampled panels
+        average blocks of ``downsample`` pixels, may then be shifted by
+        centring, and then average blocks of ``extra`` of those pixels.
         """
-        height, width = _raw.shape[:2]
+        height, width = g["panel_values"][0].shape[:2]
+        panel = _panels[index]
         work, extra = panel["downsample"], panel["extra"]
         half = steps_zoom_size.value * min(height, width) / 2 / (work * extra)
         centre = (steps_zoom_y.value * height - 0.5, steps_zoom_x.value * width - 0.5)
-        shift = panel["shift"] or (0.0, 0.0)
+        shift = _shifts[g["group"]][index] or (0.0, 0.0)
         row, column = (
             ((c - (work - 1) / 2) / work + s - (extra - 1) / 2) / extra for c, s in zip(centre, shift)
         )
         return row - half, row + half, column - half, column + half
 
-    def _mark_hot(axis, channels):
-        hot = cleaning_steps["hot"][..., [_names.index(n) for n in channels]].any(axis=-1)
-        hot_rows, hot_columns = np.nonzero(hot)
-        axis.scatter(hot_columns, hot_rows, s=14, facecolors="none", edgecolors="lime", linewidths=0.6)
+    def _mark_hot(axis, block, channels_of):
+        """Circle the replaced hot pixels (in its own section, with sections)."""
+        for _k, g in enumerate(block):
+            hot = g["hot"][..., [g["names"].index(n) for n in channels_of[g["group"]]]].any(axis=-1)
+            if _sections:
+                hot = hot & (_section_of(hot.shape) == _k)
+            hot_rows, hot_columns = np.nonzero(hot)
+            axis.scatter(hot_columns, hot_rows, s=14, facecolors="none", edgecolors="lime", linewidths=0.6)
 
-    _rows = [_shown] if steps_layout.value == "composite" else [[_n] for _n in _shown]
+    def _draw_section_lines(axis, shape):
+        """White lines between the sections."""
+        centre = ((shape[1] - 1) / 2, (shape[0] - 1) / 2)
+        radius = min(shape) / 2
+        for _k in range(len(_groups)):
+            edge = np.radians(90 + _k * 360 / len(_groups))
+            axis.plot([centre[0], centre[0] + radius * np.cos(edge)], [centre[1], centre[1] - radius * np.sin(edge)],
+                      color="white", lw=0.6)
+
+    # Blocks of rows: all groups together with sections, else one per group.
+    # Each block: its groups and the channel lists of its image rows.
+    _composite = _sections or steps_layout.value == "composite"
+    _blocks = [_groups] if _sections else [[_g] for _g in _groups]
     _size = steps_panel_size.value
-    # Figure rows, top to bottom, with their heights in inches
-    _layout = [("image", _size)] * len(_rows)
-    if steps_zoom.value:
-        _layout += [("gap", 0.08), ("zoom", _size)]
-    if steps_histograms.value:
-        _layout += [("gap", 0.08), ("histogram", 0.5 * _size)]
-    # Room above the panels for their titles, and for the legend with a composite;
-    # below them for the histogram tick labels
-    _top = 0.45 if steps_layout.value == "rows" else 0.75
+    # Figure rows, top to bottom: (kind, height in inches, block)
+    _layout = []
+    for _b, _block in enumerate(_blocks):
+        if _b:
+            _layout.append(("gap", 0.2, _b))
+        _image_rows = 1 if _composite else len(_shown[_block[0]["group"]])
+        _layout += [("image", _size, _b)] * _image_rows
+        if steps_zoom.value:
+            _layout += [("gap", 0.08, _b), ("zoom", _size, _b)]
+        if steps_histograms.value:
+            _layout += [("gap", 0.08, _b), ("histogram", 0.5 * _size, _b)]
+    # Room above the panels for their titles, and for the legend (one line per
+    # group) with a composite; below them for the histogram tick labels
+    _top = 0.45 + (0.2 * len(_groups) if _composite else 0.0)
     _bottom = 0.35 if _layout[-1][0] == "histogram" else 0.05
-    _height_in = sum(_h for _, _h in _layout) + _top + _bottom
+    _height_in = sum(_h for _, _h, _ in _layout) + _top + _bottom
     steps_figure = plt.figure(figsize=(_size * len(_panels), _height_in), facecolor=_page)
     _grid = steps_figure.add_gridspec(
         len(_layout),
         len(_panels),
-        height_ratios=[_h for _, _h in _layout],
+        height_ratios=[_h for _, _h, _ in _layout],
         wspace=0.04,
         hspace=0.02,
-        left=0.03,
+        left=0.03 + (0.02 if _several and not _sections else 0.0),
         right=0.99,
         bottom=_bottom / _height_in,
         top=1 - _top / _height_in,
     )
-    _row_of = {_kind: _i for _i, (_kind, _) in enumerate(_layout)}
-    for _row, _channels in enumerate(_rows):
-        for _column, _panel in enumerate(_panels):
-            _axis = steps_figure.add_subplot(_grid[_row, _column])
-            _axis.imshow(_rgb(_panel, _channels), interpolation="antialiased")
-            if steps_zoom.value:
-                _top_edge, _bottom_edge, _left, _right = _zoom_window(_panel)
-                _axis.add_patch(_Rectangle((_left, _top_edge), _right - _left, _bottom_edge - _top_edge,
-                                           fill=False, edgecolor=_zoom_colour, linewidth=1.0))
-            _axis.set_xticks([])
-            _axis.set_yticks([])
-            for _spine in _axis.spines.values():
-                _spine.set_visible(False)
-            if _row == 0:
-                _axis.set_title(f"{_column + 1}. {_panel['title']}", fontsize=8, color=_text)
-            if _column == 0 and steps_layout.value == "rows":
-                _axis.set_ylabel(_markers[_channels[0]], fontsize=8, color=_text)
-            if _column == 0 and steps_mark_hot.value:
-                _mark_hot(_axis, _channels)
-            if _row == len(_rows) - 1 and _column == 0:
-                # Every panel shows the same field, so one scale bar serves all
-                _height, _width = _panel["values"].shape[:2]
-                _length = steps_scale_bar.value / (steps_pixel_um.value * _panel["downsample"])
-                _pad = 0.05 * _width
-                _axis.plot([_width - _pad - _length, _width - _pad], [_height - _pad] * 2, color="white", lw=2,
-                           solid_capstyle="butt")
-                _axis.text(_width - _pad - _length / 2, _height - _pad - 0.02 * _height,
-                           f"{steps_scale_bar.value:g} µm", color="white", ha="center", va="bottom", fontsize=6)
 
-    # Intensity histogram of each step (all pixels, in that step's own units)
-    if steps_histograms.value:
-        for _column, _panel in enumerate(_panels):
-            _axis = steps_figure.add_subplot(_grid[_row_of["histogram"], _column])
-            _channel_values = [_panel["values"][..., _names.index(_n)].ravel() for _n in _shown]
-            _range = (min(float(_v.min()) for _v in _channel_values), max(float(_v.max()) for _v in _channel_values))
-            if steps_scale.value == "all" and _panel["kind"] != "normalised":
-                # One intensity axis for all steps before normalisation
-                _range = (
-                    min(float(_p["values"][..., [_names.index(_n) for _n in _shown]].min()) for _p in _intensity_panels),
-                    max(float(_p["values"][..., [_names.index(_n) for _n in _shown]].max()) for _p in _intensity_panels),
+    def _plain(axis):
+        axis.set_xticks([])
+        axis.set_yticks([])
+        for spine in axis.spines.values():
+            spine.set_visible(False)
+
+    _first_image_row = True
+    for _b, _block in enumerate(_blocks):
+        _rows_of_block = [_r for _r, (_kind, _, _rb) in enumerate(_layout) if _rb == _b]
+        _image_rows = [_r for _r in _rows_of_block if _layout[_r][0] == "image"]
+        _group_name = _block[0]["group"]
+        _group_label = GROUP_LABELS.get(_group_name, _group_name)
+        # Channels of each image row, per group of the block
+        _row_channels = (
+            [_shown]
+            if _composite
+            else [{_group_name: [_n]} for _n in _shown[_group_name]]
+        )
+        for _row, _channels_of in zip(_image_rows, _row_channels):
+            for _column in range(len(_panels)):
+                _axis = steps_figure.add_subplot(_grid[_row, _column])
+                _image = _sectioned(_column, _channels_of) if _sections else _rgb(_block[0], _column, _channels_of[_group_name])
+                _axis.imshow(_image, interpolation="antialiased")
+                if _sections and steps_section_lines.value:
+                    _draw_section_lines(_axis, _image.shape[:2])
+                if steps_zoom.value:
+                    _top_edge, _bottom_edge, _left, _right = _zoom_window(_block[0], _column)
+                    _axis.add_patch(_Rectangle((_left, _top_edge), _right - _left, _bottom_edge - _top_edge,
+                                               fill=False, edgecolor=_zoom_colour, linewidth=1.0))
+                _plain(_axis)
+                if _first_image_row:
+                    _axis.set_title(f"{_column + 1}. {_panels[_column]['title']}", fontsize=8, color=_text)
+                if _column == 0:
+                    if not _composite:
+                        _marker = _markers[_channels_of[_group_name][0]]
+                        _axis.set_ylabel(f"{_group_label}\n{_marker}" if _several else _marker, fontsize=8, color=_text)
+                    elif _several and not _sections:
+                        _axis.set_ylabel(_group_label, fontsize=8, color=_text)
+                    if steps_mark_hot.value:
+                        _mark_hot(_axis, _block, _channels_of)
+                if _row == _image_rows[-1] and _column == 0:
+                    # Every panel shows the same field, so one scale bar serves all
+                    _height, _width = _image.shape[:2]
+                    _length = steps_scale_bar.value / (
+                        steps_pixel_um.value * _panels[_column]["downsample"] * _panels[_column]["extra"]
+                    )
+                    _pad = 0.05 * _width
+                    _axis.plot([_width - _pad - _length, _width - _pad], [_height - _pad] * 2, color="white", lw=2,
+                               solid_capstyle="butt")
+                    _axis.text(_width - _pad - _length / 2, _height - _pad - 0.02 * _height,
+                               f"{steps_scale_bar.value:g} µm", color="white", ha="center", va="bottom", fontsize=6)
+            _first_image_row = False
+
+        # The zoom square of every step, pixels drawn as they are (no smoothing)
+        if steps_zoom.value:
+            _row = next(_r for _r in _rows_of_block if _layout[_r][0] == "zoom")
+            for _column in range(len(_panels)):
+                _axis = steps_figure.add_subplot(_grid[_row, _column])
+                _image = _sectioned(_column, _shown) if _sections else _rgb(_block[0], _column, _shown[_group_name])
+                _axis.imshow(_image, interpolation="nearest")
+                _top_edge, _bottom_edge, _left, _right = _zoom_window(_block[0], _column)
+                _axis.set_xlim(_left, _right)
+                _axis.set_ylim(_bottom_edge, _top_edge)
+                _axis.set_xticks([])
+                _axis.set_yticks([])
+                for _spine in _axis.spines.values():
+                    _spine.set_edgecolor(_zoom_colour)
+                    _spine.set_linewidth(1.5)
+                if _column == 0:
+                    _axis.set_ylabel("zoom", fontsize=8, color=_text)
+                    if steps_mark_hot.value:
+                        _mark_hot(_axis, _block, _shown)
+
+        # Intensity histogram of each step (all pixels of each group's image,
+        # in that step's own units)
+        if steps_histograms.value:
+            _row = next(_r for _r in _rows_of_block if _layout[_r][0] == "histogram")
+            _series = [(_g, _n) for _g in _block for _n in _shown[_g["group"]]]
+
+            def _channel_values(g, name, column):
+                return _values[g["group"]][column][..., g["names"].index(name)].ravel()
+
+            for _column in range(len(_panels)):
+                _axis = steps_figure.add_subplot(_grid[_row, _column])
+                _columns = (
+                    _intensity_columns
+                    if steps_scale.value == "all" and _panels[_column]["kind"] != "normalised"
+                    else [_column]
                 )
-            if _range[1] <= _range[0]:
-                _range = (_range[0], _range[0] + 1.0)
-            for _n, _v in zip(_shown, _channel_values):
-                _axis.hist(_v, bins=100, range=_range, histtype="step", color=_line_colours[_n], lw=0.8,
-                           log=steps_log_counts.value)
-            _axis.set_facecolor(_page)
-            _axis.set_yticks([])
-            _axis.minorticks_off()
-            _axis.tick_params(colors=_text, labelsize=6, length=2)
-            for _side in ("top", "right", "left"):
-                _axis.spines[_side].set_visible(False)
-            _axis.spines["bottom"].set_color(_text)
-            if _column == 0:
-                _axis.set_ylabel("count (log)" if steps_log_counts.value else "count", fontsize=7, color=_text)
+                # One intensity axis for all steps before normalisation with one scale for all
+                _range = (
+                    min(float(_channel_values(_g, _n, _c).min()) for _g, _n in _series for _c in _columns),
+                    max(float(_channel_values(_g, _n, _c).max()) for _g, _n in _series for _c in _columns),
+                )
+                if _range[1] <= _range[0]:
+                    _range = (_range[0], _range[0] + 1.0)
+                for _g, _n in _series:
+                    _axis.hist(_channel_values(_g, _n, _column), bins=100, range=_range, histtype="step",
+                               color=_line_colours[_n], lw=0.8, log=steps_log_counts.value)
+                _axis.set_facecolor(_page)
+                _axis.set_yticks([])
+                _axis.minorticks_off()
+                _axis.tick_params(colors=_text, labelsize=6, length=2)
+                for _side in ("top", "right", "left"):
+                    _axis.spines[_side].set_visible(False)
+                _axis.spines["bottom"].set_color(_text)
+                if _column == 0:
+                    _axis.set_ylabel("count (log)" if steps_log_counts.value else "count", fontsize=7, color=_text)
 
-    # The zoom square of every step, pixels drawn as they are (no smoothing)
-    if steps_zoom.value:
-        for _column, _panel in enumerate(_panels):
-            _axis = steps_figure.add_subplot(_grid[_row_of["zoom"], _column])
-            _axis.imshow(_rgb(_panel, _shown), interpolation="nearest")
-            _top_edge, _bottom_edge, _left, _right = _zoom_window(_panel)
-            _axis.set_xlim(_left, _right)
-            _axis.set_ylim(_bottom_edge, _top_edge)
-            _axis.set_xticks([])
-            _axis.set_yticks([])
-            for _spine in _axis.spines.values():
-                _spine.set_edgecolor(_zoom_colour)
-                _spine.set_linewidth(1.5)
-            if _column == 0:
-                _axis.set_ylabel("zoom", fontsize=8, color=_text)
-                if steps_mark_hot.value:
-                    _mark_hot(_axis, _shown)
-
-    if steps_layout.value == "composite":
-        _handles = [plt.Line2D([], [], color=_colours[_n], lw=2) for _n in _shown]
-        steps_figure.legend(_handles, [_markers[_n] for _n in _shown], loc="upper right", ncol=len(_shown), fontsize=7,
-                            bbox_to_anchor=(0.99, 0.995), labelcolor="white",
-                            frameon=True, fancybox=False, facecolor="black", edgecolor="black", framealpha=1.0)
-    _hot_count = int(cleaning_steps["hot"][..., [_names.index(_n) for _n in _shown]].sum())
-    mo.vstack(
-        [
-            show_figure(steps_figure, dpi=150),
-            mo.md(
-                f"- {selection['projection']} projection, {record_label(cleaning_steps['record'])}\n"
-                f"- {_hot_count} hot pixels replaced in the channels shown"
-            ),
-        ]
-    )
+    # Legend with a composite, in the white style of the other figures: one
+    # row per group, led by its name (and, with sections, a disc showing its sector)
+    if _composite:
+        _legend_rows = []
+        for _k, _g in enumerate(_groups):
+            _row = [(legend_swatch(_colours[_n], "white"), _markers[_n]) for _n in _shown[_g["group"]]]
+            if _several:
+                _header = SectorHandle(_k, len(_groups)) if _sections else plt.Line2D([], [], lw=0)
+                _row.insert(0, (_header, GROUP_LABELS.get(_g["group"], _g["group"])))
+            _legend_rows.append(_row)
+        _width = max(len(_r) for _r in _legend_rows)
+        _padded = [_r + [(plt.Line2D([], [], lw=0), "")] * (_width - len(_r)) for _r in _legend_rows]
+        # Legend columns fill top to bottom, so entries go in column by column
+        _entries = [_padded[_r][_c] for _c in range(_width) for _r in range(len(_padded))]
+        steps_figure.legend(
+            [_h for _h, _ in _entries], [_l for _, _l in _entries], loc="upper right", ncol=_width, fontsize=7,
+            bbox_to_anchor=(0.99, 0.995), handlelength=1.2, columnspacing=0.8, **legend_options("white"),
+        )
+    _notes = [f"- {selection['projection']} projection"]
+    for _g in _groups:
+        _hot_count = int(_g["hot"][..., [_g["names"].index(_n) for _n in _shown[_g["group"]]]].sum())
+        _notes.append(f"- {record_label(_g['record'])}: {_hot_count} hot pixels replaced in the channels shown")
+    if steps_frames["missing"]:
+        _notes.append("- Not loaded for this combination: " + ", ".join(steps_frames["missing"]))
+    mo.vstack([show_figure(steps_figure, dpi=150), mo.md("\n".join(_notes))])
     return (steps_figure,)
 
 
 @app.cell(hide_code=True)
-def _(Path, mo, steps_figure, steps_name, steps_save):
+def _(Path, mo, plt, steps_figure, steps_name, steps_save, steps_svg):
     mo.stop(not steps_save.value)
     _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
     _directory.mkdir(parents=True, exist_ok=True)
-    for _suffix in ("pdf", "png"):
-        steps_figure.savefig(_directory / f"{steps_name.value}.{_suffix}", dpi=400,
-                             facecolor=steps_figure.get_facecolor())
-    mo.md(f"Saved `{steps_name.value}.pdf` and `.png` to `{_directory}`")
+    _suffixes = ("pdf", "png", "svg") if steps_svg.value else ("pdf", "png")
+    # svg.fonttype "none" keeps text as editable text in Inkscape
+    with plt.rc_context({"svg.fonttype": "none"}):
+        for _suffix in _suffixes:
+            steps_figure.savefig(_directory / f"{steps_name.value}.{_suffix}", dpi=400,
+                                 facecolor=steps_figure.get_facecolor())
+    mo.md(f"Saved `{steps_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
     return
 
 

@@ -728,20 +728,24 @@ def _(
 @app.cell(hide_code=True)
 def _():
     figure_name = mo.ui.text(value="nodal_knockout_schematic", label="File name")
-    save_figure = mo.ui.run_button(label="Save PDF + PNG")
-    mo.hstack([figure_name, save_figure], justify="start")
-    return figure_name, save_figure
+    save_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
+    save_figure = mo.ui.run_button(label="Save figure")
+    mo.hstack([figure_name, save_svg, save_figure], justify="start")
+    return figure_name, save_figure, save_svg
 
 
 @app.cell
-def _(figure_name, ko_schematic, save_figure):
+def _(figure_name, ko_schematic, save_figure, save_svg):
     mo.stop(not save_figure.value)
     _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
     _directory.mkdir(parents=True, exist_ok=True)
-    for _suffix in ("pdf", "png"):
-        ko_schematic.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400,
-                             facecolor=ko_schematic.get_facecolor())
-    mo.md(f"Saved `{figure_name.value}.pdf` and `.png` to `{_directory}`")
+    _suffixes = ("pdf", "png", "svg") if save_svg.value else ("pdf", "png")
+    # svg.fonttype "none" keeps text as editable text in Inkscape
+    with plt.rc_context({"svg.fonttype": "none"}):
+        for _suffix in _suffixes:
+            ko_schematic.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400,
+                                 facecolor=ko_schematic.get_facecolor())
+    mo.md(f"Saved `{figure_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
     return
 
 

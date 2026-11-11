@@ -6,8 +6,9 @@ Run with:
 
 - Panel a: cartoon microscope and a time series of real colonies, one paper stack
   of replicates per timepoint (only the top sheet is clearly visible)
-- Panel b: data stack → training → local pixelwise updates → time series
-  (the patterning process is a toy local rule, for illustration only)
+- Panel b: data stack → training → local pixelwise updates → time series (v1), or
+  two spaced 3D slices with an update cone between them (v2); the patterning
+  process is a toy local rule, for illustration only
 - Panel c: 0h data → final data, joined by the rollout; a perturbation block under
   the 0h image points into it, and a mock curve of one cell type against
   perturbation time links back to the arrow ("find optimal timing")
@@ -29,6 +30,7 @@ with app.setup:
     import matplotlib.pyplot as plt
     import numpy as np
     from dotenv import load_dotenv
+    from matplotlib.collections import PolyCollection
     from matplotlib.patches import Ellipse, FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle, Wedge
 
     from Experiments.micropatterns import nodal_ko_schematic as ko_drawing
@@ -41,7 +43,7 @@ with app.setup:
     PROJECTION_LABELS = {"max": "max projection", "sum": "sum projection", "slice": "single slice"}
 
     # Toy fates of panel b, drawn like the SOX2 / TBXT / SOX17 stainings
-    TOY_COLOURS = (ko_drawing.COLOURS["cyan"], ko_drawing.COLOURS["magenta"], ko_drawing.COLOURS["yellow"])
+    TOY_COLOURS = (ko_drawing.COLOURS["cyan"], ko_drawing.COLOURS["red"], ko_drawing.COLOURS["yellow"])
 
 
 @app.function(hide_code=True)
@@ -164,6 +166,15 @@ def draw_arrow(ax, start, end, colour, lw=1.0, **kwargs):
 
 
 @app.function(hide_code=True)
+def draw_zoom_outline(ax, corner, size, dashes, z):
+    """Square outline of black dashes over a solid white line, so it shows on both
+    light pages and dark images. Marks the zoomed neighbourhood in panel b."""
+    for colour, style in (("white", "-"), ("black", (0, dashes))):
+        ax.add_patch(Rectangle(corner, size, size, fill=False, edgecolor=colour, lw=0.9, linestyle=style,
+                               zorder=z))
+
+
+@app.function(hide_code=True)
 def draw_card(ax, corner, size, z, style, rgba=None, unmeasured=(), alpha=1.0, edge=None, pixelated=False):
     """One microscopy image: a black square with the colony disc in it.
 
@@ -248,17 +259,20 @@ def draw_microscope(ax, origin, style):
 
 @app.function(hide_code=True)
 def draw_marker_legend(fig, data, style):
-    """Marker colours of each staining group in one column, in a grey box floating over
-    the figure (left out of the layout). Its top right corner is at ``style["legend_anchor"]``
-    (fractions of the figure)."""
+    """Marker colours of each staining group in one column, each headed by the colony
+    sector that group fills, in a grey box floating over the figure (left out of the
+    layout). Its top right corner is at ``style["legend_anchor"]`` (fractions of the figure)."""
     names = data["channel_names"]
     blank = plt.Line2D([], [], lw=0)
     legend_style = "white" if style["theme"]["bg"] == "white" else "black"
+    groups = style["groups"]
     entries = []
-    for group in style["groups"]:
+    for k, group in enumerate(groups):
         if entries:
             entries.append((blank, ""))
-        entries.append((blank, ko_drawing.GROUP_LABELS.get(group, group)))
+        # Header: a small disc with this group's sector filled (when the colonies are split)
+        header = ko_drawing.SectorHandle(k, len(groups)) if len(groups) > 1 else blank
+        entries.append((header, ko_drawing.GROUP_LABELS.get(group, group)))
         entries += [(legend_swatch(c, legend_style), n.rsplit("/", 1)[-1])
                     for n, c in zip(names, group_colours(names, group)) if c is not None]
     legend = fig.legend([h for h, _ in entries], [l for _, l in entries], ncol=1, loc="upper right",
@@ -304,7 +318,8 @@ def draw_imaging_panel(ax, data, style):
     top = y0 + size + (len(replicates) - 1) * step
     right = last
     if style["replicate_label"] and len(replicates) > 1:
-        start = (last - stack_width + size + 0.1, y0 + 0.1)
+        # Offset to the lower right so the arrow runs parallel to the stack edge, not along it
+        start = (last - stack_width + size + 0.25, y0)
         end = (start[0] + (len(replicates) - 1) * step, start[1] + (len(replicates) - 1) * step)
         ax.annotate("", xy=end, xytext=start, arrowprops=dict(arrowstyle="<->", color=muted, lw=0.6, shrinkA=0,
                                                               shrinkB=0))
@@ -319,9 +334,11 @@ def draw_imaging_panel(ax, data, style):
 
 @app.function(hide_code=True)
 def draw_training_panel(ax, data, toy, style):
-    """Panel b: data stack → training → local pixelwise update → time series."""
+    """Panel b: data stack → training → the patterning dynamics, as one of two layouts:
+    v1: zoomed neighbourhood → updated pixel → time series of frames
+    v2: two spaced slices (t, t+1) in 3D, with a local update cone between them"""
     theme = style["theme"]
-    fg, muted, accent, model = theme["fg"], theme["muted"], theme["accent"], style["model_colour"]
+    fg, muted, model = theme["fg"], theme["muted"], style["model_colour"]
     font, small = style["font"], style["font"] - 1
     frames, mask = toy
     centre_y = 1.7
@@ -360,6 +377,23 @@ def draw_training_panel(ax, data, toy, style):
     draw_arrow(ax, (x, centre_y), (x + 0.5, centre_y), fg)
     x += 0.65
 
+    draw_dynamics = draw_update_slices if style["training_layout"] == "v2" else draw_update_series
+    right, label_top = draw_dynamics(ax, x, centre_y, toy, style)
+    ax.set_xlim(-0.1, right + 0.1)
+    ax.set_ylim(centre_y - 1.55, label_top + (1.0 if style["equation"] else 0.6))
+
+
+@app.function(hide_code=True)
+def draw_update_series(ax, x, centre_y, toy, style):
+    """Panel b, v1: zoomed neighbourhood at t → its centre pixel at t+1 → model rollout
+    of toy frames, with the zoom marked on its frame. The rollout frames sit on a
+    continuous time axis at evenly spaced times, to show the model can be evaluated
+    at any time. Returns (right edge, top of the art)."""
+    theme = style["theme"]
+    fg, muted, accent = theme["fg"], theme["muted"], theme["accent"]
+    font, small = style["font"], style["font"] - 1
+    frames, mask = toy
+
     # Local update: a neighbourhood at one step → the centre pixel at the next
     n, grid = 7, 1.5
     zoom = min(style["zoom_frame"], len(frames) - 2)
@@ -375,12 +409,16 @@ def draw_training_panel(ax, data, toy, style):
             colour = before[i, j, :3] if before[i, j, 3] > 0.5 else "#efefef"
             ax.add_patch(Rectangle((x + j * cell, gy + grid - (i + 1) * cell), cell, cell, facecolor=colour,
                                    edgecolor="#555555", lw=0.3, zorder=3))
+    # Dashed outline: the same outline marks where this zoom sits in the time series
+    pad = 0.05
+    draw_zoom_outline(ax, (x - pad, gy - pad), grid + 2 * pad, (3, 1.5), 4)
     m = n // 2
     ax.add_patch(Rectangle((x + (m - 1) * cell, gy + grid - (m + 2) * cell), 3 * cell, 3 * cell, fill=False,
-                           edgecolor=accent, lw=1.2, zorder=4))
+                           edgecolor=style["neighbourhood_colour"], lw=1.4, zorder=4))
     ax.add_patch(Rectangle((x + m * cell, gy + grid - (m + 1) * cell), cell, cell, fill=False,
                            edgecolor="white", lw=0.9, zorder=4))
-    ax.text(x + grid / 2, gy - 0.1, "$t$", ha="center", va="top", fontsize=small)
+    # Baseline alignment keeps $t$ and $t+1$ at the same height
+    ax.text(x + grid / 2, gy - 0.25, "$t$", ha="center", va="baseline", fontsize=small)
     update_x = x
     x += grid + 0.15
     draw_arrow(ax, (x, centre_y), (x + 0.55, centre_y), accent)
@@ -391,7 +429,7 @@ def draw_training_panel(ax, data, toy, style):
                            edgecolor="white", lw=0.9, zorder=3))
     ax.add_patch(Rectangle((x, centre_y - single / 2), single, single, fill=False, edgecolor="#555555", lw=0.3,
                            zorder=4))
-    ax.text(x + single / 2, gy - 0.1, "$t+1$", ha="center", va="top", fontsize=small)
+    ax.text(x + single / 2, gy - 0.25, "$t+1$", ha="center", va="baseline", fontsize=small)
     middle = (update_x + x + single) / 2
     ax.text(middle, centre_y + grid / 2 + 0.12, style["update_label"], ha="center", va="bottom", fontsize=font,
             linespacing=1.3)
@@ -399,10 +437,12 @@ def draw_training_panel(ax, data, toy, style):
         ax.text(middle, centre_y + grid / 2 + 0.55, style["equation"], ha="center", va="bottom", fontsize=font)
     x += single + 0.2
 
-    # Time series of the toy process
+    # Model rollout: toy frames at evenly spaced (not only imaged) times. The row keeps
+    # the same total width, so frames shrink as more are added.
     draw_arrow(ax, (x, centre_y), (x + 0.5, centre_y), fg)
     x += 0.65
-    frame_size, gap = 1.2, 0.2
+    gap = 0.2
+    frame_size = min(1.2, (6.8 - gap * (len(frames) - 1)) / len(frames))
     first = x
     hours = np.linspace(0, TIMEPOINTS[-1], len(frames))
     for k, (fates, hour) in enumerate(zip(frames, hours)):
@@ -412,18 +452,131 @@ def draw_training_panel(ax, data, toy, style):
             disc, pixels = 0.9 * frame_size, frames.shape[-1]
             left = x + 0.05 * frame_size + c0 / pixels * disc
             low = centre_y - frame_size / 2 + 0.05 * frame_size + (1 - (r0 + n) / pixels) * disc
-            ax.add_patch(Rectangle((left, low), n / pixels * disc, n / pixels * disc, fill=False,
-                                   edgecolor=accent, lw=0.8, zorder=12))
-        ax.text(x + frame_size / 2, centre_y - frame_size / 2 - 0.08, f"{hour:g}h", ha="center", va="top",
+            draw_zoom_outline(ax, (left, low), n / pixels * disc, (2, 1), 12)
+        ax.text(x + frame_size / 2, centre_y - frame_size / 2 - 0.08, f"{hour:.3g}h", ha="center", va="top",
                 fontsize=small)
         x += frame_size + gap
     last = x - gap
-    draw_arrow(ax, (first, centre_y - frame_size / 2 - 0.45), (last, centre_y - frame_size / 2 - 0.45), muted,
-               lw=0.8)
+
+    # Continuous time axis: frame centres sit at their times, with a tick under each frame
+    axis_y = centre_y - frame_size / 2 - 0.45
+
+    def at(hour):
+        return first + frame_size / 2 + (last - first - frame_size) * hour / TIMEPOINTS[-1]
+
+    draw_arrow(ax, (first, axis_y), (last, axis_y), muted, lw=0.8)
+    for hour in hours:
+        ax.plot([at(hour)] * 2, [axis_y - 0.05, axis_y + 0.05], color=fg, lw=0.6, zorder=5)
+    ax.text(last, axis_y - 0.08, "time", ha="right", va="top", fontsize=small, color=muted)
     ax.text((first + last) / 2, centre_y + frame_size / 2 + 0.12, style["series_label"], ha="center",
             va="bottom", fontsize=font, linespacing=1.3)
-    ax.set_xlim(-0.1, last + 0.1)
-    ax.set_ylim(centre_y - 1.55, centre_y + grid / 2 + (1.0 if style["equation"] else 0.6))
+    return last, centre_y + grid / 2
+
+
+@app.function(hide_code=True)
+def draw_update_slices(ax, x, centre_y, toy, style):
+    """Panel b, v2: toy frames at t and t+1 as two spaced slices in an oblique 3D view,
+    with a few earlier frames packed tightly behind t (a time series). A 3x3
+    neighbourhood on t feeds a cone to one pixel on t+1: the local update f_theta. The
+    pixel is the one that changes most between the two frames. Slices lie flat and
+    time runs upwards, or with ``style["slices_transposed"]`` stand upright and time
+    runs left to right. Returns (right edge, top of the art)."""
+    theme = style["theme"]
+    muted, local = theme["muted"], style["neighbourhood_colour"]
+    font, small = style["font"], style["font"] - 1
+    frames, mask = toy
+    k = min(style["zoom_frame"], len(frames) - 2)
+    pixels = frames.shape[-1]
+    transposed = style["slices_transposed"]
+
+    # Edge vectors of a slice: e_u along image columns, e_v along image rows (upwards).
+    # The receding direction (into the page) is the same in both orientations.
+    recede = np.array([0.7, style["slice_depth"]])
+    if transposed:
+        e_u, e_v = recede, np.array([0.0, 1.6])
+        e_next, e_pack = np.array([style["slice_gap"], 0.0]), np.array([-0.08, 0.0])
+    else:
+        e_u, e_v = np.array([2.2, 0.0]), recede
+        e_next, e_pack = np.array([0.0, style["slice_gap"]]), np.array([0.0, -0.08])
+    # Slices from the back: earlier frames, t, then t+1; corners first relative to t
+    packed = style["packed_slices"]
+    offsets = [j * e_pack for j in range(packed, 0, -1)] + [np.zeros(2), e_next]
+    shown = [frames[max(k - j, 0)] for j in range(packed, 0, -1)] + [frames[k], frames[k + 1]]
+    corners = np.array([o + c for o in offsets for c in (0 * e_u, e_u, e_v, e_u + e_v)])
+    shift = np.array([x, centre_y]) - [corners[:, 0].min(), (corners[:, 1].min() + corners[:, 1].max()) / 2]
+    origins = [o + shift for o in offsets]
+    low_corner, high_corner = corners.min(axis=0) + shift, corners.max(axis=0) + shift
+
+    def pixel_corners(origin, i, j, size=1):
+        """Corners of the ``size``x``size`` block with top-left pixel (row i, column j)."""
+        u0, u1 = j / pixels, (j + size) / pixels
+        v0, v1 = 1 - (i + size) / pixels, 1 - i / pixels
+        return [origin + u * e_u + v * e_v for u, v in ((u0, v0), (u1, v0), (u1, v1), (u0, v1))]
+
+    def draw_slice(origin, fates, z):
+        outline = [origin, origin + e_u, origin + e_u + e_v, origin + e_v]
+        ax.add_patch(Polygon(outline, closed=True, facecolor="black", edgecolor=muted, lw=0.6, zorder=z))
+        rgba = toy_rgba(fates, mask)
+        cells = [(i, j) for i in range(pixels) for j in range(pixels) if mask[i, j]]
+        colours = [rgba[i, j, :3] for i, j in cells]
+        # Edges in the face colour hide the hairline seams between pixels
+        ax.add_collection(PolyCollection([pixel_corners(origin, i, j) for i, j in cells], facecolors=colours,
+                                         edgecolors=colours, linewidths=0.2, zorder=z + 0.1))
+
+    # Target pixel: the largest change between the two frames, with its whole 3x3 inside the colony
+    change = np.abs(frames[k + 1] - frames[k]).sum(axis=0)
+    inside = mask & (sum(np.roll(np.roll(mask, a, 0), b, 1) for a in (-1, 0, 1) for b in (-1, 0, 1)) == 9)
+    ti, tj = np.unravel_index(np.argmax(np.where(inside, change, -1.0)), change.shape)
+
+    # Back to front, so each slice hides the ones behind it
+    for z, (origin, fates) in enumerate(zip(origins[:-1], shown[:-1])):
+        draw_slice(origin, fates, 1 + 0.2 * z)
+    here, after = origins[-2], origins[-1]
+    ax.add_patch(Polygon(pixel_corners(here, ti - 1, tj - 1, 3), closed=True, fill=False, edgecolor=local,
+                         lw=1.4, zorder=5))
+    ax.add_patch(Polygon(pixel_corners(here, ti, tj), closed=True, fill=False, edgecolor="white", lw=0.7,
+                         zorder=5))
+
+    # Cone from the neighbourhood corners to the target pixel: solid behind the t+1
+    # slice, faint over it, so it reads as passing through the slice
+    target = np.mean(pixel_corners(after, ti, tj), axis=0)
+    for corner in pixel_corners(here, ti - 1, tj - 1, 3):
+        for z, alpha in ((6, 1.0), (9, 0.35)):
+            ax.plot([corner[0], target[0]], [corner[1], target[1]], color=local, lw=0.8, alpha=alpha, zorder=z)
+    draw_slice(after, shown[-1], 7)
+    ax.add_patch(Polygon(pixel_corners(after, ti, tj), closed=True, fill=False, edgecolor="white", lw=0.9,
+                         zorder=10))
+    cone_mid = (np.mean(pixel_corners(here, ti - 1, tj - 1, 3), axis=0) + target) / 2
+    if transposed:
+        ax.text(cone_mid[0], cone_mid[1] + 0.15, r"$f_\theta$", ha="center", va="bottom", fontsize=font,
+                color=local, zorder=10)
+    else:
+        ax.text(cone_mid[0] + 0.15, cone_mid[1], r"$f_\theta$", ha="left", va="center", fontsize=font,
+                color=local, zorder=10)
+
+    # Time labels beside (flat) or under (upright) the t and t+1 slices, joined by an arrow
+    centres = [o + (e_u + e_v) / 2 for o in (here, after)]
+    if transposed:
+        label_y = low_corner[1] - 0.25
+        for (cx, _), text in zip(centres, ("$t$", "$t+1$")):
+            ax.text(cx, label_y, text, ha="center", va="baseline", fontsize=small)
+        draw_arrow(ax, (centres[0][0] + 0.2, label_y + 0.05), (centres[1][0] - 0.3, label_y + 0.05), muted,
+                   lw=0.8)
+        right = high_corner[0]
+    else:
+        label_x = high_corner[0] + 0.15
+        for (_, cy), text in zip(centres, ("$t$", "$t+1$")):
+            ax.text(label_x, cy, text, ha="left", va="center", fontsize=small)
+        draw_arrow(ax, (label_x + 0.07, centres[0][1] + 0.15), (label_x + 0.07, centres[1][1] - 0.15), muted,
+                   lw=0.8)
+        right = label_x + 0.45
+
+    top = high_corner[1]
+    middle = (low_corner[0] + high_corner[0]) / 2
+    ax.text(middle, top + 0.12, style["update_label"], ha="center", va="bottom", fontsize=font, linespacing=1.3)
+    if style["equation"]:
+        ax.text(middle, top + 0.55, style["equation"], ha="center", va="bottom", fontsize=font)
+    return right, top
 
 
 @app.function(hide_code=True)
@@ -541,7 +694,8 @@ def draw_perturbation_panel(ax, data, style):
                 bbox=backing, zorder=6)
     ax.text(px + pw / 2, y0 - 0.08, style["curve_x_label"], ha="center", va="top", fontsize=small,
             bbox=backing, zorder=6)
-    ax.text(px - 0.12, y0 + size / 2, style["curve_y_label"], ha="right", va="center", rotation=90,
+    # Rotated anchor frame: ha centres the label along the axis, va="bottom" puts it left of the axis
+    ax.text(px - 0.12, y0 + size / 2, style["curve_y_label"], ha="center", va="bottom", rotation=90,
             rotation_mode="anchor", fontsize=small, linespacing=1.2)
     ax.text(px + pw / 2, y0 + size + 0.1, style["curve_title"], ha="center", va="bottom", fontsize=font,
             linespacing=1.3)
@@ -771,16 +925,42 @@ def _():
     stack_source = mo.ui.dropdown(options=["data", "toy"], value="data", label="Data stack (b)")
     stack_count = mo.ui.slider(start=1, stop=8, step=1, value=4, label="Sheets in data stack", show_value=True)
     toy_size = mo.ui.slider(start=12, stop=48, step=2, value=24, label="Toy grid (px)", show_value=True)
-    toy_frames = mo.ui.slider(start=3, stop=8, step=1, value=5, label="Toy frames", show_value=True)
-    toy_steps = mo.ui.slider(start=5, stop=120, step=5, value=40, label="Steps per frame", show_value=True)
+    # Rollout images over a fixed total number of toy steps
+    toy_frames = mo.ui.slider(start=3, stop=12, step=1, value=7, label="Rollout images", show_value=True)
+    toy_steps = mo.ui.slider(start=20, stop=600, step=10, value=160, label="Total toy steps", show_value=True)
     toy_seed = mo.ui.number(start=0, stop=1000, step=1, value=0, label="Seed")
     zoom_frame = mo.ui.slider(start=0, stop=6, step=1, value=2, label="Zoomed frame", show_value=True)
+    # v1: zoom → pixel → time series; v2: two spaced 3D slices with an update cone
+    training_layout = mo.ui.dropdown(options=["v1", "v2"], value="v1", label="Layout (b)")
+    slice_gap = mo.ui.slider(start=0.6, stop=2.0, step=0.05, value=1.1, label="Slice spacing (v2)",
+                             show_value=True)
+    slice_depth = mo.ui.slider(start=0.3, stop=1.2, step=0.05, value=0.7, label="Slice depth (v2)",
+                               show_value=True)
+    packed_slices = mo.ui.slider(start=0, stop=6, step=1, value=3, label="Slices behind t (v2)",
+                                 show_value=True)
+    slices_transposed = mo.ui.switch(value=False, label="Time left to right (v2)")
+    neighbourhood_colour = mo.ui.text(value="#00b300", label="Neighbourhood colour")
     mo.vstack([
         mo.md("**Panel b** (toy local rule)"),
-        mo.hstack([stack_source, stack_count, zoom_frame], justify="start"),
+        mo.hstack([training_layout, slices_transposed, slice_gap, slice_depth, packed_slices], justify="start"),
+        mo.hstack([stack_source, stack_count, zoom_frame, neighbourhood_colour], justify="start"),
         mo.hstack([toy_size, toy_frames, toy_steps, toy_seed], justify="start"),
     ])
-    return stack_count, stack_source, toy_frames, toy_seed, toy_size, toy_steps, zoom_frame
+    return (
+        neighbourhood_colour,
+        packed_slices,
+        slice_depth,
+        slice_gap,
+        slices_transposed,
+        stack_count,
+        stack_source,
+        toy_frames,
+        toy_seed,
+        toy_size,
+        toy_steps,
+        training_layout,
+        zoom_frame,
+    )
 
 
 @app.cell(hide_code=True)
@@ -828,8 +1008,9 @@ def _():
         "training_label": mo.ui.text(value="training", label="Training block"),
         "training_note": mo.ui.text(value="NCA", label="Training note"),
         "update_label": mo.ui.text(value="local pixelwise update", label="Update"),
-        "equation": mo.ui.text(value=r"$x_{t+1} = x_t + f_\theta(\mathcal{N}(x_t))$", label="Equation"),
-        "series_label": mo.ui.text(value="patterning dynamics", label="Time series"),
+        "equation": mo.ui.text(value="", placeholder=r"$x_{t+1} = x_t + f_\theta(\mathcal{N}(x_t))$",
+                               label="Equation"),
+        "series_label": mo.ui.text(value="model rollout at any time", label="Time series"),
         "initial_label": mo.ui.text(value="0h data", label="Initial"),
         "final_label": mo.ui.text(value="", placeholder="automatic", label="Final"),
         "rollout_label": mo.ui.text(value="model rollout", label="Rollout"),
@@ -849,7 +1030,8 @@ def _():
 
 @app.cell(hide_code=True)
 def _(toy_frames, toy_seed, toy_size, toy_steps):
-    toy = toy_patterning(int(toy_size.value), int(toy_frames.value), int(toy_steps.value), int(toy_seed.value))
+    _per_frame = max(1, round(int(toy_steps.value) / (int(toy_frames.value) - 1)))
+    toy = toy_patterning(int(toy_size.value), int(toy_frames.value), _per_frame, int(toy_seed.value))
     return (toy,)
 
 
@@ -879,6 +1061,8 @@ def _(
     light_colour,
     measured_hours,
     model_colour,
+    neighbourhood_colour,
+    packed_slices,
     panels,
     perturbation_hour,
     projection,
@@ -888,10 +1072,14 @@ def _(
     selected_replicates,
     selected_times,
     sheet_offset,
+    slice_depth,
+    slice_gap,
+    slices_transposed,
     stack_count,
     stack_gap,
     stack_source,
     toy,
+    training_layout,
     zoom_frame,
 ):
     mo.stop(not panels.value, mo.callout("Select at least one panel.", kind="warn"))
@@ -922,6 +1110,12 @@ def _(
         "stack_source": stack_source.value,
         "stack_count": int(stack_count.value),
         "zoom_frame": int(zoom_frame.value),
+        "training_layout": training_layout.value,
+        "slice_gap": float(slice_gap.value),
+        "slice_depth": float(slice_depth.value),
+        "slices_transposed": slices_transposed.value,
+        "packed_slices": int(packed_slices.value),
+        "neighbourhood_colour": colour_or(neighbourhood_colour.value, "#00b300"),
         "final_condition": final_condition.value,
         "final_replicate": int(final_replicate.value),
         "perturbation_hour": float(perturbation_hour.value),
@@ -944,19 +1138,24 @@ def _(
 @app.cell(hide_code=True)
 def _():
     figure_name = mo.ui.text(value="project_overview", label="File name")
-    save_figure = mo.ui.run_button(label="Save PDF + PNG")
-    mo.hstack([figure_name, save_figure], justify="start")
-    return figure_name, save_figure
+    save_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
+    save_figure = mo.ui.run_button(label="Save figure")
+    mo.hstack([figure_name, save_svg, save_figure], justify="start")
+    return figure_name, save_figure, save_svg
 
 
 @app.cell
-def _(figure_name, overview, save_figure):
+def _(figure_name, overview, save_figure, save_svg):
     mo.stop(not save_figure.value)
     _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
     _directory.mkdir(parents=True, exist_ok=True)
-    for _suffix in ("pdf", "png"):
-        overview.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400, facecolor=overview.get_facecolor())
-    mo.md(f"Saved `{figure_name.value}.pdf` and `.png` to `{_directory}`")
+    _suffixes = ("pdf", "png", "svg") if save_svg.value else ("pdf", "png")
+    # svg.fonttype "none" keeps text as editable text in Inkscape
+    with plt.rc_context({"svg.fonttype": "none"}):
+        for _suffix in _suffixes:
+            overview.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400,
+                             facecolor=overview.get_facecolor())
+    mo.md(f"Saved `{figure_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
     return
 
 

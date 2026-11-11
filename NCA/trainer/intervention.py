@@ -217,6 +217,53 @@ def rollout_model_with_blocked_channel_sampled(
 
 
 @eqx.filter_jit
+def rollout_batch_with_blocked_channel_final(
+    nca,
+    initial_states,
+    boundary_mask,
+    boundary_mode,
+    keys,
+    total_steps,
+    channel,
+    knockout_step,
+):
+    """Final states ``[B, C, H, W]`` of blocked-channel rollouts of a batch.
+
+    Each of ``initial_states`` ``[B, C, H, W]`` runs with its own key in
+    ``keys`` ``[B, ...]``, as ``rollout_model_with_blocked_channel_sampled``
+    observed at ``total_steps`` only. ``knockout_step`` is one value for
+    the whole batch, so the block switch stays a real branch under ``vmap``
+    (a batched switch would run both updates every step).
+    """
+
+    def boundary_callback(state):
+        return _apply_boundary(state, boundary_mask, boundary_mode)
+
+    def rollout(initial_state, key):
+        def step(carry, step_index):
+            state, previous_key = carry
+            step_key = jax.random.fold_in(previous_key, step_index)
+            state = apply_model_with_blocked_channel(
+                nca,
+                state,
+                boundary_callback,
+                step_key,
+                channel,
+                step_index >= knockout_step,
+            )
+            return (state, step_key), None
+
+        (state, _), _ = jax.lax.scan(
+            step,
+            (initial_state, key),
+            jnp.arange(total_steps),
+        )
+        return state
+
+    return jax.vmap(rollout)(initial_states, keys)
+
+
+@eqx.filter_jit
 def rollout_model_with_blocked_channel_pattern_counts(
     nca,
     initial_state,

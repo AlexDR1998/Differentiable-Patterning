@@ -145,3 +145,27 @@ def test_pattern_count_rollout_counts_marker_patterns_per_group():
         for group in range(2):
             expected = jnp.bincount(codes[groups == group], length=4)
             assert jnp.array_equal(step_counts[group], expected)
+
+
+def test_batched_final_rollout_matches_sampled_rollouts():
+    from NCA.trainer.intervention import rollout_batch_with_blocked_channel_final
+
+    model = AdditiveModel()
+    initial = jax.random.uniform(jax.random.PRNGKey(1), (3, 2, 4, 4))
+    keys = jnp.stack([jax.random.PRNGKey(seed) for seed in (3, 3, 8)])
+    boundary_mask = jnp.full((1, 4, 4), 0.5)
+    knockout_step = jnp.asarray(2, dtype=jnp.int32)
+
+    final = rollout_batch_with_blocked_channel_final(
+        model, initial, boundary_mask, "soft", keys, 5, 1, knockout_step,
+    )
+
+    assert final.shape == initial.shape
+    for state, key, actual in zip(initial, keys, final):
+        expected = rollout_model_with_blocked_channel_sampled(
+            model, state, boundary_mask, "soft", key, 5,
+            channel=1,
+            knockout_step=knockout_step,
+            observation_steps=jnp.asarray([5], dtype=jnp.int32),
+        )[0]
+        assert jnp.allclose(actual, expected)
