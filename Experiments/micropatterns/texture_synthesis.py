@@ -522,3 +522,109 @@ def layer_cell_counts(ranks, mask, kept=None):
         inside = np.bincount(cell, weights=weights, minlength=len(area))
         counts[layer] = float(np.sum(inside / area))
     return counts
+
+
+# --- Cells packed without overlap -------------------------------------------
+#
+# The alternative to ``place_cells`` for thin (2D) images such as confocal
+# slices, where every pixel belongs to at most one cell. Cells are grown
+# from seed points: each pixel belongs to the nearest seed if that seed is
+# within reach (about a measured cell's radius). Few seeds give separate
+# cells of measured size, many seeds a tiling without gaps, and cells never
+# overlap, so every seed is one distinct cell. The tiling is drawn on a grid
+# ``factor`` times finer than the model grid and averaged in blocks, as the
+# model-resolution data are block means of the raw images.
+
+
+def scatter_seeds(mask, count, min_distance, seed, attempts=30):
+    """Up to ``count`` random seed points in ``mask`` ``[H, W]``, no two closer than ``min_distance``.
+
+    Points are tried at random (about ``attempts`` per point wanted) and
+    kept if far enough from the points already kept, so they spread
+    evenly without lying on a lattice. Returns ``[n, 2]`` (row, column)
+    in the order kept: the first ``k`` points are an even, random set of
+    ``k`` points for any ``k``. Fewer than ``count`` points are returned
+    if ``mask`` cannot hold more.
+    """
+
+    rng = np.random.default_rng(seed)
+    inside = np.argwhere(np.asarray(mask, dtype=bool))
+    if count <= 0 or len(inside) == 0:
+        return np.zeros((0, 2))
+    distance = max(float(min_distance), 1e-9)
+    # Kept points by grid square of side min_distance: only the 3 x 3
+    # squares around a new point can hold points closer than min_distance
+    squares = {}
+    kept = []
+    for _ in range(int(attempts) * int(count)):
+        point = inside[rng.integers(len(inside))] + rng.random(2)
+        square = (int(point[0] // distance), int(point[1] // distance))
+        near = (
+            other
+            for row in range(square[0] - 1, square[0] + 2)
+            for column in range(square[1] - 1, square[1] + 2)
+            for other in squares.get((row, column), ())
+        )
+        if all(np.hypot(*(point - other)) >= distance for other in near):
+            squares.setdefault(square, []).append(point)
+            kept.append(point)
+            if len(kept) == count:
+                break
+    return np.asarray(kept).reshape(-1, 2)
+
+
+def tile_cells(seeds, reach, cell_values, gap_values, mask, factor=4):
+    """Cells grown from ``seeds`` in the colony ``mask``, at model resolution.
+
+    ``seeds`` ``[N, 2]`` are points on the model grid (``scatter_seeds``
+    on the ``factor`` times finer grid, divided by ``factor``), ``reach``
+    the largest distance (model pixels) a cell extends from its seed, and
+    ``cell_values`` ``[N, C]`` each cell's values. Each point of the fine
+    grid inside ``mask`` belongs to its nearest seed if that is within
+    ``reach``; cells end at the mask edge. Model pixels average the fine
+    grid, with ``gap_values`` ``[C]`` where no cell is.
+
+    Returns ``(state [C, H, W], coverage [H, W], cell_weights [H, W],
+    cells)``: the share of each pixel covered by cells, each pixel's share
+    of the cells (every cell spreads a weight of 1 over its pixels, so
+    ``cell_weights`` sums to the number of cells), and that number (cells
+    with no area are left out).
+    """
+
+    from scipy.spatial import cKDTree
+
+    mask = np.asarray(mask, dtype=bool)
+    height, width = mask.shape
+    seeds = np.asarray(seeds, dtype=float).reshape(-1, 2)
+    gap_values = np.asarray(gap_values, dtype=np.float32)
+    state = np.broadcast_to(gap_values[:, None, None], (len(gap_values), height, width)).copy()
+    empty = np.zeros((height, width), dtype=np.float32)
+    if len(seeds) == 0:
+        return state, empty, empty.copy(), 0
+    fine_mask = np.kron(mask, np.ones((factor, factor), dtype=bool))
+    points = np.argwhere(fine_mask)
+    distance, nearest = cKDTree(seeds * factor).query(points + 0.5)
+    owned = distance <= reach * factor
+    points, nearest = points[owned], nearest[owned]
+    # Area (fine points) of each cell in each model pixel
+    pixel = (points[:, 0] // factor) * width + points[:, 1] // factor
+    pairs, area = np.unique(pixel * len(seeds) + nearest, return_counts=True)
+    pair_pixel, pair_cell = pairs // len(seeds), pairs % len(seeds)
+    share = area / float(factor * factor)  # of the model pixel
+    cell_area = np.bincount(pair_cell, weights=share, minlength=len(seeds))
+    coverage = np.bincount(pair_pixel, weights=share, minlength=height * width)
+    weights = np.bincount(
+        pair_pixel, weights=share / cell_area[pair_cell], minlength=height * width
+    )
+    values = np.asarray(cell_values, dtype=np.float32)[pair_cell] * share[:, None]
+    filled = np.stack([
+        np.bincount(pair_pixel, weights=values[:, channel], minlength=height * width)
+        for channel in range(values.shape[1])
+    ])
+    state = (filled + (1.0 - coverage) * gap_values[:, None]).reshape(state.shape).astype(np.float32)
+    return (
+        state,
+        coverage.reshape(height, width).astype(np.float32),
+        weights.reshape(height, width).astype(np.float32),
+        int(np.count_nonzero(cell_area > 0)),
+    )

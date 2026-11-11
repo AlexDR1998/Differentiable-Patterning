@@ -1,7 +1,7 @@
 """Schematic of the micropattern loss functions, drawn with measured colonies.
 
 Run with:
-    marimo edit Experiments/micropatterns/loss_schematic.py
+    marimo edit Experiments/micropatterns/figures/loss_schematic.py
 
 - Two measured control colonies (two replicates) of the 260726 data, loaded with
   the training preprocessing of ``conf/base_config.yaml`` (default: slice
@@ -33,7 +33,6 @@ app = marimo.App(width="full", app_title="Loss schematic")
 
 with app.setup:
     import os
-    import pickle
     from pathlib import Path
 
     import marimo as mo
@@ -42,23 +41,42 @@ with app.setup:
     from dotenv import load_dotenv
     from matplotlib.patches import Circle, FancyArrowPatch, Polygon, Rectangle, Wedge
 
-    from Experiments.micropatterns import nca_training_schematic as training_drawing
-    from Experiments.micropatterns import nodal_ko_schematic as ko_drawing
-    from Experiments.micropatterns import project_overview as overview
-    from Experiments.micropatterns.schematics import colour_or, group_colours
+    from Experiments.micropatterns.figures.data import (
+        CACHE_DIRECTORY,
+        TIMEPOINTS,
+        cache_name,
+        cached,
+        crop_box,
+        load_colonies,
+    )
+    from Experiments.micropatterns.figures.drawing import (
+        colony_rgba,
+        draw_arrow,
+        draw_card,
+        rounded_box,
+        stack_panels,
+        text_height,
+        text_width,
+    )
+    from Experiments.micropatterns.figures.style import (
+        ACCENT,
+        CMAP,
+        EXPERIMENT_GROUPS,
+        FONT,
+        GROUP_COLOURS,
+        GROUP_LABELS,
+        MODEL,
+        SERIES,
+        THEME,
+        WIDTH,
+        group_colours,
+        paper_style,
+        save_figure,
+    )
+    from Experiments.micropatterns.figures.style import marker_colour as channel_colour
 
     load_dotenv()
 
-    REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-    CACHE_DIRECTORY = REPOSITORY_ROOT / "figures" / "schematics" / "cache"
-    TIMEPOINTS = ko_drawing.TIMEPOINTS
-    GROUP_LABELS = ko_drawing.GROUP_LABELS
-    GROUP_COLOURS = {
-        "cell_fate_s1": "#4c72b0",
-        "cell_fate_s2": "#55a868",
-        "rna_expression": "#c44e52",
-        "protein_response": "#8172b2",
-    }
     # Channels of a triplet go to the R, G and B inputs of VGG
     RGB = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
     RGB_TEXT = ("#e00000", "#00a000", "#0050ff")
@@ -66,64 +84,6 @@ with app.setup:
     # sheet of panel b (sheet coordinates in [0, 1]²; illustrative, not computed)
     FEATURE_POSITIONS = {"data": (0.25, 0.55), "prediction": (0.36, 0.38), "time": (0.85, 0.6)}
 
-
-@app.function(hide_code=True)
-def load_loss_data(root, replicates, projection, downsample, refresh=False):
-    """Control colonies of two one-based replicates, all experiment groups, with the
-    training preprocessing of conf/base_config.yaml, read from (or written to) the cache.
-
-    Returns images [B, T, C, H, W], measured [B, T, C], masks [B, H, W], the replicate
-    of each batch entry and the channel layout (groups, their channels, state markers)."""
-    name = f"loss_data_{projection}_ds{int(downsample)}_r{'-'.join(str(int(r)) for r in replicates)}.pkl"
-    path = CACHE_DIRECTORY / name
-    if path.is_file() and not refresh:
-        with open(path, "rb") as file:
-            return pickle.load(file)
-    from Common.dataloader.disk_cache import cache_dir_from_environment
-    from Common.dataloader.micropattern_260726 import load_micropattern_260726
-    from Experiments.micropatterns.config_helpers import _cleaning_for_loader, _excluded_images
-
-    micropattern = ko_drawing.knockout_data_config(ko_drawing.EXPERIMENT_GROUPS, projection,
-                                                   int(downsample)).micropattern
-    dataset = load_micropattern_260726(
-        Path(root).expanduser(),
-        conditions=("ctrl",),
-        projection=micropattern.projection,
-        timesteps=TIMEPOINTS,
-        downsample=int(downsample),
-        replicate_indices=tuple(int(r) - 1 for r in replicates),
-        experiment_groups=tuple(micropattern.experiment_groups),
-        excluded_measurements=micropattern.excluded_measurements,
-        hist_eqs=micropattern.histogram_percentiles,
-        intensity_factors=micropattern.intensity_factors,
-        cleaning=_cleaning_for_loader(micropattern.cleaning),
-        excluded_images=_excluded_images(micropattern),
-        cache_dir=cache_dir_from_environment(),
-    )
-    schema = dataset.aux["channel_schema"]
-    data = {
-        "images": np.asarray(dataset.data),
-        "measured": np.asarray(dataset.measurement_mask),
-        "masks": np.asarray(dataset.boundary_mask[:, 0]).astype(bool),
-        "replicates": tuple(int(r) for r in dataset.aux["batch_replicates"]),
-        "channel_names": tuple(dataset.channel_names),
-        "markers": tuple(channel.marker for channel in schema.measurement_channels),
-        "groups": tuple(schema.group_names),
-        "group_indices": tuple(schema.group_measurement_indices),
-        "state_channels": tuple(schema.state_channels),
-        "excluded": tuple(micropattern.excluded_measurements),
-    }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "wb") as file:
-        pickle.dump(data, file)
-    return data
-
-
-@app.function(hide_code=True)
-def mask_crop(mask):
-    """Row and column slices of the bounding box of ``mask``."""
-    rows, cols = np.flatnonzero(mask.any(axis=1)), np.flatnonzero(mask.any(axis=0))
-    return slice(rows[0], rows[-1] + 1), slice(cols[0], cols[-1] + 1)
 
 
 @app.function(hide_code=True)
@@ -136,19 +96,13 @@ def em(size, style):
 @app.function(hide_code=True)
 def text_w(text, size, style, bold=False):
     """Rough width of ``text`` in data units (maths markup counted as its symbols)."""
-    import re
-
-    def visible(line):
-        line = re.sub(r"\\[a-zA-Z]+", "x", line)
-        return len(re.sub(r"[${}_^]", "", line))
-
-    return (0.64 if bold else 0.58) * em(size, style) * max(visible(line) for line in text.split("\n"))
+    return text_width(text, size, style["pt_per_unit"], bold)
 
 
 @app.function(hide_code=True)
 def text_h(text, size, style, spacing=1.25):
     """Height of ``text`` in data units."""
-    return em(size, style) * spacing * (text.count("\n") + 1)
+    return text_height(text, size, style["pt_per_unit"], spacing)
 
 
 @app.function(hide_code=True)
@@ -173,7 +127,7 @@ def draw_colour_labels(ax, centre_x, top_y, texts, colours, size, style, max_wid
 @app.function(hide_code=True)
 def marker_colour(marker, theme):
     """Display colour of a marker, as in the composites (LMBR, shown in no colour: muted)."""
-    colour = ko_drawing.COLOURS[ko_drawing.MARKER_COLOURS.get(marker, "grey")]
+    colour = channel_colour(marker)
     return theme["muted"] if colour is None else colour
 
 
@@ -192,7 +146,7 @@ def group_triplets(channels, shuffle, seed, group_index):
 def triplet_rgba(image, mask, triplet, gamma):
     """RGBA of three channels (None: zero padding) as the R, G and B inputs of VGG."""
     stack = np.stack([image[c] if c is not None else np.zeros_like(image[0]) for c in triplet])
-    return ko_drawing.colony_rgba(stack, mask, RGB, gamma)
+    return colony_rgba(stack, mask, RGB, gamma)
 
 
 @app.function(hide_code=True)
@@ -200,7 +154,7 @@ def error_rgba(prediction, target, mask, colour_map):
     """RGBA of the squared error per pixel (mean over channels [C, H, W]), cropped to the
     colony and scaled to its 99th percentile."""
     error = ((prediction - target) ** 2).mean(axis=0)
-    crop = mask_crop(mask)
+    crop = crop_box(mask)
     error, inside = error[crop], mask[crop]
     top = np.percentile(error[inside], 99) if inside.any() else 1.0
     rgba = plt.get_cmap(colour_map)(np.clip(error / max(top, 1e-12), 0, 1))
@@ -226,7 +180,7 @@ def radial_profiles(image, mask, bins):
 @app.function(hide_code=True)
 def draw_unmeasured(ax, corner, size, style):
     """Empty card for a colony that was not measured."""
-    overview.draw_card(ax, corner, size, 10, style)
+    draw_card(ax, corner, size, 10)
     ax.text(corner[0] + size / 2, corner[1] + size / 2, "not\nmeasured", ha="center", va="center",
             fontsize=style["font"] - 2, color=style["theme"]["muted"], zorder=12)
 
@@ -560,7 +514,7 @@ def draw_comparison_panel(ax, data, style):
             triplets = group_triplets(channels, style["shuffle"], style["shuffle_seed"], group_index)
             triplet = triplets[min(style["triplet"], len(triplets) - 1)]
             for corner, image in zip(corners, images):
-                overview.draw_card(ax, corner, size, 10, style, triplet_rgba(image, mask, triplet, style["gamma"]))
+                draw_card(ax, corner, size, 10, triplet_rgba(image, mask, triplet, style["gamma"]))
             # Which channel feeds which input of VGG
             names = [data["markers"][c] if c is not None else "0" for c in triplet]
             for corner in corners:
@@ -568,15 +522,15 @@ def draw_comparison_panel(ax, data, style):
                                    style, max_width=size + 0.25)
         else:
             for corner, image in zip(corners, images):
-                overview.draw_card(ax, corner, size, 10, style,
-                                   ko_drawing.colony_rgba(image, mask, colours, style["gamma"]))
+                draw_card(ax, corner, size, 10,
+                                   colony_rgba(image, mask, colours, style["gamma"]))
                 if row == "radial":
                     draw_rings(ax, corner, size, style["radial_bins"], style["ring"], style)
-        overview.draw_arrow(ax, (x_data + size + 0.08, cy), (x_result - 0.1, cy), fg)
+        draw_arrow(ax, (x_data + size + 0.08, cy), (x_result - 0.1, cy), fg)
 
         if row == "l2":
             corner = (x_result, cy - size / 2)
-            overview.draw_card(ax, corner, size, 10, style,
+            draw_card(ax, corner, size, 10,
                                error_rgba(images[0][channels], images[1][channels], mask, style["error_map"]))
             bar = np.linspace(1, 0, 64)[:, None]
             ax.imshow(bar, cmap=style["error_map"], extent=(x_result + size + 0.08, x_result + size + 0.16,
@@ -729,7 +683,7 @@ def draw_groups_panel(ax, data, style):
     if style["show_state"]:
         x, top = draw_state_column(ax, 0.0, markers, counts, style)
         length = max(0.6, text_w(style["select_label"], small - 0.5, style) + 2 * pad)
-        overview.draw_arrow(ax, (x + pad, 0), (x + pad + length, 0), fg)
+        draw_arrow(ax, (x + pad, 0), (x + pad + length, 0), fg)
         ax.text(x + pad + length / 2, pad / 2, style["select_label"], ha="center", va="bottom", fontsize=small - 0.5,
                 linespacing=1.2)
         x += length + 2 * pad
@@ -759,7 +713,7 @@ def draw_groups_panel(ax, data, style):
         tiles_y = row_top - pad - tile
         middle = tiles_y + tile / 2
         colour = GROUP_COLOURS.get(group, muted)
-        training_drawing.rounded_box(ax, (x, row_top - row_h), box_right - x, row_h, colour, z=1)
+        rounded_box(ax, (x, row_top - row_h), box_right - x, row_h, colour, z=1)
         ax.text(x + pad, row_top - pad, GROUP_LABELS.get(group, group), ha="left", va="top", fontsize=small,
                 fontweight="bold", color=colour)
         if style["show_excluded"] and group in [g for g in groups if any(n.split("/")[0] == g for n in data["excluded"])]:
@@ -778,8 +732,8 @@ def draw_groups_panel(ax, data, style):
                     ax.text(px + tile / 2, tiles_y + tile / 2, "0", ha="center", va="center", fontsize=small,
                             color=muted, zorder=11)
                 elif measured:
-                    overview.draw_card(ax, (px, tiles_y), tile, 10, style,
-                                       ko_drawing.colony_rgba(image[[c]], mask, [(1.0, 1.0, 1.0)], style["gamma"]))
+                    draw_card(ax, (px, tiles_y), tile, 10,
+                                       colony_rgba(image[[c]], mask, [(1.0, 1.0, 1.0)], style["gamma"]))
                 else:
                     draw_unmeasured(ax, (px, tiles_y), tile, style)
                 ax.text(px + tile / 2, label_y, data["markers"][c] if c is not None else "pad",
@@ -792,13 +746,13 @@ def draw_groups_panel(ax, data, style):
                     va="top", fontsize=tile_label)
             corner = (composite_x + k * composite_pitch + (composite_pitch - tile) / 2, tiles_y)
             if measured:
-                overview.draw_card(ax, corner, tile, 10, style, triplet_rgba(image, mask, triplet, style["gamma"]))
+                draw_card(ax, corner, tile, 10, triplet_rgba(image, mask, triplet, style["gamma"]))
             else:
                 draw_unmeasured(ax, corner, tile, style)
             ax.text(corner[0] + tile / 2, label_y, style["triplet_label"].format(k + 1), fontsize=tile_label,
                     **label_kwargs)
         row_end = tiles_x + 3 * len(triplets[group]) * pitch + (len(triplets[group]) - 1) * triplet_gap
-        overview.draw_arrow(ax, (row_end + 0.02, middle), (composite_x - 0.08, middle), fg, lw=0.8)
+        draw_arrow(ax, (row_end + 0.02, middle), (composite_x - 0.08, middle), fg, lw=0.8)
         ax.text(loss_x + pad, middle, style["group_loss_label"].format(i + 1), ha="left", va="center",
                 fontsize=font)
         stubs.append(middle)
@@ -820,7 +774,7 @@ def draw_groups_panel(ax, data, style):
     arrow_y = label_y if style["show_matrix"] else centre
     if style["show_matrix"]:
         ax.plot([bar_x, bar_x], [centre, arrow_y], color=fg, lw=0.7)
-    overview.draw_arrow(ax, (bar_x, arrow_y), (column_x - pad, arrow_y), fg, lw=0.7)
+    draw_arrow(ax, (bar_x, arrow_y), (column_x - pad, arrow_y), fg, lw=0.7)
     ax.text(column_x, label_y + pad / 2, style["combine_label"], ha="left", va="bottom", fontsize=font)
     ax.text(column_x, label_y - pad / 2, style["matching_label"], ha="left", va="top",
             fontsize=small - 0.5, color=muted, linespacing=1.2)
@@ -843,47 +797,6 @@ def draw_groups_panel(ax, data, style):
 
     ax.set_xlim(-0.05, right + 0.05)
     ax.set_ylim(low - pad, high + 2 * em(font + 3, style))
-
-
-@app.function(hide_code=True)
-def loss_figure(panels, data, style):
-    """The chosen panels stacked top to bottom; with ``style["same_scale"]`` every panel
-    uses the same data-units-per-inch (as nca_training_schematic.schematic_figure).
-
-    Each panel is drawn a few times: after a draw its width gives the scale of the page
-    (``pt_per_unit``), which sets how much room the next draw leaves for text."""
-    theme = style["theme"]
-    draw = {"a": draw_comparison_panel, "b": draw_feature_space_panel, "c": draw_groups_panel}
-    with plt.rc_context({"text.color": theme["fg"], "font.size": style["font"]}):
-        fig = plt.figure(figsize=(style["width"], 2.0), facecolor=theme["bg"], layout="constrained")
-        axes = fig.subplots(len(panels), 1, squeeze=False)[:, 0]
-        for ax, key in zip(axes, panels):
-            panel_style = dict(style, pt_per_unit=40.0)
-            for _ in range(12):
-                ax.cla()
-                draw[key](ax, data, panel_style)
-                width = ax.get_xlim()[1] - ax.get_xlim()[0]
-                measured = 0.97 * style["width"] * 72 / width
-                if abs(measured - panel_style["pt_per_unit"]) < 0.01 * measured:
-                    break
-                # Damped, as text-heavy panels widen when their text grows
-                panel_style["pt_per_unit"] = 0.5 * (panel_style["pt_per_unit"] + measured)
-            ax.set_facecolor(theme["bg"])
-            ax.set_aspect("equal")
-            ax.axis("off")
-            ax.text(0.0, 1.0, key, transform=ax.transAxes, ha="left", va="top", fontsize=style["font"] + 3,
-                    fontweight="bold")
-            if style["titles"][key]:
-                ax.text(0.03, 1.0, style["titles"][key], transform=ax.transAxes, ha="left", va="top",
-                        fontsize=style["font"] + 1)
-        widths = [ax.get_xlim()[1] - ax.get_xlim()[0] for ax in axes]
-        if style["same_scale"]:
-            for ax in axes:
-                ax.set_xlim(ax.get_xlim()[0], ax.get_xlim()[0] + max(widths))
-        ratios = [(ax.get_ylim()[1] - ax.get_ylim()[0]) / (ax.get_xlim()[1] - ax.get_xlim()[0]) for ax in axes]
-        axes[0].get_subplotspec().get_gridspec().set_height_ratios(ratios)
-        fig.set_size_inches(style["width"], style["width"] * sum(ratios) + 0.1 * len(panels))
-    return fig
 
 
 @app.cell(hide_code=True)
@@ -922,12 +835,13 @@ def _():
 def _(dataset_root, downsample, load_button, projection, refresh, replicate_a, replicate_b):
     _replicates = (int(replicate_a.value), int(replicate_b.value))
     mo.stop(_replicates[0] == _replicates[1], mo.callout("Choose two different replicates.", kind="warn"))
-    _name = f"loss_data_{projection.value}_ds{downsample.value}_r{_replicates[0]}-{_replicates[1]}.pkl"
-    _cached = (CACHE_DIRECTORY / _name).is_file()
-    mo.stop(not (load_button.value or _cached), mo.md("Data not loaded yet: press *Load data*."))
+    _name = cache_name("loss_data", projection.value, f"ds{downsample.value}", *_replicates)
+    mo.stop(not (load_button.value or (CACHE_DIRECTORY / _name).is_file()),
+            mo.md("Data not loaded yet: press *Load data*."))
     with mo.status.spinner("Loading and cleaning the colonies"):
-        loss_data = load_loss_data(dataset_root.value, _replicates, projection.value, downsample.value,
-                                   refresh=load_button.value and refresh.value)
+        loss_data = cached(_name, lambda: load_colonies(dataset_root.value, ("ctrl",), EXPERIMENT_GROUPS,
+                                                        projection.value, downsample.value, _replicates),
+                           refresh=load_button.value and refresh.value)
     replicate_entries = tuple(loss_data["replicates"].index(_r) for _r in _replicates)
     mo.md(f"Loaded: {loss_data['masks'].shape[-1]} px across, channels {', '.join(loss_data['channel_names'])}")
     return loss_data, replicate_entries
@@ -935,43 +849,22 @@ def _(dataset_root, downsample, load_button, projection, refresh, replicate_a, r
 
 @app.cell(hide_code=True)
 def _():
-    background = mo.ui.dropdown(options=list(ko_drawing.THEMES), value="light", label="Page background")
-    figure_width = mo.ui.slider(start=5.0, stop=14.0, step=0.25, value=7.5, label="Width (in)", show_value=True)
-    font_size = mo.ui.slider(start=5, stop=12, step=0.5, value=7, label="Font size", show_value=True)
+    figure_width = mo.ui.dropdown(options={"double column": WIDTH["double"], "single column": WIDTH["single"]},
+                                  value="double column", label="Width")
     panels = mo.ui.multiselect(options=["a", "b", "c"], value=["a", "b", "c"], label="Panels")
     same_scale = mo.ui.switch(value=False, label="Same scale in every panel")
     gamma = mo.ui.slider(start=0.3, stop=1.5, step=0.05, value=0.8, label="Image gamma", show_value=True)
     hour = mo.ui.dropdown(options={f"{h}h": h for h in TIMEPOINTS}, value="48h", label="Time")
-    model_colour = mo.ui.text(value="", placeholder="theme", label="Model colour")
-    loss_colour = mo.ui.text(value="#d62728", label="Loss colour")
-    ring_colour = mo.ui.text(value="#ff7f0e", label="Ring colour")
-    pair_colour = mo.ui.text(value="#d62728", label="Pair colour")
-    shared_colour = mo.ui.text(value="#d62728", label="Shared marker colour")
     mo.vstack([
         mo.md("**Display**"),
-        mo.hstack([background, figure_width, font_size, panels, same_scale], justify="start"),
-        mo.hstack([gamma, hour], justify="start"),
-        mo.hstack([model_colour, loss_colour, ring_colour, pair_colour, shared_colour], justify="start"),
+        mo.hstack([figure_width, panels, same_scale, gamma, hour], justify="start"),
     ])
-    return (
-        background,
-        figure_width,
-        font_size,
-        gamma,
-        hour,
-        loss_colour,
-        model_colour,
-        pair_colour,
-        panels,
-        ring_colour,
-        same_scale,
-        shared_colour,
-    )
+    return figure_width, gamma, hour, panels, same_scale
 
 
 @app.cell(hide_code=True)
 def _():
-    group = mo.ui.dropdown(options={GROUP_LABELS[g]: g for g in ko_drawing.EXPERIMENT_GROUPS},
+    group = mo.ui.dropdown(options={GROUP_LABELS[g]: g for g in EXPERIMENT_GROUPS},
                            value=GROUP_LABELS["cell_fate_s1"], label="Group")
     loss_rows = mo.ui.multiselect(options={"L2": "l2", "radial": "radial", "texture": "texture"},
                                   value=["L2", "radial", "texture"], label="Loss rows")
@@ -981,17 +874,14 @@ def _():
     ring = mo.ui.slider(start=-1, stop=31, step=1, value=10, label="Highlighted ring (-1: none)", show_value=True)
     shade_profiles = mo.ui.switch(value=True, label="Shade profile differences")
     triplet = mo.ui.slider(start=0, stop=1, step=1, value=0, label="Triplet shown", show_value=True)
-    error_map = mo.ui.dropdown(options=["magma", "inferno", "viridis", "cividis", "gray"], value="magma",
-                               label="Error colour map")
     muted_notes = mo.ui.switch(value=False, label="Grey notes")
     mo.vstack([
         mo.md("**Panel a** (one group, three losses)"),
         mo.hstack([group, loss_rows, card_size, row_spacing], justify="start"),
-        mo.hstack([radial_bins, ring, shade_profiles, triplet, error_map, muted_notes], justify="start"),
+        mo.hstack([radial_bins, ring, shade_profiles, triplet, muted_notes], justify="start"),
     ])
     return (
         card_size,
-        error_map,
         group,
         loss_rows,
         muted_notes,
@@ -1018,7 +908,7 @@ def _():
         for _key, _label in (("data", "d"), ("prediction", "other colony"), ("time", "far colony"))
     }, label="Front patch position (radius as a fraction of the colony radius; angle anticlockwise from +x)")
     b_group = mo.ui.dropdown(options={"same as panel a": None,
-                                      **{GROUP_LABELS[g]: g for g in ko_drawing.EXPERIMENT_GROUPS}},
+                                      **{GROUP_LABELS[g]: g for g in EXPERIMENT_GROUPS}},
                              value="same as panel a", label="Group")
     b_triplet = mo.ui.slider(start=0, stop=1, step=1, value=0, label="Triplet (own group)", show_value=True)
     stack_shifts = mo.ui.dictionary({
@@ -1040,10 +930,9 @@ def _():
                                show_value=True)
     pixelated = mo.ui.switch(value=True, label="Show pixels")
     show_crop_location = mo.ui.switch(value=False, label="Patch location inset")
-    far_colour = mo.ui.text(value="#ff7f0e", label="Far colony colour")
     mo.vstack([
         mo.md("**Panel b** (feature sheet; panel a's time)"),
-        mo.hstack([b_group, b_triplet, far_hour, zoom_size, sheet_bulge, far_colour], justify="start"),
+        mo.hstack([b_group, b_triplet, far_hour, zoom_size, sheet_bulge], justify="start"),
         mo.hstack([crop_size, same_position, pixelated, show_crop_location], justify="start"),
         crop_positions,
         mo.hstack([stack_depth, stack_offset, stack_seed], justify="start"),
@@ -1055,7 +944,6 @@ def _():
         b_triplet,
         crop_positions,
         crop_size,
-        far_colour,
         far_hour,
         pixelated,
         same_position,
@@ -1074,8 +962,8 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    shown_groups = mo.ui.multiselect(options={GROUP_LABELS[g]: g for g in ko_drawing.EXPERIMENT_GROUPS},
-                                     value=[GROUP_LABELS[g] for g in ko_drawing.EXPERIMENT_GROUPS], label="Groups")
+    shown_groups = mo.ui.multiselect(options={GROUP_LABELS[g]: g for g in EXPERIMENT_GROUPS},
+                                     value=[GROUP_LABELS[g] for g in EXPERIMENT_GROUPS], label="Groups")
     shuffle = mo.ui.switch(value=True, label="Random channel shuffle")
     shuffle_seed = mo.ui.number(start=0, stop=1000, step=1, value=0, label="Shuffle draw")
     tile_size = mo.ui.slider(start=0.4, stop=1.2, step=0.05, value=0.65, label="Tile size", show_value=True)
@@ -1156,39 +1044,30 @@ def _():
 def _(
     b_group,
     b_triplet,
-    background,
     card_size,
     cell_size,
     crop_positions,
     crop_size,
-    error_map,
-    far_colour,
     far_hour,
     figure_width,
-    font_size,
     gamma,
     group,
     hour,
     labels,
-    loss_colour,
     loss_data,
     loss_rows,
-    model_colour,
     muted_notes,
-    pair_colour,
     panels,
     pixelated,
     radial_bins,
     replicate_entries,
     ring,
-    ring_colour,
     row_spacing,
     same_position,
     same_scale,
     sample_radius,
     scale_range,
     shade_profiles,
-    shared_colour,
     sheet_bulge,
     show_crop_location,
     show_excluded,
@@ -1209,22 +1088,21 @@ def _(
     mo.stop(not panels.value, mo.callout("Select at least one panel.", kind="warn"))
     mo.stop(not loss_rows.value and "a" in panels.value, mo.callout("Select at least one loss row.", kind="warn"))
     mo.stop(not shown_groups.value and "c" in panels.value, mo.callout("Select at least one group.", kind="warn"))
-    _theme = dict(ko_drawing.THEMES[background.value])
     _text = {k: v.replace("\\n", "\n") for k, v in labels.value.items()}
     loss_style = {
-        "theme": _theme,
-        "font": float(font_size.value),
+        "theme": THEME,
+        "font": FONT["label"],
         "width": float(figure_width.value),
         "same_scale": same_scale.value,
         "gamma": float(gamma.value),
         "hour": int(hour.value),
         "prediction_index": replicate_entries[0],
         "target_index": replicate_entries[1],
-        "model_colour": colour_or(model_colour.value, _theme["model"]),
-        "loss_colour": colour_or(loss_colour.value, "#d62728"),
-        "ring_colour": colour_or(ring_colour.value, "#ff7f0e"),
-        "pair_colour": colour_or(pair_colour.value, "#d62728"),
-        "shared_colour": colour_or(shared_colour.value, "#d62728"),
+        "model_colour": MODEL,
+        "loss_colour": ACCENT,
+        "ring_colour": SERIES[3],
+        "pair_colour": ACCENT,
+        "shared_colour": ACCENT,
         "group": group.value,
         "loss_rows": loss_rows.value,
         "card": float(card_size.value),
@@ -1233,7 +1111,7 @@ def _(
         "ring": min(int(ring.value), int(radial_bins.value) - 1),
         "shade_profiles": shade_profiles.value,
         "triplet": int(triplet.value),
-        "error_map": error_map.value,
+        "error_map": CMAP["intensity"],
         "muted_notes": muted_notes.value,
         "shown_groups": shown_groups.value,
         "shuffle": shuffle.value,
@@ -1260,11 +1138,17 @@ def _(
         "stack_shifts": stack_shifts.value,
         "pixelated": pixelated.value,
         "show_crop_location": show_crop_location.value,
-        "far_colour": colour_or(far_colour.value, "#ff7f0e"),
+        "far_colour": SERIES[4],
         "titles": {"a": _text["title_a"], "b": _text["title_b"], "c": _text["title_c"]},
         **{k: v for k, v in _text.items() if not k.startswith("title_")},
     }
-    loss_schematic = loss_figure(sorted(panels.value), loss_data, loss_style)
+    # Text-heavy panels are redrawn until their scale (points per data unit) settles
+    _panel_draw = {"a": draw_comparison_panel, "b": draw_feature_space_panel, "c": draw_groups_panel}
+    _draw = {_k: (lambda _f: lambda ax, pt: _f(ax, loss_data, dict(loss_style, pt_per_unit=pt)))(_f)
+             for _k, _f in _panel_draw.items()}
+    with paper_style():
+        loss_schematic = stack_panels(_draw, sorted(panels.value), loss_style["width"], loss_style["titles"],
+                                      loss_style["same_scale"], measure_scale=True)
     loss_schematic
     return (loss_schematic,)
 
@@ -1273,23 +1157,16 @@ def _(
 def _():
     figure_name = mo.ui.text(value="loss_schematic", label="File name")
     save_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
-    save_figure = mo.ui.run_button(label="Save figure")
-    mo.hstack([figure_name, save_svg, save_figure], justify="start")
-    return figure_name, save_figure, save_svg
+    save_button = mo.ui.run_button(label="Save figure")
+    mo.hstack([figure_name, save_svg, save_button], justify="start")
+    return figure_name, save_button, save_svg
 
 
 @app.cell
-def _(figure_name, loss_schematic, save_figure, save_svg):
-    mo.stop(not save_figure.value)
-    _directory = REPOSITORY_ROOT / "figures" / "schematics"
-    _directory.mkdir(parents=True, exist_ok=True)
-    _suffixes = ("pdf", "png", "svg") if save_svg.value else ("pdf", "png")
-    # svg.fonttype "none" keeps text as editable text in Inkscape
-    with plt.rc_context({"svg.fonttype": "none"}):
-        for _suffix in _suffixes:
-            loss_schematic.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400,
-                                   facecolor=loss_schematic.get_facecolor())
-    mo.md(f"Saved `{figure_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
+def _(figure_name, loss_schematic, save_button, save_svg):
+    mo.stop(not save_button.value)
+    _paths = save_figure(loss_schematic, figure_name.value, "schematics", svg=save_svg.value)
+    mo.md("Saved " + ", ".join(f"`{p}`" for p in _paths))
     return
 
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from Experiments.micropatterns.nodal_ko_schematic import colony_rgba, sliced_rgba
+from Experiments.micropatterns.figures.drawing import colony_rgba, sliced_rgba
 
 
 def test_colony_rgba_crops_to_mask_and_is_transparent_outside():

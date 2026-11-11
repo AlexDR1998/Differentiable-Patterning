@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from Experiments.micropatterns.schematics import composite, locate_image, normalise, project_stack
+from Experiments.micropatterns.figures.data import locate_image, normalise, project_stack
+from Experiments.micropatterns.figures.drawing import composite
 
 
 def test_project_stack_modes():

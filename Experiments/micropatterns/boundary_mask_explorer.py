@@ -1287,11 +1287,9 @@ def _(cell_type_score_outputs):
     if cell_type_score_outputs is None:
         _map_output = mo.md("")
     else:
-        _colors = {
-            "Notochord": np.asarray([214, 39, 160], dtype=float) / 255.0,
-            "Endoderm": np.asarray([23, 190, 207], dtype=float) / 255.0,
-            "Mesoderm": np.asarray([44, 160, 44], dtype=float) / 255.0,
-        }
+        from Experiments.micropatterns.figures.style import cell_type_rgb as _cell_type_rgb
+
+        _colors = {_t: np.asarray(_cell_type_rgb(_t)) for _t in ("Notochord", "Endoderm", "Mesoderm")}
         _cell_types = cell_type_score_outputs["cell_types"]
         _trajectories = cell_type_score_outputs["trajectories"]
         _figure, _axes = plt.subplots(

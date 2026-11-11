@@ -30,7 +30,6 @@ with app.setup(hide_code=True):
     import numpy as np
     import pandas as pd
     from dotenv import load_dotenv
-    from matplotlib.colors import LinearSegmentedColormap
     from matplotlib.lines import Line2D
     from matplotlib.patches import Rectangle
 
@@ -127,24 +126,25 @@ with app.setup(hide_code=True):
     LOSS_COLUMNS = ["l2", "radial", "channel_mean", "correlation", "texture"]
     VARIATION_COLUMNS = ["energy_distance", "dispersion", "distance_correlation"]
 
-    # Colours: baseline in grey, ablations from a fixed categorical order
-    BASELINE_COLOUR = "#8a8985"
-    SERIES = ["#2a78d6", "#eb6834", "#1baf7a"]
-    DIVERGING = LinearSegmentedColormap.from_list(
-        "better_worse", ["#2a78d6", "#e8e7e3", "#e34948"]
+    # Shared paper style: baseline in grey, ablations in the fixed line order,
+    # better/worse on the diverging map (blue better, red worse)
+    from Experiments.micropatterns.figures.style import (
+        BAD_COLOUR,
+        BASELINE,
+        CMAP,
+        CMY_TRIPLETS,
+        FONT,
+        INK,
+        MUTED,
+        SERIES,
+        STYLE_FILE,
+        UNMEASURED,
+        save_figure,
     )
 
-    plt.rcParams.update({
-        "font.size": 8,
-        "axes.titlesize": 9,
-        "axes.labelsize": 8,
-        "legend.fontsize": 7,
-        "legend.frameon": False,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "savefig.bbox": "tight",
-        "savefig.dpi": 300,
-    })
+    BASELINE_COLOUR = BASELINE
+    DIVERGING = plt.get_cmap(CMAP["diverging"])
+    plt.style.use(["default", STYLE_FILE])
 
     def parse_tags(tags):
         """W&B ``key:value`` tags as a dict."""
@@ -287,9 +287,8 @@ with app.setup(hide_code=True):
 
     # Marker triplets drawn as cyan, magenta, yellow (as in rendering.render_cmy_composite)
     TRIPLETS = {
-        "Cell fate (SOX2 · TBXT · SOX17)": ("SOX2", "TBXT", "SOX17"),
-        "Nodal pathway (CER1 · LEFTY · NODAL)": ("CER1", "LEFTY", "NODAL"),
-        "Signalling (FOXA2 · LEF1 · SMAD23)": ("FOXA2", "LEF1", "SMAD23"),
+        f"{name} ({' · '.join(triplet)})": triplet
+        for name, triplet in zip(("Cell fate", "Nodal pathway", "Signalling"), CMY_TRIPLETS)
     }
 
     # Loaded data and rollouts, kept between cell runs
@@ -409,11 +408,11 @@ with app.setup(hide_code=True):
         ax.set_axis_off()
         if image is not None:
             ax.imshow(image, interpolation="nearest")
-        ax.set_title(title, fontsize=7)
+        ax.set_title(title)
 
     def split_legend(ax, **kwargs):
         handles = [
-            Line2D([], [], ls="", marker=SPLIT_MARKERS[split], color="#52514e",
+            Line2D([], [], ls="", marker=SPLIT_MARKERS[split], color=INK,
                    markerfacecolor="none", label=SPLIT_LABELS[split])
             for split in ("A", "B")
         ]
@@ -538,7 +537,7 @@ def _(errors, runs):
     _limit = max(0.5, float(np.nanmax(np.abs(_values)))) if np.isfinite(_values).any() else 1.0
     _limit = min(_limit, 3.0)
     _cmap = DIVERGING.copy()
-    _cmap.set_bad("#f1f0ed")
+    _cmap.set_bad(BAD_COLOUR)
 
     fig_overview, _ax = plt.subplots(figsize=(7.5, 7.5))
     _image = _ax.imshow(
@@ -547,14 +546,14 @@ def _(errors, runs):
     for (_row, _column), _value in np.ndenumerate(_values):
         if np.isfinite(_value):
             _ax.text(
-                _column, _row, f"{_value:+.2f}", ha="center", va="center", fontsize=6.5,
-                color="white" if abs(_value) > 0.6 * _limit else "#0b0b0b",
+                _column, _row, f"{_value:+.2f}", ha="center", va="center", fontsize=FONT["annotation"],
+                color="white" if abs(_value) > 0.6 * _limit else INK,
             )
     for _row, _ablation in enumerate(_ablations):
         if ABLATIONS[_ablation][2] in ("data", "validation"):
             _ax.add_patch(Rectangle(
                 (-0.5, _row - 0.5), len(_columns), 1, fill=False,
-                hatch="////", edgecolor="#b5b4ae", lw=0,
+                hatch="////", edgecolor=UNMEASURED["edge"], lw=0,
             ))
     # Category separators, with category names on the right
     _categories = [ABLATIONS[a][1] for a in _ablations]
@@ -566,7 +565,7 @@ def _(errors, runs):
             continue
         _ax.text(
             len(_columns) - 0.35, _start - 0.5 + _categories.count(_category) / 2, _category,
-            ha="left", va="center", fontsize=7, color="#52514e", fontweight="bold",
+            ha="left", va="center", fontsize=FONT["label"], color=INK, fontweight="bold",
         )
     # Raw loss terms | replicate variation
     _ax.axvline(len(LOSS_COLUMNS) - 0.5, color="white", lw=3)
@@ -696,15 +695,15 @@ def _(errors, history, runs):
             filled=lambda a, c=_column: c in TRAINED_TERMS[a], positions=_positions,
         )
         _ax.set_title(ERROR_METRICS[_column][1])
-        _ax.axvline(len(_loss_ablations) - 0.2, color="#d4d3cf", lw=1)
+        _ax.axvline(len(_loss_ablations) - 0.2, color=MUTED, lw=1)
     _top_axes[0].set_ylabel("Final raw validation loss")
     _top.legend(
         handles=[
-            Line2D([], [], ls="", marker="o", color="#52514e", label="trained on term"),
-            Line2D([], [], ls="", marker="o", color="#52514e", markerfacecolor="none",
+            Line2D([], [], ls="", marker="o", color=INK, label="trained on term"),
+            Line2D([], [], ls="", marker="o", color=INK, markerfacecolor="none",
                    label="not trained on term"),
             *[
-                Line2D([], [], ls="", marker=SPLIT_MARKERS[_split], color="#52514e",
+                Line2D([], [], ls="", marker=SPLIT_MARKERS[_split], color=INK,
                        markerfacecolor="none", label=SPLIT_LABELS[_split])
                 for _split in ("A", "B")
             ],
@@ -721,7 +720,7 @@ def _(errors, history, runs):
             _ax, history, runs, ERROR_METRICS[_column][0], _curricula,
             colours=_curriculum_colours,
         )
-        _ax.axvspan(0.30 * _last_step, 0.75 * _last_step, color="#8a8985", alpha=0.08, lw=0)
+        _ax.axvspan(0.30 * _last_step, 0.75 * _last_step, color=BASELINE, alpha=0.08, lw=0)
         _ax.set_yscale("log")
         _ax.set_title(f"{ERROR_METRICS[_column][1]} during training")
     _bottom_axes[0].set_ylabel("Raw validation loss")
@@ -767,9 +766,9 @@ def _(errors, final, runs):
     _axes[0, 0].set_title("Training replicates")
     _axes[1, 0].set_xlabel("Number of training replicates")
     _axes[0, 0].annotate("1 val. replicate", (3, 0.02), xycoords=("data", "axes fraction"),
-                         ha="center", fontsize=6.5, color="#52514e")
+                         ha="center", fontsize=FONT["annotation"], color=INK)
     _axes[0, 0].annotate("no validation", (4, 0.02), xycoords=("data", "axes fraction"),
-                         ha="center", fontsize=6.5, color="#52514e")
+                         ha="center", fontsize=FONT["annotation"], color=INK)
 
     # Resolution
     _downsample = {"baseline": 8, "downsample_16": 16, "downsample_32": 32}
@@ -787,7 +786,7 @@ def _(errors, final, runs):
                  label=ERROR_METRICS[_column][1])
         _ax.scatter(_table["downsample"], _table[_column] / _means.loc[8, _column],
                     s=10, color=_colour, alpha=0.5)
-    _ax.axhline(1, color="#d4d3cf", lw=1, ls="--")
+    _ax.axhline(1, color=MUTED, lw=1, ls="--")
     _ax.set_xscale("log", base=2)
     _ax.set_xticks([8, 16, 32], ["8", "16", "32"])
     _ax.set_ylabel("Error relative to downsample 8")
@@ -815,7 +814,7 @@ def _(errors, final, runs):
     ]:
         draw_strip(_ax, _variation[_key], runs, _projections)
         _ax.set_xticks(range(3), _labels, rotation=0, ha="center")
-        _ax.axhline(_ideal, color="#d4d3cf", lw=1, ls="--")
+        _ax.axhline(_ideal, color=MUTED, lw=1, ls="--")
         _ax.set_ylabel(_ylabel)
     _axes[0, 2].set_title("Projection")
     split_legend(_axes[1, 0], loc="upper right")
@@ -842,8 +841,7 @@ def _(fig_data, fig_objective, fig_overview, fig_training, save, summary_table):
         "objective": fig_objective,
         "data": fig_data,
     }.items():
-        _figure.savefig(_directory / f"{_name}.pdf")
-        _figure.savefig(_directory / f"{_name}.png")
+        save_figure(_figure, _name, "micropattern_ablations")
     summary_table.to_csv(_directory / "summary.csv", index=False)
     mo.md(f"Saved to `{_directory.relative_to(repository_root)}`")
     return
@@ -1012,10 +1010,10 @@ def _(masked, outputs, replicate_choice, time_choice, triplet_choice):
                 _ax.set_axis_off()
         _axes[_r, 0].text(
             -0.12, 0.5, _category, transform=_axes[_r, 0].transAxes, rotation=90,
-            ha="right", va="center", fontsize=8, fontweight="bold",
+            ha="right", va="center", fontsize=FONT["label"], fontweight="bold",
         )
     fig_outputs.suptitle(
-        f"{triplet_choice.value} · {time_choice.selected_key} · replicate {_replicate}", fontsize=9
+        f"{triplet_choice.value} · {time_choice.selected_key} · replicate {_replicate}", fontsize=FONT["title"]
     )
     fig_outputs.tight_layout(rect=(0, 0, 1, 0.98))
     fig_outputs
@@ -1060,9 +1058,9 @@ def _(category_choice, masked, outputs, replicate_choice, triplet_choice):
             show_tile(_axes[_r, _t], _image, _time if _r == 0 else "")
         _axes[_r, 0].text(
             -0.08, 0.5, _label, transform=_axes[_r, 0].transAxes,
-            ha="right", va="center", fontsize=7,
+            ha="right", va="center", fontsize=FONT["label"],
         )
-    fig_category.suptitle(f"{category_choice.value} · {triplet_choice.value}", fontsize=9)
+    fig_category.suptitle(f"{category_choice.value} · {triplet_choice.value}", fontsize=FONT["title"])
     fig_category.tight_layout(rect=(0, 0, 1, 0.97))
     fig_category
     return (fig_category,)
@@ -1092,8 +1090,7 @@ def _(
         f"outputs_{_markers}_{time_choice.selected_key}": fig_outputs,
         f"over_time_{category_choice.value.replace(' ', '_')}_{_markers}": fig_category,
     }.items():
-        _figure.savefig(_directory / f"{_name}.pdf")
-        _figure.savefig(_directory / f"{_name}.png")
+        save_figure(_figure, _name, "micropattern_ablations")
     mo.md(f"Saved to `{_directory.relative_to(repository_root)}`")
     return
 

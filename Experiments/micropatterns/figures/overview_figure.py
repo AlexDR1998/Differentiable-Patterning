@@ -2,8 +2,10 @@
 baseline results and NODAL knockouts, in one rearrangeable figure.
 
 Run with:
-    marimo edit Experiments/micropatterns/overview_figure.py
+    marimo edit Experiments/micropatterns/figures/overview_figure.py
 
+- Slide-sized by default (``paper_style("talk")``); the page dropdown switches to a
+  double-column paper page.
 - Rollouts (one model, three conditions) are cheap and are cached in
   ``figures/overview/cache/``.
 - The knockout-time curve comes from the fine KO timing sweep of
@@ -18,8 +20,6 @@ app = marimo.App(width="full", app_title="overview figure")
 
 with app.setup:
     import os
-    import pickle
-    import re
     from pathlib import Path
 
     import marimo as mo
@@ -27,24 +27,58 @@ with app.setup:
     import numpy as np
     import pandas as pd
     from dotenv import load_dotenv
-    from matplotlib.colors import to_rgb
     from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage
     from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle, Wedge
 
-    from Experiments.micropatterns import nodal_ko_schematic as ko_drawing
-    from Experiments.micropatterns.schematics import (
-        colour_or,
-        group_colours,
-        legend_options,
-        legend_swatch,
+    from Experiments.micropatterns.figures.data import (
+        DATASET_FOLDER,
+        TIMEPOINTS,
+        cache_name,
+        cached,
+        cell_type_rgba,
+        load_control_trajectory,
         load_selection_records,
+        model_rollouts,
+    )
+    from Experiments.micropatterns.figures.drawing import (
+        colony_rgba,
+        draw_arrow,
+        draw_colony,
+        draw_placeholder,
+        draw_sectors,
+        draw_time_axis,
+        sliced_rgba,
         trajectory_tile,
     )
+    from Experiments.micropatterns.figures.style import (
+        CELL_TYPE_COLOURS,
+        DATA,
+        EXPERIMENT_GROUPS,
+        FIGURE_ROOT,
+        FONT,
+        GROUP_LABELS,
+        MODEL,
+        MUTED,
+        REPOSITORY_ROOT,
+        TALK_FONT_SCALE,
+        TALK_WIDTH,
+        THEME,
+        UNKNOWN_CELL_TYPE,
+        WIDTH,
+        SectorHandle,
+        group_colours,
+        label_panel,
+        legend_options,
+        legend_swatch,
+        paper_style,
+        save_figure,
+        sector_angles,
+    )
+    from Experiments.micropatterns.figures.style import CONDITION_LABELS as SAMPLE_CONDITION_LABELS
 
     load_dotenv()
 
-    REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-    FIGURE_DIRECTORY = REPOSITORY_ROOT / "figures" / "overview"
+    FIGURE_DIRECTORY = FIGURE_ROOT / "overview"
     CACHE_DIRECTORY = FIGURE_DIRECTORY / "cache"
 
     # Written by nodal_ko_eval.py (fine KO timing sweep, "Save for overview figure"); the
@@ -57,67 +91,17 @@ with app.setup:
 
     # Knockout hour of each condition (None: no knockout), in display order
     CONDITIONS = {"baseline": None, "ko_24h": 24, "ko_0h": 0}
-    CONDITION_LABELS = {"baseline": "Control", "ko_24h": "NODAL KO\nfrom 24h", "ko_0h": "NODAL KO\nfrom 0h"}
-    TIMEPOINTS = (0, 12, 24, 36, 48)
-
-    # Default cell-type colours, as in nodal_ko_eval.py (changeable in the notebook)
-    CELL_TYPE_COLOURS = {
-        "Notochord": "#66b399",
-        "Endoderm": "#e6e64d",
-        "Mesoderm": "#ff0000",
-        "Several": "#0000ff",
-        "Other": "#808080",
+    CONDITION_LABELS = {
+        condition: SAMPLE_CONDITION_LABELS[sample].replace(" from", "\nfrom")
+        for condition, sample in (("baseline", "ctrl"), ("ko_24h", "sl24"), ("ko_0h", "sl0"))
+    }
+    # Page size and base font of each page preset (talk: a 16:9 slide)
+    PAGES = {
+        "talk slide": {"preset": "talk", "size": (TALK_WIDTH, 7.5), "font": FONT["label"] * TALK_FONT_SCALE},
+        "paper, double column": {"preset": "paper", "size": (WIDTH["double"], 0.55 * WIDTH["double"]),
+                                 "font": FONT["label"]},
     }
 
-
-@app.function(hide_code=True)
-def rollout_cache_path(model_id, replicate, seed):
-    """Cache file of the rollouts of one model, replicate and seed."""
-    safe = re.sub(r"[^A-Za-z0-9_.-]", "_", str(model_id))
-    return CACHE_DIRECTORY / f"rollouts_{safe}_r{int(replicate)}_s{int(seed)}.pkl"
-
-
-@app.function(hide_code=True)
-def compute_rollouts(store_root, model_id, data_root, replicate, seed):
-    """Data and NCA trajectories of one model for every condition, from the 0h
-    state of ``replicate`` (one-based), loaded and scaled as in training."""
-    import jax.random as jr
-
-    import Experiments.micropatterns.nodal_ko_eval as ko_eval
-    from Experiments.model_registry import ModelRegistry
-
-    bundle = ModelRegistry(Path(store_root).expanduser()).get(model_id)
-    model = bundle.load_model(key=jr.PRNGKey(seed), implementation="portable")
-    root = Path(data_root).expanduser()
-    bins = ko_eval.load_training_histogram_bins(bundle, root)
-    rollouts = {}
-    for k, condition in enumerate(CONDITIONS):
-        data = ko_eval.load_condition_data(bundle, root, condition, replicate, bins)
-        prediction, time_labels = ko_eval.evaluate_condition(model, bundle, data, condition, seed + k)
-        rollouts[condition] = {
-            "prediction": np.asarray(prediction),
-            "target": np.asarray(data["target"]),
-            "measured": np.asarray(data["measured"]),
-            "channel_names": tuple(data["channel_names"]),
-            "time_labels": tuple(time_labels),
-            "boundary": np.asarray(data["boundary"]).squeeze().astype(bool),
-            "train_replicates": tuple(bundle.config.data.micropattern.train_replicates or ()),
-        }
-    return rollouts
-
-
-@app.function(hide_code=True)
-def cached_rollouts(store_root, model_id, data_root, replicate, seed, refresh=False):
-    """``compute_rollouts``, read from (or written to) the cache."""
-    path = rollout_cache_path(model_id, replicate, seed)
-    if path.is_file() and not refresh:
-        with open(path, "rb") as file:
-            return pickle.load(file)
-    rollouts = compute_rollouts(store_root, model_id, data_root, replicate, seed)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "wb") as file:
-        pickle.dump(rollouts, file)
-    return rollouts
 
 
 @app.function(hide_code=True)
@@ -134,48 +118,6 @@ def read_model_prevalence(path):
     # Cell types were lower-cased in the column names
     samples["cell_type"] = samples["cell_type"].str.removesuffix("_prevalence").str.capitalize()
     return samples.rename(columns={"requested_knockout_hour": "knockout_hour"}), None
-
-
-@app.function(hide_code=True)
-def load_measured_data(data_root, replicate, projection, downsample, refresh=False):
-    """Measured control trajectory of one replicate (one-based) at ``downsample`` (1: full
-    resolution), with the standard preprocessing of conf/base_config.yaml, read from (or
-    written to) the cache. Same keys as a rollout, without the prediction."""
-    path = CACHE_DIRECTORY / f"data_{projection}_ds{int(downsample)}_r{int(replicate)}.pkl"
-    if path.is_file() and not refresh:
-        with open(path, "rb") as file:
-            return pickle.load(file)
-    from Common.dataloader.disk_cache import cache_dir_from_environment
-    from Common.dataloader.micropattern_260726 import load_micropattern_260726
-    from Experiments.micropatterns.config_helpers import _cleaning_for_loader, _excluded_images
-
-    micropattern = ko_drawing.knockout_data_config(ko_drawing.EXPERIMENT_GROUPS, projection, int(downsample)).micropattern
-    dataset = load_micropattern_260726(
-        Path(data_root).expanduser() / "260726_nca_dataset",
-        conditions=("ctrl",),
-        projection=micropattern.projection,
-        timesteps=TIMEPOINTS,
-        downsample=int(downsample),
-        replicate_indices=(int(replicate) - 1,),
-        experiment_groups=tuple(micropattern.experiment_groups),
-        excluded_measurements=micropattern.excluded_measurements,
-        hist_eqs=micropattern.histogram_percentiles,
-        intensity_factors=micropattern.intensity_factors,
-        cleaning=_cleaning_for_loader(micropattern.cleaning),
-        excluded_images=_excluded_images(micropattern),
-        cache_dir=cache_dir_from_environment(),
-    )
-    data = {
-        "target": np.asarray(dataset.data[0]),
-        "measured": np.asarray(dataset.measurement_mask[0]),
-        "channel_names": tuple(dataset.channel_names),
-        "time_labels": tuple(f"{t}h" for t in TIMEPOINTS),
-        "boundary": np.asarray(dataset.boundary_mask[0, 0]).astype(bool),
-    }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "wb") as file:
-        pickle.dump(data, file)
-    return data
 
 
 @app.function(hide_code=True)
@@ -227,16 +169,8 @@ def draw_sector_disc(ax, rollout, source, i, groups, centre, size, style, edge=N
     """Colony disc of time index i, one sector per experiment group (hatched where not measured).
     Returns the RGBA image drawn."""
     rgba, unmeasured = trajectory_tile(rollout, source, i, groups, style["gamma"])
-    ko_drawing.draw_colony(ax, rgba, centre, size, style["theme"], edge=edge)
-    for k, missing in enumerate(unmeasured):
-        start, stop = ko_drawing.sector_angles(k, len(groups))
-        if missing and style["hatch"]:
-            ax.add_patch(Wedge(centre, size / 2, start, stop, facecolor="#d9d9d9", edgecolor="#8c8c8c",
-                               hatch="////", lw=0, zorder=4.5))
-        if len(groups) > 1:
-            ax.plot([centre[0], centre[0] + size / 2 * np.cos(np.radians(start))],
-                    [centre[1], centre[1] + size / 2 * np.sin(np.radians(start))],
-                    color="white", lw=0.6, zorder=5)
+    draw_colony(ax, rgba, centre, size, edge=edge)
+    draw_sectors(ax, centre, size / 2, unmeasured, hatch=style["hatch"])
     return rgba
 
 
@@ -249,12 +183,12 @@ def add_marker_legend(ax, rollout, style, in_layout, **kwargs):
     other panels aside (it may overlap them)."""
     names = rollout["channel_names"]
     sectors = style["groups"]
-    order = list(ko_drawing.EXPERIMENT_GROUPS)
+    order = list(EXPERIMENT_GROUPS)
     shown = [g for g in order if g in style["hero_groups"] or g in sectors]
     blank = plt.Line2D([], [], lw=0)
     blocks = [
-        [(ko_drawing.SectorHandle(sectors.index(g), len(sectors)) if g in sectors and len(sectors) > 1 else blank,
-          ko_drawing.GROUP_LABELS.get(g, g))]
+        [(SectorHandle(sectors.index(g), len(sectors)) if g in sectors and len(sectors) > 1 else blank,
+          GROUP_LABELS.get(g, g))]
         + [(legend_swatch(c, "white"), n.rsplit("/", 1)[-1])
            for n, c in zip(names, group_colours(names, g)) if c is not None]
         for g in shown
@@ -277,15 +211,10 @@ def add_marker_legend(ax, rollout, style, in_layout, **kwargs):
         length = max(len(c) for c in columns)
         entries = [e for c in columns for e in c + [(blank, "")] * (length - len(c))]
         ncol = len(columns)
-    options = legend_options("white")
-    if style["legend_border"]:
-        options["edgecolor"] = "#9a9a9a"
-    legend = ax.legend([h for h, _ in entries], [l for _, l in entries], ncol=ncol,
-                       fontsize=style["legend_font"], handlelength=1.2, columnspacing=1.0,
-                       **options, **kwargs)
-    legend.get_frame().set_linewidth(0.8)
+    options = {**legend_options("white", boxed=style["legend_border"]), "fontsize": style["legend_font"]}
+    legend = ax.legend([h for h, _ in entries], [l for _, l in entries], ncol=ncol, **options, **kwargs)
     legend.set_in_layout(in_layout)
-    headers = {ko_drawing.GROUP_LABELS.get(g, g) for g in shown}
+    headers = {GROUP_LABELS.get(g, g) for g in shown}
     for text in legend.get_texts():
         if text.get_text() in headers:
             text.set_fontweight("bold")
@@ -304,13 +233,6 @@ def draw_legend_panel(ax, rollout, style):
 
 
 @app.function(hide_code=True)
-def draw_arrow(ax, start, end, style, **kwargs):
-    """Plain arrow from ``start`` to ``end`` (data units)."""
-    ax.annotate("", xy=end, xytext=start, arrowprops=dict(arrowstyle="-|>", color=style["theme"]["fg"], lw=0.8,
-                                                          shrinkA=0, shrinkB=0, **kwargs))
-
-
-@app.function(hide_code=True)
 def draw_nca_panel(ax, rollout, style):
     """NCA idea: a colony, one cell's neighbourhood, its perception, the shared
     update rule and the change of state, repeated in every cell."""
@@ -323,7 +245,7 @@ def draw_nca_panel(ax, rollout, style):
     disc_centre, disc_size = (1.25, 2.4), 2.4
     n = style["zoom_pixels"]
     if rollout is None:
-        ko_drawing.draw_placeholder(ax, disc_centre, disc_size, theme, "NCA")
+        draw_placeholder(ax, disc_centre, disc_size, "NCA")
         patch = np.tile([0.45, 0.45, 0.45, 1.0], (n, n, 1))
         box = (disc_centre[0] + 0.2, disc_centre[1] - 0.3, 0.25, 0.25)
     else:
@@ -377,7 +299,7 @@ def draw_nca_panel(ax, rollout, style):
                                        ksize / 3, ksize / 3, facecolor=cmap(0.5 + 0.5 * scaled[i, j]),
                                        edgecolor="#555555", lw=0.3, zorder=3))
         ax.text(kx + ksize / 2 + 0.08, ky, name, ha="left", va="center", fontsize=small)
-    draw_arrow(ax, (gx + gsize + 0.3, 2.4), (kx - ksize / 2 - 0.1, 2.4), style)
+    draw_arrow(ax, (gx + gsize + 0.3, 2.4), (kx - ksize / 2 - 0.1, 2.4), lw=0.8)
     ax.text(kx, label_y, "perceive", ha="center", va="top", fontsize=font)
 
     # Update rule: one small network shared by every cell
@@ -392,7 +314,7 @@ def draw_nca_panel(ax, rollout, style):
         for xy in layer:
             ax.add_patch(Circle(xy, 0.075, facecolor="white" if k == 0 else style["nca_colour"],
                                 edgecolor=style["nca_colour"], lw=0.6, zorder=3))
-    draw_arrow(ax, (kx + ksize / 2 + 0.4, 2.4), (layers[0][0] - 0.15, 2.4), style)
+    draw_arrow(ax, (kx + ksize / 2 + 0.4, 2.4), (layers[0][0] - 0.15, 2.4), lw=0.8)
     ax.text(layers[1][0], label_y, "update rule\n(shared)", ha="center", va="top", fontsize=font, linespacing=1.3)
 
     # Change of state: one value per channel
@@ -402,7 +324,7 @@ def draw_nca_panel(ax, rollout, style):
     for y, value in zip(heights, values):
         ax.add_patch(Rectangle((dx - 0.13, y - 0.11), 0.26, 0.22, facecolor=cmap(0.5 + 0.45 * value),
                                edgecolor="#555555", lw=0.3, zorder=3))
-    draw_arrow(ax, (layers[-1][0] + 0.15, 2.4), (dx - 0.25, 2.4), style)
+    draw_arrow(ax, (layers[-1][0] + 0.15, 2.4), (dx - 0.25, 2.4), lw=0.8)
     ax.text(dx, label_y, "change\n$\\Delta X_n$", ha="center", va="top", fontsize=font, linespacing=1.3)
 
     # The change is added back to the cell, in every cell, at every step
@@ -427,7 +349,7 @@ def group_image(data, group, i, style):
     in_group = [n.split("/")[0] == group for n in names]
     if not np.asarray(data["measured"][i])[in_group].any():
         return None
-    return ko_drawing.colony_rgba(data["target"][i], data["boundary"], group_colours(names, group), style["gamma"])
+    return colony_rgba(data["target"][i], data["boundary"], group_colours(names, group), style["gamma"])
 
 
 @app.function(hide_code=True)
@@ -484,11 +406,11 @@ def draw_data_panel(ax, rollout, style, model_data=None):
                 continue
             # Grid colonies stay small, whatever the data resolution
             shrink = max(1, max(rgba.shape[:2]) // 150)
-            ko_drawing.draw_colony(ax, rgba[::shrink, ::shrink], xy, well, theme,
+            draw_colony(ax, rgba[::shrink, ::shrink], xy, well,
                                    alpha=1.0 if r == chosen else style["data_dim"])
     for c, group in enumerate(groups):
         x, y = centre(0, c)
-        ax.text(x - 0.1, y + well / 2 + 0.12, ko_drawing.GROUP_LABELS.get(group, group), rotation=40,
+        ax.text(x - 0.1, y + well / 2 + 0.12, GROUP_LABELS.get(group, group), rotation=40,
                 ha="left", va="bottom", fontsize=small, rotation_mode="anchor")
     ax.text(px + pw / 2, py - 0.15, style["data_caption"], ha="center", va="top", fontsize=small, linespacing=1.3)
 
@@ -511,7 +433,7 @@ def draw_data_panel(ax, rollout, style, model_data=None):
 
     # One colony, one sector per staining, each group at the finest resolution shown
     if rollout is None:
-        ko_drawing.draw_placeholder(ax, hero_centre, hero_size, theme, "data")
+        draw_placeholder(ax, hero_centre, hero_size, "data")
         names, time_label = (), ""
     else:
         images = [group_image(source(g), g, chosen, style) for g in groups]
@@ -522,14 +444,14 @@ def draw_data_panel(ax, rollout, style, model_data=None):
             # Unmeasured groups: a black sector
             blank = np.concatenate([np.zeros(shape + (3,)), reference[..., 3:]], axis=-1)
             images = [blank if i is None else resize_rgba(i, shape) for i in images]
-            ko_drawing.draw_colony(ax, ko_drawing.sliced_rgba(images), hero_centre, hero_size, theme, edge=fg)
+            draw_colony(ax, sliced_rgba(images), hero_centre, hero_size, edge=fg)
             for k in range(len(groups) if len(groups) > 1 else 0):
-                start, _ = ko_drawing.sector_angles(k, len(groups))
+                start, _ = sector_angles(k, len(groups))
                 ax.plot([hero_centre[0], hero_centre[0] + radius * np.cos(np.radians(start))],
                         [hero_centre[1], hero_centre[1] + radius * np.sin(np.radians(start))],
                         color="white", lw=0.6, zorder=5)
         else:
-            ko_drawing.draw_placeholder(ax, hero_centre, hero_size, theme, "–")
+            draw_placeholder(ax, hero_centre, hero_size, "–")
         names = rollout["channel_names"]
         time_label = rollout["time_labels"][chosen]
     ax.text(hero_centre[0], hero_centre[1] - hero_size / 2 - 0.12, time_label, ha="center", va="top", fontsize=font)
@@ -538,7 +460,7 @@ def draw_data_panel(ax, rollout, style, model_data=None):
     line = 0.27
     backing = dict(facecolor=theme["bg"], edgecolor="none", pad=0.4)
     for k, group in enumerate(groups if labelled else []):
-        start, stop = ko_drawing.sector_angles(k, len(groups))
+        start, stop = sector_angles(k, len(groups))
         middle = np.radians((start + stop) / 2)
         right = np.cos(middle) >= 0
         sign = 1 if right else -1
@@ -548,7 +470,7 @@ def draw_data_panel(ax, rollout, style, model_data=None):
         height = line * len(markers)
         top = np.clip(hero_centre[1] + hero_size / 2 * np.sin(middle) + height / 2,
                       hero_centre[1] - hero_size / 2 + height, hero_centre[1] + hero_size / 2)
-        ax.text(x, top, ko_drawing.GROUP_LABELS.get(group, group), ha="left" if right else "right", va="center",
+        ax.text(x, top, GROUP_LABELS.get(group, group), ha="left" if right else "right", va="center",
                 fontsize=font, fontweight="bold", bbox=backing, zorder=8)
         for row, (marker, colour) in enumerate(markers, start=1):
             ax.plot(x + sign * 0.1, top - row * line, "s", ms=4, color=colour, mec="#333333", mew=0.4, zorder=9)
@@ -568,16 +490,6 @@ def draw_data_panel(ax, rollout, style, model_data=None):
 
 
 @app.function(hide_code=True)
-def draw_time_axis(ax, times, y, size, style):
-    """Time axis above a row of discs (x in hours)."""
-    fg = style["theme"]["fg"]
-    ax.plot([times[0] - size / 2, times[-1] + size / 2], [y, y], color=fg, lw=0.7)
-    for t in times:
-        ax.plot([t, t], [y, y + 0.8], color=fg, lw=0.7)
-        ax.text(t, y + 1.2, f"{t:g}h", ha="center", va="bottom")
-
-
-@app.function(hide_code=True)
 def draw_baseline_panel(ax, rollout, style):
     """Baseline trajectories: measured data and NCA, one sector per group, over time."""
     s = style["colony_size"]
@@ -592,11 +504,11 @@ def draw_baseline_panel(ax, rollout, style):
                 fontweight="bold")
         for i, t in enumerate(times):
             if rollout is None:
-                ko_drawing.draw_placeholder(ax, (t, y), s, style["theme"], "")
+                draw_placeholder(ax, (t, y), s, "")
             else:
                 draw_sector_disc(ax, rollout, source, i, groups, (t, y), s, style)
     axis_y = s / 2 + 1.5
-    draw_time_axis(ax, times, axis_y, s, style)
+    draw_time_axis(ax, times, axis_y, s)
     ax.set_xlim(times[0] - s / 2 - 4.5, times[-1] + s / 2 + 0.5)
     ax.set_ylim(-step - s / 2 - 0.5, axis_y + 4.0)
     ax.set_aspect("equal")
@@ -633,7 +545,7 @@ def draw_ko_outcomes_panel(ax, rollouts, style):
         for r, (source, label, colour) in enumerate(rows):
             y = -r * step
             if rollouts is None:
-                ko_drawing.draw_placeholder(ax, (x, y), s, theme, "")
+                draw_placeholder(ax, (x, y), s, "")
             else:
                 rollout = rollouts[condition]
                 draw_sector_disc(ax, rollout, source, len(rollout["time_labels"]) - 1, groups, (x, y), s, style)
@@ -644,18 +556,6 @@ def draw_ko_outcomes_panel(ax, rollouts, style):
     ax.set_ylim(-step - s / 2 - 0.5, bar_y + 6.5)
     ax.set_aspect("equal")
     ax.axis("off")
-
-
-@app.function(hide_code=True)
-def cell_type_rgba(shares, cell_types, mask, shown, palette):
-    """RGBA of per-pixel cell-type shares [K, H, W] on black, cropped to the colony."""
-    rgb = np.zeros(mask.shape + (3,))
-    for share, cell_type in zip(np.asarray(shares, dtype=np.float32), cell_types):
-        if cell_type in shown:
-            rgb += share[..., None] * np.asarray(to_rgb(palette.get(str(cell_type), "#777777")))
-    rows, cols = np.flatnonzero(mask.any(axis=1)), np.flatnonzero(mask.any(axis=0))
-    crop = (slice(rows[0], rows[-1] + 1), slice(cols[0], cols[-1] + 1))
-    return np.concatenate([np.clip(rgb[crop], 0.0, 1.0), mask[crop][..., None].astype(float)], axis=-1)
 
 
 @app.function(hide_code=True)
@@ -705,7 +605,7 @@ def draw_ko_curve_panel(ax, sources, style):
                 curve = curves[curves["cell_type"] == cell_type].sort_values("knockout_hour")
                 if curve.empty:
                     continue
-                colour = palette.get(cell_type, "#444444")
+                colour = palette.get(cell_type, UNKNOWN_CELL_TYPE)
                 ax.plot(curve["knockout_hour"], curve["mean_prevalence"], color=colour, lw=1.6,
                         ls=dashes[k % len(dashes)], zorder=3)
                 if style["ko_uncertainty"] == "samples" and run_columns:
@@ -724,7 +624,7 @@ def draw_ko_curve_panel(ax, sources, style):
             for (cell_type, hour), values in true[true["cell_type"].isin(shown)].groupby(["cell_type",
                                                                                            "knockout_hour"]):
                 v = values["relative_prevalence"].to_numpy()
-                colour = palette.get(cell_type, "#444444")
+                colour = palette.get(cell_type, UNKNOWN_CELL_TYPE)
                 if style["ko_true_display"] == "replicates":
                     # Each replicate, spread a little along x so they do not hide each other
                     offsets = (np.arange(len(v)) - (len(v) - 1) / 2) * 0.6
@@ -741,16 +641,16 @@ def draw_ko_curve_panel(ax, sources, style):
             "Mesoderm": 0.15 + 0.1 * np.sin(hours / end * np.pi),
         }
         for k, cell_type in enumerate(shown):
-            colour = palette.get(cell_type, "#444444")
+            colour = palette.get(cell_type, UNKNOWN_CELL_TYPE)
             curve = made_up.get(cell_type, 0.05 + 0.02 * k + 0 * hours)
             ax.plot(hours, curve, color=colour, lw=1.6, alpha=0.5)
             ax.fill_between(hours, curve - 0.04, curve + 0.04, color=colour, alpha=0.08, lw=0)
         ax.text(0.5, 0.5, "PLACEHOLDER\nrun the fine KO sweep in nodal_ko_eval.py,\nthen 'Save for overview figure'",
-                transform=ax.transAxes, ha="center", va="center", color="#777777", fontsize=style["font"],
+                transform=ax.transAxes, ha="center", va="center", color=MUTED, fontsize=style["font"],
                 zorder=6, bbox=dict(facecolor="white", edgecolor="#bbbbbb", alpha=0.9, boxstyle="round,pad=0.4"))
 
     if style["ko_legend"]:
-        handles = [plt.Line2D([], [], color=palette.get(c, "#444444"), lw=1.6, label=c) for c in shown]
+        handles = [plt.Line2D([], [], color=palette.get(c, UNKNOWN_CELL_TYPE), lw=1.6, label=c) for c in shown]
         handles += [plt.Line2D([], [], color=muted, lw=1.6, label=style["nca_label"]),
                     plt.Line2D([], [], color=muted, marker="o", ls="", mec=fg, mew=0.6, ms=4,
                                label=style["data_label"])]
@@ -778,7 +678,8 @@ def draw_ko_curve_panel(ax, sources, style):
     for hour in hours_shown:
         if maps is not None:
             index = int(np.argmin(np.abs(maps["hours"] - hour)))
-            rgba = cell_type_rgba(maps["shares"][index], maps["cell_types"], maps["mask"], shown, palette)
+            _shares = dict(zip((str(t) for t in maps["cell_types"]), maps["shares"][index]))
+            rgba = cell_type_rgba(_shares, {t: palette.get(t, UNKNOWN_CELL_TYPE) for t in shown}, maps["mask"])
             box = OffsetImage(rgba, zoom=size / max(rgba.shape[:2]), interpolation="antialiased")
             x = float(maps["hours"][index])
         else:
@@ -789,17 +690,6 @@ def draw_ko_curve_panel(ax, sources, style):
         ax.add_artist(AnnotationBbox(box, (x, 1.0), xycoords=("data", "axes fraction"), box_alignment=(0.5, -0.1),
                                      frameon=False, pad=0, annotation_clip=False))
     return size + 4.0
-
-
-@app.function(hide_code=True)
-def label_panel(ax, letter, title, style, above=0.0):
-    """Panel letter and title above the top left corner of ``ax`` (``above``: extra points)."""
-    if letter:
-        ax.annotate(letter, xy=(0, 1), xycoords="axes fraction", xytext=(0, 5 + above), textcoords="offset points",
-                    ha="left", va="bottom", fontsize=style["font"] + 3, fontweight="bold")
-    if title:
-        ax.annotate(title, xy=(0, 1), xycoords="axes fraction", xytext=(13 if letter else 0, 5 + above),
-                    textcoords="offset points", ha="left", va="bottom", fontsize=style["font"] + 0.5)
 
 
 @app.cell(hide_code=True)
@@ -899,7 +789,8 @@ def _(
     _baseline_id = (baseline_model.value or "").strip()
     _ko_id = (ko_model.value or "").strip() or _baseline_id
     _models = list(dict.fromkeys(_m for _m in (_baseline_id, _ko_id) if _m))
-    _cached = bool(_models) and all(rollout_cache_path(_m, replicate.value, seed.value).is_file() for _m in _models)
+    _names = {_m: cache_name("rollouts", _m, f"r{int(replicate.value)}", f"s{int(seed.value)}") for _m in _models}
+    _cached = bool(_models) and all((CACHE_DIRECTORY / _names[_m]).is_file() for _m in _models)
     if not _models or not (run_rollouts.value or _cached):
         rollouts = {"baseline": None, "ko": None}
         _status = mo.md("No rollouts yet: panels show placeholders. Choose models, then *Roll out*.")
@@ -908,8 +799,11 @@ def _(
         _by_model = {}
         with mo.status.progress_bar(total=len(_models), title="Loading data and rolling out") as _bar:
             for _m in _models:
-                _by_model[_m] = cached_rollouts(store_root.value, _m, data_root.value, int(replicate.value),
-                                                int(seed.value), refresh=run_rollouts.value and refresh.value)
+                _by_model[_m] = cached(
+                    _names[_m],
+                    lambda: model_rollouts(store_root.value, _m, data_root.value, int(replicate.value),
+                                           int(seed.value), conditions=tuple(CONDITIONS)),
+                    refresh=run_rollouts.value and refresh.value, directory=CACHE_DIRECTORY)
                 _bar.update()
         rollouts = {
             "baseline": _by_model[_baseline_id]["baseline"] if _baseline_id else None,
@@ -944,7 +838,8 @@ def _():
 
 @app.cell(hide_code=True)
 def _(data_downsample, data_projection, data_root, load_data_panel, refresh, replicate):
-    _path = CACHE_DIRECTORY / f"data_{data_projection.value}_ds{data_downsample.value}_r{int(replicate.value)}.pkl"
+    _name = cache_name("data", data_projection.value, f"ds{data_downsample.value}", f"r{int(replicate.value)}")
+    _path = CACHE_DIRECTORY / _name
     if not (load_data_panel.value or _path.is_file()):
         measured_data = None
         _status = mo.md("Data panel images not loaded (using the model's data).")
@@ -952,8 +847,11 @@ def _(data_downsample, data_projection, data_root, load_data_panel, refresh, rep
         mo.stop(not data_root.value.strip() and not _path.is_file(),
                 mo.callout("Set the data root first.", kind="warn"))
         with mo.status.spinner("Loading and cleaning the data panel images"):
-            measured_data = load_measured_data(data_root.value, int(replicate.value), data_projection.value,
-                                               data_downsample.value, refresh=load_data_panel.value and refresh.value)
+            measured_data = cached(
+                _name,
+                lambda: load_control_trajectory(Path(data_root.value).expanduser() / DATASET_FOLDER,
+                                                int(replicate.value), data_projection.value, data_downsample.value),
+                refresh=load_data_panel.value and refresh.value, directory=CACHE_DIRECTORY)
         _status = mo.md(f"Data panel images: {measured_data['boundary'].shape[0]} px across.")
     _status
     return (measured_data,)
@@ -1002,10 +900,9 @@ def _(ko_model_csv, ko_true_csv, reload_ko_files):
 @app.cell(hide_code=True)
 def _():
     _times = {f"{_t}h": _i for _i, _t in enumerate(TIMEPOINTS)}
-    _groups = list(ko_drawing.EXPERIMENT_GROUPS)
-    figure_width = mo.ui.slider(4.0, 16.0, step=0.01, value=13.33, show_value=True, label="Width (in)")
-    figure_height = mo.ui.slider(3.0, 12.0, step=0.01, value=7.5, show_value=True, label="Height (in, 16:9 slide: 13.33 x 7.5)")
-    font_size = mo.ui.slider(5.0, 18.0, step=0.5, value=11.0, show_value=True, label="Font (pt)")
+    _groups = list(EXPERIMENT_GROUPS)
+    page = mo.ui.dropdown(options=list(PAGES), value="talk slide", label="Page")
+    figure_height = mo.ui.slider(0.3, 1.0, step=0.01, value=0.56, show_value=True, label="Height (× width)")
     gamma = mo.ui.slider(0.3, 2.0, step=0.05, value=1.0, show_value=True, label="Gamma (1 = linear)")
     colony_size = mo.ui.slider(7.0, 11.5, step=0.5, value=10.5, show_value=True, label="Colony size (h)")
     groups = mo.ui.multiselect(options=_groups, value=["cell_fate_s1", "cell_fate_s2"],
@@ -1028,7 +925,6 @@ def _():
     # Top right corner of the legend, as fractions of the figure (right edge only)
     legend_x = mo.ui.slider(0.5, 1.0, step=0.005, value=1.0, show_value=True, label="Legend x")
     legend_y = mo.ui.slider(0.0, 1.0, step=0.005, value=0.55, show_value=True, label="Legend top")
-    legend_font = mo.ui.slider(5.0, 16.0, step=0.5, value=9.0, show_value=True, label="Legend font (pt)")
     legend_gaps = mo.ui.checkbox(value=False, label="Gaps between legend groups")
     legend_border = mo.ui.checkbox(value=False, label="Legend border")
     legend_loc = mo.ui.dropdown(options=["center", "center left", "upper left", "upper center", "lower left"],
@@ -1039,12 +935,9 @@ def _():
                                           label="Data panel groups from the model's data (as panel c)")
     data_dim = mo.ui.slider(0.2, 1.0, step=0.05, value=0.6, show_value=True, label="Other rows opacity")
     figure_title = mo.ui.text(value="", placeholder="none", label="Figure title", full_width=True)
-    title_size = mo.ui.slider(8.0, 28.0, step=0.5, value=16.0, show_value=True, label="Title (pt)")
     title_align = mo.ui.dropdown(options=["left", "center"], value="left", label="Title alignment")
     data_label = mo.ui.text(value="Data", label="Data label")
-    data_colour = mo.ui.text(value="#4646c8", label="Data colour")
     nca_label = mo.ui.text(value="NCA", label="NCA label")
-    nca_colour = mo.ui.text(value="#d97706", label="NCA colour")
     data_caption = mo.ui.text(value="hESC colonies, imaged 0-48h,\n4 stainings", label="Data caption",
                               full_width=True)
     nca_state_label = mo.ui.text(value="(markers + hidden)", label="NCA state label")
@@ -1055,15 +948,15 @@ def _():
     anchor = mo.ui.dropdown(options=["NW", "N", "C", "W"], value="NW", label="Panel anchor")
     mo.vstack([
         mo.md("**Figure**"),
-        mo.hstack([figure_title, title_size, title_align], justify="start"),
-        mo.hstack([figure_width, figure_height, font_size, letters, show_titles, anchor], justify="start"),
+        mo.hstack([figure_title, title_align], justify="start"),
+        mo.hstack([page, figure_height, letters, show_titles, anchor], justify="start"),
         mo.hstack([gamma, colony_size, groups, hero_groups], justify="start"),
         mo.hstack([hero_time, nca_time, zoom_x, zoom_y, zoom_pixels, hatch], justify="start"),
         mo.hstack([legend_place, legend_layout, legend_loc, legend_x, legend_y], justify="start"),
-        mo.hstack([legend_font, legend_gaps, legend_border, data_group_labels, data_markers, data_dim],
+        mo.hstack([legend_gaps, legend_border, data_group_labels, data_markers, data_dim],
                   justify="start"),
         data_model_groups,
-        mo.hstack([data_label, data_colour, nca_label, nca_colour], justify="start"),
+        mo.hstack([data_label, nca_label], justify="start"),
         mo.hstack([nca_state_label, nca_loop_note, nca_equation], justify="start"),
         data_caption,
     ])
@@ -1071,7 +964,6 @@ def _():
         anchor,
         colony_size,
         data_caption,
-        data_colour,
         data_dim,
         data_group_labels,
         data_label,
@@ -1079,15 +971,12 @@ def _():
         data_model_groups,
         figure_height,
         figure_title,
-        figure_width,
-        font_size,
         gamma,
         groups,
         hatch,
         hero_groups,
         hero_time,
         legend_border,
-        legend_font,
         legend_gaps,
         legend_layout,
         legend_loc,
@@ -1095,15 +984,14 @@ def _():
         legend_x,
         legend_y,
         letters,
-        nca_colour,
         nca_equation,
         nca_label,
         nca_loop_note,
         nca_state_label,
         nca_time,
+        page,
         show_titles,
         title_align,
-        title_size,
         zoom_pixels,
         zoom_x,
         zoom_y,
@@ -1141,21 +1029,13 @@ def _(ko_sources):
     ko_legend = mo.ui.checkbox(value=True, label="Legend")
     ko_legend_loc = mo.ui.dropdown(options=["best", "upper left", "upper right", "center right", "lower right"],
                                    value="best", label="Legend position")
-    # Any matplotlib colour; invalid text keeps the default
-    cell_type_colours = mo.ui.dictionary({
-        _t: mo.ui.text(value=CELL_TYPE_COLOURS.get(_t, "#444444"), label=_t)
-        for _t in dict.fromkeys([*_types, *CELL_TYPE_COLOURS])
-    })
     mo.vstack([
         mo.md("**Knockout-time curve**"),
         mo.hstack([ko_source, ko_group_by, ko_uncertainty, ko_cell_types], justify="start"),
         mo.hstack([ko_projection, ko_true_display], justify="start"),
         mo.hstack([ko_map_hours, ko_map_size, ko_legend, ko_legend_loc], justify="start"),
-        mo.md("Cell-type colours"),
-        mo.hstack(list(cell_type_colours.values()), justify="start"),
     ])
     return (
-        cell_type_colours,
         ko_cell_types,
         ko_group_by,
         ko_legend,
@@ -1189,16 +1069,13 @@ def _(ko_group_by, ko_sources, ko_uncertainty):
 
 @app.cell(hide_code=True)
 def _(
-    cell_type_colours,
     colony_size,
     data_caption,
-    data_colour,
     data_dim,
     data_group_labels,
     data_label,
     data_markers,
     data_model_groups,
-    font_size,
     gamma,
     groups,
     hatch,
@@ -1215,31 +1092,30 @@ def _(
     ko_true_display,
     ko_uncertainty,
     legend_border,
-    legend_font,
     legend_gaps,
     legend_layout,
     legend_loc,
     legend_place,
     legend_x,
     legend_y,
-    nca_colour,
     nca_equation,
     nca_label,
     nca_loop_note,
     nca_state_label,
     nca_time,
+    page,
     zoom_pixels,
     zoom_x,
     zoom_y,
 ):
-    _order = list(ko_drawing.EXPERIMENT_GROUPS)
+    _order = list(EXPERIMENT_GROUPS)
     try:
         _map_hours = [float(_h) for _h in ko_map_hours.value.split(",") if _h.strip()]
     except ValueError:
         _map_hours = []
     style = {
-        "theme": ko_drawing.THEMES["light"],
-        "font": font_size.value,
+        "theme": THEME,
+        "font": PAGES[page.value]["font"],
         "gamma": gamma.value,
         "colony_size": colony_size.value,
         "groups": [_g for _g in _order if _g in groups.value] or _order[:1],
@@ -1253,7 +1129,7 @@ def _(
         "legend_loc": legend_loc.value,
         "legend_place": legend_place.value,
         "legend_anchor": (legend_x.value, legend_y.value),
-        "legend_font": legend_font.value,
+        "legend_font": PAGES[page.value]["font"] * FONT["legend"] / FONT["label"],
         "legend_gaps": legend_gaps.value,
         "legend_border": legend_border.value,
         "data_markers": data_markers.value,
@@ -1261,9 +1137,9 @@ def _(
         "data_dim": data_dim.value,
         "data_model_groups": list(data_model_groups.value),
         "data_label": data_label.value,
-        "data_colour": colour_or(data_colour.value, "#4646c8"),
+        "data_colour": DATA,
         "nca_label": nca_label.value,
-        "nca_colour": colour_or(nca_colour.value, "#d97706"),
+        "nca_colour": MODEL,
         "data_caption": data_caption.value.replace("\\n", "\n"),
         "nca_state_label": nca_state_label.value,
         "nca_equation": nca_equation.value,
@@ -1273,8 +1149,7 @@ def _(
         "ko_uncertainty": ko_uncertainty.value,
         "ko_true_display": ko_true_display.value,
         "ko_cell_types": list(ko_cell_types.value),
-        "cell_type_colours": {_t: colour_or(_c, CELL_TYPE_COLOURS.get(_t, "#444444"))
-                              for _t, _c in cell_type_colours.value.items()},
+        "cell_type_colours": CELL_TYPE_COLOURS,
         "ko_projection": ko_projection.value,
         "ko_map_hours": _map_hours,
         "ko_map_size": ko_map_size.value,
@@ -1293,15 +1168,14 @@ def _(
     anchor,
     figure_height,
     figure_title,
-    figure_width,
     ko_curves,
     letters,
     measured_data,
+    page,
     rollouts,
     show_titles,
     style,
     title_align,
-    title_size,
 ):
     _drawers = {
         "nca": lambda ax: draw_nca_panel(ax, rollouts["baseline"], style),
@@ -1314,12 +1188,10 @@ def _(
     _order = list(dict.fromkeys(_c for _row, _ in ROWS for _c in _row if _c != "."))
     _lettered = [_key for _key in _order if PANELS.get(_key) != "legend"]
     _alphabet = "abcdefghijklmnopqrstuvwxyz"
-    with plt.style.context("default"), plt.rc_context({
-                         "font.size": style["font"], "font.family": "sans-serif", "mathtext.fontset": "dejavusans",
-                         "text.color": style["theme"]["fg"], "axes.labelsize": style["font"],
-                         "xtick.labelsize": style["font"] - 1, "ytick.labelsize": style["font"] - 1}):
-        overview = plt.figure(figsize=(figure_width.value, figure_height.value), facecolor="white",
-                              layout="constrained", dpi=150)
+    _page = PAGES[page.value]
+    _width = _page["size"][0]
+    with paper_style(_page["preset"]):
+        overview = plt.figure(figsize=(_width, figure_height.value * _width), layout="constrained")
         # One subfigure per row, so each row sets its own widths
         _rows = overview.subfigures(len(ROWS), 1, height_ratios=HEIGHT_RATIOS)
         overview_axes = {}
@@ -1342,10 +1214,10 @@ def _(
             if _key in _lettered:
                 _letter = _alphabet[_lettered.index(_key)]
                 _letter = {"lower": _letter, "upper": _letter.upper()}.get(letters.value, "")
-            label_panel(_ax, _letter, TITLES.get(_panel, "") if show_titles.value else "", style, _above)
+            label_panel(_ax, _letter, TITLES.get(_panel, "") if show_titles.value else "", offset=(0, 5 + _above))
         if figure_title.value.strip():
             _left = title_align.value == "left"
-            overview.suptitle(figure_title.value.replace("\\n", "\n"), fontsize=title_size.value,
+            overview.suptitle(figure_title.value.replace("\\n", "\n"), fontsize=FONT["letter"] / FONT["label"] * style["font"],
                               fontweight="bold", x=0.01 if _left else 0.5, ha="left" if _left else "center")
         if style["legend_place"] == "figure" and rollouts["baseline"] is not None:
             add_marker_legend(overview, rollouts["baseline"], style, False, loc="upper right",
@@ -1359,34 +1231,27 @@ def _():
     figure_name = mo.ui.text(value="micropattern_overview", label="File name")
     save_panels = mo.ui.checkbox(value=False, label="Also each panel separately")
     save_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
-    save_figure = mo.ui.run_button(label="Save figure")
-    mo.hstack([figure_name, save_panels, save_svg, save_figure], justify="start")
-    return figure_name, save_figure, save_panels, save_svg
+    save_button = mo.ui.run_button(label="Save figure")
+    mo.hstack([figure_name, save_panels, save_svg, save_button], justify="start")
+    return figure_name, save_button, save_panels, save_svg
 
 
 @app.cell(hide_code=True)
-def _(figure_name, overview, overview_axes, save_figure, save_panels, save_svg):
-    mo.stop(not save_figure.value)
-    FIGURE_DIRECTORY.mkdir(parents=True, exist_ok=True)
-    _saved = []
-    _suffixes = ("pdf", "png", "svg") if save_svg.value else ("pdf", "png")
-    # svg.fonttype "none" keeps text as editable text in Inkscape
-    with plt.rc_context({"svg.fonttype": "none"}):
-        for _suffix in _suffixes:
-            overview.savefig(FIGURE_DIRECTORY / f"{figure_name.value}.{_suffix}", dpi=600,
-                             facecolor=overview.get_facecolor())
-            _saved.append(f"{figure_name.value}.{_suffix}")
-        if save_panels.value:
-            # Each panel's area of the full figure, so panels match the composite
-            overview.canvas.draw()
-            _renderer = overview.canvas.get_renderer()
+def _(figure_name, overview, overview_axes, save_button, save_panels, save_svg):
+    mo.stop(not save_button.value)
+    _saved = save_figure(overview, figure_name.value, "overview", svg=save_svg.value)
+    if save_panels.value:
+        # Each panel's area of the full figure, so panels match the composite
+        overview.canvas.draw()
+        _renderer = overview.canvas.get_renderer()
+        with plt.rc_context({"svg.fonttype": "none"}):
             for _key, _ax in overview_axes.items():
                 _box = _ax.get_tightbbox(_renderer).transformed(overview.dpi_scale_trans.inverted()).padded(0.04)
                 for _suffix in ("png", "svg") if save_svg.value else ("png",):
-                    overview.savefig(FIGURE_DIRECTORY / f"{figure_name.value}_{_key}.{_suffix}", dpi=600,
-                                     bbox_inches=_box, facecolor=overview.get_facecolor())
-                    _saved.append(f"{figure_name.value}_{_key}.{_suffix}")
-    mo.md(f"Saved to `{FIGURE_DIRECTORY}`:\n\n" + "\n".join(f"- `{_n}`" for _n in _saved))
+                    _path = FIGURE_DIRECTORY / f"{figure_name.value}_{_key}.{_suffix}"
+                    overview.savefig(_path, dpi=600, bbox_inches=_box, facecolor=overview.get_facecolor())
+                    _saved.append(_path)
+    mo.md("Saved:\n\n" + "\n".join(f"- `{_p}`" for _p in _saved))
     return
 
 

@@ -12,7 +12,7 @@
 # run.t (e.g. 32, 64, 128, 256; NCA and gNCA). Each ID appears twice: once in
 # the grid and once in its branch. Placeholders must stay distinct until
 # replaced. Copy a slot and its branch for more models.
-experiment_name: emoji_attractor_switch_critical_time_v2
+experiment_name: emoji_attractor_switch_critical_time_v3
 entrypoint: Experiments.impulse.optimise:run
 output_subdir: generated/emoji_attractor_switch_critical_time
 seed_mode: index
@@ -47,6 +47,9 @@ grid:
   impulse.repeat: [0]
   impulse.intervention.spatial: [patch]
   impulse.intervention.patch_size: [5, 9]
+  # v3: start the patch at the lattice centre, where the pattern grows from
+  # (v2 started at a random location)
+  impulse.intervention.initial_location: [centre]
   
 
 # One branch per model: its transitions and W&B tags for filtering

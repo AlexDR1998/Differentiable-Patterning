@@ -84,14 +84,19 @@ def _():
     from Common.dataloader.stripes import remove_stripes, remove_stripes_per_channel
 
     # Channel colours, group labels, sectors and legend style shared with the other figures
-    from Experiments.micropatterns.nodal_ko_schematic import (
-        COLOURS,
+    from Experiments.micropatterns.figures.drawing import sector_map
+    from Experiments.micropatterns.figures.style import CHANNEL_COLOURS as COLOURS
+    from Experiments.micropatterns.figures.style import (
         GROUP_LABELS,
         MARKER_COLOURS,
+        STYLE_FILE,
         SectorHandle,
-        sector_map,
+        legend_options,
+        legend_swatch,
     )
-    from Experiments.micropatterns.schematics import legend_options, legend_swatch
+
+    # Every plot in this notebook uses the paper figure style
+    plt.style.use(["default", STYLE_FILE])
 
     return (
         BANDS,
@@ -861,7 +866,7 @@ def _(
         for _group, _names in GROUP_CHANNELS.items()
         for _index, _name in enumerate(_names)
     }
-    CONDITION_COLOURS = {"ctrl": "C0", "sl0": "C1", "sl24": "C2"}
+    from Experiments.micropatterns.figures.style import CONDITION_COLOURS
 
     def clean_image(entry, settings):
         """Run the full-resolution cleaning steps on one raw image.
@@ -4340,22 +4345,11 @@ def _(
     # Nothing in this cell depends on the thresholds, so the threshold fit
     # can use it without rerunning whenever it moves the sliders.
     CELL_TYPE_HOUR = 48 if 48 in selection["timesteps"] else selection["timesteps"][-1]
-    # Colours of the cell types in the views below.
-    # CELL_TYPE_COLOURS = {
-    #     "Notochord": (0.84, 0.15, 0.63),
-    #     "Endoderm": (0.09, 0.75, 0.81),
-    #     "Mesoderm": (0.17, 0.63, 0.17),
-    #     "Several": (1.0, 0.6, 0.0),
-    #     "Other": (0.5, 0.5, 0.5),
-    # }
+    # Colours of the cell types in the views below (RGB), from the shared figure style
+    from Experiments.micropatterns.figures.style import CELL_TYPE_COLOURS as _cell_type_hex
+    from Experiments.micropatterns.figures.style import cell_type_rgb as _cell_type_rgb
 
-    CELL_TYPE_COLOURS = {
-        "Notochord": (0.5, 0.8, 0.5),
-        "Endoderm": (0.8, 0.8, 0.4),
-        "Mesoderm": (1.0, 0.0, 0.0),
-        "Several": (0.0, 0.0, 1.0),
-        "Other": (0.5, 0.5, 0.5),
-    }
+    CELL_TYPE_COLOURS = {_label: _cell_type_rgb(_label) for _label in _cell_type_hex}
     # Why the cell-type views cannot be drawn yet (None when they can).
     _missing = [_marker for _marker in FATE_MARKERS if _marker not in FATE_CHANNELS]
     _invalid = [
@@ -6265,7 +6259,7 @@ def _(image_key, mo, raw_images, trajectories):
         for _trajectory, _members in trajectories.items()
         for (_group, _hour), _index in _members.items()
     }
-    # Default: the colony of the 3D -> 2D schematic (Experiments/micropatterns/schematics.py)
+    # Default: the colony of the 3D -> 2D schematic (Experiments/micropatterns/figures/imaging_schematic.py)
     _schematic_key = "cell_fate_markers/sl24_s2/B3_F4_48h"
     _default = next(
         (
@@ -6362,6 +6356,8 @@ def _(GROUP_CHANNELS, GROUP_LABELS, MARKER_COLOURS, mo, steps_group):
     )
     steps_scale_bar = mo.ui.number(start=10, stop=500, step=10, value=100, label="Scale bar (µm)")
     steps_panel_size = mo.ui.slider(1.0, 4.0, step=0.1, value=2.0, label="Panel size (in)", show_value=True)
+    # Gamma of the channel images (below 1 brightens dim signal, above 1 darkens it)
+    steps_gamma = mo.ui.slider(0.2, 3.0, step=0.05, value=1.0, label="Gamma", show_value=True)
     # Total downsampling of the last panels, as data.downsample in training
     steps_downsample = mo.ui.dropdown(
         options={"4": 4, "8": 8, "16": 16, "32": 32}, value="4", label="Downsampling"
@@ -6416,7 +6412,7 @@ def _(GROUP_CHANNELS, GROUP_LABELS, MARKER_COLOURS, mo, steps_group):
             mo.hstack([steps_percentiles[_group] for _group in steps_group.value], justify="start", wrap=True),
             mo.hstack([steps_show_background, steps_show_normalised, steps_mark_hot], justify="start"),
             mo.hstack([steps_pixel_um, steps_scale_bar, steps_panel_size, steps_downsample], justify="start"),
-            mo.hstack([steps_page, steps_histograms, steps_log_counts], justify="start"),
+            mo.hstack([steps_page, steps_gamma, steps_histograms, steps_log_counts], justify="start"),
             mo.hstack([steps_zoom, steps_zoom_colour], justify="start"),
             mo.hstack([steps_zoom_x, steps_zoom_y, steps_zoom_size], justify="start"),
             mo.hstack([steps_name, steps_svg, steps_save], justify="start"),
@@ -6425,6 +6421,7 @@ def _(GROUP_CHANNELS, GROUP_LABELS, MARKER_COLOURS, mo, steps_group):
     return (
         steps_channels,
         steps_downsample,
+        steps_gamma,
         steps_group_layout,
         steps_histograms,
         steps_layout,
@@ -6625,6 +6622,7 @@ def _(
     steps_channels,
     steps_downsample,
     steps_frames,
+    steps_gamma,
     steps_histograms,
     steps_layout,
     steps_log_counts,
@@ -6647,7 +6645,7 @@ def _(
     from matplotlib.colors import is_color_like as _is_color_like
     from matplotlib.patches import Rectangle as _Rectangle
 
-    # Marker colours as in the other figures (nodal_ko_schematic.py). Markers
+    # Marker colours as in the other figures (figures/style.py). Markers
     # turned off there (LMBR) are drawn white when picked.
     _markers = {_c.name: _c.marker for _c in MICROPATTERN_260726_SCHEMA.measurement_channels}
     _groups = steps_frames["groups"]
@@ -6713,16 +6711,16 @@ def _(
     )
 
     def _scaled(group, column, channel):
-        """One channel of a group's panel in [0, 1] for display."""
+        """One channel of a group's panel in [0, 1] for display, with the gamma applied."""
         values = _values[group][column][..., channel]
         if _panels[column]["kind"] == "normalised":
-            return np.clip(values, 0.0, 1.0)
+            return np.clip(values, 0.0, 1.0) ** steps_gamma.value
         if steps_scale.value == "all":
             lo, hi = 0.0, _shared_high[(group, channel)]
         else:
             reference = _values[group][0 if steps_scale.value == "raw" else column]
             lo, hi = np.percentile(reference[..., channel], _percentiles[group])
-        return np.clip((values - lo) / max(hi - lo, 1e-6), 0.0, 1.0)
+        return np.clip((values - lo) / max(hi - lo, 1e-6), 0.0, 1.0) ** steps_gamma.value
 
     def _rgb(g, column, channels):
         """Composite of some channels of a group's panel, on black."""
@@ -6941,8 +6939,8 @@ def _(
         # Legend columns fill top to bottom, so entries go in column by column
         _entries = [_padded[_r][_c] for _c in range(_width) for _r in range(len(_padded))]
         steps_figure.legend(
-            [_h for _h, _ in _entries], [_l for _, _l in _entries], loc="upper right", ncol=_width, fontsize=7,
-            bbox_to_anchor=(0.99, 0.995), handlelength=1.2, columnspacing=0.8, **legend_options("white"),
+            [_h for _h, _ in _entries], [_l for _, _l in _entries], loc="upper right", ncol=_width,
+            bbox_to_anchor=(0.99, 0.995), **legend_options("white"),
         )
     _notes = [f"- {selection['projection']} projection"]
     for _g in _groups:
@@ -6955,17 +6953,12 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(Path, mo, plt, steps_figure, steps_name, steps_save, steps_svg):
+def _(mo, steps_figure, steps_name, steps_save, steps_svg):
+    from Experiments.micropatterns.figures.style import save_figure
+
     mo.stop(not steps_save.value)
-    _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
-    _directory.mkdir(parents=True, exist_ok=True)
-    _suffixes = ("pdf", "png", "svg") if steps_svg.value else ("pdf", "png")
-    # svg.fonttype "none" keeps text as editable text in Inkscape
-    with plt.rc_context({"svg.fonttype": "none"}):
-        for _suffix in _suffixes:
-            steps_figure.savefig(_directory / f"{steps_name.value}.{_suffix}", dpi=400,
-                                 facecolor=steps_figure.get_facecolor())
-    mo.md(f"Saved `{steps_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
+    _paths = save_figure(steps_figure, steps_name.value, "schematics", svg=steps_svg.value)
+    mo.md("Saved " + ", ".join(f"`{p}`" for p in _paths))
     return
 
 

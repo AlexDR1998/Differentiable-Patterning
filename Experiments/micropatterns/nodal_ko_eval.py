@@ -3,6 +3,7 @@
 #   "marimo",
 #   "pandas",
 #   "matplotlib",
+#   "plotly",
 #   "jax",
 #   "equinox",
 #   "omegaconf",
@@ -41,6 +42,7 @@ with app.setup(hide_code=True):
     import jax.random as jr
     import marimo as mo
     import matplotlib.pyplot as plt
+    import plotly.graph_objects as go
     from matplotlib.colors import is_color_like, to_rgb
     import numpy as np
     import pandas as pd
@@ -65,6 +67,8 @@ with app.setup(hide_code=True):
         stain_counts_from_patterns,
     )
     from Common.dataloader.cell_types import (
+        OTHER,
+        SEVERAL,
         CellTypeRules,
         label_names,
         load_cell_type_rules,
@@ -82,6 +86,8 @@ with app.setup(hide_code=True):
     # it shares with this notebook
     from Experiments.micropatterns.density_ko_sweep import (
         DensityKoSettings,
+        actual_densities,
+        capped_densities,
         format_density,
         job_configs,
         load_condition_data,
@@ -97,18 +103,47 @@ with app.setup(hide_code=True):
         render_cmy_composite,
         render_fate_cmy,
     )
-    # Colony drawing shared with the true-data schematic.
-    from Experiments.micropatterns.nodal_ko_schematic import (
-        COLOURS,
-        GROUP_LABELS,
+    # Evaluation helpers (rollouts under a knockout, cell-type shares)
+    from Experiments.micropatterns.ko_evaluation import (
+        CONDITION_KO_HOURS,
+        DENSITY_AXIS_LABELS,
+        DENSITY_COLUMNS,
+        DENSITY_UNITS,
+        add_density_axes,
+        cell_edges,
+        density_conversions,
+        density_rows,
+        data_label_shares,
+        evaluate_condition,
+        ko_time_label,
+        ko_time_ticks,
+        make_render_initial_condition,
+        marker_channel_indices,
+        model_label_shares,
+        model_option_label,
+        model_stain_counts,
+        parse_one_based_indices,
+        read_model_settings,
+        rules_projection,
+        uncertainty_band,
+    )
+    # Shared figure style and colony drawing
+    from Experiments.micropatterns.figures.data import cell_type_rgba, masked_rgba
+    from Experiments.micropatterns.figures.drawing import composite, draw_colony, sliced_rgba
+    from Experiments.micropatterns.figures.style import (
+        ACCENT,
+        CHANNEL_COLOURS,
+        DATA,
         MARKER_COLOURS,
-        THEMES,
+        MODEL,
+        PROJECTION_COLOURS,
+        SERIES,
+        STYLE_FILE,
+        THEME,
         SectorHandle,
         SectorHandler,
-        composite,
-        draw_colony,
+        cell_type_colour,
         sector_angles,
-        sliced_rgba,
     )
     from matplotlib import patheffects
     import matplotlib.path as mpath
@@ -120,279 +155,14 @@ with app.setup(hide_code=True):
     CELL_TYPE_DIRECTORY = repository_root / "Experiments/micropatterns/conf/cell_types"
 
 
-    # Display order and knockout hour (None: no knockout) of the conditions.
+    # Display order of the conditions
     CONDITION_LABELS = {"baseline": "Baseline", "ko_24h": "KO 24h", "ko_0h": "KO 0h"}
-    CONDITION_KO_HOURS = {"baseline": None, "ko_24h": 24, "ko_0h": 0}
 
-    def label_share_rgba(shares, colours, mask, crop_mask=None):
-        """RGBA of per-pixel label shares ``{label: [H, W]}`` blended with
-        ``{label: colour}``, cropped as ``masked_rgba``."""
-        rgb = sum(
-            np.asarray(shares[label])[..., None] * np.asarray(to_rgb(colour))
-            for label, colour in colours.items()
-        )
-        return masked_rgba(np.clip(rgb, 0.0, 1.0), mask, crop_mask)
-
-    def masked_rgba(rgb, mask, crop_mask=None):
-        """``rgb`` [H, W, 3] cropped to the box around ``crop_mask`` (default:
-        the colony ``mask``), transparent outside the colony."""
-        box = mask if crop_mask is None else crop_mask
-        rows, cols = np.flatnonzero(box.any(axis=1)), np.flatnonzero(box.any(axis=0))
-        crop = (slice(rows[0], rows[-1] + 1), slice(cols[0], cols[-1] + 1))
-        return np.concatenate([rgb[crop], mask[crop][..., None].astype(float)], axis=-1)
-
-    # Edge colours that tell the true-data projections apart in prevalence plots.
-    PROJECTION_EDGE_COLOURS = {"max": "black", "sum": "#8c2d9c", "slice": "#1f77b4"}
-
-    def model_option_label(record):
-        """Model picker label, with the projection and a short ID."""
-        return (
-            f"{record_label(record)} · {record['projection']} "
-            f"ds{record['downsample']} [{record['model_id'][-8:]}]"
-        )
-
-    def read_model_settings(registry, model_ids):
-        """Projection and downsample of each model, read from its bundle config.
-
-        The manifests are scanned once; IDs not found (e.g. aliases) fall
-        back to ``registry.get``.
-        """
-        wanted = set(model_ids)
-        bundles = {}
-        for path in registry.bundle_paths():
-            model_id = str(OmegaConf.load(path / "manifest.yaml").get("id", ""))
-            if model_id in wanted:
-                bundles[model_id] = open_model_bundle(path)
-        settings = {}
-        for model_id in model_ids:
-            bundle = bundles.get(model_id) or registry.get(model_id)
-            micropattern = bundle.config.data.micropattern
-            settings[model_id] = {
-                "projection": micropattern.projection if micropattern else "n/a",
-                "downsample": int(bundle.config.data.downsample),
-            }
-        return settings
-
-    def rules_projection(cell_type_rules):
-        """Projection a cell type file was tuned on (older files used max)."""
-        return str(cell_type_rules.preprocessing.get("projection", "max"))
-
-    def marker_channel_indices(channel_names, cell_type_rules):
-        """Index of each rule marker in ``channel_names`` (by channel, else by
-        marker name as in model states), in the order of the rule markers."""
-        channel_names = list(channel_names)
-        return [
-            channel_names.index(channel) if channel in channel_names else channel_names.index(marker)
-            for marker, channel in cell_type_rules.channels.items()
-        ]
-
-    def model_stain_counts(full_counts, cell_type_rules):
-        """Per-stain counts from counts over every rule marker (model output)."""
-        stains = [tuple(_channels) for _channels in rule_stains(cell_type_rules).values()]
-        return stain_counts_from_patterns(full_counts, cell_type_rules.markers, stains)
-
-    def model_label_shares(
-        image, channel_names, cell_type_rules, colony, n_rings, resolve_several=0.0
-    ):
-        """Label shares (``label_names`` order) of one model state ``[C, H, W]``.
-
-        Every marker is in every pixel, but shares are estimated per stain and
-        ring as for the measured data, so the two are comparable.
-        """
-        counts = model_pattern_counts(image, channel_names, cell_type_rules, colony, n_rings)
-        return colony_label_shares(
-            model_stain_counts(counts, cell_type_rules),
-            cell_type_rules,
-            resolve_several=resolve_several,
-        )
-
-    def data_label_shares(
-        image, channel_names, cell_type_rules, colony, n_rings, resolve_several=0.0
-    ):
-        """Label shares of one measured image ``[C, H, W]``, combining the
-        stains of the rule file (e.g. SOX2 in stain 1, FOXA2 in stain 2)."""
-        rings = radial_rings(colony, n_rings).ravel()
-        stain_counts = []
-        for _channels in rule_stains(cell_type_rules).values():
-            values = marker_values(image, channel_names, cell_type_rules, axis=0, channels=_channels)
-            markers = tuple(_channels)
-            stain_counts.append((
-                markers,
-                pattern_counts(
-                    np.stack([np.ravel(values[_m]) for _m in markers]),
-                    [cell_type_rules.thresholds[_m] for _m in markers],
-                    rings,
-                    n_rings,
-                ),
-            ))
-        return colony_label_shares(stain_counts, cell_type_rules, resolve_several=resolve_several)
-
-    def evaluate_condition(model, bundle, condition_data, condition, seed):
-        """Roll out one model, blocking recurrent NODAL reads when requested."""
-
-        initial = condition_data["initial_state"]
-        channels = int(model.N_CHANNELS)
-        if initial.shape[0] > channels:
-            raise ValueError(
-                f"{bundle.id} has {channels} state channels but its input has "
-                f"{initial.shape[0]}."
-            )
-        state = jnp.pad(
-            jnp.asarray(initial),
-            ((0, channels - initial.shape[0]), (0, 0), (0, 0)),
-        )
-
-        boundary_state = jnp.asarray(condition_data["boundary"])
-        boundary_mode = bundle.config.trainer.boundary_mode
-
-        time_labels = tuple(
-            f"{int(hour)}h" for hour in bundle.config.data.micropattern.timesteps
-        )
-        steps_per_observation = int(bundle.config.run.t)
-        frame_indices = tuple(
-            time_index * steps_per_observation
-            for time_index in range(len(time_labels))
-        )
-        total_steps = frame_indices[-1]
-        observation_steps = jnp.asarray(frame_indices, dtype=jnp.int32)
-        rollout_key = jr.PRNGKey(seed)
-
-        if condition == "baseline":
-            selected_states = rollout_model_sampled(
-                model,
-                state,
-                boundary_state,
-                boundary_mode,
-                rollout_key,
-                total_steps,
-                observation_steps,
-            )
-        else:
-            knockout_hour = 0 if condition == "ko_0h" else 24
-            knockout_step = (knockout_hour // 12) * steps_per_observation
-            selected_states = rollout_model_with_blocked_channel_sampled(
-                model,
-                state,
-                boundary_state,
-                boundary_mode,
-                rollout_key,
-                total_steps,
-                condition_data["nodal_channel"],
-                jnp.asarray(knockout_step, dtype=jnp.int32),
-                observation_steps,
-            )
-
-        prediction = np.asarray(selected_states)[
-            :, condition_data["output_channels"]
-        ]
-        return prediction, time_labels
-
-    def make_render_initial_condition(initial, boundary, shape, radius, key):
-        """Resample the measured 0h state inside a requested colony shape."""
-
-        source_mask = np.asarray(boundary).squeeze().astype(bool)
-        height, width = source_mask.shape
-        y, x = np.mgrid[-1.0:1.0:complex(height), -1.0:1.0:complex(width)]
-        if shape == "colony":
-            render_mask = source_mask
-        elif shape == "circle":
-            render_mask = x**2 + y**2 <= float(radius) ** 2
-        elif shape == "ellipse":
-            render_mask = (x / float(radius)) ** 2 + (y / (0.62 * float(radius))) ** 2 <= 1.0
-        elif shape == "triangle":
-            scaled_y = y / float(radius)
-            scaled_x = x / float(radius)
-            render_mask = (
-                (scaled_y >= -0.72)
-                & (scaled_y <= 0.85)
-                & (np.abs(scaled_x) <= (0.85 - scaled_y) / 1.57)
-            )
-        elif shape == "full":
-            render_mask = np.ones((height, width), dtype=bool)
-        else:
-            raise ValueError(f"Unknown render shape {shape!r}.")
-
-        source_values = jnp.asarray(initial)[:, source_mask]
-        if source_values.shape[1] == 0:
-            raise ValueError("The source colony mask contains no pixels.")
-        sample_indices = jr.randint(
-            key,
-            (height, width),
-            0,
-            source_values.shape[1],
-        )
-        sampled = source_values[:, sample_indices.reshape(-1)]
-        sampled = sampled.reshape(initial.shape[0], height, width)
-        shaped_initial = jnp.where(jnp.asarray(render_mask)[None], sampled, 0.0)
-        shaped_boundary = jnp.broadcast_to(
-            jnp.asarray(render_mask, dtype=jnp.asarray(boundary).dtype),
-            jnp.asarray(boundary).shape,
-        )
-        return shaped_initial, shaped_boundary, render_mask
-
-    def ko_time_label(hour, measurement_hour, prefix=""):
-        """Label of a KO time; a KO at (or after) the measurement is the baseline."""
-        if float(hour) >= float(measurement_hour):
-            return "Baseline"
-        return f"{prefix}{float(hour):g}h"
-
-    def ko_time_ticks(measurement_hour):
-        """Ticks every 12h up to the measurement, which is labelled baseline."""
-        ticks = [*np.arange(0.0, float(measurement_hour), 12.0), float(measurement_hour)]
-        return ticks, [ko_time_label(tick, measurement_hour) for tick in ticks]
-
-    def parse_one_based_indices(specification):
-        """Parse comma-separated indices and inclusive ranges such as 1,3-5."""
-
-        indices = []
-        for part in specification.split(","):
-            part = part.strip()
-            if not part:
-                continue
-            if "-" in part:
-                start_text, stop_text = part.split("-", 1)
-                start, stop = int(start_text), int(stop_text)
-                if stop < start:
-                    raise ValueError(f"Invalid descending replicate range {part!r}.")
-                indices.extend(range(start, stop + 1))
-            else:
-                indices.append(int(part))
-        indices = list(dict.fromkeys(indices))
-        if not indices or any(index < 1 for index in indices):
-            raise ValueError("Replicates must contain positive one-based indices.")
-        return tuple(indices)
-
-    # How the density × KO sweep sets the density (old results: covered share)
-    DENSITY_UNITS = {
-        "per_mm2": "Initial cells per mm²",
-        "per_colony": "Initial total cells in the colony",
-        "share": "Initial pixel coverage (covered share of the colony)",
-    }
-
-    def uncertainty_band(samples, mode):
-        """Mean and band of ``samples`` (``std``, ``sem``, ``percentile`` or
-        ``none``), the band clipped to [0, 1]."""
-        samples = np.asarray(samples, dtype=float)
-        mean = float(np.mean(samples))
-        spread = float(np.std(samples, ddof=1)) if len(samples) > 1 else 0.0
-        if mode == "std":
-            lower, upper = mean - spread, mean + spread
-        elif mode == "sem":
-            spread /= np.sqrt(len(samples))
-            lower, upper = mean - spread, mean + spread
-        elif mode == "percentile":
-            lower, upper = np.percentile(samples, [2.5, 97.5])
-        else:
-            lower = upper = mean
-        return mean, max(0.0, float(lower)), min(1.0, float(upper))
 
 
 @app.cell(hide_code=True)
 def _():
-    import matplotlib.style
-    matplotlib.style.use(
-        "default"
-    )
+    plt.style.use(["default", STYLE_FILE])
     return
 
 
@@ -1349,7 +1119,6 @@ def _(
 
 @app.cell(hide_code=True)
 def _(
-    cell_type_colour,
     tuned_cell_type_rules,
     tuning_mixed_projections,
     tuning_model_keys,
@@ -1413,7 +1182,7 @@ def _(
                 _result["prediction"][_index], _result["channel_names"], _rules, axis=0
             )
             _shares = pixel_label_shares(_values, _rules, _colony)
-            _axes[_row, _column].imshow(label_share_rgba(_shares, _colours, _colony))
+            _axes[_row, _column].imshow(cell_type_rgba(_shares, _colours, _colony))
             _prevalence_rows.append({
                 "model": tuning_model_keys[_model_id],
                 "condition": CONDITION_LABELS[_condition],
@@ -1731,11 +1500,11 @@ def _(trajectory_rollouts):
     trajectory_colony_size = mo.ui.slider(
         5.0, 11.5, step=0.5, value=9.0, show_value=True, label="Colony size (h)"
     )
-    trajectory_true_colour = mo.ui.text(value="#4646c8", label="True data label colour")
-    trajectory_model_colour = mo.ui.text(value="#d97706", label="NCA label colour")
+    trajectory_true_colour = mo.ui.text(value=DATA, label="True data label colour")
+    trajectory_model_colour = mo.ui.text(value=MODEL, label="NCA label colour")
     # Any matplotlib colour; blank draws no background
-    trajectory_baseline_band = mo.ui.text(value="#59a14f", label="Baseline background")
-    trajectory_ko_band = mo.ui.text(value=THEMES["light"]["accent"], label="KO background")
+    trajectory_baseline_band = mo.ui.text(value=SERIES[2], label="Baseline background")
+    trajectory_ko_band = mo.ui.text(value=ACCENT, label="KO background")
     trajectory_band_alpha = mo.ui.slider(
         0.0, 1.0, step=0.02, value=0.12, show_value=True, label="Background opacity"
     )
@@ -1786,7 +1555,6 @@ def _(trajectory_rollouts):
 
 @app.cell(hide_code=True)
 def _(
-    cell_type_colour,
     trajectory_band_alpha,
     trajectory_baseline_band,
     trajectory_branch,
@@ -1814,7 +1582,7 @@ def _(
     tuned_cell_type_rules,
 ):
     mo.stop(not trajectory_groups.value, mo.callout("Select at least one staining.", kind="warn"))
-    _theme = THEMES["light"]
+    _theme = THEME
     _first = next(iter(trajectory_rollouts.values()))
     _names = list(_first["channel_names"])
     _times = [float(_t.rstrip("h")) for _t in _first["time_labels"]]
@@ -1836,8 +1604,8 @@ def _(
     _source_colours = {
         _source: _text.strip() if is_color_like(_text.strip()) else _default
         for _source, _text, _default in (
-            ("target", trajectory_true_colour.value, "#4646c8"),
-            ("prediction", trajectory_model_colour.value, "#d97706"),
+            ("target", trajectory_true_colour.value, DATA),
+            ("prediction", trajectory_model_colour.value, MODEL),
         )
     }
     # Background colours (None: no background); invalid text counts as blank
@@ -1875,9 +1643,9 @@ def _(
             elif _by_condition:
                 _colours.append(next(_palette, (1.0, 1.0, 1.0)))
             elif _lmbr:
-                _colours.append(COLOURS["yellow"])
+                _colours.append(CHANNEL_COLOURS["yellow"])
             else:
-                _colours.append(COLOURS[MARKER_COLOURS.get(_marker(_name), "grey")])
+                _colours.append(CHANNEL_COLOURS[MARKER_COLOURS.get(_marker(_name), "grey")])
         _channel_colours[_group] = _colours
 
     # Sector per condition: every condition is cropped to the box around all
@@ -1891,7 +1659,7 @@ def _(
 
     def _type_tile(image, mask, crop_mask=None):
         shares = pixel_label_shares(marker_values(image, _names, _rules, axis=0), _rules, mask)
-        return label_share_rgba(shares, _type_colours, mask, crop_mask)
+        return cell_type_rgba(shares, _type_colours, mask, crop_mask)
 
     def _unmeasured(condition, source, i, group):
         """True where staining ``group`` of the true data has no image at time index i."""
@@ -2203,7 +1971,7 @@ def _(
                 for i in segment["indices"]:
                     centre = (_times[i], row_y)
                     rgba, unmeasured = tile(i)
-                    draw_colony(ax, rgba, centre, _s, _theme)
+                    draw_colony(ax, rgba, centre, _s)
                     for k, missing in enumerate(unmeasured):
                         start, stop = sector_angles(k, len(unmeasured))
                         if missing and trajectory_hatch.value:
@@ -2764,7 +2532,8 @@ def _(cell_type_labels, fine_ko_results):
     )
     fine_display_cell_types = mo.ui.multiselect(
         options=list(cell_type_labels),
-        value=list(cell_type_labels),
+        # Pixels matching several or no cell types are hidden unless chosen
+        value=[_label for _label in cell_type_labels if _label not in (SEVERAL, OTHER)],
         label="Displayed cell types",
         full_width=True,
     )
@@ -2811,33 +2580,11 @@ def _(cell_type_labels, fine_ko_results):
     )
 
 
-@app.cell
-def _():
-    # CELL_TYPE_COLOURS = {
-    #     "Notochord": "#d627a0",
-    #     "Endoderm": "#17becf",
-    #     "Mesoderm": "#2ca02c",
-    #     "Several": "#ff7f0e",
-    #     "Other": "#7f7f7f",
-    # }
 
-    CELL_TYPE_COLOURS = {
-        "Notochord": (0.4, 0.7, 0.6),
-        "Endoderm": (0.9, 0.9, 0.3),
-        "Mesoderm": (1.0, 0.0, 0.0),
-        "Several": (0.0, 0.0, 1.0),
-        "Other": (0.5, 0.5, 0.5),
-    }
-
-    def cell_type_colour(label):
-        return CELL_TYPE_COLOURS.get(label, "#000000")
-
-    return (cell_type_colour,)
 
 
 @app.cell(hide_code=True)
 def _(
-    cell_type_colour,
     cell_type_labels,
     cell_type_rings,
     cell_type_rules_by_projection,
@@ -3047,6 +2794,8 @@ def _(
             fine_prevalence_summary["cell_type"].isin(fine_display_cell_types.value)
             & fine_prevalence_summary["group"].isin(fine_display_groups.value)
         ]
+        # The group goes in the legend only when several groups are shown
+        _fine_several_groups = _fine_display_summary["group"].nunique() > 1
         for (_fine_group_label, _fine_cell_type), _fine_curve in (
             _fine_display_summary.groupby(["group", "cell_type"], sort=False)
         ):
@@ -3056,7 +2805,10 @@ def _(
                 _fine_curve["mean_prevalence"],
                 _fine_style_by_group[_fine_group_label],
                 color=cell_type_colour(_fine_cell_type),
-                label=f"{_fine_group_label} · {_fine_cell_type}",
+                label=(
+                    f"{_fine_group_label} · {_fine_cell_type}" if _fine_several_groups
+                    else _fine_cell_type
+                ),
             )
             if (
                 fine_uncertainty.value != "none"
@@ -3098,7 +2850,7 @@ def _(
                     marker=_fine_true_markers[_fine_true_row["condition"]],
                     s=65,
                     edgecolor=(
-                        PROJECTION_EDGE_COLOURS.get(_fine_true_row["projection"], "black")
+                        PROJECTION_COLOURS.get(_fine_true_row["projection"], "black")
                         if _fine_several_true else "black"
                     ),
                     linewidth=1.2 if _fine_several_true else 0.5,
@@ -3124,7 +2876,7 @@ def _(
                         color="white",
                         marker="s",
                         s=65,
-                        edgecolor=PROJECTION_EDGE_COLOURS.get(_fine_true_projection, "black"),
+                        edgecolor=PROJECTION_COLOURS.get(_fine_true_projection, "black"),
                         linewidth=1.2,
                         label=f"True data: {_fine_true_projection}",
                     )
@@ -3293,7 +3045,6 @@ def _(
 
 @app.cell(hide_code=True)
 def _(
-    cell_type_colour,
     fine_cell_map_mode,
     fine_cell_type_maps,
     fine_display_cell_types,
@@ -3565,7 +3316,9 @@ def _(dko_density_unit):
 
 
 @app.cell(hide_code=True)
-def _(dko_density_start, dko_density_stop, dko_density_unit, selection_records):
+def _(selection_records):
+    # Created apart from the layout below: a cell that shows the density
+    # controls reruns when they change, which would reset these choices
     _dko_model_options = {
         model_option_label(_record): _record["model_id"]
         for _record in selection_records
@@ -3598,6 +3351,13 @@ def _(dko_density_start, dko_density_stop, dko_density_unit, selection_records):
         value="Real cells (from nuclei)",
         label="Pieces placed",
     )
+    # Packed: cells never overlap, so the cell number is the number of distinct
+    # cells in the image (2D data such as slices). Layers: cells may overlap.
+    dko_placement = mo.ui.dropdown(
+        options={"Packed without overlap": "tiled", "Overlapping layers": "layers"},
+        value="Packed without overlap",
+        label="Cell placement",
+    )
     dko_expansion = mo.ui.number(
         0.0, 10.0, value=CELL_EXPANSION_UM, step=0.5, label="Cell reach beyond nucleus (µm)"
     )
@@ -3607,19 +3367,6 @@ def _(dko_density_start, dko_density_stop, dko_density_unit, selection_records):
     # Rollouts sent to the GPU together (lower it if memory runs out)
     dko_max_batch = mo.ui.number(1, 4096, value=64, step=1, label="Rollouts per GPU batch")
     run_dko_sweep = mo.ui.run_button(label="Run density × KO sweep")
-    mo.vstack([
-        dko_models,
-        mo.hstack([dko_density_unit, dko_density_start, dko_density_stop, dko_density_count]),
-        mo.hstack([dko_ko_start, dko_ko_stop, dko_ko_interval, dko_endpoint]),
-        mo.accordion({
-            "Cell placement (defaults as in inverse design)": mo.hstack(
-                [dko_piece_source, dko_expansion, dko_split_distance, dko_min_cell_area,
-                 dko_layers, dko_softness]
-            ),
-            "Compute": dko_max_batch,
-        }),
-        mo.hstack([dko_replicates, dko_seed, dko_duplicate_runs, run_dko_sweep]),
-    ])
     return (
         dko_density_count,
         dko_duplicate_runs,
@@ -3633,12 +3380,55 @@ def _(dko_density_start, dko_density_stop, dko_density_unit, selection_records):
         dko_min_cell_area,
         dko_models,
         dko_piece_source,
+        dko_placement,
         dko_replicates,
         dko_seed,
         dko_softness,
         dko_split_distance,
         run_dko_sweep,
     )
+
+
+@app.cell(hide_code=True)
+def _(
+    dko_density_count,
+    dko_density_start,
+    dko_density_stop,
+    dko_density_unit,
+    dko_duplicate_runs,
+    dko_endpoint,
+    dko_expansion,
+    dko_ko_interval,
+    dko_ko_start,
+    dko_ko_stop,
+    dko_layers,
+    dko_max_batch,
+    dko_min_cell_area,
+    dko_models,
+    dko_piece_source,
+    dko_placement,
+    dko_replicates,
+    dko_seed,
+    dko_softness,
+    dko_split_distance,
+    run_dko_sweep,
+):
+    mo.vstack([
+        dko_models,
+        mo.hstack([dko_density_unit, dko_density_start, dko_density_stop, dko_density_count]),
+        mo.hstack([dko_ko_start, dko_ko_stop, dko_ko_interval, dko_endpoint]),
+        mo.accordion({
+            "Cell placement (defaults as in inverse design)": mo.vstack([
+                mo.hstack([dko_placement, dko_piece_source, dko_expansion, dko_split_distance,
+                           dko_min_cell_area]),
+                mo.md("- Overlapping layers only:"),
+                mo.hstack([dko_layers, dko_softness], justify="start"),
+            ]),
+            "Compute": dko_max_batch,
+        }),
+        mo.hstack([dko_replicates, dko_seed, dko_duplicate_runs, run_dko_sweep]),
+    ])
+    return
 
 
 @app.cell(hide_code=True)
@@ -3668,6 +3458,7 @@ def _(
     dko_min_cell_area,
     dko_models,
     dko_piece_source,
+    dko_placement,
     dko_replicates,
     dko_seed,
     dko_softness,
@@ -3700,6 +3491,7 @@ def _(
         seed=int(dko_seed.value),
         duplicate_runs=int(dko_duplicate_runs.value),
         piece_source=dko_piece_source.value,
+        placement=dko_placement.value,
         expansion_um=float(dko_expansion.value),
         split_distance=int(dko_split_distance.value),
         min_cell_area=int(dko_min_cell_area.value),
@@ -3805,10 +3597,19 @@ def _(
         _local = f"output/nodal_ko_eval/{_name}"
         _dko_job_status = mo.callout(
             mo.md(
-                f"Wrote {_relative}. On the cluster, from the repository root:\n\n"
+                f"Wrote {_relative}: {len(dko_records)} models ("
+                + ", ".join(
+                    f"{_count} {_projection}"
+                    for _projection, _count in sorted(
+                        pd.Series([_record["projection"] for _record in dko_records]).value_counts().items()
+                    )
+                )
+                + "). On the cluster, from the repository root:\n\n"
                 f"```bash\nbash launch/launch_batch_multi_job.sh "
                 f"Experiments/micropatterns/density_ko_sweep.py {_relative} <workers> H200\n```\n\n"
-                f"Then copy `{_output}/` back to `{_local}/` and load that folder below. "
+                f"Then copy `{_output}/` back to `{_local}/` "
+                f"(`bash helper_scripts/copy_models_from_cluster.sh --port <port>`) "
+                f"and load that folder below. "
                 f"Test one part locally with `python Experiments/micropatterns/density_ko_sweep.py "
                 f"--manifest {_relative} --index 0`."
             ),
@@ -3877,8 +3678,24 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(cell_type_rings, cell_type_rules_by_projection, get_dko_results):
-    _all_results = get_dko_results() or ()
+def _(get_dko_results):
+    # Which of the loaded (or run) results are shown below
+    _dko_loaded_projections = sorted({_result["projection"] for _result in get_dko_results() or ()})
+    dko_projections = mo.ui.multiselect(
+        options=_dko_loaded_projections,
+        value=_dko_loaded_projections,
+        label="Projections shown",
+    )
+    dko_projections
+    return (dko_projections,)
+
+
+@app.cell(hide_code=True)
+def _(cell_type_rings, cell_type_rules_by_projection, dko_projections, get_dko_results):
+    _all_results = tuple(
+        _result for _result in get_dko_results() or ()
+        if _result["projection"] in dko_projections.value
+    )
     # Results need a cell type file of their projection
     _no_rules = sorted({
         _result["projection"] for _result in _all_results
@@ -3927,6 +3744,11 @@ def _(cell_type_rings, cell_type_rules_by_projection, get_dko_results):
 @app.cell(hide_code=True)
 def _(cell_type_labels, dko_results):
     _dko_densities = [] if not dko_results else [float(_d) for _d in dko_results[0]["densities"]]
+    # Mean density actually used at each requested density (cut at what the cell layers hold)
+    _dko_actual = (
+        [] if not dko_results
+        else list(np.mean([actual_densities(_result) for _result in dko_results], axis=0))
+    )
     _dko_unit = "share" if not dko_results else dko_results[0]["density_unit"]
     _dko_ko_hours = [] if not dko_results else [float(_h) for _h in dko_results[0]["requested_ko_hours"]]
     _dko_snapshot_hour = 48.0 if not dko_results else dko_results[0]["snapshot_hour"]
@@ -3960,15 +3782,23 @@ def _(cell_type_labels, dko_results):
     )
     dko_display_cell_types = mo.ui.multiselect(
         options=list(cell_type_labels),
-        value=list(cell_type_labels),
+        # Pixels matching several or no cell types are hidden unless chosen
+        value=[_label for _label in cell_type_labels if _label not in (SEVERAL, OTHER)],
         label="Displayed cell types",
         full_width=True,
     )
     # Slices default to the measured density and the KO time nearest 24h
+    def _density_option(_index):
+        return (
+            f"{format_density(_dko_actual[_index], _dko_unit)} "
+            f"(requested {format_density(_dko_densities[_index], _dko_unit)})"
+        )
+
+    # Values are the requested densities, which label the sweep's levels
     dko_fixed_density = mo.ui.dropdown(
-        options={format_density(_d, _dko_unit): _d for _d in _dko_densities},
+        options={_density_option(_i): _d for _i, _d in enumerate(_dko_densities)},
         value=(
-            format_density(min(_dko_densities, key=lambda _d: abs(_d - _dko_measured)), _dko_unit)
+            _density_option(int(np.argmin(np.abs(np.asarray(_dko_actual) - _dko_measured))))
             if _dko_densities else None
         ),
         label="Fixed density (KO sweep)",
@@ -3995,23 +3825,56 @@ def _(cell_type_labels, dko_results):
 
 
 @app.cell(hide_code=True)
+def _():
+    dko_show_measured = mo.ui.switch(value=True, label="Show measured density")
+    # Other density measures as extra axes (the sweep's own measure is always shown)
+    dko_extra_axes = mo.ui.multiselect(
+        options={_label: _unit for _unit, _label in DENSITY_AXIS_LABELS.items()},
+        value=[],
+        label="Extra density axes",
+    )
+    # Cell-type prevalence as a share of the colony's pixels or of its cells
+    # (each 0h cell counted once; needs cells packed without overlap)
+    dko_prevalence_basis = mo.ui.dropdown(
+        options={"Share of colony pixels": "pixels", "Share of cells": "cells"},
+        value="Share of colony pixels",
+        label="Prevalence as",
+    )
+    mo.hstack([dko_prevalence_basis, dko_show_measured, dko_extra_axes], justify="start")
+    return dko_extra_axes, dko_prevalence_basis, dko_show_measured
+
+
+@app.cell(hide_code=True)
 def _(
     cell_type_labels,
     cell_type_rules_by_projection,
     dko_group_by,
+    dko_prevalence_basis,
     dko_results,
     dko_uncertainty,
     fine_resolve_several,
 ):
-    # Shares from the stored pattern counts, so the controls above need no rerun
+    # Shares from the stored pattern counts, so the controls above need no rerun.
+    # By cells: counts where every 0h cell counts once, spread over its pixels.
+    _by_cells = dko_prevalence_basis.value == "cells"
+    _counts_key = "cell_pattern_counts" if _by_cells else "pattern_counts"
+    dko_prevalence_label = "Fraction of cells" if _by_cells else "Fraction of colony pixels"
+    _no_cell_counts = sorted({
+        f"{_result['label']} ({_result['projection']})"
+        for _result in dko_results or () if _result.get(_counts_key) is None
+    })
     _dko_rows = []
     for _result in dko_results or ():
+        if _result.get(_counts_key) is None:
+            continue
         _rules = cell_type_rules_by_projection[_result["projection"]]
+        _actual = actual_densities(_result)
+        _capped = capped_densities(_result)
         for _density_index, _density in enumerate(_result["densities"]):
             for _ko_index, _ko_hour in enumerate(_result["requested_ko_hours"]):
                 _shares = colony_label_shares(
                     model_stain_counts(
-                        _result["pattern_counts"][_density_index, _ko_index], _rules
+                        _result[_counts_key][_density_index, _ko_index], _rules
                     ),
                     _rules,
                     resolve_several=fine_resolve_several.value,
@@ -4025,7 +3888,10 @@ def _(
                         "replicate": _result["replicate"],
                         "seed": _result["seed"],
                         "group": _result["groups"][dko_group_by.value],
+                        # Requested; actual_density is what was used (in density_unit)
                         "density": float(_density),
+                        "actual_density": float(_actual[_density_index]),
+                        "capped": bool(_capped[_density_index]),
                         "density_unit": _result["density_unit"],
                         "covered_share": float(_result["covered_shares"][_density_index]),
                         "cells_per_mm2": (
@@ -4056,6 +3922,13 @@ def _(
                 "group": _group,
                 "cell_type": _cell_type,
                 "density": _density,
+                # Mean and range of the densities used by the runs at this requested density
+                "actual_density": float(_values["actual_density"].mean()),
+                "actual_density_min": float(_values["actual_density"].min()),
+                "actual_density_max": float(_values["actual_density"].max()),
+                "capped_share": float(_values["capped"].mean()),
+                # Every density measure, for the extra density axes
+                **{_column: float(_values[_column].mean()) for _column in DENSITY_COLUMNS.values()},
                 "knockout_hour": _ko_hour,
                 "mean_prevalence": _mean,
                 "lower": _lower,
@@ -4063,7 +3936,15 @@ def _(
                 "sample_count": int(len(_values)),
             })
     dko_summary = pd.DataFrame(_dko_summary_rows)
-    return dko_prevalence, dko_summary
+    (
+        mo.callout(
+            "No cell counts (cells placed in overlapping layers, or older results), so not shown "
+            "by cells: " + ", ".join(_no_cell_counts),
+            kind="warn",
+        )
+        if _by_cells and _no_cell_counts else mo.md("")
+    )
+    return dko_prevalence, dko_prevalence_label, dko_summary
 
 
 @app.cell(hide_code=True)
@@ -4084,7 +3965,7 @@ def _(dko_results):
         _cmap = plt.get_cmap("magma").copy()
         _cmap.set_bad(color="#d9d9d9")
         for _axis, _density, _share, _state in zip(
-            _axes[0], _densities, _first["covered_shares"], _first["initial_states"]
+            _axes[0], actual_densities(_first), _first["covered_shares"], _first["initial_states"]
         ):
             _axis.imshow(
                 np.where(_first["colony"], _state[_channel], np.nan),
@@ -4104,8 +3985,12 @@ def _(dko_results):
         _dko_initial_view = mo.vstack([
             _figure,
             mo.md(
-                f"- Sweep: {DENSITY_UNITS[_first['density_unit']]}; the layers hold at most "
-                f"{format_density(_first['max_density'], _first['density_unit'])}\n"
+                f"- Sweep: {DENSITY_UNITS[_first['density_unit']]}; "
+                + (
+                    "cells packed without overlap; the colony holds at most "
+                    if _first.get("placement") == "tiled" else "overlapping layers; they hold at most "
+                )
+                + f"{format_density(_first['max_density'], _first['density_unit'])}\n"
                 f"- Measured in the replicate's 0h colony (estimates of the true values): "
                 + (
                     f"{_first['measured_cells_per_mm2'] * _first['colony_mm2']:.0f} cells in a colony "
@@ -4126,12 +4011,14 @@ def _(dko_results):
 
 @app.cell(hide_code=True)
 def _(
-    cell_type_colour,
     dko_display_cell_types,
+    dko_extra_axes,
     dko_fixed_density,
     dko_fixed_ko,
     dko_prevalence,
+    dko_prevalence_label,
     dko_results,
+    dko_show_measured,
     dko_summary,
     dko_uncertainty,
 ):
@@ -4143,6 +4030,8 @@ def _(
             & dko_summary["cell_type"].isin(dko_display_cell_types.value)
         ]
         _groups = list(dict.fromkeys(dko_summary["group"]))
+        # The group goes in the legend only when several groups are shown
+        _several_groups = _shown["group"].nunique() > 1
         for (_group, _cell_type), _curve in _shown.groupby(["group", "cell_type"], sort=False):
             _curve = _curve.sort_values(_x_column)
             _line = _axis.plot(
@@ -4150,14 +4039,14 @@ def _(
                 _styles[_groups.index(_group) % len(_styles)],
                 marker="o", markersize=3,
                 color=cell_type_colour(_cell_type),
-                label=f"{_group} · {_cell_type}",
+                label=f"{_group} · {_cell_type}" if _several_groups else _cell_type,
             )
             if dko_uncertainty.value != "none" and _curve["sample_count"].max() > 1:
                 _axis.fill_between(
                     _curve[_x_column], _curve["lower"], _curve["upper"],
                     color=_line[0].get_color(), alpha=0.18,
                 )
-        _axis.set(ylabel="Fraction of colony pixels", ylim=(0.0, None))
+        _axis.set(ylabel=dko_prevalence_label, ylim=(0.0, None))
 
     if dko_summary.empty or dko_fixed_ko.value is None or dko_fixed_density.value is None:
         _dko_slice_view = mo.md("")
@@ -4165,16 +4054,25 @@ def _(
         _snapshot_hour = dko_results[0]["snapshot_hour"]
         _measured = float(np.mean(dko_prevalence["measured_density"].unique()))
         _figure, (_density_axis, _ko_axis) = plt.subplots(1, 2, figsize=(15, 5), dpi=150)
-        _plot_slice(_density_axis, "knockout_hour", dko_fixed_ko.value, "density")
-        _density_axis.axvline(_measured, color="gray", linestyle="--", linewidth=1)
-        _density_axis.text(
-            _measured, 0.98, " measured", color="gray", fontsize=8, va="top",
-            transform=_density_axis.get_xaxis_transform(),
-        )
+        _plot_slice(_density_axis, "knockout_hour", dko_fixed_ko.value, "actual_density")
+        if dko_show_measured.value:
+            _density_axis.axvline(_measured, color="gray", linestyle="--", linewidth=1)
+            _density_axis.text(
+                _measured, 0.98, " measured", color="gray", fontsize=8, va="top",
+                transform=_density_axis.get_xaxis_transform(),
+            )
         _unit = dko_results[0]["density_unit"]
         _density_axis.set(
-            xlabel=DENSITY_UNITS[_unit],
+            xlabel=f"{DENSITY_UNITS[_unit]} (used)",
             title=f"Density sweep · KO {ko_time_label(dko_fixed_ko.value, _snapshot_hour)}",
+        )
+        add_density_axes(
+            _density_axis, "x",
+            density_conversions(
+                dko_summary[np.isclose(dko_summary["knockout_hour"], dko_fixed_ko.value)],
+                _unit, dko_extra_axes.value,
+            ),
+            gap=0.2,
         )
         _plot_slice(_ko_axis, "density", dko_fixed_density.value, "knockout_hour")
         _ticks, _tick_labels = ko_time_ticks(_snapshot_hour)
@@ -4182,7 +4080,15 @@ def _(
             xlabel="NODAL knockout time (h)",
             xticks=_ticks,
             xticklabels=_tick_labels,
-            title=f"KO sweep · density {format_density(dko_fixed_density.value, _unit)}",
+            title=(
+                "KO sweep · density "
+                + format_density(
+                    float(dko_summary.loc[
+                        np.isclose(dko_summary["density"], dko_fixed_density.value), "actual_density"
+                    ].mean()),
+                    _unit,
+                )
+            ),
         )
         _ko_axis.legend(fontsize="small", ncol=2)
         _figure.suptitle(f"Predicted cell-type prevalence at {_snapshot_hour:g}h")
@@ -4212,14 +4118,19 @@ def _(dko_summary):
 @app.cell(hide_code=True)
 def _(
     dko_display_cell_types,
+    dko_extra_axes,
     dko_fixed_density,
     dko_fixed_ko,
     dko_heatmap_group,
     dko_heatmap_scale,
     dko_prevalence,
+    dko_prevalence_label,
     dko_results,
+    dko_show_measured,
     dko_summary,
 ):
+    # Grids of the heatmaps, also drawn as surfaces below
+    dko_heatmap_grids = None
     if dko_summary.empty or dko_heatmap_group.value is None or not dko_display_cell_types.value:
         _dko_heatmap_view = mo.md("")
     else:
@@ -4229,39 +4140,356 @@ def _(
             _cell_type for _cell_type in dko_display_cell_types.value
             if _cell_type in set(_shown["cell_type"])
         ]
-        _figure, _axes = plt.subplots(
-            1, len(_cell_types), figsize=(4.6 * len(_cell_types), 4.2), dpi=150, squeeze=False
-        )
         _measured = float(np.mean(dko_prevalence["measured_density"].unique()))
+        _unit = dko_results[0]["density_unit"]
+        _conversions = density_conversions(_shown, _unit, dko_extra_axes.value)
+        # Each extra density axis takes about 1.2 in left of its heatmap
+        _figure, _axes = plt.subplots(
+            1, len(_cell_types), figsize=((4.6 + 1.2 * len(_conversions)) * len(_cell_types), 4.2),
+            dpi=150, squeeze=False,
+        )
+        # Rows sit at the density each requested density actually used, on a
+        # linear axis, so rows can differ in height. Requested densities cut
+        # down to (about) the same value by the cell layers share one row.
+        _levels = _shown.groupby("density")["actual_density"].mean().sort_index()
+        _row_values, _row_of = density_rows(_levels)
+
+        dko_heatmap_grids = {
+            "group": dko_heatmap_group.value,
+            "snapshot_hour": _snapshot_hour,
+            "unit": _unit,
+            "measured": _measured,
+            "value_label": dko_prevalence_label,
+            "densities": _row_values,
+            # The rows in the extra density measures, for the surfaces' hover text
+            "extra_densities": {
+                _extra: _forward(_row_values) for _extra, (_forward, _) in _conversions.items()
+            },
+            "grids": {},
+        }
         for _axis, _cell_type in zip(_axes[0], _cell_types):
             _grid = _shown[_shown["cell_type"] == _cell_type].pivot(
                 index="density", columns="knockout_hour", values="mean_prevalence"
             ).sort_index().sort_index(axis=1)
+            _grid = _grid.groupby(_grid.index.map(_row_of)).mean().sort_index()
+            dko_heatmap_grids["ko_hours"] = _grid.columns.to_numpy()
+            dko_heatmap_grids["grids"][_cell_type] = _grid.to_numpy()
             _image = _axis.pcolormesh(
-                _grid.columns.to_numpy(), _grid.index.to_numpy(), _grid.to_numpy(),
-                shading="nearest", cmap="viridis",
+                cell_edges(_grid.columns.to_numpy()), cell_edges(_row_values), _grid.to_numpy(),
+                shading="flat", cmap="viridis",
                 **({"vmin": 0.0, "vmax": 1.0} if dko_heatmap_scale.value == "shared" else {}),
             )
             # Where the two slices above cut the map
             _axis.axvline(dko_fixed_ko.value, color="white", linewidth=0.8, linestyle=":")
-            _axis.axhline(dko_fixed_density.value, color="white", linewidth=0.8, linestyle=":")
-            _axis.axhline(_measured, color="white", linewidth=0.8, linestyle="--")
+            _fixed_level = _levels.index[np.argmin(np.abs(_levels.index.to_numpy() - dko_fixed_density.value))]
+            _axis.axhline(
+                _row_values[_row_of[_fixed_level]], color="white", linewidth=0.8, linestyle=":",
+            )
+            if dko_show_measured.value:
+                _axis.axhline(_measured, color="white", linewidth=0.8, linestyle="--")
             _ticks, _tick_labels = ko_time_ticks(_snapshot_hour)
             _axis.set(
                 xlabel="NODAL knockout time (h)",
-                ylabel=DENSITY_UNITS[dko_results[0]["density_unit"]],
+                ylabel=f"{DENSITY_UNITS[_unit]} (used)",
                 xticks=_ticks,
                 xticklabels=_tick_labels,
                 title=_cell_type,
             )
-            _figure.colorbar(_image, ax=_axis, label="Fraction of colony pixels")
+            add_density_axes(_axis, "y", _conversions, gap=0.3)
+            _figure.colorbar(_image, ax=_axis, label=dko_prevalence_label)
         _figure.suptitle(
             f"{dko_heatmap_group.value} · mean prevalence at {_snapshot_hour:g}h "
-            f"(dotted: slices above, dashed: measured density)"
+            + ("(dotted: slices above, dashed: measured density)" if dko_show_measured.value
+               else "(dotted: slices above)")
         )
         _figure.tight_layout()
         _dko_heatmap_view = _figure
     _dko_heatmap_view
+    return (dko_heatmap_grids,)
+
+
+@app.cell(hide_code=True)
+def _(dko_heatmap_grids, dko_show_measured):
+    # The heatmaps as translucent surfaces: drag to rotate, click a legend entry to hide it
+    if dko_heatmap_grids is None:
+        _dko_surface_view = mo.md("")
+    else:
+        _ko = dko_heatmap_grids["ko_hours"]
+        _densities = dko_heatmap_grids["densities"]
+        _surface_figure = go.Figure()
+        # Extra density measures of each row, shown on hover
+        _extras = dko_heatmap_grids["extra_densities"]
+        _extra_hover = "".join(
+            f"<br>{DENSITY_AXIS_LABELS[_extra]} %{{customdata[{_index}]:.4g}}"
+            for _index, _extra in enumerate(_extras)
+        )
+        for _cell_type, _grid in dko_heatmap_grids["grids"].items():
+            _colour = cell_type_colour(_cell_type)
+            _surface_figure.add_trace(go.Surface(
+                x=_ko, y=_densities, z=_grid,
+                customdata=(
+                    np.stack([np.broadcast_to(_values[:, None], _grid.shape) for _values in _extras.values()], axis=-1)
+                    if _extras else None
+                ),
+                name=_cell_type,
+                showlegend=True,
+                showscale=False,
+                opacity=0.55,
+                colorscale=[[0.0, _colour], [1.0, _colour]],
+                hovertemplate=(
+                    f"{_cell_type}<br>KO %{{x:g}} h<br>density %{{y:.4g}}{_extra_hover}<br>"
+                    "prevalence %{z:.3f}<extra></extra>"
+                ),
+            ))
+        _measured = dko_heatmap_grids["measured"]
+        if dko_show_measured.value and _densities.min() <= _measured <= _densities.max():
+            # Measured density, along the floor
+            _surface_figure.add_trace(go.Scatter3d(
+                x=[_ko.min(), _ko.max()], y=[_measured, _measured], z=[0.0, 0.0],
+                mode="lines", line={"color": "gray", "dash": "dash", "width": 4},
+                name="Measured density",
+            ))
+        _surface_figure.update_layout(
+            title=(
+                f"{dko_heatmap_grids['group']} · mean prevalence at "
+                f"{dko_heatmap_grids['snapshot_hour']:g}h"
+            ),
+            scene={
+                "xaxis_title": "NODAL knockout time (h)",
+                "yaxis_title": f"{DENSITY_UNITS[dko_heatmap_grids['unit']]} (used)",
+                "zaxis_title": dko_heatmap_grids["value_label"],
+                "zaxis": {"range": [0.0, 1.0]},
+            },
+            legend={"title": "Click to show or hide"},
+            # Keeps the camera where the user left it when the plot is redrawn
+            uirevision="dko_surfaces",
+            height=650,
+            margin={"l": 0, "r": 0, "t": 40, "b": 0},
+        )
+        _dko_surface_view = _surface_figure
+    _dko_surface_view
+    return
+
+
+@app.cell(hide_code=True)
+def _(dko_results):
+    # Measured channels of the final state: mean over the chosen rings
+    _with_means = [_result for _result in dko_results or () if _result.get("channel_means") is not None]
+    _names = list(dict.fromkeys(_name for _result in _with_means for _name in _result["state_channel_names"]))
+    _rings = max([int(_result["rings"]) for _result in _with_means] or [1])
+    dko_channels = mo.ui.multiselect(options=_names, value=_names, label="Channels", full_width=True)
+    dko_ring_range = mo.ui.range_slider(
+        1, max(_rings, 2), value=[1, _rings], step=1, label="Rings (1: centre)", show_value=True
+    )
+    mo.vstack([
+        mo.md(
+            "### Measured channels\n\n"
+            "- Mean of each channel of the final state over the chosen rings, against density and KO time\n"
+            "- Uses the fixed KO time, fixed density, grouping and heatmap group above"
+        ),
+        (
+            mo.callout("These results have no channel means (run before they were saved).", kind="warn")
+            if dko_results and not _with_means else mo.hstack([dko_channels, dko_ring_range], justify="start")
+        ),
+    ])
+    return dko_channels, dko_ring_range
+
+
+@app.cell(hide_code=True)
+def _(dko_channels, dko_group_by, dko_results, dko_ring_range, dko_uncertainty):
+    _frames = []
+    _low, _high = (int(_value) for _value in dko_ring_range.value)
+    for _result in dko_results or ():
+        _means = _result.get("channel_means")
+        if _means is None:
+            continue
+        # Weight each chosen ring by its pixels, so the mean is over the colony area
+        _rings = int(_result["rings"])
+        _ring_of_pixel = radial_rings(_result["colony"], _rings)
+        _area = np.bincount(_ring_of_pixel[_ring_of_pixel >= 0], minlength=_rings).astype(float)
+        _area[: _low - 1] = 0.0
+        _area[_high:] = 0.0
+        _weights = np.where(np.isfinite(_means), _area[None, None, :, None], 0.0)
+        _values = np.nansum(_means * _weights, axis=2) / np.maximum(_weights.sum(axis=2), 1e-12)
+        _names = list(_result["state_channel_names"])
+        _density_index, _ko_index, _channel_index = np.meshgrid(
+            np.arange(_values.shape[0]), np.arange(_values.shape[1]), np.arange(_values.shape[2]),
+            indexing="ij",
+        )
+        _frame = pd.DataFrame({
+            "density": np.asarray(_result["densities"], dtype=float)[_density_index.ravel()],
+            "actual_density": actual_densities(_result)[_density_index.ravel()],
+            "knockout_hour": np.asarray(_result["requested_ko_hours"], dtype=float)[_ko_index.ravel()],
+            "channel": np.asarray(_names)[_channel_index.ravel()],
+            "value": _values.ravel(),
+        })
+        for _unit, _column in DENSITY_COLUMNS.items():
+            _measure = _result.get({"share": "covered_shares"}.get(_unit, _column))
+            _frame[_column] = (
+                np.asarray(_measure, dtype=float)[_density_index.ravel()] if _measure is not None else np.nan
+            )
+        _frame["group"] = _result["groups"][dko_group_by.value]
+        _frame["model_label"] = _result["label"]
+        _frame["replicate"] = _result["replicate"]
+        _frame["seed"] = _result["seed"]
+        _frames.append(_frame[_frame["channel"].isin(dko_channels.value)])
+    dko_channel_values = pd.concat(_frames, ignore_index=True) if _frames else pd.DataFrame()
+    _summary_rows = []
+    if not dko_channel_values.empty:
+        for (_group, _channel, _density, _ko_hour), _rows in dko_channel_values.groupby(
+            ["group", "channel", "density", "knockout_hour"], sort=False
+        ):
+            _mean, _lower, _upper = uncertainty_band(_rows["value"], dko_uncertainty.value, clip=False)
+            _summary_rows.append({
+                "group": _group,
+                "channel": _channel,
+                "density": _density,
+                "actual_density": float(_rows["actual_density"].mean()),
+                **{_column: float(_rows[_column].mean()) for _column in DENSITY_COLUMNS.values()},
+                "knockout_hour": _ko_hour,
+                "mean_value": _mean,
+                "lower": _lower,
+                "upper": _upper,
+                "sample_count": int(len(_rows)),
+            })
+    dko_channel_summary = pd.DataFrame(_summary_rows)
+    return dko_channel_summary, dko_channel_values
+
+
+@app.cell(hide_code=True)
+def _(
+    dko_channel_summary,
+    dko_channel_values,
+    dko_channels,
+    dko_extra_axes,
+    dko_fixed_density,
+    dko_fixed_ko,
+    dko_results,
+    dko_uncertainty,
+):
+    # One row per channel: density sweep at the fixed KO time, KO sweep at the fixed density
+    if dko_channel_summary.empty or dko_fixed_ko.value is None or dko_fixed_density.value is None:
+        _dko_channel_view = mo.md("")
+    else:
+        _channels = [_c for _c in dko_channels.value if _c in set(dko_channel_summary["channel"])]
+        _groups = list(dict.fromkeys(dko_channel_summary["group"]))
+        _unit = dko_results[0]["density_unit"]
+        _snapshot_hour = dko_results[0]["snapshot_hour"]
+        _conversions = density_conversions(
+            dko_channel_summary[np.isclose(dko_channel_summary["knockout_hour"], dko_fixed_ko.value)],
+            _unit, dko_extra_axes.value,
+        )
+        _figure, _axes = plt.subplots(
+            len(_channels), 2, figsize=(13, (3.0 + 0.6 * len(_conversions)) * len(_channels)),
+            dpi=130, squeeze=False,
+        )
+
+        def _plot(_axis, _rows, _x_column):
+            for _index, (_group, _curve) in enumerate(_rows.groupby("group", sort=False)):
+                _curve = _curve.sort_values(_x_column)
+                _colour = SERIES[_groups.index(_group) % len(SERIES)]
+                _axis.plot(
+                    _curve[_x_column], _curve["mean_value"], marker="o", markersize=3,
+                    color=_colour, label=_group,
+                )
+                if dko_uncertainty.value != "none" and _curve["sample_count"].max() > 1:
+                    _axis.fill_between(
+                        _curve[_x_column], _curve["lower"], _curve["upper"], color=_colour, alpha=0.18,
+                    )
+
+        for _row, _channel in enumerate(_channels):
+            _shown = dko_channel_summary[dko_channel_summary["channel"] == _channel]
+            _density_axis, _ko_axis = _axes[_row]
+            _plot(_density_axis, _shown[np.isclose(_shown["knockout_hour"], dko_fixed_ko.value)], "actual_density")
+            _density_axis.set(
+                xlabel=f"{DENSITY_UNITS[_unit]} (used)", ylabel=f"{_channel} (mean)",
+                title=f"KO {ko_time_label(dko_fixed_ko.value, _snapshot_hour)}" if _row == 0 else None,
+            )
+            add_density_axes(_density_axis, "x", _conversions, gap=0.25)
+            _plot(_ko_axis, _shown[np.isclose(_shown["density"], dko_fixed_density.value)], "knockout_hour")
+            _ticks, _tick_labels = ko_time_ticks(_snapshot_hour)
+            _ko_axis.set(
+                xlabel="NODAL knockout time (h)", xticks=_ticks, xticklabels=_tick_labels,
+                title=(
+                    "density " + format_density(float(_shown.loc[
+                        np.isclose(_shown["density"], dko_fixed_density.value), "actual_density"
+                    ].mean()), _unit)
+                ) if _row == 0 else None,
+            )
+        if len(_groups) > 1:
+            _axes[0, 1].legend(fontsize="small")
+        _figure.tight_layout()
+        _dko_channel_view = mo.vstack([
+            _figure,
+            mo.hstack([
+                mo.download(
+                    lambda: dko_channel_values.to_csv(index=False).encode("utf-8"),
+                    filename="nodal_ko_density_channels.csv", mimetype="text/csv",
+                    label="Download per-run channel CSV",
+                ),
+                mo.download(
+                    lambda: dko_channel_summary.to_csv(index=False).encode("utf-8"),
+                    filename="nodal_ko_density_channels_summary.csv", mimetype="text/csv",
+                    label="Download grouped channel CSV",
+                ),
+            ], justify="start"),
+        ])
+    _dko_channel_view
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    dko_channel_summary,
+    dko_channels,
+    dko_fixed_density,
+    dko_fixed_ko,
+    dko_heatmap_group,
+    dko_results,
+    dko_show_measured,
+):
+    # Heatmap of each channel for the heatmap group, on the densities used (linear axis)
+    if dko_channel_summary.empty or dko_heatmap_group.value is None:
+        _dko_channel_heatmaps = mo.md("")
+    else:
+        _shown = dko_channel_summary[dko_channel_summary["group"] == dko_heatmap_group.value]
+        _channels = [_c for _c in dko_channels.value if _c in set(_shown["channel"])]
+        _levels = _shown.groupby("density")["actual_density"].mean().sort_index()
+        _row_values, _row_of = density_rows(_levels)
+        _unit = dko_results[0]["density_unit"]
+        _snapshot_hour = dko_results[0]["snapshot_hour"]
+        _measured = float(np.mean([_result["measured_density"] for _result in dko_results]))
+        _fixed_level = _levels.index[np.argmin(np.abs(_levels.index.to_numpy() - dko_fixed_density.value))]
+        _columns = min(4, max(len(_channels), 1))
+        _figure, _axes = plt.subplots(
+            -(-len(_channels) // _columns), _columns, figsize=(4.4 * _columns, 3.8 * -(-len(_channels) // _columns)),
+            dpi=130, squeeze=False,
+        )
+        for _axis, _channel in zip(_axes.flat, _channels):
+            _grid = _shown[_shown["channel"] == _channel].pivot(
+                index="density", columns="knockout_hour", values="mean_value"
+            ).sort_index().sort_index(axis=1)
+            _grid = _grid.groupby(_grid.index.map(_row_of)).mean().sort_index()
+            _image = _axis.pcolormesh(
+                cell_edges(_grid.columns.to_numpy()), cell_edges(_row_values), _grid.to_numpy(),
+                shading="flat", cmap="viridis",
+            )
+            _axis.axvline(dko_fixed_ko.value, color="white", linewidth=0.8, linestyle=":")
+            _axis.axhline(_row_values[_row_of[_fixed_level]], color="white", linewidth=0.8, linestyle=":")
+            if dko_show_measured.value:
+                _axis.axhline(_measured, color="white", linewidth=0.8, linestyle="--")
+            _ticks, _tick_labels = ko_time_ticks(_snapshot_hour)
+            _axis.set(
+                xlabel="NODAL knockout time (h)", ylabel=f"{DENSITY_AXIS_LABELS[_unit]} (used)",
+                xticks=_ticks, xticklabels=_tick_labels, title=_channel,
+            )
+            _figure.colorbar(_image, ax=_axis, label="Mean value")
+        for _axis in list(_axes.flat)[len(_channels):]:
+            _axis.set_visible(False)
+        _figure.suptitle(f"{dko_heatmap_group.value} · channel means at {_snapshot_hour:g}h")
+        _figure.tight_layout()
+        _dko_channel_heatmaps = _figure
+    _dko_channel_heatmaps
     return
 
 

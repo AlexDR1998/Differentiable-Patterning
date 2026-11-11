@@ -1,18 +1,18 @@
 """Schematic of how an NCA is defined and trained on time series data.
 
 Run with:
-    marimo edit Experiments/micropatterns/nca_training_schematic.py
+    marimo edit Experiments/micropatterns/figures/nca_training_schematic.py
 
 - Panel a: one NCA update step. State channels (observed, hidden, boundary mask)
   → fixed perception kernels → per-pixel network → gated linear unit → random
   fire mask (asynchronous updates) → residual add → boundary → next state
 - Panel b: training as a mock phase portrait, time against a 1D state space.
   Every interval between observations is rolled out at once (parallel in time),
-  for a batch per timepoint (one fibre each); fibres turn orange where a
+  for a batch per timepoint (one fibre each); fibres change colour where a
   regulariser penalises them. Predictions are compared with the data and become
   the next start states (or the data does, with probability p).
   A small plot shows loss weight curricula over training
-- Panel a's colony is the toy local rule of project_overview.py (panel b), at a
+- Panel a's colony is the toy local rule of figures/toy.py (as in project_overview.py), at a
   chosen number of pixels; panel b's values are made up. No data is loaded
 - Figures are saved to ``figures/schematics/``
 """
@@ -30,9 +30,29 @@ with app.setup:
     import numpy as np
     from matplotlib.patches import Circle, FancyBboxPatch, Rectangle
 
-    from Experiments.micropatterns import nodal_ko_schematic as ko_drawing
-    from Experiments.micropatterns import project_overview as overview
-    from Experiments.micropatterns.schematics import colour_or
+    from Experiments.micropatterns.figures.data import TIMEPOINTS
+    from Experiments.micropatterns.figures.drawing import (
+        draw_arrow,
+        draw_card,
+        draw_paper_stack,
+        grey_rgba,
+        polyline_arrow,
+        rounded_box,
+        stack_panels,
+        text_width,
+    )
+    from Experiments.micropatterns.figures.style import (
+        ACCENT,
+        FONT,
+        MODEL,
+        NEIGHBOURHOOD,
+        SERIES,
+        THEME,
+        WIDTH,
+        paper_style,
+        save_figure,
+    )
+    from Experiments.micropatterns.figures.toy import toy_patterning, toy_rgba
 
     # 3x3 perception kernels, as in Common/model/spatial_operators.py (SMOOTHING=1)
     KERNELS = {
@@ -50,7 +70,7 @@ with app.setup:
         {"type": "cosine", "initial": 0.0, "final": 1.0, "start": 0.2, "end": 0.7, "stages": None},
         {"type": "linear", "initial": 0.0, "final": 0.8, "start": 0.4, "end": 1.0, "stages": 4},
     )
-    CURVE_COLOURS = ("#1f77b4", "#8c6bb1", "#41ab5d")
+    CURVE_COLOURS = (SERIES[0], SERIES[4], SERIES[2])
     # Data reinjection probability: starts at p, falls linearly after a fraction of training
     REINJECTION = {"type": "linear", "initial": 0.5, "final": 0.15, "start": 0.25, "end": 1.0, "stages": None}
 
@@ -66,12 +86,6 @@ def schedule_factor(progress, curve):
     if curve["type"] == "cosine":
         transition = 0.5 - 0.5 * np.cos(np.pi * transition)
     return curve["initial"] + (curve["final"] - curve["initial"]) * transition
-
-
-@app.function(hide_code=True)
-def text_width(text, font):
-    """Rough width of ``text`` in data units, as estimated in project_overview.py."""
-    return 0.09 * max(len(line) for line in text.split("\n")) * font / 7
 
 
 @app.function(hide_code=True)
@@ -102,13 +116,6 @@ def resample_toy(toy, pixels):
 
 
 @app.function(hide_code=True)
-def grey_rgba(values, mask):
-    """RGBA of one channel in [0, 1], white on black, transparent outside ``mask``."""
-    rgb = np.repeat(np.clip(values, 0, 1)[..., None], 3, axis=-1)
-    return np.concatenate([rgb, mask[..., None].astype(float)], axis=-1)
-
-
-@app.function(hide_code=True)
 def operator(ax, centre, symbol, style, colour=None, radius=0.16):
     """Circle with a symbol in it, e.g. + or ⊙."""
     theme = style["theme"]
@@ -116,22 +123,6 @@ def operator(ax, centre, symbol, style, colour=None, radius=0.16):
     ax.add_patch(Circle(centre, radius, facecolor=theme["bg"], edgecolor=colour, lw=1.0, zorder=8))
     ax.text(centre[0], centre[1], symbol, ha="center", va="center", fontsize=style["font"] + 1, color=colour,
             zorder=9)
-
-
-@app.function(hide_code=True)
-def rounded_box(ax, corner, width, height, colour, z=2):
-    """Filled, outlined rounded box, like the training block of project_overview.py."""
-    for kwargs in (dict(facecolor=colour, alpha=0.15, edgecolor="none", zorder=z),
-                   dict(fill=False, edgecolor=colour, lw=1.0, zorder=z + 0.1)):
-        ax.add_patch(FancyBboxPatch(corner, width, height, boxstyle="round,pad=0,rounding_size=0.1", **kwargs))
-
-
-@app.function(hide_code=True)
-def polyline_arrow(ax, points, colour, lw=0.9, **kwargs):
-    """Line through ``points`` with an arrow head on the last segment."""
-    xs, ys = zip(*points)
-    ax.plot(xs[:-1], ys[:-1], color=colour, lw=lw, solid_capstyle="butt", **kwargs)
-    overview.draw_arrow(ax, points[-2], points[-1], colour, lw=lw, **kwargs)
 
 
 @app.function(hide_code=True)
@@ -159,11 +150,11 @@ def state_images(toy, style):
     fired = (np.random.default_rng(style["seed"]).uniform(size=mask.shape) < style["fire_rate"]) & mask
     change = np.clip(np.abs(frames[k + 1] - frames[k]) * style["update_gain"], 0, 1)
     return {
-        "before": {"observed": overview.toy_rgba(frames[k], mask), "hidden": hidden[0], "mask": mask_rgba},
-        "after": {"observed": overview.toy_rgba(frames[k + 1], mask), "hidden": hidden[1], "mask": mask_rgba},
-        "update": overview.toy_rgba(change, mask),
+        "before": {"observed": toy_rgba(frames[k], mask), "hidden": hidden[0], "mask": mask_rgba},
+        "after": {"observed": toy_rgba(frames[k + 1], mask), "hidden": hidden[1], "mask": mask_rgba},
+        "update": toy_rgba(change, mask),
         "fired": grey_rgba(fired.astype(float), mask),
-        "fired_update": overview.toy_rgba(change * fired, mask),
+        "fired_update": toy_rgba(change * fired, mask),
         "mask": mask_rgba,
     }
 
@@ -193,10 +184,10 @@ def draw_state_column(ax, x, centre_y, images, style, label, side, label_y):
         if name == "hidden":
             step = 0.07
             tiles = [(rgba, ()) for rgba in images["hidden"]]
-            overview.draw_paper_stack(ax, tiles, (x, y), size - 2 * step, (step, step), style, pixelated=True)
+            draw_paper_stack(ax, tiles, (x, y), size - 2 * step, (step, step), style["back_cards"], pixelated=True)
         else:
             edge = style["mask_colour"] if name == "mask" else None
-            overview.draw_card(ax, (x, y), size, 10, style, images[name], edge=edge, pixelated=True)
+            draw_card(ax, (x, y), size, 10, images[name], edge=edge, pixelated=True)
         text_x, ha = (x - 0.1, "right") if side == "right" else (x + size + 0.1, "left")
         ax.text(text_x, y + size / 2, names[name], ha=ha, va="center", fontsize=small, linespacing=1.2,
                 color=style["mask_colour"] if name == "mask" else theme["fg"])
@@ -229,7 +220,7 @@ def draw_network(ax, x, centre_y, style):
                                    alpha=0.25 if k == 0 else 0.08, edgecolor=model, lw=0.8, zorder=4))
             ax.text(left + bar_w / 2, centre_y, name, ha="center", va="center", rotation=90, fontsize=small - 0.5,
                     zorder=5)
-            overview.draw_arrow(ax, (left + bar_w + 0.03, centre_y), (left + bar_w + bar_gap - 0.03, centre_y),
+            draw_arrow(ax, (left + bar_w + 0.03, centre_y), (left + bar_w + bar_gap - 0.03, centre_y),
                                 theme["fg"], lw=0.8)
             continue
         unit = bar_h / sum(heights)
@@ -266,7 +257,7 @@ def draw_architecture_panel(ax, toy, style):
     skip_y = max(column_top + 0.25, cy + style["network_height"] / 2 + 0.65)
     bar_x, column_bottom = draw_state_column(ax, left, cy, images["before"], style, "$x_t$", "right", skip_y)
     x = bar_x + 0.45
-    overview.draw_arrow(ax, (bar_x, cy), (x - 0.12, cy), fg)
+    draw_arrow(ax, (bar_x, cy), (x - 0.12, cy), fg)
 
     # Perception: fixed local kernels, applied to every channel
     kernels = [k for k in style["kernels"] if k in KERNELS] or ["ID"]
@@ -283,7 +274,7 @@ def draw_architecture_panel(ax, toy, style):
     ax.text(x + k_size / 2, k_top + 0.25, style["perception_label"], ha="center", va="bottom", fontsize=small,
             linespacing=1.2)
     x += k_size + 0.25 + 1.4 * max(text_width(KERNELS[k][1].strip("$\\"), small - 0.5) for k in kernels)
-    overview.draw_arrow(ax, (x, cy), (x + 0.3, cy), fg)
+    draw_arrow(ax, (x, cy), (x + 0.3, cy), fg)
     x += 0.35
 
     net_right, parts = draw_network(ax, x, cy, style)
@@ -295,34 +286,34 @@ def draw_architecture_panel(ax, toy, style):
         sigmoid_x = x + 0.2
         gate = (sigmoid_x + 0.8, cy)
         ax.plot([x, sigmoid_x + 0.32], [a_y, a_y], color=fg, lw=0.8)
-        overview.draw_arrow(ax, (sigmoid_x + 0.32, a_y), (gate[0] - 0.11, gate[1] + 0.11), fg, lw=0.8)
+        draw_arrow(ax, (sigmoid_x + 0.32, a_y), (gate[0] - 0.11, gate[1] + 0.11), fg, lw=0.8)
         ax.plot([x, sigmoid_x], [b_y, b_y], color=fg, lw=0.8)
         ax.add_patch(Rectangle((sigmoid_x, b_y - 0.13), 0.32, 0.26, facecolor=theme["bg"], edgecolor=fg, lw=0.8,
                                zorder=6))
         ax.plot(sigmoid_x + 0.04 + 0.24 * np.linspace(0, 1, 30),
                 b_y - 0.08 + 0.16 / (1 + np.exp(-12 * (np.linspace(0, 1, 30) - 0.5))), color=fg, lw=0.7, zorder=7)
-        overview.draw_arrow(ax, (sigmoid_x + 0.32, b_y), (gate[0] - 0.11, gate[1] - 0.11), fg, lw=0.8)
+        draw_arrow(ax, (sigmoid_x + 0.32, b_y), (gate[0] - 0.11, gate[1] - 0.11), fg, lw=0.8)
         operator(ax, gate, "⊙", style, colour=style["model_colour"])
         ax.text(gate[0], a_y + 0.15, style["gate_label"], ha="center", va="bottom", fontsize=small,
                 color=style["model_colour"], linespacing=1.2)
         x = gate[0] + 0.16
 
     # Update Δx
-    overview.draw_arrow(ax, (x + 0.03, cy), (x + 0.5, cy), fg)
+    draw_arrow(ax, (x + 0.03, cy), (x + 0.5, cy), fg)
     x += 0.55
-    overview.draw_card(ax, (x, cy - size / 2), size, 10, style, images["update"], pixelated=True)
+    draw_card(ax, (x, cy - size / 2), size, 10, images["update"], pixelated=True)
     ax.text(x + size / 2, cy + size / 2 + 0.08, r"$\Delta x$", ha="center", va="bottom", fontsize=font)
     x += size
 
     # Asynchronous updates: multiply by a random fire mask
     multiply = (x + 0.55, cy)
-    overview.draw_arrow(ax, (x + 0.03, cy), (multiply[0] - 0.17, cy), fg)
+    draw_arrow(ax, (x + 0.03, cy), (multiply[0] - 0.17, cy), fg)
     operator(ax, multiply, "⊙", style, colour=accent)
     fire_top = cy - size / 2 - 0.15
     fire_x = multiply[0] - size / 2
-    overview.draw_card(ax, (fire_x, fire_top - size), size, 10, style, images["fired"], edge=accent,
+    draw_card(ax, (fire_x, fire_top - size), size, 10, images["fired"], edge=accent,
                        pixelated=True)
-    overview.draw_arrow(ax, (multiply[0], fire_top + 0.02), (multiply[0], cy - 0.17), accent)
+    draw_arrow(ax, (multiply[0], fire_top + 0.02), (multiply[0], cy - 0.17), accent)
     ax.text(multiply[0], fire_top - size - 0.08, style["fire_label_learned" if learned else "fire_label"],
             ha="center", va="top", fontsize=small, color=accent, linespacing=1.2)
     if learned:
@@ -332,24 +323,24 @@ def draw_architecture_panel(ax, toy, style):
                             (fire_x - 0.03, fire_top - size / 2)], accent, ls=(0, (3, 1.5)))
     x = multiply[0] + 0.17
 
-    overview.draw_arrow(ax, (x + 0.03, cy), (x + 0.4, cy), fg)
+    draw_arrow(ax, (x + 0.03, cy), (x + 0.4, cy), fg)
     x += 0.45
-    overview.draw_card(ax, (x, cy - size / 2), size, 10, style, images["fired_update"], pixelated=True)
+    draw_card(ax, (x, cy - size / 2), size, 10, images["fired_update"], pixelated=True)
     ax.text(x + size / 2, cy + size / 2 + 0.08, r"$\sigma \odot \Delta x$", ha="center", va="bottom",
             fontsize=font)
     x += size
 
     # Residual update x_t + σ ⊙ Δx, with the skip connection over the top
     add = (x + 0.45, cy)
-    overview.draw_arrow(ax, (x + 0.03, cy), (add[0] - 0.17, cy), fg)
+    draw_arrow(ax, (x + 0.03, cy), (add[0] - 0.17, cy), fg)
     operator(ax, add, "+", style)
     ax.plot([left + size / 2 + 0.4, add[0]], [skip_y, skip_y], color=muted, lw=0.9)
-    overview.draw_arrow(ax, (add[0], skip_y), (add[0], cy + 0.17), muted, lw=0.9)
+    draw_arrow(ax, (add[0], skip_y), (add[0], cy + 0.17), muted, lw=0.9)
     ax.text(add[0] - 0.15, skip_y + 0.1, style["skip_label"], ha="right", va="bottom", fontsize=small, color=muted)
     x = add[0] + 0.17
 
     # Boundary: the adhesion mask m is applied after every step
-    overview.draw_arrow(ax, (x + 0.03, cy), (x + 0.3, cy), fg)
+    draw_arrow(ax, (x + 0.03, cy), (x + 0.3, cy), fg)
     x += 0.32
     box_w, box_h = 1.8, 0.85
     rounded_box(ax, (x, cy - box_h / 2), box_w, box_h, mask_colour, z=5)
@@ -359,16 +350,16 @@ def draw_architecture_panel(ax, toy, style):
     ax.text(x + box_w / 2, cy - 0.15, rule, ha="center", va="center", fontsize=small - 0.5, zorder=6)
     m_size = 0.8 * size
     m_top = cy - box_h / 2 - 0.35
-    overview.draw_card(ax, (x + (box_w - m_size) / 2, m_top - m_size), m_size, 10, style, images["mask"],
+    draw_card(ax, (x + (box_w - m_size) / 2, m_top - m_size), m_size, 10, images["mask"],
                        edge=mask_colour, pixelated=True)
-    overview.draw_arrow(ax, (x + box_w / 2, m_top + 0.02), (x + box_w / 2, cy - box_h / 2 - 0.02), mask_colour)
+    draw_arrow(ax, (x + box_w / 2, m_top + 0.02), (x + box_w / 2, cy - box_h / 2 - 0.02), mask_colour)
     ax.text(x + box_w / 2, m_top - m_size - 0.08, style["adhesion_label"], ha="center", va="top",
             fontsize=small, color=mask_colour, linespacing=1.2)
     x += box_w
 
     # State x_{t+1}
     column_x = x + 0.8
-    overview.draw_arrow(ax, (x + 0.03, cy), (column_x - 0.25, cy), fg)
+    draw_arrow(ax, (x + 0.03, cy), (column_x - 0.25, cy), fg)
     draw_state_column(ax, column_x, cy, images["after"], style, "$x_{t+1}$", "left", skip_y)
     right = column_x + size + 0.15 + max(text_width(n, small) for n in names)
 
@@ -445,7 +436,7 @@ def draw_training_panel(ax, toy, style):
     data, predicted, bulges = mock_trajectories(count, style)
     width, height = style["phase_width"], style["phase_height"]
     v_low, v_high = -0.18, 1.32
-    hours = np.linspace(0, ko_drawing.TIMEPOINTS[-1], count)
+    hours = np.linspace(0, TIMEPOINTS[-1], count)
 
     def to_x(fraction):
         return width * fraction
@@ -468,7 +459,7 @@ def draw_training_panel(ax, toy, style):
 
     # Axes: time and the state space
     ax.plot([0, width], [0, 0], color=fg, lw=0.7)
-    overview.draw_arrow(ax, (0, 0), (0, height + 0.1), fg, lw=0.7)
+    draw_arrow(ax, (0, 0), (0, height + 0.1), fg, lw=0.7)
     for fraction, hour in zip(times, hours):
         ax.plot([to_x(fraction)] * 2, [0, -0.06], color=fg, lw=0.7)
         ax.text(to_x(fraction), -0.1, f"{hour:g}h", ha="center", va="top", fontsize=small)
@@ -583,84 +574,29 @@ def draw_training_panel(ax, toy, style):
     ax.set_ylim(min(bottom, py - 1.0), bracket_y + 0.8)
 
 
-@app.function(hide_code=True)
-def schematic_figure(panels, toy, style):
-    """The chosen panels stacked top to bottom; with ``style["same_scale"]`` every panel
-    uses the same data-units-per-inch."""
-    theme = style["theme"]
-    draw = {
-        "a": lambda ax: draw_architecture_panel(ax, toy, style),
-        "b": lambda ax: draw_training_panel(ax, toy, style),
-    }
-    with plt.rc_context({"text.color": theme["fg"], "font.size": style["font"]}):
-        fig = plt.figure(figsize=(style["width"], 2.0), facecolor=theme["bg"], layout="constrained")
-        axes = fig.subplots(len(panels), 1, squeeze=False)[:, 0]
-        for ax, key in zip(axes, panels):
-            ax.set_facecolor(theme["bg"])
-            draw[key](ax)
-            ax.set_aspect("equal")
-            ax.axis("off")
-            ax.text(0.0, 1.0, key, transform=ax.transAxes, ha="left", va="top", fontsize=style["font"] + 3,
-                    fontweight="bold")
-            if style["titles"][key]:
-                ax.text(0.03, 1.0, style["titles"][key], transform=ax.transAxes, ha="left", va="top",
-                        fontsize=style["font"] + 1)
-        widths = [ax.get_xlim()[1] - ax.get_xlim()[0] for ax in axes]
-        if style["same_scale"]:
-            for ax in axes:
-                ax.set_xlim(ax.get_xlim()[0], ax.get_xlim()[0] + max(widths))
-        ratios = [(ax.get_ylim()[1] - ax.get_ylim()[0]) / (ax.get_xlim()[1] - ax.get_xlim()[0]) for ax in axes]
-        axes[0].get_subplotspec().get_gridspec().set_height_ratios(ratios)
-        fig.set_size_inches(style["width"], style["width"] * sum(ratios) + 0.1 * len(panels))
-    return fig
-
-
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
     # NCA training schematic
 
     - a: one NCA update step; b: training on a time series, parallel in time
-    - a: toy colony from `project_overview.py`; b: made-up values, not data
+    - a: toy colony from `figures/toy.py`; b: made-up values, not data
     """)
     return
 
 
 @app.cell(hide_code=True)
 def _():
-    background = mo.ui.dropdown(options=list(ko_drawing.THEMES), value="light", label="Page background")
-    figure_width = mo.ui.slider(start=5.0, stop=14.0, step=0.25, value=7.5, label="Width (in)", show_value=True)
-    font_size = mo.ui.slider(start=5, stop=12, step=0.5, value=7, label="Font size", show_value=True)
+    figure_width = mo.ui.dropdown(options={"double column": WIDTH["double"], "single column": WIDTH["single"]},
+                                  value="double column", label="Width")
     panels = mo.ui.multiselect(options=["a", "b"], value=["a", "b"], label="Panels")
     same_scale = mo.ui.switch(value=True, label="Same scale in every panel")
     card_size = mo.ui.slider(start=0.6, stop=1.6, step=0.05, value=1.2, label="Image size", show_value=True)
-    model_colour = mo.ui.text(value="", placeholder="theme", label="Model colour")
-    accent_colour = mo.ui.text(value="", placeholder="theme", label="Firing colour")
-    mask_colour = mo.ui.text(value="#e6a700", label="Boundary colour")
-    neighbourhood_colour = mo.ui.text(value="#00b300", label="Kernel colour")
-    loss_colour = mo.ui.text(value="#d62728", label="Loss colour")
-    regulariser_colour = mo.ui.text(value="#ff7f0e", label="Regulariser colour")
     mo.vstack([
         mo.md("**Display**"),
-        mo.hstack([background, figure_width, font_size, card_size], justify="start"),
-        mo.hstack([panels, same_scale], justify="start"),
-        mo.hstack([model_colour, accent_colour, mask_colour], justify="start"),
-        mo.hstack([neighbourhood_colour, loss_colour, regulariser_colour], justify="start"),
+        mo.hstack([figure_width, card_size, panels, same_scale], justify="start"),
     ])
-    return (
-        accent_colour,
-        background,
-        card_size,
-        figure_width,
-        font_size,
-        loss_colour,
-        mask_colour,
-        model_colour,
-        neighbourhood_colour,
-        panels,
-        regulariser_colour,
-        same_scale,
-    )
+    return card_size, figure_width, panels, same_scale
 
 
 @app.cell(hide_code=True)
@@ -792,15 +728,13 @@ def _():
 @app.cell(hide_code=True)
 def _(toy_frames, toy_seed, toy_size, toy_steps):
     # The toy rule's length scales are in pixels, so run it at 24 px and resample to the chosen size
-    _base = overview.toy_patterning(24, int(toy_frames.value), int(toy_steps.value), int(toy_seed.value))
+    _base = toy_patterning(24, int(toy_frames.value), int(toy_steps.value), int(toy_seed.value))
     toy = resample_toy(_base, int(toy_size.value or 24))
     return (toy,)
 
 
 @app.cell(hide_code=True)
 def _(
-    accent_colour,
-    background,
     batch,
     boundary_mode,
     card_size,
@@ -810,14 +744,9 @@ def _(
     figure_width,
     fire_rate,
     firing,
-    font_size,
     gated,
     kernels,
     labels,
-    loss_colour,
-    mask_colour,
-    model_colour,
-    neighbourhood_colour,
     network_height,
     overshoot,
     overshoot_interval,
@@ -826,7 +755,6 @@ def _(
     phase_width,
     plot_gap,
     prediction_error,
-    regulariser_colour,
     same_scale,
     show_reinjection,
     show_reinjection_paths,
@@ -836,22 +764,20 @@ def _(
     zoom_frame,
 ):
     mo.stop(not panels.value, mo.callout("Select at least one panel.", kind="warn"))
-    _theme = dict(ko_drawing.THEMES[background.value])
-    _theme["accent"] = colour_or(accent_colour.value, _theme["accent"])
     _text = {k: v.replace("\\n", "\n") for k, v in labels.value.items()}
     style = {
-        "theme": _theme,
-        "font": float(font_size.value),
+        "theme": THEME,
+        "font": FONT["label"],
         "width": float(figure_width.value),
         "same_scale": same_scale.value,
         "back_cards": "full",
         "card": float(card_size.value),
         "row_gap": 0.3,
-        "model_colour": colour_or(model_colour.value, _theme["model"]),
-        "mask_colour": colour_or(mask_colour.value, "#e6a700"),
-        "neighbourhood_colour": colour_or(neighbourhood_colour.value, "#00b300"),
-        "loss_colour": colour_or(loss_colour.value, "#d62728"),
-        "regulariser_colour": colour_or(regulariser_colour.value, "#ff7f0e"),
+        "model_colour": MODEL,
+        "mask_colour": SERIES[3],
+        "neighbourhood_colour": NEIGHBOURHOOD,
+        "loss_colour": ACCENT,
+        "regulariser_colour": SERIES[4],
         "kernels": [k for k in KERNELS if k in kernels.value],
         "gated": gated.value,
         "firing": firing.value,
@@ -876,7 +802,12 @@ def _(
         "titles": {"a": _text["title_a"], "b": _text["title_b"]},
         **{k: v for k, v in _text.items() if not k.startswith("title_")},
     }
-    schematic = schematic_figure(sorted(panels.value), toy, style)
+    _draw = {
+        "a": lambda ax: draw_architecture_panel(ax, toy, style),
+        "b": lambda ax: draw_training_panel(ax, toy, style),
+    }
+    with paper_style():
+        schematic = stack_panels(_draw, sorted(panels.value), style["width"], style["titles"], style["same_scale"])
     schematic
     return (schematic,)
 
@@ -885,23 +816,16 @@ def _(
 def _():
     figure_name = mo.ui.text(value="nca_training_schematic", label="File name")
     save_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
-    save_figure = mo.ui.run_button(label="Save figure")
-    mo.hstack([figure_name, save_svg, save_figure], justify="start")
-    return figure_name, save_figure, save_svg
+    save_button = mo.ui.run_button(label="Save figure")
+    mo.hstack([figure_name, save_svg, save_button], justify="start")
+    return figure_name, save_button, save_svg
 
 
 @app.cell
-def _(figure_name, save_figure, save_svg, schematic):
-    mo.stop(not save_figure.value)
-    _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
-    _directory.mkdir(parents=True, exist_ok=True)
-    _suffixes = ("pdf", "png", "svg") if save_svg.value else ("pdf", "png")
-    # svg.fonttype "none" keeps text as editable text in Inkscape
-    with plt.rc_context({"svg.fonttype": "none"}):
-        for _suffix in _suffixes:
-            schematic.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400,
-                              facecolor=schematic.get_facecolor())
-    mo.md(f"Saved `{figure_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
+def _(figure_name, save_button, save_svg, schematic):
+    mo.stop(not save_button.value)
+    _paths = save_figure(schematic, figure_name.value, "schematics", svg=save_svg.value)
+    mo.md("Saved " + ", ".join(f"`{p}`" for p in _paths))
     return
 
 

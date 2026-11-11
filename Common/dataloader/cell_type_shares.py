@@ -36,12 +36,13 @@ import numpy as np
 from Common.dataloader.cell_types import pattern_label_shares
 
 
-def pattern_counts(values, thresholds, groups, n_groups):
+def pattern_counts(values, thresholds, groups, n_groups, weights=None):
     """Number of pixels of each high/low pattern in each group.
 
     ``values`` is ``[markers, pixels]``, ``thresholds`` one per marker and
     ``groups`` the group of each pixel (-1 = left out). Returns
     ``[n_groups, 2 ** markers]``, where bit ``i`` of a pattern is marker ``i``.
+    With ``weights`` (one per pixel) each pixel counts by its weight.
     """
     values = np.asarray(values)
     groups = np.asarray(groups)
@@ -49,7 +50,11 @@ def pattern_counts(values, thresholds, groups, n_groups):
     keep = groups >= 0
     bits = (1 << np.arange(len(thresholds)))[:, None]
     codes = np.sum((values[:, keep] > np.asarray(thresholds, dtype=float)[:, None]) * bits, axis=0)
-    counts = np.bincount(groups[keep] * n_patterns + codes, minlength=n_groups * n_patterns)
+    counts = np.bincount(
+        groups[keep] * n_patterns + codes,
+        weights=None if weights is None else np.asarray(weights, dtype=float)[keep],
+        minlength=n_groups * n_patterns,
+    )
     return counts.reshape(n_groups, n_patterns).astype(float)
 
 

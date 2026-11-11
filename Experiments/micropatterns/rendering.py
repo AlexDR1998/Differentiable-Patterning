@@ -8,25 +8,13 @@ maps colour each pixel by its label shares from a cell type file.
 import numpy as np
 
 from Common.dataloader.cell_types import label_names, marker_values, pixel_label_shares
-
-# As in nodal_ko_eval.py; labels not listed are drawn black
-CELL_TYPE_COLOURS = {
-    "Notochord": (0.4, 0.7, 0.6),
-    "Endoderm": (0.9, 0.9, 0.3),
-    "Mesoderm": (1.0, 0.0, 0.0),
-    "Several": (0.0, 0.0, 1.0),
-    "Other": (0.5, 0.5, 0.5),
-}
+from Experiments.micropatterns.figures.style import CMY_TRIPLETS, cell_type_rgb
 
 
 def render_cmy_composite(states, state_channel_names):
     """Build the thesis-style row of three CMY composite panels."""
 
-    triplets = (
-        ("SOX2", "TBXT", "SOX17"),
-        ("CER1", "LEFTY", "NODAL"),
-        ("FOXA2", "LEF1", "SMAD23"),
-    )
+    triplets = CMY_TRIPLETS
     missing = sorted(
         {name for triplet in triplets for name in triplet}
         .difference(state_channel_names)
@@ -87,14 +75,14 @@ def render_fate_cmy(states, state_channel_names, renormalise=False):
 def render_cell_types(states, state_channel_names, cell_type_rules, mask):
     """RGB ``[..., H, W, 3]`` of model states ``[..., C, H, W]`` coloured by cell type.
 
-    Each pixel blends the ``CELL_TYPE_COLOURS`` of its label shares
-    (``pixel_label_shares``); outside ``mask`` ``[H, W]`` it is black.
+    Each pixel blends the cell-type colours (``figures/style.py``) of its label
+    shares (``pixel_label_shares``); outside ``mask`` ``[H, W]`` it is black.
     """
 
     values = marker_values(states, state_channel_names, cell_type_rules, axis=-3)
     shares = pixel_label_shares(values, cell_type_rules, mask)
     rgb = sum(
-        shares[label][..., None] * np.asarray(CELL_TYPE_COLOURS.get(label, (0.0, 0.0, 0.0)))
+        shares[label][..., None] * np.asarray(cell_type_rgb(label))
         for label in label_names(cell_type_rules)
     )
     return np.clip(rgb, 0.0, 1.0)

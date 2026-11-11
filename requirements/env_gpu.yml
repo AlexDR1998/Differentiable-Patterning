@@ -21,6 +21,7 @@ dependencies:
     - scipy
     - lpips-j==0.0.6
     - matplotlib
+    - plotly
     - ipykernel
     - ipywidgets
     - ffmpeg-python

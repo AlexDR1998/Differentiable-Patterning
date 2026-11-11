@@ -2,7 +2,7 @@
 data, and probing signalling perturbations at any time with the model.
 
 Run with:
-    marimo edit Experiments/micropatterns/project_overview.py
+    marimo edit Experiments/micropatterns/figures/project_overview.py
 
 - Panel a: cartoon microscope and a time series of real colonies, one paper stack
   of replicates per timepoint (only the top sheet is clearly visible)
@@ -33,65 +33,41 @@ with app.setup:
     from matplotlib.collections import PolyCollection
     from matplotlib.patches import Ellipse, FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle, Wedge
 
-    from Experiments.micropatterns import nodal_ko_schematic as ko_drawing
-    from Experiments.micropatterns.schematics import colour_or, group_colours, legend_options, legend_swatch
+    from Experiments.micropatterns.figures.data import PROJECTION_CLEANING, TIMEPOINTS, load_colonies
+    from Experiments.micropatterns.figures.drawing import (
+        colony_rgba,
+        draw_arrow,
+        draw_card,
+        draw_paper_stack,
+        draw_zoom_outline,
+        placeholder_rgba,
+        sliced_rgba,
+        stack_panels,
+    )
+    from Experiments.micropatterns.figures.style import (
+        CONDITION_LABELS,
+        EXPERIMENT_GROUPS,
+        FONT,
+        GROUP_LABELS,
+        MODEL,
+        NEIGHBOURHOOD,
+        PROJECTION_LABELS,
+        SERIES,
+        THEME,
+        WIDTH,
+        SectorHandle,
+        group_colours,
+        legend_options,
+        legend_swatch,
+        paper_style,
+        save_figure,
+        sector_angles,
+    )
+    from Experiments.micropatterns.figures.toy import toy_patterning, toy_rgba
 
     load_dotenv()
 
-    TIMEPOINTS = ko_drawing.TIMEPOINTS
-    CONDITION_LABELS = {"ctrl": "Control", "sl24": "perturbed at 24h", "sl0": "perturbed at 0h"}
-    PROJECTION_LABELS = {"max": "max projection", "sum": "sum projection", "slice": "single slice"}
-
-    # Toy fates of panel b, drawn like the SOX2 / TBXT / SOX17 stainings
-    TOY_COLOURS = (ko_drawing.COLOURS["cyan"], ko_drawing.COLOURS["red"], ko_drawing.COLOURS["yellow"])
-
-
-@app.function(hide_code=True)
-def load_overview_data(root, conditions, groups, projection, downsample, replicates):
-    """All timepoints of the given conditions and one-based replicates, on one shared
-    intensity scale per channel (pooled normalisation, as in nodal_ko_schematic.py).
-
-    Returns images [B, T, C, H, W], measured [B, T, C], masks [B, H, W], the
-    (condition, replicate) of each batch entry and the channel names.
-    """
-    from Common.dataloader.disk_cache import cache_dir_from_environment
-    from Common.dataloader.micropattern_260726 import load_micropattern_260726
-    from Experiments.micropatterns.config_helpers import _cleaning_for_loader, _excluded_images
-
-    micropattern = ko_drawing.knockout_data_config(groups, projection, downsample, "pooled").micropattern
-    dataset = load_micropattern_260726(
-        root,
-        conditions=tuple(conditions),
-        projection=micropattern.projection,
-        timesteps=TIMEPOINTS,
-        downsample=downsample,
-        replicate_indices=tuple(r - 1 for r in replicates),
-        experiment_groups=tuple(micropattern.experiment_groups),
-        excluded_measurements=micropattern.excluded_measurements,
-        hist_eqs=micropattern.histogram_percentiles,
-        intensity_factors=micropattern.intensity_factors,
-        cleaning=_cleaning_for_loader(micropattern.cleaning),
-        excluded_images=_excluded_images(micropattern),
-        cache_dir=cache_dir_from_environment(),
-    )
-    return {
-        "images": np.asarray(dataset.data),
-        "measured": np.asarray(dataset.measurement_mask),
-        "masks": np.asarray(dataset.boundary_mask[:, 0]).astype(bool),
-        "keys": list(zip(dataset.aux["batch_conditions"], dataset.aux["batch_replicates"])),
-        "channel_names": tuple(dataset.channel_names),
-    }
-
-
-@app.function(hide_code=True)
-def placeholder_rgba(size=64):
-    """Grey disc, drawn where no data is loaded."""
-    rows, cols = np.indices((size, size))
-    inside = np.hypot(rows - (size - 1) / 2, cols - (size - 1) / 2) <= size / 2
-    rgba = np.zeros((size, size, 4))
-    rgba[..., :3] = 0.35
-    rgba[..., 3] = inside
-    return rgba
+    LIGHT_COLOUR = "#8fd0ff"  # light cone of the microscope cartoon
 
 
 @app.function(hide_code=True)
@@ -104,119 +80,9 @@ def colony_tile(data, condition, replicate, hour, groups, gamma):
     time_index = TIMEPOINTS.index(hour)
     names, image = data["channel_names"], data["images"][batch, time_index]
     measured = data["measured"][batch, time_index]
-    rgbas = [ko_drawing.colony_rgba(image, data["masks"][batch], group_colours(names, g), gamma) for g in groups]
+    rgbas = [colony_rgba(image, data["masks"][batch], group_colours(names, g), gamma) for g in groups]
     unmeasured = tuple(not any(m for n, m in zip(names, measured) if n.split("/")[0] == g) for g in groups)
-    return ko_drawing.sliced_rgba(rgbas), unmeasured
-
-
-@app.function(hide_code=True)
-def toy_patterning(size, frame_count, steps_per_frame, seed):
-    """Toy patterning process made only of local updates, for illustration.
-
-    A signal enters at the colony edge and spreads by diffusion (a 4-neighbour
-    Laplacian); each pixel then relaxes its three fates towards levels set by the
-    local signal: high → SOX17-like, middle → TBXT-like, low → SOX2-like. Returns
-    fates [F, 3, size, size] and the colony mask.
-    """
-    rng = np.random.default_rng(seed)
-    rows, cols = np.indices((size, size))
-    centre = (size - 1) / 2
-    mask = np.hypot(rows - centre, cols - centre) <= size / 2 - 0.5
-    shifts = ((1, 0), (-1, 0), (1, 1), (-1, 1))
-    neighbour_masks = [np.roll(mask, s, axis=a) for s, a in shifts]
-    neighbour_count = sum(neighbour_masks)
-    rim = mask & (neighbour_count < 4)
-    # Fixed per-pixel jitter, so ring borders are not perfectly round
-    jitter = 0.06 * rng.normal(size=(size, size))
-    rate = 0.06 * (1 + 0.5 * rng.uniform(-1, 1, size=(size, size)))
-
-    signal = np.zeros((size, size))
-    fates = np.zeros((3, size, size))
-    fates[0] = np.clip(0.85 + 0.1 * rng.normal(size=(size, size)), 0, 1)
-    frames = [fates * mask]
-    for _ in range(frame_count - 1):
-        for _ in range(steps_per_frame):
-            # Zero-flux Laplacian: only neighbours inside the colony
-            laplacian = sum(np.roll(signal, s, axis=a) * m for (s, a), m in zip(shifts, neighbour_masks))
-            laplacian = laplacian - neighbour_count * signal
-            signal = (signal + 0.2 * laplacian - 0.02 * signal) * mask
-            signal[rim] += 0.3 * (1.0 - signal[rim])
-            level = signal + jitter
-            high = 1 / (1 + np.exp(-(level - 0.5) / 0.04))
-            middle = (1 / (1 + np.exp(-(level - 0.22) / 0.04))) * (1 - high)
-            target = np.stack([np.clip(1 - high - middle, 0, 1), middle, high])
-            fates = fates + rate * (target - fates)
-        frames.append(fates * mask)
-    return np.stack(frames), mask
-
-
-@app.function(hide_code=True)
-def toy_rgba(fates, mask):
-    """RGBA [H, W, 4] of toy fates [3, H, W] on black, transparent outside the colony."""
-    rgb = ko_drawing.composite(np.clip(fates, 0, 1), TOY_COLOURS)
-    return np.concatenate([rgb, mask[..., None].astype(float)], axis=-1)
-
-
-@app.function(hide_code=True)
-def draw_arrow(ax, start, end, colour, lw=1.0, **kwargs):
-    """Plain arrow from ``start`` to ``end`` (data units)."""
-    ax.annotate("", xy=end, xytext=start, annotation_clip=False,
-                arrowprops=dict(arrowstyle="-|>", color=colour, lw=lw, shrinkA=0, shrinkB=0, mutation_scale=9,
-                                **kwargs))
-
-
-@app.function(hide_code=True)
-def draw_zoom_outline(ax, corner, size, dashes, z):
-    """Square outline of black dashes over a solid white line, so it shows on both
-    light pages and dark images. Marks the zoomed neighbourhood in panel b."""
-    for colour, style in (("white", "-"), ("black", (0, dashes))):
-        ax.add_patch(Rectangle(corner, size, size, fill=False, edgecolor=colour, lw=0.9, linestyle=style,
-                               zorder=z))
-
-
-@app.function(hide_code=True)
-def draw_card(ax, corner, size, z, style, rgba=None, unmeasured=(), alpha=1.0, edge=None, pixelated=False):
-    """One microscopy image: a black square with the colony disc in it.
-
-    Hatched sectors were not measured; ``z`` sets the drawing order of the card."""
-    theme = style["theme"]
-    x, y = corner
-    ax.add_patch(Rectangle(corner, size, size, facecolor="black", edgecolor=edge or theme["muted"], lw=0.6,
-                           zorder=z))
-    if rgba is None:
-        return
-    disc = 0.9 * size
-    cx, cy = x + size / 2, y + size / 2
-    shown = rgba.copy()
-    shown[..., 3] *= alpha
-    ax.imshow(shown, extent=(cx - disc / 2, cx + disc / 2, cy - disc / 2, cy + disc / 2), origin="upper",
-              interpolation="nearest" if pixelated else "antialiased", zorder=z + 0.1)
-    for k, missing in enumerate(unmeasured):
-        start, stop = ko_drawing.sector_angles(k, len(unmeasured))
-        if missing:
-            ax.add_patch(Wedge((cx, cy), disc / 2, start, stop, facecolor="#3a3a3a", edgecolor="#8c8c8c",
-                               hatch="////", lw=0, alpha=alpha, zorder=z + 0.2))
-        if len(unmeasured) > 1:
-            angle = np.radians(start)
-            ax.plot([cx, cx + disc / 2 * np.cos(angle)], [cy, cy + disc / 2 * np.sin(angle)], color="white",
-                    lw=0.5, alpha=alpha, zorder=z + 0.3)
-
-
-@app.function(hide_code=True)
-def draw_paper_stack(ax, tiles, corner, size, offset, style, pixelated=False):
-    """Sheets drawn back to front, each shifted by ``offset`` from the one in front.
-
-    ``tiles`` holds (rgba, unmeasured) per sheet, front first. Only the front sheet is
-    clearly visible; ``style["back_cards"]`` sets the others (blank, faded or full)."""
-    count = len(tiles)
-    for k in reversed(range(count)):
-        rgba, unmeasured = tiles[k]
-        back = k > 0
-        if back and style["back_cards"] == "blank":
-            rgba, unmeasured = None, ()
-        alpha = 0.4 if back and style["back_cards"] == "faded" else 1.0
-        draw_card(ax, (corner[0] + k * offset[0], corner[1] + k * offset[1]), size, 10 + count - k, style, rgba,
-                  unmeasured, alpha, pixelated=pixelated)
+    return sliced_rgba(rgbas), unmeasured
 
 
 @app.function(hide_code=True)
@@ -241,7 +107,7 @@ def draw_microscope(ax, origin, style):
 
     # Light cone focused on that colony
     nose = oy + 1.75
-    ax.add_patch(Polygon([(cx - 0.16, nose), (cx + 0.16, nose), (cx, oy + 0.45)], facecolor=style["light_colour"],
+    ax.add_patch(Polygon([(cx - 0.16, nose), (cx + 0.16, nose), (cx, oy + 0.45)], facecolor=LIGHT_COLOUR,
                          alpha=0.5, lw=0, zorder=4))
 
     # Objective: nose, barrel with a coloured ring, thread
@@ -264,25 +130,22 @@ def draw_marker_legend(fig, data, style):
     layout). Its top right corner is at ``style["legend_anchor"]`` (fractions of the figure)."""
     names = data["channel_names"]
     blank = plt.Line2D([], [], lw=0)
-    legend_style = "white" if style["theme"]["bg"] == "white" else "black"
     groups = style["groups"]
     entries = []
     for k, group in enumerate(groups):
         if entries:
             entries.append((blank, ""))
         # Header: a small disc with this group's sector filled (when the colonies are split)
-        header = ko_drawing.SectorHandle(k, len(groups)) if len(groups) > 1 else blank
-        entries.append((header, ko_drawing.GROUP_LABELS.get(group, group)))
-        entries += [(legend_swatch(c, legend_style), n.rsplit("/", 1)[-1])
+        header = SectorHandle(k, len(groups)) if len(groups) > 1 else blank
+        entries.append((header, GROUP_LABELS.get(group, group)))
+        entries += [(legend_swatch(c), n.rsplit("/", 1)[-1])
                     for n, c in zip(names, group_colours(names, group)) if c is not None]
     legend = fig.legend([h for h, _ in entries], [l for _, l in entries], ncol=1, loc="upper right",
-                        bbox_to_anchor=style["legend_anchor"], fontsize=style["font"] - 1, handlelength=1.0,
-                        labelspacing=0.25, **legend_options(legend_style))
-    legend.get_frame().set_edgecolor(style["theme"]["muted"])
-    legend.get_frame().set_linewidth(0.6)
+                        bbox_to_anchor=style["legend_anchor"], labelspacing=0.25,
+                        **{**legend_options("white", boxed=True), "handlelength": 1.0})
     legend.set_in_layout(False)
     legend.set_zorder(100)
-    headers = {ko_drawing.GROUP_LABELS.get(g, g) for g in style["groups"]}
+    headers = {GROUP_LABELS.get(g, g) for g in style["groups"]}
     for text in legend.get_texts():
         if text.get_text() in headers:
             text.set_fontweight("bold")
@@ -307,7 +170,7 @@ def draw_imaging_panel(ax, data, style):
     stack_width = size + (len(replicates) - 1) * step
     for hour in style["times"]:
         tiles = [colony_tile(data, style["condition"], r, hour, style["groups"], style["gamma"]) for r in replicates]
-        draw_paper_stack(ax, tiles, (x, y0), size, (step, step), style)
+        draw_paper_stack(ax, tiles, (x, y0), size, (step, step), style["back_cards"])
         ax.text(x + size / 2, y0 - 0.08, f"{hour}h", ha="center", va="top", fontsize=font)
         x += stack_width + style["stack_gap"]
     last = x - style["stack_gap"]
@@ -353,7 +216,7 @@ def draw_training_panel(ax, data, toy, style):
     tiles = tiles[:style["stack_count"]]
     depth = (len(tiles) - 1) * step
     stack_y = centre_y - (size + depth) / 2
-    draw_paper_stack(ax, tiles, (0.0, stack_y), size, (step, step), style,
+    draw_paper_stack(ax, tiles, (0.0, stack_y), size, (step, step), style["back_cards"],
                      pixelated=style["stack_source"] != "data")
     ax.text((size + depth) / 2, stack_y - 0.1, style["data_label"], ha="center", va="top", fontsize=font,
             linespacing=1.3)
@@ -446,7 +309,7 @@ def draw_update_series(ax, x, centre_y, toy, style):
     first = x
     hours = np.linspace(0, TIMEPOINTS[-1], len(frames))
     for k, (fates, hour) in enumerate(zip(frames, hours)):
-        draw_card(ax, (x, centre_y - frame_size / 2), frame_size, 10, style, toy_rgba(fates, mask), pixelated=True)
+        draw_card(ax, (x, centre_y - frame_size / 2), frame_size, 10, toy_rgba(fates, mask), pixelated=True)
         if k == zoom:
             # Where the zoomed neighbourhood comes from
             disc, pixels = 0.9 * frame_size, frames.shape[-1]
@@ -606,7 +469,7 @@ def draw_perturbation_panel(ax, data, style):
     condition, replicate = style["final_condition"], style["final_replicate"]
 
     rgba, unmeasured = colony_tile(data, condition, replicate, 0, style["groups"], style["gamma"])
-    draw_card(ax, (0.0, y0), size, 10, style, rgba, unmeasured)
+    draw_card(ax, (0.0, y0), size, 10, rgba, unmeasured)
     ax.text(size / 2, y0 + size + 0.1, style["initial_label"], ha="center", va="bottom", fontsize=font,
             linespacing=1.3)
 
@@ -669,7 +532,7 @@ def draw_perturbation_panel(ax, data, style):
     # Final image, then a mock curve of one cell type against perturbation time
     fx = end + 0.25
     rgba, unmeasured = colony_tile(data, condition, replicate, final_hour, style["groups"], style["gamma"])
-    draw_card(ax, (fx, y0), size, 10, style, rgba, unmeasured)
+    draw_card(ax, (fx, y0), size, 10, rgba, unmeasured)
     ax.text(fx + size / 2, y0 + size + 0.1, style["final_label"], ha="center", va="bottom", fontsize=font,
             linespacing=1.3)
 
@@ -740,8 +603,8 @@ def mock_curves(style):
     shifted, wider or narrower, and lower, so they look a bit different."""
     shapes = (
         {"shift": 0.0, "scale": 1.0, "height": 0.65, "colour": style["model_colour"], "line": "-"},
-        {"shift": -9.0, "scale": 0.75, "height": 0.45, "colour": "#8c6bb1", "line": (0, (4, 1.5))},
-        {"shift": 8.0, "scale": 1.4, "height": 0.35, "colour": "#41ab5d", "line": (0, (1.5, 1))},
+        {"shift": -9.0, "scale": 0.75, "height": 0.45, "colour": SERIES[2], "line": (0, (4, 1.5))},
+        {"shift": 8.0, "scale": 1.4, "height": 0.35, "colour": SERIES[4], "line": (0, (1.5, 1))},
     )
     labels = [label.strip() for label in style["density_labels"].split(",")]
     curves = []
@@ -755,41 +618,6 @@ def mock_curves(style):
             "label": labels[k] if k < len(labels) else f"density {k + 1}",
         })
     return curves
-
-
-@app.function(hide_code=True)
-def overview_figure(panels, data, toy, style):
-    """The chosen panels stacked top to bottom; with ``style["same_scale"]`` every panel
-    uses the same data-units-per-inch."""
-    theme = style["theme"]
-    draw = {
-        "a": lambda ax: draw_imaging_panel(ax, data, style),
-        "b": lambda ax: draw_training_panel(ax, data, toy, style),
-        "c": lambda ax: draw_perturbation_panel(ax, data, style),
-    }
-    with plt.rc_context({"text.color": theme["fg"], "font.size": style["font"]}):
-        fig = plt.figure(figsize=(style["width"], 2.0), facecolor=theme["bg"], layout="constrained")
-        axes = fig.subplots(len(panels), 1, squeeze=False)[:, 0]
-        for ax, key in zip(axes, panels):
-            ax.set_facecolor(theme["bg"])
-            draw[key](ax)
-            ax.set_aspect("equal")
-            ax.axis("off")
-            ax.text(0.0, 1.0, key, transform=ax.transAxes, ha="left", va="top", fontsize=style["font"] + 3,
-                    fontweight="bold")
-            if style["titles"][key]:
-                ax.text(0.03, 1.0, style["titles"][key], transform=ax.transAxes, ha="left", va="top",
-                        fontsize=style["font"] + 1)
-        widths = [ax.get_xlim()[1] - ax.get_xlim()[0] for ax in axes]
-        if style["same_scale"]:
-            for ax in axes:
-                ax.set_xlim(ax.get_xlim()[0], ax.get_xlim()[0] + max(widths))
-        ratios = [(ax.get_ylim()[1] - ax.get_ylim()[0]) / (ax.get_xlim()[1] - ax.get_xlim()[0]) for ax in axes]
-        axes[0].get_subplotspec().get_gridspec().set_height_ratios(ratios)
-        fig.set_size_inches(style["width"], style["width"] * sum(ratios) + 0.1 * len(panels))
-        if style["legend"] and data is not None:
-            draw_marker_legend(fig, data, style)
-    return fig
 
 
 @app.cell(hide_code=True)
@@ -810,9 +638,9 @@ def _():
         label="Dataset root",
         full_width=True,
     )
-    groups = mo.ui.multiselect(options=list(ko_drawing.EXPERIMENT_GROUPS), value=["cell_fate_s1"],
+    groups = mo.ui.multiselect(options=list(EXPERIMENT_GROUPS), value=["cell_fate_s1"],
                                label="Experiment groups")
-    projection = mo.ui.dropdown(options=list(ko_drawing.PROJECTION_CLEANING), value="max", label="Projection")
+    projection = mo.ui.dropdown(options=list(PROJECTION_CLEANING), value="max", label="Projection")
     downsample = mo.ui.dropdown(options={"4": 4, "8": 8, "16": 16}, value="8", label="Downsample")
     condition = mo.ui.dropdown(options=list(CONDITION_LABELS), value="ctrl", label="Condition (a)")
     times = mo.ui.multiselect(options=[f"{t}h" for t in TIMEPOINTS], value=[f"{t}h" for t in TIMEPOINTS],
@@ -852,15 +680,15 @@ def _(
     replicates,
     times,
 ):
-    selected_groups = [g for g in ko_drawing.EXPERIMENT_GROUPS if g in groups.value] or ["cell_fate_s1"]
+    selected_groups = [g for g in EXPERIMENT_GROUPS if g in groups.value] or ["cell_fate_s1"]
     selected_times = sorted(int(t.rstrip("h")) for t in times.value) or [0]
     selected_replicates = [int(r) for r in replicates.value.replace(",", " ").split() if r.isdigit()] or [1]
     _conditions = list(dict.fromkeys(["ctrl", condition.value, final_condition.value]))
     _replicates = sorted(set(selected_replicates) | {int(final_replicate.value)})
     if Path(dataset_root.value).expanduser().is_dir():
         with mo.status.spinner("Loading colonies"):
-            data = load_overview_data(Path(dataset_root.value).expanduser(), _conditions, selected_groups,
-                                      projection.value, downsample.value, _replicates)
+            data = load_colonies(dataset_root.value, _conditions, selected_groups, projection.value,
+                                 downsample.value, _replicates, normalisation="pooled")
         _note = mo.md(f"Loaded {len(data['keys'])} trajectories of {', '.join(_conditions)}")
     else:
         data = None
@@ -871,10 +699,9 @@ def _(
 
 @app.cell(hide_code=True)
 def _():
-    background = mo.ui.dropdown(options=list(ko_drawing.THEMES), value="light", label="Page background")
     gamma = mo.ui.slider(start=0.3, stop=2.0, step=0.05, value=1.0, label="Gamma", show_value=True)
-    figure_width = mo.ui.slider(start=5.0, stop=14.0, step=0.25, value=7.5, label="Width (in)", show_value=True)
-    font_size = mo.ui.slider(start=5, stop=12, step=0.5, value=7, label="Font size", show_value=True)
+    figure_width = mo.ui.dropdown(options={"double column": WIDTH["double"], "single column": WIDTH["single"]},
+                                  value="double column", label="Width")
     panels = mo.ui.multiselect(options=["a", "b", "c"], value=["a", "b", "c"], label="Panels")
     same_scale = mo.ui.switch(value=True, label="Same scale in every panel")
     back_cards = mo.ui.dropdown(options=["blank", "faded", "full"], value="blank", label="Sheets behind the top")
@@ -888,30 +715,21 @@ def _():
     # Top right corner of the legend, as fractions of the figure
     legend_x = mo.ui.slider(start=0.5, stop=1.0, step=0.005, value=1.0, label="Legend x", show_value=True)
     legend_y = mo.ui.slider(start=0.0, stop=1.0, step=0.005, value=0.97, label="Legend top", show_value=True)
-    model_colour = mo.ui.text(value="", placeholder="theme", label="Model colour")
-    accent_colour = mo.ui.text(value="", placeholder="theme", label="Accent colour")
-    light_colour = mo.ui.text(value="#8fd0ff", label="Light cone colour")
     mo.vstack([
         mo.md("**Display**"),
-        mo.hstack([background, gamma, figure_width, font_size], justify="start"),
+        mo.hstack([gamma, figure_width], justify="start"),
         mo.hstack([panels, same_scale, back_cards], justify="start"),
         mo.hstack([card_size, sheet_offset, stack_gap, replicate_label], justify="start"),
         mo.hstack([legend, legend_x, legend_y], justify="start"),
-        mo.hstack([model_colour, accent_colour, light_colour], justify="start"),
     ])
     return (
-        accent_colour,
         back_cards,
-        background,
         card_size,
         figure_width,
-        font_size,
         gamma,
         legend,
         legend_x,
         legend_y,
-        light_colour,
-        model_colour,
         panels,
         replicate_label,
         same_scale,
@@ -939,15 +757,13 @@ def _():
     packed_slices = mo.ui.slider(start=0, stop=6, step=1, value=3, label="Slices behind t (v2)",
                                  show_value=True)
     slices_transposed = mo.ui.switch(value=False, label="Time left to right (v2)")
-    neighbourhood_colour = mo.ui.text(value="#00b300", label="Neighbourhood colour")
     mo.vstack([
         mo.md("**Panel b** (toy local rule)"),
         mo.hstack([training_layout, slices_transposed, slice_gap, slice_depth, packed_slices], justify="start"),
-        mo.hstack([stack_source, stack_count, zoom_frame, neighbourhood_colour], justify="start"),
+        mo.hstack([stack_source, stack_count, zoom_frame], justify="start"),
         mo.hstack([toy_size, toy_frames, toy_steps, toy_seed], justify="start"),
     ])
     return (
-        neighbourhood_colour,
         packed_slices,
         slice_depth,
         slice_gap,
@@ -1037,10 +853,8 @@ def _(toy_frames, toy_seed, toy_size, toy_steps):
 
 @app.cell(hide_code=True)
 def _(
-    accent_colour,
     arrow_length,
     back_cards,
-    background,
     card_size,
     condition,
     curve_peak,
@@ -1051,17 +865,13 @@ def _(
     figure_width,
     final_condition,
     final_replicate,
-    font_size,
     gamma,
     ghost_hours,
     labels,
     legend,
     legend_x,
     legend_y,
-    light_colour,
     measured_hours,
-    model_colour,
-    neighbourhood_colour,
     packed_slices,
     panels,
     perturbation_hour,
@@ -1083,13 +893,11 @@ def _(
     zoom_frame,
 ):
     mo.stop(not panels.value, mo.callout("Select at least one panel.", kind="warn"))
-    _theme = dict(ko_drawing.THEMES[background.value])
-    _theme["accent"] = colour_or(accent_colour.value, _theme["accent"])
     _text = {k: v.replace("\\n", "\n") for k, v in labels.value.items()}
     _final = _text["final_label"] or f"{TIMEPOINTS[-1]}h data\n({CONDITION_LABELS[final_condition.value]})"
     style = {
-        "theme": _theme,
-        "font": float(font_size.value),
+        "theme": THEME,
+        "font": FONT["label"],
         "width": float(figure_width.value),
         "gamma": float(gamma.value),
         "same_scale": same_scale.value,
@@ -1097,7 +905,7 @@ def _(
         "times": selected_times,
         "replicates": selected_replicates,
         "condition": condition.value,
-        "condition_note": f"{CONDITION_LABELS[condition.value]}, {PROJECTION_LABELS[projection.value]}",
+        "condition_note": f"{CONDITION_LABELS[condition.value]}, {PROJECTION_LABELS[projection.value][0].lower()}",
         "back_cards": back_cards.value,
         "card_size": float(card_size.value),
         "sheet_offset": float(sheet_offset.value),
@@ -1105,8 +913,7 @@ def _(
         "replicate_label": replicate_label.value,
         "legend": legend.value,
         "legend_anchor": (float(legend_x.value), float(legend_y.value)),
-        "light_colour": colour_or(light_colour.value, "#8fd0ff"),
-        "model_colour": colour_or(model_colour.value, _theme["model"]),
+        "model_colour": MODEL,
         "stack_source": stack_source.value,
         "stack_count": int(stack_count.value),
         "zoom_frame": int(zoom_frame.value),
@@ -1115,7 +922,7 @@ def _(
         "slice_depth": float(slice_depth.value),
         "slices_transposed": slices_transposed.value,
         "packed_slices": int(packed_slices.value),
-        "neighbourhood_colour": colour_or(neighbourhood_colour.value, "#00b300"),
+        "neighbourhood_colour": NEIGHBOURHOOD,
         "final_condition": final_condition.value,
         "final_replicate": int(final_replicate.value),
         "perturbation_hour": float(perturbation_hour.value),
@@ -1130,7 +937,15 @@ def _(
         "final_label": _final,
         **{k: v for k, v in _text.items() if not k.startswith("title_") and k != "final_label"},
     }
-    overview = overview_figure(sorted(panels.value), data, toy, style)
+    _draw = {
+        "a": lambda ax: draw_imaging_panel(ax, data, style),
+        "b": lambda ax: draw_training_panel(ax, data, toy, style),
+        "c": lambda ax: draw_perturbation_panel(ax, data, style),
+    }
+    with paper_style():
+        overview = stack_panels(_draw, sorted(panels.value), style["width"], style["titles"], style["same_scale"])
+        if style["legend"] and data is not None:
+            draw_marker_legend(overview, data, style)
     overview
     return (overview,)
 
@@ -1139,23 +954,16 @@ def _(
 def _():
     figure_name = mo.ui.text(value="project_overview", label="File name")
     save_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
-    save_figure = mo.ui.run_button(label="Save figure")
-    mo.hstack([figure_name, save_svg, save_figure], justify="start")
-    return figure_name, save_figure, save_svg
+    save_button = mo.ui.run_button(label="Save figure")
+    mo.hstack([figure_name, save_svg, save_button], justify="start")
+    return figure_name, save_button, save_svg
 
 
 @app.cell
-def _(figure_name, overview, save_figure, save_svg):
-    mo.stop(not save_figure.value)
-    _directory = Path(mo.notebook_dir()).parents[1] / "figures" / "schematics"
-    _directory.mkdir(parents=True, exist_ok=True)
-    _suffixes = ("pdf", "png", "svg") if save_svg.value else ("pdf", "png")
-    # svg.fonttype "none" keeps text as editable text in Inkscape
-    with plt.rc_context({"svg.fonttype": "none"}):
-        for _suffix in _suffixes:
-            overview.savefig(_directory / f"{figure_name.value}.{_suffix}", dpi=400,
-                             facecolor=overview.get_facecolor())
-    mo.md(f"Saved `{figure_name.value}` as " + ", ".join(_suffixes) + f" to `{_directory}`")
+def _(figure_name, overview, save_button, save_svg):
+    mo.stop(not save_button.value)
+    _paths = save_figure(overview, figure_name.value, "schematics", svg=save_svg.value)
+    mo.md("Saved " + ", ".join(f"`{p}`" for p in _paths))
     return
 
 

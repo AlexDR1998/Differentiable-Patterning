@@ -8,8 +8,8 @@ from matplotlib.patches import Patch
 
 from Common.dataloader.cell_types import label_names
 from Common.trainer.wandb_logger import WandbLogger
+from Experiments.micropatterns.figures.style import cell_type_colour
 from Experiments.micropatterns.rendering import (
-    CELL_TYPE_COLOURS,
     cell_type_prevalences,
     render_cell_types,
     render_fate_cmy,
@@ -62,7 +62,7 @@ def cell_type_legend(cell_type_rules):
     canvas = FigureCanvasAgg(figure)
     figure.legend(
         handles=[
-            Patch(color=CELL_TYPE_COLOURS.get(label, (0.0, 0.0, 0.0)), label=label)
+            Patch(color=cell_type_colour(label), label=label)
             for label in labels
         ],
         loc="center",

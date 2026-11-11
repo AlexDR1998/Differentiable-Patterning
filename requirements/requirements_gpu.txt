@@ -30,4 +30,5 @@ pyparsing
 PyYAML
 pytest
 marimo
+plotly
 anywidget

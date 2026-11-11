@@ -589,7 +589,7 @@ def _(
     _axes[0].set_title(_before_title)
     _axes[1].imshow(_after, cmap="viridis")
     _axes[1].set_title("Next pool input: transition starts at t_n")
-    _axes[2].imshow(_difference, cmap="coolwarm", vmin=-_limit, vmax=_limit)
+    _axes[2].imshow(_difference, cmap="RdBu_r", vmin=-_limit, vmax=_limit)
     _axes[2].set_title("Signed difference")
     _axes[3].hist(_difference.ravel(), bins=80)
     _axes[3].set_title("Difference distribution")
@@ -629,7 +629,7 @@ def _(
     _axes[0].set_title("y before pool operation")
     _axes[1].imshow(_after, cmap="viridis")
     _axes[1].set_title("y after pool operation")
-    _axes[2].imshow(_difference, cmap="coolwarm", vmin=-_limit, vmax=_limit)
+    _axes[2].imshow(_difference, cmap="RdBu_r", vmin=-_limit, vmax=_limit)
     _axes[2].set_title("y difference")
     for _axis in _axes:
         _axis.axis("off")

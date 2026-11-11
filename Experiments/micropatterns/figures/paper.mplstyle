@@ -1,0 +1,51 @@
+# Matplotlib settings of the micropattern paper figures.
+# Used through Experiments.micropatterns.figures.style.paper_style(); sizes match style.FONT and style.LINE.
+
+font.family: sans-serif
+font.sans-serif: Arial, Helvetica, Liberation Sans, DejaVu Sans
+font.size: 7
+mathtext.fontset: custom
+mathtext.rm: sans
+mathtext.it: sans:italic
+mathtext.bf: sans:bold
+
+text.color: 222222
+axes.edgecolor: 222222
+axes.labelcolor: 222222
+axes.titlesize: 7
+axes.titleweight: bold
+axes.titlelocation: left
+axes.labelsize: 7
+axes.linewidth: 0.6
+axes.spines.top: False
+axes.spines.right: False
+axes.prop_cycle: cycler('color', ['0072B2', 'D55E00', '009E73', 'C99A00', '8E5BA8'])
+
+xtick.labelsize: 6
+ytick.labelsize: 6
+xtick.color: 222222
+ytick.color: 222222
+xtick.major.size: 2
+ytick.major.size: 2
+xtick.major.width: 0.6
+ytick.major.width: 0.6
+
+lines.linewidth: 1.0
+lines.markersize: 4
+patch.linewidth: 0.6
+hatch.linewidth: 0.5
+
+legend.fontsize: 6
+legend.frameon: False
+legend.handlelength: 1.2
+legend.columnspacing: 0.8
+legend.borderaxespad: 0.3
+
+figure.facecolor: white
+figure.dpi: 200
+savefig.dpi: 600
+savefig.bbox: tight
+savefig.pad_inches: 0.02
+savefig.facecolor: white
+pdf.fonttype: 42
+svg.fonttype: none

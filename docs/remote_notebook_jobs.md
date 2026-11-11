@@ -54,6 +54,8 @@ Things to keep in mind:
    `bash launch/launch_batch_multi_job.sh Experiments/micropatterns/density_ko_sweep.py <manifest> <workers> H200`
 4. Copy `/workspace/writeable/output/nodal_ko_eval/<name>/` back to
    `output/nodal_ko_eval/<name>/`, and load that folder in the notebook.
+   `helper_scripts/copy_models_from_cluster.sh --port <port>`
+   does this: it copies everything in the cluster's `output/` along with the models.
 
 Rollouts of all runs × densities of one KO time go to the GPU together, in
 chunks of "Rollouts per GPU batch" (`max_batch`).
