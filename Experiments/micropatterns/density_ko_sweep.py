@@ -20,7 +20,6 @@ See ``docs/remote_notebook_jobs.md``.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
@@ -42,7 +41,13 @@ from Experiments.micropatterns.cell_counts import (
 )
 from Experiments.micropatterns.synthetic_ic import cell_states, replicate_cell_library
 from Experiments.micropatterns.texture_settings import CellSettings
-from Experiments.notebook_jobs import part_path, part_paths, read_job_entry, repository_path
+from Experiments.notebook_jobs import (
+    load_results_npz,
+    part_path,
+    read_job_entry,
+    repository_path,
+    save_results_npz,
+)
 
 repository_root = Path(__file__).resolve().parents[2]
 
@@ -395,6 +400,28 @@ def replicate_cell_counts(rows, replicate, panels=None):
     return summary
 
 
+def check_stored_segmentation(colonies, dataset_root, method):
+    """Raise unless ``method`` (a stored segmentation; "" for none) has labels for
+    every colony's 0 h SOX2/LMBR image, so a missing copy cannot fall back to
+    the classical nucleus counting unnoticed."""
+    if not method:
+        return
+    from Experiments.micropatterns.nucleus_segmentation import GROUP, segmentation_root, stored_labels
+
+    folder = segmentation_root(dataset_root) / method
+    if not (folder / "manifest.yaml").exists():
+        raise FileNotFoundError(
+            f"The stored segmentation {method!r} is not at {folder}. Copy 260726_nca_segmentation next to "
+            "the dataset folder (or set NUCLEUS_SEGMENTATION_ROOT)."
+        )
+    panel = list(colonies["schema"].group_names).index(GROUP)
+    root = Path(dataset_root).expanduser().resolve()
+    for path in colonies["source_files"][:, panel]:
+        relative = Path(str(path)).resolve().relative_to(root).as_posix()
+        if stored_labels(root, method, relative) is None:
+            raise FileNotFoundError(f"The stored segmentation {method!r} has no labels for {relative} (in {folder}).")
+
+
 def circle_mask(shape, area):
     """Centred disc of about ``area`` pixels on a grid ``shape``."""
     rows, cols = np.indices(shape)
@@ -421,64 +448,26 @@ DENSITY_KO_ARRAYS = (
 
 
 def save_density_ko_results(path, results):
-    """Write density × KO sweep results to one ``.npz`` file.
-
-    Arrays are stored as ``<result index>.<name>``, the rest of each
-    result (labels, groups, settings) as JSON under ``metadata``.
-    """
-    arrays, metadata = {}, []
-    for index, result in enumerate(results):
-        metadata.append({key: value for key, value in result.items() if key not in DENSITY_KO_ARRAYS})
-        for key in DENSITY_KO_ARRAYS:
-            if result.get(key) is not None:
-                arrays[f"{index}.{key}"] = np.asarray(result[key])
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    # Written under a temporary name and then renamed, so a job killed while
-    # writing leaves no half-written part (which would be skipped on a rerun)
-    temporary = path.with_name(f".{path.name}.tmp")
-    with open(temporary, "wb") as file:
-        np.savez_compressed(
-            file,
-            metadata=np.asarray(json.dumps(
-                {"version": 1, "results": metadata},
-                default=lambda value: value.item() if hasattr(value, "item") else list(value),
-            )),
-            **arrays,
-        )
-    os.replace(temporary, path)
+    """Write density × KO sweep results to one ``.npz`` file (``save_results_npz``)."""
+    save_results_npz(path, results, DENSITY_KO_ARRAYS)
 
 
-def _load_results_file(path):
-    with np.load(Path(path), allow_pickle=False) as stored:
-        metadata = json.loads(str(stored["metadata"]))
-        results = []
-        for index, result in enumerate(metadata["results"]):
-            result["state_channel_names"] = tuple(result["state_channel_names"])
-            for key in DENSITY_KO_ARRAYS:
-                name = f"{index}.{key}"
-                result[key] = stored[name] if name in stored.files else None
-            # Results from before cell numbers: densities are covered shares
-            result.setdefault("density_unit", "share")
-            result.setdefault("placement", "layers")
-            result.setdefault("measured_covered_share", result["measured_density"])
-            if result["covered_shares"] is None:
-                result["covered_shares"] = result["densities"]
-            results.append(result)
-    return results
+def _upgrade_result(result):
+    """A loaded result, with the defaults of older files filled in."""
+    result["state_channel_names"] = tuple(result["state_channel_names"])
+    # Results from before cell numbers: densities are covered shares
+    result.setdefault("density_unit", "share")
+    result.setdefault("placement", "layers")
+    result.setdefault("measured_covered_share", result["measured_density"])
+    if result["covered_shares"] is None:
+        result["covered_shares"] = result["densities"]
+    return result
 
 
 def load_density_ko_results(path):
     """Results written by ``save_density_ko_results``: one file, or a folder
     of ``part_*.npz`` files of a remote job (joined in part order)."""
-    path = Path(path)
-    if path.is_dir():
-        files = part_paths(path)
-        if not files:
-            raise FileNotFoundError(f"No part_*.npz files in {path}")
-    else:
-        files = [path]
-    return tuple(_result for _file in files for _result in _load_results_file(_file))
+    return tuple(_upgrade_result(_result) for _result in load_results_npz(path, DENSITY_KO_ARRAYS))
 
 
 # ---------------------------------------------------------------- sweep
@@ -531,6 +520,87 @@ def _final_pattern_counts(
     )
 
 
+def prepare_model_cells(bundle, settings, projection, root):
+    """What synthetic initial states of one model need from its measured colonies.
+
+    Loads the 0h baseline colonies of ``settings.replicates`` (scaled as in
+    training), counts their nuclei (``reference_cell_counts``, with the
+    projection's cell settings, so a stored Cellpose segmentation is used
+    when set) and cuts out each replicate's cells
+    (``replicate_cell_library``). Shared by the density × KO and the size ×
+    density sweeps, so both place cells the same way. ``settings`` needs
+    ``replicates``, ``density_unit`` and ``cell_settings(projection)``.
+
+    Returns a dict with ``cell_settings``, ``colonies`` (``stacked_colonies``),
+    ``boundary`` (the data's boundary mask, for shape and dtype), ``names``
+    (state channel names), ``nodal_channel``, ``pixel_um`` (µm per model
+    pixel; NaN without nuclear counts), ``replicates`` (one dict per
+    replicate: ``library``, ``measured_share``, ``cell_counts``,
+    ``per_piece``) and ``warnings``.
+    """
+    cell_settings = settings.cell_settings(projection)
+    replicates = tuple(settings.replicates)
+    warnings = []
+    bins = load_training_histogram_bins(bundle, root)
+    data = [
+        load_condition_data(bundle, root, "baseline", _replicate, bins)
+        for _replicate in replicates
+    ]
+    colonies = stacked_colonies(data, replicates)
+    # Nuclei of the raw 0h images (needed unless the sweep is in covered share)
+    try:
+        alignment, radius_scale, pixel_um = bundle_alignment(bundle)
+        count_rows = reference_cell_counts(
+            colonies, colonies["source_files"],
+            root / "260726_nca_dataset", alignment,
+            cell_settings.markers,
+            cell_settings.split_distance, cell_settings.min_cell_area,
+            mask_radius_scale=radius_scale,
+            **cell_settings.nucleus_options(),
+            cache_dir=cache_dir_from_environment(),
+        )
+    except (OSError, ValueError, KeyError) as count_error:
+        if settings.density_unit != "share" or cell_settings.pieces == "nuclei":
+            raise
+        warnings.append(f"{bundle.id}: no nuclear counts ({count_error})")
+        count_rows, pixel_um = None, float("nan")
+
+    prepared_replicates = []
+    for replicate_index, replicate in enumerate(replicates):
+        library, measured_share = replicate_cell_library(
+            colonies, replicate_index, cell_settings,
+            raw=None if cell_settings.pieces == "segments" else {
+                "source_files": colonies["source_files"],
+                "dataset_root": root / "260726_nca_dataset",
+                "alignment": alignment,
+                "downsample": int(bundle.config.data.downsample),
+                "mask_radius_scale": radius_scale,
+                "cache_dir": cache_dir_from_environment(),
+            },
+        )
+        if count_rows is None:
+            cell_counts = {"cells_per_mm2": float("nan"), "cells_per_segment": float("nan")}
+        else:
+            cell_counts = replicate_cell_counts(count_rows, replicate, cell_settings.density_panels)
+        prepared_replicates.append({
+            "library": library,
+            "measured_share": measured_share,
+            "cell_counts": cell_counts,
+            # Real cells per placed piece: 1 for real cells, else measured cells per segment
+            "per_piece": library.get("cells_per_segment", cell_counts["cells_per_segment"]),
+        })
+    return {
+        "cell_settings": cell_settings,
+        "colonies": colonies,
+        "boundary": np.asarray(data[0]["boundary"]),
+        "names": data[0]["state_channel_names"],
+        "nodal_channel": data[0]["nodal_channel"],
+        "pixel_um": float(pixel_um),
+        "replicates": prepared_replicates,
+        "warnings": warnings,
+    }
+
+
 def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
     """``(results, warnings)`` of the sweep for the models in ``records``.
 
@@ -566,66 +636,32 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
         projection = record["projection"]
         if projection not in rules_by_projection:
             raise ValueError(f"No cell type file is set for projection {projection!r}.")
-        cell_settings = settings.cell_settings(projection)
         rules = rules_by_projection[projection]
         bundle = registry.get(record["model_id"])
         model = bundle.load_model(key=jr.PRNGKey(int(settings.seed)), implementation="portable")
-        bins = load_training_histogram_bins(bundle, root)
-        data = [
-            load_condition_data(bundle, root, "baseline", _replicate, bins)
-            for _replicate in replicates
-        ]
-        colonies = stacked_colonies(data, replicates)
+        prepared = prepare_model_cells(bundle, settings, projection, root)
+        warnings.extend(prepared["warnings"])
+        cell_settings = prepared["cell_settings"]
+        colonies = prepared["colonies"]
         # One circle for every replicate: the geometry stays fixed
         shape = colonies["support"].shape[-2:]
         mask = circle_mask(shape, float(np.mean(np.sum(colonies["support"], axis=(1, 2)))))
-        # Nuclei of the raw 0h images (needed unless the sweep is in covered share)
-        try:
-            alignment, radius_scale, pixel_um = bundle_alignment(bundle)
-            count_rows = reference_cell_counts(
-                colonies, colonies["source_files"],
-                root / "260726_nca_dataset", alignment,
-                cell_settings.markers,
-                cell_settings.split_distance, cell_settings.min_cell_area,
-                mask_radius_scale=radius_scale,
-                **cell_settings.nucleus_options(),
-                cache_dir=cache_dir_from_environment(),
-            )
-            mask_mm2 = float(np.count_nonzero(mask)) * pixel_um**2 * 1e-6
-        except (OSError, ValueError, KeyError) as count_error:
-            if unit != "share" or cell_settings.pieces == "nuclei":
-                raise
-            warnings.append(f"{bundle.id}: no nuclear counts ({count_error})")
-            count_rows, mask_mm2 = None, float("nan")
+        mask_mm2 = float(np.count_nonzero(mask)) * prepared["pixel_um"]**2 * 1e-6
         boundary = jnp.broadcast_to(
-            jnp.asarray(mask, dtype=jnp.asarray(data[0]["boundary"]).dtype),
-            jnp.asarray(data[0]["boundary"]).shape,
+            jnp.asarray(mask, dtype=prepared["boundary"].dtype), prepared["boundary"].shape,
         )
-        names = data[0]["state_channel_names"]
+        names = prepared["names"]
         channels = int(model.N_CHANNELS)
         steps_per_12h = int(bundle.config.run.t)
         total_steps = int(round(float(settings.snapshot_hour) * steps_per_12h / 12.0))
         ko_steps = [int(round(float(_hour) * steps_per_12h / 12.0)) for _hour in ko_hours]
         curriculum = tuple(bundle.config.data.knockout.curriculum or ("baseline",))
         label = record_label(record)
-        for replicate_index, replicate in enumerate(replicates):
-            library, measured_share = replicate_cell_library(
-                colonies, replicate_index, cell_settings,
-                raw=None if cell_settings.pieces == "segments" else {
-                    "source_files": colonies["source_files"],
-                    "dataset_root": root / "260726_nca_dataset",
-                    "alignment": alignment,
-                    "downsample": int(bundle.config.data.downsample),
-                    "mask_radius_scale": radius_scale,
-                    "cache_dir": cache_dir_from_environment(),
-                },
-            )
-            if count_rows is None:
-                cell_counts = {"cells_per_mm2": float("nan"), "cells_per_segment": float("nan")}
-            else:
-                cell_counts = replicate_cell_counts(count_rows, replicate, cell_settings.density_panels)
-            # Real cells per placed piece: 1 for real cells, else measured cells per segment
-            per_piece = library.get("cells_per_segment", cell_counts["cells_per_segment"])
+        for replicate, prepared_replicate in zip(replicates, prepared["replicates"]):
+            library = prepared_replicate["library"]
+            measured_share = prepared_replicate["measured_share"]
+            cell_counts = prepared_replicate["cell_counts"]
+            per_piece = prepared_replicate["per_piece"]
             # Measured density of the replicate, in unit
             measured_density = {
                 "share": measured_share,
@@ -680,7 +716,7 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
             for ko_step in ko_steps:
                 pixel_counts, cell_weighted, ring_means = _final_pattern_counts(
                     model, states, keys, boundary, bundle.config.trainer.boundary_mode,
-                    total_steps, data[0]["nodal_channel"], ko_step,
+                    total_steps, prepared["nodal_channel"], ko_step,
                     names, rules, mask, rings, settings.max_batch, cell_weights=weights,
                 )
                 counts.append(pixel_counts)

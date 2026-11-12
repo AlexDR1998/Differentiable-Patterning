@@ -291,17 +291,10 @@ def rollout_model_with_blocked_channel_pattern_counts(
     def boundary_callback(state):
         return _apply_boundary(state, boundary_mask, boundary_mode)
 
-    n_patterns = 2 ** fate_channels.shape[0]
-    bits = 2 ** jnp.arange(fate_channels.shape[0])
     groups = pixel_groups.astype(jnp.int32)
 
     def measure(state):
-        high = state[fate_channels] > fate_thresholds[:, None, None]
-        codes = jnp.sum(high * bits[:, None, None], axis=0)
-        # Left-out pixels go to one extra bin that is dropped.
-        index = jnp.where(groups >= 0, groups * n_patterns + codes, n_groups * n_patterns)
-        counts = jnp.bincount(index.ravel(), length=n_groups * n_patterns + 1)
-        return counts[:-1].reshape(n_groups, n_patterns)
+        return _group_pattern_counts(state, fate_channels, fate_thresholds, groups, n_groups)
 
     initial_counts = measure(initial_state)
 
@@ -324,3 +317,101 @@ def rollout_model_with_blocked_channel_pattern_counts(
         jnp.arange(total_steps),
     )
     return jnp.concatenate((initial_counts[None], counts), axis=0)
+
+
+def _group_pattern_counts(state, fate_channels, fate_thresholds, groups, n_groups):
+    """Pixels of each high/low pattern of ``fate_channels`` in each group, ``[n_groups, 2 ** markers]``.
+
+    High means above ``fate_thresholds``; bit ``i`` is ``fate_channels[i]``.
+    ``groups`` gives each pixel's group (``[H, W]``, -1 = left out).
+    """
+    n_patterns = 2 ** fate_channels.shape[0]
+    bits = 2 ** jnp.arange(fate_channels.shape[0])
+    high = state[fate_channels] > fate_thresholds[:, None, None]
+    codes = jnp.sum(high * bits[:, None, None], axis=0)
+    # Left-out pixels go to one extra bin that is dropped.
+    index = jnp.where(groups >= 0, groups * n_patterns + codes, n_groups * n_patterns)
+    counts = jnp.bincount(index.ravel(), length=n_groups * n_patterns + 1)
+    return counts[:-1].reshape(n_groups, n_patterns)
+
+
+def _group_means(values, groups, n_groups):
+    """Mean of each channel of ``values`` ``[C, H, W]`` in each group, ``[n_groups, C]`` (NaN for empty groups)."""
+    index = jnp.where(groups >= 0, groups, n_groups).ravel()
+    sums = jax.ops.segment_sum(
+        values.reshape(values.shape[0], -1).T, index, num_segments=n_groups + 1
+    )[:-1]
+    area = jnp.bincount(index, length=n_groups + 1)[:-1]
+    return sums / jnp.where(area > 0, area, jnp.nan)[:, None]
+
+
+@eqx.filter_jit
+def rollout_batch_with_blocked_channel_profiles(
+    nca,
+    initial_states,
+    boundary_mask,
+    boundary_mode,
+    keys,
+    total_steps,
+    channel,
+    knockout_step,
+    n_observed,
+    fate_channels,
+    fate_thresholds,
+    pixel_groups,
+    n_groups,
+):
+    """Blocked-channel rollouts of a batch, with radial profiles at every step.
+
+    As ``rollout_batch_with_blocked_channel_final``, and at every step also
+    measures, for each group of ``pixel_groups`` (``[H, W]``, e.g. distance
+    bins from the colony centre; -1 = left out):
+
+    - the mean of the first ``n_observed`` channels, and
+    - the pixels of each marker pattern (as
+      ``rollout_model_with_blocked_channel_pattern_counts``).
+
+    Returns ``(final states [B, C, H, W], profiles [B, total_steps + 1,
+    n_groups, n_observed], counts [B, total_steps + 1, n_groups, 2 **
+    markers])``. A ``knockout_step`` after ``total_steps`` gives a rollout
+    without knockout.
+    """
+
+    def boundary_callback(state):
+        return _apply_boundary(state, boundary_mask, boundary_mode)
+
+    groups = pixel_groups.astype(jnp.int32)
+
+    def measure(state):
+        return (
+            _group_means(state[:n_observed], groups, n_groups),
+            _group_pattern_counts(state, fate_channels, fate_thresholds, groups, n_groups),
+        )
+
+    def rollout(initial_state, key):
+        def step(carry, step_index):
+            state, previous_key = carry
+            step_key = jax.random.fold_in(previous_key, step_index)
+            state = apply_model_with_blocked_channel(
+                nca,
+                state,
+                boundary_callback,
+                step_key,
+                channel,
+                step_index >= knockout_step,
+            )
+            return (state, step_key), measure(state)
+
+        (state, _), (profiles, counts) = jax.lax.scan(
+            step,
+            (initial_state, key),
+            jnp.arange(total_steps),
+        )
+        first_profiles, first_counts = measure(initial_state)
+        return (
+            state,
+            jnp.concatenate((first_profiles[None], profiles), axis=0),
+            jnp.concatenate((first_counts[None], counts), axis=0),
+        )
+
+    return jax.vmap(rollout)(initial_states, keys)

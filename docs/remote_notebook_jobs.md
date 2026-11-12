@@ -59,3 +59,16 @@ Things to keep in mind:
 
 Rollouts of all runs × densities of one KO time go to the GPU together, in
 chunks of "Rollouts per GPU batch" (`max_batch`).
+
+## Size × density sweep
+
+`Experiments/micropatterns/size_density_explorer.py` (module `size_density_sweep.py`) sweeps the colony diameter (µm) and cell density, with optional NODAL KO hours. Initial states come from the same cell placement as the density × KO sweep (`density_ko_sweep.prepare_model_cells`). Each run keeps radial profiles over time (kymographs) as well as the end-time ring counts.
+
+1. Under "Run the sweep remotely", export the job. This writes `Experiments/micropatterns/conf/generated/size_density/<name>/manifest.yaml`.
+   - Parts can be one per model, per (model, replicate) or per (model, replicate, size).
+   - Every part uses the grid of the largest colony, so split parts match a single run.
+2. Launch it with:
+   `bash launch/launch_batch_multi_job.sh Experiments/micropatterns/size_density_sweep.py <manifest> <workers> H200`
+3. Copy `/workspace/writeable/output/size_density/<name>/` back to `output/size_density/<name>/`, then load that folder in the notebook.
+
+The pods need the stored nucleus segmentation (`nucleus_segmentation.py`) under the data root, as the density × KO sweep does.

@@ -36,7 +36,6 @@ with app.setup(hide_code=True):
     from dotenv import load_dotenv
 
     from Common.dataloader.disk_cache import cache_dir_from_environment
-    from Common.dataloader.micropattern_260726 import load_micropattern_260726
     from Common.dataloader.micropattern_projections import PROJECTIONS
     from Experiments.micropatterns.cell_counts import (
         default_alignment,
@@ -61,7 +60,6 @@ with app.setup(hide_code=True):
 
     repository_root = Path(__file__).resolve().parents[2]
     load_dotenv(repository_root / ".env", override=False)
-    EXPERIMENT_GROUPS = ("cell_fate_s1", "cell_fate_s2", "rna_expression", "protein_response")
     DENSITY_UNITS = {
         "Cells per mm²": "per_mm2",
         "Cells in the colony": "per_colony",
@@ -125,24 +123,20 @@ def _():
 # Cached, so returning to settings already seen does not reload
 @mo.lru_cache(maxsize=4)
 def load_colonies(root, projection, downsample, replicates):
-    """Control colonies at 0 h, as ``cell_library`` reads them."""
-    _dataset = load_micropattern_260726(
-        root=root,
-        conditions=("ctrl",),
-        projection=projection,
-        timesteps=(0, 12, 24, 36, 48),
-        downsample=downsample,
-        replicate_count=replicates,
-        experiment_groups=EXPERIMENT_GROUPS,
-        cache_dir=cache_dir_from_environment(),
+    """Control colonies at 0 h, as ``cell_library`` reads them, preprocessed as projection
+    training runs are (the micropattern base config, cleaning included, which sum projections need)."""
+    from Experiments.micropatterns.figures.data import load_dataset, projection_data_config
+
+    dataset = load_dataset(
+        root, projection_data_config(projection, int(downsample)), ("ctrl",), tuple(range(int(replicates))),
     )
     return {
-        "measurements": np.asarray(_dataset.data[:, 0]),
-        "available": np.asarray(_dataset.measurement_mask[:, 0], dtype=bool),
-        "support": np.asarray(_dataset.boundary_mask[:, 0], dtype=bool),
-        "schema": _dataset.aux["channel_schema"],
-        "replicates": tuple(_dataset.aux["batch_replicates"]),
-        "source_files": np.asarray(_dataset.aux["source_files"])[:, 0],
+        "measurements": np.asarray(dataset.data[:, 0]),
+        "available": np.asarray(dataset.measurement_mask[:, 0], dtype=bool),
+        "support": np.asarray(dataset.boundary_mask[:, 0], dtype=bool),
+        "schema": dataset.aux["channel_schema"],
+        "replicates": tuple(dataset.aux["batch_replicates"]),
+        "source_files": np.asarray(dataset.aux["source_files"])[:, 0],
     }
 
 

@@ -84,3 +84,27 @@ def test_settings_file_names_a_segmentation():
 
     assert load_cell_settings(DEFAULT_TEXTURE_SETTINGS_FILE, "slice").nucleus_options()["segmentation"] == "cpsam_sox2_lmbr"
     assert CellSettings(segmentation="cpsam").nucleus_options()["segmentation"] == "cpsam"
+
+
+def test_sweep_refuses_a_missing_stored_segmentation(tmp_path, monkeypatch):
+    import pytest
+
+    from Experiments.micropatterns.density_ko_sweep import check_stored_segmentation
+
+    monkeypatch.setenv("NUCLEUS_SEGMENTATION_ROOT", str(tmp_path / "segmentation"))
+    dataset = tmp_path / "260726_nca_dataset"
+    image = dataset / "cell_fate_markers/ctrl_s1_slices/A1_F1_0h_slice.tif"
+    image.parent.mkdir(parents=True)
+    image.touch()
+    colonies = {
+        "schema": SimpleNamespace(group_names=("cell_fate_s1", "rna_expression")),
+        "source_files": np.array([[str(image), ""]]),
+    }
+    check_stored_segmentation(colonies, dataset, "")  # none set: nothing to check
+    with pytest.raises(FileNotFoundError, match="not at"):
+        check_stored_segmentation(colonies, dataset, "cpsam")
+    segmentation.write_labels(dataset, "cpsam", "cell_fate_markers/ctrl_s1_slices/other.tif", np.zeros((4, 4)), {})
+    with pytest.raises(FileNotFoundError, match="no labels"):
+        check_stored_segmentation(colonies, dataset, "cpsam")
+    segmentation.write_labels(dataset, "cpsam", "cell_fate_markers/ctrl_s1_slices/A1_F1_0h_slice.tif", np.zeros((4, 4)), {})
+    check_stored_segmentation(colonies, dataset, "cpsam")

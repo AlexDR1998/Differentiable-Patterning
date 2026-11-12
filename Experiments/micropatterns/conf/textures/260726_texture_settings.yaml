@@ -19,7 +19,7 @@ max:
     split_distance: 1
     min_cell_area: 1
     interior_fraction: 0.8
-    expansion_um: 2.0
+    expansion_um: 1.0
     nucleus_diameter_um: 14.0
     nucleus_seed_spacing: 0.3
     nucleus_threshold: 1.0
@@ -34,7 +34,7 @@ max:
     layers: 5
     attempts: 10
     softness_cells: 0.2
-    size_bias: 0.0
+    size_bias: 2.0
     visible_fraction: 0.5
     noise_panels:
     - rna_expression
@@ -46,31 +46,31 @@ max:
     replicates: 3
     pieces_from: All replicates
     seed: 0
-    saved: '2026-11-12T17:01:21Z'
+    saved: '2026-11-12T17:33:38Z'
 sum:
   texture:
     mode: patch
     patch_size: 11
     patch_overlap: 7
     patch_jitter: 3
-    patch_downsample: null
+    patch_downsample: 8
     interior_fraction: 0.8
     candidates: 24
     iaaft_iterations: 25
     normalise: false
     normalise_iterations: 4
   cells:
-    placement: tiled
+    placement: layers
     pieces: nuclei
     markers:
     - LMBR
     - SOX2
-    split_distance: 2
-    min_cell_area: 2
+    split_distance: 1
+    min_cell_area: 1
     interior_fraction: 0.8
-    expansion_um: 2.0
-    nucleus_diameter_um: 8.0
-    nucleus_seed_spacing: 0.5
+    expansion_um: 1.0
+    nucleus_diameter_um: 14.0
+    nucleus_seed_spacing: 0.35
     nucleus_threshold: 1.0
     nucleus_split_method: distance
     nucleus_roundness: 0.0
@@ -80,19 +80,22 @@ sum:
     reach_scale: 1.0
     seed_spacing: 0.6
     tile_factor: 4
-    layers: 2
+    layers: 5
     attempts: 10
-    softness_cells: 0.5
-    size_bias: 0.0
+    softness_cells: 0.2
+    size_bias: 2.5
     visible_fraction: 0.5
     noise_panels:
     - rna_expression
     density_panels:
     - cell_fate_s1
   tuned_on:
-    note: defaults from inverse_design base_config.yaml
-    not tuned: null
-    cells: defaults of the density x KO sweep (2026-11-11), not tuned
+    condition: ctrl
+    downsample: 8
+    replicates: 3
+    pieces_from: All replicates
+    seed: 0
+    saved: '2026-11-12T17:27:53Z'
 slice:
   texture:
     mode: patch
@@ -114,7 +117,7 @@ slice:
     split_distance: 1
     min_cell_area: 1
     interior_fraction: 0.8
-    expansion_um: 2.0
+    expansion_um: 1.0
     nucleus_diameter_um: 14.0
     nucleus_seed_spacing: 0.2
     nucleus_threshold: 1.0
@@ -129,7 +132,7 @@ slice:
     layers: 5
     attempts: 10
     softness_cells: 0.2
-    size_bias: 1.0
+    size_bias: 2.0
     visible_fraction: 0.5
     noise_panels:
     - rna_expression
@@ -141,4 +144,4 @@ slice:
     replicates: 3
     pieces_from: All replicates
     seed: 0
-    saved: '2026-11-12T16:55:57Z'
+    saved: '2026-11-12T17:29:27Z'
