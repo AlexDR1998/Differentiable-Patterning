@@ -18,7 +18,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-uniform-boundary-mode
+    logging.wandb.group: smoke_emoji-independent-panels-rna-noise
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -156,7 +156,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-uniform-boundary-mode
+        group: smoke_emoji-independent-panels-rna-noise
         tags: null
         tag_keys:
         - model.family
@@ -187,7 +187,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-uniform-boundary-mode
+    logging.wandb.group: smoke_emoji-independent-panels-rna-noise
     model.family: gNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -325,7 +325,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-uniform-boundary-mode
+        group: smoke_emoji-independent-panels-rna-noise
         tags: null
         tag_keys:
         - model.family
@@ -356,7 +356,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-uniform-boundary-mode
+    logging.wandb.group: smoke_emoji-independent-panels-rna-noise
     model.family: NCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -514,7 +514,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-uniform-boundary-mode
+        group: smoke_emoji-independent-panels-rna-noise
         tags: null
         tag_keys:
         - model.family
@@ -545,7 +545,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-uniform-boundary-mode
+    logging.wandb.group: smoke_emoji-independent-panels-rna-noise
     model.family: gnNCA
     trainer.loop_autodiff: lax
     loss.terms:
@@ -685,7 +685,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-uniform-boundary-mode
+        group: smoke_emoji-independent-panels-rna-noise
         tags: null
         tag_keys:
         - model.family
@@ -716,7 +716,7 @@ configs:
     run.write_images: true
     trainer.log_every: 20
     optimiser.warmup_fraction: 0.2
-    logging.wandb.group: smoke_emoji-uniform-boundary-mode
+    logging.wandb.group: smoke_emoji-independent-panels-rna-noise
     model.family: aNCA
     trainer.loop_autodiff: checkpointed
     loss.terms:
@@ -864,7 +864,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_emoji-uniform-boundary-mode
+        group: smoke_emoji-independent-panels-rna-noise
         tags: null
         tag_keys:
         - model.family

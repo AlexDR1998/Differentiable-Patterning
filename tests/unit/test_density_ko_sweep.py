@@ -16,6 +16,7 @@ from Experiments.micropatterns.density_ko_sweep import (
     save_density_ko_results,
     settings_from_dict,
 )
+from Experiments.micropatterns.texture_settings import CellSettings
 from Experiments.notebook_jobs import part_path, read_job_entry, write_job_manifest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -118,6 +119,31 @@ def test_launchers_count_the_parts(tmp_path):
     assert output == ["2", "density_ko_job"]
 
 
+def test_settings_need_cell_settings_for_each_projection():
+    import pytest
+
+    settings = DensityKoSettings(
+        data_root="data", store_root="models", cell_type_files={"max": "x.yaml", "slice": "y.yaml"},
+        cells={"max": CellSettings().to_dict()},
+    )
+    assert settings.cell_settings("max") == CellSettings()
+    with pytest.raises(ValueError, match="slice"):
+        settings.check()
+
+
+def test_old_job_files_keep_their_cell_settings():
+    old = {
+        "data_root": "data", "store_root": "models", "cell_type_files": {"max": "x.yaml", "sum": "y.yaml"},
+        "piece_source": "nuclei", "placement": "tiled", "expansion_um": 3.0, "split_distance": 2,
+        "min_cell_area": 2, "layers": 2, "softness_cells": 0.5,
+    }
+    settings = settings_from_dict(old)
+    assert settings.cell_settings("sum") == CellSettings(expansion_um=3.0)
+    # Before cell placement was a setting, cells were placed in layers
+    unset = settings_from_dict({"data_root": "data", "store_root": "models", "cell_type_files": {"max": "x"}})
+    assert unset.cell_settings("max").placement == "layers"
+
+
 def test_settings_ranges():
     settings = DensityKoSettings(
         data_root="data", store_root="models", density_count=3, ko_interval=12.0,
@@ -211,11 +237,18 @@ def fake_library():
         "panels": [(np.array([0, 1]), [cell() for _ in range(5)]), (np.array([2, 3]), [cell() for _ in range(5)])],
         "measurement_gap_values": np.zeros(4, dtype=np.float32),
         "gap_values": np.full(3, -1.0, dtype=np.float32),
+        # Measured pixels of each panel (for noise panels)
+        "pixels": [rng.random((50, 2)).astype(np.float32) + 5.0, rng.random((50, 2)).astype(np.float32) + 7.0],
     }
 
 
 class FakeSchema:
     primary_measurements = (0, 2, 3)
+    group_names = ("cell_fate_s1", "cell_fate_s2")
+
+
+# The fake panels both hold cells
+NO_NOISE = {"noise_panels": ()}
 
 
 def disc(size=40, radius=18):
@@ -253,10 +286,11 @@ def test_tiled_cells_never_overlap_and_are_counted_exactly():
 
 
 def test_tiled_states_hit_the_requested_cell_numbers():
-    from Experiments.micropatterns.density_ko_sweep import tiled_cell_states
+    from Experiments.micropatterns.synthetic_ic import cell_states
+    from Experiments.micropatterns.texture_settings import CellSettings
 
     mask = disc()
-    tiled = tiled_cell_states(fake_library(), FakeSchema(), mask, "per_colony", [10, 100, 300], seed=1)
+    tiled = cell_states(fake_library(), FakeSchema(), mask, [10, 100, 300], False, 1, CellSettings(**NO_NOISE))
 
     np.testing.assert_array_equal(tiled["cells"], [10, 100, 300])
     np.testing.assert_allclose(tiled["cell_weights"].sum(axis=(1, 2)), [10, 100, 300], rtol=1e-5)
@@ -267,9 +301,10 @@ def test_tiled_states_hit_the_requested_cell_numbers():
 
 
 def test_tiled_states_hit_the_requested_coverage():
-    from Experiments.micropatterns.density_ko_sweep import tiled_cell_states
+    from Experiments.micropatterns.synthetic_ic import cell_states
+    from Experiments.micropatterns.texture_settings import CellSettings
 
-    tiled = tiled_cell_states(fake_library(), FakeSchema(), disc(), "share", [0.2, 0.6], seed=1)
+    tiled = cell_states(fake_library(), FakeSchema(), disc(), [0.2, 0.6], True, 1, CellSettings(**NO_NOISE))
 
     assert np.all(tiled["shares"] >= [0.2, 0.6])
     assert np.all(tiled["shares"] < [0.25, 0.65])
@@ -332,8 +367,10 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
         "panels": [(np.array([0, 1]), [cell() for _ in range(5)]), (np.array([2, 3]), [cell() for _ in range(5)])],
         "measurement_gap_values": np.zeros(4, dtype=np.float32),
         "gap_values": np.zeros(4, dtype=np.float32),
+        "pixels": [rng.random((40, 2)).astype(np.float32), rng.random((40, 2)).astype(np.float32)],
     }
-    schema = SimpleNamespace(primary_measurements=(0, 1, 2, 3))
+    # The second panel is the RNA panel: noise drawn from its pixels, no cells
+    schema = SimpleNamespace(primary_measurements=(0, 1, 2, 3), group_names=("cell_fate_s1", "rna_expression"))
     monkeypatch.setattr(sweep, "load_training_histogram_bins", lambda bundle, root: None)
     monkeypatch.setattr(sweep, "load_condition_data", lambda *args: {
         "boundary": support[None].astype(np.float32), "state_channel_names": names, "nodal_channel": 1,
@@ -343,7 +380,7 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
     })
     monkeypatch.setattr(sweep, "bundle_alignment", lambda bundle: (None, 1.0, 5.0))
     monkeypatch.setattr(sweep, "reference_cell_counts", lambda *args, **kwargs: [])
-    monkeypatch.setattr(sweep, "replicate_cell_counts", lambda rows, replicate: {
+    monkeypatch.setattr(sweep, "replicate_cell_counts", lambda rows, replicate, panels=None: {
         "cells_per_mm2": 1000.0, "cells_per_segment": 1.0,
     })
     monkeypatch.setattr(sweep, "replicate_cell_library", lambda *args, **kwargs: (library, 0.4))
@@ -354,7 +391,7 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
             data_root="data", store_root="models", cell_type_files={"slice": cell_types}, rings=3,
             density_unit="per_colony", density_start=20, density_stop=120, density_count=3,
             ko_start=0, ko_stop=12, ko_interval=12, snapshot_hour=12, replicates=(1,),
-            duplicate_runs=2, placement=placement, max_batch=4,
+            duplicate_runs=2, cells={"slice": CellSettings(placement=placement).to_dict()}, max_batch=4,
         )
         record = {"model_id": "fake-model", "projection": "slice", "downsample": 8, "notes": "fake"}
         results, warnings = sweep.run_density_ko_sweep(settings, [record])
@@ -364,16 +401,21 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
             assert result["pattern_counts"].shape[:3] == (3, 2, 3)
             assert result["channel_means"].shape == (3, 2, 3, 4)
             assert np.all(np.isfinite(result["channel_means"]))
+        cells = results[0]["cells_per_colony"]
         if placement == "tiled":
-            np.testing.assert_array_equal(results[0]["cells_per_colony"], [20, 70, 120])
-            assert results[0]["cell_pattern_counts"].shape == results[0]["pattern_counts"].shape
-            # Every 0h cell counted once over the colony
-            np.testing.assert_allclose(results[0]["cell_pattern_counts"].sum(axis=(2, 3)), [[20] * 2, [70] * 2, [120] * 2])
+            np.testing.assert_array_equal(cells, [20, 70, 120])
         else:
-            assert results[0]["cell_pattern_counts"] is None
+            # Cells that show, found by searching the density: integers close to the targets
+            np.testing.assert_allclose(cells, [20, 70, 120], atol=3)
+        assert results[0]["cell_pattern_counts"].shape == results[0]["pattern_counts"].shape
+        # Every 0h cell counted once over the colony
+        np.testing.assert_allclose(
+            results[0]["cell_pattern_counts"].sum(axis=(2, 3)), np.repeat(cells[:, None], 2, axis=1), rtol=1e-5
+        )
         save_density_ko_results(tmp_path / f"{placement}.npz", results)
         loaded = load_density_ko_results(tmp_path / f"{placement}.npz")
         assert loaded[0]["placement"] == placement
+        assert loaded[0]["cell_settings"]["placement"] == placement
         np.testing.assert_allclose(loaded[1]["channel_means"], results[1]["channel_means"])
 
     # A remote job part, as a pod runs it: manifest entry -> part file, skipped when rerun
@@ -389,3 +431,126 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
     modified = output.stat().st_mtime_ns
     run_job_part(config, index)
     assert output.stat().st_mtime_ns == modified
+
+
+def test_visible_cells_leave_out_hidden_and_faded_cells():
+    from Experiments.micropatterns.synthetic_ic import cell_ids, visible_cells
+
+    ranks = np.full((2, 1, 6, 10), -1.0)
+    ranks[0, 0, 0:4, 0:4] = 0.1  # A, on top
+    ranks[1, 0, 1:3, 1:3] = 0.2  # B, wholly under A
+    ranks[1, 0, 0:4, 3:7] = 0.3  # C, one of its four columns under A
+    ids, panel_of = cell_ids(ranks)
+    mask = np.ones((6, 10), dtype=bool)
+
+    found = visible_cells(ids, panel_of, (ranks >= 0).astype(float), mask, 0.5)
+    assert found["cells"].tolist() == [2.0]  # A and C
+    assert np.isclose(found["weights"].sum(), 2.0)
+    assert np.isclose(found["visible_area"][0], 16 + 12)
+    # Where B lies, A shows
+    assert np.all(found["owners"][0, 1:3, 1:3] == ids[0, 0, 0, 0])
+
+    # A faded to 0.4 shows less than half of itself; B now shows with weight 0.6
+    kept = (ranks >= 0).astype(float)
+    kept[0] *= 0.4
+    faded = visible_cells(ids, panel_of, kept, mask, 0.5)
+    assert faded["cells"].tolist() == [2.0]  # B and C
+    assert np.all(faded["owners"][0, 1:3, 1:3] == ids[1, 0, 1, 1])
+    # Cells mostly outside the colony do not count
+    left = np.broadcast_to(np.arange(10) < 5, (6, 10))
+    assert visible_cells(ids, panel_of, (ranks >= 0).astype(float), left, 0.5)["cells"].tolist() == [1.0]
+
+
+def test_size_bias_puts_smaller_cells_in_deeper_layers():
+    from Experiments.micropatterns.synthetic_ic import cell_ids
+    from Experiments.micropatterns.texture_synthesis import place_cells
+
+    small = (np.ones((1, 1), dtype=bool), np.ones((1, 1, 1), dtype=np.float32))
+    large = (np.ones((3, 3), dtype=bool), np.ones((1, 3, 3), dtype=np.float32))
+    panels = [(np.array([0]), [small, large, large, large])]
+
+    def mean_areas(bias):
+        _, ranks, _ = place_cells(panels, 1, (30, 30), 3, 10, seed=0, size_bias=bias)
+        ids, _ = cell_ids(ranks)
+        areas = np.bincount(ids[ids >= 0])
+        return [np.mean(areas[np.unique(ids[layer][ids[layer] >= 0])]) for layer in range(3)]
+
+    unbiased, biased = mean_areas(0.0), mean_areas(2.0)
+    assert np.isclose(biased[0], unbiased[0])  # layer 0 is drawn evenly either way
+    assert biased[2] < biased[1] < unbiased[1]
+
+
+def test_layered_states_count_the_cells_that_show():
+    from Experiments.micropatterns.synthetic_ic import cell_states
+    from Experiments.micropatterns.texture_settings import CellSettings
+
+    settings = CellSettings(placement="layers", pieces="segments", **NO_NOISE)
+    placed = cell_states(fake_library(), FakeSchema(), disc(), [20, 100, 160], False, 1, settings)
+
+    np.testing.assert_allclose(placed["cells"], [20, 100, 160], atol=1)
+    # Every panel is placed on its own and reaches each target itself
+    np.testing.assert_allclose(placed["panel_cells"], [[20] * 2, [100] * 2, [160] * 2], atol=1)
+    assert placed["densities"].shape == (3, 2)
+    np.testing.assert_allclose(placed["cell_weights"].sum(axis=(1, 2)), placed["cells"], rtol=1e-5)
+    # Kept cells hidden under others are left out of the count
+    assert np.all(placed["placed_cells"] >= placed["cells"] - 1)
+    assert np.all(np.diff(placed["densities"], axis=0) > 0)
+    assert placed["owners"].shape == (3, 2, 40, 40)
+
+    shares = cell_states(fake_library(), FakeSchema(), disc(), [0.3, 0.6], True, 1, settings)["shares"]
+    assert np.all(shares >= [0.3, 0.6]) and np.all(shares < [0.33, 0.63])
+
+
+def test_independent_panels_do_not_line_up():
+    from Experiments.micropatterns.texture_synthesis import place_cells
+
+    library = fake_library()
+    _, linked, _ = place_cells(library["panels"], 4, (40, 40), 1, 10, seed=0)
+    _, apart, _ = place_cells(library["panels"], 4, (40, 40), 1, 10, seed=0, independent_panels=True)
+
+    # Linked panels share every cell (rank and place); independent ones share none
+    np.testing.assert_array_equal(linked[0, 0] >= 0, linked[0, 1] >= 0)
+    assert not set(np.unique(apart[0, 0][apart[0, 0] >= 0])) & set(np.unique(apart[0, 1][apart[0, 1] >= 0]))
+    assert not np.array_equal(apart[0, 0] >= 0, apart[0, 1] >= 0)
+
+
+def test_tiled_panels_each_reach_the_target():
+    from Experiments.micropatterns.synthetic_ic import cell_states
+    from Experiments.micropatterns.texture_settings import CellSettings
+
+    tiled = cell_states(fake_library(), FakeSchema(), disc(), [10, 100], False, 1, CellSettings(**NO_NOISE))
+    np.testing.assert_array_equal(tiled["panel_cells"], [[10, 10], [100, 100]])
+    # Panel 0 supplies channel 0, panel 1 channels 1 and 2: their cells sit in different places
+    assert not np.array_equal(tiled["initial_states"][1, 0] == -1.0, tiled["initial_states"][1, 1] == -1.0)
+
+
+def test_noise_panels_get_measured_pixels_and_no_cells():
+    from Experiments.micropatterns.synthetic_ic import cell_states
+    from Experiments.micropatterns.texture_settings import CellSettings
+
+    library, mask = fake_library(), disc()
+    for placement in ("tiled", "layers"):
+        settings = CellSettings(placement=placement, pieces="nuclei", noise_panels=("cell_fate_s2",))
+        placed = cell_states(library, FakeSchema(), mask, [10, 60], False, 1, settings)
+
+        # Channels 1 and 2 (panel 1) are whole measured pixels, the same at every density
+        values = placed["initial_states"][:, 1:][:, :, mask]
+        pixels = {tuple(_p) for _p in library["pixels"][1]}
+        assert all(tuple(_v) in pixels for _v in values[0].T)
+        np.testing.assert_array_equal(values[0], values[1])
+        assert np.all(placed["initial_states"][:, 1:][:, :, ~mask] == 0.0)
+        # Cells are counted on panel 0 only
+        np.testing.assert_allclose(placed["cells"], [10, 60], atol=1)
+
+
+def test_measured_density_comes_from_the_density_panels():
+    from Experiments.micropatterns.density_ko_sweep import replicate_cell_counts
+
+    def row(replicate, panel, cells):
+        return {"replicate": replicate, "panel": panel, "cells": cells, "segments": cells, "from_markers": True,
+                "colony_mm2": 0.2, "cells_per_mm2": cells / 0.2, "nuclear_area_um2": 40.0}
+
+    rows = [row(1, "cell_fate_s1", 400), row(1, "rna_expression", 200), row(2, "cell_fate_s1", 300)]
+    assert replicate_cell_counts(rows, 1)["cells_per_mm2"] == 1500.0  # both panels of replicate 1
+    assert replicate_cell_counts(rows, 1, ("cell_fate_s1",))["cells_per_mm2"] == 2000.0
+    assert replicate_cell_counts(rows, 2, ("cell_fate_s1",))["cells_per_mm2"] == 1500.0

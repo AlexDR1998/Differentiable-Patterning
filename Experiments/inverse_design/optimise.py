@@ -27,14 +27,14 @@ from Common.dataloader.cell_types import load_cell_type_rules
 from Experiments.config import config_to_dict
 from Experiments.config_helpers import build_wandb_tags, open_registry_bundle, resolve_store_root
 from Experiments.inverse_design.records import create_run_id, publish_inverse_design_record
-from Experiments.micropatterns.reference import cell_library, combine_reference, load_reference
-from Experiments.micropatterns.texture_settings import load_texture_settings, scaled_patch_geometry
-from Experiments.micropatterns.texture_synthesis import (
-    normalise_histograms_and_covariance,
-    place_cells,
-    synthesise_patch_texture,
-    synthesise_reference_texture,
+from Experiments.micropatterns.reference import cell_library, load_reference
+from Experiments.micropatterns.synthetic_ic import synthesise_texture
+from Experiments.micropatterns.texture_settings import (
+    TEXTURE_SETTING_KEYS,
+    load_texture_settings,
+    scaled_patch_geometry,
 )
+from Experiments.micropatterns.texture_synthesis import place_cells
 from NCA.inverse_design import (
     CellDensity,
     CellGaps,
@@ -99,40 +99,17 @@ def texture_bank(reference, texture, grid_shape, seed, downsample):
     """``[K, state channels, H, W]`` 0 h textures over the whole grid.
 
     Each texture takes every staining panel from a random training replicate
-    and is synthesised as in ``boundary_mask_explorer.py``. ``texture`` is
-    resolved (``resolve_texture``); its patch sizes are rescaled to the data's
+    (``synthetic_ic.synthesise_texture``). ``texture`` is resolved
+    (``resolve_texture``); its patch sizes are rescaled to the data's
     ``downsample``.
     """
 
-    schema = reference["schema"]
-    groups = tuple(tuple(group) for group in schema.group_measurement_indices)
-    full = np.ones(grid_shape, dtype=bool)
-    patch_size, patch_overlap, patch_jitter = scaled_patch_geometry(
-        texture.patch_size, texture.patch_overlap, texture.patch_jitter,
-        texture.patch_downsample, downsample,
-    )
-    bank = []
-    for index in range(texture.bank_size):
-        texture_seed = seed * 100003 + index
-        measurements, support = combine_reference(reference, "sample_groups", 0, texture_seed)
-        if texture.mode == "patch":
-            tile, *_ = synthesise_patch_texture(
-                measurements, support, grid_shape, groups,
-                patch_size, patch_overlap, texture.interior_fraction,
-                patch_jitter, texture.candidates, texture_seed,
-            )
-        elif texture.mode == "iaaft":
-            tile = synthesise_reference_texture(
-                measurements, support, grid_shape, full, texture.iaaft_iterations, texture_seed
-            )
-        else:
-            raise ValueError(f"Unknown texture mode {texture.mode!r}; use patch or iaaft")
-        if texture.normalise:
-            tile = normalise_histograms_and_covariance(
-                tile, measurements, support, full, groups, texture.normalise_iterations
-            )
-        bank.append(np.asarray(tile, dtype=np.float32)[np.asarray(schema.primary_measurements)])
-    return np.stack(bank)
+    settings = {key: getattr(texture, key) for key in TEXTURE_SETTING_KEYS}
+    primary = np.asarray(reference["schema"].primary_measurements)
+    return np.stack([
+        synthesise_texture(reference, settings, grid_shape, seed * 100003 + index, downsample)[primary]
+        for index in range(texture.bank_size)
+    ])
 
 
 def texture_summary(texture_config, texture, projection, downsample):

@@ -19,7 +19,7 @@ configs:
     run.checkpoint_warmup_fraction: 0.1
     optimiser.warmup_fraction: 0.2
     trainer.log_every: 20
-    logging.wandb.group: smoke_signalling-uniform-boundary-mode
+    logging.wandb.group: smoke_signalling-independent-panels-rna-noise
     model.family: NCA
     data.signal_task.task: remote_switch
     data.signal_task.params: {}
@@ -129,7 +129,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_signalling-uniform-boundary-mode
+        group: smoke_signalling-independent-panels-rna-noise
         tags: null
         tag_keys:
         - model.family
@@ -159,7 +159,7 @@ configs:
     run.checkpoint_warmup_fraction: 0.1
     optimiser.warmup_fraction: 0.2
     trainer.log_every: 20
-    logging.wandb.group: smoke_signalling-uniform-boundary-mode
+    logging.wandb.group: smoke_signalling-independent-panels-rna-noise
     model.family: sNCA
     data.signal_task.task: connected_routing
     data.signal_task.params: {}
@@ -275,7 +275,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_signalling-uniform-boundary-mode
+        group: smoke_signalling-independent-panels-rna-noise
         tags: null
         tag_keys:
         - model.family
@@ -305,7 +305,7 @@ configs:
     run.checkpoint_warmup_fraction: 0.1
     optimiser.warmup_fraction: 0.2
     trainer.log_every: 20
-    logging.wandb.group: smoke_signalling-uniform-boundary-mode
+    logging.wandb.group: smoke_signalling-independent-panels-rna-noise
     model.family: aNCA
     data.signal_task.task: remote_switch
     data.signal_task.params:
@@ -419,7 +419,7 @@ configs:
       backend: wandb
       wandb:
         project: pipeline-smoke
-        group: smoke_signalling-uniform-boundary-mode
+        group: smoke_signalling-independent-panels-rna-noise
         tags: null
         tag_keys:
         - model.family

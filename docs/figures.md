@@ -51,7 +51,7 @@ save_figure(fig, "my_figure", "results")  # figures/results/my_figure.pdf and .p
 | --- | --- | --- |
 | `imaging_schematic.py` | 3D stack → slice, max and sum projections | `figures/schematics/` |
 | `projection_resolution_figure.py` | NCA trajectories per projection and per resolution | `figures/schematics/` |
-| `nodal_ko_schematic.py` | NODAL knockout timeline with real colonies | `figures/schematics/` |
+| `nodal_ko_schematic.py` | True data and NCA trajectories under NODAL knockout (drawing code in `ko_trajectory.py`) | `figures/schematics/` |
 | `project_overview.py` | Project overview schematic (imaging, training, perturbations) | `figures/schematics/` |
 | `nca_training_schematic.py` | NCA update step and training schematic | `figures/schematics/` |
 | `loss_schematic.py` | Loss functions schematic | `figures/schematics/` |
@@ -59,6 +59,6 @@ save_figure(fig, "my_figure", "results")  # figures/results/my_figure.pdf and .p
 
 Figures also made outside this folder:
 
-- `nodal_ko_eval.py`: evaluation notebook. It also draws the trajectory/branch figure, prevalence against knockout time and cell-type maps, and exports the data that `overview_figure.py` reads.
+- `nodal_ko_eval.py`: evaluation notebook. It also draws prevalence against knockout time and cell-type maps, and exports the data that `overview_figure.py` reads.
 - `data_cleaning.py`: data processing and QC. Section 6 draws the cleaning steps figure.
 - `ablation_comparison.py`: ablation figures (W&B runs and bundle inference).

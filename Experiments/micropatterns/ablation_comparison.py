@@ -55,9 +55,9 @@ with app.setup(hide_code=True):
         "loss_texture_only": ("Texture only", "Loss terms", "objective"),
         "loss_radial_only": ("Radial only", "Loss terms", "objective"),
         "loss_l2_only": ("L2 only", "Loss terms", "objective"),
-        "loss_l2_not_radial": ("L2 + texture", "Loss terms", "objective"),
-        "loss_add_l2": ("+ L2", "Loss terms", "objective"),
-        "loss_add_summary": ("+ mean & corr.", "Loss terms", "objective"),
+        "loss_l2_not_radial": ("Texture + L2", "Loss terms", "objective"),
+        "loss_add_l2": ("Texture + radial + L2", "Loss terms", "objective"),
+        "loss_add_summary": ("Texture + radial + mean + corr.", "Loss terms", "objective"),
         "curriculum_static": ("Static weights", "Curriculum", "objective"),
         "curriculum_macro_first": ("Macro first", "Curriculum", "objective"),
         "curriculum_reinjection_decay": ("Reinjection decay", "Curriculum", "same"),
@@ -132,14 +132,24 @@ with app.setup(hide_code=True):
         BAD_COLOUR,
         BASELINE,
         CMAP,
-        CMY_TRIPLETS,
+        FIGURE_CHANNELS,
         FONT,
+        GROUP_LABELS,
         INK,
         MUTED,
         SERIES,
         STYLE_FILE,
         UNMEASURED,
+        legend_options,
+        marker_colour,
         save_figure,
+    )
+    from Experiments.micropatterns.figures.drawing import (
+        colony_rgba,
+        draw_sectors,
+        marker_legend_entries,
+        rows_to_columns,
+        sliced_rgba,
     )
 
     BASELINE_COLOUR = BASELINE
@@ -285,15 +295,36 @@ with app.setup(hide_code=True):
 
     # ---- Model inference (section 5) ----
 
-    # Marker triplets drawn as cyan, magenta, yellow (as in rendering.render_cmy_composite)
-    TRIPLETS = {
-        f"{name} ({' · '.join(triplet)})": triplet
-        for name, triplet in zip(("Cell fate", "Nodal pathway", "Signalling"), CMY_TRIPLETS)
-    }
+    # Output tiles are colony discs with one sector per experiment group,
+    # showing that group's markers (FIGURE_CHANNELS) in MARKER_COLOURS
+    SECTOR_GROUPS = {GROUP_LABELS[g]: g for g in FIGURE_CHANNELS}
+
+    # Ablations that change the boundary: the toggle in the over-time figure
+    # shows them uncropped, to see what they grow outside the colony
+    BOUNDARY_ABLATIONS = ("mask_uniform", "no_boundary_reg", "no_regularisers")
 
     # Loaded data and rollouts, kept between cell runs
     DATA_CACHE = {}
     ROLLOUT_CACHE = {}
+    # Rollouts are also saved to disk, one file per model ID (bundles never change).
+    # Bump the version after changing rollout_bundle, so old files are not reused.
+    ROLLOUT_CACHE_VERSION = 1
+
+    LOSS_NAMES = {"l2": "L2", "texture": "texture", "radial": "radial",
+                  "channel_mean": "mean", "correlation": "corr."}
+    REGULARISER_NAMES = {"intermediate_state": "state", "boundary": "boundary"}
+
+    def loss_description(loss):
+        """Loss terms and regularisers of a typed loss config, e.g. ``("texture + radial", "state, boundary")``."""
+        terms = []
+        for term in loss.terms:
+            weights = getattr(term, "multi_target_weights", None)
+            if weights:
+                terms += [LOSS_NAMES.get(k, k) for k, w in weights.items() if w > 0]
+            elif term.weight > 0:
+                terms.append(LOSS_NAMES.get(term.type, term.type))
+        regularisers = [REGULARISER_NAMES.get(k, k) for k, w in loss.regularisers.items() if w > 0]
+        return " + ".join(terms), ", ".join(regularisers) or "none"
 
     def bundle_table(registry, experiment):
         """One row per complete bundle of the sweep, keeping the newest per (ablation, repeat, split)."""
@@ -309,10 +340,13 @@ with app.setup(hide_code=True):
                 "ablation": bundle.config.labels.ablation,
                 "repeat": bundle.config.run.repeat,
                 "split": SPLITS.get("-".join(map(str, validation or ())), "none"),
+                "losses": loss_description(bundle.config.loss),
                 "path": model["path"],
             })
         if not rows:
-            return pd.DataFrame(columns=["model_id", "created_at", "ablation", "repeat", "split", "path"])
+            return pd.DataFrame(
+                columns=["model_id", "created_at", "ablation", "repeat", "split", "losses", "path"]
+            )
         return (
             pd.DataFrame(rows)
             .sort_values("created_at")
@@ -377,25 +411,58 @@ with app.setup(hide_code=True):
             "model_id": bundle.id,
         }
 
-    def cmy_image(states, names, triplet, mask=None):
-        """RGB ``[H, W, 3]`` of three state channels ``states [C, H, W]`` as cyan, magenta, yellow."""
-        cyan, magenta, yellow = (
-            np.clip(states[names.index(name)], 0.0, 1.0) if name in names
-            else np.zeros(states.shape[-2:])
-            for name in triplet
-        )
-        rgb = np.stack((0.5 * (magenta + yellow), 0.5 * (cyan + yellow), 0.5 * (cyan + magenta)), axis=-1)
-        return rgb if mask is None else rgb * (mask[..., None] > 0)
+    def sector_image(states, names, groups, mask):
+        """RGBA disc of state channels ``states [C, H, W]`` (bare marker names), one sector per group."""
+        rgbas = [
+            colony_rgba(states, mask, [marker_colour(n) if n in FIGURE_CHANNELS[g] else None for n in names])
+            for g in groups
+        ]
+        return sliced_rgba(rgbas)
+
+    def rollout_file(cache_dir, model_id, data_path, seed=0):
+        """Disk cache file of one model's rollout (None when caching is off)."""
+        if not cache_dir:
+            return None
+        from Common.dataloader.disk_cache import cache_folder
+
+        settings = {"data_path": data_path, "seed": seed, "version": ROLLOUT_CACHE_VERSION}
+        return cache_folder(cache_dir, "ablation_rollouts", settings) / f"{model_id}.npz"
+
+    def save_rollout(file, result):
+        temporary = file.with_suffix(".tmp.npz")
+        np.savez_compressed(temporary, **{k: np.asarray(v) for k, v in result.items()})
+        temporary.replace(file)
+
+    def load_rollout(file):
+        with np.load(file) as saved:
+            return {
+                "prediction": saved["prediction"],
+                "target": saved["target"],
+                "mask": saved["mask"],
+                "names": tuple(str(n) for n in saved["names"]),
+                "replicates": tuple(int(r) for r in saved["replicates"]),
+                "source": str(saved["source"]),
+                "model_id": str(saved["model_id"]),
+            }
 
     def replicate_index(result, replicate):
         """Index of a physical replicate in a result, or its first replicate if it lacks that one."""
         return result["replicates"].index(replicate) if replicate in result["replicates"] else 0
 
-    def output_tile(result, kind, replicate, time, triplet, masked):
-        """Image of the data ("target") or the model ("prediction") at one timepoint."""
+    def output_tile(result, kind, replicate, time, groups, masked):
+        """Sector disc of the data ("target") or the model ("prediction") at one timepoint."""
         index = replicate_index(result, replicate)
-        mask = result["mask"][index] if masked else None
-        return cmy_image(result[kind][index, time], result["names"], triplet, mask)
+        states = result[kind][index, time]
+        mask = result["mask"][index] if masked else np.ones(states.shape[-2:])
+        return sector_image(states, result["names"], groups, mask)
+
+    def sector_legend(fig, groups, font_scale=1.0):
+        """Legend right of the figure: a row per group with its sector and marker colours."""
+        names = [f"{g}/{m}" for g in groups for m in FIGURE_CHANNELS[g]]
+        handles, labels, ncol = rows_to_columns(marker_legend_entries(names, groups, sectors=groups))
+        options = legend_options()
+        options["fontsize"] *= font_scale
+        fig.legend(handles, labels, ncol=ncol, loc="center left", bbox_to_anchor=(1.0, 0.5), **options)
 
     def own_data_needed(ablation, result, replicate):
         """Whether an ablation needs its own data panel (targets, replicate or split differ)."""
@@ -404,10 +471,20 @@ with app.setup(hide_code=True):
             or replicate not in result["replicates"]
         )
 
-    def show_tile(ax, image, title):
+    def show_tile(ax, image, title, sectors=1, outline=None):
+        """Draw an image (a sector disc when ``sectors`` > 1, with white lines between sectors).
+
+        ``outline`` is a colony mask drawn as a dashed edge (for uncropped tiles).
+        """
         ax.set_axis_off()
         if image is not None:
-            ax.imshow(image, interpolation="nearest")
+            ax.imshow(image, interpolation="nearest", extent=(-0.5, 0.5, -0.5, 0.5))
+            draw_sectors(ax, (0.0, 0.0), 0.5, [False] * sectors)
+            if outline is not None:
+                ax.contour(outline, levels=[0.5], extent=(-0.5, 0.5, -0.5, 0.5), origin="upper",
+                           colors="white", linewidths=0.6, linestyles="--")
+            ax.set_xlim(-0.5, 0.5)
+            ax.set_ylim(-0.5, 0.5)
         ax.set_title(title)
 
     def split_legend(ax, **kwargs):
@@ -880,10 +957,17 @@ def _():
         os.environ.get("DATA_PATH_BASE", ""),
         label="Data root (contains 260726_nca_dataset)", full_width=True,
     )
+    rollout_cache_dir = mo.ui.text(
+        os.environ.get("DATA_CACHE_DIR") or str(repository_root / "output" / "cache"),
+        label="Rollout cache (empty: off)", full_width=True,
+    )
     experiment_name = mo.ui.text("nca_micropattern_ablations_v1", label="Experiment name")
     reindex = mo.ui.run_button(label="Reindex registry")
-    mo.vstack([store_root, data_root, mo.hstack([experiment_name, reindex], justify="start")])
-    return data_root, experiment_name, reindex, store_root
+    mo.vstack([
+        store_root, data_root, rollout_cache_dir,
+        mo.hstack([experiment_name, reindex], justify="start"),
+    ])
+    return data_root, experiment_name, reindex, rollout_cache_dir, store_root
 
 
 @app.cell(hide_code=True)
@@ -918,7 +1002,14 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(bundles, data_root, repeat_choice, run_inference, split_choice):
+def _(
+    bundles,
+    data_root,
+    repeat_choice,
+    rollout_cache_dir,
+    run_inference,
+    split_choice,
+):
     # One bundle per ablation; 4 training replicates has no split
     _chosen = bundles[
         (bundles["repeat"] == repeat_choice.value)
@@ -928,23 +1019,39 @@ def _(bundles, data_root, repeat_choice, run_inference, split_choice):
         str(Path(data_root.value).expanduser() / "260726_nca_dataset")
         if data_root.value.strip() else None
     )
+    _cache_dir = rollout_cache_dir.value.strip() or None
+
+    # Rollouts already on disk are loaded without pressing the button
+    _from_disk = 0
+    for _ablation in _chosen.index:
+        _id = _chosen.at[_ablation, "model_id"]
+        _file = rollout_file(_cache_dir, _id, _data_path)
+        if _id not in ROLLOUT_CACHE and _file is not None and _file.exists():
+            ROLLOUT_CACHE[_id] = load_rollout(_file)
+            _from_disk += 1
+
     _missing = [a for a in _chosen.index if _chosen.at[a, "model_id"] not in ROLLOUT_CACHE]
     if run_inference.value and _missing:
         for _ablation in mo.status.progress_bar(_missing, title="Rolling out models"):
-            ROLLOUT_CACHE[_chosen.at[_ablation, "model_id"]] = rollout_bundle(
-                _chosen.at[_ablation, "path"], _data_path
-            )
+            _id = _chosen.at[_ablation, "model_id"]
+            ROLLOUT_CACHE[_id] = rollout_bundle(_chosen.at[_ablation, "path"], _data_path)
+            _file = rollout_file(_cache_dir, _id, _data_path)
+            if _file is not None:
+                save_rollout(_file, ROLLOUT_CACHE[_id])
         _missing = []
     outputs = {
         _ablation: ROLLOUT_CACHE[_chosen.at[_ablation, "model_id"]]
         for _ablation in ABLATIONS
         if _ablation in _chosen.index and _chosen.at[_ablation, "model_id"] in ROLLOUT_CACHE
     }
+    # (loss terms, regularisers) of each shown model, from its bundle config
+    losses = {_ablation: _chosen.at[_ablation, "losses"] for _ablation in outputs}
     mo.md(
         f"{len(outputs)} of {len(_chosen)} selected models rolled out"
+        + (f" ({_from_disk} loaded from the rollout cache)" if _from_disk else "")
         + (f" · press **Run inference** for the other {len(_missing)}" if _missing else "")
     )
-    return (outputs,)
+    return losses, outputs
 
 
 @app.cell(hide_code=True)
@@ -953,28 +1060,29 @@ def _(split_choice):
     replicate_choice = mo.ui.dropdown(
         {str(r): r for r in _validation}, value=str(_validation[0]), label="Replicate shown",
     )
-    triplet_choice = mo.ui.dropdown(
-        list(TRIPLETS), value=list(TRIPLETS)[0], label="Markers",
+    sector_choice = mo.ui.multiselect(
+        SECTOR_GROUPS, value=list(SECTOR_GROUPS), label="Sectors",
     )
     time_choice = mo.ui.dropdown(
         {"0h": 0, "12h": 1, "24h": 2, "36h": 3, "48h": 4}, value="48h", label="Timepoint",
     )
     masked = mo.ui.checkbox(True, label="Hide outside colony")
-    mo.hstack([replicate_choice, triplet_choice, time_choice, masked], justify="start")
-    return masked, replicate_choice, time_choice, triplet_choice
+    mo.hstack([replicate_choice, sector_choice, time_choice, masked], justify="start")
+    return masked, replicate_choice, sector_choice, time_choice
 
 
 @app.cell(hide_code=True)
-def _(masked, outputs, replicate_choice, time_choice, triplet_choice):
+def _(masked, outputs, replicate_choice, sector_choice, time_choice):
     mo.stop(not outputs, mo.md("Run inference to see model outputs."))
-    _triplet = TRIPLETS[triplet_choice.value]
+    mo.stop(not sector_choice.value, mo.md("Select at least one sector."))
+    _groups = [g for g in SECTOR_GROUPS.values() if g in sector_choice.value]
     _replicate = replicate_choice.value
 
     def _tile(ablation, kind):
         result = outputs.get(ablation)
         if result is None:
             return None, f"{ablation_label(ablation)}\n(not run)"
-        image = output_tile(result, kind, _replicate, time_choice.value, _triplet, masked.value)
+        image = output_tile(result, kind, _replicate, time_choice.value, _groups, masked.value)
         title = ablation_label(ablation) if kind == "prediction" else f"Data · {ablation_label(ablation)}"
         shown = result["replicates"][replicate_index(result, _replicate)]
         if shown != _replicate or result["source"] == "training":
@@ -1005,7 +1113,7 @@ def _(masked, outputs, replicate_choice, time_choice, triplet_choice):
         for _c in range(_columns):
             _ax = _axes[_r, _c]
             if _c < len(_tiles):
-                show_tile(_ax, *_tiles[_c])
+                show_tile(_ax, *_tiles[_c], sectors=len(_groups))
             else:
                 _ax.set_axis_off()
         _axes[_r, 0].text(
@@ -1013,8 +1121,9 @@ def _(masked, outputs, replicate_choice, time_choice, triplet_choice):
             ha="right", va="center", fontsize=FONT["label"], fontweight="bold",
         )
     fig_outputs.suptitle(
-        f"{triplet_choice.value} · {time_choice.selected_key} · replicate {_replicate}", fontsize=FONT["title"]
+        f"{time_choice.selected_key} · replicate {_replicate}", fontsize=FONT["title"], x=0.02, ha="left",
     )
+    sector_legend(fig_outputs, _groups)
     fig_outputs.tight_layout(rect=(0, 0, 1, 0.98))
     fig_outputs
     return (fig_outputs,)
@@ -1024,44 +1133,160 @@ def _(masked, outputs, replicate_choice, time_choice, triplet_choice):
 def _():
     category_choice = mo.ui.dropdown(
         [c for c in dict.fromkeys(c for _, c, _ in ABLATIONS.values()) if c != "Reference"],
-        value="Regularisers", label="Category over time",
+        value="Regularisers", label="Preset (category)",
     )
-    category_choice
-    return (category_choice,)
+    times_choice = mo.ui.multiselect(
+        {"0h": 0, "12h": 1, "24h": 2, "36h": 3, "48h": 4},
+        value=["48h"], label="Timepoints",
+    )
+    crop_boundary = mo.ui.checkbox(True, label="Crop boundary ablations to colony")
+    show_loss_terms = mo.ui.switch(True, label="Show loss terms")
+    show_regularisers = mo.ui.switch(False, label="Show regularisers")
+    transpose = mo.ui.switch(False, label="Transpose (conditions as columns)")
+    # Layout fine tuning
+    font_scale = mo.ui.slider(0.5, 2.0, step=0.05, value=1.0, label="Font scale", show_value=True)
+    colony_size = mo.ui.slider(0.6, 3.0, step=0.1, value=1.6, label="Colony size (in)", show_value=True)
+    colony_spacing = mo.ui.slider(0.0, 4.0, step=0.1, value=1.0, label="Spacing (font sizes)", show_value=True)
+    mo.vstack([
+        mo.hstack(
+            [category_choice, times_choice, crop_boundary, show_loss_terms, show_regularisers, transpose],
+            justify="start", wrap=True,
+        ),
+        mo.hstack([font_scale, colony_size, colony_spacing], justify="start", wrap=True),
+    ])
+    return (
+        category_choice,
+        colony_size,
+        colony_spacing,
+        crop_boundary,
+        font_scale,
+        show_loss_terms,
+        show_regularisers,
+        times_choice,
+        transpose,
+    )
 
 
 @app.cell(hide_code=True)
-def _(category_choice, masked, outputs, replicate_choice, triplet_choice):
-    mo.stop(not outputs)
-    _triplet = TRIPLETS[triplet_choice.value]
-    _replicate = replicate_choice.value
-    _times = ["0h", "12h", "24h", "36h", "48h"]
-
-    # Rows: data, baseline, then each ablation of the category (own data first if needed)
-    _rows = []
-    if "baseline" in outputs:
-        _rows += [("Data", "baseline", "target"), ("Baseline", "baseline", "prediction")]
-    for _ablation, (_label, _category, _) in ABLATIONS.items():
-        if _category != category_choice.value or _ablation not in outputs:
-            continue
-        if own_data_needed(_ablation, outputs[_ablation], _replicate):
-            _rows.append((f"Data · {_label}", _ablation, "target"))
-        _rows.append((_label, _ablation, "prediction"))
-    mo.stop(not _rows, mo.md("No rolled-out models in this category."))
-
-    fig_category, _axes = plt.subplots(
-        len(_rows), len(_times), figsize=(1.6 * len(_times) + 1, 1.6 * len(_rows)), squeeze=False,
+def _(category_choice):
+    # A new preset resets the selection to the baseline and that category
+    ablation_choice = mo.ui.multiselect(
+        {f"{label} ({category})": a for a, (label, category, _) in ABLATIONS.items()},
+        value=[
+            f"{label} ({category})" for a, (label, category, _) in ABLATIONS.items()
+            if a == "baseline" or category == category_choice.value
+        ],
+        label="Ablations over time", full_width=True,
     )
-    for _r, (_label, _ablation, _kind) in enumerate(_rows):
-        for _t, _time in enumerate(_times):
-            _image = output_tile(outputs[_ablation], _kind, _replicate, _t, _triplet, masked.value)
-            show_tile(_axes[_r, _t], _image, _time if _r == 0 else "")
-        _axes[_r, 0].text(
-            -0.08, 0.5, _label, transform=_axes[_r, 0].transAxes,
-            ha="right", va="center", fontsize=FONT["label"],
-        )
-    fig_category.suptitle(f"{category_choice.value} · {triplet_choice.value}", fontsize=FONT["title"])
-    fig_category.tight_layout(rect=(0, 0, 1, 0.97))
+    ablation_choice
+    return (ablation_choice,)
+
+
+@app.cell(hide_code=True)
+def _(
+    ablation_choice,
+    crop_boundary,
+    losses,
+    masked,
+    outputs,
+    replicate_choice,
+    sector_choice,
+    show_loss_terms,
+    show_regularisers,
+    times_choice,
+    transpose,
+    font_scale,
+    colony_size,
+    colony_spacing,
+):
+    mo.stop(not outputs or not sector_choice.value)
+    _groups = [g for g in SECTOR_GROUPS.values() if g in sector_choice.value]
+    _replicate = replicate_choice.value
+    _times = [(f"{12 * t}h", t) for t in sorted(times_choice.value)]
+    _selected = [a for a in ABLATIONS if a in ablation_choice.value and a in outputs]
+    mo.stop(not _selected or not _times, mo.md("Select at least one rolled-out ablation and timepoint."))
+
+    def _details(ablation):
+        """Grey lines under a row name: the baseline's loss terms and regularisers,
+        and for other rows only what differs from the baseline (and is not already in the name)."""
+        terms, regularisers = losses[ablation]
+        base_terms, base_regularisers = losses.get("baseline", (None, None))
+        category = ABLATIONS[ablation][1]
+        lines = []
+        if show_loss_terms.value and category != "Loss terms" and terms != base_terms:
+            lines.append(terms)
+        if show_regularisers.value and category != "Regularisers" and regularisers != base_regularisers:
+            lines.append(f"reg: {regularisers}")
+        if ablation == "baseline":
+            lines = [terms] * show_loss_terms.value + [f"reg: {regularisers}"] * show_regularisers.value
+        return "\n".join(lines)
+
+    # Rows: data (from the first selected model), then each selected ablation in sweep order
+    # (preceded by its own data when targets, split or replicate differ)
+    _rows = [("Data", "", _selected[0], "target")]
+    for _ablation in _selected:
+        _label = ablation_label(_ablation)
+        if _ablation != _selected[0] and own_data_needed(_ablation, outputs[_ablation], _replicate):
+            _rows.append((f"Data · {_label}", "", _ablation, "target"))
+        _rows.append((_label, _details(_ablation), _ablation, "prediction"))
+
+    # Conditions are rows and timepoints columns, or the other way round when transposed
+    _flip = transpose.value
+    _font = {_k: _v * font_scale.value for _k, _v in FONT.items()}
+    _tile = colony_size.value
+    _shape = (len(_times), len(_rows)) if _flip else (len(_rows), len(_times))
+    _size = (
+        _tile * _shape[1] + (0.6 if _flip else 2.2) * font_scale.value,
+        _tile * _shape[0] + (0.6 if _flip else 0.3) * font_scale.value,
+    )
+    fig_category, _axes = plt.subplots(*_shape, figsize=_size, squeeze=False)
+    for _r, (_label, _losses, _ablation, _kind) in enumerate(_rows):
+        _result = outputs[_ablation]
+        # Boundary ablations follow the crop toggle (with the colony edge dashed when uncropped)
+        _uncropped = _ablation in BOUNDARY_ABLATIONS and _kind == "prediction" and not crop_boundary.value
+        _crop = masked.value and not _uncropped
+        _outline = _result["mask"][replicate_index(_result, _replicate)] if _uncropped else None
+        for _c, (_time, _t) in enumerate(_times):
+            _ax = _axes[_c, _r] if _flip else _axes[_r, _c]
+            _image = output_tile(_result, _kind, _replicate, _t, _groups, _crop)
+            show_tile(_ax, _image, "", sectors=len(_groups), outline=_outline)
+        if _flip:
+            # Condition name above its column, with the grey details between name and image
+            _top = _axes[0, _r]
+            _lines = _losses.count("\n") + 1 if _losses else 0
+            if _losses:
+                _top.text(0.5, 1.03, _losses, transform=_top.transAxes, ha="center", va="bottom",
+                          fontsize=_font["annotation"], color=MUTED)
+            _top.annotate(_label, xy=(0.5, 1.03), xycoords="axes fraction",
+                          xytext=(0, _lines * 1.25 * _font["annotation"] + (2 if _lines else 0)),
+                          textcoords="offset points", ha="center", va="bottom",
+                          fontsize=_font["label"], fontweight="bold")
+        else:
+            _axes[_r, 0].text(
+                -0.08, 0.5, _label, transform=_axes[_r, 0].transAxes,
+                ha="right", va="bottom" if _losses else "center", fontsize=_font["label"], fontweight="bold",
+            )
+            if _losses:
+                _axes[_r, 0].text(
+                    -0.08, 0.48, _losses, transform=_axes[_r, 0].transAxes,
+                    ha="right", va="top", fontsize=_font["annotation"], color=MUTED,
+                )
+    # Timepoint labels: above the first row, or left of each row when transposed
+    # (left out for a single timepoint, which goes in the title instead)
+    for _c, (_time, _) in enumerate(_times if len(_times) > 1 else []):
+        if _flip:
+            _axes[_c, 0].text(-0.08, 0.5, _time, transform=_axes[_c, 0].transAxes,
+                              ha="right", va="center", fontsize=_font["label"])
+        else:
+            _axes[0, _c].set_title(_time, fontsize=_font["label"])
+    fig_category.suptitle(
+        f"Replicate {_replicate}"
+        + (f" · {_times[0][0]}" if len(_times) == 1 else "")
+        + ("" if crop_boundary.value else " · boundary ablations uncropped"),
+        fontsize=_font["title"], x=0.02, ha="left",
+    )
+    sector_legend(fig_category, _groups, font_scale.value)
+    fig_category.tight_layout(rect=(0, 0, 1, 0.97), w_pad=colony_spacing.value, h_pad=colony_spacing.value)
     fig_category
     return (fig_category,)
 
@@ -1075,20 +1300,22 @@ def _():
 
 @app.cell(hide_code=True)
 def _(
-    category_choice,
+    ablation_choice,
     fig_category,
     fig_outputs,
     save_outputs,
+    sector_choice,
     time_choice,
-    triplet_choice,
 ):
     mo.stop(not save_outputs.value)
     _directory = repository_root / "figures" / "micropattern_ablations"
     _directory.mkdir(parents=True, exist_ok=True)
-    _markers = "-".join(TRIPLETS[triplet_choice.value])
+    _markers = "-".join(g for g in SECTOR_GROUPS.values() if g in sector_choice.value) or "none"
+    _picked = [a for a in ABLATIONS if a in ablation_choice.value]
+    _picked = "-".join(_picked) if len(_picked) <= 3 else f"{len(_picked)}_ablations"
     for _name, _figure in {
         f"outputs_{_markers}_{time_choice.selected_key}": fig_outputs,
-        f"over_time_{category_choice.value.replace(' ', '_')}_{_markers}": fig_category,
+        f"over_time_{_picked}_{_markers}": fig_category,
     }.items():
         save_figure(_figure, _name, "micropattern_ablations")
     mo.md(f"Saved to `{_directory.relative_to(repository_root)}`")

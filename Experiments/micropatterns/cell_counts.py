@@ -46,6 +46,21 @@ PATTERN_DIAMETER_UM = 500.0
 NUCLEUS_DIAMETER_UM = 8.0
 # How far a cell reaches beyond its nucleus (nuclear cell library)
 CELL_EXPANSION_UM = 2.0
+# Touching nuclei are split at seeds at least this share of a nucleus apart
+NUCLEUS_SEED_SPACING = 0.5
+# The nuclear stain threshold, as a multiple of its Otsu threshold
+NUCLEUS_THRESHOLD = 1.0
+# How touching nuclei are told apart (count_nuclei)
+NUCLEUS_SPLIT_METHODS = ("distance", "rim", "intensity")
+NUCLEUS_SPLIT_METHOD = "distance"
+# Nuclei less round than this (solidity: area over convex hull area) are split
+# again; 0: never. Nuclei are round, so pinched shapes are usually merged ones.
+NUCLEUS_ROUNDNESS = 0.0
+# Nucleus size limits, as multiples of the area of the set nucleus diameter:
+# smaller pieces are dropped (debris); larger ones are split into about
+# area / nucleus area pieces (clumps; 0: never)
+NUCLEUS_SMALLEST = 0.1
+NUCLEUS_LARGEST = 0.0
 # Default alignment file of the 260726 dataset (repository relative)
 DEFAULT_ALIGNMENT_FILE = "Experiments/micropatterns/conf/alignment/260726_alignment.yaml"
 
@@ -68,33 +83,127 @@ def um_per_pixel(pattern_radius, downsample=1):
 # Nuclei at full resolution
 
 
-def count_nuclei(channel, mask, nucleus_diameter_px):
+def count_nuclei(channel, mask, nucleus_diameter_px, seed_spacing=NUCLEUS_SEED_SPACING,
+                 threshold_scale=NUCLEUS_THRESHOLD, split_method=NUCLEUS_SPLIT_METHOD,
+                 roundness=NUCLEUS_ROUNDNESS, smallest=NUCLEUS_SMALLEST, largest=NUCLEUS_LARGEST):
     """Nuclei in a raw nuclear stain ``[X, Y]`` inside ``mask``.
 
-    The stain is smoothed, thresholded (Otsu, inside the mask) and holes are
-    filled (LMBR marks the nuclear rim). Touching nuclei are split by a
-    watershed of the distance to the background, started from its maxima
-    at least half a nucleus apart. Pieces under a tenth of a nucleus are
-    dropped. Returns ``(count, labels [X, Y], mean nuclear area in px)``.
+    The stain is smoothed and thresholded (``threshold_scale`` times its Otsu
+    threshold inside the mask), and holes are filled, giving blobs of one or
+    more nuclei. Each blob is split by a watershed from seeds at least
+    ``seed_spacing`` nuclei apart, placed by ``split_method``:
+
+    - ``distance``: the maxima of the distance to the background, so blobs
+      split where they narrow
+    - ``rim``: for stains of the nuclear rim (LMBR), the dark interior of
+      each nucleus, enclosed by its rim in a lightly smoothed stain (enclosed
+      regions under a tenth of a nucleus, such as gaps between nuclei, are
+      left out). The watershed follows the stain, so touching nuclei split
+      along their shared rim.
+    - ``intensity``: the maxima of the more smoothed stain, for filled
+      nuclear stains (DAPI), whose touching nuclei are dimmer between them
+
+    Blobs given no seed get ``distance`` seeds. Then nuclei less round than
+    ``roundness`` (solidity; 0: none) are split again at their own distance
+    maxima, half as far apart, if no piece is under a quarter of a nucleus.
+    Nuclei larger than ``largest`` nuclei (clumps; 0: none) are split into
+    ``round(area / nucleus area)`` pieces (at least 2) by k-means of their
+    pixel positions, so the pieces are about equal and round. Last, pieces
+    smaller than ``smallest`` nuclei (debris) are dropped. Returns ``(count,
+    labels [X, Y], mean nuclear area in px)``.
     """
 
     from skimage.feature import peak_local_max
+    from skimage.measure import regionprops
     from skimage.segmentation import watershed
 
+    if split_method not in NUCLEUS_SPLIT_METHODS:
+        raise ValueError(f"Unknown split method {split_method!r}; use one of {NUCLEUS_SPLIT_METHODS}")
     mask = np.asarray(mask, dtype=bool)
+    channel = np.asarray(channel, dtype=np.float32)
     diameter = float(nucleus_diameter_px)
-    smooth = ndi.gaussian_filter(np.asarray(channel, dtype=np.float32), sigma=max(0.15 * diameter, 0.5))
-    foreground = ndi.binary_fill_holes((smooth > otsu_threshold(smooth[mask])) & mask)
+    nucleus_area = np.pi * (diameter / 2.0) ** 2
+    spacing = max(int(round(float(seed_spacing) * diameter)), 1)
+    smooth = ndi.gaussian_filter(channel, sigma=max(0.15 * diameter, 0.5))
+    threshold = float(threshold_scale) * otsu_threshold(smooth[mask])
+    stained = (smooth > threshold) & mask
+    foreground = ndi.binary_fill_holes(stained)
     distance = ndi.distance_transform_edt(foreground)
     patches, _ = ndi.label(foreground)
-    peaks = peak_local_max(
-        distance, min_distance=max(int(round(0.5 * diameter)), 1), labels=patches, exclude_border=False,
-    )
-    seeds = np.zeros(foreground.shape, dtype=np.int32)
-    seeds[tuple(peaks.T)] = np.arange(1, len(peaks) + 1)
-    labels = watershed(-distance, seeds, mask=foreground)
+
+    def _seeds(peaks, shape, first=1):
+        seeds = np.zeros(shape, dtype=np.int32)
+        seeds[tuple(np.asarray(peaks).reshape(-1, 2).T)] = np.arange(first, first + len(peaks))
+        return seeds
+
+    if split_method == "rim":
+        # Interiors from a lightly smoothed stain: the usual smoothing blurs the thin rim into them
+        light = ndi.gaussian_filter(channel, sigma=max(0.05 * diameter, 0.5))
+        rim = (light > float(threshold_scale) * otsu_threshold(light[mask])) & mask
+        interiors, _ = ndi.label(ndi.binary_fill_holes(rim) & ~rim & foreground)
+        sizes = np.bincount(interiors.ravel())
+        large = np.flatnonzero(sizes >= 0.1 * nucleus_area)
+        large = large[large > 0]
+        relabel = np.zeros(len(sizes), dtype=np.int32)
+        relabel[large] = np.arange(1, len(large) + 1)
+        seeds = relabel[interiors]
+        elevation = smooth
+    elif split_method == "intensity":
+        bright = ndi.gaussian_filter(channel, sigma=max(0.25 * diameter, 0.5))
+        peaks = peak_local_max(bright, min_distance=spacing, labels=patches, exclude_border=False)
+        seeds = _seeds(peaks, foreground.shape)
+        elevation = -bright
+    else:
+        peaks = peak_local_max(distance, min_distance=spacing, labels=patches, exclude_border=False)
+        seeds = _seeds(peaks, foreground.shape)
+        elevation = -distance
+    # Blobs with no seed (no closed rim, or a flat stain): seeds at the distance maxima
+    unseeded = np.setdiff1d(np.unique(patches[foreground]), np.unique(patches[seeds > 0]))
+    if len(unseeded):
+        peaks = peak_local_max(
+            distance, min_distance=spacing, labels=np.where(np.isin(patches, unseeded), patches, 0),
+            exclude_border=False,
+        )
+        extra = _seeds(peaks, foreground.shape, first=int(seeds.max()) + 1)
+        seeds = np.where(extra > 0, extra, seeds)
+    labels = watershed(elevation, seeds, mask=foreground)
+
+    # Nuclei are round: split pinched ones again along their own shape
+    if roundness > 0:
+        next_label = int(labels.max()) + 1
+        for region in regionprops(labels):
+            if region.solidity >= roundness or region.area < 0.5 * nucleus_area:
+                continue
+            inside = region.image
+            local = ndi.distance_transform_edt(inside)
+            peaks = peak_local_max(
+                local, min_distance=max(spacing // 2, 1), labels=inside.astype(np.int32), exclude_border=False,
+            )
+            if len(peaks) < 2:
+                continue
+            parts = watershed(-local, _seeds(peaks, inside.shape), mask=inside)
+            if np.bincount(parts[inside])[1:].min() < 0.25 * nucleus_area:
+                continue
+            box = labels[region.slice]
+            box[inside] = parts[inside] + next_label - 1
+            next_label += len(peaks)
+
+    # Clumps: split into about as many pieces as nuclei would fill them
+    if largest > 0:
+        from scipy.cluster.vq import kmeans2
+
+        next_label = int(labels.max()) + 1
+        for region in regionprops(labels):
+            if region.area <= largest * nucleus_area:
+                continue
+            pieces = max(2, int(round(region.area / nucleus_area)))
+            positions = region.coords.astype(np.float64)
+            _, part = kmeans2(positions, pieces, minit="++", seed=0)
+            labels[tuple(region.coords.T)] = part + next_label
+            next_label += pieces
+
     areas = np.bincount(labels.ravel())[1:]
-    kept = np.flatnonzero(areas >= 0.1 * np.pi * (diameter / 2.0) ** 2) + 1
+    kept = np.flatnonzero((areas > 0) & (areas >= smallest * nucleus_area)) + 1
     # Kept nuclei renumbered 1 .. count
     renumber = np.zeros(len(areas) + 1, dtype=np.int32)
     renumber[kept] = np.arange(1, len(kept) + 1)
@@ -108,13 +217,28 @@ def _circle(shape, centre, radius):
     return (rows - centre[0]) ** 2 + (columns - centre[1]) ** 2 <= radius**2
 
 
+def colony_mask(path, dataset_root, alignment, shape, mask_radius_scale=1.0):
+    """The aligned circular colony ``[X, Y]`` (bool) of one raw image of ``shape``, as ``colony_nuclei`` uses it."""
+
+    root = Path(dataset_root).expanduser().resolve()
+    relative = Path(path).resolve().relative_to(root).as_posix()
+    return _circle(shape, alignment.centre(relative), alignment.pattern_radius * mask_radius_scale)
+
+
 def colony_nuclei(path, group, dataset_root, alignment, mask_radius_scale=1.0,
-                  nucleus_diameter_um=NUCLEUS_DIAMETER_UM, cache_dir=None):
+                  nucleus_diameter_um=NUCLEUS_DIAMETER_UM, cache_dir=None,
+                  seed_spacing=NUCLEUS_SEED_SPACING, threshold_scale=NUCLEUS_THRESHOLD,
+                  split_method=NUCLEUS_SPLIT_METHOD, roundness=NUCLEUS_ROUNDNESS,
+                  smallest=NUCLEUS_SMALLEST, largest=NUCLEUS_LARGEST, segmentation=None):
     """``(nucleus labels [X, Y], colony mask [X, Y], µm per pixel)`` of one raw image.
 
     Nuclei are found inside the aligned circular colony (centre from
     ``alignment``, radius ``pattern_radius * mask_radius_scale``), as the
-    loader masks it. With ``cache_dir`` the labels are kept on disk.
+    loader masks it. With ``segmentation`` (a stored method of
+    ``nucleus_segmentation.py``) its stored labels are used when it has this
+    image, keeping the nuclei centred in the colony; otherwise, and without
+    it, nuclei are found by ``count_nuclei``. With ``cache_dir`` those labels
+    are kept on disk.
     """
 
     from Common.dataloader.disk_cache import cache_folder, cached_array
@@ -127,17 +251,42 @@ def colony_nuclei(path, group, dataset_root, alignment, mask_radius_scale=1.0,
     radius = alignment.pattern_radius * mask_radius_scale
     pixel_um = um_per_pixel(alignment.pattern_radius)
 
+    if segmentation:
+        from Experiments.micropatterns.nucleus_segmentation import relabel_inside, stored_labels
+
+        stored = stored_labels(root, segmentation, relative)
+        if stored is not None:
+            colony = _circle(stored.shape, centre, radius)
+            return relabel_inside(stored, colony), colony, pixel_um
+
     def _labels():
         channel = read_nuclear_channel(path, group)
         mask = _circle(channel.shape, centre, radius)
-        return count_nuclei(channel, mask, nucleus_diameter_um / pixel_um)[1]
+        return count_nuclei(
+            channel, mask, nucleus_diameter_um / pixel_um, seed_spacing, threshold_scale, split_method, roundness,
+            smallest, largest,
+        )[1]
 
     if cache_dir is None:
         labels = _labels()
     else:
+        settings = {"dataset": str(root), "nucleus_diameter_um": nucleus_diameter_um}
+        # Only settings changed from their defaults are named, so counts cached before they existed stay valid
+        if seed_spacing != NUCLEUS_SEED_SPACING:
+            settings["seed_spacing"] = float(seed_spacing)
+        if threshold_scale != NUCLEUS_THRESHOLD:
+            settings["threshold_scale"] = float(threshold_scale)
+        if split_method != NUCLEUS_SPLIT_METHOD:
+            settings["split_method"] = str(split_method)
+        if roundness != NUCLEUS_ROUNDNESS:
+            settings["roundness"] = float(roundness)
+        if smallest != NUCLEUS_SMALLEST:
+            settings["smallest"] = float(smallest)
+        if largest != NUCLEUS_LARGEST:
+            settings["largest"] = float(largest)
         folder = cache_folder(
             cache_dir, "micropattern_260726_nuclei",
-            {"dataset": str(root), "nucleus_diameter_um": nucleus_diameter_um},
+            settings,
             (count_nuclei, read_nuclear_channel),
         )
         # The colony mask is part of the item name, so a new alignment is recounted
@@ -147,11 +296,16 @@ def colony_nuclei(path, group, dataset_root, alignment, mask_radius_scale=1.0,
 
 
 def colony_cell_count(path, group, dataset_root, alignment, mask_radius_scale=1.0,
-                      nucleus_diameter_um=NUCLEUS_DIAMETER_UM, cache_dir=None):
+                      nucleus_diameter_um=NUCLEUS_DIAMETER_UM, cache_dir=None,
+                      seed_spacing=NUCLEUS_SEED_SPACING, threshold_scale=NUCLEUS_THRESHOLD,
+                  split_method=NUCLEUS_SPLIT_METHOD, roundness=NUCLEUS_ROUNDNESS,
+                  smallest=NUCLEUS_SMALLEST, largest=NUCLEUS_LARGEST, segmentation=None):
     """``(cells, mean nuclear area in µm², colony area in mm²)`` of one raw image (``colony_nuclei``)."""
 
     labels, colony, pixel_um = colony_nuclei(
         path, group, dataset_root, alignment, mask_radius_scale, nucleus_diameter_um, cache_dir,
+        seed_spacing=seed_spacing, threshold_scale=threshold_scale, split_method=split_method,
+        roundness=roundness, smallest=smallest, largest=largest, segmentation=segmentation,
     )
     areas = np.bincount(labels.ravel())[1:]
     nuclear_area = float(np.mean(areas)) * pixel_um**2 if len(areas) else 0.0
@@ -196,7 +350,10 @@ def _measured_panels(colonies, source_files):
 
 def reference_cell_counts(colonies, source_files, dataset_root, alignment, markers,
                           split_distance=2, min_area=2, mask_radius_scale=1.0,
-                          nucleus_diameter_um=NUCLEUS_DIAMETER_UM, cache_dir=None):
+                          nucleus_diameter_um=NUCLEUS_DIAMETER_UM, cache_dir=None,
+                          seed_spacing=NUCLEUS_SEED_SPACING, threshold_scale=NUCLEUS_THRESHOLD,
+                  split_method=NUCLEUS_SPLIT_METHOD, roundness=NUCLEUS_ROUNDNESS,
+                  smallest=NUCLEUS_SMALLEST, largest=NUCLEUS_LARGEST, segmentation=None):
     """Cells and model-resolution segments of every measured panel of the reference colonies.
 
     ``colonies`` is as ``cell_library`` reads it (``[B, C, H, W]``) and
@@ -213,6 +370,8 @@ def reference_cell_counts(colonies, source_files, dataset_root, alignment, marke
     for index, _, name, indices, path in _measured_panels(colonies, source_files):
         cells, nuclear_area, colony_mm2 = colony_cell_count(
             path, name, dataset_root, alignment, mask_radius_scale, nucleus_diameter_um, cache_dir,
+            seed_spacing=seed_spacing, threshold_scale=threshold_scale, split_method=split_method,
+        roundness=roundness, smallest=smallest, largest=largest, segmentation=segmentation,
         )
         segments, from_markers = colony_segments(
             {"measurements": np.asarray(colonies["measurements"][index]), "schema": colonies["schema"]},
@@ -310,7 +469,9 @@ def match_values(values, source, target, quantiles=101):
 def nuclear_cells(path, group, names, dataset_root, alignment, downsample, target, support,
                   mask_radius_scale=1.0, interior_fraction=0.8, min_area=1,
                   nucleus_diameter_um=NUCLEUS_DIAMETER_UM, expansion_um=CELL_EXPANSION_UM,
-                  cache_dir=None):
+                  cache_dir=None, seed_spacing=NUCLEUS_SEED_SPACING, threshold_scale=NUCLEUS_THRESHOLD,
+                  split_method=NUCLEUS_SPLIT_METHOD, roundness=NUCLEUS_ROUNDNESS,
+                  smallest=NUCLEUS_SMALLEST, largest=NUCLEUS_LARGEST, segmentation=None):
     """Whole cells of one raw image, at model resolution, as ``cell_library`` panels hold them.
 
     Each nucleus (``colony_nuclei``) is grown by ``expansion_um`` into its
@@ -333,6 +494,8 @@ def nuclear_cells(path, group, names, dataset_root, alignment, downsample, targe
 
     labels, colony, pixel_um = colony_nuclei(
         path, group, dataset_root, alignment, mask_radius_scale, nucleus_diameter_um, cache_dir,
+        seed_spacing=seed_spacing, threshold_scale=threshold_scale, split_method=split_method,
+        roundness=roundness, smallest=smallest, largest=largest, segmentation=segmentation,
     )
     channels, raw_names, _ = read_raw_channels(path, group)
     channels = channels[..., [raw_names.index(name) for name in names]]
@@ -364,7 +527,9 @@ def nuclear_cells(path, group, names, dataset_root, alignment, downsample, targe
 def nuclear_cell_library(colonies, source_files, dataset_root, alignment, downsample, markers,
                          split_distance=2, interior_fraction=0.8, min_area=1, mask_radius_scale=1.0,
                          nucleus_diameter_um=NUCLEUS_DIAMETER_UM, expansion_um=CELL_EXPANSION_UM,
-                         cache_dir=None):
+                         cache_dir=None, seed_spacing=NUCLEUS_SEED_SPACING, threshold_scale=NUCLEUS_THRESHOLD,
+                  split_method=NUCLEUS_SPLIT_METHOD, roundness=NUCLEUS_ROUNDNESS,
+                  smallest=NUCLEUS_SMALLEST, largest=NUCLEUS_LARGEST, segmentation=None):
     """``cell_library`` with whole cells found from nuclei at full resolution instead of segments.
 
     The pieces are real cells (``cells_per_segment`` 1). Gap values are
@@ -388,6 +553,8 @@ def nuclear_cell_library(colonies, source_files, dataset_root, alignment, downsa
             path, name, [schema.measurement_names[i] for i in indices], dataset_root, alignment,
             downsample, np.asarray(colonies["measurements"][index])[indices], colonies["support"][index],
             mask_radius_scale, interior_fraction, min_area, nucleus_diameter_um, expansion_um, cache_dir,
+            seed_spacing=seed_spacing, threshold_scale=threshold_scale, split_method=split_method,
+        roundness=roundness, smallest=smallest, largest=largest, segmentation=segmentation,
         )
         panels[group_index][1].extend(cells)
         rows.append({

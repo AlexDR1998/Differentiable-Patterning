@@ -43,7 +43,6 @@ with app.setup:
     from Common.dataloader.micropattern_projections import PROJECTIONS
     from Common.dataloader.disk_cache import cache_dir_from_environment
     from Experiments.micropatterns.cell_counts import (
-        CELL_EXPANSION_UM,
         cells_to_density,
         default_alignment,
         density_to_cells,
@@ -56,9 +55,10 @@ with app.setup:
     from Experiments.micropatterns.reference import cell_library
     from Experiments.micropatterns.texture_settings import (
         DEFAULT_TEXTURE_SETTINGS_FILE,
+        CellSettings,
+        load_cell_settings,
         load_texture_settings,
         read_texture_settings_file,
-        save_texture_settings,
         scaled_patch_geometry,
     )
     from Experiments.micropatterns.texture_synthesis import (
@@ -1457,8 +1457,8 @@ def _():
     mo.vstack([
         mo.md(
             "### Texture settings per projection\n\n"
-            "- The texture controls below start at the settings saved for this projection\n"
-            "- Inverse design reads the section for its model's projection (`inverse_design.texture.file`)"
+            "- The texture and cell density controls below start at the settings saved for this projection\n"
+            "- Tune and save them in `synthetic_textured_ic_explorer.py`"
         ),
         mo.hstack([texture_projection, texture_settings_path], justify="start"),
     ])
@@ -1468,9 +1468,13 @@ def _():
 @app.cell(hide_code=True)
 def _(texture_projection, texture_settings_path):
     saved_texture_settings = None
+    saved_cell_settings = None
     saved_texture_note = None
     try:
         saved_texture_settings = load_texture_settings(
+            Path(texture_settings_path.value).expanduser(), texture_projection.value
+        )
+        saved_cell_settings = load_cell_settings(
             Path(texture_settings_path.value).expanduser(), texture_projection.value
         )
         saved_texture_note = read_texture_settings_file(
@@ -1480,7 +1484,7 @@ def _(texture_projection, texture_settings_path):
     except (KeyError, ValueError, OSError) as _error:
         _view = mo.callout(f"Using defaults: {_error}", kind="warn")
     _view
-    return (saved_texture_settings,)
+    return saved_cell_settings, saved_texture_settings
 
 
 @app.cell(hide_code=True)
@@ -1644,8 +1648,10 @@ def _(saved_texture_settings):
 
 
 @app.cell(hide_code=True)
-def _(reference_channel_names):
+def _(reference_channel_names, saved_cell_settings):
     _names = list(reference_channel_names or ())
+    # Start values: the saved cells settings for the projection, else the defaults
+    _cells = saved_cell_settings or CellSettings()
     texture_model = mo.ui.dropdown(
         options={"Reference gaps (current)": "reference", "Cell density": "density"},
         value="Reference gaps (current)",
@@ -1653,19 +1659,22 @@ def _(reference_channel_names):
     )
     density_markers = mo.ui.multiselect(
         options=_names,
-        value=[_m for _m in ("LMBR", "SOX2") if _m in _names],
+        value=[_m for _m in _cells.markers if _m in _names],
         label="Cell markers",
     )
-    density_split_distance = mo.ui.number(0, 20, value=2, step=1, label="Split distance (px)")
-    density_min_area = mo.ui.number(1, 100, value=2, step=1, label="Min cell area (px)")
-    density_interior = mo.ui.slider(0.3, 1.0, value=0.8, step=0.05, label="Cell source radius")
+    density_split_distance = mo.ui.number(0, 20, value=_cells.split_distance, step=1, label="Split distance (px)")
+    density_min_area = mo.ui.number(1, 100, value=_cells.min_cell_area, step=1, label="Min cell area (px)")
+    density_interior = mo.ui.slider(
+        0.3, 1.0, value=round(_cells.interior_fraction / 0.05) * 0.05, step=0.05, label="Cell source radius"
+    )
+    _pieces = {"Real cells (from nuclei)": "nuclei", "Segments (model resolution)": "segments"}
     density_piece_source = mo.ui.dropdown(
-        options={"Real cells (from nuclei)": "nuclei", "Segments (model resolution)": "segments"},
-        value="Real cells (from nuclei)",
+        options=_pieces,
+        value=next(_k for _k, _v in _pieces.items() if _v == _cells.pieces),
         label="Pieces",
     )
     density_expansion = mo.ui.number(
-        0.0, 10.0, value=CELL_EXPANSION_UM, step=0.5, label="Cell reach beyond nucleus (µm)"
+        0.0, 10.0, value=_cells.expansion_um, step=0.5, label="Cell reach beyond nucleus (µm)"
     )
     mo.vstack([
         mo.md(
@@ -1841,10 +1850,14 @@ def _(
     density_error,
     density_reference,
     density_unit,
+    saved_cell_settings,
 ):
-    density_softness = mo.ui.slider(0.05, 5.0, value=0.5, step=0.05, label="Cut softness (cells)")
-    density_layers = mo.ui.number(1, 4, value=2, step=1, label="Layers")
-    density_attempts = mo.ui.number(1, 50, value=10, step=1, label="Attempts per cell")
+    _cells = saved_cell_settings or CellSettings()
+    density_softness = mo.ui.slider(
+        0.05, 5.0, value=min(max(_cells.softness_cells, 0.05), 5.0), step=0.05, label="Cut softness (cells)"
+    )
+    density_layers = mo.ui.number(1, 4, value=min(_cells.layers, 4), step=1, label="Layers")
+    density_attempts = mo.ui.number(1, 50, value=_cells.attempts, step=1, label="Attempts per cell")
     density_seed = mo.ui.number(0, 100000, value=0, step=1, label="Cell seed")
     if density_error is not None:
         _view = mo.callout(density_error, kind="danger")
@@ -2455,100 +2468,6 @@ def _(
         except ValueError as _error:
             _series_view = mo.callout(str(_error), kind="danger")
     _series_view
-    return
-
-
-@app.cell(hide_code=True)
-def _(texture_projection):
-    save_texture_button = mo.ui.run_button(
-        label=f"Save texture settings for {texture_projection.value}"
-    )
-    return (save_texture_button,)
-
-
-@app.cell(hide_code=True)
-def _(
-    profile_mode,
-    reference_condition,
-    reference_replicate_mode,
-    reference_replicate_seed,
-    reference_replicates,
-    reference_time,
-    save_texture_button,
-    texture_downsample,
-    texture_histogram_normalisation,
-    texture_interior_fraction,
-    texture_iterations,
-    texture_normalisation_iterations,
-    texture_patch_candidates,
-    texture_patch_jitter,
-    texture_patch_overlap,
-    texture_patch_reference_downsample,
-    texture_patch_size,
-    texture_projection,
-    texture_scale_patch_geometry,
-    texture_seed,
-    texture_settings_path,
-):
-    # The current controls as a section of the texture settings file
-    _path = Path(texture_settings_path.value).expanduser()
-    _notes = []
-    if profile_mode.value == "Uniform":
-        _current = None
-        _notes.append(mo.callout("A uniform profile is not a texture; pick patch or IAAFT to save.", kind="warn"))
-    else:
-        _current = {
-            "mode": "iaaft" if profile_mode.value == "Reference texture (IAAFT)" else "patch",
-            "patch_size": int(texture_patch_size.value),
-            "patch_overlap": int(texture_patch_overlap.value),
-            "patch_jitter": int(texture_patch_jitter.value),
-            # Without scaling, the sizes are pixels at the loaded data's downsample
-            "patch_downsample": int(
-                texture_patch_reference_downsample.value
-                if texture_scale_patch_geometry.value
-                else texture_downsample.value
-            ),
-            "interior_fraction": float(texture_interior_fraction.value),
-            "candidates": int(texture_patch_candidates.value),
-            "iaaft_iterations": int(texture_iterations.value),
-            "normalise": bool(texture_histogram_normalisation.value),
-            "normalise_iterations": int(texture_normalisation_iterations.value),
-        }
-        if int(reference_time.value) != 0:
-            _notes.append(mo.callout("Inverse design synthesises 0 h textures; the reference time is not 0 h.", kind="warn"))
-    if save_texture_button.value and _current is not None:
-        save_texture_settings(
-            _path,
-            texture_projection.value,
-            _current,
-            note={
-                "condition": reference_condition.value,
-                "downsample": int(texture_downsample.value),
-                "replicates": int(reference_replicates.value),
-                "replicate_mode": reference_replicate_mode.value,
-                "replicate_seed": int(reference_replicate_seed.value),
-                "texture_seed": int(texture_seed.value),
-            },
-        )
-        _notes.append(mo.callout(f"Saved the {texture_projection.value} settings to `{_path}`", kind="success"))
-    try:
-        _saved = read_texture_settings_file(_path)
-    except ValueError as _error:
-        _saved = {}
-        _notes.append(mo.callout(str(_error), kind="danger"))
-    _rows = [
-        {"settings": "current controls", **_current} if _current is not None else None,
-        *[
-            {"settings": f"saved: {_name}", **{_k: _v for _k, _v in _section.items() if _k != "tuned_on"}}
-            for _name, _section in _saved.items()
-        ],
-    ]
-    mo.vstack([
-        mo.md("### Save texture settings"),
-        save_texture_button,
-        *_notes,
-        mo.ui.table([_row for _row in _rows if _row is not None], selection=None),
-    ])
     return
 
 

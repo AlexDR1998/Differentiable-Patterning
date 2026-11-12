@@ -13,8 +13,10 @@ Run with:
 - Panel b: three colonies on a sheet standing for VGG feature space, each with a
   stack of zoomed patches of its cells (a chosen front patch and random patches at
   several scales behind it, as the texture loss looks at many features and scales):
-  d and another colony at the same time are close, d at another time is far.
-  Positions are illustrative, not computed
+  x̂ is close to d at the same time and far from d at another time. Positions are
+  illustrative, not computed
+- The two colonies have the same names in panels a and b (x̂ and d, or colony 1 and
+  colony 2; see *Colony names*). Panel b also gives each colony's time
 - Panel c: the texture loss over experiment groups, as in
   ``NCA/trainer/loss_multi_target.py``. Each state channel is compared with every
   group that measured its marker; within a group the channels are zero-padded to
@@ -80,10 +82,9 @@ with app.setup:
     # Channels of a triplet go to the R, G and B inputs of VGG
     RGB = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
     RGB_TEXT = ("#e00000", "#00a000", "#0050ff")
-    # Where d, another colony at the same time and d at another time sit on the feature
+    # Where d, x̂ at the same time and d at another time sit on the feature
     # sheet of panel b (sheet coordinates in [0, 1]²; illustrative, not computed)
     FEATURE_POSITIONS = {"data": (0.25, 0.55), "prediction": (0.36, 0.38), "time": (0.85, 0.6)}
-
 
 
 @app.function(hide_code=True)
@@ -229,10 +230,12 @@ def draw_profiles(ax, corner, width, height, profiles, colours, style):
             rotation_mode="anchor", fontsize=small)
     # Key: line style of x̂ and d
     y = y0 + height + 0.1
-    for k, (line, text) in enumerate(((None, style["prediction_label"]), ((0, (2.5, 1.5)), style["data_label"]))):
-        kx = x0 + width - 1.0 + k * 0.55
+    keys = ((None, style["names"]["prediction"]), ((0, (2.5, 1.5)), style["names"]["data"]))
+    kx = x0 + width - sum(0.4 + text_w(text, small, style) for _, text in keys)
+    for line, text in keys:
         ax.plot([kx, kx + 0.25], [y, y], color=fg, lw=1.0, ls=line or "-")
         ax.text(kx + 0.3, y, text, ha="left", va="center", fontsize=small)
+        kx += 0.4 + text_w(text, small, style)
 
 
 @app.function(hide_code=True)
@@ -304,9 +307,17 @@ def draw_features(ax, x, centre_y, size, style):
         draw_dot(ax, to_xy(u, v), colours[key], style)
     for key, side in (("prediction", 1), ("data", -1)):
         px, py = to_xy(*points[key])
-        ax.text(px + side * 0.12, py, style[f"features_{key}_label"], ha="left" if side > 0 else "right",
+        ax.text(px + side * 0.12, py, f"$\\phi$({style['names'][key]})", ha="left" if side > 0 else "right",
                 va="center", fontsize=small, zorder=8)
     return x + narrow + 0.25 + 1.35 * size
+
+
+@app.function(hide_code=True)
+def colony_caption(key, style, panel):
+    """Caption of a colony ("data", "prediction", or "time": d at the far time) in panel a or b."""
+    name = style["names"]["data" if key == "time" else key]
+    hour = style["far_hour"] if key == "time" else style["hour"]
+    return style[f"caption_{panel}"].format(name=name, hour=hour)
 
 
 @app.function(hide_code=True)
@@ -403,7 +414,7 @@ def zoom_views(data, style):
 @app.function(hide_code=True)
 def draw_feature_space_panel(ax, data, style):
     """Panel b: three colonies on the VGG feature sheet, each with a zoomed crop of its
-    cells. d and another colony at the same time are close; d at another time is far.
+    cells. x̂ is close to d at the same time and far from d at another time.
     Positions are illustrative, not computed."""
     theme = style["theme"]
     muted = theme["muted"]
@@ -423,9 +434,9 @@ def draw_feature_space_panel(ax, data, style):
             va="bottom", fontsize=font, color=style["model_colour"])
     points = {k: to_xy(*FEATURE_POSITIONS[k]) for k in ("data", "prediction", "time")}
 
-    # Distances along the sheet
-    for key in ("prediction", "time"):
-        draw_geodesic(ax, to_xy, FEATURE_POSITIONS["data"], FEATURE_POSITIONS[key], style["loss_colour"],
+    # Distances along the sheet, from x̂ to each sample of d
+    for key in ("data", "time"):
+        draw_geodesic(ax, to_xy, FEATURE_POSITIONS["prediction"], FEATURE_POSITIONS[key], style["loss_colour"],
                       lw=1.4 if key == "time" else 1.8)
 
     label_room = 0.3
@@ -451,7 +462,7 @@ def draw_feature_space_panel(ax, data, style):
             ax.text(cx, cy, "not\nmeasured", ha="center", va="center", fontsize=small - 1, color=muted, zorder=10)
         else:
             draw_patch_stack(ax, corner, rgbas[key], patch_samples(key, style), colour, style)
-        label = style[f"view_{key}"].format(style["far_hour"])
+        label = colony_caption(key, style, "b")
         ax.text(cx, corner[1] - 0.05, label, ha="center", va="top", fontsize=small, color=colour, zorder=12)
         draw_dot(ax, point, colour, style, radius=0.09)
         low = min(low, corner[1] - 0.1 - text_h(label, small, style))
@@ -461,7 +472,7 @@ def draw_feature_space_panel(ax, data, style):
 
     # Which channel goes to which VGG input (one random draw when shuffled), under the far box
     names = [f"{'RGB'[j]}: {data['markers'][c] if c is not None else '0'}" for j, c in enumerate(triplet)]
-    far_label = style["view_time"].format(style["far_hour"])
+    far_label = colony_caption("time", style, "b")
     key_y = corners["time"][1] - 0.15 - text_h(far_label, small, style)
     bottom = draw_colour_labels(ax, corners["time"][0] + zoom / 2, key_y, names, RGB_TEXT, small - 1.5, style,
                                 max_width=zoom + extent)
@@ -496,8 +507,9 @@ def draw_comparison_panel(ax, data, style):
     x_note = x_result + result_width + 0.4
     row_height = size + style["row_spacing"]
     header_y = size / 2 + 0.1
-    ax.text(x_prediction + size / 2, header_y, style["prediction_label"], ha="center", va="bottom", fontsize=font + 1)
-    ax.text(x_data + size / 2, header_y, style["data_label"], ha="center", va="bottom", fontsize=font + 1)
+    for x, key in ((x_prediction, "prediction"), (x_data, "data")):
+        ax.text(x + size / 2, header_y, colony_caption(key, style, "a"), ha="center", va="bottom",
+                fontsize=font + 1)
 
     for k, row in enumerate(rows):
         cy = -k * row_height
@@ -807,7 +819,7 @@ def _():
     - a: L2, radial profile and texture losses on one experiment group
     - b: colonies on the VGG feature sheet, with zoomed crops (positions illustrative, not computed)
     - c: texture loss over experiment groups (`loss_multi_target.py`)
-    - x̂ and d are two measured control colonies (two replicates); x̂ stands in for a prediction
+    - x̂ and d (colony 1 and 2) are two measured control colonies (two replicates); x̂ stands in for a prediction
     """)
     return
 
@@ -818,8 +830,8 @@ def _():
                               label="Dataset root", full_width=True)
     projection = mo.ui.dropdown(options=["slice", "max", "sum"], value="slice", label="Projection")
     downsample = mo.ui.dropdown(options={"1": 1, "2": 2, "4": 4, "8": 8}, value="4", label="Downsample")
-    replicate_a = mo.ui.number(start=1, stop=99, step=1, value=1, label="Replicate for x̂")
-    replicate_b = mo.ui.number(start=1, stop=99, step=1, value=2, label="Replicate for d")
+    replicate_a = mo.ui.number(start=1, stop=99, step=1, value=1, label="Replicate for x̂ (colony 1)")
+    replicate_b = mo.ui.number(start=1, stop=99, step=1, value=2, label="Replicate for d (colony 2)")
     refresh = mo.ui.checkbox(value=False, label="Ignore cache")
     load_button = mo.ui.run_button(label="Load data")
     mo.vstack([
@@ -828,11 +840,27 @@ def _():
         mo.hstack([projection, downsample, replicate_a, replicate_b, refresh, load_button], justify="start"),
         mo.md("- Cached data loads without pressing *Load data*"),
     ])
-    return dataset_root, downsample, load_button, projection, refresh, replicate_a, replicate_b
+    return (
+        dataset_root,
+        downsample,
+        load_button,
+        projection,
+        refresh,
+        replicate_a,
+        replicate_b,
+    )
 
 
 @app.cell(hide_code=True)
-def _(dataset_root, downsample, load_button, projection, refresh, replicate_a, replicate_b):
+def _(
+    dataset_root,
+    downsample,
+    load_button,
+    projection,
+    refresh,
+    replicate_a,
+    replicate_b,
+):
     _replicates = (int(replicate_a.value), int(replicate_b.value))
     mo.stop(_replicates[0] == _replicates[1], mo.callout("Choose two different replicates.", kind="warn"))
     _name = cache_name("loss_data", projection.value, f"ds{downsample.value}", *_replicates)
@@ -895,7 +923,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    far_hour = mo.ui.dropdown(options={f"{h}h": h for h in TIMEPOINTS}, value="0h", label="Far colony: time")
+    far_hour = mo.ui.dropdown(options={f"{h}h": h for h in TIMEPOINTS}, value="0h", label="Time of d, far")
     zoom_size = mo.ui.slider(start=0.6, stop=2.0, step=0.05, value=1.2, label="Zoom box size", show_value=True)
     crop_size = mo.ui.slider(start=0.05, stop=0.6, step=0.01, value=0.2, label="Front patch (fraction of colony)",
                              show_value=True)
@@ -905,7 +933,7 @@ def _():
             "radius": mo.ui.slider(start=0.0, stop=0.9, step=0.05, value=0.5, label="radius", show_value=True),
             "angle": mo.ui.slider(start=0, stop=355, step=5, value=45, label="angle", show_value=True),
         }, label=_label)
-        for _key, _label in (("data", "d"), ("prediction", "other colony"), ("time", "far colony"))
+        for _key, _label in (("data", "d"), ("prediction", "x̂"), ("time", "d, other time"))
     }, label="Front patch position (radius as a fraction of the colony radius; angle anticlockwise from +x)")
     b_group = mo.ui.dropdown(options={"same as panel a": None,
                                       **{GROUP_LABELS[g]: g for g in EXPERIMENT_GROUPS}},
@@ -916,7 +944,7 @@ def _():
             "x": mo.ui.slider(start=-3.0, stop=3.0, step=0.05, value=0.0, label="x", show_value=True),
             "y": mo.ui.slider(start=-3.0, stop=3.0, step=0.05, value=0.0, label="y", show_value=True),
         }, label=_label)
-        for _key, _label in (("data", "d"), ("prediction", "other colony"), ("time", "far colony"))
+        for _key, _label in (("data", "d"), ("prediction", "x̂"), ("time", "d, other time"))
     }, label="Move patch stacks (data units)")
     stack_depth = mo.ui.slider(start=1, stop=10, step=1, value=4, label="Patches per stack", show_value=True)
     stack_offset = mo.ui.slider(start=0.02, stop=0.3, step=0.01, value=0.1, label="Stack offset", show_value=True)
@@ -989,63 +1017,12 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _():
-    labels = mo.ui.dictionary({
-        "title_a": mo.ui.text(value="Comparing a prediction with data", label="Title a"),
-        "title_b": mo.ui.text(value="Texture: distances in VGG feature space", label="Title b"),
-        "title_c": mo.ui.text(value="Texture loss within experiment groups", label="Title c"),
-        "prediction_label": mo.ui.text(value="$\\hat{x}$", label="Prediction"),
-        "data_label": mo.ui.text(value="$d$", label="Data"),
-        "l2_name": mo.ui.text(value="pixelwise L2", label="L2"),
-        "l2_formula": mo.ui.text(value="$\\sum_p (\\hat{x}_p - d_p)^2$", label="L2 formula"),
-        "l2_note": mo.ui.text(value="every pixel compared:\\nseparate colonies never\\nline up cell by cell",
-                              label="L2 note"),
-        "radial_name": mo.ui.text(value="radial profile", label="Radial"),
-        "radial_formula": mo.ui.text(value="$\\sum_{c,r} (\\bar{x}_{c,r} - \\bar{d}_{c,r})^2$",
-                                     label="Radial formula"),
-        "radial_note": mo.ui.text(value="mean of each ring:\\nkeeps the radial pattern,\\nignores positions in a ring",
-                                  label="Radial note"),
-        "texture_name": mo.ui.text(value="texture", label="Texture"),
-        "texture_formula": mo.ui.text(value="$\\sum_l \\|\\phi_l(\\hat{x}) - \\phi_l(d)\\|^2$",
-                                      label="Texture formula"),
-        "texture_note": mo.ui.text(value="deep image features:\\ncell-scale structure and\\nco-expression in a triplet",
-                                   label="Texture note"),
-        "error_label": mo.ui.text(value="$(\\hat{x} - d)^2$", label="Error map"),
-        "error_high": mo.ui.text(value="high", label="Error bar top"),
-        "radius_label": mo.ui.text(value="radius", label="Radius"),
-        "ring_mean_label": mo.ui.text(value="ring mean", label="Ring mean"),
-        "vgg_label": mo.ui.text(value="VGG", label="VGG"),
-        "features_prediction_label": mo.ui.text(value="$\\phi(\\hat{x})$", label="Features x̂"),
-        "features_data_label": mo.ui.text(value="$\\phi(d)$", label="Features d"),
-        "feature_space_label": mo.ui.text(value="VGG feature space", label="Feature space"),
-        "view_data": mo.ui.text(value="$d$", label="Colony d"),
-        "view_prediction": mo.ui.text(value="other colony, same time", label="Other colony"),
-        "view_time": mo.ui.text(value="$d$ at {}h", label="Far colony ({} = hour)"),
-        "shuffle_note": mo.ui.text(value="(channel order re-drawn\\nevery training step)", label="Shuffle note"),
-        "state_label": mo.ui.text(value="NCA state\\n(one channel\\nper marker)", label="State"),
-        "select_label": mo.ui.text(value="markers\\nper group", label="Select"),
-        "excluded_label": mo.ui.text(value="{}\\nexcluded\\n(artefacts)", label="Excluded ({} = names)"),
-        "triplet_label": mo.ui.text(value="RGB {}", label="Triplet ({} = number)"),
-        "composite_label": mo.ui.text(value="VGG inputs", label="Composites"),
-        "group_loss_label": mo.ui.text(value="$\\mathcal{{L}}_{{{}}}$", label="Group loss ({} = number)"),
-        "combine_label": mo.ui.text(value="$\\mathcal{L}_{\\mathrm{tex}}$: mean over groups", label="Combine"),
-        "matching_label": mo.ui.text(value="colonies matched\\nseparately in each group", label="Matching"),
-        "matrix_title": mo.ui.text(value="channel pairs seen together", label="Matrix title"),
-        "key_triplet": mo.ui.text(value="same RGB triplet", label="Key: triplet"),
-        "key_group": mo.ui.text(value="same group\\n(over shuffles)", label="Key: group"),
-        "key_cross": mo.ui.text(value="different colonies:\\nnever compared", label="Key: cross"),
-    })
-    mo.vstack([mo.md("**Labels** (`\\n` for a new line, `$...$` for maths)"),
-               mo.hstack(list(labels.values()), wrap=True, justify="start")])
-    return (labels,)
-
-
-@app.cell(hide_code=True)
 def _(
     b_group,
     b_triplet,
     card_size,
     cell_size,
+    colony_names,
     crop_positions,
     crop_size,
     far_hour,
@@ -1140,6 +1117,7 @@ def _(
         "show_crop_location": show_crop_location.value,
         "far_colour": SERIES[4],
         "titles": {"a": _text["title_a"], "b": _text["title_b"], "c": _text["title_c"]},
+        "names": dict(zip(("prediction", "data"), colony_names.value)),
         **{k: v for k, v in _text.items() if not k.startswith("title_")},
     }
     # Text-heavy panels are redrawn until their scale (points per data unit) settles
@@ -1151,6 +1129,57 @@ def _(
                                       loss_style["same_scale"], measure_scale=True)
     loss_schematic
     return (loss_schematic,)
+
+
+@app.cell(hide_code=True)
+def _():
+    labels = mo.ui.dictionary({
+        "title_a": mo.ui.text(value="Comparing a prediction with data", label="Title a"),
+        "title_b": mo.ui.text(value="Texture: distances in VGG feature space", label="Title b"),
+        "title_c": mo.ui.text(value="Texture loss within experiment groups", label="Title c"),
+        "caption_a": mo.ui.text(value="{name}", label="Colony caption a ({name}, {hour})"),
+        "caption_b": mo.ui.text(value="{name}, {hour}h", label="Colony caption b ({name}, {hour})"),
+        "l2_name": mo.ui.text(value="pixelwise L2", label="L2"),
+        "l2_formula": mo.ui.text(value="$\\sum_p (\\hat{x}_p - d_p)^2$", label="L2 formula"),
+        "l2_note": mo.ui.text(value="every pixel compared:\\nseparate colonies never\\nline up cell by cell",
+                              label="L2 note"),
+        "radial_name": mo.ui.text(value="radial profile", label="Radial"),
+        "radial_formula": mo.ui.text(value="$\\sum_{c,r} (\\bar{x}_{c,r} - \\bar{d}_{c,r})^2$",
+                                     label="Radial formula"),
+        "radial_note": mo.ui.text(value="mean of each ring:\\nkeeps the radial pattern,\\nignores positions in a ring",
+                                  label="Radial note"),
+        "texture_name": mo.ui.text(value="texture", label="Texture"),
+        "texture_formula": mo.ui.text(value="$\\sum_l \\|\\phi_l(\\hat{x}) - \\phi_l(d)\\|^2$",
+                                      label="Texture formula"),
+        "texture_note": mo.ui.text(value="deep image features:\\ncell-scale structure and\\nco-expression in a triplet",
+                                   label="Texture note"),
+        "error_label": mo.ui.text(value="$(\\hat{x} - d)^2$", label="Error map"),
+        "error_high": mo.ui.text(value="high", label="Error bar top"),
+        "radius_label": mo.ui.text(value="radius", label="Radius"),
+        "ring_mean_label": mo.ui.text(value="ring mean", label="Ring mean"),
+        "vgg_label": mo.ui.text(value="VGG", label="VGG"),
+        "feature_space_label": mo.ui.text(value="VGG feature space", label="Feature space"),
+        "shuffle_note": mo.ui.text(value="(channel order re-drawn\\nevery training step)", label="Shuffle note"),
+        "state_label": mo.ui.text(value="NCA state\\n(one channel\\nper marker)", label="State"),
+        "select_label": mo.ui.text(value="markers\\nper group", label="Select"),
+        "excluded_label": mo.ui.text(value="{}\\nexcluded\\n(artefacts)", label="Excluded ({} = names)"),
+        "triplet_label": mo.ui.text(value="RGB {}", label="Triplet ({} = number)"),
+        "composite_label": mo.ui.text(value="VGG inputs", label="Composites"),
+        "group_loss_label": mo.ui.text(value="$\\mathcal{{L}}_{{{}}}$", label="Group loss ({} = number)"),
+        "combine_label": mo.ui.text(value="$\\mathcal{L}_{\\mathrm{tex}}$: mean over groups", label="Combine"),
+        "matching_label": mo.ui.text(value="colonies matched\\nseparately in each group", label="Matching"),
+        "matrix_title": mo.ui.text(value="channel pairs seen together", label="Matrix title"),
+        "key_triplet": mo.ui.text(value="same RGB triplet", label="Key: triplet"),
+        "key_group": mo.ui.text(value="same group\\n(over shuffles)", label="Key: group"),
+        "key_cross": mo.ui.text(value="different colonies:\\nnever compared", label="Key: cross"),
+    })
+    colony_names = mo.ui.dropdown(options={"x̂ and d": ("$\\hat{x}$", "$d$"),
+                                           "colony 1 and colony 2": ("colony 1", "colony 2")},
+                                  value="x̂ and d", label="Colony names (panels a and b)")
+    mo.vstack([mo.md("**Labels** (`\\n` for a new line, `$...$` for maths)"),
+               colony_names,
+               mo.hstack(list(labels.values()), wrap=True, justify="start")])
+    return colony_names, labels
 
 
 @app.cell(hide_code=True)

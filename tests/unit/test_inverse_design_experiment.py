@@ -405,6 +405,8 @@ def test_texture_settings_are_saved_per_projection_and_rescaled(tmp_path):
     from Experiments.micropatterns.texture_settings import (
         DEFAULT_TEXTURE_SETTINGS_FILE,
         TEXTURE_SETTING_KEYS,
+        CellSettings,
+        load_cell_settings,
         load_texture_settings,
         save_texture_settings,
         scaled_patch_geometry,
@@ -414,13 +416,18 @@ def test_texture_settings_are_saved_per_projection_and_rescaled(tmp_path):
     assert set(TEXTURE_SETTING_KEYS) == set(TextureConfig.__dataclass_fields__) - {"bank_size", "file"}
     for projection in ("max", "sum", "slice"):
         load_texture_settings(DEFAULT_TEXTURE_SETTINGS_FILE, projection)
+        load_cell_settings(DEFAULT_TEXTURE_SETTINGS_FILE, projection)
 
     path = tmp_path / "textures.yaml"
     settings = {**load_texture_settings(DEFAULT_TEXTURE_SETTINGS_FILE, "max"), "patch_downsample": 4}
-    save_texture_settings(path, "max", settings, note={"downsample": 4})
-    save_texture_settings(path, "slice", {**settings, "patch_size": 21}, note={"downsample": 4})
+    cells = CellSettings(placement="layers", pieces="segments", markers=["SOX2"])
+    save_texture_settings(path, "max", settings, CellSettings(), note={"downsample": 4})
+    save_texture_settings(path, "slice", {**settings, "patch_size": 21}, cells, note={"downsample": 4})
     assert load_texture_settings(path, "max") == settings
     assert load_texture_settings(path, "slice")["patch_size"] == 21
+    assert load_cell_settings(path, "slice") == cells
+    with pytest.raises(ValueError, match="pieces: nuclei"):
+        CellSettings(placement="tiled", pieces="segments")
     with pytest.raises(KeyError, match="sum"):
         load_texture_settings(path, "sum")
     # 11 px at downsample 4 is about 5 px at 8 (always odd and at least 3)
@@ -441,14 +448,15 @@ def test_texture_file_and_config_values_cannot_both_be_set():
 def test_run_takes_the_texture_settings_for_the_model_projection(tmp_path, monkeypatch):
     from Experiments.micropatterns.texture_settings import (
         DEFAULT_TEXTURE_SETTINGS_FILE,
+        CellSettings,
         load_texture_settings,
         save_texture_settings,
     )
 
     path = tmp_path / "textures.yaml"
     settings = load_texture_settings(DEFAULT_TEXTURE_SETTINGS_FILE, "max")
-    save_texture_settings(path, "max", settings)
-    save_texture_settings(path, "slice", {**settings, "patch_size": 9, "patch_downsample": 4})
+    save_texture_settings(path, "max", settings, CellSettings())
+    save_texture_settings(path, "slice", {**settings, "patch_size": 9, "patch_downsample": 4}, CellSettings())
     entrypoint, cfg = _fake_run_setup(tmp_path, monkeypatch, texture_file=path)
 
     entrypoint.run(cfg)

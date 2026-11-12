@@ -6695,20 +6695,32 @@ def _(
     # until the figure is redrawn, use the defaults)
     _percentiles = {_g["group"]: steps_percentiles.value.get(_g["group"], (0.5, 99.5)) for _g in _groups}
     _intensity_columns = [_c for _c, _p in enumerate(_panels) if _p["kind"] != "normalised"]
-    # With one scale for all, each channel runs from 0 to the high percentile of
-    # its brightest panel (normalised values keep their own 0 to 1)
-    _shared_high = (
-        {
-            (_g["group"], _c): max(
-                float(np.percentile(_values[_g["group"]][_column][..., _c], _percentiles[_g["group"]][1]))
-                for _column in _intensity_columns
-            )
-            for _g in _groups
-            for _c in range(len(_g["names"]))
-        }
-        if steps_scale.value == "all" and _intensity_columns
-        else {}
-    )
+
+    def _limits(values, percentiles):
+        """Display limits (low, high) of one channel of a panel, or None if it is all zero.
+
+        Zeros are left out: most are fill (outside the mask, or padding from
+        centring and rotation), and channels without background removal (the
+        RNA by default) would otherwise get a low limit of 0 and show their
+        offset as bright.
+        """
+        values = values[values != 0]
+        return None if values.size == 0 else tuple(float(_v) for _v in np.percentile(values, percentiles))
+
+    # With one scale for all, each channel runs from the lowest low limit to the
+    # highest high limit of its panels (normalised values keep their own 0 to 1)
+    _shared_limits = {}
+    if steps_scale.value == "all":
+        for _g in _groups:
+            for _c in range(len(_g["names"])):
+                _found = [
+                    _l
+                    for _column in _intensity_columns
+                    if (_l := _limits(_values[_g["group"]][_column][..., _c], _percentiles[_g["group"]]))
+                ]
+                _shared_limits[(_g["group"], _c)] = (
+                    (min(_l[0] for _l in _found), max(_l[1] for _l in _found)) if _found else (0.0, 1.0)
+                )
 
     def _scaled(group, column, channel):
         """One channel of a group's panel in [0, 1] for display, with the gamma applied."""
@@ -6716,10 +6728,10 @@ def _(
         if _panels[column]["kind"] == "normalised":
             return np.clip(values, 0.0, 1.0) ** steps_gamma.value
         if steps_scale.value == "all":
-            lo, hi = 0.0, _shared_high[(group, channel)]
+            lo, hi = _shared_limits[(group, channel)]
         else:
             reference = _values[group][0 if steps_scale.value == "raw" else column]
-            lo, hi = np.percentile(reference[..., channel], _percentiles[group])
+            lo, hi = _limits(reference[..., channel], _percentiles[group]) or (0.0, 1.0)
         return np.clip((values - lo) / max(hi - lo, 1e-6), 0.0, 1.0) ** steps_gamma.value
 
     def _rgb(g, column, channels):

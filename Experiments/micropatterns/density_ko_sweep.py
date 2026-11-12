@@ -2,9 +2,11 @@
 
 Synthetic circular colonies are filled with whole cells at a range of
 densities, and each is rolled out with NODAL blocked from a range of KO
-times. Only the marker-pattern counts per radial ring of the final state
-are kept (``[densities, KO times, rings, patterns]`` per run), so results
-files stay small.
+times. How the cells are placed is the ``cells`` setting of each model's
+projection in the texture settings file (``synthetic_ic.py``, tuned in
+``synthetic_textured_ic_explorer.py``). Only the marker-pattern counts per
+radial ring of the final state are kept (``[densities, KO times, rings,
+patterns]`` per run), so results files stay small.
 
 Used by ``nodal_ko_eval.py`` (section "Cell density × NODAL-KO time"), which
 sets the sweep up, plots the results and can export it as a remote job. Run
@@ -32,27 +34,15 @@ from Common.dataloader.cell_type_fit import radial_rings
 from Common.dataloader.cell_type_shares import pattern_counts
 from Common.dataloader.cell_types import load_cell_type_rules, marker_values
 from Common.dataloader.disk_cache import cache_dir_from_environment
-from Experiments.inverse_design.config import InverseDesignDensityConfig
 from Experiments.micropatterns.cell_counts import (
-    CELL_EXPANSION_UM,
-    cells_to_density,
     default_alignment,
-    density_to_cells,
-    nuclear_cell_library,
-    rank_softness,
     reference_cell_counts,
     summarise_counts,
     um_per_pixel,
 )
-from Experiments.micropatterns.reference import cell_library
-from Experiments.micropatterns.texture_synthesis import (
-    layer_cell_counts,
-    place_cells,
-    scatter_seeds,
-    tile_cells,
-)
+from Experiments.micropatterns.synthetic_ic import cell_states, replicate_cell_library
+from Experiments.micropatterns.texture_settings import CellSettings
 from Experiments.notebook_jobs import part_path, part_paths, read_job_entry, repository_path
-from NCA.inverse_design.density import CellDensity, CellGaps, pack_cells
 
 repository_root = Path(__file__).resolve().parents[2]
 
@@ -86,16 +76,10 @@ class DensityKoSettings:
     replicates: tuple = (1,)
     seed: int = 0
     duplicate_runs: int = 3
-    piece_source: str = "nuclei"
-    # "tiled": cells packed without overlap, so every placed cell is a distinct
-    # cell in the image (for 2D images such as slices). "layers": layers of
-    # cells that may overlap (placed_cell_texture). Old job files used layers.
-    placement: str = "layers"
-    expansion_um: float = CELL_EXPANSION_UM
-    split_distance: int = InverseDesignDensityConfig().split_distance
-    min_cell_area: int = InverseDesignDensityConfig().min_cell_area
-    layers: int = InverseDesignDensityConfig().layers
-    softness_cells: float = 0.5
+    # How cells are placed, per projection: the cells sections of the texture
+    # settings file (CellSettings as dicts), copied in so a job file keeps
+    # the settings it ran with
+    cells: dict = field(default_factory=dict)
     # Rollouts run on the GPU at once (runs × densities of one KO time)
     max_batch: int = 64
 
@@ -127,10 +111,17 @@ class DensityKoSettings:
             raise ValueError("Last KO time must be at or after first KO time.")
         if self.ko_stop > self.snapshot_hour:
             raise ValueError("KO times cannot be later than the snapshot time.")
-        if self.placement not in ("tiled", "layers"):
-            raise ValueError(f"Unknown cell placement {self.placement!r}.")
-        if self.placement == "tiled" and self.piece_source != "nuclei":
-            raise ValueError("Packing without overlap needs real cells (pieces from nuclei).")
+        for projection in self.cell_type_files:
+            self.cell_settings(projection)
+
+    def cell_settings(self, projection):
+        """``CellSettings`` for models of ``projection``."""
+        if projection not in self.cells:
+            raise ValueError(
+                f"No cell settings for projection {projection!r}; save them with "
+                "synthetic_textured_ic_explorer.py"
+            )
+        return CellSettings(**self.cells[projection])
 
 
 def settings_from_dict(values):
@@ -138,7 +129,25 @@ def settings_from_dict(values):
     values = dict(values)
     values["replicates"] = tuple(int(_r) for _r in values.get("replicates", (1,)))
     values["cell_type_files"] = dict(values.get("cell_type_files") or {})
+    # Job files from before the texture settings file held one set of cell
+    # settings for every projection (placement "layers" by default)
+    old = {_new: values.pop(_old) for _old, _new in OLD_CELL_KEYS.items() if _old in values}
+    if "cells" not in values:
+        cells = CellSettings(**{"placement": "layers", **old}).to_dict()
+        values["cells"] = {_projection: cells for _projection in values["cell_type_files"]}
     return DensityKoSettings(**values)
+
+
+# Cell settings of old job files, and their names in CellSettings
+OLD_CELL_KEYS = {
+    "piece_source": "pieces",
+    "placement": "placement",
+    "expansion_um": "expansion_um",
+    "split_distance": "split_distance",
+    "min_cell_area": "min_cell_area",
+    "layers": "layers",
+    "softness_cells": "softness_cells",
+}
 
 
 # ---------------------------------------------------------------- helpers
@@ -371,8 +380,13 @@ def bundle_alignment(bundle):
     return alignment, scale, um_per_pixel(alignment.pattern_radius, bundle.config.data.downsample)
 
 
-def replicate_cell_counts(rows, replicate):
-    """``summarise_counts`` of one replicate's panels; what it lacks comes from every replicate."""
+def replicate_cell_counts(rows, replicate, panels=None):
+    """``summarise_counts`` of one replicate's panels; what it lacks comes from every replicate.
+
+    With ``panels`` (staining panel names), only those panels' counts are used.
+    """
+    if panels is not None:
+        rows = [_row for _row in rows if _row["panel"] in panels]
     summary = summarise_counts(rows)
     try:
         summary.update(summarise_counts([_row for _row in rows if _row["replicate"] == replicate]))
@@ -381,127 +395,11 @@ def replicate_cell_counts(rows, replicate):
     return summary
 
 
-def replicate_cell_library(colonies, index, density_config, nuclei=None):
-    """Whole pieces of colony ``index``. Staining panels it did not measure
-    at 0h take their pieces from the other colonies.
-
-    Pieces are segments (``cell_library``), or with ``nuclei`` (keyword
-    arguments of ``nuclear_cell_library`` after the colonies: source files,
-    dataset root, alignment, downsample, ...) real cells from the nuclei.
-    """
-    available = np.array(colonies["available"], dtype=bool)
-    others = np.arange(len(available)) != index
-    for indices in colonies["schema"].group_measurement_indices:
-        indices = np.asarray(indices, dtype=int)
-        if np.all(available[index, indices]):
-            available[np.ix_(others, indices)] = False
-    if nuclei is None:
-        library = cell_library(
-            {**colonies, "available": available},
-            density_config.markers,
-            density_config.split_distance,
-            density_config.interior_fraction,
-            density_config.min_cell_area,
-        )
-    else:
-        library = nuclear_cell_library(
-            {**colonies, "available": available},
-            markers=density_config.markers,
-            split_distance=density_config.split_distance,
-            interior_fraction=density_config.interior_fraction,
-            min_area=density_config.min_cell_area,
-            **nuclei,
-        )
-    own = [
-        _row["coverage"] for _row in library["coverage"]
-        if _row["replicate"] == colonies["replicates"][index] and _row["from_markers"]
-    ]
-    # The colony's own covered share (else that of the colonies used)
-    measured_density = float(np.mean(own)) if own else library["density"]
-    return library, measured_density
-
-
 def circle_mask(shape, area):
     """Centred disc of about ``area`` pixels on a grid ``shape``."""
     rows, cols = np.indices(shape)
     distance = np.hypot(rows - (shape[0] - 1) / 2, cols - (shape[1] - 1) / 2)
     return distance <= np.sqrt(area / np.pi)
-
-
-def placed_cell_texture(
-    library, schema, shape, density_config, seed, highest_density=0.0, max_layers=10,
-    mask=None, highest_cells=0.0, softness_cells=None,
-):
-    """``(packed texture, CellGaps, cells per layer)``: whole cells placed
-    at random over ``shape``, in state channel order
-    (``NCA/inverse_design/density.py``).
-
-    Cells are placed over a margin around the grid and cropped, so the
-    grid edge has as many cells as the centre. One layer of
-    non-overlapping cells jams well below full coverage, so layers are
-    added (from ``density_config.layers`` up to ``max_layers``) until
-    together they can cover ``highest_density`` and hold
-    ``highest_cells`` cells in ``mask`` ``[H, W]``. Placement is layer by
-    layer from ``seed``, so the extra layers go on top of the same cells.
-    The cells per layer are counted in ``mask`` (None without a mask).
-    ``softness_cells`` sets the cut softness in cells (``rank_softness``)
-    instead of ``density_config.softness``.
-    """
-    panels = library["panels"]
-    margin = max(max(_mask.shape) for _, _cells in panels for _mask, _ in _cells)
-
-    def _place(layers):
-        return place_cells(
-            panels,
-            len(library["measurement_gap_values"]),
-            (shape[0] + 2 * margin, shape[1] + 2 * margin),
-            layers,
-            density_config.attempts,
-            seed,
-        )
-
-    padded_mask = None if mask is None else np.pad(np.asarray(mask, dtype=bool), margin)
-
-    def _cells(ranks):
-        return None if padded_mask is None else layer_cell_counts(ranks, padded_mask)
-
-    layers = density_config.layers
-    textures, ranks, coverage = _place(layers)
-    cells = _cells(ranks)
-    uncovered = float(np.prod(1.0 - coverage))
-    per_layer = 1.0 - uncovered ** (1.0 / layers)
-    needed = layers
-    if 1.0 - uncovered < highest_density and per_layer > 0.0:
-        # Layers are about equally full and independent: 1 - (1 - c) ** L.
-        # The small margin covers layers that come out a little emptier.
-        target = min(float(highest_density) + 0.02, 0.999)
-        needed = int(np.ceil(np.log(1.0 - target) / np.log(1.0 - per_layer)))
-    if cells is not None and float(np.sum(cells)) < highest_cells and np.mean(cells) > 0.0:
-        needed = max(needed, int(np.ceil(1.02 * highest_cells / float(np.mean(cells)))))
-    if needed > layers and layers < max_layers:
-        textures, ranks, coverage = _place(min(max(needed, layers + 1), max_layers))
-        cells = _cells(ranks)
-    crop = (
-        slice(None), slice(None),
-        slice(margin, margin + shape[0]), slice(margin, margin + shape[1]),
-    )
-    primary = np.asarray(schema.primary_measurements, dtype=int)
-    panel_of = {
-        int(_index): _panel
-        for _panel, (_indices, _) in enumerate(panels) for _index in _indices
-    }
-    gaps = CellGaps(
-        gap_values=jnp.asarray(library["gap_values"]),
-        channel_panels=jnp.asarray([panel_of[int(_index)] for _index in primary]),
-        layer_coverage=jnp.asarray(coverage),
-        panels=len(panels),
-        softness=(
-            density_config.softness if softness_cells is None
-            else rank_softness(softness_cells, ranks)
-        ),
-    )
-    packed = pack_cells(jnp.asarray(textures[crop][:, primary]), jnp.asarray(ranks[crop]))
-    return packed, gaps, cells
 
 
 # ---------------------------------------------------------------- results files
@@ -583,92 +481,6 @@ def load_density_ko_results(path):
     return tuple(_result for _file in files for _result in _load_results_file(_file))
 
 
-# ---------------------------------------------------------------- cells packed without overlap
-
-# Fine grid of the tiling, per model pixel along each axis
-TILE_FACTOR = 4
-
-
-def tiled_cell_states(library, schema, mask, unit, targets, seed, factor=TILE_FACTOR):
-    """Initial states of one run with cells packed without overlap (``tile_cells``).
-
-    Cells are grown from seeds spread evenly over ``mask`` ``[H, W]``, out
-    to the radius of a measured cell (the mean area of the library's
-    cells), and each takes the mean values of a random measured cell (one
-    per staining panel). ``targets`` are the cells wanted in the colony,
-    or covered shares when ``unit`` is ``share``. The seeds come in one
-    random order, so a run's densities share their first cells.
-
-    Returns a dict with ``initial_states`` ``[D, C, H, W]``,
-    ``cell_weights`` ``[D, H, W]`` (``tile_cells``), and per density the
-    ``cells`` in the colony and the ``shares`` they cover; ``capacity``,
-    the most cells (or the largest share) the seeds give; and
-    ``squeeze``, the mean area of a cell at the highest density over the
-    measured cell area.
-    """
-
-    mask = np.asarray(mask, dtype=bool)
-    targets = np.asarray(targets, dtype=float)
-    panels = library["panels"]
-    primary = np.asarray(schema.primary_measurements, dtype=int)
-    cell_area = float(np.mean([np.count_nonzero(_m) for _, _cells in panels for _m, _ in _cells]))
-    reach = np.sqrt(cell_area / np.pi)
-    colony_area = float(np.count_nonzero(mask))
-    if unit == "share":
-        # Enough cells to cover the colony, squeezed to a third of their area
-        wanted = int(np.ceil(3.0 * colony_area / cell_area))
-    else:
-        wanted = int(np.ceil(targets.max()))
-    fine_mask = np.kron(mask, np.ones((factor, factor), dtype=bool))
-    seeds = scatter_seeds(
-        fine_mask, wanted, 0.6 * np.sqrt(fine_mask.sum() / max(wanted, 1)), seed,
-    ) / factor
-    # Each cell's values: per panel, the mean of one random measured cell
-    rng = np.random.default_rng([int(seed), 1])
-    values = np.zeros((len(seeds), len(library["measurement_gap_values"])), dtype=np.float32)
-    for indices, cells in panels:
-        means = np.stack([_values[:, _mask].mean(axis=1) for _mask, _values in cells])
-        values[:, indices] = means[rng.integers(len(cells), size=len(seeds))]
-    values = values[:, primary]
-    gap_values = np.asarray(library["gap_values"], dtype=np.float32)
-
-    def _tile(count):
-        return tile_cells(seeds[:count], reach, values[:count], gap_values, mask, factor)
-
-    def _share(tiled):
-        return float(np.mean(tiled[1][mask]))
-
-    if unit == "share":
-        capacity = _share(_tile(len(seeds)))
-        counts = []
-        for target in targets:
-            # Fewest cells covering the target (coverage grows with the cells)
-            low, high = 0, len(seeds)
-            while low < high:
-                middle = (low + high) // 2
-                if _share(_tile(middle)) >= target:
-                    high = middle
-                else:
-                    low = middle + 1
-            counts.append(low)
-    else:
-        capacity = float(len(seeds))
-        counts = [min(int(round(_target)), len(seeds)) for _target in targets]
-    tiled = [_tile(_count) for _count in counts]
-    cells = np.asarray([_t[3] for _t in tiled], dtype=float)
-    shares = np.asarray([_share(_t) for _t in tiled])
-    covered = shares[-1] * colony_area
-    return {
-        "initial_states": np.stack([_t[0] * mask[None] for _t in tiled]),
-        "cell_weights": np.stack([_t[2] * mask for _t in tiled]),
-        "cells": cells,
-        "shares": shares,
-        "capacity": capacity,
-        "cell_area": cell_area,
-        "squeeze": covered / max(cells[-1], 1.0) / cell_area,
-    }
-
-
 # ---------------------------------------------------------------- sweep
 
 
@@ -683,7 +495,7 @@ def _final_pattern_counts(
 
     Returns ``(pixel counts, cell counts, channel means)``. With
     ``cell_weights`` ``[B, H, W]`` (each pixel's share of the 0h cells,
-    ``tile_cells``) the cell counts count every cell once, spread over its
+    ``synthetic_ic.cell_states``) the cell counts count every cell once, spread over its
     pixels; else None. Channel means are ``[B, rings, channels]`` of the
     measured state channels (``ring_channel_means``).
     """
@@ -733,12 +545,6 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
     from Experiments.model_registry import ModelRegistry
 
     settings.check()
-    density_config = replace(
-        InverseDesignDensityConfig(),
-        split_distance=int(settings.split_distance),
-        min_cell_area=int(settings.min_cell_area),
-        layers=int(settings.layers),
-    )
     unit = settings.density_unit
     densities = settings.densities()
     ko_hours = settings.ko_hours()
@@ -760,6 +566,7 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
         projection = record["projection"]
         if projection not in rules_by_projection:
             raise ValueError(f"No cell type file is set for projection {projection!r}.")
+        cell_settings = settings.cell_settings(projection)
         rules = rules_by_projection[projection]
         bundle = registry.get(record["model_id"])
         model = bundle.load_model(key=jr.PRNGKey(int(settings.seed)), implementation="portable")
@@ -778,14 +585,15 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
             count_rows = reference_cell_counts(
                 colonies, colonies["source_files"],
                 root / "260726_nca_dataset", alignment,
-                density_config.markers,
-                density_config.split_distance, density_config.min_cell_area,
+                cell_settings.markers,
+                cell_settings.split_distance, cell_settings.min_cell_area,
                 mask_radius_scale=radius_scale,
+                **cell_settings.nucleus_options(),
                 cache_dir=cache_dir_from_environment(),
             )
             mask_mm2 = float(np.count_nonzero(mask)) * pixel_um**2 * 1e-6
         except (OSError, ValueError, KeyError) as count_error:
-            if unit != "share" or settings.piece_source == "nuclei":
+            if unit != "share" or cell_settings.pieces == "nuclei":
                 raise
             warnings.append(f"{bundle.id}: no nuclear counts ({count_error})")
             count_rows, mask_mm2 = None, float("nan")
@@ -802,21 +610,20 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
         label = record_label(record)
         for replicate_index, replicate in enumerate(replicates):
             library, measured_share = replicate_cell_library(
-                colonies, replicate_index, density_config,
-                nuclei=None if settings.piece_source == "segments" else {
+                colonies, replicate_index, cell_settings,
+                raw=None if cell_settings.pieces == "segments" else {
                     "source_files": colonies["source_files"],
                     "dataset_root": root / "260726_nca_dataset",
                     "alignment": alignment,
                     "downsample": int(bundle.config.data.downsample),
                     "mask_radius_scale": radius_scale,
-                    "expansion_um": float(settings.expansion_um),
                     "cache_dir": cache_dir_from_environment(),
                 },
             )
             if count_rows is None:
                 cell_counts = {"cells_per_mm2": float("nan"), "cells_per_segment": float("nan")}
             else:
-                cell_counts = replicate_cell_counts(count_rows, replicate)
+                cell_counts = replicate_cell_counts(count_rows, replicate, cell_settings.density_panels)
             # Real cells per placed piece: 1 for real cells, else measured cells per segment
             per_piece = library.get("cells_per_segment", cell_counts["cells_per_segment"])
             # Measured density of the replicate, in unit
@@ -825,88 +632,39 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                 "per_mm2": cell_counts["cells_per_mm2"],
                 "per_colony": cell_counts["cells_per_mm2"] * mask_mm2,
             }[unit]
-            # Requested densities as real cells in the circle
+            # Requested densities as real cells in the circle (or covered shares)
             targets = densities * mask_mm2 if unit == "per_mm2" else densities
 
             # Place the cells of every run, then roll them all out together
             placed = []
             for run_index in range(runs):
                 run_seed = int(settings.seed) + job_index * runs + run_index
-                if settings.placement == "tiled":
-                    tiled = tiled_cell_states(
-                        library, colonies["schema"], mask, unit,
-                        densities if unit == "share" else targets, run_seed,
-                    )
-                    max_density = (
-                        tiled["capacity"] if unit != "per_mm2" else tiled["capacity"] / mask_mm2
-                    )
-                    if densities[-1] > max_density:
-                        warnings.append(
-                            f"{label}, replicate {replicate}, run {run_index}: "
-                            f"the colony holds at most {format_density(max_density, unit)} "
-                            "cells packed without overlap"
-                        )
-                    if tiled["squeeze"] < 0.5:
-                        warnings.append(
-                            f"{label}, replicate {replicate}, run {run_index}: at the highest density "
-                            f"cells have {tiled['squeeze']:.0%} of the measured cell area"
-                        )
-                    placed.append({
-                        "run_index": run_index,
-                        "seed": run_seed,
-                        "shares": tiled["shares"],
-                        "cells": tiled["cells"],
-                        "max_density": max_density,
-                        "initial_states": tiled["initial_states"],
-                        "cell_weights": tiled["cell_weights"],
-                        "cell_layers": 0,
-                        "cell_area_px": tiled["cell_area"],
-                    })
-                    continue
-                # Layers are added until the highest density fits
-                packed, gaps, layer_pieces = placed_cell_texture(
-                    library, colonies["schema"], shape, density_config, run_seed,
-                    highest_density=float(densities[-1]) if unit == "share" else 0.0,
-                    mask=mask,
-                    softness_cells=float(settings.softness_cells),
-                    highest_cells=0.0 if unit == "share" else float(targets[-1]) / per_piece,
+                states = cell_states(
+                    library, colonies["schema"], mask, targets, unit == "share",
+                    run_seed, cell_settings, per_piece,
                 )
-                coverage = np.asarray(gaps.layer_coverage)
-                capacity = float(np.sum(layer_pieces)) * per_piece
-                if unit == "share":
-                    shares = np.asarray(densities, dtype=float)
-                    max_density = float(gaps.max_density)
-                else:
-                    shares = np.asarray([
-                        cells_to_density(_n, layer_pieces, coverage, per_piece) for _n in targets
-                    ])
-                    max_density = capacity / (mask_mm2 if unit == "per_mm2" else 1.0)
+                max_density = states["capacity"] / (mask_mm2 if unit == "per_mm2" else 1.0)
+                where = f"{label}, replicate {replicate}, run {run_index}"
                 if densities[-1] > max_density:
                     warnings.append(
-                        f"{label}, replicate {replicate}, run {run_index}: "
-                        f"{int(coverage.shape[0])} layers hold at most "
+                        f"{where}: the {cell_settings.placement} cells hold at most "
                         f"{format_density(max_density, unit)}"
                     )
-                shares = np.clip(shares, 1e-3, min(float(gaps.max_density), 0.999))
-                # Nuclei in the circle at each covered share used
-                cells = np.asarray([
-                    density_to_cells(_d, layer_pieces, coverage, per_piece) for _d in shares
-                ])
-                initial_states = np.stack([
-                    np.asarray(gaps.apply(packed, CellDensity(float(_d)), jr.PRNGKey(run_seed)))
-                    * mask[None]
-                    for _d in shares
-                ])
+                if states["squeeze"] < 0.5:
+                    warnings.append(
+                        f"{where}: at the highest density cells have "
+                        f"{states['squeeze']:.0%} of the measured cell area"
+                    )
                 placed.append({
                     "run_index": run_index,
                     "seed": run_seed,
-                    "shares": shares,
-                    "cells": cells,
+                    "shares": states["shares"],
+                    "cells": states["cells"],
                     "max_density": max_density,
-                    "initial_states": initial_states,
-                    "cell_weights": None,
-                    "cell_layers": int(gaps.layer_coverage.shape[0]),
-                    "cell_area_px": float("nan"),
+                    "initial_states": states["initial_states"],
+                    "cell_weights": states["cell_weights"],
+                    "cell_layers": states["layers"],
+                    "cell_area_px": states["cell_area"],
                 })
 
             # [runs × densities, C, H, W], padded with zero channels to the model's
@@ -915,11 +673,8 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
             keys = jnp.concatenate([
                 jnp.broadcast_to(jr.PRNGKey(_run["seed"]), (len(densities), 2)) for _run in placed
             ])
-            # Each pixel's share of the 0h cells (tiled placement only)
-            weights = (
-                np.concatenate([_run["cell_weights"] for _run in placed])
-                if settings.placement == "tiled" else None
-            )
+            # Each pixel's share of the 0h cells that show (synthetic_ic.cell_states)
+            weights = np.concatenate([_run["cell_weights"] for _run in placed])
             # [KO times, runs × densities, rings, patterns]
             counts, weighted_counts, channel_means = [], [], []
             for ko_step in ko_steps:
@@ -969,7 +724,7 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                     "covered_shares": run["shares"],
                     "cells_per_colony": run["cells"],
                     "cells_per_mm2": run["cells"] / mask_mm2,
-                    "piece_source": settings.piece_source,
+                    "piece_source": cell_settings.pieces,
                     "cells_per_segment": per_piece,
                     "measured_cells_per_mm2": cell_counts["cells_per_mm2"],
                     "colony_mm2": mask_mm2,
@@ -981,9 +736,9 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                         [12.0 * _step / steps_per_12h for _step in ko_steps]
                     ),
                     "snapshot_hour": float(settings.snapshot_hour),
-                    "placement": settings.placement,
-                    # [densities, KO times, rings, patterns]: pixels, and (tiled
-                    # placement) cells, each 0h cell counted once over its pixels
+                    "placement": cell_settings.placement,
+                    # [densities, KO times, rings, patterns]: pixels, and cells
+                    # (each 0h cell that shows counted once over its pixels)
                     "pattern_counts": run_counts,
                     "cell_pattern_counts": run_cell_counts,
                     # [densities, KO times, rings, channels]: mean of each measured
@@ -1000,9 +755,7 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                         _marker: float(rules.thresholds[_marker]) for _marker in rules.markers
                     },
                     "rings": rings,
-                    # Its softness is unused: the cut is softness_cells wide
-                    "density_config": asdict(density_config),
-                    "softness_cells": float(settings.softness_cells),
+                    "cell_settings": cell_settings.to_dict(),
                     "cell_layers": run["cell_layers"],
                 })
             job_index += 1

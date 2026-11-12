@@ -53,6 +53,11 @@ with app.setup(hide_code=True):
     from Experiments.micropatterns.reference import combine_reference
     from Experiments.micropatterns.reference import load_reference as load_bundle_reference
     from Experiments.micropatterns.rendering import render_cmy_composite, render_fate_cmy
+    from Experiments.micropatterns.texture_settings import (
+        DEFAULT_TEXTURE_SETTINGS_FILE,
+        load_texture_settings,
+        scaled_patch_geometry,
+    )
     from Experiments.micropatterns.texture_synthesis import (
         normalise_histograms_and_covariance,
         synthesise_patch_texture,
@@ -202,14 +207,21 @@ def _(bundle, data_root):
 
 
 @app.cell(hide_code=True)
-def _():
+def _(bundle):
+    # Start values: the saved texture settings for the model's projection (synthetic_textured_ic_explorer.py)
+    _saved = load_texture_settings(DEFAULT_TEXTURE_SETTINGS_FILE, str(bundle.config.data.micropattern.projection))
+    _size, _overlap, _jitter = scaled_patch_geometry(
+        _saved["patch_size"], _saved["patch_overlap"], _saved["patch_jitter"],
+        _saved["patch_downsample"], bundle.config.data.downsample,
+    )
+    _modes = {
+        "Multichannel patch resampling": "patch",
+        "IAAFT spectrum + histogram": "iaaft",
+        "Uniform (reference mean)": "uniform",
+    }
     texture_mode = mo.ui.dropdown(
-        options={
-            "Multichannel patch resampling": "patch",
-            "IAAFT spectrum + histogram": "iaaft",
-            "Uniform (reference mean)": "uniform",
-        },
-        value="Multichannel patch resampling",
+        options=_modes,
+        value=next(_k for _k, _v in _modes.items() if _v == _saved["mode"]),
         label="Texture",
     )
     reference_mode = mo.ui.dropdown(
@@ -219,14 +231,20 @@ def _():
     )
     reference_sample = mo.ui.number(0, 32, value=0, step=1, label="Fixed replicate")
     reference_seed = mo.ui.number(0, 100000, value=0, step=1, label="Replicate seed")
-    patch_size = mo.ui.slider(3, 31, value=11, step=2, label="Patch width (px)")
-    patch_overlap = mo.ui.slider(0, 30, value=7, step=1, label="Patch overlap (px)")
-    patch_jitter = mo.ui.slider(0, 12, value=3, step=1, label="Patch jitter (px)")
-    patch_interior = mo.ui.slider(0.4, 1.0, value=0.8, step=0.01, label="Patch source radius fraction")
-    patch_candidates = mo.ui.slider(1, 64, value=24, step=1, label="Quilting candidates")
-    iaaft_iterations = mo.ui.slider(0, 100, value=25, step=5, label="IAAFT iterations")
-    normalise = mo.ui.switch(value=False, label="Match histograms + covariance")
-    normalise_iterations = mo.ui.slider(1, 12, value=4, step=1, label="Normalisation iterations")
+    patch_size = mo.ui.slider(3, 31, value=min(_size, 31), step=2, label="Patch width (px)")
+    patch_overlap = mo.ui.slider(0, 30, value=min(_overlap, 30), step=1, label="Patch overlap (px)")
+    patch_jitter = mo.ui.slider(0, 12, value=min(_jitter, 12), step=1, label="Patch jitter (px)")
+    patch_interior = mo.ui.slider(
+        0.4, 1.0, value=_saved["interior_fraction"], step=0.01, label="Patch source radius fraction"
+    )
+    patch_candidates = mo.ui.slider(1, 64, value=_saved["candidates"], step=1, label="Quilting candidates")
+    iaaft_iterations = mo.ui.slider(
+        0, 100, value=5 * round(_saved["iaaft_iterations"] / 5), step=5, label="IAAFT iterations"
+    )
+    normalise = mo.ui.switch(value=_saved["normalise"], label="Match histograms + covariance")
+    normalise_iterations = mo.ui.slider(
+        1, 12, value=_saved["normalise_iterations"], step=1, label="Normalisation iterations"
+    )
     texture_seed = mo.ui.number(0, 100000, value=0, step=1, label="Texture seed")
     noise_strength = mo.ui.slider(0.0, 0.05, value=0.005, step=0.001, label="Initial noise (training: 0.005)")
     mo.vstack([

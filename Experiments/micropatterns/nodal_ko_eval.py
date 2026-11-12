@@ -43,7 +43,7 @@ with app.setup(hide_code=True):
     import marimo as mo
     import matplotlib.pyplot as plt
     import plotly.graph_objects as go
-    from matplotlib.colors import is_color_like, to_rgb
+    from matplotlib.colors import to_rgb
     import numpy as np
     import pandas as pd
     from dotenv import load_dotenv
@@ -79,9 +79,8 @@ with app.setup(hide_code=True):
     )
     from Common.model.boundary import build_boundary_callback, no_boundary
     from Common.save_to_video import save_to_video_rgb
-    # Cell density initial conditions, as in inverse design
-    from Experiments.inverse_design.config import InverseDesignDensityConfig
-    from Experiments.micropatterns.cell_counts import CELL_EXPANSION_UM
+    # Cell placement of the density sweep (tuned in synthetic_textured_ic_explorer.py)
+    from Experiments.micropatterns.texture_settings import DEFAULT_TEXTURE_SETTINGS_FILE, load_cell_settings
     # Density × KO sweep (run here or as a remote job), and the data loading
     # it shares with this notebook
     from Experiments.micropatterns.density_ko_sweep import (
@@ -98,14 +97,18 @@ with app.setup(hide_code=True):
         run_density_ko_sweep,
         save_density_ko_results,
     )
-    from Experiments.notebook_jobs import write_job_manifest
+    from Experiments.notebook_jobs import repository_path, write_job_manifest
+
+    def repository_relative_path(path):
+        """``path`` relative to the repository root when it lies inside it."""
+        path = Path(path).resolve()
+        return str(path.relative_to(repository_root)) if path.is_relative_to(repository_root) else str(path)
     from Experiments.micropatterns.rendering import (
         render_cmy_composite,
         render_fate_cmy,
     )
     # Evaluation helpers (rollouts under a knockout, cell-type shares)
     from Experiments.micropatterns.ko_evaluation import (
-        CONDITION_KO_HOURS,
         DENSITY_AXIS_LABELS,
         DENSITY_COLUMNS,
         DENSITY_UNITS,
@@ -129,25 +132,13 @@ with app.setup(hide_code=True):
     )
     # Shared figure style and colony drawing
     from Experiments.micropatterns.figures.data import cell_type_rgba, masked_rgba
-    from Experiments.micropatterns.figures.drawing import composite, draw_colony, sliced_rgba
     from Experiments.micropatterns.figures.style import (
-        ACCENT,
-        CHANNEL_COLOURS,
-        DATA,
-        MARKER_COLOURS,
-        MODEL,
         PROJECTION_COLOURS,
         SERIES,
         STYLE_FILE,
-        THEME,
-        SectorHandle,
-        SectorHandler,
         cell_type_colour,
-        sector_angles,
     )
-    from matplotlib import patheffects
-    import matplotlib.path as mpath
-    from matplotlib.patches import FancyBboxPatch, Patch, PathPatch, Wedge
+    from matplotlib.patches import Patch
 
     load_dotenv(repository_root / ".env", override=False)
 
@@ -1329,807 +1320,6 @@ def _(
             f"(tuned on {rules_projection(_loaded)})."
         )
     _message
-    return
-
-
-@app.cell(hide_code=True)
-def _(selection_records):
-    _options = {model_option_label(_record): _record["model_id"] for _record in selection_records}
-    trajectory_model = mo.ui.dropdown(
-        options=_options,
-        value=next(iter(_options), None),
-        label="Model",
-        full_width=True,
-    )
-    trajectory_replicate = mo.ui.number(1, 999, value=1, step=1, label="Replicate (one-based)")
-    trajectory_seed = mo.ui.number(0, 2**31 - 1, value=0, step=1, label="Rollout seed")
-    run_trajectory = mo.ui.run_button(label="Roll out baseline, KO 0h and KO 24h")
-    mo.vstack([
-        mo.md(
-            "## Model trajectory (baseline and measured KO)\n\n"
-            "- One model, rolled out from the replicate's 0h state for each condition\n"
-            "- Drawn as the true data in `nodal_ko_schematic.py`: one disc per "
-            "timepoint, one sector per staining"
-        ),
-        trajectory_model,
-        mo.hstack([trajectory_replicate, trajectory_seed, run_trajectory], justify="start"),
-    ])
-    return (
-        run_trajectory,
-        trajectory_model,
-        trajectory_replicate,
-        trajectory_seed,
-    )
-
-
-@app.cell(hide_code=True)
-def _(
-    data_root,
-    run_trajectory,
-    selection_records,
-    store_root,
-    trajectory_model,
-    trajectory_replicate,
-    trajectory_seed,
-):
-    mo.stop(not run_trajectory.value, mo.md("Choose a model, then roll it out."))
-    mo.stop(
-        trajectory_model.value is None or not data_root.value.strip(),
-        mo.callout("Load a model selection and set Data root first.", kind="warn"),
-    )
-    _bundle = ModelRegistry(Path(store_root.value).expanduser()).get(trajectory_model.value)
-    _model = _bundle.load_model(
-        key=jr.PRNGKey(int(trajectory_seed.value)), implementation="portable"
-    )
-    _root = Path(data_root.value).expanduser()
-    trajectory_rollouts = {}
-    with mo.status.spinner("Loading data and rolling out"):
-        _bins = load_training_histogram_bins(_bundle, _root)
-        for _index, _condition in enumerate(CONDITION_LABELS):
-            _data = load_condition_data(
-                _bundle, _root, _condition, int(trajectory_replicate.value), _bins
-            )
-            _prediction, _time_labels = evaluate_condition(
-                _model, _bundle, _data, _condition, int(trajectory_seed.value) + _index
-            )
-            trajectory_rollouts[_condition] = {
-                "prediction": _prediction,
-                "target": _data["target"],
-                "measured": _data["measured"],
-                "channel_names": _data["channel_names"],
-                "time_labels": _time_labels,
-                "boundary": np.asarray(_data["boundary"]).squeeze().astype(bool),
-            }
-    trajectory_label = model_option_label(next(
-        _record for _record in selection_records if _record["model_id"] == trajectory_model.value
-    )) + f" · replicate {int(trajectory_replicate.value)} · seed {int(trajectory_seed.value)}"
-    return (trajectory_rollouts,)
-
-
-@app.cell(hide_code=True)
-def _(trajectory_rollouts):
-    _names = next(iter(trajectory_rollouts.values()))["channel_names"]
-    _groups = list(dict.fromkeys(_n.split("/")[0] for _n in _names if "/" in _n))
-    trajectory_layout = mo.ui.dropdown(
-        options={
-            "Row per condition, sector per staining": "stainings",
-            "Row per staining, sector per condition (CMY)": "conditions",
-        },
-        value="Row per condition, sector per staining",
-        label="Layout",
-    )
-    trajectory_groups = mo.ui.multiselect(
-        options=_groups,
-        value=[_g for _g in _groups if _g.startswith("cell_fate")] or _groups[:1],
-        label="Stainings",
-    )
-    trajectory_colour_by = mo.ui.dropdown(
-        options={"Channels": "channels", "Cell types (tuned rules above)": "cell_types"},
-        value="Channels",
-        label="Model colours",
-    )
-    trajectory_show_true = mo.ui.checkbox(value=True, label="Show true data")
-    trajectory_gamma = mo.ui.slider(
-        0.3, 2.0, step=0.05, value=1.0, show_value=True, label="Gamma (1 = linear)"
-    )
-    trajectory_branch = mo.ui.dropdown(
-        options={"One row each": "rows", "KO 24h branches off baseline": "branch"},
-        value="One row each",
-        label="Conditions (row per condition only)",
-    )
-    trajectory_panels = mo.ui.dropdown(
-        options={
-            "Rows, true then model": "rows",
-            "Two panels, side by side": "panels",
-            "Two panels, true data on top": "stacked",
-        },
-        value="Rows, true then model",
-        label="Model and true data",
-    )
-    trajectory_hatch = mo.ui.checkbox(value=False, label="Hatch unmeasured stainings")
-    trajectory_lmbr = mo.ui.checkbox(value=False, label="LMBR in yellow (Fate S2)")
-    trajectory_legend_style = mo.ui.dropdown(
-        options={"Black box": "black", "White, outlined colours": "white"},
-        value="Black box",
-        label="Legend style",
-    )
-    trajectory_connectors = mo.ui.dropdown(
-        options={
-            "Arrows": "arrows",
-            "Backgrounds flow (Sankey)": "flow",
-            "Both": "both",
-        },
-        value="Arrows",
-        label="Branch connectors",
-    )
-    trajectory_legend_font = mo.ui.slider(
-        4.0, 12.0, step=0.5, value=6.5, show_value=True, label="Legend font size (pt)"
-    )
-    trajectory_legend_shape = mo.ui.dropdown(
-        options={
-            "Auto (by position)": "auto",
-            "Row per staining": "rows",
-            "Column per staining": "columns",
-            "Single column": "single",
-        },
-        value="Auto (by position)",
-        label="Legend entries",
-    )
-    trajectory_track_gap = mo.ui.slider(
-        1.0, 12.0, step=0.5, value=5.0, show_value=True, label="Gap between tracks (h)"
-    )
-    # Branch view: 0 is level with KO 24h, 1 with the later baseline
-    trajectory_start_height = mo.ui.slider(
-        0.0, 1.0, step=0.05, value=0.5, show_value=True, label="Shared baseline start height"
-    )
-    trajectory_legend = mo.ui.dropdown(
-        options={
-            "Auto (corner of branch view, else right)": "auto",
-            "Corner of branch view": "gap",
-            "Right": "right",
-            "Top": "top",
-            "Bottom": "bottom",
-        },
-        value="Auto (corner of branch view, else right)",
-        label="Legend",
-    )
-    trajectory_font_size = mo.ui.slider(
-        4.0, 12.0, step=0.5, value=7.0, show_value=True, label="Font size (pt)"
-    )
-    # In hours of the time axis, whose ticks are 12h apart
-    trajectory_colony_size = mo.ui.slider(
-        5.0, 11.5, step=0.5, value=9.0, show_value=True, label="Colony size (h)"
-    )
-    trajectory_true_colour = mo.ui.text(value=DATA, label="True data label colour")
-    trajectory_model_colour = mo.ui.text(value=MODEL, label="NCA label colour")
-    # Any matplotlib colour; blank draws no background
-    trajectory_baseline_band = mo.ui.text(value=SERIES[2], label="Baseline background")
-    trajectory_ko_band = mo.ui.text(value=ACCENT, label="KO background")
-    trajectory_band_alpha = mo.ui.slider(
-        0.0, 1.0, step=0.02, value=0.12, show_value=True, label="Background opacity"
-    )
-    mo.vstack([
-        mo.hstack([trajectory_layout, trajectory_groups, trajectory_colour_by], justify="start"),
-        mo.hstack([trajectory_branch, trajectory_panels], justify="start"),
-        mo.hstack(
-            [trajectory_baseline_band, trajectory_ko_band, trajectory_band_alpha], justify="start"
-        ),
-        mo.hstack([trajectory_true_colour, trajectory_model_colour], justify="start"),
-        mo.hstack([trajectory_font_size, trajectory_colony_size, trajectory_track_gap], justify="start"),
-        mo.hstack([trajectory_start_height, trajectory_connectors], justify="start"),
-        mo.hstack(
-            [trajectory_legend, trajectory_legend_shape, trajectory_legend_style, trajectory_legend_font],
-            justify="start",
-        ),
-        mo.hstack(
-            [trajectory_show_true, trajectory_hatch, trajectory_lmbr, trajectory_gamma],
-            justify="start",
-        ),
-    ])
-    return (
-        trajectory_band_alpha,
-        trajectory_baseline_band,
-        trajectory_branch,
-        trajectory_colony_size,
-        trajectory_colour_by,
-        trajectory_connectors,
-        trajectory_font_size,
-        trajectory_gamma,
-        trajectory_groups,
-        trajectory_hatch,
-        trajectory_ko_band,
-        trajectory_layout,
-        trajectory_legend,
-        trajectory_legend_font,
-        trajectory_legend_shape,
-        trajectory_legend_style,
-        trajectory_lmbr,
-        trajectory_model_colour,
-        trajectory_panels,
-        trajectory_show_true,
-        trajectory_start_height,
-        trajectory_track_gap,
-        trajectory_true_colour,
-    )
-
-
-@app.cell(hide_code=True)
-def _(
-    trajectory_band_alpha,
-    trajectory_baseline_band,
-    trajectory_branch,
-    trajectory_colony_size,
-    trajectory_colour_by,
-    trajectory_connectors,
-    trajectory_font_size,
-    trajectory_gamma,
-    trajectory_groups,
-    trajectory_hatch,
-    trajectory_ko_band,
-    trajectory_layout,
-    trajectory_legend,
-    trajectory_legend_font,
-    trajectory_legend_shape,
-    trajectory_legend_style,
-    trajectory_lmbr,
-    trajectory_model_colour,
-    trajectory_panels,
-    trajectory_rollouts,
-    trajectory_show_true,
-    trajectory_start_height,
-    trajectory_track_gap,
-    trajectory_true_colour,
-    tuned_cell_type_rules,
-):
-    mo.stop(not trajectory_groups.value, mo.callout("Select at least one staining.", kind="warn"))
-    _theme = THEME
-    _first = next(iter(trajectory_rollouts.values()))
-    _names = list(_first["channel_names"])
-    _times = [float(_t.rstrip("h")) for _t in _first["time_labels"]]
-    _groups = [
-        _g for _g in dict.fromkeys(_n.split("/")[0] for _n in _names if "/" in _n)
-        if _g in trajectory_groups.value
-    ]
-    _rules = tuned_cell_type_rules
-    _type_colours = {_label: cell_type_colour(_label) for _label in label_names(_rules)}
-    _cell_types = trajectory_colour_by.value == "cell_types"
-    _by_condition = trajectory_layout.value == "conditions"
-    _branch = trajectory_branch.value == "branch" and not _by_condition
-    _gamma = trajectory_gamma.value
-    # True data comes first: top or left of the model
-    _sources = ("target", "prediction") if trajectory_show_true.value else ("prediction",)
-    _source_names = {"prediction": "model", "target": "true"}
-    _panel_titles = {"prediction": "NCA", "target": "True data"}
-    # Any matplotlib colour; invalid text keeps the default
-    _source_colours = {
-        _source: _text.strip() if is_color_like(_text.strip()) else _default
-        for _source, _text, _default in (
-            ("target", trajectory_true_colour.value, DATA),
-            ("prediction", trajectory_model_colour.value, MODEL),
-        )
-    }
-    # Background colours (None: no background); invalid text counts as blank
-    _baseline_band, _ko_band = (
-        _text.strip() if is_color_like(_text.strip()) else None
-        for _text in (trajectory_baseline_band.value, trajectory_ko_band.value)
-    )
-
-    def _marker(name):
-        return name.rsplit("/", 1)[-1]
-
-    # Staining names for this figure; track labels and a legend column per
-    # staining break at the newline, other legends show them on one line.
-    _group_labels = {
-        "cell_fate_s1": "Cell fate markers\n(Staining set 1)",
-        "cell_fate_s2": "Cell fate markers\n(Staining set 2)",
-        "rna_expression": "Morphogen expression",
-        "protein_response": "Signalling response",
-    }
-
-    # Channel colours of each staining (None: not drawn). Sector per staining:
-    # the schematic's marker colours. Sector per condition: cyan, magenta,
-    # yellow in channel order within each staining, as in data_cleaning.py.
-    # LMBR is off, except optionally in Fate S2, whose yellow (SOX17) is excluded.
-    _channel_colours = {}
-    for _group in _groups:
-        _palette = iter([(0.0, 1.0, 1.0), (1.0, 0.0, 1.0), (1.0, 1.0, 0.0), (1.0, 0.5, 0.0)])
-        _colours = []
-        for _name in _names:
-            _lmbr = _marker(_name) == "LMBR"
-            if _name.split("/")[0] != _group or (
-                _lmbr and not (trajectory_lmbr.value and _group == "cell_fate_s2")
-            ):
-                _colours.append(None)
-            elif _by_condition:
-                _colours.append(next(_palette, (1.0, 1.0, 1.0)))
-            elif _lmbr:
-                _colours.append(CHANNEL_COLOURS["yellow"])
-            else:
-                _colours.append(CHANNEL_COLOURS[MARKER_COLOURS.get(_marker(_name), "grey")])
-        _channel_colours[_group] = _colours
-
-    # Sector per condition: every condition is cropped to the box around all
-    # colonies, so the sectors line up.
-    _sector_conditions = ("baseline", "ko_0h", "ko_24h")
-    _union = np.any([trajectory_rollouts[_c]["boundary"] for _c in _sector_conditions], axis=0)
-
-    def _channel_tile(image, mask, colours, crop_mask=None):
-        rgb = composite(np.clip(image, 0.0, 1.0) ** _gamma, colours)
-        return masked_rgba(rgb, mask, crop_mask)
-
-    def _type_tile(image, mask, crop_mask=None):
-        shares = pixel_label_shares(marker_values(image, _names, _rules, axis=0), _rules, mask)
-        return cell_type_rgba(shares, _type_colours, mask, crop_mask)
-
-    def _unmeasured(condition, source, i, group):
-        """True where staining ``group`` of the true data has no image at time index i."""
-        if source != "target" or group is None:
-            return False
-        flags = trajectory_rollouts[condition]["measured"][i]
-        return not any(_f for _n, _f in zip(_names, flags) if _n.split("/")[0] == group)
-
-    # A tile maps time index i to (RGBA, unmeasured flag of each sector).
-    def _condition_tile(condition, source):
-        rollout = trajectory_rollouts[condition]
-
-        def tile(i):
-            image, mask = rollout[source][i], rollout["boundary"]
-            if _cell_types and source == "prediction":
-                return _type_tile(image, mask), [False]
-            tiles = [_channel_tile(image, mask, _channel_colours[_g]) for _g in _groups]
-            return sliced_rgba(tiles), [_unmeasured(condition, source, i, _g) for _g in _groups]
-        return tile
-
-    def _sliced(source, make, group=None):
-        def tile(i):
-            rgba = sliced_rgba([
-                make(trajectory_rollouts[_c][source][i], trajectory_rollouts[_c]["boundary"])
-                for _c in _sector_conditions
-            ])
-            return rgba, [_unmeasured(_c, source, i, group) for _c in _sector_conditions]
-        return tile
-
-    # Tracks: one per condition (or staining), holding one row of discs per
-    # source (true, model).
-    _tracks = []
-    if not _by_condition:
-        for _condition, _ko in CONDITION_KO_HOURS.items():
-            _tracks.append({
-                "key": _condition,
-                "label": CONDITION_LABELS[_condition],
-                "colour": _theme["fg"] if _ko is None else _theme["accent"],
-                "ko": _ko,
-                "entries": {_source: _condition_tile(_condition, _source) for _source in _sources},
-            })
-    else:
-        for _group in _groups:
-            _make = lambda image, mask, group=_group: _channel_tile(
-                image, mask, _channel_colours[group], _union
-            )
-            _tracks.append({
-                "key": _group, "label": _group_labels.get(_group, _group), "colour": _theme["fg"],
-                "ko": None,
-                "entries": {
-                    _source: _sliced(_source, _make, _group) for _source in _sources
-                    if _source == "target" or not _cell_types
-                },
-            })
-        if _cell_types:
-            # Last, so the model sits below the true data
-            _tracks.append({
-                "key": "cell_types", "label": "Cell types", "colour": _theme["fg"], "ko": None,
-                "entries": {"prediction": _sliced(
-                    "prediction", lambda image, mask: _type_tile(image, mask, _union)
-                )},
-            })
-
-    # Panels: one with every source, or one per source (true data first).
-    _arrangement = trajectory_panels.value
-    _separate = _arrangement != "rows" and len(_sources) > 1
-    _panels = []
-    for _panel_sources in ([(_src,) for _src in _sources] if _separate else [_sources]):
-        _panel_tracks = [
-            {**_t, "entries": [(_src, _t["entries"][_src]) for _src in _panel_sources if _src in _t["entries"]]}
-            for _t in _tracks
-        ]
-        _panel_tracks = [_t for _t in _panel_tracks if _t["entries"]]
-        if _panel_tracks:
-            _panels.append((_panel_sources[0] if _separate else None, _panel_tracks))
-    mo.stop(not _panels, mo.md("Nothing to draw: show true data or colour the model by channels."))
-
-    _s = trajectory_colony_size.value
-    # Font size, and the scale of the text spacing (in hours) with it
-    _font = trajectory_font_size.value
-    _text = _font / 7.0
-    _sub_step = _s + 1.5  # true and model rows of one track
-    _track_gap = trajectory_track_gap.value
-    _end = _times[-1]
-    _all = list(range(len(_times)))
-    # Tracks with true and model rows get a source label per row
-    _two_rows = any(len(_t["entries"]) > 1 for _, _panel_tracks in _panels for _t in _panel_tracks)
-    # Each extra line of a (rotated) track label needs more room
-    _label_lines = max(_t["label"].count("\n") + 1 for _t in _tracks)
-    _label_room = (6.0 if _two_rows else 3.0) * _text + 1.6 * _text * (_label_lines - 1)
-
-    def _height(track):
-        return (len(track["entries"]) - 1) * _sub_step
-
-    def _segment(track, indices, y, band, side="left"):
-        return {**track, "indices": indices, "y": y, "band": band, "side": side}
-
-    def _band(start, stop, colour):
-        return None if colour is None else (start, stop, colour, trajectory_band_alpha.value)
-
-    def _track_band(ko):
-        """Background of a condition track: from the knockout, or all of the
-        baseline. Staining tracks (sector per condition) have none."""
-        if _by_condition:
-            return None
-        if ko is None:
-            return _band(_times[0], _end, _baseline_band)
-        return _band(ko, _end, _ko_band)
-
-    def _place(tracks):
-        """Segments (a track over some time indices, at height y of its first
-        row) and branch arrows of one panel."""
-        if not _branch:
-            segments, y = [], 0.0
-            for track in tracks:
-                segments.append(_segment(track, _all, y, _track_band(track["ko"])))
-                y -= _height(track) + _s + _track_gap
-            return segments, []
-        # Baseline splits at the first knockout after 0h: later baseline on
-        # top, then the knockouts, all evenly spaced; the shared start sits
-        # between the later baseline and the first knockout (adjustable).
-        branched = [_t for _t in tracks if _t["ko"] is not None and _t["ko"] > _times[0]]
-        others = [_t for _t in tracks if _t not in branched and _t["key"] != "baseline"]
-        baseline = next(_t for _t in tracks if _t["key"] == "baseline")
-        split = min(_t["ko"] for _t in branched)
-        before = [_i for _i, _t in enumerate(_times) if _t < split]
-        segments = [_segment(
-            baseline, [_i for _i in _all if _times[_i] >= split], 0.0,
-            _band(split, _end, _baseline_band), "right",
-        )]
-        for track in branched + others:
-            y = segments[-1]["y"] - _height(segments[-1]) - _s - _track_gap
-            if track in branched:
-                after = [_i for _i in _all if _times[_i] >= track["ko"]]
-                segments.append(_segment(track, after, y, _track_band(track["ko"]), "right"))
-            else:
-                segments.append(_segment(track, _all, y, _track_band(track["ko"])))
-        posts = segments[:1 + len(branched)]
-
-        def middle(segment):
-            return segment["y"] - _height(segment) / 2
-
-        # 0: level with the first knockout, 1: level with the later baseline
-        low, high = middle(posts[1]), middle(posts[0])
-        centre = low + trajectory_start_height.value * (high - low)
-        pre_half = _height(baseline) / 2 + _s / 2
-        segments.insert(0, _segment(
-            baseline, before, centre + _height(baseline) / 2,
-            _band(_times[before[0]], _times[before[-1]], _baseline_band),
-        ))
-        # From above or below the last shared colony, turning towards each
-        # post; straight across when a post is level with it.
-        arrows = []
-        for post in posts:
-            target_y = middle(post)
-            stop_x = _times[post["indices"][0]] - _s / 2 - 0.6
-            if abs(target_y - centre) >= pre_half + 2.1:
-                side = 1 if target_y > centre else -1
-                start = (_times[before[-1]], centre + side * (pre_half + 0.9))
-                arrows.append((start, (stop_x, target_y), "angle,angleA=90,angleB=0,rad=8"))
-            else:
-                level = (target_y + centre) / 2
-                start = (_times[before[-1]] + _s / 2 + 0.6, level)
-                arrows.append((start, (stop_x, level), "arc3,rad=0"))
-        return segments, arrows
-
-    def _draw_labels(ax, segment, rows_y):
-        """Rotated track label beside the first (left) or last (right) colony;
-        with true and model rows, a source label per row and a bracket."""
-        left = segment["side"] == "left"
-        sign = -1 if left else 1
-        ha = "right" if left else "left"
-        edge = _times[segment["indices"][0 if left else -1]] + sign * _s / 2
-        x = edge + sign * _text
-        if len(rows_y) > 1:
-            for (source, _), row_y in zip(segment["entries"], rows_y):
-                ax.text(x, row_y, _source_names[source], rotation=90, ha=ha, va="center",
-                        fontsize=_font - 0.5, color=_source_colours[source])
-            x += sign * 2.4 * _text
-            ax.plot([x, x], [rows_y[-1] - _s / 2 + 0.5, rows_y[0] + _s / 2 - 0.5],
-                    color=segment["colour"], lw=0.7)
-            x += sign * 0.6 * _text
-        ax.text(x, (rows_y[0] + rows_y[-1]) / 2, segment["label"], rotation=90, ha=ha, va="center",
-                fontsize=_font + 0.5, color=segment["colour"])
-
-    _placed = [(_title, *_place(_panel_tracks)) for _title, _panel_tracks in _panels]
-    _bottoms = [
-        min(_seg["y"] - _height(_seg) for _seg in _segs) - _s / 2 - 1.5 for _, _segs, _ in _placed
-    ]
-    _axis_top = _s / 2 + 1.5 + 3.0 * _text  # top of the time axis labels
-    _bar = 3.5 * _text  # width of a panel's name bar
-    _left = _times[0] - _s / 2 - _label_room - (_bar + 1.5 if _separate else 0.5)
-    _right = _end + _s / 2 + (_label_room if _branch else 0.0) + 1.0
-    _panel_width, _panel_gap = _right - _left, 2.0
-    _unit = 7.0 / _panel_width  # inches per hour, whatever the number of panels
-    _any_hatched = []
-
-    # Axes boxes (x, bottom, top) in hours: side by side share one height,
-    # stacked panels each fit their own tracks.
-    if _arrangement == "stacked" and _separate:
-        _figure_width = _panel_width
-        _heights = [_axis_top - _b for _b in _bottoms]
-        _figure_height = sum(_heights) + _panel_gap * (len(_placed) - 1)
-        _boxes, _cursor = [], _figure_height
-        for _b, _h in zip(_bottoms, _heights):
-            _boxes.append((0.0, _cursor - _h, _b))
-            _cursor -= _h + _panel_gap
-    else:
-        _figure_width = len(_placed) * _panel_width + (len(_placed) - 1) * _panel_gap
-        _figure_height = _axis_top - min(_bottoms)
-        _boxes = [(_p * (_panel_width + _panel_gap), 0.0, min(_bottoms)) for _p in range(len(_placed))]
-
-    _rounding = 1.5  # corner radius of the backgrounds
-
-    def _band_box(segment):
-        """(left, right, bottom, top) of a segment's background, in hours."""
-        start, stop, _, _ = segment["band"]
-        first = segment["y"]
-        return (
-            start - _s / 2 - 0.4, stop + _s / 2 + 0.4,
-            first - _height(segment) - _s / 2 - 0.6, first + _s / 2 + 0.6,
-        )
-
-    def _band_colour(segment):
-        """Background colour blended onto the page, so overlaps don't darken."""
-        _, _, colour, alpha = segment["band"]
-        page = np.asarray(to_rgb(_theme["bg"]))
-        return alpha * np.asarray(to_rgb(colour)) + (1 - alpha) * page
-
-    def _draw_flows(ax, pre, posts):
-        """Sankey-like ribbons from the shared start's background to each
-        post's, splitting its height between them and shading between their
-        colours."""
-        if pre["band"] is None:
-            return
-        _, right, pre_bottom, pre_top = _band_box(pre)
-        boxes = [_band_box(_p) if _p["band"] is not None else None for _p in posts]
-        total = sum(_b[3] - _b[2] for _b in boxes if _b is not None)
-        top = pre_top
-        for post, box in zip(posts, boxes):
-            if box is None:
-                continue
-            left, _, post_bottom, post_top = box
-            bottom = top - (pre_top - pre_bottom) * (post_top - post_bottom) / total
-            middle = (right + left) / 2
-            # Square ends reach under the rounded corners of both backgrounds
-            path = mpath.Path(
-                [
-                    (right - _rounding, top), (right, top),
-                    (middle, top), (middle, post_top), (left, post_top),
-                    (left + _rounding, post_top), (left + _rounding, post_bottom), (left, post_bottom),
-                    (middle, post_bottom), (middle, bottom), (right, bottom),
-                    (right - _rounding, bottom), (right - _rounding, top),
-                ],
-                [mpath.Path.MOVETO, mpath.Path.LINETO,
-                 mpath.Path.CURVE4, mpath.Path.CURVE4, mpath.Path.CURVE4,
-                 mpath.Path.LINETO, mpath.Path.LINETO, mpath.Path.LINETO,
-                 mpath.Path.CURVE4, mpath.Path.CURVE4, mpath.Path.CURVE4,
-                 mpath.Path.LINETO, mpath.Path.CLOSEPOLY],
-            )
-            xs = np.linspace(right - _rounding, left + _rounding, 128)
-            mix = np.clip((xs - right) / (left - right), 0.0, 1.0)
-            mix = mix * mix * (3 - 2 * mix)  # smooth start and end
-            colours = (1 - mix[:, None]) * _band_colour(pre) + mix[:, None] * _band_colour(post)
-            image = ax.imshow(
-                colours[None], extent=(xs[0], xs[-1], min(bottom, post_bottom), max(top, post_top)),
-                interpolation="bilinear", zorder=0,
-            )
-            image.set_clip_path(PathPatch(path, transform=ax.transData))
-            top = bottom
-
-    def _draw_panel(ax, title, segments, arrows, bottom):
-        ax.set_xlim(_left, _right)
-        ax.set_ylim(bottom, _axis_top)
-        ax.set_aspect("equal")
-        ax.axis("off")
-        axis_y = _s / 2 + 1.5
-        ax.plot([_times[0] - _s / 2, _end + _s / 2], [axis_y] * 2, color=_theme["fg"], lw=0.7)
-        for t in _times:
-            ax.plot([t, t], [axis_y, axis_y + 0.8], color=_theme["fg"], lw=0.7)
-            ax.text(t, axis_y + 1.2, f"{t:g}h", ha="center", va="bottom")
-        if title is not None:
-            # Frame with the source named in a bar down its left side
-            colour = _source_colours[title]
-            frame_top, frame_bottom = _s / 2 + 1.0, bottom + 0.5
-            ax.add_patch(FancyBboxPatch(
-                (_left + 0.5, frame_bottom), _right - _left - 1.0, frame_top - frame_bottom,
-                boxstyle="round,pad=0,rounding_size=1.5", fill=False, edgecolor=colour, lw=1.2,
-            ))
-            ax.add_patch(FancyBboxPatch(
-                (_left + 0.5, frame_bottom), _bar, frame_top - frame_bottom,
-                boxstyle="round,pad=0,rounding_size=1.5", facecolor=colour, edgecolor=colour, lw=1.2,
-            ))
-            ax.text(_left + 0.5 + _bar / 2, (frame_top + frame_bottom) / 2, _panel_titles[title],
-                    rotation=90, ha="center", va="center", color="white", fontweight="bold",
-                    fontsize=_font + 1)
-
-        for segment in segments:
-            entries, y = segment["entries"], segment["y"]
-            rows_y = [y - _k * _sub_step for _k in range(len(entries))]
-            _draw_labels(ax, segment, rows_y)
-            if segment["band"] is not None:
-                x0, x1, y0, y1 = _band_box(segment)
-                ax.add_patch(FancyBboxPatch(
-                    (x0, y0), x1 - x0, y1 - y0, boxstyle=f"round,pad=0,rounding_size={_rounding}",
-                    facecolor=_band_colour(segment), edgecolor="none", zorder=0,
-                ))
-            for (_, tile), row_y in zip(entries, rows_y):
-                for i in segment["indices"]:
-                    centre = (_times[i], row_y)
-                    rgba, unmeasured = tile(i)
-                    draw_colony(ax, rgba, centre, _s)
-                    for k, missing in enumerate(unmeasured):
-                        start, stop = sector_angles(k, len(unmeasured))
-                        if missing and trajectory_hatch.value:
-                            _any_hatched.append(True)
-                            ax.add_patch(Wedge(
-                                centre, _s / 2, start, stop, facecolor="#d9d9d9",
-                                edgecolor="#8c8c8c", hatch="////", lw=0, zorder=4.5,
-                            ))
-                        if len(unmeasured) > 1:
-                            ax.plot(
-                                [centre[0], centre[0] + _s / 2 * np.cos(np.radians(start))],
-                                [centre[1], centre[1] + _s / 2 * np.sin(np.radians(start))],
-                                color="white", lw=0.6, zorder=5,
-                            )
-        if _branch and trajectory_connectors.value != "arrows":
-            _draw_flows(ax, segments[0], [_seg for _seg in segments if _seg["side"] == "right"])
-        if trajectory_connectors.value == "flow":
-            arrows = []
-        for start, stop, connection in arrows:
-            ax.annotate("", xy=stop, xytext=start, arrowprops={
-                "arrowstyle": "-|>,head_length=0.5,head_width=0.25", "color": _theme["fg"], "lw": 0.9,
-                "shrinkA": 0, "shrinkB": 0, "connectionstyle": connection,
-            })
-
-    with plt.rc_context({"font.size": _font, "font.family": "sans-serif", "text.color": _theme["fg"]}):
-        # Panels first; the figure is resized around them once the legend's
-        # size is known.
-        _figure = plt.figure(
-            figsize=(_unit * _figure_width, _unit * _figure_height), facecolor=_theme["bg"], dpi=200
-        )
-        _axes = []
-        for (_title, _segments, _arrows), (_x, _y, _bottom) in zip(_placed, _boxes):
-            _ax = _figure.add_axes((
-                _x / _figure_width, _y / _figure_height,
-                _panel_width / _figure_width, (_axis_top - _bottom) / _figure_height,
-            ))
-            _draw_panel(_ax, _title, _segments, _arrows, _bottom)
-            _axes.append((_ax, _x, _y, _axis_top - _bottom))
-
-        # Legend entries, one row each: the sectors (per condition), cell type
-        # colours, then each staining's channel colours.
-        _white_legend = trajectory_legend_style.value == "white"
-        # On white, colour swatches get a black outline
-        _outline = (
-            [patheffects.Stroke(linewidth=3.4, foreground="black"), patheffects.Normal()]
-            if _white_legend else []
-        )
-        _legend_rows = []
-        if _by_condition:
-            _legend_rows.append([
-                (SectorHandle(_k, len(_sector_conditions)), CONDITION_LABELS[_c])
-                for _k, _c in enumerate(_sector_conditions)
-            ])
-        if _cell_types:
-            _legend_rows.append([
-                (Patch(facecolor=to_rgb(_c), edgecolor="black" if _white_legend else "none", lw=0.6), _l)
-                for _l, _c in _type_colours.items()
-            ])
-        if not _cell_types or trajectory_show_true.value:
-            for _k, _group in enumerate(_groups):
-                _header = (
-                    SectorHandle(_k, len(_groups)) if not _by_condition and len(_groups) > 1
-                    else plt.Line2D([], [], lw=0)
-                )
-                _legend_rows.append([(_header, _group_labels.get(_group, _group))] + [
-                    (plt.Line2D([], [], color=_c, lw=2, path_effects=_outline), _marker(_name))
-                    for _name, _c in zip(_names, _channel_colours[_group])
-                    if _c is not None
-                ])
-        if _any_hatched:
-            _legend_rows.append([(
-                Patch(facecolor="#d9d9d9", edgecolor="#8c8c8c", hatch="////", lw=0), "not measured"
-            )])
-
-        def _legend(shape, **placement):
-            """Legend on black like the images (or on white), with a row per
-            staining ("rows"), a column per staining ("columns") or a single
-            column."""
-            length = max(len(_r) for _r in _legend_rows)
-            blank = (plt.Line2D([], [], lw=0), "")
-            padded = [_r + [blank] * (length - len(_r)) for _r in _legend_rows]
-            # Legend columns fill top to bottom, so entries go in column by column
-            if shape == "rows":
-                width, entries = length, [_r[_c] for _c in range(length) for _r in padded]
-            elif shape == "columns":
-                width, entries = len(padded), [_e for _r in padded for _e in _r]
-            else:
-                width, entries = 1, [_e for _r in _legend_rows for _e in _r]
-            if shape != "columns":
-                entries = [(_h, _l.replace("\n", " ")) for _h, _l in entries]
-            return _figure.legend(
-                [_h for _h, _ in entries], [_l for _, _l in entries], ncol=width,
-                fontsize=trajectory_legend_font.value, handlelength=1.2, columnspacing=0.8,
-                labelcolor=_theme["fg"] if _white_legend else "white",
-                frameon=not _white_legend, fancybox=False, facecolor="black", edgecolor="black",
-                framealpha=1.0, handler_map={SectorHandle: (
-                    SectorHandler(fill="#666666", edge="#222222") if _white_legend else SectorHandler()
-                )}, **placement,
-            )
-
-        def _inches(legend):
-            box = legend.get_window_extent(_figure.canvas.get_renderer())
-            return box.width / _figure.dpi, box.height / _figure.dpi
-
-        _panels_size = (_unit * _figure_width, _unit * _figure_height)
-        _size, _offset = _panels_size, (0.0, 0.0)  # figure, and the panels' corner in it (in)
-        _pad = 0.08
-        _position = trajectory_legend.value
-        _chosen = trajectory_legend_shape.value  # "auto": by position
-        if _position in ("auto", "gap") and _branch:
-            # Above the shared baseline start of the first panel, left of its
-            # arrows and below the time axis
-            _pre = _placed[0][1][0]
-            _gap_left = _left + 0.5 + (_bar + 0.5 if _separate else 0.0)
-            _gap_right = _times[_pre["indices"][-1]] - 1.0
-            _gap_bottom = _pre["y"] + _s / 2 + 1.2
-            _gap_top = _s / 2 + 1.0
-            # Whichever shape fits; a forced corner keeps the last one tried
-            _shapes = ("rows", "columns") if _chosen == "auto" else (_chosen,)
-            for _shape in _shapes:
-                _legend_box = _legend(
-                    _shape, loc="upper left", bbox_to_anchor=(_gap_left, _gap_top),
-                    bbox_transform=_axes[0][0].transData,
-                )
-                _w, _h = _inches(_legend_box)
-                if _w <= _unit * (_gap_right - _gap_left) and _h <= _unit * (_gap_top - _gap_bottom):
-                    _position = "gap"
-                    break
-                if _shape != _shapes[-1] or _position != "gap":
-                    _legend_box.remove()
-            if _position != "gap":
-                _position = "right"
-        elif _position in ("auto", "gap"):
-            _position = "right"  # no corner without the branch view
-        if _position == "right":
-            _legend_box = _legend("single" if _chosen == "auto" else _chosen, loc="upper left")
-            _w, _h = _inches(_legend_box)
-            _size = (_panels_size[0] + _w + 2 * _pad, max(_panels_size[1], _h + 2 * _pad))
-            _offset = (0.0, _size[1] - _panels_size[1])
-            _anchor = ((_panels_size[0] + _pad) / _size[0], 1.0 - _pad / _size[1])
-        elif _position in ("top", "bottom"):
-            _top = _position == "top"
-            _legend_box = _legend(
-                "rows" if _chosen == "auto" else _chosen, loc="upper center" if _top else "lower center"
-            )
-            _w, _h = _inches(_legend_box)
-            _size = (_panels_size[0], _panels_size[1] + _h + 2 * _pad)
-            _offset = (0.0, 0.0 if _top else _h + 2 * _pad)
-            _anchor = (0.5, 1.0 - _pad / _size[1] if _top else _pad / _size[1])
-        _figure.set_size_inches(*_size)
-        for _ax, _x, _y, _h in _axes:
-            _ax.set_position((
-                (_offset[0] + _unit * _x) / _size[0], (_offset[1] + _unit * _y) / _size[1],
-                _unit * _panel_width / _size[0], _unit * _h / _size[1],
-            ))
-        if _position != "gap":
-            _legend_box.set_bbox_to_anchor(_anchor, transform=_figure.transFigure)
-    _figure
     return
 
 
@@ -3323,7 +2513,6 @@ def _(selection_records):
         model_option_label(_record): _record["model_id"]
         for _record in selection_records
     }
-    _dko_defaults = InverseDesignDensityConfig()
     dko_models = mo.ui.multiselect(
         options=_dko_model_options,
         value=list(_dko_model_options),
@@ -3338,31 +2527,11 @@ def _(selection_records):
     dko_replicates = mo.ui.text("1", label="Replicates (for example: 1,2,4-6)", full_width=True)
     dko_seed = mo.ui.number(0, 2**31 - 1, value=0, step=1, label="Rollout seed")
     dko_duplicate_runs = mo.ui.number(1, 100, value=3, step=1, label="Duplicate runs")
-    dko_split_distance = mo.ui.number(
-        0, 20, value=_dko_defaults.split_distance, step=1, label="Cell split distance (px)"
-    )
-    dko_min_cell_area = mo.ui.number(
-        1, 100, value=_dko_defaults.min_cell_area, step=1, label="Min cell area (px)"
-    )
-    # More layers are added when the highest density needs them
-    dko_layers = mo.ui.number(1, 10, value=_dko_defaults.layers, step=1, label="Min cell layers")
-    dko_piece_source = mo.ui.dropdown(
-        options={"Real cells (from nuclei)": "nuclei", "Segments (model resolution)": "segments"},
-        value="Real cells (from nuclei)",
-        label="Pieces placed",
-    )
-    # Packed: cells never overlap, so the cell number is the number of distinct
-    # cells in the image (2D data such as slices). Layers: cells may overlap.
-    dko_placement = mo.ui.dropdown(
-        options={"Packed without overlap": "tiled", "Overlapping layers": "layers"},
-        value="Packed without overlap",
-        label="Cell placement",
-    )
-    dko_expansion = mo.ui.number(
-        0.0, 10.0, value=CELL_EXPANSION_UM, step=0.5, label="Cell reach beyond nucleus (µm)"
-    )
-    dko_softness = mo.ui.number(
-        0.05, 5.0, value=0.5, step=0.05, label="Density cut softness (cells)"
+    # Cell placement for each projection (cells sections; tuned in synthetic_textured_ic_explorer.py)
+    dko_texture_file = mo.ui.text(
+        value=repository_relative_path(DEFAULT_TEXTURE_SETTINGS_FILE),
+        label="Texture settings file",
+        full_width=True,
     )
     # Rollouts sent to the GPU together (lower it if memory runs out)
     dko_max_batch = mo.ui.number(1, 4096, value=64, step=1, label="Rollouts per GPU batch")
@@ -3371,20 +2540,14 @@ def _(selection_records):
         dko_density_count,
         dko_duplicate_runs,
         dko_endpoint,
-        dko_expansion,
         dko_ko_interval,
         dko_ko_start,
         dko_ko_stop,
-        dko_layers,
         dko_max_batch,
-        dko_min_cell_area,
         dko_models,
-        dko_piece_source,
-        dko_placement,
         dko_replicates,
         dko_seed,
-        dko_softness,
-        dko_split_distance,
+        dko_texture_file,
         run_dko_sweep,
     )
 
@@ -3397,20 +2560,14 @@ def _(
     dko_density_unit,
     dko_duplicate_runs,
     dko_endpoint,
-    dko_expansion,
     dko_ko_interval,
     dko_ko_start,
     dko_ko_stop,
-    dko_layers,
     dko_max_batch,
-    dko_min_cell_area,
     dko_models,
-    dko_piece_source,
-    dko_placement,
     dko_replicates,
     dko_seed,
-    dko_softness,
-    dko_split_distance,
+    dko_texture_file,
     run_dko_sweep,
 ):
     mo.vstack([
@@ -3418,11 +2575,9 @@ def _(
         mo.hstack([dko_density_unit, dko_density_start, dko_density_stop, dko_density_count]),
         mo.hstack([dko_ko_start, dko_ko_stop, dko_ko_interval, dko_endpoint]),
         mo.accordion({
-            "Cell placement (defaults as in inverse design)": mo.vstack([
-                mo.hstack([dko_placement, dko_piece_source, dko_expansion, dko_split_distance,
-                           dko_min_cell_area]),
-                mo.md("- Overlapping layers only:"),
-                mo.hstack([dko_layers, dko_softness], justify="start"),
+            "Cell placement": mo.vstack([
+                dko_texture_file,
+                mo.md("- The `cells` settings of each model's projection; tune them in `synthetic_textured_ic_explorer.py`"),
             ]),
             "Compute": dko_max_batch,
         }),
@@ -3449,33 +2604,23 @@ def _(
     dko_density_unit,
     dko_duplicate_runs,
     dko_endpoint,
-    dko_expansion,
     dko_ko_interval,
     dko_ko_start,
     dko_ko_stop,
-    dko_layers,
     dko_max_batch,
-    dko_min_cell_area,
     dko_models,
-    dko_piece_source,
-    dko_placement,
     dko_replicates,
     dko_seed,
-    dko_softness,
-    dko_split_distance,
+    dko_texture_file,
     selection_records,
     store_root,
 ):
     # Everything the sweep reads, for a run here or a remote job
-    def _repository_relative(_path):
-        _path = Path(_path).resolve()
-        return str(_path.relative_to(repository_root)) if _path.is_relative_to(repository_root) else str(_path)
-
     dko_settings = DensityKoSettings(
         data_root=data_root.value.strip(),
         store_root=store_root.value.strip(),
         cell_type_files={
-            _projection: _repository_relative(_path)
+            _projection: repository_relative_path(_path)
             for _projection, _path in cell_type_files.value.items() if _path is not None
         },
         rings=int(cell_type_rings.value),
@@ -3490,13 +2635,10 @@ def _(
         replicates=parse_one_based_indices(dko_replicates.value),
         seed=int(dko_seed.value),
         duplicate_runs=int(dko_duplicate_runs.value),
-        piece_source=dko_piece_source.value,
-        placement=dko_placement.value,
-        expansion_um=float(dko_expansion.value),
-        split_distance=int(dko_split_distance.value),
-        min_cell_area=int(dko_min_cell_area.value),
-        layers=int(dko_layers.value),
-        softness_cells=float(dko_softness.value),
+        cells={
+            _projection: load_cell_settings(repository_path(dko_texture_file.value.strip()), _projection).to_dict()
+            for _projection, _path in cell_type_files.value.items() if _path is not None
+        },
         max_batch=int(dko_max_batch.value),
     )
     _records = {_record["model_id"]: _record for _record in selection_records}
@@ -4095,6 +3237,60 @@ def _(
         _figure.tight_layout()
         _dko_slice_view = _figure
     _dko_slice_view
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    save_dko_slice = mo.ui.run_button(label="Save KO slice for overview figure")
+    mo.vstack([
+        mo.md(
+            "- Saves the KO sweep at the fixed density above (default: nearest the measured "
+            "density) to `figures/overview/nodal_ko_density_slice_samples.csv`, one row per run "
+            "and KO time\n"
+            "- `overview_figure.py` uses it for the KO-time curve in place of the fine KO sweep"
+        ),
+        save_dko_slice,
+    ])
+    return (save_dko_slice,)
+
+
+@app.cell(hide_code=True)
+def _(dko_fixed_density, dko_prevalence, dko_prevalence_basis, save_dko_slice):
+    mo.stop(not save_dko_slice.value)
+    mo.stop(
+        dko_prevalence.empty or dko_fixed_density.value is None,
+        mo.callout("Run or load the density × KO sweep first.", kind="warn"),
+    )
+    _slice = dko_prevalence[np.isclose(dko_prevalence["density"], dko_fixed_density.value)]
+    # Same layout as the fine KO sweep export (nodal_ko_prevalence_samples.csv),
+    # plus the density of each run
+    _index = [
+        "model_id", "model_label", "projection", "downsample", "replicate", "seed", "group",
+        "knockout_hour", "realised_knockout_hour",
+        "density_unit", "density", "actual_density", "measured_density",
+    ]
+    _export = (
+        _slice.pivot(index=_index, columns="cell_type", values="relative_prevalence")
+        .rename(columns=lambda cell_type: f"{cell_type.lower()}_prevalence")
+        .reset_index()
+        .rename(columns={
+            "model_id": "model_realisation_id",
+            "model_label": "model_realisation_label",
+            "replicate": "initial_condition_replicate",
+            "seed": "random_seed",
+            "knockout_hour": "requested_knockout_hour",
+            "density": "requested_density",
+        })
+        .assign(prevalence_basis=dko_prevalence_basis.value)
+    )
+    _path = repository_root / "figures" / "overview" / "nodal_ko_density_slice_samples.csv"
+    _path.parent.mkdir(parents=True, exist_ok=True)
+    _export.to_csv(_path, index=False)
+    mo.callout(
+        f"Saved {len(_export)} rows ({_export['requested_knockout_hour'].nunique()} KO times) to `{_path}`",
+        kind="success",
+    )
     return
 
 

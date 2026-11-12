@@ -142,20 +142,28 @@ class CellGaps(eqx.Module):
         """How much each cell pixel is kept (0 to 1), ``[L, P, H, W]``."""
 
         _, ranks = self.unpack(packed)
-        return self._kept(ranks, density, key)
+        return self.kept_ranks(ranks, density, key)
 
     def coverage(self, packed: Array, density: CellDensity, key: Array) -> Array:
         """How much each pixel is covered by cells of each panel ``[P, H, W]``."""
 
         _, ranks = self.unpack(packed)
-        kept = self._kept(ranks, density, key)
+        kept = self.kept_ranks(ranks, density, key)
         return 1.0 - jnp.prod(1.0 - kept, axis=0)
 
     def apply(self, packed: Array, density: CellDensity, key: Array) -> Array:
         """The state channels ``[C, H, W]`` of a packed texture with cells for ``density``, chosen by ``key``."""
 
         textures, ranks = self.unpack(packed)
-        kept = self._kept(ranks, density, key)[:, self.channel_panels]
+        return self.composite(textures, self.kept_ranks(ranks, density, key))
+
+    def composite(self, textures: Array, kept: Array) -> Array:
+        """The state channels ``[C, H, W]`` of ``textures`` ``[L, C, H, W]`` with cell pixels kept by ``kept`` ``[L, P, H, W]``.
+
+        Layer 0 is drawn on top; the gaps get ``gap_values``.
+        """
+
+        kept = kept[:, self.channel_panels]
         image = jnp.broadcast_to(
             jnp.asarray(self.gap_values, dtype=textures.dtype)[:, None, None], textures.shape[1:]
         )
@@ -163,7 +171,9 @@ class CellGaps(eqx.Module):
             image = kept[layer] * textures[layer] + (1.0 - kept[layer]) * image
         return image
 
-    def _kept(self, ranks, density, key):
+    def kept_ranks(self, ranks: Array, density: CellDensity, key: Array) -> Array:
+        """``kept`` for rank maps ``[L, P, H, W]`` given directly (e.g. uncropped ones)."""
+
         shift = jax.random.uniform(key, dtype=ranks.dtype)
         level = fill_level(density.value, self.layer_coverage)
         return kept_cells(ranks, level, shift, self.softness)

@@ -8,9 +8,10 @@ Run with:
   double-column paper page.
 - Rollouts (one model, three conditions) are cheap and are cached in
   ``figures/overview/cache/``.
-- The knockout-time curve comes from the fine KO timing sweep of
-  ``nodal_ko_eval.py`` ("Save for overview figure"), which writes to
-  ``figures/overview/``. Until then the panel shows a marked placeholder.
+- The knockout-time curve comes from the density × KO sweep at one density
+  (``nodal_ko_eval.py``, "Save KO slice for overview figure"), else from the fine
+  KO timing sweep ("Save for overview figure"); both write to ``figures/overview/``.
+  Until then the panel shows a marked placeholder.
 """
 
 import marimo
@@ -84,6 +85,9 @@ with app.setup:
     # Written by nodal_ko_eval.py (fine KO timing sweep, "Save for overview figure"); the
     # CSVs can also be the ones from its download buttons
     KO_SAMPLES_CSV = FIGURE_DIRECTORY / "nodal_ko_prevalence_samples.csv"
+    # Written by nodal_ko_eval.py (density × KO section, "Save KO slice for overview figure"):
+    # the KO sweep at one density, same layout as KO_SAMPLES_CSV; used first when present
+    KO_DENSITY_SLICE_CSV = FIGURE_DIRECTORY / "nodal_ko_density_slice_samples.csv"
     KO_SUMMARY_CSV = FIGURE_DIRECTORY / "nodal_ko_prevalence_summary.csv"
     KO_TRUE_CSV = FIGURE_DIRECTORY / "nodal_ko_true_prevalence.csv"
     KO_MAPS_NPZ = FIGURE_DIRECTORY / "nodal_ko_cell_maps.npz"
@@ -859,7 +863,9 @@ def _(data_downsample, data_projection, data_root, load_data_panel, refresh, rep
 
 @app.cell(hide_code=True)
 def _():
-    _model_default = KO_SAMPLES_CSV if KO_SAMPLES_CSV.is_file() or not KO_SUMMARY_CSV.is_file() else KO_SUMMARY_CSV
+    # Density × KO slice, else the fine KO sweep (per sample, else summary)
+    _model_default = next((_p for _p in (KO_DENSITY_SLICE_CSV, KO_SAMPLES_CSV, KO_SUMMARY_CSV) if _p.is_file()),
+                          KO_SAMPLES_CSV)
     ko_model_csv = mo.ui.text(value=str(_model_default), label="Model prevalence CSV", full_width=True)
     ko_true_csv = mo.ui.text(value=str(KO_TRUE_CSV), label="True-data prevalence CSV", full_width=True)
     reload_ko_files = mo.ui.button(value=0, on_click=lambda _v: _v + 1, label="Reload KO files")
@@ -870,7 +876,10 @@ def _():
         reload_ko_files,
         mo.md("- Model CSV: the per-sample export (`nodal_ko_cell_type_prevalence.csv` download, or "
               "`nodal_ko_prevalence_samples.csv` saved here) lets grouping and bands change here; "
-              "the grouped summary is drawn as exported"),
+              "the grouped summary is drawn as exported\n"
+              "- `nodal_ko_density_slice_samples.csv` (density × KO sweep at one density) is used "
+              "first when present\n"
+              "- True data and cell-type maps still come from the fine KO sweep"),
     ])
     return ko_model_csv, ko_true_csv, reload_ko_files
 

@@ -101,6 +101,77 @@ def test_count_nuclei_finds_separate_and_touching_nuclei():
     assert 0.5 * np.pi * 36 < area < 1.5 * np.pi * 36
 
 
+def test_count_nuclei_seed_spacing_and_threshold():
+    from Experiments.micropatterns.cell_counts import count_nuclei
+
+    rows, columns = np.mgrid[:80, :80]
+    image = np.zeros((80, 80), dtype=np.float32)
+    for row, column, brightness in [(40, 30, 1.0), (40, 41, 1.0), (15, 15, 1.0), (65, 65, 0.45)]:
+        image = np.maximum(image, brightness * ((rows - row) ** 2 + (columns - column) ** 2 <= 6**2))
+    mask = np.ones((80, 80), dtype=bool)
+
+    # The touching pair (centres 11 px apart) is split by default, merged with widely spaced seeds
+    assert count_nuclei(image, mask, 12)[0] == 4
+    assert count_nuclei(image, mask, 12, seed_spacing=1.2)[0] == 3
+    # A higher stain threshold drops the dim nucleus
+    assert count_nuclei(image, mask, 12, threshold_scale=1.0)[0] == 4
+    assert count_nuclei(image, mask, 12, threshold_scale=1.6)[0] == 3
+
+
+def _rings(centres, radius=7.0, width=2.0, size=80):
+    """A nuclear rim stain (as LMBR): a bright ring per nucleus."""
+    rows, columns = np.mgrid[:size, :size]
+    image = np.zeros((size, size), dtype=np.float32)
+    for row, column in centres:
+        distance = np.hypot(rows - row, columns - column)
+        image = np.maximum(image, (np.abs(distance - radius) <= width / 2).astype(np.float32))
+    return image
+
+
+def test_count_nuclei_rim_splits_touching_nuclei_along_their_rim():
+    from Experiments.micropatterns.cell_counts import count_nuclei
+
+    mask = np.ones((80, 80), dtype=bool)
+    # Two rings pressed together (shared rim, no narrowing), and a separate one
+    pressed = _rings([(40, 26), (40, 40), (15, 60)])
+    assert count_nuclei(pressed, mask, 16, seed_spacing=1.0, split_method="rim")[0] == 3
+    # Three rings around a small enclosed gap: the gap is not a nucleus
+    triangle = _rings([(30, 30), (30, 44), (42, 37)])
+    assert count_nuclei(triangle, mask, 16, split_method="rim")[0] == 3
+
+
+def test_count_nuclei_roundness_and_intensity_split_merged_nuclei():
+    from Experiments.micropatterns.cell_counts import count_nuclei
+
+    rows, columns = np.mgrid[:80, :80]
+    mask = np.ones((80, 80), dtype=bool)
+    # Two filled nuclei overlapping into one pinched blob (solidity about 0.88 after smoothing)
+    pair = np.maximum(np.hypot(rows - 40, columns - 34) <= 6, np.hypot(rows - 40, columns - 46) <= 6)
+    pair = pair.astype(np.float32)
+    assert count_nuclei(pair, mask, 12, seed_spacing=1.2)[0] == 1
+    assert count_nuclei(pair, mask, 12, seed_spacing=1.2, roundness=0.9)[0] == 2
+    # Two filled nuclei touching, dimmer where they meet (as DAPI)
+    blobs = sum(np.exp(-((rows - 40) ** 2 + (columns - c) ** 2) / (2 * 4.0**2)) for c in (33, 45))
+    assert count_nuclei(blobs.astype(np.float32), mask, 12, seed_spacing=0.5, split_method="intensity")[0] == 2
+
+
+def test_count_nuclei_size_limits_drop_debris_and_split_clumps():
+    from Experiments.micropatterns.cell_counts import count_nuclei
+
+    rows, columns = np.mgrid[:80, :80]
+    mask = np.ones((80, 80), dtype=bool)
+    clump = (np.hypot(rows - 40, columns - 40) <= 14).astype(np.float32)  # about 5 nuclei of diameter 12
+    speck = (np.hypot(rows - 8, columns - 8) <= 3).astype(np.float32)  # under half a nucleus
+    image = np.maximum(clump, speck)
+
+    count, labels, _ = count_nuclei(image, mask, 12)
+    assert count == 2  # the clump as one nucleus, and the speck
+    count, labels, _ = count_nuclei(image, mask, 12, largest=2.0)
+    assert count == 6
+    assert labels[40, 40] > 0 and len(np.unique(labels[np.hypot(rows - 40, columns - 40) <= 12])) == 5
+    assert count_nuclei(image, mask, 12, largest=2.0, smallest=0.5)[0] == 5
+
+
 def test_cells_and_density_convert_both_ways():
     from Experiments.micropatterns.cell_counts import cells_to_density, density_to_cells
 

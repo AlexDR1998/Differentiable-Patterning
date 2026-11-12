@@ -158,26 +158,45 @@ def _():
     gamma = mo.ui.slider(start=0.3, stop=2.0, step=0.05, value=0.8, label="Gamma", show_value=True)
     n_planes = mo.ui.slider(start=3, stop=24, step=1, value=8, label="Planes drawn", show_value=True)
     plane_opacity = mo.ui.slider(start=0.1, stop=1.0, step=0.05, value=0.6, label="Plane opacity", show_value=True)
+    lmbr_alpha = mo.ui.switch(value=False, label="LMBR as plane alpha")
+    empty_opacity = mo.ui.slider(start=0.0, stop=0.6, step=0.01, value=0.05, label="Empty plane opacity (LMBR)",
+                                 show_value=True)
+    mask_gain = mo.ui.slider(start=0.5, stop=5.0, step=0.1, value=2.0, label="Cell opacity gain (LMBR)",
+                             show_value=True)
     stack_height = mo.ui.slider(start=0.4, stop=2.5, step=0.05, value=1.2, label="Stack height", show_value=True)
     z_exaggeration = mo.ui.slider(start=1.0, stop=10.0, step=0.5, value=3.0, label="XZ z exaggeration",
                                   show_value=True)
     scale_bar_um = mo.ui.number(start=10, stop=500, step=10, value=100, label="Scale bar (µm)")
     figure_height = mo.ui.slider(start=2.5, stop=8.0, step=0.1, value=4.7, label="Height (in)", show_value=True)
+    figure_width = mo.ui.slider(start=5.0, stop=10.0, step=0.05, value=round(WIDTH["double"], 2), label="Width (in)",
+                                show_value=True)
+    stack_column = mo.ui.slider(start=1.5, stop=5.0, step=0.1, value=2.8, label="Stack column width",
+                                show_value=True)
+    stack_share = mo.ui.slider(start=1.0, stop=5.0, step=0.1, value=2.0, label="Stack : XZ height",
+                               show_value=True)
     mo.vstack([
         mo.md("**Display**"),
         mo.hstack([low_percentile, high_percentile, gamma], justify="start"),
         mo.hstack([n_planes, plane_opacity, stack_height, z_exaggeration], justify="start"),
-        mo.hstack([scale_bar_um, figure_height], justify="start"),
+        mo.hstack([lmbr_alpha, empty_opacity, mask_gain], justify="start"),
+        mo.hstack([scale_bar_um, figure_width, figure_height], justify="start"),
+        mo.hstack([stack_column, stack_share], justify="start"),
     ])
     return (
+        empty_opacity,
         figure_height,
+        figure_width,
         gamma,
         high_percentile,
+        lmbr_alpha,
         low_percentile,
+        mask_gain,
         n_planes,
         plane_opacity,
         scale_bar_um,
+        stack_column,
         stack_height,
+        stack_share,
         z_exaggeration,
     )
 
@@ -303,9 +322,13 @@ def _(
     cropped,
     dx,
     dz,
+    empty_opacity,
     figure_height,
+    figure_width,
     gamma,
     limits,
+    lmbr_alpha,
+    mask_gain,
     n_planes,
     plane_opacity,
     probe_radius,
@@ -313,7 +336,9 @@ def _(
     probe_y,
     projections,
     scale_bar_um,
+    stack_column,
     stack_height,
+    stack_share,
     training_images,
     z_bounds,
     z_exaggeration,
@@ -331,24 +356,31 @@ def _(
     _probe_col = int(probe_x.value * (_side - 1))
     _probe_row = int(probe_y.value * (_side - 1))
     _training = training_images is not None
+    # LMBR marks cell presence, so it can serve as the plane alpha even when not shown
+    _lmbr = channel_names.index("LMBR") if lmbr_alpha.value and "LMBR" in channel_names else None
 
     def _rgba(planes_czyx):
-        """Composite and alpha of channel-first data; alpha follows the brightest shown channel."""
+        """Composite and alpha of channel-first data; alpha follows LMBR or the brightest shown channel."""
         _norm = normalise(planes_czyx, _lo, _hi, gamma.value)
         _rgb = composite(_norm, _colours)
         _shown = [i for i, c in enumerate(_colours) if c is not None]
-        _alpha = _norm[_shown].max(axis=0) if _shown else np.zeros(_norm.shape[1:])
+        if _lmbr is not None:
+            _alpha = np.clip(mask_gain.value * _norm[_lmbr], 0.0, 1.0)
+        else:
+            _alpha = _norm[_shown].max(axis=0) if _shown else np.zeros(_norm.shape[1:])
         return np.concatenate([_rgb, _alpha[..., None]], axis=-1)
 
     with paper_style():
-        schematic = plt.figure(figsize=(WIDTH["double"], figure_height.value))
+        schematic = plt.figure(figsize=(figure_width.value, figure_height.value))
         # Optional last column: the same projections as the training dataloader returns them
-        _ratios = [2.8, 0.2, 0.75, 1.0] + ([1.0] if _training else [])
+        _ratios = [stack_column.value, 0.2, 0.75, 1.0] + ([1.0] if _training else [])
         _grid = schematic.add_gridspec(3, len(_ratios), width_ratios=_ratios, height_ratios=[1, 1, 1],
                                        wspace=0.08, hspace=0.25, left=0.02, right=0.98, top=0.9, bottom=0.05)
+        # The left column has its own split, so the stack can grow without resizing the projection rows
+        _left = _grid[:, 0].subgridspec(2, 1, height_ratios=[stack_share.value, 1], hspace=0.25)
 
         # Oblique stack: evenly spaced planes plus the slice plane
-        _ax_stack = schematic.add_subplot(_grid[0:2, 0])
+        _ax_stack = schematic.add_subplot(_left[0])
         _plane_z = np.unique(np.r_[np.linspace(_z0, _z1 - 1, n_planes.value).round().astype(int), z_slice.value])
         _plane_z = _plane_z[(_plane_z >= _z0) & (_plane_z < _z1) | (_plane_z == z_slice.value)]
         _stride = max(1, _side // 256)
@@ -366,7 +398,9 @@ def _(
         _voxel_heights = (np.arange(_z0, _z1) - _z0) / _span * stack_height.value
         _column = ((probe_x.value, probe_y.value), column_width.value, _voxel_colours, _voxel_heights,
                    z_slice.value - _z0)
-        _column_top = draw_stack(_ax_stack, _planes, _heights, _highlight, plane_opacity.value, _column)
+        # With the LMBR mask, the black backing of each plane is faded so empty areas are see-through
+        _backing = empty_opacity.value if _lmbr is not None else plane_opacity.value
+        _column_top = draw_stack(_ax_stack, _planes, _heights, _highlight, _backing, _column)
         # Label above the stack, joined to the top of the column
         _stack_top = _heights[-1] + 0.3
         _ax_stack.annotate("single pixel z column", xy=_column_top, xytext=(_column_top[0], _stack_top + 0.1),
@@ -387,7 +421,7 @@ def _(
         _ax_stack.set_title("3D confocal stack")
 
         # XZ section through the probe row, showing the z range and slice
-        _ax_section = schematic.add_subplot(_grid[2, 0])
+        _ax_section = schematic.add_subplot(_left[1])
         _section = cropped[:, :, _probe_row, :].transpose(1, 0, 2).astype(np.float32)
         _ax_section.imshow(composite(normalise(_section, _lo, _hi, gamma.value), _colours),
                            origin="lower", extent=(0, _side * dx, 0, cropped.shape[0] * dz),
@@ -400,7 +434,7 @@ def _(
         add_length_marker(_ax_section, (-0.02, 0), (-0.02, cropped.shape[0] * dz),
                           f"z  {cropped.shape[0] * dz:.0f} µm", xycoords=("axes fraction", "data"),
                           offset=(-3, 0), rotation=90, ha="center", va="bottom")
-        _ax_section.set_title(f"XZ section (z ×{z_exaggeration.value:g})")
+        _ax_section.set_title("XZ section" if z_exaggeration.value == 1 else f"XZ section (z ×{z_exaggeration.value:g})")
         _ax_section.axis("off")
 
         # One row per projection: z-profile at the probe, the 2D result, and
@@ -450,7 +484,9 @@ def _(
         _labels = [n for n, c in zip(channel_names, _colours) if c is not None]
         schematic.legend(_handles, _labels, loc="upper right", ncol=max(1, len(_labels)),
                          bbox_to_anchor=(0.98, 1.0), **legend_options("white"))
-    mo.vstack([z_slice, mo.hstack([probe_x, probe_y], widths="equal"), schematic])
+    _warning = ([mo.callout("No `LMBR` channel in the channel names, so the plane alpha is unchanged.", kind="warn")]
+                if lmbr_alpha.value and _lmbr is None else [])
+    mo.vstack([*_warning, z_slice, mo.hstack([probe_x, probe_y], widths="equal"), schematic])
     return (schematic,)
 
 

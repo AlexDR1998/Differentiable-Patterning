@@ -79,7 +79,7 @@ inverse_design:
 
   texture:
     bank_size: 16
-    # Settings for each projection, tuned in boundary_mask_explorer.py. When
+    # Settings for each projection, tuned in synthetic_textured_ic_explorer.py. When
     # set, all texture settings but bank_size come from this file, for the
     # model's projection; null uses the values below.
     file: Experiments/micropatterns/conf/textures/260726_texture_settings.yaml

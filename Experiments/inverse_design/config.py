@@ -72,7 +72,7 @@ class InverseDesignRolloutConfig(ConfigValue):
 
 @dataclass(frozen=True)
 class TextureConfig(ConfigValue):
-    """Synthetic 0 h textures, as in ``boundary_mask_explorer.py``.
+    """Synthetic 0 h textures (``Experiments/micropatterns/synthetic_ic.py``).
 
     With ``file`` set, every setting except ``bank_size`` comes from that
     file's section for the model's projection

@@ -1,0 +1,9 @@
+# One-off nucleus segmentation of the 0 h SOX2/LMBR images (see
+# Experiments/micropatterns/nucleus_segmentation.py). A separate environment,
+# so the training environment keeps no PyTorch:
+#
+#   python -m venv ~/.venvs/dp-segmentation
+#   ~/.venvs/dp-segmentation/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   ~/.venvs/dp-segmentation/bin/pip install -r requirements/requirements_segmentation.txt
+cellpose==4.2.1.1
+pyyaml

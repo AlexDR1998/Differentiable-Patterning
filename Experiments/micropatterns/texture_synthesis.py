@@ -437,7 +437,10 @@ def _turned(image, turns, flip):
     return image[..., ::-1] if flip else image
 
 
-def place_cells(panels, channel_count, output_shape, layers, attempts, seed):
+def place_cells(
+    panels, channel_count, output_shape, layers, attempts, seed, size_bias=0.0, independent_panels=False,
+    first_layer=0,
+):
     """Whole measured cells at random places, in ``layers`` independent layers.
 
     ``panels`` holds, for each staining panel, ``(channel indices, cells)``
@@ -448,6 +451,18 @@ def place_cells(panels, channel_count, output_shape, layers, attempts, seed):
     cell of that panel already in the layer, so cells are never cut. About
     ``attempts`` places are tried per cell that would fit in the grid. Each
     added place gets a random rank in [0, 1), shared by its panels.
+
+    With ``independent_panels``, each panel is placed on its own instead
+    (its own places and ranks), as the panels were imaged on different
+    colonies and their cells do not line up. A panel's layer then also
+    stops once ``20 * attempts`` places in a row are refused (it is full).
+
+    With ``size_bias`` above 0, layer ``k`` draws each panel's cells with
+    probability proportional to ``area ** (-size_bias * k)``: layer 0 is
+    drawn evenly and deeper layers (filled only at high densities) favour
+    smaller cells, as cells are smaller where they are crowded. The layers
+    count from ``first_layer`` for this, so layers can be placed one call
+    at a time.
 
     Returns ``textures`` ``[layers, channel_count, H, W]`` (the cells'
     values, 0 elsewhere), ``ranks`` ``[layers, panels, H, W]`` (the rank of
@@ -461,33 +476,78 @@ def place_cells(panels, channel_count, output_shape, layers, attempts, seed):
     height, width = output_shape
     if not panels or any(not cells for _, cells in panels):
         raise ValueError("Every panel needs at least one cell")
-    mean_area = np.mean([np.mean([mask.sum() for mask, _ in cells]) for _, cells in panels])
-    tries = int(np.ceil(attempts * height * width / mean_area))
+    areas = [np.array([mask.sum() for mask, _ in cells], dtype=float) for _, cells in panels]
+    # Every cell mask in its 8 orientations (index turns * 2 + flip), made once
+    oriented = [
+        [[_turned(mask, turns, bool(flip)) for turns in range(4) for flip in range(2)] for mask, _ in cells]
+        for _, cells in panels
+    ]
     textures = np.zeros((layers, channel_count, height, width), dtype=np.float32)
     ranks = np.full((layers, len(panels), height, width), -1.0, dtype=np.float32)
+
+    def _draw(layer, panel, centre, cumulative):
+        """A cell of ``panel`` centred on ``centre`` if it fits, else None."""
+        cells = panels[panel][1]
+        if cumulative is None:
+            index = rng.integers(len(cells))
+        else:
+            index = min(int(np.searchsorted(cumulative, rng.random())), len(cells) - 1)
+        turns, flip = int(rng.integers(4)), bool(rng.integers(2))
+        mask = oriented[panel][index][2 * turns + flip]
+        rows, columns = mask.shape
+        top = centre[0] - rows // 2
+        left = centre[1] - columns // 2
+        if top < 0 or left < 0 or top + rows > height or left + columns > width:
+            return None
+        values = cells[index][1]
+        box = (slice(top, top + rows), slice(left, left + columns))
+        if np.any(ranks[(layer, panel, *box)][mask] >= 0):
+            return None
+        return panel, box, mask, values, turns, flip
+
+    def _add(layer, drawn, rank):
+        panel, box, mask, values, turns, flip = drawn
+        indices = np.asarray(panels[panel][0], dtype=int)
+        region = textures[(layer, slice(None), *box)]
+        region[indices] = np.where(mask, _turned(values, turns, flip), region[indices])
+        ranks[(layer, panel, *box)][mask] = rank
+
     for layer in range(layers):
-        for _ in range(tries):
+        # Cumulative draw probabilities per panel (None: every cell equally likely)
+        cumulative = [None] * len(panels)
+        if size_bias and first_layer + layer:
+            cumulative = [np.cumsum(area ** (-float(size_bias) * (first_layer + layer))) for area in areas]
+            cumulative = [_c / _c[-1] for _c in cumulative]
+        mean_areas = [
+            np.mean(area) if _c is None else np.sum(area * np.diff(_c, prepend=0.0))
+            for area, _c in zip(areas, cumulative)
+        ]
+        if independent_panels:
+            for panel in range(len(panels)):
+                refused = 0
+                for _ in range(int(np.ceil(attempts * height * width / mean_areas[panel]))):
+                    drawn = _draw(layer, panel, (rng.integers(0, height), rng.integers(0, width)), cumulative[panel])
+                    if drawn is None:
+                        refused += 1
+                        # So many places refused in a row: the layer is full
+                        if refused > 20 * attempts:
+                            break
+                    else:
+                        refused = 0
+                        _add(layer, drawn, rng.random())
+            continue
+        for _ in range(int(np.ceil(attempts * height * width / np.mean(mean_areas)))):
             centre = rng.integers(0, height), rng.integers(0, width)
             drawn = []
-            for panel, (_, cells) in enumerate(panels):
-                mask, values = cells[rng.integers(len(cells))]
-                turns, flip = int(rng.integers(4)), bool(rng.integers(2))
-                mask, values = _turned(mask, turns, flip), _turned(values, turns, flip)
-                top = centre[0] - mask.shape[0] // 2
-                left = centre[1] - mask.shape[1] // 2
-                if top < 0 or left < 0 or top + mask.shape[0] > height or left + mask.shape[1] > width:
+            for panel in range(len(panels)):
+                found = _draw(layer, panel, centre, cumulative[panel])
+                if found is None:
                     break
-                box = (slice(top, top + mask.shape[0]), slice(left, left + mask.shape[1]))
-                if np.any(ranks[(layer, panel, *box)][mask] >= 0):
-                    break
-                drawn.append((panel, box, mask, values))
+                drawn.append(found)
             else:
                 rank = rng.random()
-                for panel, box, mask, values in drawn:
-                    indices = np.asarray(panels[panel][0], dtype=int)
-                    region = textures[(layer, slice(None), *box)]
-                    region[indices] = np.where(mask, values, region[indices])
-                    ranks[(layer, panel, *box)][mask] = rank
+                for found in drawn:
+                    _add(layer, found, rank)
     margin = max(max(mask.shape) for _, cells in panels for mask, _ in cells) // 2
     margin = min(margin, (min(height, width) - 1) // 2)
     inner = (slice(None), slice(None), slice(margin, height - margin), slice(margin, width - margin))
