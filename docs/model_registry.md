@@ -20,6 +20,11 @@ $MODEL_STORE_ROOT/
     config.yaml
     manifest.yaml
     states.npz
+  inverse_design/<experiment>/<record-id>/   (docs/inverse_design.md)
+    geometry.eqx, density.eqx (if optimised)
+    config.yaml
+    summary.yaml
+    states.npz
   registry.sqlite
 ```
 

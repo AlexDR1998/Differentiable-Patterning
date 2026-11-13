@@ -255,32 +255,120 @@ DENSITY_AXIS_LABELS = {"per_mm2": "Cells per mm²", "per_colony": "Cells per col
 DENSITY_COLUMNS = {"per_mm2": "cells_per_mm2", "per_colony": "cells_per_colony", "share": "covered_share"}
 
 
-def density_conversions(summary, unit, extra_units):
-    """``{extra unit: (forward, inverse)}`` from the plotted density
-    (``actual_density``, in ``unit``) to each of ``extra_units``, through the
-    mean of each measure at every requested density in ``summary``. Units
-    that cannot be converted (e.g. no cell counts in old results) are left out."""
-    columns = ["actual_density", *(DENSITY_COLUMNS[_unit] for _unit in extra_units)]
+# References rolled out beside the density sweeps (result "source"), and how plots draw them
+REFERENCE_LABELS = {"true_data": "True data", "measured_density": "Synthetic at measured density"}
+REFERENCE_MARKERS = {"true_data": "*", "measured_density": "s"}
+REFERENCE_LINESTYLES = {"true_data": (0, (5, 2)), "measured_density": (0, (1, 1.5))}
+
+
+REFERENCE_SHORT_LABELS = {"true_data": "True data", "measured_density": "Measured\ndensity"}
+
+
+def draw_reference_strip(axis, positions, rows, sources, image, vertical=False):
+    """A thin heatmap of the references beside a main heatmap.
+
+    ``rows`` ``[references, positions]`` are the references' values at
+    ``positions`` (the main heatmap's columns, or its rows when
+    ``vertical``), one per entry of ``sources``, drawn with the colour map
+    and scale of ``image`` (the main heatmap's mesh). NaN shows as empty.
+    """
+    rows = np.ma.masked_invalid(np.asarray(rows, dtype=float))
+    labels = [REFERENCE_SHORT_LABELS[_source] for _source in sources]
+    ticks = np.arange(len(sources)) + 0.5
+    edges = cell_edges(np.asarray(positions, dtype=float))
+    common = {"shading": "flat", "cmap": image.get_cmap(), "norm": image.norm}
+    if vertical:
+        axis.pcolormesh(np.arange(len(sources) + 1), edges, rows.T, **common)
+        axis.set_xticks(ticks, labels, rotation=90)
+        axis.tick_params(axis="x", labelsize=7, length=0)
+    else:
+        axis.pcolormesh(edges, np.arange(len(sources) + 1), rows, **common)
+        axis.set_yticks(ticks, labels)
+        axis.tick_params(axis="y", labelsize=7, length=0)
+
+
+def reference_legend_handles(sources):
+    """Grey legend entries for the reference ``sources`` (their marker and line style)."""
+    import matplotlib.pyplot as plt
+
+    return [
+        plt.Line2D(
+            [], [], color="0.35", marker=REFERENCE_MARKERS[_source], linestyle=REFERENCE_LINESTYLES[_source],
+            markersize=6, label=REFERENCE_LABELS[_source],
+        )
+        for _source in sources
+    ]
+
+
+def density_column(unit, sweep_unit):
+    """Column of the density × KO tables holding ``unit``: the sweep's own
+    measure is ``actual_density`` (the density each run used)."""
+    return "actual_density" if unit == sweep_unit else DENSITY_COLUMNS[unit]
+
+
+def main_density_unit(summary, sweep_unit, shown_units):
+    """The density measure a plot is drawn linear in: the sweep's own when
+    it is among ``shown_units`` (or nothing is shown), else the first shown
+    measure ``summary`` has at every density (old results lack cell counts)."""
+    shown = [_unit for _unit in DENSITY_AXIS_LABELS if _unit in shown_units]
+    if not shown or sweep_unit in shown:
+        return sweep_unit
+    for unit in shown:
+        if np.isfinite(summary[DENSITY_COLUMNS[unit]].to_numpy(dtype=float)).all():
+            return unit
+    return sweep_unit
+
+
+def density_conversions(summary, unit, extra_units, main_unit=None):
+    """``{extra unit: (forward, inverse)}`` from the plotted density (in
+    ``main_unit``, default the sweep's ``unit``) to each of ``extra_units``,
+    through the mean of each measure at every requested density in
+    ``summary``. Units that cannot be converted (e.g. no cell counts in old
+    results) are left out."""
+    main_unit = main_unit or unit
+    main = density_column(main_unit, unit)
+    extras = [_unit for _unit in extra_units if _unit != main_unit]
+    columns = list(dict.fromkeys([main, *(density_column(_unit, unit) for _unit in extras)]))
     levels = summary.groupby("density")[columns].mean()
     conversions = {}
-    for extra in extra_units:
-        if extra == unit:
-            continue
-        functions = density_converter(levels["actual_density"], levels[DENSITY_COLUMNS[extra]])
+    for extra in extras:
+        functions = density_converter(levels[main], levels[density_column(extra, unit)])
         if functions is not None:
             conversions[extra] = functions
     return conversions
 
 
-def add_density_axes(axis, which, conversions, gap):
-    """One extra axis per entry of ``conversions`` (``density_conversions``),
-    stacked below the x axis (``which="x"``) or left of the y axis, ``gap``
-    apart in axes coordinates."""
+def add_density_axes(axis, which, main_unit, conversions, gap):
+    """Label the density axis of ``axis`` (``which``: "x" or "y"), drawn
+    linear in ``main_unit``, and add one axis per other measure in
+    ``conversions`` (``density_conversions``), stacked below the x axis or
+    left of the y axis, ``gap`` apart in axes coordinates."""
+    axis.set(**{f"{which}label": DENSITY_AXIS_LABELS[main_unit]})
     for offset, (extra, functions) in enumerate(conversions.items(), start=1):
         if which == "x":
             axis.secondary_xaxis(-gap * offset, functions=functions).set_xlabel(DENSITY_AXIS_LABELS[extra])
         else:
             axis.secondary_yaxis(-gap * offset, functions=functions).set_ylabel(DENSITY_AXIS_LABELS[extra])
+
+
+def measured_density(results, unit):
+    """Mean measured density of the real 0 h colonies of ``results`` in
+    ``unit``, or None when the results did not record it."""
+    values = []
+    for result in results:
+        if unit == result["density_unit"]:
+            value = result.get("measured_density")
+        elif unit == "share":
+            value = result.get("measured_covered_share")
+        elif "measured_cells_per_mm2" not in result:
+            value = None
+        elif unit == "per_mm2":
+            value = result["measured_cells_per_mm2"]
+        else:
+            value = result["measured_cells_per_mm2"] * result["colony_mm2"] if "colony_mm2" in result else None
+        if value is not None and np.isfinite(value):
+            values.append(float(value))
+    return float(np.mean(values)) if values else None
 
 
 def uncertainty_band(samples, mode, clip=True):

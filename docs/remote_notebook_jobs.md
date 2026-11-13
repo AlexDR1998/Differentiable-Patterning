@@ -72,3 +72,26 @@ chunks of "Rollouts per GPU batch" (`max_batch`).
 3. Copy `/workspace/writeable/output/size_density/<name>/` back to `output/size_density/<name>/`, then load that folder in the notebook.
 
 The pods need the stored nucleus segmentation (`nucleus_segmentation.py`) under the data root, as the density × KO sweep does.
+
+## References in both sweeps
+
+Both sweeps can also roll out two references, switched on under
+"References" when setting the sweep up. They use the same KO times (or
+conditions) and run seeds as the sweep.
+
+- **True data**: the 0 h control colony of each replicate in "Replicates",
+  in its own outline (and, in the size sweep, its own size), with that
+  replicate's run seeds. A replicate whose colony cannot be loaded is
+  skipped with a warning.
+- **Synthetic at the measured density**: the sweep's cells placed at the
+  measured density, the mean over the sweep's replicates (in the size
+  sweep, at every size).
+
+They are saved beside the sweep's results with `source` set to
+`true_data` or `measured_density` (`sweep` for the sweep itself; older files
+load as `sweep`). In a split job every part averages the measured density
+over all the replicates (`measured_replicates`) and runs the true data of
+its own replicates (in a job split by size, in its first size part only).
+The plots pool the replicates' true colonies. The plots show the references when they are
+chosen under "References". True data has no cell counts, so it is shown by
+pixels only.

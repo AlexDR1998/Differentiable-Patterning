@@ -33,9 +33,13 @@ of one cell type (e.g. notochord). The NCA is frozen and only the shape changes.
    shares of every label. `records.load_geometry` reads the geometry back.
 
 ```bash
-python Experiments/generate_configs.py Experiments/inverse_design \
+python Experiments/generate_configs.py \
+    Experiments/inverse_design/conf/experiments/<sweep>.yaml \
     Experiments/inverse_design/conf/base_config.yaml Experiments/inverse_design/conf/generated
 ```
+
+Give one sweep file, not the folder: the folder form regenerates (and
+overwrites) every manifest in it.
 
 ## Caveats
 

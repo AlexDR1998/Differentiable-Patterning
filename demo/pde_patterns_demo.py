@@ -25,7 +25,8 @@ with app.setup:
     from PDE.catalogue import PDE_MODELS
     from PDE.dataset import simulate_trajectories
 
-    BENCHMARK = Path("Experiments/pde/conf/experiments/nca_pde_benchmark.yaml")
+    # Relative to this file, so the notebook works from any folder
+    BENCHMARK = Path(__file__).resolve().parents[1] / "Experiments/pde/conf/experiments/nca_pde_benchmark.yaml"
 
 
 @app.cell
@@ -33,6 +34,21 @@ def _():
     mo.md("""
     - Each PDE in `PDE/catalogue.py`, simulated with the settings of `nca_pde_benchmark.yaml`
     - All observed channels are shown (hidden PDE channels are not)
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md("""
+    The PDEs (equations in each model's constructor, `PDE/model/fixed_models/`):
+
+    - **gray_scott**: two chemicals react and diffuse; spots, stripes and splitting spots
+    - **chhabra**: activator–inhibitor reaction-diffusion (Turing patterns)
+    - **cahn_hilliard**: one field separates into two phases that coarsen over time
+    - **heat**: plain diffusion; patterns only blur (a simple baseline)
+    - **hillen_painter**, **keller_segel**: cells move up a signal gradient they produce themselves (chemotaxis); clusters form
+    - Trajectories are `[batch, time, channels, H, W]`, the same layout as all NCA training data
     """)
     return
 

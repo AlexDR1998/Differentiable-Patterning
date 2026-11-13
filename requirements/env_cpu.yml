@@ -1,38 +1,11 @@
+# conda env create -f requirements/env_cpu.yml
+# conda activate jax_cpu
+# pip install -e .
 name: jax_cpu
 channels:
   - conda-forge
 dependencies:
-  - python=3.12
+  - python=3.13
+  - pip
   - pip:
-    - jax
-    - jaxlib
-    - equinox
-    - optax
-    - diffrax
-    - tqdm
-    - wandb
-    - wandb[media]
-    - einops
-    - jaxpruner @ git+https://github.com/google-research/jaxpruner
-    - ott-jax==0.4.5
-    - pandas
-    - scikit-learn
-    - scikit-image
-    - scipy
-    - lpips-j==0.0.6
-    - matplotlib
-    - plotly
-    - ipykernel
-    - ipywidgets
-    - ffmpeg-python
-    - imageio-ffmpeg
-    - nbformat
-    - flax
-    - orbax-checkpoint
-    - requests
-    - clip-jax
-    - transformers
-    - pyparsing
-    - PyYAML
-    - pytest
-
+    - -r requirements_cpu.txt

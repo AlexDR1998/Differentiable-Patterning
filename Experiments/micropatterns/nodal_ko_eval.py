@@ -112,21 +112,29 @@ with app.setup(hide_code=True):
         DENSITY_AXIS_LABELS,
         DENSITY_COLUMNS,
         DENSITY_UNITS,
+        REFERENCE_LABELS,
+        REFERENCE_LINESTYLES,
+        REFERENCE_MARKERS,
         add_density_axes,
         cell_edges,
+        density_column,
+        draw_reference_strip,
         density_conversions,
         density_rows,
         data_label_shares,
         evaluate_condition,
         ko_time_label,
         ko_time_ticks,
+        main_density_unit,
         make_render_initial_condition,
         marker_channel_indices,
+        measured_density,
         model_label_shares,
         model_option_label,
         model_stain_counts,
         parse_one_based_indices,
         read_model_settings,
+        reference_legend_handles,
         rules_projection,
         uncertainty_band,
     )
@@ -149,6 +157,11 @@ with app.setup(hide_code=True):
     # Display order of the conditions
     CONDITION_LABELS = {"baseline": "Baseline", "ko_24h": "KO 24h", "ko_0h": "KO 0h"}
 
+    # Standard matplotlib colour maps offered for the heatmaps
+    COLOUR_MAPS = (
+        "viridis", "plasma", "inferno", "magma", "cividis", "turbo",
+        "gray", "Greys", "Blues", "Reds", "YlGnBu", "coolwarm", "RdBu_r",
+    )
 
 
 @app.cell(hide_code=True)
@@ -1770,9 +1783,6 @@ def _(cell_type_labels, fine_ko_results):
     )
 
 
-
-
-
 @app.cell(hide_code=True)
 def _(
     cell_type_labels,
@@ -2535,11 +2545,16 @@ def _(selection_records):
     )
     # Rollouts sent to the GPU together (lower it if memory runs out)
     dko_max_batch = mo.ui.number(1, 4096, value=64, step=1, label="Rollouts per GPU batch")
+    # References rolled out beside the sweep, at the same KO times and seeds
+    dko_include_true_data = mo.ui.switch(value=False, label="True data initial condition")
+    dko_include_measured = mo.ui.switch(value=False, label="Synthetic at the measured density")
     run_dko_sweep = mo.ui.run_button(label="Run density × KO sweep")
     return (
         dko_density_count,
         dko_duplicate_runs,
         dko_endpoint,
+        dko_include_measured,
+        dko_include_true_data,
         dko_ko_interval,
         dko_ko_start,
         dko_ko_stop,
@@ -2560,6 +2575,8 @@ def _(
     dko_density_unit,
     dko_duplicate_runs,
     dko_endpoint,
+    dko_include_measured,
+    dko_include_true_data,
     dko_ko_interval,
     dko_ko_start,
     dko_ko_stop,
@@ -2580,6 +2597,15 @@ def _(
                 mo.md("- The `cells` settings of each model's projection; tune them in `synthetic_textured_ic_explorer.py`"),
             ]),
             "Compute": dko_max_batch,
+            "References": mo.vstack([
+                mo.md(
+                    "- True data: the 0h control colony of each replicate above, in its own outline\n"
+                    "- Synthetic at the measured density: the sweep's cells at the measured density "
+                    "(mean over the replicates)\n"
+                    "- Both use the same KO times and run seeds as the sweep"
+                ),
+                mo.hstack([dko_include_true_data, dko_include_measured], justify="start"),
+            ]),
         }),
         mo.hstack([dko_replicates, dko_seed, dko_duplicate_runs, run_dko_sweep]),
     ])
@@ -2604,6 +2630,8 @@ def _(
     dko_density_unit,
     dko_duplicate_runs,
     dko_endpoint,
+    dko_include_measured,
+    dko_include_true_data,
     dko_ko_interval,
     dko_ko_start,
     dko_ko_stop,
@@ -2640,6 +2668,8 @@ def _(
             for _projection, _path in cell_type_files.value.items() if _path is not None
         },
         max_batch=int(dko_max_batch.value),
+        include_true_data=bool(dko_include_true_data.value),
+        include_measured_density=bool(dko_include_measured.value),
     )
     _records = {_record["model_id"]: _record for _record in selection_records}
     dko_records = tuple(_records[_model_id] for _model_id in dko_models.value)
@@ -2833,7 +2863,12 @@ def _(get_dko_results):
 
 
 @app.cell(hide_code=True)
-def _(cell_type_rings, cell_type_rules_by_projection, dko_projections, get_dko_results):
+def _(
+    cell_type_rings,
+    cell_type_rules_by_projection,
+    dko_projections,
+    get_dko_results,
+):
     _all_results = tuple(
         _result for _result in get_dko_results() or ()
         if _result["projection"] in dko_projections.value
@@ -2843,10 +2878,13 @@ def _(cell_type_rings, cell_type_rules_by_projection, dko_projections, get_dko_r
         _result["projection"] for _result in _all_results
         if _result["projection"] not in cell_type_rules_by_projection
     })
-    dko_results = tuple(
+    _usable = tuple(
         _result for _result in _all_results
         if _result["projection"] in cell_type_rules_by_projection
-    ) or None
+    )
+    # Sweep results; the references (true data, synthetic at the measured density) apart
+    dko_results = tuple(_result for _result in _usable if _result["source"] == "sweep") or None
+    dko_references = tuple(_result for _result in _usable if _result["source"] != "sweep")
 
     def _thresholds(_rules):
         return {_marker: float(_rules.thresholds[_marker]) for _marker in _rules.markers}
@@ -2880,7 +2918,7 @@ def _(cell_type_rings, cell_type_rules_by_projection, dko_projections, get_dko_r
             kind="warn",
         ))
     mo.vstack(_warnings)
-    return (dko_results,)
+    return dko_references, dko_results
 
 
 @app.cell(hide_code=True)
@@ -2967,13 +3005,21 @@ def _(cell_type_labels, dko_results):
 
 
 @app.cell(hide_code=True)
-def _():
+def _(dko_references, dko_results):
     dko_show_measured = mo.ui.switch(value=True, label="Show measured density")
-    # Other density measures as extra axes (the sweep's own measure is always shown)
-    dko_extra_axes = mo.ui.multiselect(
+    # References present in the results (true data, synthetic at the measured density), shown on request
+    _present = [_source for _source in REFERENCE_LABELS if any(_r["source"] == _source for _r in dko_references)]
+    dko_show_references = mo.ui.multiselect(
+        options={REFERENCE_LABELS[_source]: _source for _source in _present},
+        value=[REFERENCE_LABELS[_source] for _source in _present],
+        label="References",
+    )
+    # Density measures shown on the density axes; starts with the sweep's own
+    _sweep_unit = dko_results[0]["density_unit"] if dko_results else "per_colony"
+    dko_density_axes = mo.ui.multiselect(
         options={_label: _unit for _unit, _label in DENSITY_AXIS_LABELS.items()},
-        value=[],
-        label="Extra density axes",
+        value=[DENSITY_AXIS_LABELS[_sweep_unit]],
+        label="Density axes",
     )
     # Cell-type prevalence as a share of the colony's pixels or of its cells
     # (each 0h cell counted once; needs cells packed without overlap)
@@ -2982,8 +3028,18 @@ def _():
         value="Share of colony pixels",
         label="Prevalence as",
     )
-    mo.hstack([dko_prevalence_basis, dko_show_measured, dko_extra_axes], justify="start")
-    return dko_extra_axes, dko_prevalence_basis, dko_show_measured
+    mo.vstack([
+        mo.hstack([dko_prevalence_basis, dko_show_measured, dko_density_axes], justify="start"),
+        mo.hstack([
+            dko_show_references,
+            mo.md(
+                "- References: true data (every replicate, each in its own outline), and synthetic colonies "
+                "at the measured density\n"
+                "- True data has no cell counts, so it is shown by pixels only"
+            ),
+        ], justify="start") if _present else mo.md(""),
+    ])
+    return dko_density_axes, dko_prevalence_basis, dko_show_measured, dko_show_references
 
 
 @app.cell(hide_code=True)
@@ -2992,6 +3048,7 @@ def _(
     cell_type_rules_by_projection,
     dko_group_by,
     dko_prevalence_basis,
+    dko_references,
     dko_results,
     dko_uncertainty,
     fine_resolve_several,
@@ -3005,65 +3062,71 @@ def _(
         f"{_result['label']} ({_result['projection']})"
         for _result in dko_results or () if _result.get(_counts_key) is None
     })
-    _dko_rows = []
-    for _result in dko_results or ():
-        if _result.get(_counts_key) is None:
-            continue
-        _rules = cell_type_rules_by_projection[_result["projection"]]
-        _actual = actual_densities(_result)
-        _capped = capped_densities(_result)
-        for _density_index, _density in enumerate(_result["densities"]):
-            for _ko_index, _ko_hour in enumerate(_result["requested_ko_hours"]):
-                _shares = colony_label_shares(
-                    model_stain_counts(
-                        _result[_counts_key][_density_index, _ko_index], _rules
-                    ),
-                    _rules,
-                    resolve_several=fine_resolve_several.value,
-                )
-                for _cell_type, _share in zip(cell_type_labels, _shares):
-                    _dko_rows.append({
-                        "model_id": _result["model_id"],
-                        "model_label": _result["label"],
-                        "projection": _result["projection"],
-                        "downsample": _result["downsample"],
-                        "replicate": _result["replicate"],
-                        "seed": _result["seed"],
-                        "group": _result["groups"][dko_group_by.value],
-                        # Requested; actual_density is what was used (in density_unit)
-                        "density": float(_density),
-                        "actual_density": float(_actual[_density_index]),
-                        "capped": bool(_capped[_density_index]),
-                        "density_unit": _result["density_unit"],
-                        "covered_share": float(_result["covered_shares"][_density_index]),
-                        "cells_per_mm2": (
-                            float(_result["cells_per_mm2"][_density_index])
-                            if _result["cells_per_mm2"] is not None else float("nan")
+    def _prevalence_rows(_results):
+        """One row per run, density, KO time and cell type of ``_results``."""
+        _rows = []
+        for _result in _results:
+            if _result.get(_counts_key) is None:
+                continue
+            _rules = cell_type_rules_by_projection[_result["projection"]]
+            _actual = actual_densities(_result)
+            _capped = capped_densities(_result)
+            for _density_index, _density in enumerate(_result["densities"]):
+                for _ko_index, _ko_hour in enumerate(_result["requested_ko_hours"]):
+                    _shares = colony_label_shares(
+                        model_stain_counts(
+                            _result[_counts_key][_density_index, _ko_index], _rules
                         ),
-                        "cells_per_colony": (
-                            float(_result["cells_per_colony"][_density_index])
-                            if _result["cells_per_colony"] is not None else float("nan")
-                        ),
-                        "measured_density": _result["measured_density"],
-                        "max_density": _result["max_density"],
-                        "knockout_hour": float(_ko_hour),
-                        "realised_knockout_hour": float(_result["realised_ko_hours"][_ko_index]),
-                        "cell_type": _cell_type,
-                        "relative_prevalence": float(_share),
-                    })
-    dko_prevalence = pd.DataFrame(_dko_rows)
-    _dko_summary_rows = []
-    if not dko_prevalence.empty:
-        for (_group, _cell_type, _density, _ko_hour), _values in dko_prevalence.groupby(
-            ["group", "cell_type", "density", "knockout_hour"], sort=False
-        ):
+                        _rules,
+                        resolve_several=fine_resolve_several.value,
+                    )
+                    for _cell_type, _share in zip(cell_type_labels, _shares):
+                        _rows.append({
+                            "model_id": _result["model_id"],
+                            "model_label": _result["label"],
+                            "projection": _result["projection"],
+                            "downsample": _result["downsample"],
+                            "replicate": _result["replicate"],
+                            "seed": _result["seed"],
+                            # sweep, true_data or measured_density
+                            "source": _result["source"],
+                            "group": _result["groups"][dko_group_by.value],
+                            # Requested; actual_density is what was used (in density_unit)
+                            "density": float(_density),
+                            "actual_density": float(_actual[_density_index]),
+                            "capped": bool(_capped[_density_index]),
+                            "density_unit": _result["density_unit"],
+                            "covered_share": float(_result["covered_shares"][_density_index]),
+                            "cells_per_mm2": (
+                                float(_result["cells_per_mm2"][_density_index])
+                                if _result["cells_per_mm2"] is not None else float("nan")
+                            ),
+                            "cells_per_colony": (
+                                float(_result["cells_per_colony"][_density_index])
+                                if _result["cells_per_colony"] is not None else float("nan")
+                            ),
+                            "measured_density": _result["measured_density"],
+                            "max_density": _result["max_density"],
+                            "knockout_hour": float(_ko_hour),
+                            "realised_knockout_hour": float(_result["realised_ko_hours"][_ko_index]),
+                            "cell_type": _cell_type,
+                            "relative_prevalence": float(_share),
+                        })
+        return pd.DataFrame(_rows)
+
+    def _summary(_frame, _keys):
+        """Mean and band of the prevalence per ``_keys``, with every density measure."""
+        _summary_rows = []
+        if _frame.empty:
+            return pd.DataFrame()
+        for _key_values, _values in _frame.groupby(_keys, sort=False):
             _mean, _lower, _upper = uncertainty_band(
                 _values["relative_prevalence"], dko_uncertainty.value
             )
-            _dko_summary_rows.append({
-                "group": _group,
-                "cell_type": _cell_type,
-                "density": _density,
+            _summary_rows.append({
+                **dict(zip(_keys, _key_values)),
+                # References: one density each (it can differ a little between models)
+                **({} if "density" in _keys else {"density": float(_values["density"].mean())}),
                 # Mean and range of the densities used by the runs at this requested density
                 "actual_density": float(_values["actual_density"].mean()),
                 "actual_density_min": float(_values["actual_density"].min()),
@@ -3071,13 +3134,18 @@ def _(
                 "capped_share": float(_values["capped"].mean()),
                 # Every density measure, for the extra density axes
                 **{_column: float(_values[_column].mean()) for _column in DENSITY_COLUMNS.values()},
-                "knockout_hour": _ko_hour,
                 "mean_prevalence": _mean,
                 "lower": _lower,
                 "upper": _upper,
                 "sample_count": int(len(_values)),
             })
-    dko_summary = pd.DataFrame(_dko_summary_rows)
+        return pd.DataFrame(_summary_rows)
+
+    dko_prevalence = _prevalence_rows(dko_results or ())
+    dko_summary = _summary(dko_prevalence, ["group", "cell_type", "density", "knockout_hour"])
+    # References: true data, and synthetic colonies at the measured density
+    dko_reference_prevalence = _prevalence_rows(dko_references)
+    dko_reference_summary = _summary(dko_reference_prevalence, ["group", "source", "cell_type", "knockout_hour"])
     (
         mo.callout(
             "No cell counts (cells placed in overlapping layers, or older results), so not shown "
@@ -3086,12 +3154,40 @@ def _(
         )
         if _by_cells and _no_cell_counts else mo.md("")
     )
-    return dko_prevalence, dko_prevalence_label, dko_summary
+    return (
+        dko_prevalence,
+        dko_prevalence_label,
+        dko_reference_prevalence,
+        dko_reference_summary,
+        dko_summary,
+    )
 
 
 @app.cell(hide_code=True)
-def _(dko_results):
-    # Synthetic initial states of the first run, SOX2 inside the colony
+def _():
+    # Colour scale of the synthetic initial states below
+    dko_initial_scale = mo.ui.dropdown(
+        options={"Percentiles of these states": "percentile", "Fixed values": "fixed"},
+        value="Percentiles of these states",
+        label="Colour scale",
+    )
+    dko_initial_percentiles = mo.ui.range_slider(0, 100, step=0.5, value=[1, 99], label="Percentiles")
+    dko_initial_values = mo.ui.range_slider(0.0, 1.0, step=0.01, value=[0.0, 1.0], label="Values")
+    dko_initial_cmap = mo.ui.dropdown(COLOUR_MAPS, value="magma", label="Colour map")
+    return dko_initial_cmap, dko_initial_percentiles, dko_initial_scale, dko_initial_values
+
+
+@app.cell(hide_code=True)
+def _(
+    dko_initial_cmap,
+    dko_initial_percentiles,
+    dko_initial_scale,
+    dko_initial_values,
+    dko_references,
+    dko_results,
+    dko_show_references,
+):
+    # Synthetic initial states of the first run, SOX2 inside the colony; then the references' (when shown)
     if not dko_results:
         _dko_initial_view = mo.md("")
     else:
@@ -3100,31 +3196,70 @@ def _(dko_results):
             _first["state_channel_names"].index("SOX2")
             if "SOX2" in _first["state_channel_names"] else 0
         )
-        _densities = _first["densities"]
+        _unit = _first["density_unit"]
+        # (state, colony, title) of each panel
+        _panels = [
+            (_state, _first["colony"], f"{format_density(_density, _unit)} · share {_share:.2f}")
+            for _density, _share, _state in zip(
+                actual_densities(_first), _first["covered_shares"], _first["initial_states"]
+            )
+        ]
+        for _source in dko_show_references.value:
+            # The reference of the shown run's replicate, else another of the model's
+            _candidates = [
+                _r for _r in dko_references
+                if _r["source"] == _source and _r["model_id"] == _first["model_id"] and _r["initial_states"] is not None
+            ]
+            _reference = next(
+                (_r for _r in _candidates if _r["replicate"] == _first["replicate"]),
+                _candidates[0] if _candidates else None,
+            )
+            if _reference is not None:
+                _panels.append((
+                    _reference["initial_states"][0], _reference["colony"],
+                    f"{REFERENCE_LABELS[_source]} · replicate {_reference['replicate']}\n"
+                    f"{format_density(actual_densities(_reference)[0], _unit)} · "
+                    f"share {_reference['covered_shares'][0]:.2f}",
+                ))
+        # A grid of at most 5 snapshots per row, so each stays readable
+        _columns = min(5, len(_panels))
+        _rows = int(np.ceil(len(_panels) / _columns))
         _figure, _axes = plt.subplots(
-            1, len(_densities), figsize=(2.2 * len(_densities), 2.6), dpi=150, squeeze=False
+            _rows, _columns, figsize=(3.2 * _columns, 3.4 * _rows), dpi=150, squeeze=False
         )
-        _cmap = plt.get_cmap("magma").copy()
+        for _axis in _axes.flat[len(_panels):]:
+            _axis.axis("off")
+        _cmap = plt.get_cmap(dko_initial_cmap.value).copy()
         _cmap.set_bad(color="#d9d9d9")
-        for _axis, _density, _share, _state in zip(
-            _axes[0], actual_densities(_first), _first["covered_shares"], _first["initial_states"]
-        ):
+        # One colour scale for every density: percentiles of the colony pixels of all of them, or fixed values
+        if dko_initial_scale.value == "percentile":
+            _vmin, _vmax = np.percentile(
+                _first["initial_states"][:, _channel][:, _first["colony"]], dko_initial_percentiles.value
+            )
+        else:
+            _vmin, _vmax = dko_initial_values.value
+        _vmax = max(float(_vmax), float(_vmin) + 1e-6)
+        for _axis, (_state, _colony, _title) in zip(_axes.flat, _panels):
             _axis.imshow(
-                np.where(_first["colony"], _state[_channel], np.nan),
-                cmap=_cmap, vmin=0.0, vmax=1.0, origin="lower",
+                np.where(_colony, _state[_channel], np.nan),
+                cmap=_cmap, vmin=_vmin, vmax=_vmax, origin="lower",
             )
-            _axis.set_title(
-                f"{format_density(_density, _first['density_unit'])} · share {_share:.2f}", fontsize=9
-            )
+            _axis.set_title(_title, fontsize=9)
             _axis.set_xticks([])
             _axis.set_yticks([])
         _figure.suptitle(
             f"Synthetic 0h {_first['state_channel_names'][_channel]} · "
-            f"replicate {_first['replicate']} · seed {_first['seed']}",
+            f"replicate {_first['replicate']} · seed {_first['seed']} · "
+            f"colour scale {_vmin:.3g}–{_vmax:.3g}",
             fontsize=10,
         )
         _figure.tight_layout()
         _dko_initial_view = mo.vstack([
+            mo.hstack([
+                dko_initial_scale,
+                dko_initial_percentiles if dko_initial_scale.value == "percentile" else dko_initial_values,
+                dko_initial_cmap,
+            ], justify="start"),
             _figure,
             mo.md(
                 f"- Sweep: {DENSITY_UNITS[_first['density_unit']]}; "
@@ -3147,6 +3282,7 @@ def _(dko_results):
                 )
             ),
         ])
+        # _figure.show()
     _dko_initial_view
     return
 
@@ -3154,16 +3290,48 @@ def _(dko_results):
 @app.cell(hide_code=True)
 def _(
     dko_display_cell_types,
-    dko_extra_axes,
+    dko_density_axes,
     dko_fixed_density,
     dko_fixed_ko,
-    dko_prevalence,
     dko_prevalence_label,
+    dko_reference_summary,
     dko_results,
     dko_show_measured,
+    dko_show_references,
     dko_summary,
     dko_uncertainty,
 ):
+    # References shown: their summary rows of the displayed cell types
+    _references = (
+        dko_reference_summary[
+            dko_reference_summary["source"].isin(dko_show_references.value)
+            & dko_reference_summary["cell_type"].isin(dko_display_cell_types.value)
+        ]
+        if not dko_reference_summary.empty else pd.DataFrame()
+    )
+
+    def _plot_references(_axis, _x_column=None):
+        """References at the fixed KO time as points at their density (``_x_column``),
+        or against KO time as lines (``_x_column`` None)."""
+        if _references.empty:
+            return
+        for (_group, _source, _cell_type), _rows in _references.groupby(["group", "source", "cell_type"], sort=False):
+            _colour = cell_type_colour(_cell_type)
+            if _x_column is None:
+                _rows = _rows.sort_values("knockout_hour")
+                _axis.plot(
+                    _rows["knockout_hour"], _rows["mean_prevalence"], color=_colour,
+                    linestyle=REFERENCE_LINESTYLES[_source], marker=REFERENCE_MARKERS[_source], markersize=4,
+                )
+            else:
+                _rows = _rows[np.isclose(_rows["knockout_hour"], dko_fixed_ko.value)]
+                _mean = _rows["mean_prevalence"].to_numpy()
+                _axis.errorbar(
+                    _rows[_x_column].to_numpy(), _mean,
+                    yerr=[_mean - _rows["lower"].to_numpy(), _rows["upper"].to_numpy() - _mean],
+                    color=_colour, marker=REFERENCE_MARKERS[_source], markersize=8, linestyle="none", capsize=2,
+                )
+
     def _plot_slice(_axis, _fixed_column, _fixed_value, _x_column):
         # Mean ± band against _x_column, at _fixed_column == _fixed_value
         _styles = ("-", "--", ":", "-.")
@@ -3194,29 +3362,33 @@ def _(
         _dko_slice_view = mo.md("")
     else:
         _snapshot_hour = dko_results[0]["snapshot_hour"]
-        _measured = float(np.mean(dko_prevalence["measured_density"].unique()))
+        _unit = dko_results[0]["density_unit"]
+        # Drawn linear in the main chosen density measure; the others are extra axes
+        _main = main_density_unit(dko_summary, _unit, dko_density_axes.value)
+        _column = density_column(_main, _unit)
+        _measured = measured_density(dko_results, _main)
         _figure, (_density_axis, _ko_axis) = plt.subplots(1, 2, figsize=(15, 5), dpi=150)
-        _plot_slice(_density_axis, "knockout_hour", dko_fixed_ko.value, "actual_density")
-        if dko_show_measured.value:
+        _plot_slice(_density_axis, "knockout_hour", dko_fixed_ko.value, _column)
+        _plot_references(_density_axis, _column)
+        if dko_show_measured.value and _measured is not None:
             _density_axis.axvline(_measured, color="gray", linestyle="--", linewidth=1)
             _density_axis.text(
                 _measured, 0.98, " measured", color="gray", fontsize=8, va="top",
                 transform=_density_axis.get_xaxis_transform(),
             )
-        _unit = dko_results[0]["density_unit"]
         _density_axis.set(
-            xlabel=f"{DENSITY_UNITS[_unit]} (used)",
             title=f"Density sweep · KO {ko_time_label(dko_fixed_ko.value, _snapshot_hour)}",
         )
         add_density_axes(
-            _density_axis, "x",
+            _density_axis, "x", _main,
             density_conversions(
                 dko_summary[np.isclose(dko_summary["knockout_hour"], dko_fixed_ko.value)],
-                _unit, dko_extra_axes.value,
+                _unit, dko_density_axes.value, _main,
             ),
             gap=0.2,
         )
         _plot_slice(_ko_axis, "density", dko_fixed_density.value, "knockout_hour")
+        _plot_references(_ko_axis)
         _ticks, _tick_labels = ko_time_ticks(_snapshot_hour)
         _ko_axis.set(
             xlabel="NODAL knockout time (h)",
@@ -3226,13 +3398,20 @@ def _(
                 "KO sweep · density "
                 + format_density(
                     float(dko_summary.loc[
-                        np.isclose(dko_summary["density"], dko_fixed_density.value), "actual_density"
+                        np.isclose(dko_summary["density"], dko_fixed_density.value), _column
                     ].mean()),
-                    _unit,
+                    _main,
                 )
             ),
         )
-        _ko_axis.legend(fontsize="small", ncol=2)
+        _handles, _labels = _ko_axis.get_legend_handles_labels()
+        _reference_handles = reference_legend_handles(
+            [_source for _source in REFERENCE_LABELS if not _references.empty and _source in set(_references["source"])]
+        )
+        _ko_axis.legend(
+            _handles + _reference_handles, _labels + [_h.get_label() for _h in _reference_handles],
+            fontsize="small", ncol=2,
+        )
         _figure.suptitle(f"Predicted cell-type prevalence at {_snapshot_hour:g}h")
         _figure.tight_layout()
         _dko_slice_view = _figure
@@ -3295,7 +3474,7 @@ def _(dko_fixed_density, dko_prevalence, dko_prevalence_basis, save_dko_slice):
 
 
 @app.cell(hide_code=True)
-def _(dko_summary):
+def _(dko_results, dko_summary):
     _dko_heatmap_groups = list(dict.fromkeys(dko_summary["group"])) if not dko_summary.empty else []
     dko_heatmap_group = mo.ui.dropdown(
         options=_dko_heatmap_groups,
@@ -3307,22 +3486,34 @@ def _(dko_summary):
         value="0 to 1 for every cell type",
         label="Colour scale",
     )
-    mo.hstack([dko_heatmap_group, dko_heatmap_scale], justify="start")
-    return dko_heatmap_group, dko_heatmap_scale
+    dko_heatmap_cmap = mo.ui.dropdown(COLOUR_MAPS, value="viridis", label="Colour map")
+    # Density measures of the heatmaps (and surfaces); rows are linear in the main one
+    _sweep_unit = dko_results[0]["density_unit"] if dko_results else "per_colony"
+    dko_heatmap_density_axes = mo.ui.multiselect(
+        options={_label: _unit for _unit, _label in DENSITY_AXIS_LABELS.items()},
+        value=[DENSITY_AXIS_LABELS[_sweep_unit]],
+        label="Density axes",
+    )
+    mo.hstack(
+        [dko_heatmap_group, dko_heatmap_scale, dko_heatmap_cmap, dko_heatmap_density_axes], justify="start"
+    )
+    return dko_heatmap_cmap, dko_heatmap_density_axes, dko_heatmap_group, dko_heatmap_scale
 
 
 @app.cell(hide_code=True)
 def _(
     dko_display_cell_types,
-    dko_extra_axes,
     dko_fixed_density,
     dko_fixed_ko,
+    dko_heatmap_cmap,
+    dko_heatmap_density_axes,
     dko_heatmap_group,
     dko_heatmap_scale,
-    dko_prevalence,
     dko_prevalence_label,
+    dko_reference_summary,
     dko_results,
     dko_show_measured,
+    dko_show_references,
     dko_summary,
 ):
     # Grids of the heatmaps, also drawn as surfaces below
@@ -3336,24 +3527,41 @@ def _(
             _cell_type for _cell_type in dko_display_cell_types.value
             if _cell_type in set(_shown["cell_type"])
         ]
-        _measured = float(np.mean(dko_prevalence["measured_density"].unique()))
         _unit = dko_results[0]["density_unit"]
-        _conversions = density_conversions(_shown, _unit, dko_extra_axes.value)
-        # Each extra density axis takes about 1.2 in left of its heatmap
-        _figure, _axes = plt.subplots(
-            1, len(_cell_types), figsize=((4.6 + 1.2 * len(_conversions)) * len(_cell_types), 4.2),
-            dpi=150, squeeze=False,
+        # Rows are linear in the main chosen density measure; the others are extra axes
+        _main = main_density_unit(_shown, _unit, dko_heatmap_density_axes.value)
+        _measured = measured_density(dko_results, _main)
+        _conversions = density_conversions(_shown, _unit, dko_heatmap_density_axes.value, _main)
+        # References of this group (true data, synthetic at the measured density), as a strip above each map
+        _references = (
+            dko_reference_summary[
+                (dko_reference_summary["group"] == dko_heatmap_group.value)
+                & dko_reference_summary["source"].isin(dko_show_references.value)
+            ]
+            if not dko_reference_summary.empty else pd.DataFrame()
         )
+        _sources = [_s for _s in REFERENCE_LABELS if not _references.empty and _s in set(_references["source"])]
+        # Each extra density axis takes about 1.2 in left of its heatmap
+        _width = (4.6 + 1.2 * len(_conversions)) * len(_cell_types)
+        if _sources:
+            _figure, _all_axes = plt.subplots(
+                2, len(_cell_types), figsize=(_width, 4.4 + 0.3 * len(_sources)), dpi=150, squeeze=False,
+                sharex="col", height_ratios=[0.3 * len(_sources), 3.6], layout="constrained",
+            )
+            _strips, _axes = _all_axes[:1], _all_axes[1:]
+        else:
+            _figure, _axes = plt.subplots(1, len(_cell_types), figsize=(_width, 4.2), dpi=150, squeeze=False)
+            _strips = None
         # Rows sit at the density each requested density actually used, on a
         # linear axis, so rows can differ in height. Requested densities cut
         # down to (about) the same value by the cell layers share one row.
-        _levels = _shown.groupby("density")["actual_density"].mean().sort_index()
+        _levels = _shown.groupby("density")[density_column(_main, _unit)].mean().sort_index()
         _row_values, _row_of = density_rows(_levels)
 
         dko_heatmap_grids = {
             "group": dko_heatmap_group.value,
             "snapshot_hour": _snapshot_hour,
-            "unit": _unit,
+            "unit": _main,
             "measured": _measured,
             "value_label": dko_prevalence_label,
             "densities": _row_values,
@@ -3362,8 +3570,10 @@ def _(
                 _extra: _forward(_row_values) for _extra, (_forward, _) in _conversions.items()
             },
             "grids": {},
+            # {source: {"density": in the main measure, "values": {cell type: [KO times]}}}
+            "references": {},
         }
-        for _axis, _cell_type in zip(_axes[0], _cell_types):
+        for _column, (_axis, _cell_type) in enumerate(zip(_axes[0], _cell_types)):
             _grid = _shown[_shown["cell_type"] == _cell_type].pivot(
                 index="density", columns="knockout_hour", values="mean_prevalence"
             ).sort_index().sort_index(axis=1)
@@ -3372,7 +3582,7 @@ def _(
             dko_heatmap_grids["grids"][_cell_type] = _grid.to_numpy()
             _image = _axis.pcolormesh(
                 cell_edges(_grid.columns.to_numpy()), cell_edges(_row_values), _grid.to_numpy(),
-                shading="flat", cmap="viridis",
+                shading="flat", cmap=dko_heatmap_cmap.value,
                 **({"vmin": 0.0, "vmax": 1.0} if dko_heatmap_scale.value == "shared" else {}),
             )
             # Where the two slices above cut the map
@@ -3381,24 +3591,42 @@ def _(
             _axis.axhline(
                 _row_values[_row_of[_fixed_level]], color="white", linewidth=0.8, linestyle=":",
             )
-            if dko_show_measured.value:
+            if dko_show_measured.value and _measured is not None:
                 _axis.axhline(_measured, color="white", linewidth=0.8, linestyle="--")
             _ticks, _tick_labels = ko_time_ticks(_snapshot_hour)
             _axis.set(
                 xlabel="NODAL knockout time (h)",
-                ylabel=f"{DENSITY_UNITS[_unit]} (used)",
                 xticks=_ticks,
                 xticklabels=_tick_labels,
                 title=_cell_type,
             )
-            add_density_axes(_axis, "y", _conversions, gap=0.3)
-            _figure.colorbar(_image, ax=_axis, label=dko_prevalence_label)
+            add_density_axes(_axis, "y", _main, _conversions, gap=0.3)
+            if _strips is not None:
+                # The references' prevalence at the same KO times, on the same colour scale
+                _ko = _grid.columns.to_numpy()
+                _strip_rows = []
+                for _source in _sources:
+                    _of = _references[(_references["source"] == _source) & (_references["cell_type"] == _cell_type)]
+                    _strip_rows.append(_of.set_index("knockout_hour")["mean_prevalence"].reindex(_ko).to_numpy())
+                    _entry = dko_heatmap_grids["references"].setdefault(
+                        _source, {"density": float(_of[density_column(_main, _unit)].mean()), "values": {}},
+                    )
+                    _entry["values"][_cell_type] = _strip_rows[-1]
+                draw_reference_strip(_strips[0, _column], _ko, _strip_rows, _sources, _image)
+                _strips[0, _column].set_title(_cell_type)
+                _axis.set_title("")
+                plt.setp(_strips[0, _column].get_xticklabels(), visible=False)
+                _figure.colorbar(_image, ax=[_strips[0, _column], _axis], label=dko_prevalence_label)
+            else:
+                _figure.colorbar(_image, ax=_axis, label=dko_prevalence_label)
         _figure.suptitle(
             f"{dko_heatmap_group.value} · mean prevalence at {_snapshot_hour:g}h "
             + ("(dotted: slices above, dashed: measured density)" if dko_show_measured.value
                else "(dotted: slices above)")
+            + ("; strip: references" if _sources else "")
         )
-        _figure.tight_layout()
+        if _strips is None:
+            _figure.tight_layout()
         _dko_heatmap_view = _figure
     _dko_heatmap_view
     return (dko_heatmap_grids,)
@@ -3433,12 +3661,23 @@ def _(dko_heatmap_grids, dko_show_measured):
                 opacity=0.55,
                 colorscale=[[0.0, _colour], [1.0, _colour]],
                 hovertemplate=(
-                    f"{_cell_type}<br>KO %{{x:g}} h<br>density %{{y:.4g}}{_extra_hover}<br>"
+                    f"{_cell_type}<br>KO %{{x:g}} h<br>{DENSITY_AXIS_LABELS[dko_heatmap_grids['unit']]} %{{y:.4g}}{_extra_hover}<br>"
                     "prevalence %{z:.3f}<extra></extra>"
                 ),
             ))
+        # References: a line over KO time at each reference's density
+        for _source, _reference in dko_heatmap_grids["references"].items():
+            for _cell_type, _values in _reference["values"].items():
+                _surface_figure.add_trace(go.Scatter3d(
+                    x=dko_heatmap_grids["ko_hours"], y=np.full(len(_values), _reference["density"]), z=_values,
+                    mode="lines+markers",
+                    line={"color": cell_type_colour(_cell_type), "width": 5,
+                          "dash": "dash" if _source == "true_data" else "dot"},
+                    marker={"size": 3, "symbol": "diamond" if _source == "true_data" else "square"},
+                    name=f"{REFERENCE_LABELS[_source]} · {_cell_type}",
+                ))
         _measured = dko_heatmap_grids["measured"]
-        if dko_show_measured.value and _densities.min() <= _measured <= _densities.max():
+        if dko_show_measured.value and _measured is not None and _densities.min() <= _measured <= _densities.max():
             # Measured density, along the floor
             _surface_figure.add_trace(go.Scatter3d(
                 x=[_ko.min(), _ko.max()], y=[_measured, _measured], z=[0.0, 0.0],
@@ -3452,7 +3691,7 @@ def _(dko_heatmap_grids, dko_show_measured):
             ),
             scene={
                 "xaxis_title": "NODAL knockout time (h)",
-                "yaxis_title": f"{DENSITY_UNITS[dko_heatmap_grids['unit']]} (used)",
+                "yaxis_title": DENSITY_AXIS_LABELS[dko_heatmap_grids["unit"]],
                 "zaxis_title": dko_heatmap_grids["value_label"],
                 "zaxis": {"range": [0.0, 1.0]},
             },
@@ -3492,64 +3731,82 @@ def _(dko_results):
 
 
 @app.cell(hide_code=True)
-def _(dko_channels, dko_group_by, dko_results, dko_ring_range, dko_uncertainty):
-    _frames = []
+def _(
+    dko_channels,
+    dko_group_by,
+    dko_references,
+    dko_results,
+    dko_ring_range,
+    dko_uncertainty,
+):
     _low, _high = (int(_value) for _value in dko_ring_range.value)
-    for _result in dko_results or ():
-        _means = _result.get("channel_means")
-        if _means is None:
-            continue
-        # Weight each chosen ring by its pixels, so the mean is over the colony area
-        _rings = int(_result["rings"])
-        _ring_of_pixel = radial_rings(_result["colony"], _rings)
-        _area = np.bincount(_ring_of_pixel[_ring_of_pixel >= 0], minlength=_rings).astype(float)
-        _area[: _low - 1] = 0.0
-        _area[_high:] = 0.0
-        _weights = np.where(np.isfinite(_means), _area[None, None, :, None], 0.0)
-        _values = np.nansum(_means * _weights, axis=2) / np.maximum(_weights.sum(axis=2), 1e-12)
-        _names = list(_result["state_channel_names"])
-        _density_index, _ko_index, _channel_index = np.meshgrid(
-            np.arange(_values.shape[0]), np.arange(_values.shape[1]), np.arange(_values.shape[2]),
-            indexing="ij",
-        )
-        _frame = pd.DataFrame({
-            "density": np.asarray(_result["densities"], dtype=float)[_density_index.ravel()],
-            "actual_density": actual_densities(_result)[_density_index.ravel()],
-            "knockout_hour": np.asarray(_result["requested_ko_hours"], dtype=float)[_ko_index.ravel()],
-            "channel": np.asarray(_names)[_channel_index.ravel()],
-            "value": _values.ravel(),
-        })
-        for _unit, _column in DENSITY_COLUMNS.items():
-            _measure = _result.get({"share": "covered_shares"}.get(_unit, _column))
-            _frame[_column] = (
-                np.asarray(_measure, dtype=float)[_density_index.ravel()] if _measure is not None else np.nan
+
+    def _channel_values(_results):
+        """Mean of each chosen channel over the chosen rings, per run, density and KO time."""
+        _frames = []
+        for _result in _results:
+            _means = _result.get("channel_means")
+            if _means is None:
+                continue
+            # Weight each chosen ring by its pixels, so the mean is over the colony area
+            _rings = int(_result["rings"])
+            _ring_of_pixel = radial_rings(_result["colony"], _rings)
+            _area = np.bincount(_ring_of_pixel[_ring_of_pixel >= 0], minlength=_rings).astype(float)
+            _area[: _low - 1] = 0.0
+            _area[_high:] = 0.0
+            _weights = np.where(np.isfinite(_means), _area[None, None, :, None], 0.0)
+            _values = np.nansum(_means * _weights, axis=2) / np.maximum(_weights.sum(axis=2), 1e-12)
+            _names = list(_result["state_channel_names"])
+            _density_index, _ko_index, _channel_index = np.meshgrid(
+                np.arange(_values.shape[0]), np.arange(_values.shape[1]), np.arange(_values.shape[2]),
+                indexing="ij",
             )
-        _frame["group"] = _result["groups"][dko_group_by.value]
-        _frame["model_label"] = _result["label"]
-        _frame["replicate"] = _result["replicate"]
-        _frame["seed"] = _result["seed"]
-        _frames.append(_frame[_frame["channel"].isin(dko_channels.value)])
-    dko_channel_values = pd.concat(_frames, ignore_index=True) if _frames else pd.DataFrame()
-    _summary_rows = []
-    if not dko_channel_values.empty:
-        for (_group, _channel, _density, _ko_hour), _rows in dko_channel_values.groupby(
-            ["group", "channel", "density", "knockout_hour"], sort=False
-        ):
+            _frame = pd.DataFrame({
+                "density": np.asarray(_result["densities"], dtype=float)[_density_index.ravel()],
+                "actual_density": actual_densities(_result)[_density_index.ravel()],
+                "knockout_hour": np.asarray(_result["requested_ko_hours"], dtype=float)[_ko_index.ravel()],
+                "channel": np.asarray(_names)[_channel_index.ravel()],
+                "value": _values.ravel(),
+            })
+            for _unit, _column in DENSITY_COLUMNS.items():
+                _measure = _result.get({"share": "covered_shares"}.get(_unit, _column))
+                _frame[_column] = (
+                    np.asarray(_measure, dtype=float)[_density_index.ravel()] if _measure is not None else np.nan
+                )
+            _frame["group"] = _result["groups"][dko_group_by.value]
+            _frame["source"] = _result["source"]
+            _frame["model_label"] = _result["label"]
+            _frame["replicate"] = _result["replicate"]
+            _frame["seed"] = _result["seed"]
+            _frames.append(_frame[_frame["channel"].isin(dko_channels.value)])
+        return pd.concat(_frames, ignore_index=True) if _frames else pd.DataFrame()
+
+    def _channel_summary(_frame, _keys):
+        _summary_rows = []
+        if _frame.empty:
+            return pd.DataFrame()
+        for _key_values, _rows in _frame.groupby(_keys, sort=False):
             _mean, _lower, _upper = uncertainty_band(_rows["value"], dko_uncertainty.value, clip=False)
             _summary_rows.append({
-                "group": _group,
-                "channel": _channel,
-                "density": _density,
+                **dict(zip(_keys, _key_values)),
+                # References: one density each (it can differ a little between models)
+                **({} if "density" in _keys else {"density": float(_rows["density"].mean())}),
                 "actual_density": float(_rows["actual_density"].mean()),
                 **{_column: float(_rows[_column].mean()) for _column in DENSITY_COLUMNS.values()},
-                "knockout_hour": _ko_hour,
                 "mean_value": _mean,
                 "lower": _lower,
                 "upper": _upper,
                 "sample_count": int(len(_rows)),
             })
-    dko_channel_summary = pd.DataFrame(_summary_rows)
-    return dko_channel_summary, dko_channel_values
+        return pd.DataFrame(_summary_rows)
+
+    dko_channel_values = _channel_values(dko_results or ())
+    dko_channel_summary = _channel_summary(dko_channel_values, ["group", "channel", "density", "knockout_hour"])
+    # References: true data, and synthetic colonies at the measured density
+    dko_reference_channel_summary = _channel_summary(
+        _channel_values(dko_references), ["group", "source", "channel", "knockout_hour"],
+    )
+    return dko_channel_summary, dko_channel_values, dko_reference_channel_summary
 
 
 @app.cell(hide_code=True)
@@ -3557,10 +3814,12 @@ def _(
     dko_channel_summary,
     dko_channel_values,
     dko_channels,
-    dko_extra_axes,
+    dko_density_axes,
     dko_fixed_density,
     dko_fixed_ko,
+    dko_reference_channel_summary,
     dko_results,
+    dko_show_references,
     dko_uncertainty,
 ):
     # One row per channel: density sweep at the fixed KO time, KO sweep at the fixed density
@@ -3571,9 +3830,12 @@ def _(
         _groups = list(dict.fromkeys(dko_channel_summary["group"]))
         _unit = dko_results[0]["density_unit"]
         _snapshot_hour = dko_results[0]["snapshot_hour"]
+        # Drawn linear in the main chosen density measure; the others are extra axes
+        _main = main_density_unit(dko_channel_summary, _unit, dko_density_axes.value)
+        _column = density_column(_main, _unit)
         _conversions = density_conversions(
             dko_channel_summary[np.isclose(dko_channel_summary["knockout_hour"], dko_fixed_ko.value)],
-            _unit, dko_extra_axes.value,
+            _unit, dko_density_axes.value, _main,
         )
         _figure, _axes = plt.subplots(
             len(_channels), 2, figsize=(13, (3.0 + 0.6 * len(_conversions)) * len(_channels)),
@@ -3593,27 +3855,61 @@ def _(
                         _curve[_x_column], _curve["lower"], _curve["upper"], color=_colour, alpha=0.18,
                     )
 
+        # References shown: points at their density (left) and lines over KO time (right)
+        _references = (
+            dko_reference_channel_summary[dko_reference_channel_summary["source"].isin(dko_show_references.value)]
+            if not dko_reference_channel_summary.empty else pd.DataFrame()
+        )
+
+        def _plot_references(_density_axis, _ko_axis, _channel):
+            if _references.empty:
+                return
+            _of = _references[_references["channel"] == _channel]
+            for (_group, _source), _rows in _of.groupby(["group", "source"], sort=False):
+                _colour = SERIES[_groups.index(_group) % len(SERIES)] if _group in _groups else "0.35"
+                _rows = _rows.sort_values("knockout_hour")
+                _ko_axis.plot(
+                    _rows["knockout_hour"], _rows["mean_value"], color=_colour,
+                    linestyle=REFERENCE_LINESTYLES[_source], marker=REFERENCE_MARKERS[_source], markersize=4,
+                )
+                _at = _rows[np.isclose(_rows["knockout_hour"], dko_fixed_ko.value)]
+                _mean = _at["mean_value"].to_numpy()
+                _density_axis.errorbar(
+                    _at[_column].to_numpy(), _mean,
+                    yerr=[_mean - _at["lower"].to_numpy(), _at["upper"].to_numpy() - _mean],
+                    color=_colour, marker=REFERENCE_MARKERS[_source], markersize=8, linestyle="none", capsize=2,
+                )
+
         for _row, _channel in enumerate(_channels):
             _shown = dko_channel_summary[dko_channel_summary["channel"] == _channel]
             _density_axis, _ko_axis = _axes[_row]
-            _plot(_density_axis, _shown[np.isclose(_shown["knockout_hour"], dko_fixed_ko.value)], "actual_density")
+            _plot(_density_axis, _shown[np.isclose(_shown["knockout_hour"], dko_fixed_ko.value)], _column)
+            _plot_references(_density_axis, _ko_axis, _channel)
             _density_axis.set(
-                xlabel=f"{DENSITY_UNITS[_unit]} (used)", ylabel=f"{_channel} (mean)",
+                ylabel=f"{_channel} (mean)",
                 title=f"KO {ko_time_label(dko_fixed_ko.value, _snapshot_hour)}" if _row == 0 else None,
             )
-            add_density_axes(_density_axis, "x", _conversions, gap=0.25)
+            add_density_axes(_density_axis, "x", _main, _conversions, gap=0.25)
             _plot(_ko_axis, _shown[np.isclose(_shown["density"], dko_fixed_density.value)], "knockout_hour")
             _ticks, _tick_labels = ko_time_ticks(_snapshot_hour)
             _ko_axis.set(
                 xlabel="NODAL knockout time (h)", xticks=_ticks, xticklabels=_tick_labels,
                 title=(
                     "density " + format_density(float(_shown.loc[
-                        np.isclose(_shown["density"], dko_fixed_density.value), "actual_density"
-                    ].mean()), _unit)
+                        np.isclose(_shown["density"], dko_fixed_density.value), _column
+                    ].mean()), _main)
                 ) if _row == 0 else None,
             )
-        if len(_groups) > 1:
-            _axes[0, 1].legend(fontsize="small")
+        _reference_handles = reference_legend_handles(
+            [_source for _source in REFERENCE_LABELS if not _references.empty and _source in set(_references["source"])]
+        )
+        if len(_groups) > 1 or _reference_handles:
+            _handles, _labels = _axes[0, 1].get_legend_handles_labels()
+            _axes[0, 1].legend(
+                (_handles if len(_groups) > 1 else []) + _reference_handles,
+                (_labels if len(_groups) > 1 else []) + [_h.get_label() for _h in _reference_handles],
+                fontsize="small",
+            )
         _figure.tight_layout()
         _dko_channel_view = mo.vstack([
             _figure,
@@ -3635,14 +3931,25 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _():
+    # Colour map of the channel heatmaps below
+    dko_channel_cmap = mo.ui.dropdown(COLOUR_MAPS, value="viridis", label="Colour map")
+    return (dko_channel_cmap,)
+
+
+@app.cell(hide_code=True)
 def _(
+    dko_channel_cmap,
     dko_channel_summary,
     dko_channels,
     dko_fixed_density,
     dko_fixed_ko,
+    dko_heatmap_density_axes,
     dko_heatmap_group,
+    dko_reference_channel_summary,
     dko_results,
     dko_show_measured,
+    dko_show_references,
 ):
     # Heatmap of each channel for the heatmap group, on the densities used (linear axis)
     if dko_channel_summary.empty or dko_heatmap_group.value is None:
@@ -3650,41 +3957,86 @@ def _(
     else:
         _shown = dko_channel_summary[dko_channel_summary["group"] == dko_heatmap_group.value]
         _channels = [_c for _c in dko_channels.value if _c in set(_shown["channel"])]
-        _levels = _shown.groupby("density")["actual_density"].mean().sort_index()
-        _row_values, _row_of = density_rows(_levels)
         _unit = dko_results[0]["density_unit"]
+        # Rows are linear in the main chosen density measure; the others are extra axes
+        _main = main_density_unit(_shown, _unit, dko_heatmap_density_axes.value)
+        _levels = _shown.groupby("density")[density_column(_main, _unit)].mean().sort_index()
+        _row_values, _row_of = density_rows(_levels)
         _snapshot_hour = dko_results[0]["snapshot_hour"]
-        _measured = float(np.mean([_result["measured_density"] for _result in dko_results]))
+        _measured = measured_density(dko_results, _main)
         _fixed_level = _levels.index[np.argmin(np.abs(_levels.index.to_numpy() - dko_fixed_density.value))]
+        _conversions = density_conversions(_shown, _unit, dko_heatmap_density_axes.value, _main)
         _columns = min(4, max(len(_channels), 1))
-        _figure, _axes = plt.subplots(
-            -(-len(_channels) // _columns), _columns, figsize=(4.4 * _columns, 3.8 * -(-len(_channels) // _columns)),
-            dpi=130, squeeze=False,
+        _rows = -(-len(_channels) // _columns)
+        # References of this group, as a strip above each map
+        _references = (
+            dko_reference_channel_summary[
+                (dko_reference_channel_summary["group"] == dko_heatmap_group.value)
+                & dko_reference_channel_summary["source"].isin(dko_show_references.value)
+            ]
+            if not dko_reference_channel_summary.empty else pd.DataFrame()
         )
-        for _axis, _channel in zip(_axes.flat, _channels):
+        _sources = [_s for _s in REFERENCE_LABELS if not _references.empty and _s in set(_references["source"])]
+        # Each extra density axis takes about 1.2 in left of its heatmap
+        _width = (4.4 + 1.2 * len(_conversions)) * _columns
+        if _sources:
+            _figure, _all_axes = plt.subplots(
+                2 * _rows, _columns, figsize=(_width, (4.0 + 0.3 * len(_sources)) * _rows), dpi=130,
+                squeeze=False, height_ratios=[0.3 * len(_sources), 3.4] * _rows, layout="constrained",
+            )
+            _strips, _axes = _all_axes[0::2], _all_axes[1::2]
+        else:
+            _figure, _axes = plt.subplots(_rows, _columns, figsize=(_width, 3.8 * _rows), dpi=130, squeeze=False)
+            _strips = None
+        for _index, (_axis, _channel) in enumerate(zip(_axes.flat, _channels)):
             _grid = _shown[_shown["channel"] == _channel].pivot(
                 index="density", columns="knockout_hour", values="mean_value"
             ).sort_index().sort_index(axis=1)
             _grid = _grid.groupby(_grid.index.map(_row_of)).mean().sort_index()
             _image = _axis.pcolormesh(
                 cell_edges(_grid.columns.to_numpy()), cell_edges(_row_values), _grid.to_numpy(),
-                shading="flat", cmap="viridis",
+                shading="flat", cmap=dko_channel_cmap.value,
             )
             _axis.axvline(dko_fixed_ko.value, color="white", linewidth=0.8, linestyle=":")
             _axis.axhline(_row_values[_row_of[_fixed_level]], color="white", linewidth=0.8, linestyle=":")
-            if dko_show_measured.value:
+            if dko_show_measured.value and _measured is not None:
                 _axis.axhline(_measured, color="white", linewidth=0.8, linestyle="--")
             _ticks, _tick_labels = ko_time_ticks(_snapshot_hour)
             _axis.set(
-                xlabel="NODAL knockout time (h)", ylabel=f"{DENSITY_AXIS_LABELS[_unit]} (used)",
+                xlabel="NODAL knockout time (h)",
                 xticks=_ticks, xticklabels=_tick_labels, title=_channel,
             )
-            _figure.colorbar(_image, ax=_axis, label="Mean value")
+            add_density_axes(_axis, "y", _main, _conversions, gap=0.3)
+            if _strips is not None:
+                # The references' channel means at the same KO times, on the same colour scale
+                _strip = _strips.flat[_index]
+                _ko = _grid.columns.to_numpy()
+                draw_reference_strip(
+                    _strip, _ko,
+                    [
+                        _references[(_references["source"] == _source) & (_references["channel"] == _channel)]
+                        .set_index("knockout_hour")["mean_value"].reindex(_ko).to_numpy()
+                        for _source in _sources
+                    ],
+                    _sources, _image,
+                )
+                _strip.set_xlim(_axis.get_xlim())
+                _strip.set_xticks([])
+                _strip.set_title(_channel)
+                _axis.set_title("")
+                _figure.colorbar(_image, ax=[_strip, _axis], label="Mean value")
+            else:
+                _figure.colorbar(_image, ax=_axis, label="Mean value")
         for _axis in list(_axes.flat)[len(_channels):]:
             _axis.set_visible(False)
-        _figure.suptitle(f"{dko_heatmap_group.value} · channel means at {_snapshot_hour:g}h")
-        _figure.tight_layout()
-        _dko_channel_heatmaps = _figure
+        for _strip in (list(_strips.flat)[len(_channels):] if _strips is not None else []):
+            _strip.set_visible(False)
+        _figure.suptitle(
+            f"{dko_heatmap_group.value} · channel means at {_snapshot_hour:g}h" + ("; strip: references" if _sources else "")
+        )
+        if _strips is None:
+            _figure.tight_layout()
+        _dko_channel_heatmaps = mo.vstack([dko_channel_cmap, _figure])
     _dko_channel_heatmaps
     return
 
@@ -4018,13 +4370,15 @@ def _(temporal_prevalence_results):
         label="Heatmap cell type",
         full_width=True,
     )
-    mo.hstack([dynamics_heatmap_model, dynamics_heatmap_cell_type])
-    return dynamics_heatmap_cell_type, dynamics_heatmap_model
+    dynamics_heatmap_cmap = mo.ui.dropdown(COLOUR_MAPS, value="viridis", label="Colour map")
+    mo.hstack([dynamics_heatmap_model, dynamics_heatmap_cell_type, dynamics_heatmap_cmap])
+    return dynamics_heatmap_cell_type, dynamics_heatmap_cmap, dynamics_heatmap_model
 
 
 @app.cell(hide_code=True)
 def _(
     dynamics_heatmap_cell_type,
+    dynamics_heatmap_cmap,
     dynamics_heatmap_model,
     temporal_prevalence_results,
 ):
@@ -4050,7 +4404,7 @@ def _(
             _heatmap_values,
             origin="lower",
             aspect="auto",
-            cmap="viridis",
+            cmap=dynamics_heatmap_cmap.value,
             vmin=0.0,
             vmax=1.0,
             extent=(

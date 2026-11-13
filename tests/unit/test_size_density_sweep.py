@@ -1,5 +1,6 @@
 """Colony size × cell density sweep: geometry, profile rollouts, fronts, results files and jobs."""
 
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -172,8 +173,12 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
     }
     schema = SimpleNamespace(primary_measurements=(0, 1, 2, 3), group_names=("cell_fate_s1", "rna_expression"))
     monkeypatch.setattr(density_sweep, "load_training_histogram_bins", lambda bundle, root: None)
+    # The true colony: a smaller disc on the 30-pixel data grid
+    true_support = disc(30, 11)
     monkeypatch.setattr(density_sweep, "load_condition_data", lambda *args: {
-        "boundary": support[None].astype(np.float32), "state_channel_names": names, "nodal_channel": 1,
+        "boundary": (true_support if len(args) > 3 and args[3] == 2 else support)[None].astype(np.float32),
+        "state_channel_names": names, "nodal_channel": 1,
+        "initial_state": rng.random((len(names), 30, 30)).astype(np.float32),
     })
     monkeypatch.setattr(density_sweep, "stacked_colonies", lambda data, replicates: {
         "support": np.stack([support] * len(replicates)), "schema": schema, "source_files": None,
@@ -248,6 +253,59 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
     modified = output.stat().st_mtime_ns
     sweep.run_job_part(config, index)
     assert output.stat().st_mtime_ns == modified
+
+    # References: every size at the measured density, and the true colony of each replicate (2 is the smaller disc)
+    settings = replace(settings, replicates=(1, 2), include_measured_density=True, include_true_data=True)
+    results, warnings = sweep.run_size_density_sweep(settings, [record])
+    assert [r["source"] for r in results] == (["sweep"] * 2 + ["measured_density"] * 2 + ["true_data"] * 2) * 2
+    measured = [r for r in results if r["source"] == "measured_density"]
+    true = [r for r in results if r["source"] == "true_data"]
+    sweep_runs = [r for r in results if r["source"] == "sweep"]
+    for result in measured:
+        np.testing.assert_allclose(result["densities"], [3000.0])
+        assert result["pattern_counts"].shape[:3] == (sizes, 1, conditions)
+        np.testing.assert_allclose(result["cells_per_mm2"][:, 0], 3000.0, rtol=0.2)
+    assert [r["seed"] for r in measured] == [r["seed"] for r in sweep_runs]
+    assert [r["seed"] for r in true] == [r["seed"] for r in sweep_runs]
+    for result in true:
+        # One size: each replicate's own outline, centred on the sweep's grid
+        disc_of = true_support if result["replicate"] == 2 else support
+        assert result["colony_masks"].shape == (1, 37, 37)
+        assert result["colony_masks"][0].sum() == disc_of.sum()
+        np.testing.assert_allclose(result["diameters_um"], [2 * np.sqrt(disc_of.sum() / np.pi) * 5.0])
+        assert result["profiles"].shape[:3] == (1, 1, conditions)
+        assert result["cell_pattern_counts"] is None
+        assert result["profile_counts"][0, 0, 0, 0].sum() == disc_of.sum()
+    # Every replicate's true colony has the same radial bins, so their kymographs can be averaged
+    assert len({len(r["profile_radii_um"]) for r in true}) == 1
+    assert sweep.mean_kymograph(true, "SOX2").shape[:3] == (1, 1, conditions)
+    assert [r["initial_states"] is not None for r in true] == [True, False, True, False]
+    assert true[0]["initial_states"].shape == (1, 1, 4, 37, 37)
+    assert settings.trajectories(1) == 2 * (2 * 3 * 2 + 2 * 3 + 2) * 2
+    save_size_density_results(tmp_path / "references.npz", results)
+    assert [r["source"] for r in load_size_density_results(tmp_path / "references.npz")] == [r["source"] for r in results]
+    # Files from before the references load as sweep results
+    assert all(r["source"] == "sweep" for r in load_size_density_results(tmp_path / "results.npz"))
+
+
+def test_jobs_run_each_replicates_true_data_once_and_average_every_replicate():
+    from Experiments.micropatterns.density_ko_sweep import DensityKoSettings
+    from Experiments.micropatterns.density_ko_sweep import job_configs as density_job_configs
+
+    record = {"model_id": "m", "projection": "slice", "downsample": 8}
+    size_settings = SizeDensitySettings(
+        data_root="d", store_root="s", replicates=(1, 2), diameters_um=(200.0, 500.0),
+        include_true_data=True, include_measured_density=True,
+    )
+    parts = job_configs(size_settings, [record], "out", split="size")
+    # Each replicate's true data runs in its first size part only
+    assert [p["settings"]["include_true_data"] for p in parts] == [True, False, True, False]
+    assert all(tuple(p["settings"]["measured_replicates"]) == (1, 2) for p in parts)
+    density_settings = DensityKoSettings(data_root="d", store_root="s", replicates=(1, 2), include_true_data=True)
+    parts = density_job_configs(density_settings, [record], "out", split="replicate")
+    # Each part runs the true data of its own replicate
+    assert [p["settings"]["include_true_data"] for p in parts] == [True, True]
+    assert all(tuple(p["settings"]["measured_replicates"]) == (1, 2) for p in parts)
 
 
 def test_mean_kymograph_pools_runs():

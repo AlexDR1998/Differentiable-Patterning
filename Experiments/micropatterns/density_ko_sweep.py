@@ -87,6 +87,15 @@ class DensityKoSettings:
     cells: dict = field(default_factory=dict)
     # Rollouts run on the GPU at once (runs × densities of one KO time)
     max_batch: int = 64
+    # References beside the sweep, rolled out with the same KO times and run
+    # seeds: the true 0h control colony of each of ``replicates`` (in its own
+    # outline), and synthetic colonies at the measured density (the mean
+    # over the replicates)
+    include_true_data: bool = False
+    include_measured_density: bool = False
+    # Replicates the measured density is the mean over (empty: replicates);
+    # a job split by replicate keeps every replicate here
+    measured_replicates: tuple = ()
 
     def densities(self):
         return np.linspace(float(self.density_start), float(self.density_stop), int(self.density_count))
@@ -99,11 +108,12 @@ class DensityKoSettings:
         )
 
     def trajectories(self, models):
-        """Number of rollouts for ``models`` models."""
-        return (
-            models * len(self.replicates) * int(self.duplicate_runs)
-            * len(self.densities()) * len(self.ko_hours())
-        )
+        """Number of rollouts for ``models`` models (references included)."""
+        # Colonies per model and run: the sweep's, then one per reference
+        colonies = len(self.replicates) * len(self.densities())
+        colonies += len(self.replicates) if self.include_measured_density else 0
+        colonies += len(self.replicates) if self.include_true_data else 0
+        return models * int(self.duplicate_runs) * colonies * len(self.ko_hours())
 
     def check(self):
         if not str(self.data_root).strip():
@@ -133,6 +143,9 @@ def settings_from_dict(values):
     """``DensityKoSettings`` from a plain dict (as written into a job manifest)."""
     values = dict(values)
     values["replicates"] = tuple(int(_r) for _r in values.get("replicates", (1,)))
+    values["measured_replicates"] = tuple(int(_r) for _r in values.get("measured_replicates", ()))
+    # Job files that chose one true data replicate: it now comes from every replicate
+    values.pop("true_data_replicate", None)
     values["cell_type_files"] = dict(values.get("cell_type_files") or {})
     # Job files from before the texture settings file held one set of cell
     # settings for every projection (placement "layers" by default)
@@ -459,6 +472,8 @@ def _upgrade_result(result):
     result.setdefault("density_unit", "share")
     result.setdefault("placement", "layers")
     result.setdefault("measured_covered_share", result["measured_density"])
+    # Results from before the references are all sweep results
+    result.setdefault("source", "sweep")
     if result["covered_shares"] is None:
         result["covered_shares"] = result["densities"]
     return result
@@ -536,7 +551,9 @@ def prepare_model_cells(bundle, settings, projection, root):
     (state channel names), ``nodal_channel``, ``pixel_um`` (µm per model
     pixel; NaN without nuclear counts), ``replicates`` (one dict per
     replicate: ``library``, ``measured_share``, ``cell_counts``,
-    ``per_piece``) and ``warnings``.
+    ``per_piece``), ``histogram_bins`` (the training scaling),
+    ``count_rows`` (``reference_cell_counts``; None without nuclear counts)
+    and ``warnings``.
     """
     cell_settings = settings.cell_settings(projection)
     replicates = tuple(settings.replicates)
@@ -597,7 +614,57 @@ def prepare_model_cells(bundle, settings, projection, root):
         "nodal_channel": data[0]["nodal_channel"],
         "pixel_um": float(pixel_um),
         "replicates": prepared_replicates,
+        "histogram_bins": bins,
+        "count_rows": count_rows,
         "warnings": warnings,
+    }
+
+
+def measured_density_cells(bundle, settings, projection, root, prepared):
+    """``(prepared, replicates)`` of the replicates the measured density is the
+    mean over (``settings.measured_replicates``, else ``settings.replicates``):
+    ``prepared`` itself when they are the sweep's, else those replicates
+    prepared by ``prepare_model_cells``."""
+    replicates = tuple(settings.measured_replicates) or tuple(settings.replicates)
+    if replicates == tuple(settings.replicates):
+        return prepared, replicates
+    return prepare_model_cells(bundle, replace(settings, replicates=replicates), projection, root), replicates
+
+
+def mean_measured_density(prepared):
+    """``(cells per mm², covered share)`` of the real 0h colonies: the mean
+    over the replicates of ``prepare_model_cells`` (NaN cells without counts)."""
+    return (
+        float(np.mean([_r["cell_counts"]["cells_per_mm2"] for _r in prepared["replicates"]])),
+        float(np.mean([_r["measured_share"] for _r in prepared["replicates"]])),
+    )
+
+
+def true_data_colony(bundle, root, prepared, replicate, replicates):
+    """The true 0h control colony of ``replicate`` (counting from 1).
+
+    Returns ``initial_state`` ``[state channels, H, W]`` (scaled as in
+    training), ``mask`` (its own outline), ``mask_mm2``, and its measured
+    ``cells_per_mm2`` and ``covered_share``. Cells per mm² come from that
+    replicate's nuclei when they were counted (``replicates`` are the ones
+    ``prepared`` loaded), else from the mean over them; the covered share
+    likewise.
+    """
+    data = load_condition_data(bundle, root, "baseline", int(replicate), prepared["histogram_bins"])
+    mask = np.asarray(data["boundary"]).squeeze() > 0.5
+    per_mm2, share = mean_measured_density(prepared)
+    if prepared["count_rows"] is not None:
+        per_mm2 = replicate_cell_counts(
+            prepared["count_rows"], int(replicate), prepared["cell_settings"].density_panels,
+        )["cells_per_mm2"]
+    if int(replicate) in tuple(replicates):
+        share = prepared["replicates"][tuple(replicates).index(int(replicate))]["measured_share"]
+    return {
+        "initial_state": np.asarray(data["initial_state"], dtype=np.float32),
+        "mask": mask,
+        "mask_mm2": float(np.count_nonzero(mask)) * prepared["pixel_um"] ** 2 * 1e-6,
+        "cells_per_mm2": float(per_mm2),
+        "covered_share": float(share),
     }
 
 
@@ -610,7 +677,12 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
     from ``job_offset``, so a sweep split into parts keeps the seeds of a
     single run. ``progress(n)`` is called after every ``n`` rollouts.
     Results are the dicts ``save_density_ko_results`` writes, one per
-    (model, replicate, run).
+    (model, replicate, run) and ``source``: ``sweep``, and when the
+    settings ask for them the references ``measured_density`` (synthetic
+    colonies at the mean measured density, one density, same seeds as the
+    sweep) and ``true_data`` (each replicate's true colony in its own
+    outline, with that replicate's seeds; replicates whose colony cannot be
+    loaded are skipped with a warning).
     """
     from Experiments.model_registry import ModelRegistry
 
@@ -647,9 +719,6 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
         shape = colonies["support"].shape[-2:]
         mask = circle_mask(shape, float(np.mean(np.sum(colonies["support"], axis=(1, 2)))))
         mask_mm2 = float(np.count_nonzero(mask)) * prepared["pixel_um"]**2 * 1e-6
-        boundary = jnp.broadcast_to(
-            jnp.asarray(mask, dtype=prepared["boundary"].dtype), prepared["boundary"].shape,
-        )
         names = prepared["names"]
         channels = int(model.N_CHANNELS)
         steps_per_12h = int(bundle.config.run.t)
@@ -657,143 +726,235 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
         ko_steps = [int(round(float(_hour) * steps_per_12h / 12.0)) for _hour in ko_hours]
         curriculum = tuple(bundle.config.data.knockout.curriculum or ("baseline",))
         label = record_label(record)
-        for replicate, prepared_replicate in zip(replicates, prepared["replicates"]):
-            library = prepared_replicate["library"]
-            measured_share = prepared_replicate["measured_share"]
+        # Measured density of the real colonies, mean over the replicates
+        measured_cells, measured_replicates = (
+            measured_density_cells(bundle, settings, projection, root, prepared)
+            if settings.include_true_data or settings.include_measured_density else (prepared, replicates)
+        )
+        mean_per_mm2, mean_share = mean_measured_density(measured_cells)
+
+        def to_unit(_per_mm2, _share, _colony_mm2):
+            """A density in the sweep's unit."""
+            return {"share": _share, "per_mm2": _per_mm2, "per_colony": _per_mm2 * _colony_mm2}[unit]
+
+        def ko_rollouts(_initial, _seeds, _weights, _colony):
+            """Final-state counts of ``_initial`` ``[runs × points, C, H, W]``
+            (one seed per run) at every KO time, each ``[runs, points, KO times, ...]``."""
+            _points = _initial.shape[0] // len(_seeds)
+            # Padded with zero channels to the model's
+            _states = np.pad(_initial, ((0, 0), (0, channels - _initial.shape[1]), (0, 0), (0, 0)))
+            _keys = jnp.concatenate([
+                jnp.broadcast_to(jr.PRNGKey(_seed), (_points, 2)) for _seed in _seeds
+            ])
+            _boundary = jnp.broadcast_to(
+                jnp.asarray(_colony, dtype=prepared["boundary"].dtype), prepared["boundary"].shape,
+            )
+            _pixel, _cell, _means = [], [], []
+            for _ko_step in ko_steps:
+                _counts, _cell_counts, _ring_means = _final_pattern_counts(
+                    model, _states, _keys, _boundary, bundle.config.trainer.boundary_mode,
+                    total_steps, prepared["nodal_channel"], _ko_step,
+                    names, rules, _colony, rings, settings.max_batch, cell_weights=_weights,
+                )
+                _pixel.append(_counts)
+                _cell.append(_cell_counts)
+                _means.append(_ring_means)
+                progress(_states.shape[0])
+
+            def _by_run(_values):
+                return np.stack(_values, axis=1).reshape(
+                    len(_seeds), _points, len(ko_steps), *_values[0].shape[1:]
+                )
+
+            return (
+                _by_run(_pixel),
+                _by_run(_cell) if _weights is not None else [None] * len(_seeds),
+                _by_run(_means),
+            )
+
+        def result(_source, _replicate, _run, _counts, _cell_counts, _means, _measured, _keep_image):
+            """One result dict; ``_run`` holds what differs between runs and sources."""
+            return {
+                "model_id": bundle.id,
+                "label": label,
+                "projection": projection,
+                "downsample": record["downsample"],
+                "replicate": _replicate,
+                "run_index": _run["run_index"],
+                "seed": _run["seed"],
+                # sweep, or a reference: measured_density or true_data
+                "source": _source,
+                "groups": {
+                    "projection": projection,
+                    "projection_resolution": f"{projection} · ds{record['downsample']}",
+                    "curriculum": " + ".join(map(str, curriculum)),
+                    "experiment": str(record.get("experiment") or "Unlabelled"),
+                    "family": str(record.get("family") or "Unlabelled"),
+                    "notes": str(record.get("notes") or "Unlabelled"),
+                    "individual": label,
+                    "all": "All selected models",
+                },
+                # Requested, in density_unit; the covered shares used
+                "densities": _run["densities"],
+                "density_unit": unit,
+                "covered_shares": _run["shares"],
+                "cells_per_colony": _run["cells"],
+                "cells_per_mm2": _run["cells"] / _run["colony_mm2"],
+                "piece_source": cell_settings.pieces,
+                "cells_per_segment": _run["per_piece"],
+                "measured_cells_per_mm2": _measured["cells_per_mm2"],
+                "colony_mm2": _run["colony_mm2"],
+                "measured_covered_share": _measured["share"],
+                "max_density": _run["max_density"],
+                "measured_density": _measured["density"],
+                "requested_ko_hours": ko_hours,
+                "realised_ko_hours": np.asarray(
+                    [12.0 * _step / steps_per_12h for _step in ko_steps]
+                ),
+                "snapshot_hour": float(settings.snapshot_hour),
+                "placement": cell_settings.placement,
+                # [densities, KO times, rings, patterns]: pixels, and cells
+                # (each 0h cell that shows counted once over its pixels)
+                "pattern_counts": _counts,
+                "cell_pattern_counts": _cell_counts,
+                # [densities, KO times, rings, channels]: mean of each measured
+                # state channel (state_channel_names) in each ring
+                "channel_means": _means,
+                "cell_area_px": _run["cell_area_px"],
+                # Kept for one run only, to show the initial states
+                "initial_states": _run["initial_states"] if _keep_image else None,
+                "state_channel_names": names,
+                "colony": _run["colony"],
+                # What the pattern counts depend on, checked when loading
+                "cell_type_markers": list(rules.markers),
+                "cell_type_thresholds": {
+                    _marker: float(rules.thresholds[_marker]) for _marker in rules.markers
+                },
+                "rings": rings,
+                "cell_settings": cell_settings.to_dict(),
+                "cell_layers": _run["cell_layers"],
+            }
+
+        def place(_library_index, _targets, _seed):
+            """Synthetic initial states of one replicate's cells in the sweep's circle."""
+            _prepared = prepared["replicates"][_library_index]
+            _states = cell_states(
+                _prepared["library"], colonies["schema"], mask, _targets, unit == "share",
+                _seed, cell_settings, _prepared["per_piece"],
+            )
+            return {
+                "shares": _states["shares"],
+                "cells": _states["cells"],
+                "max_density": _states["capacity"] / (mask_mm2 if unit == "per_mm2" else 1.0),
+                "initial_states": _states["initial_states"],
+                "cell_weights": _states["cell_weights"],
+                "cell_layers": _states["layers"],
+                "cell_area_px": _states["cell_area"],
+                "squeeze": _states["squeeze"],
+                "per_piece": _prepared["per_piece"],
+                "colony": mask,
+                "colony_mm2": mask_mm2,
+            }
+
+        for replicate_index, replicate in enumerate(replicates):
+            prepared_replicate = prepared["replicates"][replicate_index]
             cell_counts = prepared_replicate["cell_counts"]
-            per_piece = prepared_replicate["per_piece"]
-            # Measured density of the replicate, in unit
-            measured_density = {
+            measured_share = prepared_replicate["measured_share"]
+            measured = {
+                "cells_per_mm2": cell_counts["cells_per_mm2"],
                 "share": measured_share,
-                "per_mm2": cell_counts["cells_per_mm2"],
-                "per_colony": cell_counts["cells_per_mm2"] * mask_mm2,
-            }[unit]
+                # Measured density of the replicate, in unit
+                "density": to_unit(cell_counts["cells_per_mm2"], measured_share, mask_mm2),
+            }
             # Requested densities as real cells in the circle (or covered shares)
             targets = densities * mask_mm2 if unit == "per_mm2" else densities
+            seeds = [int(settings.seed) + job_index * runs + _run for _run in range(runs)]
 
             # Place the cells of every run, then roll them all out together
             placed = []
-            for run_index in range(runs):
-                run_seed = int(settings.seed) + job_index * runs + run_index
-                states = cell_states(
-                    library, colonies["schema"], mask, targets, unit == "share",
-                    run_seed, cell_settings, per_piece,
-                )
-                max_density = states["capacity"] / (mask_mm2 if unit == "per_mm2" else 1.0)
+            for run_index, run_seed in enumerate(seeds):
+                states = place(replicate_index, targets, run_seed)
                 where = f"{label}, replicate {replicate}, run {run_index}"
-                if densities[-1] > max_density:
+                if densities[-1] > states["max_density"]:
                     warnings.append(
                         f"{where}: the {cell_settings.placement} cells hold at most "
-                        f"{format_density(max_density, unit)}"
+                        f"{format_density(states['max_density'], unit)}"
                     )
                 if states["squeeze"] < 0.5:
                     warnings.append(
                         f"{where}: at the highest density cells have "
                         f"{states['squeeze']:.0%} of the measured cell area"
                     )
-                placed.append({
-                    "run_index": run_index,
-                    "seed": run_seed,
-                    "shares": states["shares"],
-                    "cells": states["cells"],
-                    "max_density": max_density,
-                    "initial_states": states["initial_states"],
-                    "cell_weights": states["cell_weights"],
-                    "cell_layers": states["layers"],
-                    "cell_area_px": states["cell_area"],
-                })
+                placed.append({**states, "run_index": run_index, "seed": run_seed, "densities": densities})
+            counts, cell_pattern, means = ko_rollouts(
+                np.concatenate([_run["initial_states"] for _run in placed]), seeds,
+                np.concatenate([_run["cell_weights"] for _run in placed]), mask,
+            )
+            for run, run_counts, run_cells, run_means in zip(placed, counts, cell_pattern, means):
+                results.append(result(
+                    "sweep", replicate, run, run_counts, run_cells, run_means, measured, not results,
+                ))
 
-            # [runs × densities, C, H, W], padded with zero channels to the model's
-            states = np.concatenate([_run["initial_states"] for _run in placed])
-            states = np.pad(states, ((0, 0), (0, channels - states.shape[1]), (0, 0), (0, 0)))
-            keys = jnp.concatenate([
-                jnp.broadcast_to(jr.PRNGKey(_run["seed"]), (len(densities), 2)) for _run in placed
-            ])
-            # Each pixel's share of the 0h cells that show (synthetic_ic.cell_states)
-            weights = np.concatenate([_run["cell_weights"] for _run in placed])
-            # [KO times, runs × densities, rings, patterns]
-            counts, weighted_counts, channel_means = [], [], []
-            for ko_step in ko_steps:
-                pixel_counts, cell_weighted, ring_means = _final_pattern_counts(
-                    model, states, keys, boundary, bundle.config.trainer.boundary_mode,
-                    total_steps, prepared["nodal_channel"], ko_step,
-                    names, rules, mask, rings, settings.max_batch, cell_weights=weights,
-                )
-                counts.append(pixel_counts)
-                weighted_counts.append(cell_weighted)
-                channel_means.append(ring_means)
-                progress(states.shape[0])
+            # Reference: the same cells at the measured density (mean over the replicates)
+            if settings.include_measured_density:
+                reference_density = to_unit(mean_per_mm2, mean_share, mask_mm2)
+                if not np.isfinite(reference_density):
+                    warnings.append(f"{label}: no measured density (nuclei not counted); skipped that reference")
+                else:
+                    reference_target = reference_density * (mask_mm2 if unit == "per_mm2" else 1.0)
+                    reference = [
+                        {
+                            **place(replicate_index, np.asarray([reference_target]), _seed),
+                            "run_index": _run, "seed": _seed, "densities": np.asarray([reference_density]),
+                        }
+                        for _run, _seed in enumerate(seeds)
+                    ]
+                    counts, cell_pattern, means = ko_rollouts(
+                        np.concatenate([_run["initial_states"] for _run in reference]), seeds,
+                        np.concatenate([_run["cell_weights"] for _run in reference]), mask,
+                    )
+                    for run, run_counts, run_cells, run_means in zip(reference, counts, cell_pattern, means):
+                        results.append(result(
+                            "measured_density", replicate, run, run_counts, run_cells, run_means,
+                            measured, run["run_index"] == 0 and replicate_index == 0,
+                        ))
 
-            def _by_run(_counts):
-                # [runs, densities, KO times, rings, patterns]
-                return np.stack(_counts, axis=1).reshape(
-                    runs, len(densities), len(ko_steps), *_counts[0].shape[1:]
-                )
-
-            counts = _by_run(counts)
-            # Not cell_counts: that name holds the replicate's measured nuclei
-            weighted_counts = _by_run(weighted_counts) if weights is not None else [None] * runs
-            channel_means = _by_run(channel_means)
-
-            for run, run_counts, run_cell_counts, run_means in zip(placed, counts, weighted_counts, channel_means):
-                results.append({
-                    "model_id": bundle.id,
-                    "label": label,
-                    "projection": projection,
-                    "downsample": record["downsample"],
-                    "replicate": replicate,
-                    "run_index": run["run_index"],
-                    "seed": run["seed"],
-                    "groups": {
-                        "projection": projection,
-                        "projection_resolution": f"{projection} · ds{record['downsample']}",
-                        "curriculum": " + ".join(map(str, curriculum)),
-                        "experiment": str(record.get("experiment") or "Unlabelled"),
-                        "family": str(record.get("family") or "Unlabelled"),
-                        "notes": str(record.get("notes") or "Unlabelled"),
-                        "individual": label,
-                        "all": "All selected models",
-                    },
-                    # Requested, in density_unit; the covered shares used
-                    "densities": densities,
-                    "density_unit": unit,
-                    "covered_shares": run["shares"],
-                    "cells_per_colony": run["cells"],
-                    "cells_per_mm2": run["cells"] / mask_mm2,
-                    "piece_source": cell_settings.pieces,
-                    "cells_per_segment": per_piece,
-                    "measured_cells_per_mm2": cell_counts["cells_per_mm2"],
-                    "colony_mm2": mask_mm2,
-                    "measured_covered_share": measured_share,
-                    "max_density": run["max_density"],
-                    "measured_density": measured_density,
-                    "requested_ko_hours": ko_hours,
-                    "realised_ko_hours": np.asarray(
-                        [12.0 * _step / steps_per_12h for _step in ko_steps]
-                    ),
-                    "snapshot_hour": float(settings.snapshot_hour),
-                    "placement": cell_settings.placement,
-                    # [densities, KO times, rings, patterns]: pixels, and cells
-                    # (each 0h cell that shows counted once over its pixels)
-                    "pattern_counts": run_counts,
-                    "cell_pattern_counts": run_cell_counts,
-                    # [densities, KO times, rings, channels]: mean of each measured
-                    # state channel (state_channel_names) in each ring
-                    "channel_means": run_means,
-                    "cell_area_px": run["cell_area_px"],
-                    # Kept for the first run only, to show the initial states
-                    "initial_states": run["initial_states"] if not results else None,
-                    "state_channel_names": names,
-                    "colony": mask,
-                    # What the pattern counts depend on, checked when loading
-                    "cell_type_markers": list(rules.markers),
-                    "cell_type_thresholds": {
-                        _marker: float(rules.thresholds[_marker]) for _marker in rules.markers
-                    },
-                    "rings": rings,
-                    "cell_settings": cell_settings.to_dict(),
-                    "cell_layers": run["cell_layers"],
-                })
+            # Reference: this replicate's true colony, in its own outline, with the sweep's seeds
+            if settings.include_true_data:
+                try:
+                    true = true_data_colony(bundle, root, measured_cells, replicate, measured_replicates)
+                except (OSError, ValueError, KeyError, IndexError) as error:
+                    warnings.append(f"{label}: no true data for replicate {replicate} ({error}); skipped it")
+                    true = None
+                if true is not None:
+                    true_density = to_unit(true["cells_per_mm2"], true["covered_share"], true["mask_mm2"])
+                    true_measured = {
+                        "cells_per_mm2": true["cells_per_mm2"],
+                        "share": true["covered_share"],
+                        "density": true_density,
+                    }
+                    counts, _, means = ko_rollouts(
+                        np.repeat(true["initial_state"][None], runs, axis=0), seeds, None, true["mask"],
+                    )
+                    for run_index, (run_counts, run_means) in enumerate(zip(counts, means)):
+                        run = {
+                            "run_index": run_index,
+                            "seed": seeds[run_index],
+                            "densities": np.asarray([true_density]),
+                            "shares": np.asarray([true["covered_share"]]),
+                            "cells": np.asarray([true["cells_per_mm2"] * true["mask_mm2"]]),
+                            # Nothing was placed, so nothing was cut down
+                            "max_density": true_density,
+                            "initial_states": true["initial_state"][None],
+                            "cell_layers": 0,
+                            "cell_area_px": None,
+                            "per_piece": 1.0,
+                            "colony": true["mask"],
+                            "colony_mm2": true["mask_mm2"],
+                        }
+                        results.append(result(
+                            "true_data", replicate, run, run_counts, None, run_means, true_measured, run_index == 0,
+                        ))
             job_index += 1
     return tuple(results), warnings
 
@@ -804,9 +965,14 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
 def job_configs(settings, records, output_dir, split="model"):
     """One manifest entry per model (``split="model"``) or per (model,
     replicate) pair (``split="replicate"``), each writing a part into
-    ``output_dir``. ``job_offset`` keeps the seeds of a single run."""
+    ``output_dir``. ``job_offset`` keeps the seeds of a single run. Every
+    part averages the measured density over all the replicates, and runs
+    the true data of its own replicates."""
     configs = []
     job_offset = 0
+    settings = replace(
+        settings, measured_replicates=tuple(settings.measured_replicates) or tuple(settings.replicates),
+    )
     for record in records:
         replicate_groups = (
             [(_r,) for _r in settings.replicates] if split == "replicate"

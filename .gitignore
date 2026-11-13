@@ -1,43 +1,38 @@
-# Ignore all Jupyter Notebook files in this directory
-*/__pycache__/*
-**/__pycache__/*
-***/__pycache__/*
-***/__pycache__/*.pyc
-***/__pycache__/*.pyo
-***/__pycache__/*/*.pyc
-***/__pycache__/*/*.pyo
-***/__pycache__/*/*/*.pyc
-***/__pycache__/*/*/*.pyo
-***/__pycache__/*/*/*/*.pyc
-NCA/__pycache__/*
-NCA/model/__pycache__/*
-NCA/trainer/__pycache__/*
-*.ipynb
-*.pyc
-*.npy
-*.eqx
-*events.out.tfevents.*
-logs/*
-wandb/*
-models/*
-*.mp4
-*.pickle
-*.png
-!demo/*
-*Dockerfile
-.env 
-*/wandb/*
+# Python caches and packaging
 __pycache__/
 *.pyc
-slurmlog/**
-perturbations/**
-**/__marimo__/**
-notebooks/**
+*.pyo
+*.egg-info/
+
+# Secrets and machine-specific settings (see .env.example)
+.env
 settings.json
-AGENTS.md
-run_*.yml
-*.orig
-*:Zone.Identifier
-*.egg-info/*
+
+# Data, models and results: these live outside git (see docs/data.md)
+models/*
 output/*
 figures/*
+logs/*
+wandb/*
+*/wandb/*
+slurmlog/**
+perturbations/**
+*.eqx
+*.npy
+*.pickle
+*.mp4
+*.png
+!demo/**/*.png
+
+# Notebook state
+*.ipynb
+**/__marimo__/**
+
+# Files written by the launchers
+run_*.yml
+*events.out.tfevents.*
+
+# Other
+*Dockerfile
+*.orig
+*:Zone.Identifier

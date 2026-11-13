@@ -1,0 +1,45 @@
+# Packages shared by the CPU and GPU installs. Use requirements_cpu.txt or
+# requirements_gpu.txt (they include this file), not this file on its own.
+#
+# Versions are the ones the code was last run and tested with (Python 3.13).
+# Newer versions will usually work, but JAX and Equinox change their APIs
+# often, so upgrade those two carefully.
+
+# Core: models, training and PDE simulation
+equinox==0.12.1
+optax==0.2.6
+diffrax==0.7.0
+jaxtyping==0.3.2
+einops==0.8.1
+numpy==2.2.5
+scipy==1.15.3
+
+# Extra losses (optimal transport, VGG/LPIPS features)
+ott-jax==0.4.5
+lpips-j==0.0.6
+flax==0.10.6
+
+# Configs, logging and the .env file
+omegaconf==2.3.0
+PyYAML==6.0.2
+python-dotenv==1.1.0
+wandb==0.19.11
+tqdm==4.67.1
+
+# Images and data
+scikit-image==0.25.2
+tifffile==2025.5.10
+pillow==10.4.0
+pandas==2.2.3
+
+# Plots, videos and notebooks
+matplotlib==3.10.3
+plotly==6.0.1
+marimo==0.25.1
+anywidget==0.9.18
+opencv-python==4.12.0.88
+cmapy==0.6.6
+imageio-ffmpeg==0.6.0
+
+# Tests
+pytest==9.1.1

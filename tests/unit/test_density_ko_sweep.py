@@ -96,7 +96,8 @@ def test_manifest_round_trip_and_job_environment(tmp_path, monkeypatch):
 
     index, config = read_job_entry(manifest, index=1)
     assert index == 1
-    assert settings_from_dict(config["settings"]) == settings
+    # The job keeps every replicate for the measured density
+    assert settings_from_dict(config["settings"]) == replace(settings, measured_replicates=(1, 3))
     assert config["records"][0]["model_id"] == "model-b"
     assert config["job_offset"] == 2
 
@@ -372,8 +373,12 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
     # The second panel is the RNA panel: noise drawn from its pixels, no cells
     schema = SimpleNamespace(primary_measurements=(0, 1, 2, 3), group_names=("cell_fate_s1", "rna_expression"))
     monkeypatch.setattr(sweep, "load_training_histogram_bins", lambda bundle, root: None)
+    # A slightly smaller true colony, so its own outline can be told apart from the sweep's circle
+    true_support = disc(30, 11)
     monkeypatch.setattr(sweep, "load_condition_data", lambda *args: {
-        "boundary": support[None].astype(np.float32), "state_channel_names": names, "nodal_channel": 1,
+        "boundary": (true_support if len(args) > 3 and args[3] == 3 else support)[None].astype(np.float32),
+        "state_channel_names": names, "nodal_channel": 1,
+        "initial_state": rng.random((len(names), 30, 30)).astype(np.float32),
     })
     monkeypatch.setattr(sweep, "stacked_colonies", lambda data, replicates: {
         "support": np.stack([support] * len(replicates)), "schema": schema, "source_files": None,
@@ -431,6 +436,53 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
     modified = output.stat().st_mtime_ns
     run_job_part(config, index)
     assert output.stat().st_mtime_ns == modified
+
+    # References: synthetic colonies at the measured density, and the true colony of every replicate.
+    # Replicate 2's true colony cannot be loaded, so it is skipped; replicate 3's is the smaller disc.
+    loader = sweep.true_data_colony
+
+    def true_data_colony(bundle, root, prepared, replicate, replicates):
+        if replicate == 2:
+            raise FileNotFoundError("no 0h image")
+        return loader(bundle, root, prepared, replicate, replicates)
+
+    monkeypatch.setattr(sweep, "true_data_colony", true_data_colony)
+    settings = replace(settings, replicates=(1, 2, 3), include_measured_density=True, include_true_data=True)
+    results, warnings = sweep.run_density_ko_sweep(settings, [record])
+    sources = [result["source"] for result in results]
+    # Per replicate: the sweep's runs, the measured-density runs, then the true data's runs
+    assert sources == (
+        ["sweep"] * 2 + ["measured_density"] * 2 + ["true_data"] * 2
+        + ["sweep"] * 2 + ["measured_density"] * 2
+        + ["sweep"] * 2 + ["measured_density"] * 2 + ["true_data"] * 2
+    )
+    assert any("no true data for replicate 2" in warning for warning in warnings)
+    measured = [result for result in results if result["source"] == "measured_density"]
+    true = [result for result in results if result["source"] == "true_data"]
+    sweep_runs = [result for result in results if result["source"] == "sweep"]
+    # One density each: the measured 1000 cells/mm² in the sweep's circle, as cells per colony
+    for result in measured:
+        np.testing.assert_allclose(result["densities"], [1000.0 * result["colony_mm2"]])
+        assert result["pattern_counts"].shape[:3] == (1, 2, 3)
+    # References use the sweep's seeds of their replicate
+    assert [r["seed"] for r in measured] == [r["seed"] for r in sweep_runs]
+    assert [r["seed"] for r in true] == [r["seed"] for r in sweep_runs if r["replicate"] in (1, 3)]
+    assert [r["replicate"] for r in true] == [1, 1, 3, 3]
+    for result in true:
+        # Each in its own outline
+        np.testing.assert_array_equal(result["colony"], true_support if result["replicate"] == 3 else support)
+        assert result["pattern_counts"].shape[:3] == (1, 2, 3)
+        assert result["cell_pattern_counts"] is None
+        np.testing.assert_allclose(result["densities"], [1000.0 * result["colony_mm2"]])
+    # Initial states kept for the first run of each replicate's true colony, and once for the measured density
+    assert [r["initial_states"] is not None for r in true] == [True, False, True, False]
+    assert sum(r["initial_states"] is not None for r in measured) == 1
+    assert settings.trajectories(1) == 2 * (3 * 3 + 3 + 3) * 2
+    save_density_ko_results(tmp_path / "references.npz", results)
+    loaded = load_density_ko_results(tmp_path / "references.npz")
+    assert [r["source"] for r in loaded] == sources
+    # Files from before the references load as sweep results
+    assert all(r["source"] == "sweep" for r in load_density_ko_results(tmp_path / "tiled.npz"))
 
 
 def test_visible_cells_leave_out_hidden_and_faded_cells():
@@ -554,3 +606,65 @@ def test_measured_density_comes_from_the_density_panels():
     assert replicate_cell_counts(rows, 1)["cells_per_mm2"] == 1500.0  # both panels of replicate 1
     assert replicate_cell_counts(rows, 1, ("cell_fate_s1",))["cells_per_mm2"] == 2000.0
     assert replicate_cell_counts(rows, 2, ("cell_fate_s1",))["cells_per_mm2"] == 1500.0
+
+
+def test_density_plots_are_linear_in_the_chosen_measure():
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import pandas as pd
+
+    from Experiments.micropatterns.ko_evaluation import (
+        add_density_axes,
+        density_column,
+        density_conversions,
+        main_density_unit,
+    )
+
+    summary = pd.DataFrame({
+        "density": [100.0, 200.0, 400.0],
+        "actual_density": [100.0, 200.0, 400.0],
+        "cells_per_colony": [100.0, 200.0, 400.0],
+        "cells_per_mm2": [500.0, 1000.0, 2000.0],
+        "covered_share": [0.2, 0.3, 0.35],
+    })
+    # The sweep's own measure stays the main one while it is chosen
+    assert main_density_unit(summary, "per_colony", ["per_colony", "share"]) == "per_colony"
+    assert main_density_unit(summary, "per_colony", []) == "per_colony"
+    # Else the first chosen measure, plotted from its own column
+    assert main_density_unit(summary, "per_colony", ["share"]) == "share"
+    assert density_column("share", "per_colony") == "covered_share"
+    assert density_column("per_colony", "per_colony") == "actual_density"
+    # Measures missing at some densities cannot be the main one
+    assert main_density_unit(summary.assign(covered_share=np.nan), "per_colony", ["share"]) == "per_colony"
+
+    # Conversions go from the main measure to the others
+    conversions = density_conversions(summary, "per_colony", ["share", "per_colony"], "share")
+    assert list(conversions) == ["per_colony"]
+    np.testing.assert_allclose(conversions["per_colony"][0]([0.3]), [200.0])
+
+    figure, axis = plt.subplots()
+    add_density_axes(axis, "x", "share", conversions, gap=0.2)
+    assert axis.get_xlabel() == "Pixel coverage"
+    assert [child.get_xlabel() for child in axis.child_axes] == ["Cells per colony"]
+    plt.close(figure)
+
+
+def test_measured_density_in_each_measure():
+    from Experiments.micropatterns.ko_evaluation import measured_density
+
+    result = {
+        "density_unit": "per_colony",
+        "measured_density": 300.0,
+        "measured_cells_per_mm2": 1500.0,
+        "colony_mm2": 0.2,
+        "measured_covered_share": 0.35,
+    }
+    assert measured_density([result], "per_colony") == 300.0
+    assert measured_density([result], "per_mm2") == 1500.0
+    assert measured_density([result], "share") == 0.35
+    # Old results recorded only the sweep's own measure
+    old = {"density_unit": "share", "measured_density": 0.4}
+    assert measured_density([old], "share") == 0.4
+    assert measured_density([old], "per_mm2") is None

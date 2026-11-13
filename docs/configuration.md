@@ -77,6 +77,9 @@ the same data they were trained on:
   Version 10 replaced them with `*_fraction` fields (see above); older counts
   are divided by `run.iterations`, which gives back the same iterations. The
   emoji ramp length `schedule_iterations` becomes the end point `end_fraction`.
+- **8 → 9** replaced `data.micropattern.cleaning.knockouts_use_control_bounds`
+  (true/false) with `cleaning.knockout_bounds`: `true` becomes `control`,
+  `false` becomes `selected`.
 - **8** removed `impulse.output` (a folder for loose impulse result files).
   Impulse runs now save records in the model store
   (`docs/model_registry.md`); older impulse configs just drop the section.
@@ -208,7 +211,9 @@ trajectories reuse it before the knockout.
 
 Cell-type thresholds tuned in the notebook (**Cell types at 48h**) can be
 exported as a cell type file (**Export and load cell types**, by default
-`Experiments/micropatterns/conf/cell_types/260726_cell_types.yaml`). It holds
+`Experiments/micropatterns/conf/cell_types/260726_cell_types.yaml`; the files
+in use are `260726_cell_types_{v1,v2,sum_v1,sliced_nca}.yaml` in that folder,
+and inverse design reads `_sliced_nca`). It holds
 the channel and threshold of each marker, the high/low/any rule of each cell
 type, and the `data.micropattern` settings the thresholds were tuned with,
 since they only hold for images normalised that way. Training does not read

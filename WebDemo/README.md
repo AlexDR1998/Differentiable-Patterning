@@ -2,11 +2,17 @@
 
 WebGL viewer and marimo page for exported NCA rollouts.
 
-Export a model with:
+Two exported models are already in `WebDemo/public/models/`, so you can
+start by serving the viewer (below).
+
+To export a trained model, point `--model-path` at the `model.eqx` of its
+bundle (find it with `python -m Experiments.model_registry show <model-id>`),
+and copy the settings from the bundle's `config.yaml` (`model.channels`,
+`model.kernel_str`, ...):
 
 ```bash
 python WebDemo/export_model.py \
-  --model-path demo/models/test_grow_crab.eqx \
+  --model-path models/bundles/<collection>/<experiment>/<bundle>/model.eqx \
   --model-id test_grow_crab \
   --family NCA \
   --channels 20 \
@@ -45,7 +51,7 @@ marimo run WebDemo/marimo_app.py
 marimo export html-wasm WebDemo/marimo_app.py -o WebDemo/site --mode run
 ```
 
-Emoji models can also be exported from
+Emoji models can also be exported from the legacy thesis notebook
 `Experiments/emoji/thesis_chapter_1_figures.py`:
 
 ```python

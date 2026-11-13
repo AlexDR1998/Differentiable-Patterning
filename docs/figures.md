@@ -22,7 +22,7 @@ with paper_style():
     ax = fig.add_subplot()
     ...
     label_panel(ax, "a", "Title", "subtitle")
-save_figure(fig, "my_figure", "results")  # figures/results/my_figure.pdf and .png
+save_figure(fig, "my_figure", "schematics")  # figures/schematics/my_figure.pdf and .png
 ```
 
 - Draw inside `with paper_style():` so fonts, line widths and the colour cycle match.
@@ -56,6 +56,28 @@ save_figure(fig, "my_figure", "results")  # figures/results/my_figure.pdf and .p
 | `nca_training_schematic.py` | NCA update step and training schematic | `figures/schematics/` |
 | `loss_schematic.py` | Loss functions schematic | `figures/schematics/` |
 | `overview_figure.py` | Results overview (slide-sized by default) | `figures/overview/` |
+
+## What each figure needs
+
+The notebooks read the data folder (`DATA_PATH_BASE`) and the model store
+(`MODEL_STORE_ROOT`) from `.env`. Models are chosen with a **selection** file
+exported from `Experiments/model_registry_explorer.py`
+([workflow_micropatterns.md](workflow_micropatterns.md#7-copy-models-back-and-pick-the-ones-to-use)).
+
+| Notebook | Data | Models | Other inputs |
+| --- | --- | --- | --- |
+| `imaging_schematic.py` | yes | | one 3D stack (`MICROPATTERN_3D_STACK`) |
+| `loss_schematic.py` | yes | | |
+| `nca_training_schematic.py` | | | toy data only |
+| `project_overview.py` | yes | | |
+| `nodal_ko_schematic.py` | yes | selection | |
+| `projection_resolution_figure.py` | yes | two selections (per projection, per resolution) | |
+| `overview_figure.py` | yes | selection | exports from `nodal_ko_eval.py`, saved into `figures/overview/`: **run `nodal_ko_eval.py` first** |
+
+Slow results (rollouts) are cached as pickles in `figures/cache/` and
+`figures/overview/cache/`. Delete them after changing a model or the data.
+
+TODO(handover): which selection file each final paper figure was made with.
 
 Figures also made outside this folder:
 

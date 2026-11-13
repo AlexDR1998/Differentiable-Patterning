@@ -1,80 +1,208 @@
 # CLAUDE.md
 
-Research code for differentiable patterning: neural cellular automata (NCA), built on JAX, Equinox and Optax. `PDE/` holds pattern-forming PDE simulators used as NCA training tasks. Earlier agent-based work and neural-PDE trainers live only in git history. See also `README.md` and `docs/`.
+Research code for differentiable patterning: neural cellular automata (NCA)
+trained on stem-cell micropatterns, emoji, snowmelt maps and simulated PDEs,
+built on JAX, Equinox and Optax. Earlier agent-based and neural-PDE work is
+only in git history.
+
+## Who you are working with
+
+The people using this repository are **scientists, not software engineers**.
+- Explain what you change and why, in plain words. Say what each change means
+  for their experiments.
+- Prefer small, readable changes over clever ones.
+- Ask before large refactors, renames or anything that touches saved models.
+- When a request is ambiguous about the science (which loss, which data,
+  which models), ask rather than guess.
+
+Concepts and vocabulary: `docs/concepts.md` (glossary at the end). All docs:
+`docs/README.md`.
 
 ## Ground rules
 
-- **Never run experiments or training scripts locally.** Training needs remote GPUs (Slurm / Kubernetes). Propose edits only. A human checks them and runs them remotely.
-- **No git commits or PRs.** Leave local diffs for review.
-- Safe to run locally: `pytest tests/unit` (CPU, lightweight). `tests/hardware` needs a GPU.
-- The repository is a package (`pyproject.toml`): `pip install -e .` once per environment, or set `PYTHONPATH` to the repo root (the launchers do). Don't add `sys.path` hacks or absolute paths.
-- After a change that needs the smoke tests rerun, set `SMOKE_VERSION` in `Experiments/pipeline_smoke_test.py` to a label for that change (e.g. `refactor-phase6b-augmenters`) and regenerate the smoke manifests with `--dry-run`. It becomes part of each run's W&B group.
-- Don't commit or rely on `.env`, `wandb/`, `models/`, `output/`, `Videos/`, `figures/`, `logs/` or machine-specific paths.
-- Dependencies live in `requirements/` (`requirements_{cpu,gpu}.txt`, `env_{cpu,gpu}.yml`); `pyproject.toml` lists none.
+- **Never run training, sweeps or the smoke test locally.** Training runs on
+  the EIDF GPU cluster, which you cannot reach. Write the changes and the
+  exact commands, and the person runs them (`docs/cluster_eidf.md`).
+- **No git commits or PRs** unless asked. Leave local changes for review.
+- **Keep local checks to seconds.** Run single unit test files:
+  `pytest tests/unit/test_<area>.py -q`. `tests/unit/test_trainer_runs.py`
+  sometimes stalls; run it on its own with `timeout 600`. Slow numerical
+  checks (VGG, OT losses) belong in the smoke test, not in unit tests.
+- **Don't analyse the user's data.** Build tools for looking at data
+  (notebooks, plots); don't render or study data images and report findings
+  unless asked.
+- The repository is a package: `pip install -e .`, or `PYTHONPATH` set to the
+  repo root (the launchers do this). No `sys.path` hacks or absolute paths.
+- Don't commit or rely on `.env`, `wandb/`, `models/`, `output/`,
+  `figures/`, `logs/` or machine-specific paths. Environment variables are
+  listed in `.env.example`.
+- Dependencies: `requirements/requirements_common.txt` (pinned), included by
+  `requirements_{cpu,gpu}.txt` and `env_{cpu,gpu}.yml`. `pyproject.toml`
+  lists none.
+
+## Traps
+
+- **Generate manifests from one sweep file, never a folder.**
+  `python Experiments/generate_configs.py <sweep.yaml> <base_config.yaml> <conf/generated>`.
+  The folder form regenerates and overwrites every tracked manifest in it,
+  and those are often the only record of how registry models were trained.
+- **Tracked manifests (`conf/generated/`) are records.** Don't regenerate or
+  edit them. To change a sweep that has run, bump `_vN` in both
+  `experiment_name` and `output_subdir`.
+- **Saved bundles are immutable.** Never edit `config.yaml`, `manifest.yaml`
+  or `model.eqx` in the model store.
+- **Model field layout is part of the saved format.** New model options must
+  be `eqx.field(static=True)` (or arrays). Adding, removing or reordering
+  array fields breaks old bundles.
+- **Pass explicit PRNG keys.** Many model functions silently seed from the
+  clock when `key=None`.
+- **marimo notebooks:** a global name can be defined in only one cell; prefix
+  cell-local names with `_`. Don't edit text that people wrote in notebooks;
+  any text you add should be short bullet points.
 
 ## Layout
 
 | Path | Contents |
 | --- | --- |
-| `Common/` | Shared code. `model/` has `AbstractModel` (eqx.Module base with save/load/partition), `spatial_operators.Ops` (ID/LAP/GRAD/DIFF/AV kernels, padding), boundaries and KAN layers. `dataloader/` has emoji, micropattern, snowmelt and texture loaders plus channel schemas, and `disk_cache.py`, a local cache of cleaned 260726 images that is turned on by `DATA_CACHE_DIR` (for local notebooks). `trainer/` has the losses: generic ones in `loss.py`, `loss_vgg.py` and `loss_ott.py`, the ones tied to the micropattern channel layout in `loss_micropattern.py`, and the name → function table in `loss_table.py`. It also has typed loss configs (`config.py`, including the name → config-class table `LOSS_TERM_CONFIGS`) and the W&B wrapper `wandb_logger.WandbLogger`. |
-| `NCA/model/` | `NCA` (with `GATED`, `PARAMETER_NOISE_LEVEL` and `FIRING` options; the families `gNCA`, `nNCA` and `gnNCA` are the first two switched on, and `aNCA`/`gaNCA` learn a per-cell firing rate, stored in the last state channel and penalised by the `firing_energy` regulariser), KAN-based `FastKaNCA`, hierarchical `HNCA`, and `SignalNCA` (`sNCA`/`gsNCA`, in `NCA_signalling.py`: signal channels that move through structures grown by the NCA: cable, axon, steady, excitable, broadcast or pointer modes; the main gate is penalised by the `wire_cost` regulariser). |
-| `NCA/trainer/` | The active modular trainer (see below). `logging/` has the W&B loggers (`wandb_log.NCALogger`, `kan_wandb_log.FastKANLogger`) and the diagnostic plots they log (`diagnostics.py`). `data_augmenter/` has the augmenters (`EmojiAugmenter`, `MicropatternAugmenter`, `SnowmeltAugmenter`, `PdeAugmenter`, all built on `base.PoolAugmenter`) and the pure functions they use (`transforms.py`, `trajectory.py`). |
-| `NCA/inverse_design/`, `NCA/trainer/impulse/` | Optimisation of trained NCAs for micropattern geometry and impulses/initial state (the learned perturbation module is `impulse/perturbation.py`). Geometry: a Fourier-radial shape, a soft cell-type share built from a cell type file (`CellTypeShareObjective`), and binary-mask evaluation (see `docs/inverse_design.md`). |
-| `PDE/` | Pattern-forming PDEs (Gray-Scott, Chhabra, Cahn-Hilliard, heat, Hillen-Painter, Keller-Segel; plus a Navier-Stokes model not used for training) in `model/fixed_models/`, the diffrax solver `model/solver/semidiscrete_solver.PDE_solver`, the JAX-free name → model table `catalogue.py`, `initial_conditions.py`, and `dataset.simulate_trajectories`, which makes `[B, T, C, H, W]` training data. |
-| `Experiments/micropatterns/figures/` | Micropattern paper figures: the shared style config (`style.py`, `paper.mplstyle`), shared drawing and data helpers, and one marimo notebook per figure (see `docs/figures.md`). Figure code takes colours, fonts and sizes from `style.py`. |
-| `Experiments/` | Config-driven entrypoints for each domain: `emoji/`, `micropatterns/`, `snowmelt/`, `pde/`, `signalling/` (procedural tasks for sNCA/aNCA), `impulse/`, `inverse_design/` (colony geometry for a cell type), plus marimo explorers (`*_explorer.py`, `micropatterns/nodal_ko_eval.py`; `micropatterns/size_density_explorer.py` sweeps colony size × cell density and draws radial kymographs). `model_registry.py` is the local model-bundle registry and its CLI (`ModelRegistry`, `create_model_id`, `record_evaluation`, `verify_evaluation_input`, and `load_selection` for model lists exported by `model_registry_explorer.py`). `notebook_jobs.py` runs a heavy notebook section as remote jobs (see `docs/remote_notebook_jobs.md`; examples: `micropatterns/density_ko_sweep.py`, `micropatterns/size_density_sweep.py`). |
-| `launch/` | Remote and local sweep launchers; they share `manifest.sh` to read manifests. |
-| `demo/`, `notebooks/`, `WebDemo/` | Walkthroughs (marimo), Jupyter notebooks and a static WebGL viewer with an exporter. |
+| `NCA/model/` | `NCA` (options `GATED`, `PARAMETER_NOISE_LEVEL`, `FIRING`: families `gNCA`, `nNCA`, `gnNCA`, `aNCA`, `gaNCA`), `SignalNCA` (`sNCA`, `gsNCA`), `HNCA`, `FastKaNCA`. `factory.py:build_model` builds any family from a `ModelConfig`. |
+| `NCA/trainer/` | The trainer (see below). `data_augmenter/` has one augmenter per task, built on `base.PoolAugmenter`. `logging/` has the W&B loggers and diagnostic plots. `intervention.py` has knockout rollouts. |
+| `NCA/inverse_design/`, `NCA/trainer/impulse/` | Optimising colony geometry (`docs/inverse_design.md`) and impulses (learned perturbations, `impulse/perturbation.py`) for trained NCAs. |
+| `Common/model/` | `AbstractModel` (save/load/partition), `spatial_operators.Ops` (ID/LAP/GRAD/DIFF/AV kernels), boundaries, KAN layers. |
+| `Common/dataloader/` | Loaders (`micropattern_260726.py` is current; `micropattern.py` is the older dataset), channel schemas (`micropattern_schemas.py`), cleaning steps, `disk_cache.py` (`DATA_CACHE_DIR`, local only). |
+| `Common/trainer/` | Losses (`loss.py` generic, `loss_micropattern.py` for the micropattern channel layout, `loss_vgg.py`, `loss_ott.py`), `loss_table.py` (name → function), typed loss configs (`config.py`, `LOSS_TERM_CONFIGS`), `wandb_logger.py`. |
+| `PDE/` | Pattern-forming PDEs (`model/fixed_models/`), the diffrax solver, the JAX-free catalogue (`catalogue.py`), `dataset.simulate_trajectories` → `[B, T, C, H, W]`. |
+| `Experiments/<task>/` | `emoji`, `micropatterns`, `snowmelt`, `pde`, `signalling`, `impulse`, `inverse_design`: `train.py` (or `optimise.py`), `config.py`, `config_helpers.py` (`load_data`, `build_data_augmenter`), `conf/base_config.yaml`, `conf/experiments/*.yaml` sweeps, `conf/generated/` manifests. |
+| `Experiments/` (top level) | `config.py` (typed `ExperimentConfig`, `upgrade_legacy_config`), `config_workflow.py` + `generate_configs.py` (sweep → manifest), `run_config.py` (runs one manifest entry), `nca_training.py`, `model_registry.py` (bundles, `ModelRegistry`, selections), `notebook_jobs.py`, `pipeline_smoke_test.py`. |
+| `Experiments/micropatterns/figures/` | Paper figure notebooks with shared `style.py`; colours, fonts and sizes come only from `style.py` (`docs/figures.md`). |
+| `launch/` | EIDF Kubernetes launcher (`launch_batch_multi_job.sh`, `run.tpl.yml`, `launch_inside_pod.sh`), local sweep runner; Slurm scripts are unused. |
+| `demo/` | Tutorials (marimo), see `demo/README.md`. |
+| `docs/` | Documentation, indexed in `docs/README.md`. |
+| `WebDemo/` | WebGL viewer for exported models. |
 
-## Experiment workflow
+Notebooks: `docs/notebooks.md` lists every marimo notebook and its status.
+Legacy ones (`thesis_chapter_*_figures.py`, `nodal_knockout_dev.py`) need old
+model files.
 
-1. Each domain has `Experiments/<domain>/conf/base_config.yaml` plus sweep files in `conf/experiments/*.yaml`. A sweep file has `experiment_name`, `entrypoint` (such as `Experiments.emoji.train:run`), `output_subdir`, `seed_mode` and a `grid:` of dotted overrides expanded as a Cartesian product. Group and condition blocks are handled in `Experiments/config_workflow.py`.
-2. `python Experiments/generate_configs.py <experiments_dir> <baseline_yaml_or_dir> <output_dir>` writes a manifest into `conf/generated/<name>/`.
-3. `Experiments/run_config.py --manifest M --index i` (or `--config-file F --entrypoint mod:fn`) does the following:
-   - resolves OmegaConf
-   - applies environment overrides (`MODEL_STORE_ROOT`, XLA flags)
-   - converts the config to typed frozen dataclasses with `Experiments.config.load_experiment_config`
-   - calls the entrypoint `run(cfg)`
-4. The launchers in `launch/` wrap step 3:
-   - `launch_batch_slurm.sh SCRIPT MANIFEST` submits a Slurm array that runs `launch_slurm.sh`.
-   - `launch_batch_multi_job.sh SCRIPT MANIFEST WORKERS GPU` fills `run.tpl.yml` and submits indexed Kubernetes jobs that run `launch_inside_pod.sh`.
-   - `launch_local_sweep.py` runs entries one after another on one GPU.
+## Configs
 
-Config rules (`docs/configuration.md`):
-- The typed config uses the same names as the YAML files: `cfg.system`, `cfg.data` (with `data.emoji|micropattern|snowmelt|pde` and `data.knockout`), `cfg.model`, `cfg.run`, `cfg.trainer`, `cfg.optimiser`, `cfg.loss`, ... So the grid key `run.t` is `cfg.run.t`. Read fields as attributes; configs have no `.get()`.
-- Current files have `schema_version: 10`. Older configs (old sweeps, manifests and older model bundles) are translated only in `Experiments/config.py:upgrade_legacy_config`. Don't add compatibility code anywhere else.
-- Conversion is strict: unknown keys and unknown model families fail early. A new option needs a field in the right dataclass. The main ones are in `Experiments/config.py`, `NCA/model/config.py`, `NCA/trainer/config.py` and `Common/trainer/config.py`.
-- Never pass OmegaConf objects into `Common/` or `NCA/`. Pass only typed configs.
-- A new loss goes into `Common/trainer/loss_table.py:LOSSES` and `Common/trainer/config.py:LOSS_TERM_CONFIGS`; an import-time check makes sure both list the same names. `Experiments/config.py` must stay importable without JAX, so it only uses `LOSS_TERM_CONFIGS`.
-- Model families are built in `NCA/model/factory.py:build_model`. A new family goes into its `MODEL_FAMILIES` table and `build_model_config_string`; a small variant of `NCA` should be a constructor option plus a table entry, not a new class. New model options must be `eqx.field(static=True)` (or arrays), because every Python int/float/bool field is written to saved `.eqx` files and changing that layout breaks old bundles. Retired families (`NCA_sycl`, `NCA_fast`, `gNCA_sycl`) map to current ones through `PORTABLE_MODEL_FAMILIES`. `Experiments.config_helpers` re-exports `build_model` only because old bundles record that path as their factory.
-- `NCA/` and `Common/` must not import from `Experiments/`. Values that come from the experiment config (e.g. W&B tags) are passed in through `TrainerContext`.
+The flow is: sweep YAML → manifest → `run_config.py` → OmegaConf →
+`Experiments.config.load_experiment_config` → frozen dataclasses →
+`entrypoint run(cfg)`. Details are in `docs/configuration.md`.
 
-## NCA trainer architecture (`docs/nca_trainer.md`)
+- The dataclasses use the YAML names: grid key `run.t` is `cfg.run.t`.
+  Sections are `system`, `data` (with `emoji|micropattern|snowmelt|pde`,
+  `knockout`), `model`, `run`, `trainer`, `optimiser`, `loss`, `logging`,
+  `model_store`, `initialization`.
+- Read fields as attributes; configs have no `.get()`.
+- Conversion is strict, and unknown keys fail. A new option needs a field
+  (with a default) in the right dataclass:
+  - `Experiments/config.py`;
+  - `NCA/model/config.py`;
+  - `NCA/trainer/config.py`;
+  - `Common/trainer/config.py`;
+  - or `Experiments/<task>/config.py`.
+- Current `schema_version: 10`. Old configs are translated **only** in
+  `Experiments/config.py:upgrade_legacy_config`. Renaming or removing a
+  setting needs a translation there and a version bump.
+- Never pass OmegaConf objects into `Common/` or `NCA/`. `NCA/` and `Common/`
+  must not import from `Experiments/`; values from the experiment config
+  reach them through `TrainerContext`.
+- `Experiments/config.py` must stay importable without JAX.
+- Check a manifest locally: load each `manifest.configs[i].config` with
+  `load_experiment_config` (snippet in `docs/workflow_micropatterns.md`).
 
-The flow is: entrypoint → `TrainerContext` + `ExperimentConfig` → `Experiments/nca_training.py:run_training` → `build_trainer` → `NcaTrainer.train` → `TrainingResult` → optional bundle publication.
+## NCA trainer (`docs/nca_trainer.md`)
 
-- User choices belong in frozen config dataclasses. Don't add new constructor or `train()` kwargs for options.
-- `TrainerContext` (`NCA/trainer/context.py`) holds only runtime values derived from data: boundaries, channel schemas, masks, names, paths and provenance.
-- `NcaTrainer.train` runs `preparation.prepare_training` (returns a frozen `PreparedTraining`; never changes the trainer) → `setup_logging` → `step.build_train_step` → `runner.run_loop`. `step.py` holds everything JAX traces (`batch_model`, `run_nca_steps`, `batch_loss`); `runner.py` holds the Python loop, pool admission and `BestCheckpoint`. See `docs/nca_trainer.md` for the full file table.
-- `NcaTrainer` keeps only the config sections it uses (`run_config`, `trainer_config`, `optimiser_config`, `loss_config`, `logging_config`, `knockout_config`), not the whole `ExperimentConfig`.
-- The compiled step covers rollout, gradient and optimiser update. Logging, pool admission and checkpoint decisions stay in Python, outside differentiated code.
-- Data augmenters follow `NCA/trainer/data_augmenter/protocols.py:NCAAugmenterProtocol` (`initialize_pool`, `advance_pool(x, y, i, key)`, `return_saved_data`, `return_observed_data`). Each entrypoint builds the augmenter from its loaded data (`build_data_augmenter`) and passes the instance in `TrainerContext.data_augmenter`. Options are constructor arguments; don't define augmenter subclasses inside functions. All randomness must come from the supplied key. Trajectory data is batched as `[batch, time, channels, H, W]`, and `data[:, 0]` is the initial condition.
+The call chain:
+```text
+Experiments/<task>/train.py:run(cfg)
+  → nca_training.run_training
+  → build_trainer → NcaTrainer.train → TrainingResult
+  → bundle published
+```
 
-## Model registry (`docs/model_registry.md`)
+`NcaTrainer.train` runs these steps:
+1. `preparation.prepare_training` (a frozen `PreparedTraining`; it never
+   changes the trainer);
+2. `setup_logging`;
+3. `step.build_train_step`;
+4. `runner.run_loop`.
 
-When `model_store.enabled` is set, training publishes an immutable bundle to `bundles/<collection>/<experiment>/<slug>--<id>/`. It contains `model.eqx`, `config.yaml` and `manifest.yaml`. The SQLite index is rebuilt with `python -m Experiments.model_registry reindex`, and `list` and `show <id>` inspect it. `bundle.load_model()` rebuilds the model from its saved `ModelConfig` through the recorded factory and checks the checksum. Saved configs must never be edited.
+Where the code goes:
+- `step.py`: everything JAX traces (rollout, loss, gradient, optimiser
+  update).
+- `runner.py`: the Python loop, pool admission, validation, logging and
+  `BestCheckpoint`. These stay outside differentiated code.
+- **User choices** go in frozen config dataclasses, never as new constructor
+  or `train()` arguments.
+- **`TrainerContext`** holds only runtime values derived from data:
+  boundaries, channel schemas, masks, names, paths, provenance and W&B tags.
+- **Augmenters** follow `data_augmenter/protocols.py:NCAAugmenterProtocol`
+  (`initialize_pool`, `advance_pool(x, y, i, key)`, `return_saved_data`,
+  `return_observed_data`).
+  - Each task builds one with `build_data_augmenter` and passes it in
+    `TrainerContext.data_augmenter`.
+  - Options are constructor arguments.
+  - All randomness comes from the supplied key.
+  - Data is `[batch, time, channels, H, W]`, and `data[:, 0]` is the initial
+    condition.
 
-## Code conventions
+## Common tasks
 
-- Models and trainers must stay `equinox.Module` and PyTree compatible. Avoid mutable state or Python side effects that break `jit`, `vmap` or `grad`. Use `eqx.filter_*` and `eqx.partition`/`combine` (see `AbstractModel.partition`).
-- Classes use CamelCase. Files and helpers use snake_case, grouped by prefix (`data_augmenter_*`, `update_*`, `*_trainer.py`, `loss_*.py`).
-- New code uses 4-space indentation and explicit imports. Many older model and trainer files use tabs. Match the file you are editing and don't reindent whole files.
-- **marimo notebooks** (`*.py` with `@app.cell`, found in `demo/`, `Experiments/*/*_explorer.py`, `Experiments/micropatterns/figures/`, `thesis_chapter_*_figures.py` and `WebDemo/marimo_app.py`): a global name can be defined in only one cell. Prefix cell-local names with `_`. `marimo_utils.py` holds shared helpers.
-- Tests are in `tests/unit/test_*.py` (pytest). Add or extend unit tests for config conversion, losses, augmenters and trainer components when you change them.
+- **Add a loss:**
+  - write the function (`Common/trainer/loss.py`, or `loss_micropattern.py`
+    if it depends on the channel layout);
+  - add it to `Common/trainer/loss_table.py:LOSSES` and
+    `Common/trainer/config.py:LOSS_TERM_CONFIGS` (an import-time check
+    compares them);
+  - add a test to `tests/unit/test_loss_table.py`;
+  - add a row to `docs/losses.md`.
+- **Add a regulariser:**
+  - write the function in `NCA/trainer/NCA_regulariser.py`;
+  - add its name to `NCA/trainer/preparation.py:_regularisers`;
+  - add it to `docs/losses.md`.
+- **Add a model option:**
+  - add a constructor argument stored as `eqx.field(static=True)`;
+  - add a `ModelConfig` field;
+  - pass it through in `NCA/model/factory.py`. A small variant of `NCA` is an
+    option plus a `MODEL_FAMILIES` entry (and `build_model_config_string`),
+    not a new class;
+  - run `tests/unit/test_model_factory.py`.
+- **Add a sweep:** copy the nearest file in `conf/experiments/`, give it a
+  new `_v1` name, generate its manifest from that one file, and check it.
+- **Add a figure:** a marimo notebook in `Experiments/micropatterns/figures/`
+  using `style.py` (`paper_style`, `WIDTH`, `save_figure`); add it to
+  `docs/figures.md`.
+- **Run a heavy notebook section remotely:** see
+  `docs/remote_notebook_jobs.md` (examples: `micropatterns/density_ko_sweep.py`,
+  `size_density_sweep.py`).
 
+## Checking a change
 
-## Style and aesthetic
-- This is a research codebase for academic use, not production software. Clarity, simplicity and ease-of-understanding (especially to potentially new 3rd parties) is crucial, so where possible, avoid unnecessarily complex design patterns
-- For any documentation or comments, avoid overly verbose software engineering terms
-- In general a compositional / functional programming approach is preferred over object inheretence, but this is not strict - instead prioritise using the design pattern that most cleanly matches the problem definition
-- For any marimo notebook, keep the text minimal. If there are text blocks written by humans, do not edit them - the roll of any LLM agent here is for software development. For any text you add, keep it to short bullet points
+- **Unit tests:** in `tests/unit/test_*.py`. Add or extend tests when you
+  change config conversion, losses, augmenters, models or trainer components.
+  Run the relevant file(s) only.
+- **Notebooks:** `marimo check <file>` after editing one.
+- **Trainer, models, losses, data or configs:** after changing any of these,
+  set `SMOKE_VERSION` in `Experiments/pipeline_smoke_test.py` to a label for
+  the change (e.g. `new-radial-loss`). Regenerate the smoke manifests with
+  `python Experiments/pipeline_smoke_test.py --dry-run`, and ask the person
+  to run the smoke test on EIDF.
+- **Models:** after any model change, check that old bundles still load:
+  `tests/unit/test_model_factory.py`, and `bundle.load_model()` on a real
+  bundle if one is available locally.
+
+## Code style
+
+- Clarity first: this is research code that new scientists will read.
+  - Prefer simple functions and composition to class hierarchies.
+  - Avoid design patterns that aren't needed.
+  - Keep comments and docs short and free of software-engineering jargon.
+- Models and trainers stay `equinox.Module` and PyTree compatible. Avoid
+  mutable state or side effects that break `jit`, `vmap` or `grad`. Use
+  `eqx.filter_*` and `eqx.partition`/`combine`.
+- Classes are CamelCase; files and functions snake_case.
+- New code uses 4-space indentation. Some older files use tabs: match the
+  file and don't re-indent whole files.
+- British spelling in new names (`optimiser`, `normalise`), except where an
+  existing API uses US spelling (`initialize_pool`).

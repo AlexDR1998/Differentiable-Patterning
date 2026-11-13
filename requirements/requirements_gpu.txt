@@ -1,34 +1,7 @@
-jax[cuda12]
-jaxlib
-equinox
-optax
-diffrax
-hydra-core>=1.3.2
-tqdm
-wandb
-wandb[media]
-einops
-# jaxpruner @ git+https://github.com/google-research/jaxpruner
-ott-jax==0.4.5
-pandas
-scikit-learn
-scikit-image
-scipy
-lpips-j==0.0.6
-matplotlib
-ipykernel
-ipywidgets
-ffmpeg-python
-imageio-ffmpeg
-nbformat
-flax
-orbax-checkpoint
-requests
-clip-jax
-transformers
-pyparsing
-PyYAML
-pytest
-marimo
-plotly
-anywidget
+# NVIDIA GPU install (CUDA 12):
+#     pip install -r requirements/requirements_gpu.txt
+#     pip install -e .
+# If JAX can't see the GPU, check the driver against the JAX install guide:
+# https://docs.jax.dev/en/latest/installation.html
+jax[cuda12]==0.6.0
+-r requirements_common.txt
