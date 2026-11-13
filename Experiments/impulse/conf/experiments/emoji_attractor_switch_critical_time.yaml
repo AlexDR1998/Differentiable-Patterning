@@ -12,7 +12,7 @@
 # run.t (e.g. 32, 64, 128, 256; NCA and gNCA). Each ID appears twice: once in
 # the grid and once in its branch. Placeholders must stay distinct until
 # replaced. Copy a slot and its branch for more models.
-experiment_name: emoji_attractor_switch_critical_time_v3
+experiment_name: emoji_attractor_switch_critical_time_v4
 entrypoint: Experiments.impulse.optimise:run
 output_subdir: generated/emoji_attractor_switch_critical_time
 seed_mode: index
@@ -23,16 +23,24 @@ transitions:
     impulse.pair_source.target_index: [1, 0]
 
 grid:
-  checkpoint.model_id:
-    - 20261012T170018Z-cfg870b44681de6-b96926b9  # rooster alien
+  # checkpoint.model_id:
+    # - 20261012T170018Z-cfg870b44681de6-b96926b9  # rooster alien
+  checkpoint.model_id:    
+    - 20261011T224424Z-cfg59e588bb3dd2-0c676e4b  # rooster lizard    
+    - 20261011T235939Z-cfgc50985d82674-84efd6fd  # alien lizard    
+    - 20261011T212704Z-cfgac53cc06242d-dd5c7149  # microbe lizard    
+    - 20261010T091124Z-cfg3d43ae592d45-7e84ae30  # microbe rooster    
+    - 20261010T015409Z-cfge3ae5935363e-8c8f88cd  # microbe alien    
+    - 20261012T170018Z-cfg870b44681de6-b96926b9  # rooster alien    
+    - 20261012T132346Z-cfg31699f23d032-82037ba5  # crab alien
   impulse.iterations: [4000]
   impulse.batch_size: [8]
   impulse.pair_source.type: [stable_attractor]
   impulse.pair_source.time_unit: [training_t]
-  impulse.pair_source.impulse_time: [0, 0.125, 0.25, 0.5, 0.75, 1.0, 1.5]
+  impulse.pair_source.impulse_time: [0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.7,0.8,0.9,1.0,1.25,1.5]
   # Mature source and target: 1.5-2 run.t, within the training horizon
   # (target_repeats: 2 trains the target to persist up to 2 run.t)
-  impulse.pair_source.stabilisation_steps: [[1.5, 2.0]]
+  impulse.pair_source.stabilisation_steps: [[2.0]]
   impulse.objective.type: [attractor_contrast]
   impulse.objective.contrast_weight: [0.1]
   impulse.rollout.steps: [256]
@@ -46,15 +54,18 @@ grid:
   impulse.intervention.channels: [all]
   impulse.repeat: [0]
   impulse.intervention.spatial: [patch]
-  impulse.intervention.patch_size: [5, 9]
+  impulse.intervention.patch_size: [5]
   # v3: start the patch at the lattice centre, where the pattern grows from
   # (v2 started at a random location)
   impulse.intervention.initial_location: [centre]
-  
+  logging.wandb.tags: [[attractors:2,]]
+groups:
+  - impulse.pair_source.source_index: [0, 1]
+    impulse.pair_source.target_index: [1, 0]
 
 # One branch per model: its transitions and W&B tags for filtering
-branches:
-  - when: {checkpoint.model_id: 20261012T170018Z-cfg870b44681de6-b96926b9}
-    grid: {logging.wandb.tags: [[attractors:2,]]}
-    groups: [*k2]
+# branches:
+  # - when: {checkpoint.model_id: 20261012T170018Z-cfg870b44681de6-b96926b9}
+    # grid: {logging.wandb.tags: [[attractors:2,]]}
+    # groups: [*k2]
   
