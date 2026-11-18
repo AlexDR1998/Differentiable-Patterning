@@ -1,0 +1,435 @@
+experiment_name: final_losses_proj_res_final_losses_v1
+count: 54
+configs:
+- index: 0
+  config:
+    model_ids:
+    - 20261030T162313Z-cfgd170a5309b76-cb6548a3
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 1
+  config:
+    model_ids:
+    - 20261030T162345Z-cfgad1ba55ece8b-560ae38e
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 2
+  config:
+    model_ids:
+    - 20261030T173217Z-cfgd1f8b9a43d1a-f48796bd
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 3
+  config:
+    model_ids:
+    - 20261030T184252Z-cfg11a7b6e64eb3-5af44625
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 4
+  config:
+    model_ids:
+    - 20261030T184817Z-cfgbe8a9adf7fc5-5a902bf5
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 5
+  config:
+    model_ids:
+    - 20261030T193357Z-cfgdd3ee56e877c-e0899c3b
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 6
+  config:
+    model_ids:
+    - 20261030T211224Z-cfg77514d33c714-2cd3c000
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 7
+  config:
+    model_ids:
+    - 20261031T021328Z-cfg682e941551b0-183c059c
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 8
+  config:
+    model_ids:
+    - 20261031T043124Z-cfgc6114c2beb4d-2667e5da
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 9
+  config:
+    model_ids:
+    - 20261031T074001Z-cfgdda2d44d289d-883e0f89
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 10
+  config:
+    model_ids:
+    - 20261031T123800Z-cfg78e59e32ce82-e3e67f28
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 11
+  config:
+    model_ids:
+    - 20261031T141746Z-cfg6df627783f6c-37970ef9
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 12
+  config:
+    model_ids:
+    - 20261031T183336Z-cfgaabc22987903-94973124
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 13
+  config:
+    model_ids:
+    - 20261031T213725Z-cfg9f39bb219510-0d20da34
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 14
+  config:
+    model_ids:
+    - 20261031T231724Z-cfgc6247058dae8-2f18b652
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 15
+  config:
+    model_ids:
+    - 20261101T020906Z-cfgc25fb1331165-74e50faa
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 16
+  config:
+    model_ids:
+    - 20261101T023800Z-cfg33e667a642ee-779a89c4
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 17
+  config:
+    model_ids:
+    - 20261101T031716Z-cfgf091ea5519c2-f1e2e2f1
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 18
+  config:
+    model_ids:
+    - 20261101T032401Z-cfgc75820792415-7f47a09a
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 19
+  config:
+    model_ids:
+    - 20261101T052019Z-cfg50aeb9e1003e-6d2e6e3d
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 20
+  config:
+    model_ids:
+    - 20261101T054613Z-cfgdf5d2b21da90-9aa15d42
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 21
+  config:
+    model_ids:
+    - 20261101T062841Z-cfg6c43f5aa5f55-35d9b536
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 22
+  config:
+    model_ids:
+    - 20261101T134633Z-cfg55762dc4550b-bc432467
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 23
+  config:
+    model_ids:
+    - 20261101T152526Z-cfg163741412629-f01d356e
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 24
+  config:
+    model_ids:
+    - 20261101T184125Z-cfgb6b7bde0d82c-519fe6ea
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 25
+  config:
+    model_ids:
+    - 20261101T192631Z-cfg1de5e945646d-38759687
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 26
+  config:
+    model_ids:
+    - 20261101T203057Z-cfgc86f6e6ac4eb-f86fac36
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 27
+  config:
+    model_ids:
+    - 20261102T033115Z-cfgb1f33a032dd8-6c0d3f6e
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 28
+  config:
+    model_ids:
+    - 20261102T050901Z-cfg938e6c595710-15e7bb14
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 29
+  config:
+    model_ids:
+    - 20261102T061037Z-cfg12b0769d233d-cee25976
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 30
+  config:
+    model_ids:
+    - 20261102T072125Z-cfg7d13115cdc56-f3806aa4
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 31
+  config:
+    model_ids:
+    - 20261102T092223Z-cfg15ea38ada746-e9186e5f
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 32
+  config:
+    model_ids:
+    - 20261102T170907Z-cfg4701ab36faea-e59727f7
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 33
+  config:
+    model_ids:
+    - 20261103T004509Z-cfg9d60ece41791-0d979c5c
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 34
+  config:
+    model_ids:
+    - 20261103T093302Z-cfg4d9b9805e160-06361c3d
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 35
+  config:
+    model_ids:
+    - 20261103T113736Z-cfge701aabd8e11-6439e80c
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 36
+  config:
+    model_ids:
+    - 20261103T130712Z-cfg55c81f41c573-b7ae835e
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 37
+  config:
+    model_ids:
+    - 20261103T130746Z-cfg25ddc91060ef-ed10f82d
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 38
+  config:
+    model_ids:
+    - 20261103T130753Z-cfg2e5ca374de85-ad73ace5
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 39
+  config:
+    model_ids:
+    - 20261103T135545Z-cfgd81346361709-55a7565d
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 40
+  config:
+    model_ids:
+    - 20261103T141008Z-cfg0e2cde2eb4de-cb00d954
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 41
+  config:
+    model_ids:
+    - 20261103T141618Z-cfg24f2cf42a8c3-5eb003af
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 42
+  config:
+    model_ids:
+    - 20261103T151224Z-cfg260a3c95af2d-1618f838
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 43
+  config:
+    model_ids:
+    - 20261103T151834Z-cfgb2e48913092a-3921b71f
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 44
+  config:
+    model_ids:
+    - 20261103T155731Z-cfg9bcecbd6b3e9-8689d500
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 45
+  config:
+    model_ids:
+    - 20261103T162324Z-cfg75c2169a0be7-4d781937
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 46
+  config:
+    model_ids:
+    - 20261103T162709Z-cfg4ba61938821f-a1db6230
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 47
+  config:
+    model_ids:
+    - 20261103T171915Z-cfg2a6be46d3dfd-179039be
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 48
+  config:
+    model_ids:
+    - 20261103T173419Z-cfg9241823c0d70-e1252596
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 49
+  config:
+    model_ids:
+    - 20261103T173643Z-cfg7aeab0b0d320-ac433a97
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 50
+  config:
+    model_ids:
+    - 20261103T180252Z-cfg70f7f1762e53-3c7b113f
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 51
+  config:
+    model_ids:
+    - 20261103T192843Z-cfg60bec93f5d2a-b18e76c1
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 52
+  config:
+    model_ids:
+    - 20261103T200536Z-cfg7bbb1888d49c-b4b40ca7
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
+- index: 53
+  config:
+    model_ids:
+    - 20261103T202618Z-cfgeba150c39400-396f372c
+    seed: 0
+    output_dir: /workspace/writeable/output/final_losses/proj_res_final_losses_v1
+    store_root: /home/alex/PhD/Differentiable-Patterning/models/
+    data_root: /home/alex/PhD/Data/
