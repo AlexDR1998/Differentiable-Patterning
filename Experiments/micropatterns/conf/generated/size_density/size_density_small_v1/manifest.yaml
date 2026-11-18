@@ -130,7 +130,7 @@ configs:
       - 4
       seed: 0
       duplicate_runs: 1
-      max_batch: 16
+      max_batch: 8
       include_true_data: true
       include_measured_density: true
       measured_replicates:
@@ -470,7 +470,7 @@ configs:
       - 4
       seed: 0
       duplicate_runs: 1
-      max_batch: 16
+      max_batch: 8
       include_true_data: true
       include_measured_density: true
       measured_replicates:
@@ -810,7 +810,7 @@ configs:
       - 4
       seed: 0
       duplicate_runs: 1
-      max_batch: 16
+      max_batch: 8
       include_true_data: true
       include_measured_density: true
       measured_replicates:
@@ -1150,7 +1150,7 @@ configs:
       - 4
       seed: 0
       duplicate_runs: 1
-      max_batch: 16
+      max_batch: 8
       include_true_data: true
       include_measured_density: true
       measured_replicates:
