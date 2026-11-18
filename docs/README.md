@@ -22,6 +22,7 @@
 | [notebooks.md](notebooks.md) | Find the notebook for a job. |
 | [remote_notebook_jobs.md](remote_notebook_jobs.md) | Run a slow notebook section on the cluster. |
 | [inverse_design.md](inverse_design.md) | Optimise colony geometry for a target cell-type mix. |
+| [finetune_ablation.md](finetune_ablation.md) | Compare fine-tuning with joint training, or add new conditions (e.g. cell densities). |
 | [handover.md](handover.md) | See where each project thread stood, and the known issues. |
 
 ## Reference

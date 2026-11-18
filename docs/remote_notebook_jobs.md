@@ -8,7 +8,8 @@ launchers, and loads the results back into the notebook.
 ## Pattern
 
 - **Move the heavy loop into a plain module** next to the notebook
-  (example: `Experiments/micropatterns/density_ko_sweep.py`).
+  (examples: `Experiments/micropatterns/density_ko_sweep.py`,
+  `finetune_ablation.py`).
   - Settings are a frozen dataclass (`DensityKoSettings`), and the work is a
     function `run_<thing>(settings, records, ...) -> results`.
   - The module does not import marimo.
@@ -72,6 +73,26 @@ chunks of "Rollouts per GPU batch" (`max_batch`).
 3. Copy `/workspace/writeable/output/size_density/<name>/` back to `output/size_density/<name>/`, then load that folder in the notebook.
 
 The pods need the stored nucleus segmentation (`nucleus_segmentation.py`) under the data root, as the density × KO sweep does.
+
+## Final losses
+
+`Experiments/micropatterns/figures/projection_resolution_figure.py` (module
+`final_losses.py`) recomputes each model's final training and validation loss.
+At fine resolutions this needs more GPU memory than a laptop has (the VGG
+features of the loss alone need over 1 GB at the finer resolutions).
+
+1. In the "Final losses" section, choose the models and the loss seed, then
+   click "Export remote job". This writes
+   `Experiments/micropatterns/conf/generated/final_losses/<name>/manifest.yaml`,
+   with one part per model by default ("Models per part").
+2. Optional: test one part locally:
+   `python Experiments/micropatterns/final_losses.py --manifest <manifest> --index 0`
+3. Launch it with:
+   `bash launch/launch_batch_multi_job.sh Experiments/micropatterns/final_losses.py <manifest> <workers> H200`
+4. Copy `/workspace/writeable/output/final_losses/<name>/` back to
+   `output/final_losses/<name>/`, then load that folder with "Load remote results".
+
+Each part stores only the loss values (a few kB per model).
 
 ## References in both sweeps
 

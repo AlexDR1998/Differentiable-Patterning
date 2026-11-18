@@ -28,7 +28,8 @@ files in the repository.
 | Notebook | What it is for | Needs | Status |
 | --- | --- | --- | --- |
 | `data_cleaning.py` | Tune the cleaning of the 260726 images; exports the cleaning settings, alignment and cell-type files. Very large. | data | maintained |
-| `nodal_ko_eval.py` | Evaluate a selection under Nodal knockouts: cell-type prevalence, knockout time and density sweeps; exports data for `overview_figure.py`. | data, store, selection | maintained |
+| `finetune_ablation_explorer.py` | Evaluate the fine-tune vs joint training ablation the same way for every model, and plot it ([finetune_ablation.md](finetune_ablation.md)). | data, store, selection | maintained |
+| `nodal_ko_eval.py` | Evaluate a selection under Nodal knockouts: cell-type prevalence, knockout time and density sweeps (with the 250K colonies as a held-out test); exports data for `overview_figure.py`. | data, store, selection | maintained |
 | `size_density_explorer.py` | Sweep colony size × cell density; radial kymographs. | data, store, selection | maintained |
 | `ablation_comparison.py` | Compare the ablation sweep runs from their W&B logs and by running the bundles. | W&B, store, data | maintained |
 | `augmenter_explorer.py` | See what the micropattern augmenter does to the training data. | data | maintained |
@@ -55,6 +56,7 @@ files in the repository.
 | --- | --- | --- | --- |
 | `impulse_explorer.py` | Look at optimised impulses on an emoji NCA. | store | maintained |
 | `impulse_sweep_explorer.py` | Compare impulse sweep runs. | store | maintained |
+| `impulse_critical_time.py` | Switch rate against impulse time: when an attractor can no longer be switched. | store | maintained |
 
 ## Snowmelt (`Experiments/snowmelt/`)
 

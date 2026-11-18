@@ -14,7 +14,7 @@ ExperimentConfig                 (Experiments/config.py)
 ├── system: SystemConfig         precision, gpu, xla_flags
 ├── data: DataConfig             dataset, batches, downsample
 │   ├── emoji | micropattern | snowmelt | pde   (whichever matches data.dataset)
-│   └── knockout: KnockoutConfig          curriculum, channel, mode, time
+│   └── knockout: KnockoutConfig          curriculum, curriculum_weights, channel, mode, time
 ├── model: ModelConfig           (NCA/model/config.py)
 ├── run: RunConfig               t, iterations, checkpoint_warmup_fraction, ...
 ├── trainer: TrainerConfig       (NCA/trainer/config.py), incl. pool_admission

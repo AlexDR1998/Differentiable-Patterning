@@ -11,35 +11,35 @@ results are, and what is next.
 
 ### Micropattern NCA paper
 
-- **Question:** TODO(handover)
-- **Models:** TODO(handover). Which experiments and selection files the
-  paper figures use.
-- **Figures:** see [figures.md](figures.md). TODO(handover): which are
-  final, which still need work.
+- **Question:** Can NCA be trained to capture pattern formation dynamics from real biological images (yes)? Can these models be useful for predicting and extrapolating new experimental settings (maybe)?
+- **Models:** [Experiments/model_registr_explorer.py](Experiments/model_registr_explorer.py) is used to filter, select and bundle (as a yaml file) groups of models. It filters by any configuration tag from the training config yaml files.
+- **Figures:** see [figures.md](figures.md)
 - **Open sweeps:** TODO(handover). Knockout time × density, and size ×
   density inference sweeps (`Experiments/micropatterns/conf/generated/density_ko/`,
   `size_density/`).
-- **Next steps:** TODO(handover)
+- **Next steps:** Write paper given existing figures. Also see Inverse Design subsection
 
 ### Impulses
 
-TODO(handover): critical-time sweeps, emoji attractor switching.
+Work with Can. Finding impulses (bounded/local in space and time) to NCA trajectory rollouts that induce transitions between multiple stable attractor states.
+
+ critical-time sweeps, emoji attractor switching.
 
 ### Inverse design
 
-TODO(handover); see [inverse_design.md](inverse_design.md).
+Gradient based optimisation of initial conditions (currently just micropattern geometry), to maximise the production of specific cell types. See [inverse_design.md](inverse_design.md).
 
 ### Signalling NCAs, snowmelt, PDEs
 
-TODO(handover)
+Some half-baked ideas in [Experiments/signalling](Experiments/signalling) - specifically introducing different biologically motivated signalling mechanisms to specific NCA channels.
 
-## People and accounts
+Snowmelt - this will be it's own minimal git branch, so painter et al can more easily use it
 
-- EIDF project and PI: TODO(handover)
-- W&B entity and projects: TODO(handover)
-- Docker Hub image `alexdr1998/jax_equinox_scratch`: TODO(handover). Who
-  can push to it, and where its Dockerfile is.
-- Where the raw data comes from, and who to ask about it: TODO(handover)
+
+## Python Environment
+
+- For running on EIDF, you need a docker image. The existing Docker Hub image `alexdr1998/jax_equinox_scratch` currently handles all the python dependancies on EIDF for this codebase. For any major changes (i.e. new python library has a feature we really need), I suggest learning to build your own docker image.
+- For running locally, the base requirements are in [requirements/requirements_common.txt](requirements/requirements_common.txt). [TODO-LLM] add pip install instructions here
 
 ## Known issues in the code
 
@@ -49,31 +49,15 @@ they are worth knowing before you build on the code.
 - **Clock-seeded random keys.** About 13 functions
   (`NCA.__init__`, `NCA.__call__`, `NCA.run`, and the same in `HNCA`,
   `SignalNCA`, `FastKaNCA` and a few loaders) make a key from the clock when
-  given `key=None`, with no warning. Always pass a key when results must be
-  repeatable.
+  given `key=None`, with no warning. Good practice with JAX code is to akways explicitely declare a random number key
 - **Loss names.** `sliced_wasserstein_full` and `spectral_wasserstein_full`
   (`Common/trainer/loss.py:wasserstein_projected`,
   `spectral_wasserstein_projected`) don't sort their projections, so they
-  are not Wasserstein distances. `LPIPS_OT_SP` in `Common/trainer/loss_vgg.py`
-  sorts along the channel axis after a spatial projection; check that this
-  is intended.
-- **Unchecked axes.** `Common/model/spatial_operators.py` has
-  `TODO: check the axes are correct here` in a vector operator used only by
-  the (unused) Navier-Stokes model.
-- **Smoke tests depend on the shared store.**
-  `smoke_micropatterns_ko_finetune.yaml` and `smoke_impulse.yaml` name parent
-  model IDs that exist only in the current model store. With a new store,
-  replace them with models trained by the emoji and micropattern smoke runs.
-- **Some sweep files no longer match their tracked manifests.** The sweep was
-  edited after it ran. The manifest in `conf/generated/` is the record of
-  what actually ran. `nca_loss_cache_debug.yaml` no longer converts.
-- **One manifest folder is shared by two sweeps.**
-  `emoji_multi_attractor_outsource.yaml` and
-  `emoji_multi_attractor_stability_data_wide_sweep.yaml` both write to
-  `generated/emoji_multi_attractor_outsource/`.
-- **Machine paths in manifests.** Older manifests store `sweep_file` and
-  `base_config` as absolute paths on the previous owner's laptop. These are
-  only records and are not used when running.
+  are not Wasserstein distances. Currently unused.
+- `multi_target` (`NCA/trainer/loss_multi_target.py`) works for the number of 
+  data replicates we train on now, but will scale poorly for larger batch sizes.
+  This is due to comparing each combination of prediction and data - we probably 
+  need a smarter optimal transport style comparison before scaling to many replicates
 
 ## Possible clean-up
 

@@ -113,6 +113,13 @@ Each part can have its own schedule (`multi_target_schedules`).
 `Experiments/micropatterns/conf/experiments/nca_nodal_ko_projections_finetune.yaml`
 is a full example.
 
+Colonies are only matched within one condition (one curriculum entry, e.g.
+`ko_0h`). Every ordering within a condition is tried, so keep each condition
+to a few colonies. To weight conditions, use
+`data.knockout.curriculum_weights` (e.g. `{baseline: 4, ko_0h: 1, ko_24h: 1}`)
+rather than repeating curriculum entries. The batch loss is then a weighted
+mean; validation losses are not weighted.
+
 ## Regularisers
 
 Set a weight above 0 under `loss.regularisers` to switch one on. The code is

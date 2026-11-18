@@ -30,6 +30,7 @@ save_figure(fig, "my_figure", "schematics")  # figures/schematics/my_figure.pdf 
 - Don't write colours, font sizes or colour maps in notebooks; take them from `style.py`. To change the look of every figure, change `style.py`.
 - Notebooks keep only widgets that choose content (models, groups, panels, zoom), not colours or fonts.
 - Fluorescence channels use `MARKER_COLOURS`, shown per group as in `FIGURE_CHANNELS` (`group_colours`).
+- Zoom boxes and their magnified views use the black and white striped outline `ZOOM_OUTLINE` (`drawing.draw_zoom_outline`, `drawing.frame_zoom_axes`).
 - The line colours and cell-type colours were checked for colour-blind separation.
 
 ## Text roles
@@ -50,8 +51,8 @@ save_figure(fig, "my_figure", "schematics")  # figures/schematics/my_figure.pdf 
 | Notebook | Figure | Saved to |
 | --- | --- | --- |
 | `imaging_schematic.py` | 3D stack → slice, max and sum projections | `figures/schematics/` |
-| `projection_resolution_figure.py` | NCA trajectories per projection and per resolution | `figures/schematics/` |
-| `nodal_ko_schematic.py` | True data and NCA trajectories under NODAL knockout (drawing code in `ko_trajectory.py`) | `figures/schematics/` |
+| `projection_resolution_figure.py` | NCA trajectories per projection and per resolution, a projection × resolution grid at one timepoint, final training and validation losses of all selected models (table per projection × Δ), and 48h snapshots above a bar chart of those losses per projection or per resolution (`Experiments/micropatterns/final_losses.py`) | `figures/schematics/` |
+| `nodal_ko_schematic.py` | True data and NCA trajectories under NODAL knockout (drawing code in `ko_trajectory.py`), and an mp4 of the NCA rollouts for slides (`ko_video.py`) | `figures/schematics/` |
 | `project_overview.py` | Project overview schematic (imaging, training, perturbations) | `figures/schematics/` |
 | `nca_training_schematic.py` | NCA update step and training schematic | `figures/schematics/` |
 | `loss_schematic.py` | Loss functions schematic | `figures/schematics/` |
@@ -68,10 +69,10 @@ exported from `Experiments/model_registry_explorer.py`
 | --- | --- | --- | --- |
 | `imaging_schematic.py` | yes | | one 3D stack (`MICROPATTERN_3D_STACK`) |
 | `loss_schematic.py` | yes | | |
-| `nca_training_schematic.py` | | | toy data only |
+| `nca_training_schematic.py` | optional | optional (rollout version of panel b) | toy data by default |
 | `project_overview.py` | yes | | |
 | `nodal_ko_schematic.py` | yes | selection | |
-| `projection_resolution_figure.py` | yes | two selections (per projection, per resolution) | |
+| `projection_resolution_figure.py` | yes | four selections (per projection, per resolution, both, final losses) | losses cached in `figures/cache/` |
 | `overview_figure.py` | yes | selection | exports from `nodal_ko_eval.py`, saved into `figures/overview/`: **run `nodal_ko_eval.py` first** |
 
 Slow results (rollouts) are cached as pickles in `figures/cache/` and

@@ -194,10 +194,24 @@ groups:
 
 - **Parent:** `initialization.model_id` names the parent bundle, which pods
   load from the shared store. Find IDs in `model_registry_explorer.py`.
-- **Matching settings:** the run stops early if the parent's projection, data
-  cleaning or model settings differ from the fine-tuning config.
+- **Matching settings:** the run stops before loading data if the child
+  doesn't read the data as its parent did: model, resolution, `run.t`,
+  projection, cleaning, normalisation, left-out channels or training
+  replicates (`Experiments/micropatterns/finetune.py:check_parent_compatible`).
 - **Same replicate split:** keep the parent's train/validation split, so
   validation colonies stay unseen.
+- **Write new fine-tune sweeps from a template** instead of copying settings
+  by hand. The template holds only the new settings and
+  `initialization.model_id: [FROM_PARENTS]`, and lives in
+  `conf/experiments/finetune_templates/`. Then:
+  ```bash
+  python -m Experiments.micropatterns.finetune <template.yaml> \
+      --selection <selection of parents> --out <sweep.yaml>
+  ```
+  This writes one `groups:` row per parent, copying the parent's settings,
+  and checks every run. The tutorial `demo/finetuning_workflow.py` shows the
+  whole workflow, and [finetune_ablation.md](finetune_ablation.md) compares it
+  with joint training.
 - **Paper models:** the sweep file is now at `v3_sum`. Older versions
   survive as tracked manifests in `conf/generated/`
   (`nca_nodal_ko_projections_finetune/` holds v2).
@@ -212,7 +226,7 @@ groups:
 | `DATA_PATH_BASE must be set` | `.env` missing locally, or running outside a pod without the variable. |
 | Pod `Pending` for a long time | No free GPUs of that type; try another type, or wait. `kubectl describe pod` shows why. |
 | Pod `OOMKilled` or CUDA out of memory | Batch, resolution or `run.t` too large. Try `trainer.loop_autodiff: checkpointed` (slower, less memory) or a smaller batch. |
-| Run stops: parent settings differ | The fine-tuning config does not match the parent bundle (projection, cleaning, channels). |
+| Run stops: "does not fit this run" | The fine-tuning config does not match the parent bundle; the message names each setting. Often the base config changed after the parent was trained. Write the sweep with `Experiments/micropatterns/finetune.py`. |
 | `verify_evaluation_input` fails | The data or cleaning changed since the model was trained. |
 | A notebook is very slow the first time | JAX compiles each new shape once. The second run is fast. |
 
