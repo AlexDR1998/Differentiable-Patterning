@@ -1,0 +1,61 @@
+# Tutorial (demo/finetuning_workflow.py), step 1: a small wild-type baseline.
+# Two runs, one per replicate split, at the coarsest resolution (ds32) so
+# they finish quickly. A real baseline sweep is
+# Experiments/micropatterns/conf/experiments/micropattern_projections_training_sweep.yaml.
+experiment_name: tutorial_finetune_baseline_v1
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/tutorial_finetune_baseline_v1
+seed_mode: index
+
+grid:
+  run.repeat: [0]
+  logging.wandb.project: [nca_tutorial]
+  labels.gpu: [H200]
+
+  # The model
+  model.family: [gNCA]
+  model.channels: [48]
+  system.precision: [bfloat16]
+
+  # The data: every experiment group, sum projections with the stripe filter
+  # the sum images need, at downsample 32 (run.t = 128 * 16 / 32)
+  data.dataset: [micropatterns_260726]
+  data.micropattern.data_channels: [13]  # 14 minus cell_fate_s2/SOX17 (excluded in base_config)
+  data.micropattern.experiment_groups:
+    - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+  data.micropattern.projection: [sum]
+  data.micropattern.cleaning.horizontal_stripe_widths:
+    - {cell_fate_s1/TBXT: 10, cell_fate_s2/TBXT: 10}
+  data.micropattern.cleaning.stripe_block: [270]
+  data.downsample: [32]
+  run.t: [64]
+  data.batches: [2]
+
+  # Baseline (control) colonies only
+  data.knockout.curriculum: [null]
+
+  # Training
+  run.iterations: [4000]
+  run.write_videos: [false]
+  optimiser.learn_rate: [1e-4]
+  optimiser.type: [nadam]
+  optimiser.gradient_clip_norm: [1.0]
+  trainer.loop_autodiff: [lax]
+  trainer.validation_every: [500]
+  trainer.validation_rollout: [true]
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [0.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.random_channel_shuffle: [true]
+
+groups:
+  # Train on one pair of replicates and hold out the other pair
+  - data.micropattern.train_replicates:
+      - [1, 2]
+      - [3, 4]
+    data.micropattern.validation_replicates:
+      - [3, 4]
+      - [1, 2]

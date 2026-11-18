@@ -1,0 +1,9 @@
+# Example selection, in the format model_registry_explorer.py exports. This
+# model is the sum-projection ds32 wild-type baseline of
+# nca_micropattern_projections_baseline_v3 (in the shared model store), used
+# as a parent by nca_nodal_ko_projections_finetune_v3_sum.
+schema_version: 1
+model_count: 1
+models:
+  - model_id: 20261027T143308Z-cfgb505b3517573-a92c347a
+    experiment: nca-micropattern-projections-baseline-v3

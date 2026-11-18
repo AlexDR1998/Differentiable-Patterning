@@ -4559,6 +4559,519 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(mo, selection, trajectories, trajectory_label):
+    from Experiments.micropatterns import density_test_data as heldout
+
+    # 150K colonies with a cell_fate_s2 image at 48h, to compare with
+    _comparable = [_t for _t in trajectories if ("cell_fate_s2", 48) in trajectories[_t]]
+    # One replicate of each condition to start with
+    _first = {}
+    for _t in _comparable:
+        _first.setdefault(_t[0], _t)
+    heldout_folder = mo.ui.text(
+        str(selection["root"].parent / heldout.TEST_FOLDER),
+        label="Folder of the 250K colonies",
+        full_width=True,
+    )
+    heldout_trajectories = mo.ui.multiselect(
+        options={trajectory_label(_t): _t for _t in _comparable},
+        value=[trajectory_label(_t) for _t in _first.values()],
+        label="150K colonies at 48h",
+        full_width=True,
+    )
+    heldout_normalisation = mo.ui.dropdown(
+        {_label: _mode for _mode, _label in heldout.NORMALISATIONS.items()},
+        value=heldout.NORMALISATIONS["joint"],
+        label="250K normalisation",
+    )
+    heldout_show = mo.ui.checkbox(value=False, label="Show the 250K colonies")
+    heldout_show_channels = mo.ui.checkbox(value=False, label="Also show each marker after thresholding")
+    mo.vstack([
+        mo.md(
+            "### 250K colonies beside the 150K colonies\n\n"
+            "- 250K-plated colonies (`density_test_data.py`), one per Nodal KO time, fixed at 48h; only SOX17, TBXT, FOXA2 (and LMBR) imaged\n"
+            "- Shown with the `cell_fate_s2` panel of the chosen 150K colonies, both with the current cleaning, mask, percentile and threshold controls\n"
+            "- Each panel (S2: SOX17, TBXT, FOXA2; S1: SOX17, SOX2, TBXT) uses only the rule rows its markers can check, as \"each stain on its own\" above; the 250K colonies have no S1 panel\n"
+            "- Bars per panel, with that panel's rules, to judge which panel to trust for which experiment\n"
+            "- The 250K images have no 0h image, so their normalisation is a choice: joint over the KO times, per image, or matched to the chosen 150K KO 24h colonies"
+        ),
+        heldout_folder,
+        heldout_trajectories,
+        mo.hstack([heldout_normalisation, heldout_show, heldout_show_channels], justify="start"),
+    ])
+    return (
+        heldout,
+        heldout_folder,
+        heldout_normalisation,
+        heldout_show,
+        heldout_show_channels,
+        heldout_trajectories,
+    )
+
+
+@app.cell(hide_code=True)
+def _(heldout, heldout_folder, mo, selection):
+    from Common.dataloader.micropattern_schemas import (
+        DEFAULT_260726_BACKGROUND_RADII as _radii,
+        DEFAULT_260726_HOT_PIXEL_THRESHOLDS as _thresholds,
+    )
+
+    # Pre-processing of the 250K colonies only, tuned by hand. Starts from
+    # the training defaults; the 150K controls above are not changed.
+    heldout_hours = list(heldout.test_image_paths(heldout_folder.value.strip(), selection["projection"]))
+    _names = heldout.source_names()
+    heldout_brightness = mo.ui.dictionary({
+        _name: mo.ui.dictionary({
+            str(_hour): mo.ui.number(start=0.05, stop=10.0, step=0.05, value=1.0)
+            for _hour in heldout_hours
+        })
+        for _name in _names
+    })
+    heldout_hot_thresholds = mo.ui.dictionary({
+        _name: mo.ui.number(start=0, stop=200, step=1, value=float(_thresholds.get(_name, 0)))
+        for _name in _names
+    })
+    heldout_background_radii = mo.ui.dictionary({
+        _name: mo.ui.number(start=0, stop=200, step=1, value=int(_radii.get(_name, 0)))
+        for _name in _names
+    })
+    heldout_hot_window = mo.ui.number(start=3, stop=15, step=2, value=5, label="Hot pixel window (pixels)")
+    heldout_own_cleaning = mo.ui.checkbox(
+        value=True, label="Use these hot pixel and background settings (else the 150K ones above)"
+    )
+    _header = mo.hstack(
+        [mo.md("**Channel**")]
+        + [mo.md(f"**× KO {_h}h**") for _h in heldout_hours]
+        + [mo.md("**Hot pixel threshold**"), mo.md("**Background radius**")],
+        widths="equal",
+    )
+    _rows = [
+        mo.hstack(
+            [mo.md(_name.split("/")[1])]
+            + [heldout_brightness[_name][str(_h)] for _h in heldout_hours]
+            + [heldout_hot_thresholds[_name], heldout_background_radii[_name]],
+            widths="equal",
+        )
+        for _name in _names
+    ]
+    mo.vstack([
+        mo.md(
+            "#### 250K pre-processing\n\n"
+            "- **Brightness** (×): multiplies one channel of one colony before cleaning, like the 260726 intensity factors. "
+            "Use it when one colony is dimmer than the others; a factor on every colony of a channel cancels out in the normalisation\n"
+            "- **Hot pixel threshold**: noise levels above the local median (0 = off); brightness does not change which pixels are hot\n"
+            "- **Background radius**: rolling-ball radius in full-resolution pixels (0 = off)\n"
+            "- Stripes, mask size and percentiles follow the 150K controls above"
+        ),
+        heldout_own_cleaning,
+        heldout_hot_window,
+        _header,
+        *_rows,
+    ])
+    return (
+        heldout_background_radii,
+        heldout_brightness,
+        heldout_hot_thresholds,
+        heldout_hot_window,
+        heldout_hours,
+        heldout_own_cleaning,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    cleaning_settings,
+    heldout_background_radii,
+    heldout_brightness,
+    heldout_hot_thresholds,
+    heldout_hot_window,
+    heldout_own_cleaning,
+    radius_scale,
+):
+    from types import SimpleNamespace as _Namespace
+
+    # The cleaning of the 250K colonies: this section's hot pixel and
+    # background settings (or the 150K ones), with the 150K stripes and mask
+    _own = heldout_own_cleaning.value
+    heldout_cleaning = _Namespace(
+        hot_pixel_thresholds=heldout_hot_thresholds.value if _own else cleaning_settings["hot_thresholds"],
+        hot_pixel_window=int(heldout_hot_window.value) if _own else cleaning_settings["hot_size"],
+        horizontal_stripe_widths=cleaning_settings["h_stripes"],
+        vertical_stripe_widths=cleaning_settings["v_stripes"],
+        stripe_block=cleaning_settings["stripe_block"],
+        background_radii=heldout_background_radii.value if _own else cleaning_settings["radii"],
+        background_shrink=cleaning_settings["shrink"],
+        mask_radius_scale=radius_scale.value,
+    )
+    # {channel name: {hour: factor}}
+    heldout_brightness_values = {
+        _name: {int(_hour): float(_factor) for _hour, _factor in _factors.items()}
+        for _name, _factors in heldout_brightness.value.items()
+    }
+    return heldout_brightness_values, heldout_cleaning
+
+
+@app.cell(hide_code=True)
+def _(
+    DISPLAY_DOWNSAMPLE,
+    heldout,
+    heldout_brightness_values,
+    heldout_cleaning,
+    heldout_folder,
+    heldout_normalisation,
+    heldout_show,
+    heldout_trajectories,
+    high_percentiles,
+    live_channel,
+    loaded_names,
+    low_percentiles,
+    mo,
+    np,
+    pattern_radius,
+    selection,
+):
+    # The 250K colonies with the current cleaning and normalisation controls
+    # (thresholds only matter in the next cell, so moving them is quick)
+    from Common.dataloader.micropattern_schemas import DEFAULT_260726_HISTOGRAM_PERCENTILES as _default
+
+    mo.stop(not heldout_show.value)
+    _paths = heldout.test_image_paths(heldout_folder.value.strip(), selection["projection"])
+    mo.stop(
+        not _paths,
+        mo.callout(
+            f"No {heldout.FILE_PREFIXES[selection['projection']]}_KO<hour>.tif files in `{heldout_folder.value}`.",
+            kind="warn",
+        ),
+    )
+    # Channels not loaded here (e.g. left out) keep the training default
+    _percentiles = {
+        _name: (
+            (low_percentiles.value[_name], high_percentiles.value[_name])
+            if _name in low_percentiles.value else tuple(_default)
+        )
+        for _name, _ in heldout.group_channels()
+    }
+    _reference = None
+    heldout_reference_note = ""
+    if heldout_normalisation.value == "match_150k":
+        _ko24 = [_t for _t in heldout_trajectories.value if _t[0] == "sl24"]
+        mo.stop(
+            not _ko24,
+            mo.callout("Choose at least one 150K KO 24h colony to match the 250K colonies to.", kind="warn"),
+        )
+        _names = [
+            _n for _n in loaded_names
+            if _n.split("/")[0] in ("cell_fate_s1", "cell_fate_s2")
+            and _n.split("/")[1] in heldout.FILE_MARKERS
+        ]
+        _images, _masks = [], []
+        for _t in _ko24:
+            _stack = []
+            for _n in _names:
+                _image, _mask = live_channel(_n, _t)[1][48]
+                _stack.append(_image)
+            _images.append(np.stack(_stack))
+            _masks.append(_mask)
+        _reference, _sources = heldout.reference_ranges(_images, _masks, _names, _percentiles)
+        heldout_reference_note = "; ".join(
+            f"{_n} matched to {_s}" for _n, _s in _sources.items() if _n != _s
+        )
+    with mo.status.spinner("Cleaning the 250K colonies"):
+        heldout_colonies = heldout.process_test_images(
+            _paths,
+            heldout.reference_pixel_size_um(selection["root"], selection["projection"]),
+            heldout_cleaning,
+            _percentiles,
+            pattern_radius,
+            DISPLAY_DOWNSAMPLE,
+            heldout_normalisation.value,
+            _reference,
+            brightness=heldout_brightness_values,
+        )
+    # Share of pixels the hot pixel step replaced, per colony and channel
+    mo.vstack([
+        mo.md("Pixels replaced as hot (% of each image):"),
+        mo.ui.table(
+            [
+                {"colony": f"KO {_h:g}h"}
+                | {
+                    _n.split("/")[1]: round(100 * float(_share), 3)
+                    for _n, _share in zip(heldout_colonies["channel_names"], _shares)
+                }
+                for _h, _shares in zip(heldout_colonies["hours"], heldout_colonies["hot_shares"])
+            ],
+            selection=None,
+        ),
+    ])
+    return heldout_colonies, heldout_reference_note
+
+
+@app.cell(hide_code=True)
+def _(heldout, mo):
+    from Experiments.micropatterns.figures.style import MARKER_COLOURS as _marker_colours
+
+    heldout_preview_channels = mo.ui.multiselect(
+        options={_name.split("/")[1]: _name for _name in heldout.source_names()},
+        value=[_m for _m in ("SOX17", "TBXT", "FOXA2")],
+        label="Channels in the preview (standard colours; LMBR grey)",
+    )
+    heldout_preview_hot = mo.ui.checkbox(value=False, label="Mark blocks where pixels were replaced as hot (red)")
+    mo.hstack([heldout_preview_channels, heldout_preview_hot], justify="start")
+    return heldout_preview_channels, heldout_preview_hot
+
+
+@app.cell(hide_code=True)
+def _(
+    DISPLAY_DOWNSAMPLE,
+    heldout_colonies,
+    heldout_preview_channels,
+    heldout_preview_hot,
+    mo,
+    np,
+    plt,
+    show_figure,
+):
+    from Experiments.micropatterns.figures.style import marker_colour as _marker_colour
+
+    # Every 250K colony after cleaning and normalisation, the chosen channels
+    # added like light in their standard colours
+    _names = list(heldout_colonies["channel_names"])
+    _chosen = [_n for _n in _names if _n in heldout_preview_channels.value]
+    mo.stop(not _chosen, mo.md("Choose at least one channel."))
+    _count = len(heldout_colonies["hours"])
+    _columns = len(_chosen) + 1
+    _figure, _axes = plt.subplots(
+        _count, _columns, figsize=(2.4 * _columns, 2.4 * _count), squeeze=False
+    )
+    for _row, (_hour, _image, _mask, _hot) in enumerate(zip(
+        heldout_colonies["hours"], heldout_colonies["images"], heldout_colonies["mask"], heldout_colonies["hot_shares"]
+    )):
+        _composite = np.zeros((*_mask.shape, 3))
+        for _column, _name in enumerate(_chosen, start=1):
+            _index = _names.index(_name)
+            _colour = np.asarray(_marker_colour(_name) or (0.6, 0.6, 0.6))
+            _values = np.where(_mask, _image[_index], 0.0)
+            _composite += _values[..., None] * _colour
+            _axis = _axes[_row, _column]
+            _axis.imshow(np.clip(_values[..., None] * _colour, 0, 1))
+            if heldout_preview_hot.value:
+                # Blocks where any pixel was replaced as hot
+                _hot_blocks = np.ma.masked_where(
+                    heldout_colonies["hot_maps"][_row, _index] <= 0, np.ones(_mask.shape)
+                )
+                _axis.imshow(_hot_blocks, cmap="autumn", vmin=0, vmax=1, alpha=0.8, interpolation="nearest")
+            _axis.set_title(
+                f"{_name.split('/')[1]} (hot {100 * _hot[_index]:.2f}%)", fontsize=7
+            )
+        _axes[_row, 0].imshow(np.clip(_composite, 0, 1))
+        _axes[_row, 0].set_title("Merged", fontsize=7)
+        _axes[_row, 0].set_ylabel(f"KO {_hour:g}h", fontsize=9)
+        for _axis in _axes[_row]:
+            _axis.contour(_mask, levels=[0.5], colors="0.4", linewidths=0.4)
+            _axis.set_xticks([])
+            _axis.set_yticks([])
+    _figure.suptitle(
+        f"250K colonies after cleaning and normalisation (blocks of {DISPLAY_DOWNSAMPLE} pixels)",
+        fontsize=9,
+    )
+    _figure.tight_layout()
+    show_figure(_figure)
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    CELL_TYPE_COLOURS,
+    CONDITION_COLOURS,
+    cell_type_problem,
+    cell_type_rules,
+    classify_within_stain,
+    heldout,
+    heldout_colonies,
+    heldout_reference_note,
+    heldout_show_channels,
+    heldout_trajectories,
+    label_names,
+    live_channel,
+    loaded_names,
+    mo,
+    np,
+    plt,
+    radial_ring_count,
+    show_figure,
+    trajectory_label,
+):
+    mo.stop(cell_type_problem is not None, mo.callout(cell_type_problem, kind="warn"))
+    # The two cell-fate panels, each labelled with only the rule rows it can check
+    _panels = {
+        "cell_fate_s2": ("SOX17", "TBXT", "FOXA2"),
+        "cell_fate_s1": ("SOX17", "SOX2", "TBXT"),
+    }
+    _missing = [
+        f"cell_fate_s2/{_m}" for _m in _panels["cell_fate_s2"] if f"cell_fate_s2/{_m}" not in loaded_names
+    ]
+    mo.stop(
+        bool(_missing) and bool(heldout_trajectories.value),
+        mo.callout(
+            "To compare like for like, load " + ", ".join(f"`{_n}`" for _n in _missing)
+            + " (untick it under the left-out channels and reload).",
+            kind="warn",
+        ),
+    )
+    _names = label_names(cell_type_rules)
+    _colours = np.array([CELL_TYPE_COLOURS.get(_name, (1.0, 1.0, 1.0)) for _name in _names])
+    _restricted = {
+        _panel: heldout.stain_rules(cell_type_rules, _markers, _panel) for _panel, _markers in _panels.items()
+    }
+
+    def _panel_images(trajectory, panel):
+        """``({marker: image}, mask)`` of one 150K colony's panel at 48h, or None."""
+        _values = {}
+        for _m in _panels[panel]:
+            _name = f"{panel}/{_m}"
+            if _name not in loaded_names:
+                return None
+            _images = live_channel(_name, trajectory)[1]
+            if 48 not in _images:
+                return None
+            _values[_m], _mask = _images[48]
+        return _values, _mask
+
+    # One column per colony: (title, title colour, {panel: ({marker: image}, mask) or None})
+    _columns = [
+        (
+            trajectory_label(_t),
+            CONDITION_COLOURS[_t[0]],
+            {_panel: _panel_images(_t, _panel) for _panel in _panels},
+        )
+        for _t in heldout_trajectories.value
+    ]
+    _channel_names = list(heldout_colonies["channel_names"])
+    for _hour, _image, _mask in zip(
+        heldout_colonies["hours"], heldout_colonies["images"], heldout_colonies["mask"]
+    ):
+        _values = {_m: _image[_channel_names.index(f"cell_fate_s2/{_m}")] for _m in _panels["cell_fate_s2"]}
+        _columns.append((f"250K KO {_hour:g}h", "black", {"cell_fate_s2": (_values, _mask), "cell_fate_s1": None}))
+
+    # Rows per panel: the markers as RGB, the cell types, optionally each marker thresholded
+    _rows = [
+        (_panel, _kind, _m)
+        for _panel, _markers in _panels.items()
+        for _kind, _m in (
+            [("rgb", None), ("types", None)]
+            + ([("threshold", _m) for _m in _markers] if heldout_show_channels.value else [])
+        )
+    ]
+    _figure, _axes = plt.subplots(
+        len(_rows), len(_columns), figsize=(2.6 * len(_columns), 2.6 * len(_rows)), squeeze=False
+    )
+    _shares = {_panel: [] for _panel in _panels}
+    for _column, (_title, _title_colour, _by_panel) in enumerate(_columns):
+        _axes[0, _column].set_title(_title, fontsize=8, color=_title_colour)
+        for _panel, _markers in _panels.items():
+            _data = _by_panel[_panel]
+            _shares[_panel].append(
+                None if _data is None
+                else heldout.panel_label_shares(_data[0], _data[1], _restricted[_panel][0], radial_ring_count.value)
+            )
+        for _row, (_panel, _kind, _m) in enumerate(_rows):
+            _axis = _axes[_row, _column]
+            _data = _by_panel[_panel]
+            if _data is None:
+                _axis.text(0.5, 0.5, "not imaged", ha="center", va="center", fontsize=8, color="0.5")
+                _axis.set_axis_off()
+                continue
+            _values, _mask = _data
+            if _kind == "rgb":
+                _axis.imshow(np.clip(
+                    np.stack([np.where(_mask, _values[_mm], 0.0) for _mm in _panels[_panel]], axis=-1), 0, 1
+                ))
+            elif _kind == "types":
+                _labels = classify_within_stain(_values, cell_type_rules, _mask)
+                _map = np.ones((*_mask.shape, 3))
+                for _index, _cell_type in enumerate(_names):
+                    _map[_labels[_cell_type]] = _colours[_index]
+                _axis.imshow(_map)
+            else:
+                _high = (_values[_m] > cell_type_rules.thresholds[_m]) & _mask
+                _axis.imshow(np.where(_high, _values[_m], 0.0), cmap="gray", vmin=0, vmax=1)
+                _axis.text(
+                    0.02, 0.98, f"{100 * _high.sum() / max(int(_mask.sum()), 1):.1f}%",
+                    transform=_axis.transAxes, ha="left", va="top", fontsize=7, color="white",
+                )
+            _axis.set_xticks([])
+            _axis.set_yticks([])
+    for _row, (_panel, _kind, _m) in enumerate(_rows):
+        _short = _panel.rsplit("_", 1)[-1].upper()
+        _label = {
+            "rgb": f"{_short}: " + " / ".join(_panels[_panel]),
+            "types": f"{_short}: cell types",
+            "threshold": f"{_short}: {_m} high",
+        }[_kind]
+        _axes[_row, 0].set_ylabel(_label, fontsize=8)
+        _axes[_row, 0].set_axis_on()
+    _figure.suptitle(
+        "48h, each panel labelled on its own. Thresholds: "
+        + ", ".join(f"{_m} {cell_type_rules.thresholds[_m]:.2f}" for _m in cell_type_rules.markers),
+        fontsize=9,
+    )
+    _figure.tight_layout()
+
+    # Prevalence per panel, with that panel's rules, for the colonies that have it
+    _bars, _bar_axes = plt.subplots(
+        1, len(_panels), figsize=(2 * max(4.0, 0.9 * len(_columns) + 2.0), 3.6), squeeze=False
+    )
+    for _axis, (_panel, _panel_shares) in zip(_bar_axes[0], _shares.items()):
+        _panel_names = label_names(_restricted[_panel][0])
+        _positions = np.arange(len(_columns))
+        _bottom = np.zeros(len(_columns))
+        _values = np.array([
+            np.full(len(_panel_names), np.nan) if _share is None else _share for _share in _panel_shares
+        ])
+        for _index, _cell_type in enumerate(_panel_names):
+            _heights = np.nan_to_num(100 * _values[:, _index])
+            _axis.bar(
+                _positions, _heights, bottom=_bottom,
+                color=CELL_TYPE_COLOURS.get(_cell_type, (1.0, 1.0, 1.0)), label=_cell_type,
+            )
+            _bottom += _heights
+        _axis.set_xticks(_positions)
+        _axis.set_xticklabels([_c[0] for _c in _columns], rotation=30, ha="right", fontsize=8)
+        for _tick, _column in zip(_axis.get_xticklabels(), _columns):
+            _tick.set_color(_column[1])
+        _axis.set_ylim(0, 100)
+        _axis.set_ylabel("% of colony (estimated)", fontsize=8)
+        _axis.set_title(f"{_panel.rsplit('_', 1)[-1].upper()}-only rules ({', '.join(_panels[_panel])})", fontsize=9)
+    _bar_axes[0, -1].legend(fontsize=7, bbox_to_anchor=(1.02, 1), loc="upper left")
+    _bars.tight_layout()
+
+    _notes = [
+        "Centre fit scores of the 250K colonies (1 = clean circle): "
+        + ", ".join(
+            f"KO {_h:g}h {_s:.2f}" for _h, _s in zip(heldout_colonies["hours"], heldout_colonies["fit_scores"])
+        ),
+    ]
+    for _panel, (_, _dropped, _borrowed) in _restricted.items():
+        _short = _panel.rsplit("_", 1)[-1].upper()
+        _notes.append(
+            f"{_short}: rule rows its markers cannot check (left out of its bars): "
+            + ("; ".join(f"{_t}: {_c}" for _t, _c in _dropped) or "none")
+        )
+        _notes += [
+            f"{_short}: {_m} threshold set on `{_channel}`, read here from `{_panel}/{_m}`"
+            for _m, _channel in _borrowed.items()
+        ]
+    if heldout_reference_note:
+        _notes.append(heldout_reference_note)
+    mo.vstack([
+        show_figure(_figure),
+        show_figure(_bars),
+        mo.md("\n".join(f"- {_note}" for _note in _notes)),
+    ])
+    return
+
+
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ### Radial cell-type prevalence
@@ -6311,13 +6824,19 @@ def _(image_key, mo, raw_images, trajectories):
 
 
 @app.cell(hide_code=True)
-def _(GROUP_CHANNELS, GROUP_LABELS, MARKER_COLOURS, mo, steps_group):
+def _(GROUP_CHANNELS, GROUP_LABELS, MARKER_COLOURS, mo, selection, steps_group):
     _names = [_name for _group in steps_group.value for _name in GROUP_CHANNELS[_group]]
     # Channels turned off in the standard colours (LMBR) start unselected
     steps_channels = mo.ui.multiselect(
         options=_names,
         value=[_n for _n in _names if MARKER_COLOURS.get(_n.rsplit("/", 1)[-1]) != "off"],
         label="Channels",
+    )
+    # Channels excluded from training (section 1, e.g. cell_fate_s2/SOX17) can be left out
+    _excluded = [_n for _n in _names if _n in selection["excluded"]]
+    steps_hide_excluded = mo.ui.checkbox(
+        value=True,
+        label="Hide channels excluded from training" + (f" ({', '.join(_excluded)})" if _excluded else ""),
     )
     steps_layout = mo.ui.dropdown(
         options={"One composite": "composite", "One row per channel": "rows"},
@@ -6370,7 +6889,7 @@ def _(GROUP_CHANNELS, GROUP_LABELS, MARKER_COLOURS, mo, steps_group):
     steps_zoom_x = mo.ui.slider(0.0, 1.0, step=0.005, value=0.5, label="Zoom centre x", show_value=True)
     steps_zoom_y = mo.ui.slider(0.0, 1.0, step=0.005, value=0.5, label="Zoom centre y", show_value=True)
     steps_zoom_size = mo.ui.slider(0.02, 0.5, step=0.005, value=0.1, label="Zoom size", show_value=True)
-    steps_zoom_colour = mo.ui.text(value="red", label="Zoom outline colour (name or hex)")
+    steps_zoom_colour = mo.ui.text(value="", label="Zoom outline colour (empty: black and white stripes)")
     steps_name = mo.ui.text(value="cleaning_steps", label="File name")
     steps_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
     steps_save = mo.ui.run_button(label="Save figure")
@@ -6408,7 +6927,7 @@ def _(GROUP_CHANNELS, GROUP_LABELS, MARKER_COLOURS, mo, steps_group):
     mo.vstack(
         [
             *_group_controls,
-            mo.hstack([steps_channels, steps_layout, steps_scale], justify="start"),
+            mo.hstack([steps_channels, steps_hide_excluded, steps_layout, steps_scale], justify="start"),
             mo.hstack([steps_percentiles[_group] for _group in steps_group.value], justify="start", wrap=True),
             mo.hstack([steps_show_background, steps_show_normalised, steps_mark_hot], justify="start"),
             mo.hstack([steps_pixel_um, steps_scale_bar, steps_panel_size, steps_downsample], justify="start"),
@@ -6423,6 +6942,7 @@ def _(GROUP_CHANNELS, GROUP_LABELS, MARKER_COLOURS, mo, steps_group):
         steps_downsample,
         steps_gamma,
         steps_group_layout,
+        steps_hide_excluded,
         steps_histograms,
         steps_layout,
         steps_log_counts,
@@ -6623,6 +7143,7 @@ def _(
     steps_downsample,
     steps_frames,
     steps_gamma,
+    steps_hide_excluded,
     steps_histograms,
     steps_layout,
     steps_log_counts,
@@ -6643,7 +7164,9 @@ def _(
     steps_zoom_y,
 ):
     from matplotlib.colors import is_color_like as _is_color_like
-    from matplotlib.patches import Rectangle as _Rectangle
+
+    from Experiments.micropatterns.figures.drawing import draw_zoom_outline as _draw_zoom_outline
+    from Experiments.micropatterns.figures.drawing import frame_zoom_axes as _frame_zoom_axes
 
     # Marker colours as in the other figures (figures/style.py). Markers
     # turned off there (LMBR) are drawn white when picked.
@@ -6655,7 +7178,11 @@ def _(
         for _n in _g["names"]
     }
     # Channels shown of each group
-    _shown = {_g["group"]: [_n for _n in _g["names"] if _n in steps_channels.value] for _g in _groups}
+    _hidden = set(selection["excluded"]) if steps_hide_excluded.value else set()
+    _shown = {
+        _g["group"]: [_n for _n in _g["names"] if _n in steps_channels.value and _n not in _hidden]
+        for _g in _groups
+    }
     _groups = [_g for _g in _groups if _shown[_g["group"]]]
     # Images stay on black; the page around them can be white or black
     _page = steps_page.value
@@ -6755,7 +7282,8 @@ def _(
         section = _section_of(images[0].shape[:2])
         return sum((section == _k)[..., None] * _image for _k, _image in enumerate(images))
 
-    _zoom_colour = steps_zoom_colour.value.strip() if _is_color_like(steps_zoom_colour.value.strip()) else "red"
+    # No colour (or not a colour): the black and white striped outline of the paper figures
+    _zoom_colour = steps_zoom_colour.value.strip() if _is_color_like(steps_zoom_colour.value.strip()) else None
 
     def _zoom_window(g, index):
         """(top, bottom, left, right) of the zoom square in a panel's pixel coordinates.
@@ -6854,8 +7382,8 @@ def _(
                     _draw_section_lines(_axis, _image.shape[:2])
                 if steps_zoom.value:
                     _top_edge, _bottom_edge, _left, _right = _zoom_window(_block[0], _column)
-                    _axis.add_patch(_Rectangle((_left, _top_edge), _right - _left, _bottom_edge - _top_edge,
-                                               fill=False, edgecolor=_zoom_colour, linewidth=1.0))
+                    _draw_zoom_outline(_axis, (_left, _top_edge), _right - _left, height=_bottom_edge - _top_edge,
+                                       colour=_zoom_colour, lw=1.0)
                 _plain(_axis)
                 if _first_image_row:
                     _axis.set_title(f"{_column + 1}. {_panels[_column]['title']}", fontsize=8, color=_text)
@@ -6892,9 +7420,7 @@ def _(
                 _axis.set_ylim(_bottom_edge, _top_edge)
                 _axis.set_xticks([])
                 _axis.set_yticks([])
-                for _spine in _axis.spines.values():
-                    _spine.set_edgecolor(_zoom_colour)
-                    _spine.set_linewidth(1.5)
+                _frame_zoom_axes(_axis, colour=_zoom_colour, lw=1.5)
                 if _column == 0:
                     _axis.set_ylabel("zoom", fontsize=8, color=_text)
                     if steps_mark_hot.value:

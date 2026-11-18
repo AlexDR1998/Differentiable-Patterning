@@ -16,6 +16,7 @@ Work through them in this order:
 | 3 | `nca_objectives_and_pool_dynamics.py` | What training optimises: loss terms, regularisers, the data augmenter and the training pool. | 30 min |
 | 4 | `pde_patterns_demo.py` | The pattern-forming PDEs that can be used as training data. | 10 min |
 | 5 | `bundles_and_inference.py` | Finding trained models in the model store, saving a selection, loading a bundle, running it and knocking a channel out. Uses the model from tutorial 2, or the shared store. | 20 min |
+| 6 | `finetuning_workflow.py` | The micropattern workflow from a baseline sweep to fine-tuning on new experiments (knockouts, densities) and evaluating parent and child. Writes and checks the sweeps; training itself runs on the cluster. Its sweep files are in `conf/finetuning/`. | 30 min (evaluation needs the store and data) |
 
 After these:
 - read [docs/concepts.md](../docs/concepts.md);

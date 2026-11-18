@@ -36,6 +36,17 @@ class ImpulsePairSourceConfig(ConfigValue):
     # (multiples of the model's run.t, rounded to whole steps)
     time_unit: str = "steps"
 
+    def __post_init__(self):
+        # Checked here so a bad sweep fails when its manifest is generated,
+        # not on the cluster
+        if self.type == "stable_attractor":
+            steps = tuple(self.stabilisation_steps)
+            if len(steps) != 2 or not 0 <= steps[0] < steps[1]:
+                raise ValueError(
+                    "impulse.pair_source.stabilisation_steps must be an increasing "
+                    f"[minimum, maximum) pair for stable_attractor, got {list(steps)}"
+                )
+
 
 @dataclass(frozen=True)
 class ImpulseRolloutConfig(ConfigValue):

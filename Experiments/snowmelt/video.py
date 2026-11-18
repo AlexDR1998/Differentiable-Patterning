@@ -60,7 +60,8 @@ def _rgba(frame, mask):
     return np.concatenate([frame, mask[..., None].astype(frame.dtype)], axis=-1)
 
 
-def render_mp4(path, panels, frame_titles, extent, fps=24, ncols=None, draw_outline=None, progress=None):
+def render_mp4(path, panels, frame_titles, extent, fps=24, ncols=None, draw_outline=None, progress=None,
+               panel_size=(4.4, 4.0), dpi=100, show_axes=True, background=BACKGROUND, decorate=None):
     """Draw ``panels`` frame by frame and write them to ``path`` as H.264 mp4.
 
     Panels fill a grid of ``ncols`` columns row by row; a ``None`` panel leaves
@@ -69,6 +70,10 @@ def render_mp4(path, panels, frame_titles, extent, fps=24, ncols=None, draw_outl
     imshow extent (km) shared by all panels. ``draw_outline(ax, mask, extent)``
     adds the catchment outline, and ``progress`` wraps the frame iterator
     (e.g. ``mo.status.progress_bar``).
+
+    ``panel_size`` (inches) and ``dpi`` set the video size. ``show_axes=False`` hides
+    the axes, ``background`` is drawn outside each mask, and ``decorate(fig)``
+    adds anything fixed, such as a legend, before the first frame.
     """
     import imageio_ffmpeg
     from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -77,7 +82,7 @@ def render_mp4(path, panels, frame_titles, extent, fps=24, ncols=None, draw_outl
     ncols = ncols or len(panels)
     nrows = -(-len(panels) // ncols)
     # A standalone off-screen figure, so the notebook's pyplot state is untouched
-    fig = Figure(figsize=(4.4 * ncols, 4.0 * nrows + 0.4), dpi=100, layout="constrained")
+    fig = Figure(figsize=(panel_size[0] * ncols, panel_size[1] * nrows + 0.4), dpi=dpi, layout="constrained")
     FigureCanvasAgg(fig)
     axes = fig.subplots(nrows, ncols, squeeze=False, sharex=True, sharey=True)
     images = []
@@ -86,7 +91,7 @@ def render_mp4(path, panels, frame_titles, extent, fps=24, ncols=None, draw_outl
             ax.axis("off")
             images.append(None)
             continue
-        ax.set_facecolor(BACKGROUND)
+        ax.set_facecolor(background)
         if panel.frames.ndim == 3:
             first = np.where(panel.mask, panel.frames[0], np.nan)
             image = ax.imshow(first, cmap=panel.cmap, vmin=panel.vmin, vmax=panel.vmax,
@@ -98,10 +103,17 @@ def render_mp4(path, panels, frame_titles, extent, fps=24, ncols=None, draw_outl
             draw_outline(ax, panel.mask, extent)
         ax.set_title(panel.title, fontsize=10)
         ax.tick_params(labelsize=8)
+        if not show_axes:
+            ax.set_xticks([])
+            ax.set_yticks([])
+            for spine in ax.spines.values():
+                spine.set_visible(False)
         images.append(image)
     for ax in axes.ravel()[len(panels):]:
         ax.axis("off")
     title = fig.suptitle(frame_titles[0], fontsize=11)
+    if decorate is not None:
+        decorate(fig)
 
     fig.canvas.draw()
     width, height = fig.canvas.get_width_height(physical=True)

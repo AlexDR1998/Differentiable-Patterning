@@ -12,9 +12,9 @@
 # run.t (e.g. 32, 64, 128, 256; NCA and gNCA). Each ID appears twice: once in
 # the grid and once in its branch. Placeholders must stay distinct until
 # replaced. Copy a slot and its branch for more models.
-experiment_name: emoji_attractor_switch_critical_time_v4
+experiment_name: emoji_attractor_switch_critical_time_v5
 entrypoint: Experiments.impulse.optimise:run
-output_subdir: generated/emoji_attractor_switch_critical_time
+output_subdir: generated/emoji_attractor_switch_critical_time_v5
 seed_mode: index
 
 transitions:
@@ -40,7 +40,7 @@ grid:
   impulse.pair_source.impulse_time: [0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.7,0.8,0.9,1.0,1.25,1.5]
   # Mature source and target: 1.5-2 run.t, within the training horizon
   # (target_repeats: 2 trains the target to persist up to 2 run.t)
-  impulse.pair_source.stabilisation_steps: [[2.0]]
+  impulse.pair_source.stabilisation_steps: [[1.5, 2.0]]
   impulse.objective.type: [attractor_contrast]
   impulse.objective.contrast_weight: [0.1]
   impulse.rollout.steps: [256]

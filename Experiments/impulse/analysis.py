@@ -1,6 +1,7 @@
 """Local inference for inspecting impulse results on multi-attractor NCA models.
 
-Used by ``Experiments/impulse/impulse_explorer.py`` (impulse records) and
+Used by ``Experiments/impulse/impulse_explorer.py`` (impulse records),
+``impulse_critical_time.py`` (critical time sweeps, record manifests only) and
 ``impulse_sweep_explorer.py`` (old flat result files, see below). Every function runs the frozen NCA forward
 only, so it is cheap enough for a laptop. States are [batch, channels, H, W];
 reference attractors are [pattern, channels, H, W].
@@ -299,3 +300,101 @@ def add_state_noise(states, strength, key):
     """Gaussian noise of standard deviation ``strength`` on every channel."""
 
     return states + strength * jax.random.normal(key, states.shape, states.dtype)
+
+
+# ---------------------------------------------------------------------------
+# Critical time sweeps: when can a developing pattern no longer be switched?
+# Used by impulse_critical_time.py. Reads record manifests only.
+# ---------------------------------------------------------------------------
+
+def impulse_record_table(paths):
+    """One row per impulse record folder in ``paths``, from its manifest and config only.
+
+    ``impulse_time`` is in the sweep's own unit (a fraction of run.t for
+    ``time_unit: training_t``); ``impulse_steps`` is the same time in NCA steps.
+    """
+
+    import pandas as pd
+    from omegaconf import OmegaConf
+
+    rows = []
+    for path in paths:
+        path = Path(path)
+        manifest = OmegaConf.load(path / "manifest.yaml")
+        config = OmegaConf.load(path / "config.yaml")
+        conditions, results, model = manifest.conditions, manifest.results, manifest.model
+        pair_source = config.impulse.pair_source
+        intervention = config.impulse.intervention
+        size = intervention.get("patch_size") if intervention.spatial == "patch" else intervention.get("width")
+        source, target = conditions.get("source_pattern"), conditions.get("target_pattern")
+        rows.append(
+            {
+                "experiment": manifest.get("experiment"),
+                "impulse_id": str(manifest.id),
+                "path": str(path),
+                "model_id": str(model.id),
+                "family": model.get("family"),
+                "training_t": model.get("training_t"),
+                "source_index": conditions.get("source_index"),
+                "target_index": conditions.get("target_index"),
+                "source_pattern": source,
+                "target_pattern": target,
+                "switch": f"{source} → {target}",
+                "impulse_time": pair_source.get("impulse_time"),
+                "time_unit": pair_source.get("time_unit", "steps"),
+                "impulse_steps": conditions.get("impulse_time"),
+                "setting": f"{intervention.channels}, {intervention.spatial} {size}",
+                **{
+                    name: results.get(name)
+                    for name in (
+                        "switch_rate", "baseline_switch_rate", "evaluation_loss",
+                        "baseline_evaluation_loss", "switch_time", "impulse_l2", "footprint",
+                    )
+                },
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def critical_time(times, rates, threshold=0.5):
+    """Earliest time after which the switch rate stays below ``threshold``.
+
+    ``inf`` when the last time still switches (no critical time within the
+    sweep); the first time when it never switches.
+    """
+
+    order = np.argsort(times)
+    times = np.asarray(times, dtype=float)[order]
+    switches = np.asarray(rates, dtype=float)[order] >= threshold
+    if switches[-1]:
+        return np.inf
+    if not switches.any():
+        return float(times[0])
+    return float(times[np.nonzero(switches)[0][-1] + 1])
+
+
+def sigmoid_midpoint(times, rates):
+    """Fit ``top / (1 + exp((t - t0) / width))`` to the switch rate: returns (t0, width, top).
+
+    ``t0`` is the midpoint, where the fit is half its height. All NaN when the
+    fit fails or the rate does not change.
+    """
+
+    from scipy.optimize import curve_fit
+
+    times = np.asarray(times, dtype=float)
+    rates = np.asarray(rates, dtype=float)
+    if len(times) < 3 or np.ptp(rates) == 0:
+        return np.nan, np.nan, np.nan
+
+    def logistic(t, top, t0, width):
+        return top / (1 + np.exp((t - t0) / width))
+
+    span = max(np.ptp(times), 1e-6)
+    start = (max(rates.max(), 1e-3), np.median(times), span / 10)
+    bounds = ([0.0, times.min() - span, span / 1000], [1.0, times.max() + span, 10 * span])
+    try:
+        (top, t0, width), _ = curve_fit(logistic, times, rates, p0=start, bounds=bounds)
+    except (RuntimeError, ValueError):
+        return np.nan, np.nan, np.nan
+    return float(t0), float(width), float(top)

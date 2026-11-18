@@ -1,0 +1,42 @@
+# Tutorial (demo/finetuning_workflow.py), step 2: the fine-tune TEMPLATE.
+# It holds only what is new in the fine-tune: the conditions, the training
+# length and the loss. The model, how the data is read and the replicate
+# split come from each parent, so they are NOT set here (the writer stops if
+# they are). Turn it into a sweep with:
+#
+#   python -m Experiments.micropatterns.finetune demo/conf/finetuning/finetune_template_v1.yaml \
+#     --selection <selection of parents> --out <sweep.yaml>
+experiment_name: tutorial_finetune_ko_v1
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/tutorial_finetune_ko_v1
+seed_mode: index
+
+grid:
+  # Replaced by one row per parent
+  initialization.model_id: [FROM_PARENTS]
+  logging.wandb.project: [nca_tutorial]
+  labels.gpu: [H200]
+  system.precision: [bfloat16]
+  data.batches: [2]
+
+  # New conditions, with the baseline kept in so the model does not forget it
+  data.knockout.channel: [Nodal]
+  data.knockout.curriculum:
+    - [baseline, ko_0h, ko_24h]
+
+  # Shorter than the baseline: the model only has to adapt
+  run.iterations: [2000]
+  run.write_videos: [false]
+  optimiser.learn_rate: [1e-4]
+  optimiser.type: [nadam]
+  optimiser.gradient_clip_norm: [1.0]
+  trainer.loop_autodiff: [lax]
+  trainer.validation_every: [500]
+  trainer.validation_rollout: [true]
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [0.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.random_channel_shuffle: [true]
