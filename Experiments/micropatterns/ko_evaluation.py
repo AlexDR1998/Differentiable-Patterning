@@ -20,7 +20,11 @@ from Common.dataloader.cell_type_shares import (
 from Common.dataloader.cell_types import marker_values
 from Experiments.micropatterns.density_ko_sweep import density_converter, model_pattern_counts, record_label
 from Experiments.model_registry import open_model_bundle
-from NCA.trainer.intervention import rollout_model_sampled, rollout_model_with_blocked_channel_sampled
+from NCA.trainer.intervention import (
+    knockout_step as knockout_start_step,
+    rollout_model_sampled,
+    rollout_model_with_blocked_channel_sampled,
+)
 
 # Knockout hour of each evaluation condition (None: no knockout)
 CONDITION_KO_HOURS = {"baseline": None, "ko_24h": 24, "ko_0h": 0}
@@ -109,8 +113,17 @@ def data_label_shares(
         ))
     return colony_label_shares(stain_counts, cell_type_rules, resolve_several=resolve_several)
 
-def evaluate_condition(model, bundle, condition_data, condition, seed):
-    """Roll out one model, blocking recurrent NODAL reads when requested."""
+def evaluate_condition(
+    model, bundle, condition_data, condition, seed, steps_per_frame=None, knockout_hour=None
+):
+    """Roll out one model, blocking recurrent NODAL reads when requested.
+
+    Returns the states at the observation times and their labels ("0h", "12h", ...).
+    With ``steps_per_frame`` it returns every ``steps_per_frame``-th NCA step instead
+    (for videos), labelled with its time in hours. The rollout itself is the same.
+    The knockout hour comes from ``CONDITION_KO_HOURS[condition]`` unless
+    ``knockout_hour`` is given; it may fall between observation times.
+    """
 
     initial = condition_data["initial_state"]
     channels = int(model.N_CHANNELS)
@@ -136,10 +149,16 @@ def evaluate_condition(model, bundle, condition_data, condition, seed):
         for time_index in range(len(time_labels))
     )
     total_steps = frame_indices[-1]
+    if steps_per_frame is not None:
+        frame_indices = tuple(range(0, total_steps + 1, int(steps_per_frame)))
+        hours_per_step = 12.0 / steps_per_observation
+        time_labels = tuple(f"{step * hours_per_step:.4g}h" for step in frame_indices)
     observation_steps = jnp.asarray(frame_indices, dtype=jnp.int32)
     rollout_key = jr.PRNGKey(seed)
 
-    if condition == "baseline":
+    if knockout_hour is None:
+        knockout_hour = CONDITION_KO_HOURS[condition]
+    if knockout_hour is None:
         selected_states = rollout_model_sampled(
             model,
             state,
@@ -150,8 +169,7 @@ def evaluate_condition(model, bundle, condition_data, condition, seed):
             observation_steps,
         )
     else:
-        knockout_hour = 0 if condition == "ko_0h" else 24
-        knockout_step = (knockout_hour // 12) * steps_per_observation
+        knockout_step = knockout_start_step(knockout_hour, steps_per_observation)
         selected_states = rollout_model_with_blocked_channel_sampled(
             model,
             state,

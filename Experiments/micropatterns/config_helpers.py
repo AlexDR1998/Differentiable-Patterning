@@ -99,6 +99,20 @@ def resolve_knockout_curriculum(intervention):
     return curriculum
 
 
+def curriculum_condition_ids(curriculum, replicates_per_condition):
+    """One label per batch: the index of its curriculum name among the distinct names.
+
+    Repeated entries (``[baseline, baseline, ko_0h]``) share a label, so
+    replicates are only swapped and matched within one condition.
+    """
+    names = tuple(dict.fromkeys(curriculum))
+    return tuple(
+        names.index(item)
+        for item in curriculum
+        for _ in range(replicates_per_condition)
+    )
+
+
 def _coerce_dataset_result(result):
     """Also accept the older tuple return value (used by some test doubles)."""
 
@@ -160,6 +174,7 @@ def build_data_augmenter(
     channel_schema=None,
     intervention_times=None,
     observation_times=None,
+    condition_ids=None,
 ):
     """Build the micropattern augmenter for ``data`` [batch, time, measurement, H, W].
 
@@ -190,6 +205,7 @@ def build_data_augmenter(
             reinjection="group",
             measurement_mask=channel_timestep_mask,
             intervention_times=intervention_times,
+            condition_ids=condition_ids,
             **reinjection_options,
         )
         return augmenter, (
@@ -324,6 +340,12 @@ def load_data(
         curriculum = resolve_knockout_curriculum(data_config.knockout)
         if curriculum != ("baseline",) and not _all_groups(data_config.micropattern):
             raise ValueError("Knockout curricula require every 260726 experiment group")
+        unknown = sorted(
+            set(data_config.knockout.curriculum_weights or {})
+            - CURRICULUM_CONDITIONS.keys()
+        )
+        if unknown:
+            raise ValueError(f"Unknown data.knockout.curriculum_weights entries: {unknown}")
         if impath is None:
             data_path_base = os.getenv("DATA_PATH_BASE")
             if data_path_base is None:
@@ -387,11 +409,25 @@ def load_data(
             for item in curriculum
             for time in [CURRICULUM_CONDITIONS[item][1]] * replicates_per_condition
         )
+        condition_ids = curriculum_condition_ids(curriculum, replicates_per_condition)
+        weights = data_config.knockout.curriculum_weights
+        batch_loss_weights = (
+            None
+            if weights is None
+            else tuple(
+                float(weights.get(item, 1.0))
+                for item in curriculum
+                for _ in range(replicates_per_condition)
+            )
+        )
         if pool_copies > 1:
             data = jnp.concatenate([data] * pool_copies, axis=0)
             boundary = jnp.concatenate([boundary] * pool_copies, axis=0)
             mask = jnp.concatenate([mask] * pool_copies, axis=0)
             intervention_times *= pool_copies
+            condition_ids *= pool_copies
+            if batch_loss_weights is not None:
+                batch_loss_weights *= pool_copies
         final_indices = selection_indices * pool_copies
         batch_aux_keys = (
             "group_boundary_masks",
@@ -417,6 +453,11 @@ def load_data(
         aux["intervention_times"] = (
             None if curriculum == ("baseline",) else intervention_times
         )
+        # None when every batch has the same condition
+        aux["condition_ids"] = (
+            None if len(set(curriculum)) == 1 else condition_ids
+        )
+        aux["batch_loss_weights"] = batch_loss_weights
         selected_schema = dataset.schema
         selected_channel_count = getattr(
             selected_schema, "n_measurement_channels", data.shape[2]

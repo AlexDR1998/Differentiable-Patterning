@@ -1,0 +1,113 @@
+# Fine-tune vs joint training ablation (Nodal KO). Three files:
+#   nca_finetune_ablation_pretrain_v1.yaml   baseline-only parents
+#   nca_finetune_ablation_scratch_v1.yaml    joint training from scratch
+#   finetune_templates/nca_finetune_ablation_finetune_v1.yaml
+#                                            fine-tunes of the parents
+# Every model gets 12000 iterations in total (parent plus fine-tune). Two
+# axes: the share f of the budget spent on baseline-only pretraining, and the
+# share s of the loss weight on the baseline condition while training on all
+# conditions (data.knockout.curriculum_weights, KO weights are 1 each):
+#   s = 0   -> baseline 0        s = 1/3 -> baseline 1        s = 2/3 -> baseline 4
+# Evaluate every model the same way with
+# Experiments/micropatterns/finetune_ablation.py (docs/finetune_ablation.md).
+#
+# This file: f = 0, all conditions from the start for the whole budget, at
+# each baseline share s. The last weight setting trains on baseline only for
+# the whole budget (f = 1), as the reference for no fine-tuning.
+# Total jobs: 4 weight settings * 2 splits * 2 repeats = 16.
+experiment_name: nca_finetune_ablation_scratch_v1
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/nca_finetune_ablation_scratch_v1
+seed_mode: index
+
+grid:
+  run.repeat: [0, 1]
+  run.iterations: [12000]
+  data.knockout.curriculum_weights:
+    - {baseline: 0.0, ko_0h: 1.0, ko_24h: 1.0}
+    - {baseline: 1.0, ko_0h: 1.0, ko_24h: 1.0}
+    - {baseline: 4.0, ko_0h: 1.0, ko_24h: 1.0}
+    - {baseline: 1.0, ko_0h: 0.0, ko_24h: 0.0}
+
+  model.family: [gNCA]
+  model.channels: [48]
+  data.micropattern.projection: [sum]
+  data.micropattern.cleaning.horizontal_stripe_widths:
+    - {cell_fate_s1/TBXT: 10, cell_fate_s2/TBXT: 10}
+  data.micropattern.cleaning.stripe_block: [270]
+  data.downsample: [16]
+  run.t: [128]
+  trainer.loop_autodiff: [lax]
+
+  labels.gpu: [H200]
+  logging.wandb.project: [nca_micropattern_finetune_ablation]
+  system.precision: [bfloat16]
+
+  data.dataset: [micropatterns_260726]
+  data.micropattern.data_channels: [13]  # 14 minus cell_fate_s2/SOX17 (excluded in base_config)
+  data.micropattern.experiment_groups:
+    - [cell_fate_s1, cell_fate_s2, rna_expression, protein_response]
+  data.micropattern.pool_copies: [1]
+  data.batches: [2]
+  # Every arm loads all three conditions, so every iteration costs the same.
+  data.knockout.channel: [Nodal]
+  data.knockout.curriculum:
+    - [baseline, ko_0h, ko_24h]
+
+  # Loss and optimiser as nca_nodal_ko_projections_finetune.yaml. Schedules
+  # are fractions of this run's own iterations.
+  optimiser.learn_rate: [1e-4]
+  optimiser.type: [nadam]
+  optimiser.gradient_clip_norm: [1.0]
+  trainer.log_every: [200]
+  trainer.validation_every: [500]
+  trainer.validation_rollout: [true]
+  run.write_videos: [false]
+
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [0.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.random_channel_shuffle: [true]
+  loss.schedule_label: [cos_reverse]
+  loss.terms.0.multi_target_schedules.l2.type: [cosine]
+  loss.terms.0.multi_target_schedules.l2.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.l2.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.l2.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.l2.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.l2.stages: [8]
+  loss.terms.0.multi_target_schedules.texture.type: [cosine]
+  loss.terms.0.multi_target_schedules.texture.initial_factor: [1.0]
+  loss.terms.0.multi_target_schedules.texture.final_factor: [0.25]
+  loss.terms.0.multi_target_schedules.texture.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.texture.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.texture.stages: [8]
+  loss.terms.0.multi_target_schedules.channel_mean.type: [cosine]
+  loss.terms.0.multi_target_schedules.channel_mean.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.channel_mean.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.channel_mean.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.channel_mean.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.channel_mean.stages: [8]
+  loss.terms.0.multi_target_schedules.correlation.type: [cosine]
+  loss.terms.0.multi_target_schedules.correlation.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.correlation.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.correlation.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.correlation.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.correlation.stages: [8]
+  loss.terms.0.multi_target_schedules.radial.type: [cosine]
+  loss.terms.0.multi_target_schedules.radial.initial_factor: [0.05]
+  loss.terms.0.multi_target_schedules.radial.final_factor: [1.0]
+  loss.terms.0.multi_target_schedules.radial.start_fraction: [0.30]
+  loss.terms.0.multi_target_schedules.radial.end_fraction: [0.75]
+  loss.terms.0.multi_target_schedules.radial.stages: [8]
+
+groups:
+  # Train on each pair of replicates and validate on the other pair.
+  - data.micropattern.train_replicates:
+      - [1, 2]
+      - [3, 4]
+    data.micropattern.validation_replicates:
+      - [3, 4]
+      - [1, 2]

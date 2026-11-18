@@ -30,6 +30,15 @@ class TrainerContext:
     validation_loss_time_channel_mask: Any = None
     training_intervention_times: Any = None
     validation_intervention_times: Any = None
+    # One label per batch item naming its experimental condition (e.g. a
+    # curriculum entry). Matching of predictions to targets in the
+    # multi-target loss stays within one condition. None falls back to the
+    # intervention times.
+    training_condition_ids: Any = None
+    validation_condition_ids: Any = None
+    # Training loss weight of each batch item (e.g. per condition). None
+    # weighs every item equally.
+    training_batch_weights: Any = None
     # Observation time of each target image (any unit), used by non-uniform
     # training.loop.interval_mode settings to size each transition.
     observation_times: tuple[float, ...] | None = None

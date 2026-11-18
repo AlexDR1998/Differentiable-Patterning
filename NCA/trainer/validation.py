@@ -34,6 +34,10 @@ class ValidationEvaluator:
         self.loss_masks = list(rearrange(jnp.asarray(loss_mask), "b n c -> b n c () ()"))
         schema = trainer.channel_schema
         self.intervention_times = trainer.context.validation_intervention_times
+        condition_ids = trainer.context.validation_condition_ids
+        self.assignment_groups = (
+            condition_ids if condition_ids is not None else self.intervention_times
+        )
         self.nodal_channel = (
             None
             if self.intervention_times is None
@@ -64,7 +68,7 @@ class ValidationEvaluator:
                 self.targets,
                 jnp.asarray(self.boundary_mask)[0, 0],
                 self.loss_masks,
-                self.intervention_times,
+                self.assignment_groups,
                 self.key,
                 loss_weights,
             )
@@ -133,6 +137,7 @@ class ValidationEvaluator:
             self.nodal_channel,
             self.setup.intervention_observation_times,
             time_offset=time_offset,
+            slot_steps=self.setup.interval_schedule.steps,
         )
         _, states, _ = run_nca_steps(
             model,

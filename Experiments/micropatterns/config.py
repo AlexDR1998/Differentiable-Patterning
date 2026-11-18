@@ -80,7 +80,21 @@ class KnockoutConfig(ConfigValue):
     mode: str | None = None
     time: int | None = None
     channel: str | None = None
+    # 260726 only: the conditions in each training batch (e.g. [baseline,
+    # ko_0h, ko_24h]); see config_helpers.CURRICULUM_CONDITIONS.
     curriculum: tuple[str, ...] | None = None
+    # Training loss weight of each curriculum condition, by name (e.g.
+    # {baseline: 1, ko_0h: 0, ko_24h: 0} trains on baseline only while still
+    # loading every condition). Unlisted conditions weigh 1. Validation losses
+    # are not weighted.
+    curriculum_weights: Mapping[str, float] | None = None
+
+    def __post_init__(self):
+        # Names are checked when the data loads, and all-zero weights when
+        # training starts (evaluation reloads one condition at a time).
+        weights = self.curriculum_weights or {}
+        if any(value < 0 for value in weights.values()):
+            raise ValueError("data.knockout.curriculum_weights must be non-negative")
 
 
 @dataclass(frozen=True)

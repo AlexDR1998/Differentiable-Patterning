@@ -303,6 +303,27 @@ with app.setup(hide_code=True):
     # shows them uncropped, to see what they grow outside the colony
     BOUNDARY_ABLATIONS = ("mask_uniform", "no_boundary_reg", "no_regularisers")
 
+    # Presets of the over-time figure that combine categories. In the boundary
+    # preset the crop toggle applies to every tile (data included), so that
+    # cropped and uncropped views compare all conditions the same way.
+    BOUNDARY_PRESET = "Boundary (mask + regularisers)"
+    COMBINED_PRESETS = {BOUNDARY_PRESET: ("Adhesion mask", "Regularisers")}
+    # Row titles in a preset: what each model uses, not what it leaves out. The
+    # uniform mask model keeps the boundary regulariser's weight, but with no colony
+    # edge it has nothing to penalise, so it is not listed.
+    PRESET_TITLES = {
+        BOUNDARY_PRESET: {
+            "mask_uniform": "intermediate state regulariser,\nuniform boundary",
+            "no_intermediate_state_reg": "boundary regulariser,\ncircular boundary",
+            "no_boundary_reg": "intermediate state regulariser,\ncircular boundary",
+            "no_regularisers": "no regularisers,\ncircular boundary",
+        },
+    }
+    # Grey note under the baseline in a preset: the baseline in the terms of that preset
+    PRESET_BASELINE_NOTES = {
+        BOUNDARY_PRESET: "intermediate state + boundary\nregularisers, circular boundary",
+    }
+
     # Loaded data and rollouts, kept between cell runs
     DATA_CACHE = {}
     ROLLOUT_CACHE = {}
@@ -908,7 +929,14 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(fig_data, fig_objective, fig_overview, fig_training, save, summary_table):
+def _(
+    fig_data,
+    fig_objective,
+    fig_overview,
+    fig_training,
+    save,
+    summary_table,
+):
     mo.stop(not save.value)
     _directory = repository_root / "figures" / "micropattern_ablations"
     _directory.mkdir(parents=True, exist_ok=True)
@@ -1130,16 +1158,26 @@ def _(masked, outputs, replicate_choice, sector_choice, time_choice):
 
 
 @app.cell(hide_code=True)
-def _():
+def _(split_choice):
     category_choice = mo.ui.dropdown(
-        [c for c in dict.fromkeys(c for _, c, _ in ABLATIONS.values()) if c != "Reference"],
+        [c for c in dict.fromkeys(c for _, c, _ in ABLATIONS.values()) if c != "Reference"]
+        + list(COMBINED_PRESETS),
         value="Regularisers", label="Preset (category)",
     )
     times_choice = mo.ui.multiselect(
         {"0h": 0, "12h": 1, "24h": 2, "36h": 3, "48h": 4},
         value=["48h"], label="Timepoints",
     )
-    crop_boundary = mo.ui.checkbox(True, label="Crop boundary ablations to colony")
+    # Columns: every chosen replicate at every chosen timepoint (the split's validation replicates)
+    _validation = {"A": [3, 4], "B": [1, 2]}[split_choice.value]
+    replicates_choice = mo.ui.multiselect(
+        {f"Replicate {r}": r for r in _validation}, value=[f"Replicate {_validation[0]}"], label="Replicates",
+    )
+    crop_boundary = mo.ui.checkbox(
+        True, label="Crop boundary ablations to colony (every tile in the Boundary preset)"
+    )
+    show_legend = mo.ui.switch(True, label="Channel legend")
+    wrap_choice = mo.ui.number(start=0, stop=30, step=1, value=0, label="Wrap after N conditions (0: off)")
     show_loss_terms = mo.ui.switch(True, label="Show loss terms")
     show_regularisers = mo.ui.switch(False, label="Show regularisers")
     transpose = mo.ui.switch(False, label="Transpose (conditions as columns)")
@@ -1149,7 +1187,8 @@ def _():
     colony_spacing = mo.ui.slider(0.0, 4.0, step=0.1, value=1.0, label="Spacing (font sizes)", show_value=True)
     mo.vstack([
         mo.hstack(
-            [category_choice, times_choice, crop_boundary, show_loss_terms, show_regularisers, transpose],
+            [category_choice, times_choice, replicates_choice, crop_boundary, show_loss_terms,
+             show_regularisers, show_legend, transpose, wrap_choice],
             justify="start", wrap=True,
         ),
         mo.hstack([font_scale, colony_size, colony_spacing], justify="start", wrap=True),
@@ -1160,21 +1199,25 @@ def _():
         colony_spacing,
         crop_boundary,
         font_scale,
+        replicates_choice,
+        show_legend,
         show_loss_terms,
         show_regularisers,
         times_choice,
         transpose,
+        wrap_choice,
     )
 
 
 @app.cell(hide_code=True)
 def _(category_choice):
-    # A new preset resets the selection to the baseline and that category
+    # A new preset resets the selection to the baseline and that category (or categories)
+    _categories = COMBINED_PRESETS.get(category_choice.value, (category_choice.value,))
     ablation_choice = mo.ui.multiselect(
         {f"{label} ({category})": a for a, (label, category, _) in ABLATIONS.items()},
         value=[
             f"{label} ({category})" for a, (label, category, _) in ABLATIONS.items()
-            if a == "baseline" or category == category_choice.value
+            if a == "baseline" or category in _categories
         ],
         label="Ablations over time", full_width=True,
     )
@@ -1185,33 +1228,53 @@ def _(category_choice):
 @app.cell(hide_code=True)
 def _(
     ablation_choice,
+    category_choice,
+    colony_size,
+    colony_spacing,
     crop_boundary,
+    font_scale,
     losses,
     masked,
     outputs,
-    replicate_choice,
+    replicates_choice,
     sector_choice,
+    show_legend,
     show_loss_terms,
     show_regularisers,
     times_choice,
     transpose,
-    font_scale,
-    colony_size,
-    colony_spacing,
+    wrap_choice,
 ):
     mo.stop(not outputs or not sector_choice.value)
     _groups = [g for g in SECTOR_GROUPS.values() if g in sector_choice.value]
-    _replicate = replicate_choice.value
-    _times = [(f"{12 * t}h", t) for t in sorted(times_choice.value)]
+    _replicates = sorted(replicates_choice.value)
+    _hours = sorted(times_choice.value)
     _selected = [a for a in ABLATIONS if a in ablation_choice.value and a in outputs]
-    mo.stop(not _selected or not _times, mo.md("Select at least one rolled-out ablation and timepoint."))
+    mo.stop(not _selected or not _hours or not _replicates,
+            mo.md("Select at least one rolled-out ablation, timepoint and replicate."))
+    # Columns: (label, replicate, time index) for every replicate at every timepoint.
+    # Labels name only what varies; a single column has none.
+    _times = []
+    for _rep in _replicates:
+        for _t in _hours:
+            _parts = ([f"Replicate {_rep}"] if len(_replicates) > 1 else []) + ([f"{12 * _t}h"] if len(_hours) > 1 else [])
+            _times.append((" · ".join(_parts), _rep, _t))
+
+    _titles = PRESET_TITLES.get(category_choice.value, {})
+    _baseline_note = PRESET_BASELINE_NOTES.get(category_choice.value)
 
     def _details(ablation):
         """Grey lines under a row name: the baseline's loss terms and regularisers,
-        and for other rows only what differs from the baseline (and is not already in the name)."""
+        and for other rows only what differs from the baseline (and is not already in the name).
+        A preset with its own titles describes the baseline in its terms instead."""
         terms, regularisers = losses[ablation]
         base_terms, base_regularisers = losses.get("baseline", (None, None))
         category = ABLATIONS[ablation][1]
+        if _baseline_note:
+            if ablation == "baseline":
+                return _baseline_note if show_loss_terms.value or show_regularisers.value else ""
+            # The title already says which regularisers and boundary are used
+            return terms if show_loss_terms.value and terms != base_terms else ""
         lines = []
         if show_loss_terms.value and category != "Loss terms" and terms != base_terms:
             lines.append(terms)
@@ -1225,34 +1288,51 @@ def _(
     # (preceded by its own data when targets, split or replicate differ)
     _rows = [("Data", "", _selected[0], "target")]
     for _ablation in _selected:
-        _label = ablation_label(_ablation)
-        if _ablation != _selected[0] and own_data_needed(_ablation, outputs[_ablation], _replicate):
+        _label = _titles.get(_ablation, ablation_label(_ablation))
+        if _ablation != _selected[0] and any(own_data_needed(_ablation, outputs[_ablation], _rep)
+                                              for _rep in _replicates):
             _rows.append((f"Data · {_label}", "", _ablation, "target"))
         _rows.append((_label, _details(_ablation), _ablation, "prediction"))
 
-    # Conditions are rows and timepoints columns, or the other way round when transposed
+    # Conditions are rows and timepoints columns, or the other way round when transposed.
+    # With wrapping, the conditions are split into blocks of at most _wrap: blocks sit
+    # side by side (conditions as rows) or one under the other (conditions as columns).
     _flip = transpose.value
     _font = {_k: _v * font_scale.value for _k, _v in FONT.items()}
     _tile = colony_size.value
-    _shape = (len(_times), len(_rows)) if _flip else (len(_rows), len(_times))
+    _wrap = min(int(wrap_choice.value or 0) or len(_rows), len(_rows))
+    _blocks = -(-len(_rows) // _wrap)
+    _count = len(_times)
+    _shape = (_count * _blocks, _wrap) if _flip else (_wrap, _count * _blocks)
+
+    def _position(row, column):
+        """Grid position of condition ``row`` at column (replicate/timepoint) ``column``."""
+        block, within = divmod(row, _wrap)
+        return (block * _count + column, within) if _flip else (within, block * _count + column)
+
     _size = (
-        _tile * _shape[1] + (0.6 if _flip else 2.2) * font_scale.value,
-        _tile * _shape[0] + (0.6 if _flip else 0.3) * font_scale.value,
+        _tile * _shape[1] + (0.6 if _flip else 2.2 * _blocks) * font_scale.value,
+        _tile * _shape[0] + (0.6 * _blocks if _flip else 0.3) * font_scale.value,
     )
+    # Boundary preset: the crop toggle applies to every tile, data included
+    _crop_all = category_choice.value == BOUNDARY_PRESET
     fig_category, _axes = plt.subplots(*_shape, figsize=_size, squeeze=False)
+    for _ax in _axes.ravel():
+        _ax.set_axis_off()  # slots left empty by the last block stay blank
     for _r, (_label, _losses, _ablation, _kind) in enumerate(_rows):
         _result = outputs[_ablation]
         # Boundary ablations follow the crop toggle (with the colony edge dashed when uncropped)
-        _uncropped = _ablation in BOUNDARY_ABLATIONS and _kind == "prediction" and not crop_boundary.value
+        _follows_toggle = _crop_all or (_ablation in BOUNDARY_ABLATIONS and _kind == "prediction")
+        _uncropped = _follows_toggle and not crop_boundary.value
         _crop = masked.value and not _uncropped
-        _outline = _result["mask"][replicate_index(_result, _replicate)] if _uncropped else None
-        for _c, (_time, _t) in enumerate(_times):
-            _ax = _axes[_c, _r] if _flip else _axes[_r, _c]
-            _image = output_tile(_result, _kind, _replicate, _t, _groups, _crop)
+        for _c, (_time, _rep, _t) in enumerate(_times):
+            _ax = _axes[_position(_r, _c)]
+            _image = output_tile(_result, _kind, _rep, _t, _groups, _crop)
+            _outline = _result["mask"][replicate_index(_result, _rep)] if _uncropped else None
             show_tile(_ax, _image, "", sectors=len(_groups), outline=_outline)
         if _flip:
             # Condition name above its column, with the grey details between name and image
-            _top = _axes[0, _r]
+            _top = _axes[_position(_r, 0)]
             _lines = _losses.count("\n") + 1 if _losses else 0
             if _losses:
                 _top.text(0.5, 1.03, _losses, transform=_top.transAxes, ha="center", va="bottom",
@@ -1262,31 +1342,29 @@ def _(
                           textcoords="offset points", ha="center", va="bottom",
                           fontsize=_font["label"], fontweight="bold")
         else:
-            _axes[_r, 0].text(
-                -0.08, 0.5, _label, transform=_axes[_r, 0].transAxes,
+            _first = _axes[_position(_r, 0)]
+            _first.text(
+                -0.08, 0.5, _label, transform=_first.transAxes,
                 ha="right", va="bottom" if _losses else "center", fontsize=_font["label"], fontweight="bold",
             )
             if _losses:
-                _axes[_r, 0].text(
-                    -0.08, 0.48, _losses, transform=_axes[_r, 0].transAxes,
+                _first.text(
+                    -0.08, 0.48, _losses, transform=_first.transAxes,
                     ha="right", va="top", fontsize=_font["annotation"], color=MUTED,
                 )
-    # Timepoint labels: above the first row, or left of each row when transposed
-    # (left out for a single timepoint, which goes in the title instead)
-    for _c, (_time, _) in enumerate(_times if len(_times) > 1 else []):
-        if _flip:
-            _axes[_c, 0].text(-0.08, 0.5, _time, transform=_axes[_c, 0].transAxes,
-                              ha="right", va="center", fontsize=_font["label"])
-        else:
-            _axes[0, _c].set_title(_time, fontsize=_font["label"])
-    fig_category.suptitle(
-        f"Replicate {_replicate}"
-        + (f" · {_times[0][0]}" if len(_times) == 1 else "")
-        + ("" if crop_boundary.value else " · boundary ablations uncropped"),
-        fontsize=_font["title"], x=0.02, ha="left",
-    )
-    sector_legend(fig_category, _groups, font_scale.value)
-    fig_category.tight_layout(rect=(0, 0, 1, 0.97), w_pad=colony_spacing.value, h_pad=colony_spacing.value)
+    # Column labels (replicate and/or timepoint), once per block: above its first row,
+    # or left of each of its rows when transposed
+    for _block in range(_blocks):
+        for _c, (_time, _, _) in enumerate(_times if len(_times) > 1 else []):
+            if _flip:
+                _ax = _axes[_block * _count + _c, 0]
+                _ax.text(-0.08, 0.5, _time, transform=_ax.transAxes, ha="right", va="center",
+                         fontsize=_font["label"])
+            else:
+                _axes[0, _block * _count + _c].set_title(_time, fontsize=_font["label"])
+    if show_legend.value:
+        sector_legend(fig_category, _groups, font_scale.value)
+    fig_category.tight_layout(w_pad=colony_spacing.value, h_pad=colony_spacing.value)
     fig_category
     return (fig_category,)
 
@@ -1301,8 +1379,10 @@ def _():
 @app.cell(hide_code=True)
 def _(
     ablation_choice,
+    crop_boundary,
     fig_category,
     fig_outputs,
+    replicates_choice,
     save_outputs,
     sector_choice,
     time_choice,
@@ -1313,9 +1393,12 @@ def _(
     _markers = "-".join(g for g in SECTOR_GROUPS.values() if g in sector_choice.value) or "none"
     _picked = [a for a in ABLATIONS if a in ablation_choice.value]
     _picked = "-".join(_picked) if len(_picked) <= 3 else f"{len(_picked)}_ablations"
+    # Cropped and uncropped versions, and different replicates, are saved to different files
+    _suffix = ("" if crop_boundary.value else "_uncropped") + "_rep" + "-".join(
+        str(r) for r in sorted(replicates_choice.value))
     for _name, _figure in {
         f"outputs_{_markers}_{time_choice.selected_key}": fig_outputs,
-        f"over_time_{_picked}_{_markers}": fig_category,
+        f"over_time_{_picked}_{_markers}{_suffix}": fig_category,
     }.items():
         save_figure(_figure, _name, "micropattern_ablations")
     mo.md(f"Saved to `{_directory.relative_to(repository_root)}`")

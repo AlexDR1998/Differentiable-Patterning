@@ -435,13 +435,15 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
         )
         mean_per_mm2, mean_share = mean_measured_density(measured_cells)
 
-        def roll_sizes(_masks, _states_of, _seeds, n_bins=None):
+        def roll_sizes(_masks, _states_of, _seeds, keep_images, n_bins=None):
             """Rollouts of every run's initial states at every size in ``_masks``.
 
             ``_states_of(size index, mask, seed)`` gives the dict of
             ``size_initial_states`` (``cell_weights`` may be None). Profiles
             have ``n_bins`` radial bins (default: those reaching the largest
             mask). Returns ``(per_run, n_bins, radii_um)``: arrays ``[runs, sizes, ...]``.
+            Initial and final images are kept for the first run only, and
+            only with ``keep_images`` (they are large).
             """
             _n_bins = int(n_bins or int(distance_bins[np.any(_masks, axis=0)].max()) + 1)
             _by_size = []
@@ -469,7 +471,6 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                         _groups, _n_bins, record_steps, settings.max_batch,
                     )
                     _kept = {
-                        "final_states": _final.astype(np.float16),
                         "pattern_counts": np.stack([
                             model_pattern_counts(_state, names, rules, _mask, rings) for _state in _final
                         ]),
@@ -479,6 +480,9 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                         "profiles": _profiles.astype(np.float16),
                         "profile_counts": _counts.astype(np.uint32),
                     }
+                    if keep_images:
+                        # The first run's rollouts come first
+                        _kept["final_states"] = _final[:_points].astype(np.float16)
                     if _weights is not None:
                         _kept["cell_pattern_counts"] = np.stack([
                             model_pattern_counts(_state, names, rules, _mask, rings, weights=_w)
@@ -487,16 +491,15 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                     _per_condition.append(_kept)
                     progress(_padded.shape[0])
 
-                # [runs, points, conditions, ...]
+                # [runs, points, conditions, ...] (images: one run)
                 _stacked = {
                     _key: np.stack([_c[_key] for _c in _per_condition], axis=1).reshape(
-                        len(_seeds), _points, len(ko_steps), *_per_condition[0][_key].shape[1:]
+                        -1, _points, len(ko_steps), *_per_condition[0][_key].shape[1:]
                     )
                     for _key in _per_condition[0]
                 }
-                _stacked["initial_states"] = _initial.astype(np.float16).reshape(
-                    len(_seeds), _points, *_initial.shape[1:]
-                )
+                if keep_images:
+                    _stacked["initial_states"] = _initial[None, :_points].astype(np.float16)
                 _stacked["covered_shares"] = np.stack([_run["shares"] for _run in _placed])
                 _stacked["cells_per_colony"] = np.stack([_run["cells"] for _run in _placed])
                 _stacked["max_density"] = np.asarray([_run["max_density"] for _run in _placed])
@@ -506,7 +509,8 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
             return _per_run, _n_bins, (np.arange(_n_bins) + 0.5) * bin_um
 
         def add_results(_source, _replicate, _seeds, _rolled, _diameters, _masks, _densities, _measured, _images):
-            """One result per run; ``_images``: keep the images of the first run."""
+            """One result per run; ``_images``: keep the images of the first run
+            (``_rolled`` must come from ``roll_sizes`` with ``keep_images``)."""
             _per_run, _n_bins, _radii_um = _rolled
             for _run_index, _seed in enumerate(_seeds):
                 _keep = _images and _run_index == 0
@@ -574,8 +578,8 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                     "profile_radii_um": _radii_um,
                     "bin_um": bin_um,
                     # Images, for one run only (they are large)
-                    "initial_states": _per_run["initial_states"][_run_index] if _keep else None,
-                    "final_states": _per_run["final_states"][_run_index] if _keep else None,
+                    "initial_states": _per_run["initial_states"][0] if _keep else None,
+                    "final_states": _per_run["final_states"][0] if _keep else None,
                     "state_channel_names": names,
                     # What the pattern counts depend on, checked when loading
                     "cell_type_markers": list(rules.markers),
@@ -608,9 +612,10 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                     )
                 return _states
 
+            sweep_images = not results
             add_results(
-                "sweep", replicate, seeds, roll_sizes(masks, sweep_states, seeds),
-                diameters, masks, densities, measured, not results,
+                "sweep", replicate, seeds, roll_sizes(masks, sweep_states, seeds, sweep_images),
+                diameters, masks, densities, measured, sweep_images,
             )
 
             # Reference: the same cells at the measured density (mean over the replicates), every size
@@ -627,6 +632,7 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                                 prepared, replicate_index, _mask, [reference_density], unit, _seed,
                             ),
                             seeds,
+                            replicate_index == 0,
                         ),
                         diameters, masks, [reference_density], measured, replicate_index == 0,
                     )
@@ -657,7 +663,7 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                     add_results(
                         "true_data", replicate, seeds,
                         # Bins over the whole grid, so every replicate's colony has the same bins
-                        roll_sizes(true_mask[None], true_states, seeds, n_bins=int(distance_bins.max()) + 1),
+                        roll_sizes(true_mask[None], true_states, seeds, True, n_bins=int(distance_bins.max()) + 1),
                         # The diameter of a disc of the colony's area
                         [2.0 * np.sqrt(true["mask_mm2"] / np.pi) * 1000.0],
                         true_mask[None],

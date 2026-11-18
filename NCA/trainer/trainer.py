@@ -57,6 +57,18 @@ class NcaTrainer:
 		self.channel_names = context.channel_names
 		self.timepoint_names = context.timepoint_names
 		self.intervention_times = context.training_intervention_times
+		# Batches whose predictions may be matched to each other's targets
+		self.assignment_groups = (
+			context.training_condition_ids
+			if context.training_condition_ids is not None
+			else self.intervention_times
+		)
+		# Loss weight of each batch item (None: plain mean)
+		self.batch_weights = (
+			None
+			if context.training_batch_weights is None
+			else jnp.asarray(context.training_batch_weights, dtype=jnp.float32)
+		)
 		self.nodal_channel = (
 			channel_schema.state_channels.index("NODAL")
 			if self.intervention_times is not None
@@ -90,6 +102,8 @@ class NcaTrainer:
 		self.data = self.data_augmenter.return_saved_data()
 		self.batch_count = len(self.data)
 		print("Batches = "+str(self.batch_count))
+		if self.batch_weights is not None and len(self.batch_weights) != self.batch_count:
+			raise ValueError("training_batch_weights needs one weight per batch")
 		
 		# Set up partial mask of channels / timesteps
 		if self.loss_time_channel_mask is None:

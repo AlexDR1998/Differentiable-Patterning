@@ -7,37 +7,12 @@ count: 2
 configs:
 - index: 0
   overrides:
-    initialization.model_id: 20260923T134957Z-cfgd39864233e18-86c2c4d5
     logging.wandb.project: pipeline-smoke
     model_store.collection: pipeline-smoke
-    data.dataset: micropatterns_260726
-    data.micropattern.data_channels: 14
-    data.micropattern.excluded_measurements: []
-    data.micropattern.experiment_groups:
-    - cell_fate_s1
-    - cell_fate_s2
-    - rna_expression
-    - protein_response
-    data.downsample: 16
     data.batches: 2
-    data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
-    - 3
-    - 4
     data.knockout.channel: Nodal
-    model.family: gNCA
-    model.channels: 48
-    model.kernel_str:
-    - ID
-    - LAP
-    - DIFF
-    model.fire_rate: 0.5
-    model.padding: CIRCULAR
     data.knockout.curriculum:
     - ko_24h
-    run.t: 32
     run.iterations: 40
     run.checkpoint_warmup_fraction: 0.125
     optimiser.learn_rate: 0.0001
@@ -53,7 +28,100 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-independent-panels-rna-noise
+    logging.wandb.group: smoke_micropatterns_ko_finetune-mid-slot-knockout
+    initialization.model_id: 20261027T143308Z-cfgb505b3517573-a92c347a
+    model.family: gNCA
+    model.channels: 48
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.activation: relu
+    model.kernel_scale: 1
+    model.parameter_noise_level: 0.01
+    model.firing_estimator: straight_through
+    data.dataset: micropatterns_260726
+    data.downsample: 32
+    data.micropattern.projection: sum
+    data.micropattern.cleaning.enabled: true
+    data.micropattern.cleaning.hot_pixel_thresholds:
+      cell_fate_s1/SOX17: 30.0
+      cell_fate_s1/SOX2: 30.0
+      cell_fate_s1/TBXT: 30.0
+      cell_fate_s1/LMBR: 0.0
+      cell_fate_s2/SOX17: 30.0
+      cell_fate_s2/FOXA2: 30.0
+      cell_fate_s2/TBXT: 30.0
+      cell_fate_s2/LMBR: 0.0
+      rna_expression/CER1: 30.0
+      rna_expression/LEFTY: 30.0
+      rna_expression/NODAL: 30.0
+      protein_response/LEF1: 30.0
+      protein_response/LMBR: 0.0
+      protein_response/SMAD23: 30.0
+    data.micropattern.cleaning.hot_pixel_window: 5
+    data.micropattern.cleaning.background_radii:
+      cell_fate_s1/SOX17: 10
+      cell_fate_s1/SOX2: 10
+      cell_fate_s1/TBXT: 10
+      cell_fate_s1/LMBR: 0
+      cell_fate_s2/SOX17: 10
+      cell_fate_s2/FOXA2: 10
+      cell_fate_s2/TBXT: 10
+      cell_fate_s2/LMBR: 0
+      rna_expression/CER1: 0
+      rna_expression/LEFTY: 0
+      rna_expression/NODAL: 0
+      protein_response/LEF1: 10
+      protein_response/LMBR: 0
+      protein_response/SMAD23: 0
+    data.micropattern.cleaning.background_shrink: 4
+    data.micropattern.cleaning.horizontal_stripe_widths:
+      cell_fate_s1/TBXT: 10
+      cell_fate_s2/TBXT: 10
+    data.micropattern.cleaning.vertical_stripe_widths: {}
+    data.micropattern.cleaning.stripe_block: 270
+    data.micropattern.cleaning.alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+    data.micropattern.cleaning.mask_radius_scale: 1.0
+    data.micropattern.cleaning.normalisation: per_replicate
+    data.micropattern.cleaning.channel_percentiles: {}
+    data.micropattern.cleaning.percentiles_inside_mask: true
+    data.micropattern.cleaning.knockout_bounds: joint
+    data.micropattern.excluded_measurements:
+    - cell_fate_s2/SOX17
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    - cell_fate_s2
+    - rna_expression
+    - protein_response
+    data.micropattern.data_channels: 13
+    data.micropattern.timesteps:
+    - 0
+    - 12
+    - 24
+    - 36
+    - 48
+    data.micropattern.histogram_percentiles:
+    - 0.0
+    - 99.5
+    data.micropattern.intensity_factors:
+      cell_fate_s1/SOX17:
+        '0': 0.3
+      cell_fate_s2/SOX17:
+        '0': 0.15
+        '12': 0.5
+      cell_fate_s2/FOXA2:
+        '0': 0.02
+    data.micropattern.train_replicates:
+    - 3
+    - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
+    run.t: 64
+    run.repeat: 1
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
@@ -72,31 +140,32 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      downsample: 16
+      downsample: 32
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
         - rna_expression
         - protein_response
-        excluded_measurements: []
+        excluded_measurements:
+        - cell_fate_s2/SOX17
         timesteps:
         - 0
         - 12
         - 24
         - 36
         - 48
-        data_channels: 14
+        data_channels: 13
         pad_multiple: null
         noise_strength: 0.005
-        projection: max
+        projection: sum
         intermediate_reinjection_probability: 0.5
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
@@ -106,11 +175,15 @@ configs:
         intensity_factors:
           cell_fate_s1/SOX17:
             0: 0.3
+            '0': 0.3
           cell_fate_s2/SOX17:
             0: 0.15
             12: 0.5
+            '0': 0.15
+            '12': 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
+            '0': 0.02
         cleaning:
           enabled: true
           hot_pixel_window: 5
@@ -145,9 +218,11 @@ configs:
             protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
-          horizontal_stripe_widths: {}
+          horizontal_stripe_widths:
+            cell_fate_s1/TBXT: 10
+            cell_fate_s2/TBXT: 10
           vertical_stripe_widths: {}
-          stripe_block: 0
+          stripe_block: 270
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
           normalisation: per_replicate
@@ -171,6 +246,10 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
+      activation: relu
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: straight_through
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -222,11 +301,12 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 32
+      t: 64
       iterations: 40
       checkpoint_warmup_fraction: 0.125
       write_images: true
       write_videos: true
+      repeat: 1
     logging:
       backend: wandb
       singular_values:
@@ -235,7 +315,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-independent-panels-rna-noise
+        group: smoke_micropatterns_ko_finetune-mid-slot-knockout
         tags: null
         tag_keys:
         - data.knockout.curriculum
@@ -245,42 +325,17 @@ configs:
       collection: pipeline-smoke
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20260923T134957Z-cfgd39864233e18-86c2c4d5
+      model_id: 20261027T143308Z-cfgb505b3517573-a92c347a
 - index: 1
   overrides:
-    initialization.model_id: 20260923T134957Z-cfgd39864233e18-86c2c4d5
     logging.wandb.project: pipeline-smoke
     model_store.collection: pipeline-smoke
-    data.dataset: micropatterns_260726
-    data.micropattern.data_channels: 14
-    data.micropattern.excluded_measurements: []
-    data.micropattern.experiment_groups:
-    - cell_fate_s1
-    - cell_fate_s2
-    - rna_expression
-    - protein_response
-    data.downsample: 16
     data.batches: 2
-    data.micropattern.train_replicates:
-    - 1
-    - 2
-    data.micropattern.validation_replicates:
-    - 3
-    - 4
     data.knockout.channel: Nodal
-    model.family: gNCA
-    model.channels: 48
-    model.kernel_str:
-    - ID
-    - LAP
-    - DIFF
-    model.fire_rate: 0.5
-    model.padding: CIRCULAR
     data.knockout.curriculum:
     - baseline
     - ko_0h
     - ko_24h
-    run.t: 32
     run.iterations: 40
     run.checkpoint_warmup_fraction: 0.125
     optimiser.learn_rate: 0.0001
@@ -296,7 +351,100 @@ configs:
     loss.terms.0.multi_target_weights.correlation: 0.0
     loss.terms.0.multi_target_weights.radial: 1.0
     loss.terms.0.random_channel_shuffle: true
-    logging.wandb.group: smoke_micropatterns_ko_finetune-independent-panels-rna-noise
+    logging.wandb.group: smoke_micropatterns_ko_finetune-mid-slot-knockout
+    initialization.model_id: 20261027T143308Z-cfgb505b3517573-a92c347a
+    model.family: gNCA
+    model.channels: 48
+    model.kernel_str:
+    - ID
+    - LAP
+    - DIFF
+    model.fire_rate: 0.5
+    model.padding: CIRCULAR
+    model.activation: relu
+    model.kernel_scale: 1
+    model.parameter_noise_level: 0.01
+    model.firing_estimator: straight_through
+    data.dataset: micropatterns_260726
+    data.downsample: 32
+    data.micropattern.projection: sum
+    data.micropattern.cleaning.enabled: true
+    data.micropattern.cleaning.hot_pixel_thresholds:
+      cell_fate_s1/SOX17: 30.0
+      cell_fate_s1/SOX2: 30.0
+      cell_fate_s1/TBXT: 30.0
+      cell_fate_s1/LMBR: 0.0
+      cell_fate_s2/SOX17: 30.0
+      cell_fate_s2/FOXA2: 30.0
+      cell_fate_s2/TBXT: 30.0
+      cell_fate_s2/LMBR: 0.0
+      rna_expression/CER1: 30.0
+      rna_expression/LEFTY: 30.0
+      rna_expression/NODAL: 30.0
+      protein_response/LEF1: 30.0
+      protein_response/LMBR: 0.0
+      protein_response/SMAD23: 30.0
+    data.micropattern.cleaning.hot_pixel_window: 5
+    data.micropattern.cleaning.background_radii:
+      cell_fate_s1/SOX17: 10
+      cell_fate_s1/SOX2: 10
+      cell_fate_s1/TBXT: 10
+      cell_fate_s1/LMBR: 0
+      cell_fate_s2/SOX17: 10
+      cell_fate_s2/FOXA2: 10
+      cell_fate_s2/TBXT: 10
+      cell_fate_s2/LMBR: 0
+      rna_expression/CER1: 0
+      rna_expression/LEFTY: 0
+      rna_expression/NODAL: 0
+      protein_response/LEF1: 10
+      protein_response/LMBR: 0
+      protein_response/SMAD23: 0
+    data.micropattern.cleaning.background_shrink: 4
+    data.micropattern.cleaning.horizontal_stripe_widths:
+      cell_fate_s1/TBXT: 10
+      cell_fate_s2/TBXT: 10
+    data.micropattern.cleaning.vertical_stripe_widths: {}
+    data.micropattern.cleaning.stripe_block: 270
+    data.micropattern.cleaning.alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
+    data.micropattern.cleaning.mask_radius_scale: 1.0
+    data.micropattern.cleaning.normalisation: per_replicate
+    data.micropattern.cleaning.channel_percentiles: {}
+    data.micropattern.cleaning.percentiles_inside_mask: true
+    data.micropattern.cleaning.knockout_bounds: joint
+    data.micropattern.excluded_measurements:
+    - cell_fate_s2/SOX17
+    data.micropattern.experiment_groups:
+    - cell_fate_s1
+    - cell_fate_s2
+    - rna_expression
+    - protein_response
+    data.micropattern.data_channels: 13
+    data.micropattern.timesteps:
+    - 0
+    - 12
+    - 24
+    - 36
+    - 48
+    data.micropattern.histogram_percentiles:
+    - 0.0
+    - 99.5
+    data.micropattern.intensity_factors:
+      cell_fate_s1/SOX17:
+        '0': 0.3
+      cell_fate_s2/SOX17:
+        '0': 0.15
+        '12': 0.5
+      cell_fate_s2/FOXA2:
+        '0': 0.02
+    data.micropattern.train_replicates:
+    - 3
+    - 4
+    data.micropattern.validation_replicates:
+    - 1
+    - 2
+    run.t: 64
+    run.repeat: 1
     experiment.name: smoke_micropatterns_ko_finetune
     seed: 0
     logging.wandb.tag_keys:
@@ -315,31 +463,32 @@ configs:
     data:
       dataset: micropatterns_260726
       batches: 2
-      downsample: 16
+      downsample: 32
       micropattern:
         pool_copies: 1
         train_replicates:
-        - 1
-        - 2
-        validation_replicates:
         - 3
         - 4
+        validation_replicates:
+        - 1
+        - 2
         experiment_groups:
         - cell_fate_s1
         - cell_fate_s2
         - rna_expression
         - protein_response
-        excluded_measurements: []
+        excluded_measurements:
+        - cell_fate_s2/SOX17
         timesteps:
         - 0
         - 12
         - 24
         - 36
         - 48
-        data_channels: 14
+        data_channels: 13
         pad_multiple: null
         noise_strength: 0.005
-        projection: max
+        projection: sum
         intermediate_reinjection_probability: 0.5
         intermediate_reinjection_probability_end: 0.5
         intermediate_reinjection_decay_start_fraction: 0.25
@@ -349,11 +498,15 @@ configs:
         intensity_factors:
           cell_fate_s1/SOX17:
             0: 0.3
+            '0': 0.3
           cell_fate_s2/SOX17:
             0: 0.15
             12: 0.5
+            '0': 0.15
+            '12': 0.5
           cell_fate_s2/FOXA2:
             0: 0.02
+            '0': 0.02
         cleaning:
           enabled: true
           hot_pixel_window: 5
@@ -388,9 +541,11 @@ configs:
             protein_response/LEF1: 10
             protein_response/LMBR: 0
             protein_response/SMAD23: 0
-          horizontal_stripe_widths: {}
+          horizontal_stripe_widths:
+            cell_fate_s1/TBXT: 10
+            cell_fate_s2/TBXT: 10
           vertical_stripe_widths: {}
-          stripe_block: 0
+          stripe_block: 270
           alignment_file: Experiments/micropatterns/conf/alignment/260726_alignment.yaml
           mask_radius_scale: 1.0
           normalisation: per_replicate
@@ -416,6 +571,10 @@ configs:
       - DIFF
       fire_rate: 0.5
       padding: CIRCULAR
+      activation: relu
+      kernel_scale: 1
+      parameter_noise_level: 0.01
+      firing_estimator: straight_through
     trainer:
       boundary_mode: soft
       grad_loss: false
@@ -467,11 +626,12 @@ configs:
         hidden_state_size: 0.0
     run:
       mode: train
-      t: 32
+      t: 64
       iterations: 40
       checkpoint_warmup_fraction: 0.125
       write_images: true
       write_videos: true
+      repeat: 1
     logging:
       backend: wandb
       singular_values:
@@ -480,7 +640,7 @@ configs:
         epsilon: 1.0e-08
       wandb:
         project: pipeline-smoke
-        group: smoke_micropatterns_ko_finetune-independent-panels-rna-noise
+        group: smoke_micropatterns_ko_finetune-mid-slot-knockout
         tags: null
         tag_keys:
         - data.knockout.curriculum
@@ -490,5 +650,5 @@ configs:
       collection: pipeline-smoke
       model_factory: NCA.model.factory:build_model
     initialization:
-      model_id: 20260923T134957Z-cfgd39864233e18-86c2c4d5
+      model_id: 20261027T143308Z-cfgb505b3517573-a92c347a
 emit_files: false

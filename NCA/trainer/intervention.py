@@ -20,15 +20,57 @@ def intervention_slot(intervention_time, observation_times=None):
     return jnp.searchsorted(times, intervention_time, side="right") - 1
 
 
+def knockout_step(knockout_hour, steps_per_12h):
+    """First NCA step of a 12-hour-per-``steps_per_12h`` rollout at or after ``knockout_hour``.
+
+    The step that starts at hour ``step * 12 / steps_per_12h``. Training blocks
+    from the same step (``nodal_read_block_mask`` with ``step``).
+    """
+    return -(-int(knockout_hour) * int(steps_per_12h) // 12)
+
+
+def _slot_hours(slot_indices, observation_times):
+    """Start hour and length (hours) of each transition slot."""
+    if observation_times is None:
+        return 12.0 * slot_indices, jnp.full(slot_indices.shape, 12.0)
+    times = jnp.asarray(observation_times, dtype=jnp.float32)
+    last = times.shape[0] - 1
+    start = times[jnp.clip(slot_indices, 0, last)]
+    end = times[jnp.clip(slot_indices + 1, 0, last)]
+    # A slot past the last observation (e.g. a duplicated final time) keeps 12 h
+    return start, jnp.where(end > start, end - start, 12.0)
+
+
 def nodal_read_block_mask(
-    intervention_time, state_count, *, time_offset=0, observation_times=None
+    intervention_time,
+    state_count,
+    *,
+    time_offset=0,
+    observation_times=None,
+    step=None,
+    slot_steps=None,
 ):
-    """True for time slots at or after the intervention."""
+    """True for time slots at or after the intervention.
+
+    Without ``step`` a slot is blocked as a whole when it starts at or after
+    the slot holding the intervention. With ``step`` (the step within each
+    slot) and ``slot_steps`` (the step count of every slot, indexed from slot
+    0), a slot is blocked once ``step`` reaches the intervention hour, so a
+    knockout can start part-way through a slot (e.g. 28 h in the 24-36 h slot).
+    For knockouts on a slot boundary both give the same blocking.
+    """
 
     time_indices = jnp.arange(state_count) + time_offset
-    return (intervention_time >= 0) & (
-        time_indices >= intervention_slot(intervention_time, observation_times)
-    )
+    knocked_out = intervention_time >= 0
+    if step is None:
+        return knocked_out & (
+            time_indices >= intervention_slot(intervention_time, observation_times)
+        )
+    steps = jnp.asarray(slot_steps, dtype=jnp.float32)
+    steps = steps[jnp.clip(time_indices, 0, steps.shape[0] - 1)]
+    start, length = _slot_hours(time_indices, observation_times)
+    # Step j starts at hour start + j * length / steps
+    return knocked_out & (step * length >= (intervention_time - start) * steps)
 
 
 def apply_model_with_blocked_channel(

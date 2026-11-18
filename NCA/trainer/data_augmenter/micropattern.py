@@ -35,8 +35,9 @@ class MicropatternAugmenter(PoolAugmenter):
 
     * ``"group"`` (260726 snapshot data): for each slot one experiment group
       is chosen, and all its channels come from the same randomly chosen
-      replicate. Replicates are only mixed within the same knockout condition
-      (``intervention_times``). ``measurement_mask`` [batch, time - 1,
+      replicate. Replicates are only mixed within the same condition
+      (``condition_ids``, one label per batch, or else ``intervention_times``).
+      ``measurement_mask`` [batch, time - 1,
       measurement] marks which measurements exist.
     * ``"masked"`` (older colony data): true state channels are put back where
       ``measurement_mask`` [batch, time - 1, state] is set, and NODAL is
@@ -61,6 +62,7 @@ class MicropatternAugmenter(PoolAugmenter):
         total_iterations=None,
         measurement_mask=None,
         intervention_times=None,
+        condition_ids=None,
         knockout_times=None,
         observation_times=None,
     ):
@@ -96,6 +98,12 @@ class MicropatternAugmenter(PoolAugmenter):
         )
         if intervention_times is not None and len(intervention_times) != batch_count:
             raise ValueError("Intervention times must match the global reinjection donor pool")
+        if condition_ids is not None and len(condition_ids) != batch_count:
+            raise ValueError("Condition ids must match the global reinjection donor pool")
+        # Replicates are only swapped between batches with the same label
+        self.donor_groups = (
+            condition_ids if condition_ids is not None else intervention_times
+        )
 
         if reinjection == "group":
             expected_shape = (batch_count, target_times, schema.n_measurement_channels)
@@ -165,14 +173,14 @@ class MicropatternAugmenter(PoolAugmenter):
         return add_noise(x, self.noise_strength, noise_key), y
 
     def _matched_donors(self, key, donor_count):
-        """Random replicate for each batch, only swapping within one knockout condition."""
-        if self.intervention_times is None:
+        """Random replicate for each batch, only swapping within one condition."""
+        if self.donor_groups is None:
             return jax.random.permutation(key, donor_count)
-        intervention_times = tuple(int(value) for value in self.intervention_times)
+        labels = tuple(int(value) for value in self.donor_groups)
         donors = jnp.arange(donor_count)
-        for group_index, intervention_time in enumerate(dict.fromkeys(intervention_times)):
+        for group_index, label in enumerate(dict.fromkeys(labels)):
             indices = jnp.asarray(
-                [index for index, value in enumerate(intervention_times) if value == intervention_time]
+                [index for index, value in enumerate(labels) if value == label]
             )
             donors = donors.at[indices].set(
                 jax.random.permutation(jax.random.fold_in(key, group_index), indices)

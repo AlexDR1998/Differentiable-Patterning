@@ -52,12 +52,16 @@ def batch_model(
     nodal_channel=None,
     observation_times=None,
     time_offset=0,
+    slot_steps=None,
 ):
     """Apply ``model`` to a list of batches, each of shape [N, C, H, W].
 
     With ``intervention_times`` (one per batch), the NODAL channel is blocked
     from the knockout time onward. ``observation_times`` maps knockout hours to
     time slots for non-uniform schedules (``None`` keeps 12-hour slots).
+    Given the step within the slot (``step``) and ``slot_steps`` (steps of
+    every slot), blocking starts at the step of the knockout hour, which may
+    fall inside a slot.
     """
     if intervention_times is None:
         apply_with_boundary = jax.vmap(
@@ -71,7 +75,7 @@ def batch_model(
         raise ValueError("NODAL intervention requires a NODAL state channel")
     intervention_times = tuple(intervention_times)
 
-    def apply_interventions(x, callbacks, key_array):
+    def apply_interventions(x, callbacks, key_array, step=None):
         if len(x) != len(intervention_times):
             raise ValueError("Intervention times must match the outer training batch")
         outputs = []
@@ -83,6 +87,8 @@ def batch_model(
                 states.shape[0],
                 time_offset=time_offset,
                 observation_times=observation_times,
+                step=None if slot_steps is None else step,
+                slot_steps=slot_steps,
             )
             outputs.append(jax.vmap(
                 lambda state, item_key, is_blocked: apply_model_with_blocked_channel(
@@ -94,6 +100,8 @@ def batch_model(
             )(states, keys, blocked))
         return type(x)(outputs)
 
+    # run_nca_steps passes the step within the slot to models that take it
+    apply_interventions.takes_step = slot_steps is not None
     return apply_interventions
 
 
@@ -144,7 +152,10 @@ def run_nca_steps(
             maxval=2_147_483_647,
             dtype=jnp.uint32,
         ))
-        new_state = batched_model(state, boundary_callbacks, key_array)
+        if getattr(batched_model, "takes_step", False):
+            new_state = batched_model(state, boundary_callbacks, key_array, step=j)
+        else:
+            new_state = batched_model(state, boundary_callbacks, key_array)
         context = {
             "model": batched_model,
             "boundary_state_selector": model.boundary_regulariser_state,
@@ -232,9 +243,21 @@ def batch_loss(
     return combine_loss_components(losses, component_weights)
 
 
+def batch_mean(losses, weights=None):
+    """Mean loss over the batch, weighted per batch item when ``weights`` is given."""
+    if weights is None:
+        return jnp.mean(losses)
+    weights = weights.astype(losses.dtype)
+    return jnp.sum(losses * weights) / jnp.sum(weights)
+
+
 def multi_target_losses(trainer, setup, states, targets, boundary, measurement_masks,
-                        intervention_times, key, loss_weights):
-    """Multi-target loss per batch and its components, for all batches at once."""
+                        assignment_groups, key, loss_weights):
+    """Multi-target loss per batch and its components, for all batches at once.
+
+    Predictions are only matched to targets with the same ``assignment_groups``
+    label (one per batch; None lets every batch match every other).
+    """
     loss_arguments = {
         **setup.loss_arguments,
         "multi_target_weights": loss_weights.multi_target,
@@ -248,7 +271,7 @@ def multi_target_losses(trainer, setup, states, targets, boundary, measurement_m
         key,
         loss_arguments,
         measurement_mask=jnp.stack(measurement_masks)[..., 0, 0],
-        assignment_groups=intervention_times,
+        assignment_groups=assignment_groups,
     )
 
 
@@ -276,6 +299,7 @@ def build_train_step(trainer, setup):
             trainer.intervention_times,
             trainer.nodal_channel,
             setup.intervention_observation_times,
+            slot_steps=setup.interval_schedule.steps,
         )
         regulariser_totals = {
             name: jnp.zeros(len(states), dtype=LOSS_DTYPE)
@@ -301,7 +325,7 @@ def build_train_step(trainer, setup):
                 targets,
                 jnp.asarray(trainer.diagnostic_boundary_mask)[0, 0],
                 trainer.loss_time_channel_mask,
-                trainer.intervention_times,
+                trainer.assignment_groups,
                 key,
                 loss_weights,
             )
@@ -346,7 +370,7 @@ def build_train_step(trainer, setup):
             if regulariser_losses
             else jnp.array(0.0, dtype=LOSS_DTYPE)
         )
-        mean_loss = jnp.mean(losses) + regulariser_total
+        mean_loss = batch_mean(losses, trainer.batch_weights) + regulariser_total
         return mean_loss, (states, losses, regulariser_losses, diagnostics)
 
     def train_step(state: TrainState):

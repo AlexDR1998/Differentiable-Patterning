@@ -4,16 +4,26 @@ Run with:
     marimo edit Experiments/micropatterns/figures/nca_training_schematic.py
 
 - Panel a: one NCA update step. State channels (observed, hidden, boundary mask)
-  → fixed perception kernels → per-pixel network → gated linear unit → random
-  fire mask (asynchronous updates) → residual add → boundary → next state
+  → fixed perception kernels → perception vector → per-pixel network → gated
+  linear unit → random fire mask (asynchronous updates) → residual add → boundary
+  → next state
 - Panel b: training as a mock phase portrait, time against a 1D state space.
   Every interval between observations is rolled out at once (parallel in time),
   for a batch per timepoint (one fibre each); fibres change colour where a
   regulariser penalises them. Predictions are compared with the data and become
   the next start states (or the data does, with probability p).
   A small plot shows loss weight curricula over training
+- Panel b, rollout version (dropdown): the colony rolled out for N steps through
+  model blocks φ_θ that share the parameters θ, the state at every observed time
+  compared with the data there by one loss term, and the terms summed. Each term's
+  gradient goes back along the forward arrows, through every earlier model block and
+  up into θ, never into the data at x_0 (lanes widen as they carry more terms)
+- Panel b's rollout images come from the toy rule (its "data" is the toy rule from
+  another seed at a different pace), or from a registry model rolled out from one
+  replicate's 0h data, against that replicate's data. Rollouts are cached in
+  ``figures/cache/``
 - Panel a's colony is the toy local rule of figures/toy.py (as in project_overview.py), at a
-  chosen number of pixels; panel b's values are made up. No data is loaded
+  chosen number of pixels; the phase portrait's values are made up
 - Figures are saved to ``figures/schematics/``
 """
 
@@ -23,14 +33,24 @@ __generated_with = "0.25.1"
 app = marimo.App(width="full", app_title="NCA training schematic")
 
 with app.setup:
+    import os
     from pathlib import Path
 
     import marimo as mo
     import matplotlib.pyplot as plt
     import numpy as np
-    from matplotlib.patches import Circle, FancyBboxPatch, Rectangle
+    from dotenv import load_dotenv
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle
 
-    from Experiments.micropatterns.figures.data import TIMEPOINTS
+    from Experiments.micropatterns.figures.data import (
+        CACHE_DIRECTORY,
+        TIMEPOINTS,
+        cache_name,
+        cached,
+        load_selection_records,
+        model_rollouts,
+    )
     from Experiments.micropatterns.figures.drawing import (
         draw_arrow,
         draw_card,
@@ -40,27 +60,38 @@ with app.setup:
         rounded_box,
         stack_panels,
         text_width,
+        trajectory_tile,
     )
     from Experiments.micropatterns.figures.style import (
         ACCENT,
+        EXPERIMENT_GROUPS,
         FONT,
+        GROUP_BOX,
+        GROUP_LABELS,
         MODEL,
         NEIGHBOURHOOD,
+        REPOSITORY_ROOT,
         SERIES,
         THEME,
         WIDTH,
+        legend_options,
         paper_style,
         save_figure,
     )
     from Experiments.micropatterns.figures.toy import toy_patterning, toy_rgba
 
-    # 3x3 perception kernels, as in Common/model/spatial_operators.py (SMOOTHING=1)
+    load_dotenv()
+
+    # 3x3 perception kernels, as in Common/model/spatial_operators.py (SMOOTHING=1):
+    # name -> (kernels, labels). One label for two kernels means they are combined into
+    # one feature: DIFF is |∇| = sqrt(gx² + gy²) of the x and y Sobel filters.
+    SOBEL_X = np.outer([1, 2, 1], [-1, 0, 1]) / 8
     KERNELS = {
-        "ID": (np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]], float), "identity"),
-        "LAP": (np.array([[0.25, 0.5, 0.25], [0.5, -3, 0.5], [0.25, 0.5, 0.25]]), "Laplacian"),
-        "DIFF": (np.outer([1, 2, 1], [-1, 0, 1]) / 8, r"$|\nabla|$"),
-        "GRAD": (np.outer([1, 2, 1], [-1, 0, 1]) / 8, r"$\nabla_x, \nabla_y$"),
-        "AV": (np.full((3, 3), 1 / 9), "average"),
+        "ID": ((np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]], float),), (r"$\mathbf{1}$",)),
+        "LAP": ((np.array([[0.25, 0.5, 0.25], [0.5, -3, 0.5], [0.25, 0.5, 0.25]]),), (r"$\nabla^2$",)),
+        "DIFF": ((SOBEL_X, SOBEL_X.T), (r"$|\nabla|$",)),
+        "GRAD": ((SOBEL_X, SOBEL_X.T), (r"$\nabla_x$", r"$\nabla_y$")),
+        "AV": ((np.full((3, 3), 1 / 9),), ("average",)),
     }
 
     # Example loss weight curricula for panel b, in the form of
@@ -73,6 +104,14 @@ with app.setup:
     CURVE_COLOURS = (SERIES[0], SERIES[4], SERIES[2])
     # Data reinjection probability: starts at p, falls linearly after a fraction of training
     REINJECTION = {"type": "linear", "initial": 0.5, "final": 0.15, "start": 0.25, "end": 1.0, "stages": None}
+
+
+@app.function(hide_code=True)
+def line_breaks(text):
+    """Typed ``\\n`` as a new line, except inside ``$...$`` maths, where it starts
+    commands such as ``\\nabla``."""
+    parts = text.split("$")
+    return "$".join(part if k % 2 else part.replace("\\n", "\n") for k, part in enumerate(parts))
 
 
 @app.function(hide_code=True)
@@ -166,20 +205,23 @@ def column_rows(style):
 
 
 @app.function(hide_code=True)
-def draw_state_column(ax, x, centre_y, images, style, label, side, label_y):
+def draw_state_column(ax, x, centre_y, images, style, label, side, label_y, boxed, label_x=None):
     """State channels as a column of cards (hidden channels as a small stack). A bracket
     on ``side`` ("right" or "left") joins them to one point. Labels go on the other side;
-    ``label`` is centred at height ``label_y``. Returns (bracket x, column bottom)."""
+    ``label`` is centred at height ``label_y`` (and at ``label_x``, default the column
+    centre). The cards of the rows in ``boxed`` sit in a light grey box.
+    Returns (bracket x, column bottom, (bottom, top) of the grey box)."""
     theme = style["theme"]
     small = style["font"] - 1
-    size, gap = style["card"], style["row_gap"]
+    size, gap, pad = style["card"], style["row_gap"], style["box_pad"]
     rows = column_rows(style)
     height = len(rows) * size + (len(rows) - 1) * gap
     top = centre_y + height / 2
     names = {"observed": style["observed_label"], "hidden": style["hidden_label"], "mask": style["mask_label"]}
-    middles = []
+    middles, card_y = [], {}
     for k, name in enumerate(rows):
         y = top - (k + 1) * size - k * gap
+        card_y[name] = y
         middles.append(y + size / 2)
         if name == "hidden":
             step = 0.07
@@ -188,10 +230,17 @@ def draw_state_column(ax, x, centre_y, images, style, label, side, label_y):
         else:
             edge = style["mask_colour"] if name == "mask" else None
             draw_card(ax, (x, y), size, 10, images[name], edge=edge, pixelated=True)
-        text_x, ha = (x - 0.1, "right") if side == "right" else (x + size + 0.1, "left")
+        text_x, ha = (x - pad - 0.08, "right") if side == "right" else (x + size + pad + 0.08, "left")
         ax.text(text_x, y + size / 2, names[name], ha=ha, va="center", fontsize=small, linespacing=1.2,
                 color=style["mask_colour"] if name == "mask" else theme["fg"])
-    ax.text(x + size / 2, label_y, label, ha="center", va="center", fontsize=style["font"] + 1)
+    ax.text(x + size / 2 if label_x is None else label_x, label_y, label, ha="center", va="center",
+            fontsize=style["font"] + 1)
+    box_rows = [r for r in rows if r in boxed]
+    box_bottom = min(card_y[r] for r in box_rows) - pad
+    box_top = max(card_y[r] for r in box_rows) + size + pad
+    ax.add_patch(FancyBboxPatch((x - pad, box_bottom), size + 2 * pad, box_top - box_bottom,
+                                boxstyle="round,pad=0,rounding_size=0.06", facecolor=GROUP_BOX["face"],
+                                edgecolor=GROUP_BOX["edge"], lw=0.6, zorder=1))
 
     # Bracket: a short stub from each card to a shared vertical bar
     edge_x = x + size + 0.05 if side == "right" else x - 0.05
@@ -199,12 +248,75 @@ def draw_state_column(ax, x, centre_y, images, style, label, side, label_y):
     for middle in middles:
         ax.plot([edge_x, bar_x], [middle, middle], color=theme["fg"], lw=0.8)
     ax.plot([bar_x, bar_x], [min(middles), max(middles)], color=theme["fg"], lw=0.8)
-    return bar_x, top - height
+    return bar_x, top - height, (box_bottom, box_top)
+
+
+@app.function(hide_code=True)
+def draw_perception(ax, x, centre_y, style):
+    """Perception kernels in a box, top to bottom in KERNELS order, each labelled on the
+    right. Kernels combined into one feature (|∇|) are joined by a bracket to their label.
+    Returns (right edge of the labels, number of features)."""
+    theme, small = style["theme"], style["font"] - 1
+    names = [k for k in style["kernels"] if k in KERNELS] or ["ID"]
+    pair_gap, k_gap = 0.06, 0.2
+    count = sum(len(KERNELS[n][0]) for n in names)
+    gaps = sum((len(KERNELS[n][0]) - 1) * pair_gap for n in names) + (len(names) - 1) * k_gap
+    # Kernels shrink when there are many, so the box stays near the network's height
+    k_size = min(0.4, (style["network_height"] + 0.4 - gaps) / count)
+    height = count * k_size + gaps
+    top = centre_y + height / 2
+    y, label_right = top, x
+    features = 0
+    for k, name in enumerate(names):
+        kernels, labels = KERNELS[name]
+        y -= k_gap if k else 0
+        middles = []
+        for j, kernel in enumerate(kernels):
+            y -= (pair_gap if j else 0) + k_size
+            draw_kernel(ax, (x, y), k_size, kernel)
+            middles.append(y + k_size / 2)
+        if len(labels) == len(kernels):
+            for middle, label in zip(middles, labels):
+                ax.text(x + k_size + 0.14, middle, label, ha="left", va="center", fontsize=small - 0.5)
+            text_x = x + k_size + 0.14
+        else:
+            # Bracket from each kernel to one label: the kernels make one feature
+            bar_x = x + k_size + 0.2
+            for middle in middles:
+                ax.plot([x + k_size + 0.03, bar_x], [middle, middle], color=theme["fg"], lw=0.7, zorder=6)
+            ax.plot([bar_x, bar_x], [min(middles), max(middles)], color=theme["fg"], lw=0.7, zorder=6)
+            ax.plot([bar_x, bar_x + 0.08], [np.mean(middles)] * 2, color=theme["fg"], lw=0.7, zorder=6)
+            ax.text(bar_x + 0.12, np.mean(middles), labels[0], ha="left", va="center", fontsize=small - 0.5)
+            text_x = bar_x + 0.12
+        label_right = max(label_right, text_x + 1.4 * max(text_width(l.strip("$\\"), small - 0.5) for l in labels))
+        features += len(labels)
+    ax.add_patch(FancyBboxPatch((x - 0.08, top - height - 0.08), k_size + 0.16, height + 0.16,
+                                boxstyle="round,pad=0,rounding_size=0.05", fill=False,
+                                edgecolor=style["neighbourhood_colour"], lw=1.0, zorder=5))
+    ax.text(x + k_size / 2, top + 0.25, style["perception_label"], ha="center", va="bottom", fontsize=small,
+            linespacing=1.2)
+    return label_right, features
+
+
+@app.function(hide_code=True)
+def draw_perception_vector(ax, x, centre_y, features, style):
+    """The perception vector of one pixel: a bar with one segment per kernel feature (in
+    the order of the kernels), each covering every state channel. Returns its right edge."""
+    small, colour = style["font"] - 1, style["neighbourhood_colour"]
+    width, height = 0.22, style["network_height"]
+    step = height / features
+    for k in range(features):
+        ax.add_patch(Rectangle((x, centre_y + height / 2 - (k + 1) * step), width, step, facecolor=colour,
+                               alpha=0.3 if k % 2 == 0 else 0.12, edgecolor=colour, lw=0.6, zorder=4))
+    # Label below the bar, as the network's label is above it
+    ax.text(x + width / 2, centre_y - height / 2 - 0.1, style["perception_vector_label"], ha="center",
+            va="top", fontsize=small, linespacing=1.2)
+    return x + width
 
 
 @app.function(hide_code=True)
 def draw_network(ax, x, centre_y, style):
-    """Per-pixel network: 1x1 conv → ReLU → 1x1 conv, drawn as three bars. The last bar
+    """Per-pixel network: weight matrix → ReLU → weight matrix, drawn as three bars. The last bar
     is split into the GLU halves a and b (gated) and a firing logit p (learned firing).
     Returns (right edge, centre height of each part of the last bar)."""
     theme = style["theme"]
@@ -213,7 +325,7 @@ def draw_network(ax, x, centre_y, style):
     learned = style["firing"] == "learned"
     parts = (["a", "b"] if style["gated"] else [r"$\Delta$"]) + (["p"] if learned else [])
     heights = [1.0] * (len(parts) - learned) + ([0.35] if learned else [])
-    for k, name in enumerate(("1×1 conv", "ReLU", "1×1 conv")):
+    for k, name in enumerate(("weight matrix", "ReLU", "weight matrix")):
         left = x + k * (bar_w + bar_gap)
         if k < 2:
             ax.add_patch(Rectangle((left, centre_y - bar_h / 2), bar_w, bar_h, facecolor=model,
@@ -250,31 +362,29 @@ def draw_architecture_panel(ax, toy, style):
     learned = style["firing"] == "learned"
     names = [style[f"{r}_label"] for r in column_rows(style)]
 
-    # State x_t. The residual line runs at the height of its label, above the network
-    left = max(text_width(n, small) for n in names) + 0.15
+    # State x_t. The observed and hidden channels (grey box) also skip ahead to the
+    # residual add, along a line above the network
+    pad = style["box_pad"]
+    left = max(text_width(n, small) for n in names) + 0.15 + pad
     rows = len(column_rows(style))
     column_top = cy + (rows * size + (rows - 1) * style["row_gap"]) / 2
-    skip_y = max(column_top + 0.25, cy + style["network_height"] / 2 + 0.65)
-    bar_x, column_bottom = draw_state_column(ax, left, cy, images["before"], style, "$x_t$", "right", skip_y)
+    # (the kernel box can be up to 0.4 taller than the network)
+    skip_y = max(column_top + pad + 0.3, cy + (style["network_height"] + 0.4) / 2 + 0.75)
+    skip_x = left + 0.8 * size
+    bar_x, column_bottom, (_, box_top) = draw_state_column(
+        ax, left, cy, images["before"], style, "$x_t$", "right", skip_y, ("observed", "hidden"),
+        label_x=left + 0.3 * size)
     x = bar_x + 0.45
     draw_arrow(ax, (bar_x, cy), (x - 0.12, cy), fg)
 
-    # Perception: fixed local kernels, applied to every channel
-    kernels = [k for k in style["kernels"] if k in KERNELS] or ["ID"]
-    k_size, k_gap = 0.4, 0.2
-    k_height = len(kernels) * k_size + (len(kernels) - 1) * k_gap
-    k_top = cy + k_height / 2
-    for k, name in enumerate(kernels):
-        ky = k_top - (k + 1) * k_size - k * k_gap
-        draw_kernel(ax, (x, ky), k_size, KERNELS[name][0])
-        ax.text(x + k_size + 0.14, ky + k_size / 2, KERNELS[name][1], ha="left", va="center", fontsize=small - 0.5)
-    ax.add_patch(FancyBboxPatch((x - 0.08, k_top - k_height - 0.08), k_size + 0.16, k_height + 0.16,
-                                boxstyle="round,pad=0,rounding_size=0.05", fill=False,
-                                edgecolor=style["neighbourhood_colour"], lw=1.0, zorder=5))
-    ax.text(x + k_size / 2, k_top + 0.25, style["perception_label"], ha="center", va="bottom", fontsize=small,
-            linespacing=1.2)
-    x += k_size + 0.25 + 1.4 * max(text_width(KERNELS[k][1].strip("$\\"), small - 0.5) for k in kernels)
-    draw_arrow(ax, (x, cy), (x + 0.3, cy), fg)
+    # Perception: fixed local kernels, applied to every channel, stacked into a
+    # perception vector at each pixel
+    x, features = draw_perception(ax, x, cy, style)
+    # The label widths are generous estimates, so the arrow starts a little inside them
+    vector_x = x - 0.05
+    draw_arrow(ax, (vector_x - 0.3, cy), (vector_x - 0.05, cy), fg)
+    x = draw_perception_vector(ax, vector_x, cy, features, style)
+    draw_arrow(ax, (x + 0.03, cy), (x + 0.3, cy), fg)
     x += 0.35
 
     net_right, parts = draw_network(ax, x, cy, style)
@@ -334,9 +444,8 @@ def draw_architecture_panel(ax, toy, style):
     add = (x + 0.45, cy)
     draw_arrow(ax, (x + 0.03, cy), (add[0] - 0.17, cy), fg)
     operator(ax, add, "+", style)
-    ax.plot([left + size / 2 + 0.4, add[0]], [skip_y, skip_y], color=muted, lw=0.9)
+    ax.plot([skip_x, skip_x, add[0]], [box_top, skip_y, skip_y], color=muted, lw=0.9, solid_joinstyle="miter")
     draw_arrow(ax, (add[0], skip_y), (add[0], cy + 0.17), muted, lw=0.9)
-    ax.text(add[0] - 0.15, skip_y + 0.1, style["skip_label"], ha="right", va="bottom", fontsize=small, color=muted)
     x = add[0] + 0.17
 
     # Boundary: the adhesion mask m is applied after every step
@@ -357,18 +466,19 @@ def draw_architecture_panel(ax, toy, style):
             fontsize=small, color=mask_colour, linespacing=1.2)
     x += box_w
 
-    # State x_{t+1}
-    column_x = x + 0.8
+    # State x_{t+1}: all of its channels (grey box) become the next x_t
+    column_x = x + 0.8 + pad
     draw_arrow(ax, (x + 0.03, cy), (column_x - 0.25, cy), fg)
-    draw_state_column(ax, column_x, cy, images["after"], style, "$x_{t+1}$", "left", skip_y)
-    right = column_x + size + 0.15 + max(text_width(n, small) for n in names)
+    _, _, (after_bottom, _) = draw_state_column(ax, column_x, cy, images["after"], style, "$x_{t+1}$", "left",
+                                                skip_y, column_rows(style))
+    right = column_x + size + pad + 0.15 + max(text_width(n, small) for n in names)
 
-    # Repeat: dashed loop from x_{t+1} back to x_t, under everything
+    # Repeat: dashed loop from the whole of x_{t+1} back to x_t, under everything
     low = min(fire_top - size, m_top - m_size) - 0.65
     if style["repeat_label"]:
         low_label = low
-        low = min(low, column_bottom - 0.25)
-        polyline_arrow(ax, [(column_x + size / 2, column_bottom - 0.05), (column_x + size / 2, low),
+        low = min(low, after_bottom - 0.25)
+        polyline_arrow(ax, [(column_x + size / 2, after_bottom), (column_x + size / 2, low),
                             (left + size / 2, low), (left + size / 2, column_bottom - 0.05)], muted,
                        ls=(0, (3, 2)))
         ax.text((left + column_x + size) / 2, low - 0.08, style["repeat_label"], ha="center", va="top",
@@ -435,6 +545,10 @@ def draw_training_panel(ax, toy, style):
     count = len(toy[0])
     data, predicted, bulges = mock_trajectories(count, style)
     width, height = style["phase_width"], style["phase_height"]
+    # Without the curricula plot, the portrait can fill a given panel width (that of
+    # panel a, so both panels span the page); 0.45 left and 0.35 right are margins
+    if not style["show_curricula"] and style["full_width"]:
+        width = style["full_width"] - 0.45 - 0.35
     v_low, v_high = -0.18, 1.32
     hours = np.linspace(0, TIMEPOINTS[-1], count)
 
@@ -526,21 +640,24 @@ def draw_training_panel(ax, toy, style):
     ]
     if style["show_reinjection_paths"]:
         entries.append((None, dict(color=muted, lw=0.9, ls=(0, (2, 1.5))), style["reinjection_key"]))
-    # Two rows; each column as wide as its widest entry
-    columns = [entries[k:k + 2] for k in range(0, len(entries), 2)]
-    x = 0.05
-    for column in columns:
-        for row, (marker, line, text) in enumerate(column):
-            y = key_y - row * 0.3
-            if marker:
-                ax.plot(x + 0.12, y, ls="none", **marker)
-            else:
-                ax.plot([x, x + 0.25], [y, y], **line)
-            ax.text(x + 0.32, y, text, ha="left", va="center", fontsize=small)
-        x += 0.32 + 1.2 * max(text_width(text, small) for *_, text in column) + 0.4
-    key_right = x
-    key_y -= 0.3
-    bottom = key_y - 0.3
+    # Two rows, filled column by column. A legend measures its own text, so the
+    # columns never overlap
+    handles = [Line2D([], [], ls="none", **marker) if marker else Line2D([], [], **line)
+               for marker, line, _ in entries]
+    options = {**legend_options(), "fontsize": small, "handlelength": 1.8, "columnspacing": 2.0}
+    ax.legend(handles, [text for *_, text in entries], ncol=(len(entries) + 1) // 2, loc="upper left",
+              bbox_to_anchor=(-0.05, key_y + 0.2), bbox_transform=ax.transData, borderaxespad=0,
+              borderpad=0, labelspacing=0.6, **options)
+    bottom = key_y - 0.6
+
+    if not style["show_curricula"]:
+        # No curricula plot: the total loss goes under the key instead
+        if style["equation"]:
+            ax.text(width / 2, bottom - 0.05, style["equation"], ha="center", va="top", fontsize=font)
+            bottom -= 0.55
+        ax.set_xlim(-0.45, width + 0.35)
+        ax.set_ylim(bottom, bracket_y + 0.8)
+        return
 
     # Loss curricula: weight factor of each loss term against training iteration
     # Same height and baseline as the phase portrait
@@ -570,8 +687,168 @@ def draw_training_panel(ax, toy, style):
     # Total loss, under the plot
     if style["equation"]:
         ax.text((px + plot_right) / 2, py - 0.45, style["equation"], ha="center", va="top", fontsize=font)
-    ax.set_xlim(-0.45, max(plot_right, key_right))
+    ax.set_xlim(-0.45, plot_right)
     ax.set_ylim(min(bottom, py - 1.0), bracket_y + 0.8)
+
+
+@app.function(hide_code=True)
+def toy_columns(toy, target):
+    """Images of the rollout version of panel b from the toy rule: rollout frames and
+    data at evenly spaced times. Each image is (rgba, unmeasured sectors)."""
+    frames, mask = toy
+    data, data_mask = target
+    return {
+        "predicted": [(toy_rgba(f, mask), ()) for f in frames],
+        "data": [(toy_rgba(d, data_mask), ()) for d in data],
+        "hours": list(np.linspace(0, TIMEPOINTS[-1], len(frames))),
+    }
+
+
+@app.function(hide_code=True)
+def model_columns(rollout, groups, gamma):
+    """Images of the rollout version of panel b from a registry model's rollout: the
+    model's states and the measured data at the observation times, one sector per
+    experiment group (hatched where a group was not measured)."""
+    count = len(rollout["time_labels"])
+    return {
+        "predicted": [trajectory_tile(rollout, "prediction", i, groups, gamma) for i in range(count)],
+        "data": [trajectory_tile(rollout, "target", i, groups, gamma) for i in range(count)],
+        "hours": [float(t.rstrip("h")) for t in rollout["time_labels"]],
+    }
+
+
+@app.function(hide_code=True)
+def draw_rollout_panel(ax, columns, style):
+    """Panel b, rollout version: the NCA rolled out from x_0 = d_0, with a model block φ_θ
+    on every arrow between frames (K steps each), and the data d_i under each frame. Each
+    frame is compared with its data by one loss term, and the terms are summed.
+
+    The gradient of each loss term goes back into its frame, then back along a lane
+    under the forward arrows, through every earlier model block, and up from each block
+    into the parameters θ that all blocks share. It never goes into the data at x_0. The
+    lanes get wider towards x_0, as earlier blocks collect the gradient of more terms.
+
+    ``columns`` holds "predicted" and "data" images ((rgba, unmeasured) each) and their
+    "hours" (see ``toy_columns`` and ``model_columns``)."""
+    theme = style["theme"]
+    fg, muted, model, loss_colour = theme["fg"], theme["muted"], style["model_colour"], style["loss_colour"]
+    font, small = style["font"], style["font"] - 1
+    predicted, data, hours = columns["predicted"], columns["data"], columns["hours"]
+    count, size, cy = len(predicted), style["card"], 0.0
+    gap_y, radius = style["compare_gap"], 0.17
+    pixelated = style["pixelated"]
+
+    # Frame spacing: fixed, or stretched so the panel is as wide as panel a
+    sum_width = text_width(style["sum_label"].strip("$"), font) if style["sum_label"] else 0.0
+    tail = 0.3 + sum_width
+    gap = style["frame_gap"]
+    if style["fill_width"] and style["full_width"] and count > 1:
+        gap = max(gap, (style["full_width"] - 0.2 - tail - count * size) / (count - 1))
+    lefts = [k * (size + gap) for k in range(count)]
+    centres = [left + size / 2 for left in lefts]
+    last = lefts[-1] + size
+
+    # Heights: parameters, rollout row, loss terms, data row
+    loss_y = cy - size / 2 - gap_y
+    data_y = loss_y - gap_y - size / 2
+    theta_y = cy + size / 2 + 0.55
+    theta_h = 0.32
+
+    # Lines: forward (model colour) above the centre, the gradient (loss colour) below it
+    lane = 0.1
+    grad_kwargs = dict(arrowstyle="-|>", mutation_scale=7, color=loss_colour, zorder=8, shrinkA=0, shrinkB=0)
+    if style["dashed_backprop"]:
+        grad_kwargs["linestyle"] = (0, (3, 1.5))
+
+    def grad_arrow(start, end, terms):
+        """Gradient arrow, wider the more loss terms it carries."""
+        lw = 0.9 + style["grad_growth"] * (terms - 1)
+        ax.add_patch(FancyArrowPatch(start, end, lw=lw, **grad_kwargs))
+
+    # Rollout: one card every K steps, labelled above
+    names = [r"$x_0$"] + [r"$x_K$" if k == 1 else rf"$x_{{{k}K}}$" for k in range(1, count - 1)] + [r"$x_N$"]
+    for left, (rgba, unmeasured), name in zip(lefts, predicted, names):
+        draw_card(ax, (left, cy - size / 2), size, 10, rgba, unmeasured=unmeasured, pixelated=pixelated)
+        ax.text(left + size / 2, cy + size / 2 + 0.06, name, ha="center", va="bottom", fontsize=font)
+
+    # Model blocks: the NCA function (φ_θ) for K steps on every forward arrow, all sharing the parameters θ
+    block_w = min(style["block_width"], gap - 0.3)
+    block_h = 0.5
+    block_centres = [left + size + gap / 2 for left in lefts[:-1]]
+    for k, bx in enumerate(block_centres):
+        frame_right, next_left = bx - gap / 2, bx + gap / 2
+        block_left, block_right = bx - block_w / 2, bx + block_w / 2
+        rounded_box(ax, (block_left, cy - block_h / 2), block_w, block_h, model, z=9, rounding=0.08)
+        ax.text(bx, cy, style["nca_symbol"], ha="center", va="center", fontsize=font, zorder=10)
+        if style["step_label"]:
+            ax.text(bx, cy - block_h / 2 - 0.06, style["step_label"], ha="center", va="top", fontsize=small,
+                    color=model)
+        # Forward: frame → block → next frame
+        ax.plot([frame_right + 0.04, block_left], [cy + lane] * 2, color=model, lw=0.9, zorder=8)
+        draw_arrow(ax, (block_right, cy + lane), (next_left - 0.04, cy + lane), model, lw=0.9)
+        # Gradient: next frame → block, carrying the terms at and after the next frame;
+        # then on to the frame before, unless that is the initial condition
+        terms = count - 1 - k
+        grad_arrow((next_left - 0.04, cy - lane), (block_right, cy - lane), terms)
+        if k > 0:
+            grad_arrow((block_left, cy - lane), (frame_right + 0.04, cy - lane), terms)
+        # Shared parameters into the block, and the gradient up out of it
+        ax.plot([bx - lane, bx - lane], [theta_y - theta_h / 2, cy + block_h / 2], color=model, lw=0.8,
+                ls=(0, (2, 1.5)), zorder=7)
+        grad_arrow((bx + lane, cy + block_h / 2 + 0.02), (bx + lane, theta_y - theta_h / 2 - 0.02), terms)
+
+    # Shared parameters θ, over all the blocks
+    if block_centres:
+        theta_left = block_centres[0] - block_w / 2
+        theta_right = block_centres[-1] + block_w / 2
+        rounded_box(ax, (theta_left, theta_y - theta_h / 2), theta_right - theta_left, theta_h, model, z=9,
+                    rounding=0.08)
+        ax.text((theta_left + theta_right) / 2, theta_y, style["theta_label"], ha="center", va="center",
+                fontsize=small, zorder=10)
+    top = theta_y + theta_h / 2
+    if style["backprop_label"]:
+        ax.text((centres[0] + centres[-1]) / 2, top + 0.1, style["backprop_label"], ha="center", va="bottom",
+                fontsize=font, color=loss_colour)
+        top += 0.45
+
+    # Data at every time, labelled below. The first is the initial condition x_0
+    for k, (left, (rgba, unmeasured)) in enumerate(zip(lefts, data)):
+        draw_card(ax, (left, data_y - size / 2), size, 10, rgba, unmeasured=unmeasured, edge=fg,
+                  pixelated=pixelated)
+        ax.text(left + size / 2, data_y - size / 2 - 0.08, f"$d_{{{k}}}$", ha="center", va="top", fontsize=font)
+    draw_arrow(ax, (centres[0], data_y + size / 2 + 0.04), (centres[0], cy - size / 2 - 0.04), fg, lw=0.9)
+    ax.text(centres[0] + 0.1, loss_y, style["initial_label"], ha="left", va="center", fontsize=small,
+            linespacing=1.2)
+
+    # Loss terms: one per observed time, summed along a line to the total loss
+    ax.plot([centres[1], last + 0.2], [loss_y, loss_y], color=loss_colour, lw=0.9, zorder=6)
+    if style["sum_label"]:
+        ax.text(last + 0.3, loss_y, style["sum_label"], ha="left", va="center", fontsize=font, color=loss_colour)
+    side = 0.09
+    edge = np.sqrt(radius ** 2 - side ** 2)
+    for centre in centres[1:]:
+        operator(ax, (centre, loss_y), r"$\mathcal{L}$", style, colour=loss_colour, radius=radius)
+        # Prediction and data into the loss term; its gradient back up into the prediction
+        draw_arrow(ax, (centre - side, cy - size / 2 - 0.03), (centre - side, loss_y + edge + 0.02), fg, lw=0.7)
+        draw_arrow(ax, (centre, data_y + size / 2 + 0.03), (centre, loss_y - radius - 0.02), fg, lw=0.7)
+        grad_arrow((centre + side, loss_y + edge + 0.02), (centre + side, cy - size / 2 - 0.03), 1)
+
+    # Continuous time axis, ticked under each column
+    axis_y = data_y - size / 2 - 0.55
+    bottom = axis_y
+    if style["show_time_axis"]:
+        draw_arrow(ax, (0, axis_y), (last + 0.15, axis_y), muted, lw=0.8)
+        for centre, hour in zip(centres, hours):
+            ax.plot([centre] * 2, [axis_y - 0.05, axis_y + 0.05], color=fg, lw=0.6, zorder=5)
+            ax.text(centre, axis_y - 0.09, f"{hour:.3g}h", ha="center", va="top", fontsize=small)
+        ax.text(last + 0.22, axis_y, "time", ha="left", va="center", fontsize=small, color=muted)
+        bottom = axis_y - 0.35
+    if style["rollout_label"]:
+        ax.text(last / 2, bottom - 0.05, style["rollout_label"], ha="center", va="top", fontsize=font, color=model)
+        bottom -= 0.45
+
+    ax.set_xlim(-0.1, last + tail + 0.1)
+    ax.set_ylim(bottom - 0.1, top + 0.2)
 
 
 @app.cell(hide_code=True)
@@ -581,6 +858,9 @@ def _():
 
     - a: one NCA update step; b: training on a time series, parallel in time
     - a: toy colony from `figures/toy.py`; b: made-up values, not data
+    - b has a second version (*Panel b version*): a rollout through model blocks compared with data at
+      every timepoint, and each loss term's gradient backpropagated through the blocks to the parameters
+    - its images come from the toy rule or from a registry model (*Images from*)
     """)
     return
 
@@ -660,11 +940,13 @@ def _():
     plot_gap = mo.ui.slider(start=0.6, stop=2.5, step=0.05, value=1.3, label="Gap before plot", show_value=True)
     curve_count = mo.ui.slider(start=1, stop=3, step=1, value=3, label="Loss curves", show_value=True)
     show_reinjection = mo.ui.switch(value=True, label="Reinjection curve")
+    show_curricula = mo.ui.switch(value=True, label="Loss curricula plot")
+    show_equation = mo.ui.switch(value=True, label="Loss equation")
     mo.vstack([
         mo.md("**Panel b** (mock phase portrait)"),
         mo.hstack([phase_width, phase_height, batch, fibre_width, fibre_alpha], justify="start"),
         mo.hstack([prediction_error, overshoot, overshoot_interval, show_reinjection_paths], justify="start"),
-        mo.hstack([plot_gap, curve_count, show_reinjection], justify="start"),
+        mo.hstack([show_curricula, show_equation, plot_gap, curve_count, show_reinjection], justify="start"),
     ])
     return (
         batch,
@@ -677,6 +959,8 @@ def _():
         phase_width,
         plot_gap,
         prediction_error,
+        show_curricula,
+        show_equation,
         show_reinjection,
         show_reinjection_paths,
     )
@@ -684,87 +968,95 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    labels = mo.ui.dictionary({
-        "title_a": mo.ui.text(value="Defining the NCA update", label="Title a"),
-        "title_b": mo.ui.text(value="Training on time series data", label="Title b"),
-        "observed_label": mo.ui.text(value="observed\\nchannels", label="Observed"),
-        "hidden_label": mo.ui.text(value="hidden\\nchannels", label="Hidden"),
-        "mask_label": mo.ui.text(value="mask\\nchannel", label="Mask"),
-        "perception_label": mo.ui.text(value="perception\\nkernels", label="Perception"),
-        "network_label": mo.ui.text(value="channel mixing\\nnetwork $f_\\theta$", label="Network"),
-        "gate_label": mo.ui.text(value="gated\\nlinear unit", label="Gate"),
-        "fire_label": mo.ui.text(value="random fire mask\\n$\\sigma \\sim$ Bernoulli$(p)$", label="Fire mask"),
-        "fire_label_learned": mo.ui.text(value="learned fire mask\\n$\\sigma \\sim$ Bernoulli$(p_\\theta)$",
-                                         label="Fire mask (learned)"),
-        "skip_label": mo.ui.text(value="residual", label="Skip"),
-        "boundary_label": mo.ui.text(value="boundary", label="Boundary"),
-        "adhesion_label": mo.ui.text(value="micropattern\\nmask $m$", label="Adhesion mask"),
-        "repeat_label": mo.ui.text(value="repeat for $K$ steps", label="Repeat"),
-        "space_label": mo.ui.text(value="state space $\\mathcal{X}$", label="State space"),
-        "time_label": mo.ui.text(value="time", label="Time"),
-        "steps_label": mo.ui.text(value="$K$ NCA steps", label="Rollout"),
-        "parallel_label": mo.ui.text(value="intervals rolled out in parallel, outputs feed forward at the next training iteration",
-                                     label="Parallel"),
-        "region_label": mo.ui.text(value="outside valid range: penalised by regulariser $R$", label="Region"),
-        "data_key": mo.ui.text(value="data $d_i$", label="Key: data"),
-        "prediction_key": mo.ui.text(value="prediction $\\hat{x}_i$ (pool)", label="Key: prediction"),
-        "state_key": mo.ui.text(value="rollout, one per batch member", label="Key: rollout"),
-        "penalised_key": mo.ui.text(value="penalised by regulariser", label="Key: penalised"),
-        "reinjection_key": mo.ui.text(value="start from data (prob. $q$)", label="Key: reinjection"),
-        "curve_title": mo.ui.text(value="loss curricula", label="Plot title"),
-        "curve_x_label": mo.ui.text(value="training iteration", label="Plot x"),
-        "curve_y_label": mo.ui.text(value="weight", label="Plot y"),
-        "curve_labels": mo.ui.text(value="loss term 1, loss term 2, loss term 3", label="Curve labels"),
-        "reinjection_label": mo.ui.text(value="reinjection $q$", label="Reinjection"),
-        "equation": mo.ui.text(
-            value=r"$\mathcal{L} = \sum_k w_k(n)\, \mathcal{L}_k(\hat{x}, d) + \sum_r \lambda_r \sum_s R_r(x_s)$",
-            label="Equation", full_width=True),
-    })
-    mo.vstack([mo.md("**Labels** (`\\n` for a new line, `$...$` for maths)"),
-               mo.hstack(list(labels.values()), wrap=True, justify="start")])
-    return (labels,)
-
-
-@app.cell(hide_code=True)
-def _(toy_frames, toy_seed, toy_size, toy_steps):
-    # The toy rule's length scales are in pixels, so run it at 24 px and resample to the chosen size
-    _base = toy_patterning(24, int(toy_frames.value), int(toy_steps.value), int(toy_seed.value))
-    toy = resample_toy(_base, int(toy_size.value or 24))
-    return (toy,)
+    panel_b_version = mo.ui.dropdown(options=["phase portrait", "rollout"], value="phase portrait",
+                                     label="Panel b version")
+    rollout_source = mo.ui.dropdown(options=["toy rule", "registry model"], value="toy rule",
+                                    label="Images from")
+    frame_gap = mo.ui.slider(start=0.6, stop=2.0, step=0.05, value=1.0, label="Gap between frames",
+                             show_value=True)
+    fill_width = mo.ui.switch(value=True, label="Stretch to panel a's width")
+    block_width = mo.ui.slider(start=0.3, stop=1.2, step=0.05, value=0.6, label="Model block width",
+                               show_value=True)
+    compare_gap = mo.ui.slider(start=0.25, stop=1.0, step=0.05, value=0.4, label="Gap around losses",
+                               show_value=True)
+    grad_growth = mo.ui.slider(start=0.0, stop=0.6, step=0.05, value=0.25,
+                               label="Gradient line widening per loss term", show_value=True)
+    dashed_backprop = mo.ui.switch(value=False, label="Dashed gradient arrows")
+    show_time_axis = mo.ui.switch(value=True, label="Time axis")
+    data_pace = mo.ui.slider(start=0.5, stop=2.5, step=0.05, value=1.6, label="Toy data pace (× rollout)",
+                             show_value=True)
+    data_seed = mo.ui.number(start=0, stop=1000, step=1, value=1, label="Toy data seed (added to seed)")
+    mo.vstack([
+        mo.md("**Panel b** (rollout version)"),
+        mo.hstack([panel_b_version, rollout_source, frame_gap, fill_width, block_width], justify="start"),
+        mo.hstack([compare_gap, grad_growth, dashed_backprop, show_time_axis], justify="start"),
+        mo.hstack([data_pace, data_seed], justify="start"),
+        mo.md("- Toy data: the toy rule from another seed, run *Toy data pace* times as many steps, so it "
+              "differs from the rollout; its first frame is the rollout's initial condition\n"
+              "- Registry model: its rollout from one replicate's 0h data, against that replicate's data "
+              "(set the model below)"),
+    ])
+    return (
+        block_width,
+        compare_gap,
+        dashed_backprop,
+        data_pace,
+        data_seed,
+        fill_width,
+        frame_gap,
+        grad_growth,
+        panel_b_version,
+        rollout_source,
+        show_time_axis,
+    )
 
 
 @app.cell(hide_code=True)
 def _(
     batch,
+    block_width,
     boundary_mode,
     card_size,
+    columns,
+    compare_gap,
     curve_count,
+    dashed_backprop,
     fibre_alpha,
     fibre_width,
     figure_width,
+    fill_width,
     fire_rate,
     firing,
+    frame_gap,
     gated,
+    grad_growth,
     kernels,
     labels,
     network_height,
     overshoot,
     overshoot_interval,
+    panel_b_version,
     panels,
     phase_height,
     phase_width,
     plot_gap,
     prediction_error,
     same_scale,
+    show_curricula,
+    show_equation,
     show_reinjection,
     show_reinjection_paths,
+    show_time_axis,
     toy,
     toy_seed,
     update_gain,
     zoom_frame,
 ):
     mo.stop(not panels.value, mo.callout("Select at least one panel.", kind="warn"))
-    _text = {k: v.replace("\\n", "\n") for k, v in labels.value.items()}
+    # {nca} in any label stands for the NCA function's symbol
+    _nca = line_breaks(labels.value["nca_symbol"])
+    _text = {k: line_breaks(v).replace("{nca}", _nca) for k, v in labels.value.items()}
+    _rollout = panel_b_version.value == "rollout"
     style = {
         "theme": THEME,
         "font": FONT["label"],
@@ -773,6 +1065,7 @@ def _(
         "back_cards": "full",
         "card": float(card_size.value),
         "row_gap": 0.3,
+        "box_pad": 0.1,
         "model_colour": MODEL,
         "mask_colour": SERIES[3],
         "neighbourhood_colour": NEIGHBOURHOOD,
@@ -799,17 +1092,218 @@ def _(
         "plot_gap": float(plot_gap.value),
         "curve_count": int(curve_count.value),
         "show_reinjection": show_reinjection.value,
-        "titles": {"a": _text["title_a"], "b": _text["title_b"]},
+        "show_curricula": show_curricula.value,
+        "frame_gap": float(frame_gap.value),
+        "fill_width": fill_width.value,
+        "compare_gap": float(compare_gap.value),
+        "block_width": float(block_width.value),
+        "grad_growth": float(grad_growth.value),
+        # Toy images and low-resolution models: one square per pixel
+        "pixelated": True,
+        "dashed_backprop": dashed_backprop.value,
+        "show_time_axis": show_time_axis.value,
+        "titles": {"a": _text["title_a"], "b": _text["title_b_rollout" if _rollout else "title_b"]},
         **{k: v for k, v in _text.items() if not k.startswith("title_")},
     }
+    # No equation: drawn as an empty label, which the panel leaves out
+    if not show_equation.value:
+        style["equation"] = ""
+    # Width of panel a, for panel b (rollout, or without the curricula plot) to fill the same width
+    style["full_width"] = None
+    if (_rollout or not show_curricula.value) and "a" in panels.value and same_scale.value:
+        with paper_style():
+            _figure, _ax = plt.subplots()
+            draw_architecture_panel(_ax, toy, style)
+            style["full_width"] = float(np.diff(_ax.get_xlim())[0])
+            plt.close(_figure)
     _draw = {
         "a": lambda ax: draw_architecture_panel(ax, toy, style),
-        "b": lambda ax: draw_training_panel(ax, toy, style),
+        "b": lambda ax: (draw_rollout_panel(ax, columns, style) if _rollout
+                         else draw_training_panel(ax, toy, style)),
     }
     with paper_style():
-        schematic = stack_panels(_draw, sorted(panels.value), style["width"], style["titles"], style["same_scale"])
+        # Letters only when both panels are shown
+        schematic = stack_panels(_draw, sorted(panels.value), style["width"], style["titles"], style["same_scale"],
+                                 letters=len(panels.value) > 1)
     schematic
     return (schematic,)
+
+
+@app.cell(hide_code=True)
+def _():
+    selection_path = mo.ui.text(placeholder="/path/to/model_registry_selection.yaml (optional)",
+                                label="Exported registry selection", full_width=True)
+    store_root = mo.ui.text(value=os.getenv("MODEL_STORE_ROOT", str(REPOSITORY_ROOT / "models")),
+                            label="Model store", full_width=True)
+    data_root = mo.ui.text(value=os.getenv("DATA_PATH_BASE", ""), label="Data root (contains 260726_nca_dataset)",
+                           full_width=True)
+    mo.vstack([mo.md("**Registry model** (rollout version of panel b, *Images from: registry model*)"),
+               selection_path, store_root, data_root])
+    return data_root, selection_path, store_root
+
+
+@app.cell(hide_code=True)
+def _(selection_path, store_root):
+    _path = Path(selection_path.value).expanduser()
+    _options = {}
+    if selection_path.value.strip() and _path.is_file():
+        _options = {_r["option_label"]: _r["model_id"] for _r in load_selection_records(_path, store_root.value)}
+    # From the selection if there is one, else a typed model ID
+    if _options:
+        model_id = mo.ui.dropdown(options=_options, value=next(iter(_options)), label="Model", full_width=True)
+    else:
+        model_id = mo.ui.text(placeholder="model ID", label="Model", full_width=True)
+    replicate = mo.ui.number(start=1, stop=999, step=1, value=1, label="Replicate (one-based)")
+    rollout_seed = mo.ui.number(start=0, stop=2**31 - 1, step=1, value=0, label="Rollout seed")
+    refresh = mo.ui.checkbox(value=False, label="Ignore cache")
+    run_rollout = mo.ui.run_button(label="Roll out")
+    mo.vstack([
+        model_id,
+        mo.hstack([replicate, rollout_seed, refresh, run_rollout], justify="start"),
+        mo.md("- A low-resolution model reads best: each pixel is drawn as a square\n"
+              "- Cached rollouts load without pressing *Roll out*"),
+    ])
+    return model_id, refresh, replicate, rollout_seed, run_rollout
+
+
+@app.cell(hide_code=True)
+def _(
+    data_root,
+    model_id,
+    refresh,
+    replicate,
+    rollout_seed,
+    rollout_source,
+    run_rollout,
+    store_root,
+):
+    _model = (model_id.value or "").strip()
+    _name = cache_name("training_schematic_rollout", _model, f"r{int(replicate.value)}",
+                       f"s{int(rollout_seed.value)}")
+    _cached = bool(_model) and (CACHE_DIRECTORY / _name).is_file()
+    model_rollout = None
+    if rollout_source.value != "registry model":
+        _status = mo.md("")
+    elif not _model or not (run_rollout.value or _cached):
+        _status = mo.callout("No model rollout yet: panel b shows the toy rule. Choose a model, then *Roll out*.",
+                             kind="info")
+    elif not data_root.value.strip() and not _cached:
+        _status = mo.callout("Set the data root first.", kind="warn")
+    else:
+        with mo.status.spinner("Loading data and rolling out"):
+            model_rollout = cached(
+                _name,
+                lambda: model_rollouts(store_root.value, _model, data_root.value, int(replicate.value),
+                                       int(rollout_seed.value))["baseline"],
+                refresh=run_rollout.value and refresh.value)
+        _split = ("in the training split" if int(replicate.value) in model_rollout["train_replicates"]
+                  else "held out from training")
+        _status = mo.md(f"Rollout ready: {model_rollout['boundary'].shape[0]} px across; replicate "
+                        f"{int(replicate.value)} is {_split}.")
+    _status
+    return (model_rollout,)
+
+
+@app.cell(hide_code=True)
+def _(model_rollout):
+    # Experiment groups of the model, each drawn as one sector of the colony
+    _present = ([g for g in EXPERIMENT_GROUPS if any(n.split("/")[0] == g for n in model_rollout["channel_names"])]
+                if model_rollout is not None else [])
+    rollout_groups = mo.ui.multiselect(options={GROUP_LABELS.get(g, g): g for g in _present},
+                                       value=[GROUP_LABELS.get(g, g) for g in _present[:1]],
+                                       label="Groups (one sector each)")
+    rollout_gamma = mo.ui.slider(start=0.3, stop=2.0, step=0.05, value=1.0, label="Gamma (1 = linear)",
+                                 show_value=True)
+    mo.hstack([rollout_groups, rollout_gamma], justify="start") if _present else mo.md("")
+    return rollout_gamma, rollout_groups
+
+
+@app.cell(hide_code=True)
+def _(model_rollout, rollout_gamma, rollout_groups, target, toy):
+    # Images of the rollout version of panel b: the model's if it is rolled out, else the toy rule's
+    if model_rollout is not None and rollout_groups.value:
+        columns = model_columns(model_rollout, [g for g in EXPERIMENT_GROUPS if g in rollout_groups.value],
+                                float(rollout_gamma.value))
+    else:
+        columns = toy_columns(toy, target)
+    return (columns,)
+
+
+@app.cell(hide_code=True)
+def _():
+    labels = mo.ui.dictionary({
+        "nca_symbol": mo.ui.text(value="$\\phi_\\theta$", label="NCA function ({nca} in other labels)"),
+        "title_a": mo.ui.text(value="Defining the NCA update", label="Title a"),
+        "title_b": mo.ui.text(value="Training on time series data", label="Title b"),
+        "title_b_rollout": mo.ui.text(value="Training by backpropagation through the rollout",
+                                      label="Title b (rollout)"),
+        "observed_label": mo.ui.text(value="observed\\nchannels", label="Observed"),
+        "hidden_label": mo.ui.text(value="hidden\\nchannels", label="Hidden"),
+        "mask_label": mo.ui.text(value="mask\\nchannel", label="Mask"),
+        "perception_label": mo.ui.text(value="perception\\nkernels", label="Perception"),
+        "perception_vector_label": mo.ui.text(value="perception\\nvector", label="Perception vector"),
+        "network_label": mo.ui.text(value="channel mixing\\nnetwork {nca}", label="Network"),
+        "gate_label": mo.ui.text(value="gated\\nlinear unit", label="Gate"),
+        "fire_label": mo.ui.text(value="random fire mask\\n$\\sigma \\sim$ Bernoulli$(p)$", label="Fire mask"),
+        "fire_label_learned": mo.ui.text(value="learned fire mask\\n$\\sigma \\sim$ Bernoulli$(p_\\theta)$",
+                                         label="Fire mask (learned)"),
+        "boundary_label": mo.ui.text(value="boundary", label="Boundary"),
+        "adhesion_label": mo.ui.text(value="micropattern\\nmask $m$", label="Adhesion mask"),
+        "repeat_label": mo.ui.text(value="repeat for $K$ steps", label="Repeat"),
+        "space_label": mo.ui.text(value="state space $\\mathcal{X}$", label="State space"),
+        "time_label": mo.ui.text(value="time", label="Time"),
+        "steps_label": mo.ui.text(value="$K$ NCA steps", label="Rollout"),
+        "parallel_label": mo.ui.text(value="intervals rolled out in parallel, outputs feed forward at the next training iteration",
+                                     label="Parallel"),
+        "region_label": mo.ui.text(value="outside valid range: penalised by regulariser $R$", label="Region"),
+        "data_key": mo.ui.text(value="data $d_i$", label="Key: data"),
+        "prediction_key": mo.ui.text(value="prediction $\\hat{x}_i$ (pool)", label="Key: prediction"),
+        "state_key": mo.ui.text(value="rollout, one per batch member", label="Key: rollout"),
+        "penalised_key": mo.ui.text(value="penalised by regulariser", label="Key: penalised"),
+        "reinjection_key": mo.ui.text(value="start from data (prob. $q$)", label="Key: reinjection"),
+        "curve_title": mo.ui.text(value="loss curricula", label="Plot title"),
+        "curve_x_label": mo.ui.text(value="training iteration", label="Plot x"),
+        "curve_y_label": mo.ui.text(value="weight", label="Plot y"),
+        "curve_labels": mo.ui.text(value="loss term 1, loss term 2, loss term 3", label="Curve labels"),
+        "reinjection_label": mo.ui.text(value="reinjection $q$", label="Reinjection"),
+        "step_label": mo.ui.text(value="$K$ steps", label="Model blocks"),
+        "theta_label": mo.ui.text(value="parameters $\\theta$, shared by every step", label="Parameters"),
+        "rollout_label": mo.ui.text(value="NCA rollout: $N$ steps of {nca} from $x_0$",
+                                    label="Rollout (b, rollout)"),
+        "initial_label": mo.ui.text(value="$x_0 = d_0$", label="Initial condition"),
+        "sum_label": mo.ui.text(value="$\\mathcal{L} = \\sum_i \\mathcal{L}(x_{iK}, d_i)$", label="Total loss"),
+        "backprop_label": mo.ui.text(
+            value="$\\nabla_\\theta \\mathcal{L}$: every loss term backpropagated through the model blocks to $\\theta$",
+            label="Backpropagation"),
+        "equation": mo.ui.text(
+            value=r"$\mathcal{L} = \sum_k w_k(n)\, \mathcal{L}_k(\hat{x}, d) + \sum_r \lambda_r \sum_s R_r(x_s)$",
+            label="Equation", full_width=True),
+    })
+    mo.vstack([mo.md("**Labels** (`\\n` for a new line, `$...$` for maths, `{nca}` for the NCA function)"),
+               mo.hstack(list(labels.values()), wrap=True, justify="start")])
+    return (labels,)
+
+
+@app.cell(hide_code=True)
+def _(toy_frames, toy_seed, toy_size, toy_steps):
+    # The toy rule's length scales are in pixels, so run it at 24 px and resample to the chosen size
+    _base = toy_patterning(24, int(toy_frames.value), int(toy_steps.value), int(toy_seed.value))
+    toy = resample_toy(_base, int(toy_size.value or 24))
+    return (toy,)
+
+
+@app.cell(hide_code=True)
+def _(data_pace, data_seed, toy, toy_frames, toy_seed, toy_size, toy_steps):
+    # Mock data for the rollout version of panel b: a toy run from another seed, at a
+    # different pace, so it differs from the rollout. It starts from the rollout's
+    # initial condition (x_0 = d_0)
+    _steps = max(1, round(int(toy_steps.value) * float(data_pace.value)))
+    _seed = int(toy_seed.value) + int(data_seed.value or 0)
+    _frames, _mask = resample_toy(toy_patterning(24, int(toy_frames.value), _steps, _seed),
+                                  int(toy_size.value or 24))
+    _frames[0] = toy[0][0]
+    target = (_frames, _mask)
+    return (target,)
 
 
 @app.cell(hide_code=True)

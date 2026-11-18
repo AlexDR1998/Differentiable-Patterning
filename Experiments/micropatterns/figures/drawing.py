@@ -8,6 +8,7 @@ import io
 import re
 
 import matplotlib.pyplot as plt
+from matplotlib import patheffects
 import numpy as np
 from matplotlib.patches import Circle, FancyBboxPatch, Polygon, Rectangle, Wedge
 from matplotlib.transforms import Affine2D
@@ -23,7 +24,10 @@ from Experiments.micropatterns.figures.style import (
     LINE,
     MUTED,
     PAGE,
+    SOURCE_COLOURS,
+    SOURCE_LABELS,
     UNMEASURED,
+    ZOOM_OUTLINE,
     SectorHandle,
     figure_width,
     group_colours,
@@ -197,12 +201,30 @@ def rounded_box(ax, corner, width, height, colour, z=2, rounding=0.1):
                                     **kwargs))
 
 
-def draw_zoom_outline(ax, corner, size, dashes, z):
-    """Square outline of black dashes over a solid white line, so it shows on both
-    light pages and dark images."""
-    for colour, linestyle in (("white", "-"), ("black", (0, dashes))):
-        ax.add_patch(Rectangle(corner, size, size, fill=False, edgecolor=colour, lw=0.9, linestyle=linestyle,
-                               zorder=z))
+def draw_zoom_outline(ax, corner, size, dashes=None, z=6, height=None, colour=None, lw=None, **kwargs):
+    """Outline of a zoom box: black dashes over a solid white line (``ZOOM_OUTLINE``),
+    so it shows on both light pages and dark images.
+
+    ``size`` is the width (and the height, unless ``height`` is given). A ``colour``
+    draws a solid line of that colour instead. Other keywords go to the patches,
+    e.g. ``transform=ax.transAxes, clip_on=False`` to frame a whole axes.
+    """
+    lw = ZOOM_OUTLINE["width"] if lw is None else lw
+    if colour is not None:
+        lines = ((colour, "-"),)
+    else:
+        background, foreground = ZOOM_OUTLINE["colours"]
+        lines = ((background, "-"), (foreground, (0, dashes or ZOOM_OUTLINE["dashes"])))
+    for line_colour, linestyle in lines:
+        ax.add_patch(Rectangle(corner, size, size if height is None else height, fill=False,
+                               edgecolor=line_colour, lw=lw, linestyle=linestyle, zorder=z, **kwargs))
+
+
+def frame_zoom_axes(ax, colour=None, lw=None):
+    """Frame a whole axes (a magnified view) with the zoom box outline instead of its spines."""
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    draw_zoom_outline(ax, (0, 0), 1, z=10, colour=colour, lw=lw, transform=ax.transAxes, clip_on=False)
 
 
 def draw_card(ax, corner, size, z, rgba=None, unmeasured=(), alpha=1.0, edge=None, pixelated=False):
@@ -291,14 +313,14 @@ def text_height(text, size, pt_per_unit=DEFAULT_PT_PER_UNIT, spacing=1.25):
 # --- Panels ------------------------------------------------------------------------
 
 
-def stack_panels(draw, panels, width="double", titles=None, same_scale=True, measure_scale=False):
+def stack_panels(draw, panels, width="double", titles=None, same_scale=True, measure_scale=False, letters=True):
     """Schematic panels stacked top to bottom, each an equal-aspect axes without axis lines.
 
     ``draw`` maps a panel key to a function drawing it on an axes. With
     ``measure_scale`` the function also gets the panel's points per data unit,
     and the panel is redrawn until that value settles (for text-heavy panels).
     ``same_scale`` gives every panel the same data units per inch. Panels are
-    labelled with their key and ``titles[key]``.
+    labelled with their key (left out with ``letters=False``) and ``titles[key]``.
     """
     width = figure_width(width)
     titles = titles or {}
@@ -319,7 +341,7 @@ def stack_panels(draw, panels, width="double", titles=None, same_scale=True, mea
             draw[key](ax)
         ax.set_aspect("equal")
         ax.axis("off")
-        label_panel(ax, key, titles.get(key) or None, offset=(0, 0))
+        label_panel(ax, key if letters else None, titles.get(key) or None, offset=(0, 0))
     widths = [ax.get_xlim()[1] - ax.get_xlim()[0] for ax in axes]
     if same_scale:
         for ax in axes:
@@ -445,9 +467,14 @@ def trajectory_figure(rollouts, blocks, groups, gamma, colony_size, hatch, zoom=
     row label, row label colour). Positions are in hours of the time axis.
     ``zoom``, if given, adds magnified squares right of the trajectories: a dict
     with ``time`` (index), ``centres`` ((x, y) as fractions of the disc, y down),
-    ``width`` (fraction of the disc), ``colours`` (one per centre) and ``title``.
+    ``width`` (fraction of the disc) and ``title``. Boxes have the striped zoom
+    outline, numbered when there are several; ``colours`` (one per centre) gives
+    solid coloured outlines instead.
     With ``pixels`` ({rollout key: n}) each box is instead n x n whole pixels of
-    that rollout, on its pixel grid. ``legend_kind`` is "white" or "black".
+    that rollout, on its pixel grid. The box is placed on the coarsest grid (the
+    smallest n), so every rollout shows the same region; finer n must be whole
+    multiples of it, and the grids must share their top-left corner (as when
+    downsampling). ``legend_kind`` is "white" or "black".
     """
     width = figure_width(width)
     first = next(iter(rollouts.values()))
@@ -462,9 +489,12 @@ def trajectory_figure(rollouts, blocks, groups, gamma, colony_size, hatch, zoom=
         y = ys[-1] - s - block_gap
     label_lines = max(label.count("\n") + 1 for label, _, _ in blocks)
     left = times[0] - s / 2 - 6.0 * text - 1.8 * text * (label_lines - 1) - 0.5
-    zoom_x = []
+    zoom_x, zoom_colours = [], []
     if zoom is not None:
         zoom_x = [times[-1] + s + 3.0 + k * (s + 1.5) for k in range(len(zoom["centres"]))]
+        zoom_colours = zoom.get("colours") or [None] * len(zoom["centres"])
+    # Several striped boxes look alike, so they are numbered
+    numbered = len(zoom_x) > 1 and zoom_colours[0] is None
     right = (zoom_x[-1] if zoom_x else times[-1]) + s / 2 + 2.0
     bottom = placed[-1][2][-1][1] - s / 2 - 1.0
     axis_y = s / 2 + 1.5
@@ -474,15 +504,28 @@ def trajectory_figure(rollouts, blocks, groups, gamma, colony_size, hatch, zoom=
     panel_height = unit * (top - bottom)
     hatched = False
 
-    def zoom_box(zx, zy, rgba, key):
+    def crop_corner_and_shape(key):
+        """Top-left pixel and (rows, cols) of the colony crop drawn for rollout ``key``."""
+        crop = crop_box(rollouts[key]["boundary"])
+        return (crop[0].start, crop[1].start), (crop[0].stop - crop[0].start, crop[1].stop - crop[1].start)
+
+    def zoom_box(zx, zy, key):
         """(left, top, width, height) of a zoom box, as fractions of the disc image."""
         if zoom.get("pixels") is None:
             return zx - zoom["width"] / 2, zy - zoom["width"] / 2, zoom["width"], zoom["width"]
-        n = zoom["pixels"][key]
-        rows, cols = rgba.shape[:2]
-        col = int(np.clip(round(zx * cols - n / 2), 0, max(cols - n, 0)))
-        row = int(np.clip(round(zy * rows - n / 2), 0, max(rows - n, 0)))
-        return col / cols, row / rows, n / cols, n / rows
+        # Snap once on the grid of the coarsest rollout (fewest pixels), with the
+        # centre as a fraction of its colony crop, then take the same region on
+        # every finer grid. Each colony is cropped separately, so the crop offsets
+        # are needed to line the grids up.
+        coarse = min(zoom["pixels"], key=zoom["pixels"].get)
+        n = zoom["pixels"][coarse]
+        (top_c, left_c), (rows_c, cols_c) = crop_corner_and_shape(coarse)
+        col = int(np.clip(np.floor(zx * cols_c - n / 2 + 0.5), 0, max(cols_c - n, 0)))
+        row = int(np.clip(np.floor(zy * rows_c - n / 2 + 0.5), 0, max(rows_c - n, 0)))
+        scale = zoom["pixels"][key] // n  # finer pixels per coarse pixel
+        (top, left), (rows, cols) = crop_corner_and_shape(key)
+        col, row = (left_c + col) * scale - left, (top_c + row) * scale - top
+        return col / cols, row / rows, n * scale / cols, n * scale / rows
 
     figure = plt.figure(figsize=(width, panel_height + legend_height))
     ax = figure.add_axes((0.0, legend_height / (panel_height + legend_height), 1.0,
@@ -496,6 +539,8 @@ def trajectory_figure(rollouts, blocks, groups, gamma, colony_size, hatch, zoom=
         ax.plot([zoom_x[0] - s / 2, zoom_x[-1] + s / 2], [axis_y] * 2, color=INK, lw=LINE["axis"])
         ax.text((zoom_x[0] + zoom_x[-1]) / 2, axis_y + 1.2, zoom["title"], ha="center", va="bottom",
                 fontsize=FONT["tick"])
+        for k, x in enumerate(zoom_x if numbered else []):
+            ax.text(x, axis_y - 0.4, str(k + 1), ha="center", va="top", fontsize=FONT["tick"])
 
     x_row = times[0] - s / 2 - text
     x_bracket = x_row - 2.4 * text
@@ -513,10 +558,14 @@ def trajectory_figure(rollouts, blocks, groups, gamma, colony_size, hatch, zoom=
                     continue
                 # Boxes on the disc, and the disc magnified so each box fills its
                 # square, with nearest-pixel drawing so the grid of the data shows
-                for (zx, zy), zoom_colour, x in zip(zoom["centres"], zoom["colours"], zoom_x):
-                    fx, fy, fw, fh = zoom_box(zx, zy, rgba, key)
-                    ax.add_patch(Rectangle((t + (fx - 0.5) * s, row_y + (0.5 - fy - fh) * s), fw * s, fh * s,
-                                           fill=False, edgecolor=zoom_colour, lw=0.8, zorder=6))
+                for k, ((zx, zy), zoom_colour, x) in enumerate(zip(zoom["centres"], zoom_colours, zoom_x)):
+                    fx, fy, fw, fh = zoom_box(zx, zy, key)
+                    box_left, box_low = t + (fx - 0.5) * s, row_y + (0.5 - fy - fh) * s
+                    draw_zoom_outline(ax, (box_left, box_low), fw * s, height=fh * s, colour=zoom_colour, z=6)
+                    if numbered:
+                        ax.text(box_left + fw * s + 0.15, box_low + fh * s, str(k + 1), ha="left", va="top",
+                                fontsize=FONT["tick"], color="white", zorder=7,
+                                path_effects=[patheffects.withStroke(linewidth=1.2, foreground="black")])
                     tile = Rectangle((x - s / 2, row_y - s / 2), s, s, transform=ax.transData)
                     ax.add_patch(Rectangle((x - s / 2, row_y - s / 2), s, s, facecolor=IMAGE_BG, lw=0, zorder=3))
                     image_left = x - s / 2 - fx * s / fw
@@ -524,8 +573,7 @@ def trajectory_figure(rollouts, blocks, groups, gamma, colony_size, hatch, zoom=
                     image = ax.imshow(rgba, extent=(image_left, image_left + s / fw, image_top - s / fh, image_top),
                                       origin="upper", interpolation="nearest", zorder=4)
                     image.set_clip_path(tile)
-                    ax.add_patch(Rectangle((x - s / 2, row_y - s / 2), s, s, fill=False, edgecolor=zoom_colour,
-                                           lw=1.0, zorder=6))
+                    draw_zoom_outline(ax, (x - s / 2, row_y - s / 2), s, colour=zoom_colour, lw=1.0, z=6)
         ys = [row_y for _, row_y in rows]
         ax.plot([x_bracket, x_bracket], [ys[-1] - s / 2 + 0.5, ys[0] + s / 2 - 0.5], color=colour, lw=LINE["axis"])
         ax.text(x_bracket - 0.6 * text, (ys[0] + ys[-1]) / 2, label, rotation=90, ha="right", va="center",
@@ -534,11 +582,148 @@ def trajectory_figure(rollouts, blocks, groups, gamma, colony_size, hatch, zoom=
     ax.set_xlim(left, right)
     ax.set_ylim(bottom, top)
 
-    # A legend row per group: its sector, then its channel colours
+    add_group_legend(figure, names, groups, hatched, legend_kind)
+    return figure
+
+
+def add_group_legend(figure, names, groups, hatched, legend_kind="white"):
+    """Legend below the figure: a row per group with its sector, then its channel colours."""
     legend_rows = marker_legend_entries(names, groups, sectors=groups, kind=legend_kind)
     if hatched:
         legend_rows.append([(unmeasured_patch(), "not measured")])
     handles, labels, ncol = rows_to_columns(legend_rows)
     figure.legend(handles, labels, ncol=ncol, loc="lower center", bbox_to_anchor=(0.5, 0.0),
                   **legend_options(legend_kind))
+
+
+def draw_disc_grid(ax, rollouts, blocks, columns, groups, gamma, colony_size, hatch, time_label, title=None):
+    """Draw the discs of ``grid_figure`` on ``ax`` (see there for the arguments).
+
+    Returns the disc centres along x, the (left, right, bottom, top) data limits
+    and whether any sector was hatched.
+    """
+    s, text = colony_size, FONT["label"] / 7.0
+    step, block_gap = s + 1.5, 3.0
+    xs = [k * step for k in range(len(columns))]
+    placed, y = [], 0.0
+    for label, colour, rows in blocks:
+        ys = [y - k * step for k in range(len(rows))]
+        placed.append((label, colour, list(zip(rows, ys))))
+        y = ys[-1] - s - block_gap
+    label_lines = max(label.count("\n") + 1 for label, _, _ in blocks)
+    left = xs[0] - s / 2 - 6.0 * text - 1.8 * text * (label_lines - 1) - 0.5
+    right = xs[-1] + s / 2 + 1.0
+    bottom = placed[-1][2][-1][1] - s / 2 - 1.0
+    header_y = s / 2 + 0.8
+    top = header_y + (3.5 if title else 1.5) * text
+
+    ax.set_aspect("equal")
+    ax.axis("off")
+    for x, (_, column_label) in zip(xs, columns):
+        ax.text(x, header_y, column_label, ha="center", va="bottom", fontsize=FONT["tick"])
+    if title:
+        ax.text((xs[0] + xs[-1]) / 2, header_y + 1.6 * text, title, ha="center", va="bottom",
+                fontsize=FONT["tick"])
+
+    hatched = False
+    x_row = xs[0] - s / 2 - text
+    x_bracket = x_row - 2.4 * text
+    for label, colour, rows in placed:
+        for (row_key, source, row_label, row_colour), row_y in rows:
+            ax.text(x_row, row_y, row_label, rotation=90, ha="right", va="center", fontsize=FONT["annotation"],
+                    color=row_colour)
+            for x, (column_key, _) in zip(xs, columns):
+                rollout = rollouts.get((row_key, column_key))
+                if rollout is None or time_label not in rollout["time_labels"]:
+                    draw_placeholder(ax, (x, row_y), s, "no model" if rollout is None else f"no {time_label}")
+                    continue
+                rgba, unmeasured = trajectory_tile(rollout, source, rollout["time_labels"].index(time_label),
+                                                   groups, gamma)
+                draw_colony(ax, rgba, (x, row_y), s)
+                hatched |= draw_sectors(ax, (x, row_y), s / 2, unmeasured, hatch=hatch)
+        ys = [row_y for _, row_y in rows]
+        ax.plot([x_bracket, x_bracket], [ys[-1] - s / 2 + 0.5, ys[0] + s / 2 - 0.5], color=colour, lw=LINE["axis"])
+        ax.text(x_bracket - 0.6 * text, (ys[0] + ys[-1]) / 2, label, rotation=90, ha="right", va="center",
+                multialignment="center", fontsize=FONT["label"], color=colour)
+    # Limits last, since imshow resets them
+    ax.set_xlim(left, right)
+    ax.set_ylim(bottom, top)
+    return xs, (left, right, bottom, top), hatched
+
+
+def grid_figure(rollouts, blocks, columns, groups, gamma, colony_size, hatch, time_label, title=None,
+                width="double", legend_kind="white"):
+    """Colony discs at one timepoint, in a grid of rows and columns, with a bracketed label per block.
+
+    ``rollouts`` are keyed by (row key, column key). ``blocks`` are (label, colour,
+    rows), and each row is (row key, source, row label, row label colour), as in
+    ``trajectory_figure``. ``columns`` are (column key, column label). Each disc is
+    the rollout's frame labelled ``time_label`` (e.g. "48h"); cells without a
+    rollout get a dashed "no model" circle. ``title`` goes above the column labels.
+    """
+    width = figure_width(width)
+    names = list(next(iter(rollouts.values()))["channel_names"])
+    figure = plt.figure()
+    ax = figure.add_axes((0.0, 0.0, 1.0, 1.0))
+    _, (left, right, bottom, top), hatched = draw_disc_grid(
+        ax, rollouts, blocks, columns, groups, gamma, colony_size, hatch, time_label, title)
+    legend_height = 0.2 * (len(groups) + 1) + 0.15  # inches
+    panel_height = width / (right - left) * (top - bottom)
+    total = panel_height + legend_height
+    figure.set_size_inches(width, total)
+    ax.set_position((0.0, legend_height / total, 1.0, panel_height / total))
+    add_group_legend(figure, names, groups, hatched, legend_kind)
+    return figure
+
+
+def snapshot_loss_figure(rollouts, columns, groups, gamma, colony_size, hatch, time_label, losses, loss_label,
+                         title=None, width="double", legend_kind="white", bar_height=1.3):
+    """Discs of true data and NCA at one timepoint per column, above a bar chart of losses.
+
+    ``rollouts`` (one model per column) and ``losses`` are keyed by the column keys
+    of ``columns`` [(column key, column label)]. ``losses[key]`` is
+    ``{"train": [...], "validation": [...]}`` with one value per model; each bar is
+    their mean and the dots are the single models. Each pair of bars sits under its
+    column of discs. ``loss_label`` labels the y axis; ``bar_height`` is in inches.
+    """
+    width = figure_width(width)
+    names = list(next(iter(rollouts.values()))["channel_names"])
+    figure = plt.figure()
+    grid_ax = figure.add_axes((0.0, 0.0, 1.0, 1.0))
+    rows = [("model", source, SOURCE_LABELS[source], SOURCE_COLOURS[source]) for source in SOURCE_LABELS]
+    xs, (left, right, bottom, top), hatched = draw_disc_grid(
+        grid_ax, {("model", key): rollout for key, rollout in rollouts.items()}, [(f"At {time_label}", INK, rows)],
+        columns, groups, gamma, colony_size, hatch, time_label, title)
+
+    # Heights in inches, from the bottom: group legend, tick labels, bars, bar legend, discs
+    legend_height = 0.2 * (len(groups) + 1) + 0.15
+    tick_height, gap = 0.3, 0.3
+    panel_height = width / (right - left) * (top - bottom)
+    total = legend_height + tick_height + bar_height + gap + panel_height
+    figure.set_size_inches(width, total)
+    grid_ax.set_position((0.0, 1.0 - panel_height / total, 1.0, panel_height / total))
+
+    # Bar axes over the disc columns, with the same x units as the discs
+    step = xs[1] - xs[0] if len(xs) > 1 else colony_size + 1.5
+    x0, x1 = xs[0] - step / 2, xs[-1] + step / 2
+    bar_ax = figure.add_axes(((x0 - left) / (right - left), (legend_height + tick_height) / total,
+                              (x1 - x0) / (right - left), bar_height / total))
+    bar_width = 0.35 * step
+    for offset, split, colour, label in ((-0.5, "train", MUTED, "Training replicates"),
+                                         (0.5, "validation", INK, "Validation replicates")):
+        for k, (x, (key, _)) in enumerate(zip(xs, columns)):
+            values = np.asarray(losses.get(key, {}).get(split, []), dtype=float)
+            if values.size == 0:
+                continue
+            centre = x + offset * bar_width
+            bar_ax.bar(centre, values.mean(), bar_width, color=colour, label=label if k == 0 else None, zorder=2)
+            bar_ax.plot(np.full(values.size, centre), values, "o", ms=2.5, color=INK, mec=PAGE, mew=0.5,
+                        zorder=3)
+    bar_ax.set_xlim(x0, x1)
+    bar_ax.set_xticks(xs, [column_label for _, column_label in columns])
+    bar_ax.set_ylabel(loss_label)
+    bar_ax.spines[["top", "right"]].set_visible(False)
+    # The bars are on white whatever the legend kind of the discs
+    bar_ax.legend(loc="lower right", bbox_to_anchor=(1.0, 1.0), ncol=2, **legend_options("white"))
+    add_group_legend(figure, names, groups, hatched, legend_kind)
     return figure

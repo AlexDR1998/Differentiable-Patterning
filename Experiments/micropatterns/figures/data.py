@@ -340,9 +340,13 @@ def load_selection_records(path, store_root):
     return [{**r, "option_label": model_option_label(r)} for r in records]
 
 
-def model_rollouts(store_root, model_id, data_root, replicate, seed, conditions=("baseline",)):
+def model_rollouts(store_root, model_id, data_root, replicate, seed, conditions=("baseline",), frames_per_12h=None):
     """Data and NCA trajectories of a registry model for each condition ("baseline", "ko_24h",
-    "ko_0h"), from the 0h state of ``replicate`` (one-based), loaded and scaled as in training."""
+    "ko_0h"), from the 0h state of ``replicate`` (one-based), loaded and scaled as in training.
+
+    By default the NCA is kept at the observation times. With ``frames_per_12h`` (for
+    videos) it is kept that many times per 12 h, and "frame_hours" gives each frame's time.
+    The true data stays at the observation times."""
     import jax.random as jr
 
     from Experiments.micropatterns.density_ko_sweep import load_condition_data, load_training_histogram_bins
@@ -354,9 +358,12 @@ def model_rollouts(store_root, model_id, data_root, replicate, seed, conditions=
     root = Path(data_root).expanduser()
     bins = load_training_histogram_bins(bundle, root)
     rollouts = {}
+    steps_per_frame = None
+    if frames_per_12h:
+        steps_per_frame = max(1, int(bundle.config.run.t) // int(frames_per_12h))
     for k, condition in enumerate(conditions):
         data = load_condition_data(bundle, root, condition, replicate, bins)
-        prediction, time_labels = evaluate_condition(model, bundle, data, condition, seed + k)
+        prediction, time_labels = evaluate_condition(model, bundle, data, condition, seed + k, steps_per_frame)
         rollouts[condition] = {
             "prediction": np.asarray(prediction),
             "target": np.asarray(data["target"]),
@@ -365,6 +372,7 @@ def model_rollouts(store_root, model_id, data_root, replicate, seed, conditions=
             "time_labels": tuple(time_labels),
             "boundary": np.asarray(data["boundary"]).squeeze().astype(bool),
             "train_replicates": tuple(bundle.config.data.micropattern.train_replicates or ()),
+            "frame_hours": tuple(float(label.rstrip("h")) for label in time_labels),
         }
     return rollouts
 
@@ -372,6 +380,20 @@ def model_rollouts(store_root, model_id, data_root, replicate, seed, conditions=
 def baseline_rollout(store_root, model_id, data_root, replicate, seed):
     """Baseline (no KO) rollout of a registry model; see ``model_rollouts``."""
     return model_rollouts(store_root, model_id, data_root, replicate, seed)["baseline"]
+
+
+def model_final_losses(store_root, model_id, data_root, seed=0, refresh=False):
+    """Final losses of a registry model on its training and validation replicates
+    (see ``Experiments/micropatterns/final_losses.py``), cached in ``figures/cache``."""
+
+    def compute():
+        from Experiments.micropatterns.final_losses import final_losses
+        from Experiments.model_registry import ModelRegistry
+
+        bundle = ModelRegistry(Path(store_root).expanduser()).get(model_id)
+        return final_losses(bundle, data_root, seed)
+
+    return cached(cache_name("final_losses", model_id, seed), compute, refresh)
 
 
 # --- Cell types ----------------------------------------------------------------

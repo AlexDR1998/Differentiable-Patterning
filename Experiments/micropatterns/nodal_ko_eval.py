@@ -70,6 +70,7 @@ with app.setup(hide_code=True):
         OTHER,
         SEVERAL,
         CellTypeRules,
+        classify_cell_types,
         label_names,
         load_cell_type_rules,
         marker_values,
@@ -4062,6 +4063,495 @@ def _(dko_prevalence, dko_summary):
             ),
         ], justify="start"),
     ])
+    return
+
+
+@app.cell(hide_code=True)
+def _(data_root, dko_results):
+    from Experiments.micropatterns import density_test_data as heldout
+
+    _projections = sorted({_result["projection"] for _result in dko_results or ()})
+    heldout_folder = mo.ui.text(
+        str(Path(data_root.value.strip() or ".") / heldout.TEST_FOLDER),
+        label="Folder of the 250K colonies",
+        full_width=True,
+    )
+    heldout_projection = mo.ui.dropdown(
+        _projections, value=next(iter(_projections), None), label="Projection"
+    )
+    heldout_normalisation = mo.ui.dropdown(
+        {_label: _mode for _mode, _label in heldout.NORMALISATIONS.items()},
+        value=heldout.NORMALISATIONS["joint"],
+        label="Normalisation",
+    )
+    heldout_load = mo.ui.run_button(label="Load the 250K colonies")
+    mo.vstack([
+        mo.md(
+            "### Held-out test: 250K plating\n\n"
+            "- One colony per KO time (24, 28, 32, 36 h), fixed at 48 h, plated at 250K instead of 150K; never used in training\n"
+            "- Placed at 250/150 × the measured 150K density (dashed line below); needs a sweep in cells per mm² or per colony\n"
+            "- Only SOX17, TBXT, FOXA2 (and LMBR) are imaged, so data **and** model use the rule clauses those markers can check (listed below)\n"
+            "- No 0h images: the normalisation is a choice. Compare the options on the images and the shares\n"
+            "- Cleaning settings come from the first sweep model of the projection; centres are fitted (no alignment file entries)\n"
+            "- Sweep KO times should include 28 and 32 h (e.g. every 4 h), else predictions there are interpolated"
+        ),
+        heldout_folder,
+        mo.hstack([heldout_projection, heldout_normalisation, heldout_load], justify="start"),
+    ])
+    return (
+        heldout,
+        heldout_folder,
+        heldout_load,
+        heldout_normalisation,
+        heldout_projection,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    cell_type_rings,
+    cell_type_rules_by_projection,
+    data_root,
+    dko_results,
+    fine_resolve_several,
+    heldout,
+    heldout_folder,
+    heldout_load,
+    heldout_normalisation,
+    heldout_projection,
+    store_root,
+):
+    mo.stop(not heldout_load.value)
+    mo.stop(
+        heldout_projection.value is None,
+        mo.callout("Run or load a density × KO sweep first.", kind="warn"),
+    )
+    _projection = heldout_projection.value
+    _root = Path(data_root.value.strip()).expanduser()
+    _record = next(_r for _r in dko_results if _r["projection"] == _projection)
+    _bundle = ModelRegistry(Path(store_root.value.strip()).expanduser()).get(_record["model_id"])
+    _reference = None
+    _reference_note = ""
+    if heldout_normalisation.value == "match_150k":
+        # The 150K KO 24 h colonies at 48 h, normalised as the model was trained
+        _bins = load_training_histogram_bins(_bundle, _root)
+        _loaded = [
+            load_condition_data(_bundle, _root, "ko_24h", _replicate, _bins) for _replicate in (1, 2, 3, 4)
+        ]
+        _reference, _sources = heldout.reference_ranges(
+            [_data["target"][-1] for _data in _loaded],
+            [np.asarray(_data["boundary"]).squeeze() > 0 for _data in _loaded],
+            _loaded[0]["channel_names"],
+            heldout.channel_percentiles(_bundle.config.data.micropattern),
+        )
+        _reference_note = "; ".join(
+            f"{_name} matched to {_source}" for _name, _source in _sources.items() if _name != _source
+        )
+    with mo.status.spinner("Reading and cleaning the 250K colonies"):
+        heldout_colonies = heldout.prepare_test_colonies(
+            heldout_folder.value.strip(), _projection, _bundle.config,
+            _root / "260726_nca_dataset", heldout_normalisation.value, _reference,
+        )
+    heldout_rules, _dropped, _borrowed = heldout.stain_rules(cell_type_rules_by_projection[_projection])
+    _rows = []
+    for _hour, _image, _mask in zip(
+        heldout_colonies["hours"], heldout_colonies["images"], heldout_colonies["mask"]
+    ):
+        _shares = data_label_shares(
+            _image, heldout_colonies["channel_names"], heldout_rules, _mask,
+            int(cell_type_rings.value), resolve_several=fine_resolve_several.value,
+        )
+        _rows.extend(
+            {"knockout_hour": float(_hour), "cell_type": _label, "measured": float(_share)}
+            for _label, _share in zip(label_names(heldout_rules), _shares)
+        )
+    heldout_measured = pd.DataFrame(_rows)
+    mo.vstack([
+        mo.md(
+            f"- Cleaning and resolution of `{_record['model_id']}` (ds{_bundle.config.data.downsample})\n"
+            f"- Centre fit scores (1 = clean circle): "
+            + ", ".join(f"KO {_h:g}h {_s:.2f}" for _h, _s in zip(heldout_colonies["hours"], heldout_colonies["fit_scores"]))
+            + "\n- Clauses left out (need markers not imaged): "
+            + ("; ".join(f"{_t}: {_c}" for _t, _c in _dropped) or "none")
+            + "".join(
+                f"\n- {_marker} is read from `cell_fate_s2/{_marker}` with the threshold tuned on `{_channel}`"
+                for _marker, _channel in _borrowed.items()
+            )
+            + (f"\n- {_reference_note}" if _reference_note else "")
+        ),
+    ])
+    return heldout_colonies, heldout_measured, heldout_rules
+
+
+@app.cell(hide_code=True)
+def _(heldout_colonies, heldout_rules):
+    _names = list(heldout_colonies["channel_names"])
+    _labels = list(label_names(heldout_rules))
+    # The shared cell type colours of the figure style
+    _colours = np.array([to_rgb(cell_type_colour(_label)) for _label in _labels])
+    _count = len(heldout_colonies["hours"])
+    _figure, _axes = plt.subplots(2, _count, figsize=(2.6 * _count, 5.4), dpi=120, squeeze=False)
+    for _column, (_hour, _image, _mask) in enumerate(zip(
+        heldout_colonies["hours"], heldout_colonies["images"], heldout_colonies["mask"]
+    )):
+        # SOX17, TBXT, FOXA2 as red, green, blue
+        _rgb = np.stack([_image[_names.index(f"cell_fate_s2/{_m}")] for _m in ("SOX17", "TBXT", "FOXA2")], axis=-1)
+        _axes[0, _column].imshow(np.clip(_rgb, 0, 1))
+        _axes[0, _column].contour(_mask, levels=[0.5], colors="white", linewidths=0.6)
+        _axes[0, _column].set_title(f"KO {_hour:g}h")
+        _classes = classify_cell_types(marker_values(_image, _names, heldout_rules), heldout_rules, _mask)
+        _map = np.ones(_mask.shape + (3,))
+        for _index, _label in enumerate(_labels):
+            _map[_classes[_label]] = _colours[_index, :3]
+        _axes[1, _column].imshow(_map)
+    for _axis in _axes.flat:
+        _axis.set_xticks([])
+        _axis.set_yticks([])
+    _axes[0, 0].set_ylabel("SOX17 / TBXT / FOXA2")
+    _axes[1, 0].set_ylabel("Cell types (S2 rules)")
+    _figure.legend(
+        handles=[plt.Rectangle((0, 0), 1, 1, color=_c) for _c in _colours],
+        labels=_labels, loc="lower center", ncol=len(_labels), frameon=False,
+    )
+    _figure.tight_layout(rect=(0, 0.06, 1, 1))
+    _figure
+    return
+
+
+@app.cell(hide_code=True)
+def _(dko_group_by, dko_results, fine_resolve_several, heldout, heldout_colonies, heldout_measured, heldout_projection, heldout_rules):
+    _results = [_r for _r in dko_results if _r["projection"] == heldout_projection.value]
+    heldout_density = heldout.test_density(_results)
+    _labels = list(label_names(heldout_rules))
+    _rows = []
+    # Each sweep run: its S2-rule shares on the grid, read at the test points
+    for _result in _results:
+        _grid = heldout.model_stain_prevalence(
+            _result["pattern_counts"], _result["cell_type_markers"], heldout_rules,
+            resolve_several=fine_resolve_several.value,
+        )
+        for _hour in heldout_colonies["hours"]:
+            _predicted = heldout.predict_at(
+                _grid, actual_densities(_result), _result["requested_ko_hours"], heldout_density, _hour,
+            )
+            _rows.extend(
+                {
+                    "group": _result["groups"][dko_group_by.value],
+                    "knockout_hour": float(_hour),
+                    "cell_type": _label,
+                    "predicted": float(_value),
+                }
+                for _label, _value in zip(_labels, _predicted)
+            )
+    heldout_predicted = pd.DataFrame(_rows)
+    heldout_comparison = (
+        heldout_predicted.groupby(["group", "knockout_hour", "cell_type"])["predicted"]
+        .agg(model_mean="mean", model_std="std", runs="count")
+        .reset_index()
+        .merge(heldout_measured, on=["knockout_hour", "cell_type"])
+    )
+    heldout_comparison["difference"] = heldout_comparison["model_mean"] - heldout_comparison["measured"]
+    _outside = heldout_comparison["model_mean"].isna().any()
+    _swept = sorted({float(_h) for _r in _results for _h in _r["requested_ko_hours"]})
+    mo.vstack([
+        mo.md(
+            f"- Test density: {format_density(heldout_density, _results[0]['density_unit'])} "
+            f"(250/150 × measured)\n"
+            f"- Swept KO times: {', '.join(f'{_h:g}' for _h in _swept)} h"
+        ),
+        mo.callout("The test density or a KO time lies outside the sweep; widen it.", kind="warn")
+        if _outside else mo.md(""),
+        heldout_comparison,
+        mo.download(
+            lambda: heldout_comparison.to_csv(index=False).encode("utf-8"),
+            filename="heldout_250k_comparison.csv",
+            mimetype="text/csv",
+            label="Download comparison CSV",
+        ),
+    ])
+    return heldout_density, heldout_predicted
+
+
+@app.cell(hide_code=True)
+def _(dko_group_by, dko_heatmap_cmap, dko_results, heldout, heldout_density, heldout_measured, heldout_projection, heldout_rules, fine_resolve_several):
+    # Heatmaps with the S2 rules, mean over the runs of each group, with the
+    # measured 250K shares as dots on the same colour scale
+    _results = [_r for _r in dko_results if _r["projection"] == heldout_projection.value]
+    _labels = [_l for _l in label_names(heldout_rules) if _l not in (SEVERAL, OTHER)]
+    _groups = list(dict.fromkeys(_r["groups"][dko_group_by.value] for _r in _results))
+    _figure, _axes = plt.subplots(
+        len(_groups), len(_labels), figsize=(3.6 * len(_labels), 3.2 * len(_groups)), dpi=120, squeeze=False,
+    )
+    for _row, _group in enumerate(_groups):
+        _members = [_r for _r in _results if _r["groups"][dko_group_by.value] == _group]
+        _grids = np.mean([
+            heldout.model_stain_prevalence(
+                _r["pattern_counts"], _r["cell_type_markers"], heldout_rules,
+                resolve_several=fine_resolve_several.value,
+            ) for _r in _members
+        ], axis=0)
+        _densities = np.mean([actual_densities(_r) for _r in _members], axis=0)
+        _hours = np.asarray(_members[0]["requested_ko_hours"], dtype=float)
+        _order = np.argsort(_densities)
+        for _column, _label in enumerate(_labels):
+            _axis = _axes[_row, _column]
+            _index = list(label_names(heldout_rules)).index(_label)
+            _image = _axis.pcolormesh(
+                cell_edges(_hours), cell_edges(_densities[_order]), _grids[_order][..., _index],
+                shading="flat", cmap=dko_heatmap_cmap.value, vmin=0.0, vmax=1.0,
+            )
+            _axis.axhline(heldout_density, color="white", linewidth=0.8, linestyle="--")
+            _points = heldout_measured[heldout_measured["cell_type"] == _label]
+            _axis.scatter(
+                _points["knockout_hour"], np.full(len(_points), heldout_density),
+                c=_points["measured"], cmap=dko_heatmap_cmap.value, vmin=0.0, vmax=1.0,
+                s=70, edgecolors="white", linewidths=1.2, zorder=3,
+            )
+            _axis.set(title=f"{_group} · {_label}", xlabel="NODAL knockout time (h)")
+            if _column == 0:
+                _axis.set_ylabel(DENSITY_AXIS_LABELS[_results[0]["density_unit"]])
+            _figure.colorbar(_image, ax=_axis)
+    _figure.suptitle("S2-rule prevalence at 48 h; dots: measured 250K colonies (same colour scale)")
+    _figure.tight_layout()
+    _figure
+    return
+
+
+@app.cell(hide_code=True)
+def _(dko_results, heldout_projection):
+    # Models of the held-out projection in the loaded sweep
+    _models = {}
+    for _result in dko_results or ():
+        if _result["projection"] == heldout_projection.value:
+            _models.setdefault(f"{_result['label']} [{_result['model_id'][-8:]}]", _result["model_id"])
+    tp_models = mo.ui.multiselect(
+        options=_models, value=list(_models)[:1], label="Models to roll out at the test points", full_width=True,
+    )
+    tp_run = mo.ui.run_button(label="Roll out at the test points")
+    tp_file = mo.ui.text(
+        f"output/nodal_ko_eval/test_points/{heldout_projection.value}.npz",
+        label="Test point rollouts file", full_width=True,
+    )
+    tp_save = mo.ui.run_button(label="Save rollouts")
+    tp_load = mo.ui.run_button(label="Load rollouts")
+    mo.vstack([
+        mo.md(
+            "### Tuning thresholds on 150K and 250K data together\n\n"
+            "- The sweep keeps only counts made with the cell type file's thresholds, so the heatmaps above cannot follow a threshold change\n"
+            "- Here the models are rolled out at the points with data, and their 48h states kept: 150K density (baseline, KO 0h, KO 24h) and 250/150 × 150K density (the 250K KO times)\n"
+            "- The sliders then set **one** set of thresholds for the model states, the 150K colonies and the 250K colonies (S2-panel rules, as above)\n"
+            "- Cells are placed as in the sweep (its replicates, duplicate runs and cell settings); about a few minutes per model on a GPU\n"
+            "- 150K colonies: all four replicates at 48h with the `cell_fate_s2` panel complete, normalised as for training"
+        ),
+        tp_models,
+        mo.hstack([tp_run, tp_save, tp_load], justify="start"),
+        tp_file,
+    ])
+    return tp_file, tp_load, tp_models, tp_run, tp_save
+
+
+@app.cell(hide_code=True)
+def _():
+    get_tp_results, set_tp_results = mo.state(None)
+    return get_tp_results, set_tp_results
+
+
+@app.cell(hide_code=True)
+def _(
+    data_root,
+    dko_settings,
+    heldout,
+    heldout_folder,
+    heldout_projection,
+    set_tp_results,
+    store_root,
+    tp_file,
+    tp_load,
+    tp_models,
+    tp_run,
+    tp_save,
+    get_tp_results,
+):
+    _status = mo.md("")
+    if tp_run.value and tp_models.value:
+        _root = Path(data_root.value.strip()).expanduser()
+        _registry = ModelRegistry(Path(store_root.value.strip()).expanduser())
+        _hours = list(heldout.test_image_paths(heldout_folder.value.strip(), heldout_projection.value)) or [24, 28, 32, 36]
+        _points = [
+            ("150K baseline", 1.0, None), ("150K KO 0h", 1.0, 0), ("150K KO 24h", 1.0, 24),
+        ] + [(f"250K KO {_h}h", heldout.PLATING_SCALE, _h) for _h in _hours]
+        _results = []
+        for _model_id in mo.status.progress_bar(tp_models.value, title="Rolling out", remove_on_exit=True):
+            _bundle = _registry.get(_model_id)
+            _results.append({"model_id": _model_id, **heldout.test_point_states(_bundle, dko_settings, _points, _root)})
+        # The 150K colonies, read with the first model's data settings
+        _measured = heldout.measured_150k(
+            _registry.get(tp_models.value[0]), _root, ("baseline", "ko_0h", "ko_24h"), (1, 2, 3, 4),
+        )
+        set_tp_results({"models": _results, "measured_150k": _measured})
+        _status = mo.md(f"Rolled out {len(_results)} model(s) at {len(_points)} points.")
+    elif tp_save.value and get_tp_results() is not None:
+        _path = repository_path(tp_file.value.strip())
+        heldout.save_test_points(_path, get_tp_results()["models"])
+        _status = mo.md(f"Saved the rollouts to `{_path}` (the 150K colonies are read again on loading).")
+    elif tp_load.value:
+        _path = repository_path(tp_file.value.strip())
+        _models = list(heldout.load_test_points(_path))
+        _registry = ModelRegistry(Path(store_root.value.strip()).expanduser())
+        _measured = heldout.measured_150k(
+            _registry.get(_models[0]["model_id"]), Path(data_root.value.strip()).expanduser(),
+            ("baseline", "ko_0h", "ko_24h"), (1, 2, 3, 4),
+        )
+        set_tp_results({"models": _models, "measured_150k": _measured})
+        _status = mo.md(f"Loaded {len(_models)} model(s) from `{_path}`.")
+    _status
+    return
+
+
+@app.cell(hide_code=True)
+def _(cell_type_rules_by_projection, heldout, heldout_projection):
+    # One threshold per marker the S2 panel checks, starting from the cell type file
+    _rules = cell_type_rules_by_projection[heldout_projection.value]
+    _restricted, _, _ = heldout.stain_rules(_rules)
+    tp_thresholds = mo.ui.dictionary({
+        _marker: mo.ui.slider(0.0, 1.0, step=0.01, value=round(float(_rules.thresholds[_marker]), 2), show_value=True)
+        for _marker in _restricted.markers
+    })
+    mo.vstack([
+        mo.md("Thresholds (shared by model, 150K and 250K); the cell type file's values are the starting point:"),
+        tp_thresholds,
+    ])
+    return (tp_thresholds,)
+
+
+@app.cell(hide_code=True)
+def _(
+    cell_type_rings,
+    cell_type_rules_by_projection,
+    fine_resolve_several,
+    get_tp_results,
+    heldout,
+    heldout_colonies,
+    heldout_projection,
+    tp_thresholds,
+):
+    _tp = get_tp_results()
+    mo.stop(_tp is None, mo.md("Roll out (or load) the test points first."))
+    _rules = cell_type_rules_by_projection[heldout_projection.value]
+    _rings = int(cell_type_rings.value)
+    _resolve = fine_resolve_several.value
+
+    def _scores(thresholds):
+        """Rows of (point, cell type, source, share) with ``thresholds``."""
+        _rows = []
+        _labels = None
+        for _model in _tp["models"]:
+            for _point, _states in zip(_model["labels"], _model["states"]):
+                _shares, _restricted = heldout.shares_with(
+                    _states, _model["names"], _model["mask"], _rules, thresholds, _rings, _resolve,
+                )
+                _labels = label_names(_restricted)
+                _rows.extend(
+                    {"point": _point, "cell_type": _label, "source": "model", "share": float(_value)}
+                    for _sample in _shares for _label, _value in zip(_labels, _sample)
+                )
+        _names_150k = {"baseline": "150K baseline", "ko_0h": "150K KO 0h", "ko_24h": "150K KO 24h"}
+        for _condition, _colonies in _tp["measured_150k"].items():
+            for _image, _mask, _names in _colonies:
+                _shares, _ = heldout.shares_with(_image[None], _names, _mask, _rules, thresholds, _rings, _resolve)
+                _rows.extend(
+                    {"point": _names_150k[_condition], "cell_type": _label, "source": "data", "share": float(_value)}
+                    for _label, _value in zip(_labels, _shares[0])
+                )
+        for _hour, _image, _mask in zip(heldout_colonies["hours"], heldout_colonies["images"], heldout_colonies["mask"]):
+            _shares, _ = heldout.shares_with(
+                _image[None], heldout_colonies["channel_names"], _mask, _rules, thresholds, _rings, _resolve,
+            )
+            _rows.extend(
+                {"point": f"250K KO {_hour:g}h", "cell_type": _label, "source": "data", "share": float(_value)}
+                for _label, _value in zip(_labels, _shares[0])
+            )
+        return pd.DataFrame(_rows)
+
+    def _errors(table):
+        """Mean absolute difference of model mean and data mean, for 150K and 250K points."""
+        _means = table.groupby(["point", "cell_type", "source"])["share"].mean().unstack("source").dropna()
+        _difference = (_means["model"] - _means["data"]).abs()
+        _density = _difference.index.get_level_values("point").str.split(" ").str[0]
+        return _difference.groupby(_density).mean()
+
+    tp_table = _scores(dict(tp_thresholds.value))
+    _file_errors = _errors(_scores({}))
+    _tuned_errors = _errors(tp_table)
+    _order = list(dict.fromkeys(tp_table["point"]))
+    _cell_types = [_c for _c in dict.fromkeys(tp_table["cell_type"]) if _c not in (SEVERAL, OTHER)]
+    _figure, _axes = plt.subplots(1, len(_cell_types), figsize=(4.2 * len(_cell_types), 3.6), dpi=120, squeeze=False)
+    _x = {_point: _i for _i, _point in enumerate(_order)}
+    for _axis, _cell_type in zip(_axes[0], _cell_types):
+        _of = tp_table[tp_table["cell_type"] == _cell_type]
+        _model = _of[_of["source"] == "model"].groupby("point")["share"].agg(["mean", "std"]).reindex(_order)
+        _axis.errorbar(
+            np.arange(len(_order)), _model["mean"], yerr=_model["std"], fmt="o", color=cell_type_colour(_cell_type),
+            capsize=3, label="NCA (mean ± SD over models, replicates, runs)",
+        )
+        _data = _of[_of["source"] == "data"]
+        _axis.scatter([_x[_p] + 0.15 for _p in _data["point"]], _data["share"], marker="x", color="black", label="Data")
+        _axis.axvline(2.5, color="0.6", linewidth=0.8, linestyle=":")
+        _axis.set(title=_cell_type, ylim=(0, 1), ylabel="Share of colony at 48 h")
+        _axis.set_xticks(range(len(_order)), _order, rotation=40, ha="right", fontsize=8)
+    _axes[0, 0].legend(fontsize=7, frameon=False)
+    _figure.tight_layout()
+    _summary = pd.DataFrame({"cell type file thresholds": _file_errors, "these thresholds": _tuned_errors}).round(3)
+    _summary.index.name = "mean |NCA − data|"
+    mo.vstack([
+        _figure,
+        mo.md("Mean absolute difference between NCA and data shares (lower is better):"),
+        _summary,
+    ])
+    return (tp_table,)
+
+
+@app.cell(hide_code=True)
+def _(cell_type_rules_by_projection, heldout_projection, tp_thresholds):
+    _rules = cell_type_rules_by_projection[heldout_projection.value]
+    tp_save_name = mo.ui.text(
+        f"260726_cell_types_{heldout_projection.value}_tuned_250k.yaml", label="File name", full_width=True,
+    )
+    tp_save_rules = mo.ui.run_button(label="Save as a cell type file")
+    _changed = {
+        _m: (float(_rules.thresholds[_m]), float(_v)) for _m, _v in tp_thresholds.value.items()
+        if abs(float(_rules.thresholds[_m]) - float(_v)) > 1e-9
+    }
+    mo.vstack([
+        mo.md(
+            "- Saving writes the cell type file with these thresholds (rules and other markers unchanged), into "
+            "`Experiments/micropatterns/conf/cell_types/`; choose it above and rerun the sweep to see the heatmaps with it\n"
+            "- A threshold applies wherever its marker is read, also in the S1 panel (e.g. SOX17)\n"
+            + ("- Changed: " + ", ".join(f"{_m} {_a:.2f} → {_b:.2f}" for _m, (_a, _b) in _changed.items()) if _changed else "- No threshold changed yet")
+        ),
+        tp_save_name,
+        tp_save_rules,
+    ])
+    return tp_save_name, tp_save_rules
+
+
+@app.cell(hide_code=True)
+def _(
+    cell_type_rules_by_projection,
+    heldout_projection,
+    set_cell_type_files_version,
+    tp_save_name,
+    tp_save_rules,
+    tp_thresholds,
+):
+    mo.stop(not tp_save_rules.value)
+    _rules = cell_type_rules_by_projection[heldout_projection.value]
+    _tuned = replace(_rules, thresholds={**_rules.thresholds, **{_m: float(_v) for _m, _v in tp_thresholds.value.items()}})
+    _path = CELL_TYPE_DIRECTORY / tp_save_name.value.strip()
+    mo.stop(_path.exists(), mo.callout(f"`{_path.name}` exists; choose another name.", kind="warn"))
+    save_cell_type_rules(_path, _tuned, made_with="Experiments/micropatterns/nodal_ko_eval.py (250K threshold tuning)")
+    set_cell_type_files_version(lambda _version: _version + 1)
+    mo.md(f"Saved `{_path.relative_to(repository_root)}`.")
     return
 
 

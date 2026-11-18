@@ -14,9 +14,13 @@ def _as_list(value):
 
 
 def load_initial_model(cfg, key, model_root):
-    from Common.dataloader.micropattern_schemas import MICROPATTERN_260726_SCHEMA
-    from Experiments.config import config_to_dict
-    from NCA.model.factory import build_model, build_model_config_string, portable_family
+    """A new model, or the parent bundle's model when fine-tuning.
+
+    A parent is only used if it read the data exactly as this run does
+    (``Experiments/micropatterns/finetune.py:check_parent_compatible``).
+    """
+    from Experiments.micropatterns.finetune import check_parent_compatible
+    from NCA.model.factory import build_model, build_model_config_string
 
     model_id = cfg.initialization.model_id
     if model_id is None:
@@ -24,46 +28,12 @@ def load_initial_model(cfg, key, model_root):
 
     from Experiments.model_registry import ModelRegistry
 
-    def comparable(model_config):
-        # Archived SYCL families (e.g. gNCA_sycl) load as their portable
-        # equivalents (gNCA), so treat the two names as the same model.
-        values = config_to_dict(model_config)
-        values["family"] = portable_family(values["family"])
-        return values
-
     bundle = ModelRegistry(model_root).get(model_id)
-    if comparable(bundle.config.model) != comparable(cfg.model):
+    problems = check_parent_compatible(bundle.config, cfg)
+    if problems:
         raise ValueError(
-            f"Pretrained model {model_id!r} has an incompatible model configuration"
-        )
-    parent_data = bundle.config.data
-    all_groups = MICROPATTERN_260726_SCHEMA.group_names
-    parent_groups = parent_data.micropattern.experiment_groups or all_groups
-    child_groups = cfg.data.micropattern.experiment_groups or all_groups
-    if (
-        parent_data.dataset != "micropatterns_260726"
-        or cfg.data.dataset != "micropatterns_260726"
-        or set(parent_groups) != set(all_groups)
-        or tuple(parent_groups) != tuple(child_groups)
-    ):
-        raise ValueError(
-            "Nodal fine-tuning requires micropatterns_260726 parent and child "
-            "configurations with every experiment group"
-        )
-    if set(parent_data.micropattern.excluded_measurements) != set(
-        cfg.data.micropattern.excluded_measurements
-    ):
-        raise ValueError(
-            f"Pretrained model {model_id!r} left out the channels "
-            f"{list(parent_data.micropattern.excluded_measurements)}, but this run "
-            f"leaves out {list(cfg.data.micropattern.excluded_measurements)}; "
-            "train a parent with the same data.micropattern.excluded_measurements"
-        )
-    if parent_data.micropattern.projection != cfg.data.micropattern.projection:
-        raise ValueError(
-            f"Pretrained model {model_id!r} was trained on "
-            f"{parent_data.micropattern.projection} projections, but this run "
-            f"uses {cfg.data.micropattern.projection}"
+            f"Pretrained model {model_id!r} does not fit this run: "
+            + "; ".join(problems)
         )
     return bundle.load_model(key=key), build_model_config_string(cfg.model)
 
@@ -127,6 +97,11 @@ def build_run_name(cfg, model_name, optimiser_name):
         curriculum = _as_list(cfg.data.knockout.curriculum)
         if curriculum:
             details += "_cur" + "-".join(curriculum)
+        weights = cfg.data.knockout.curriculum_weights
+        if weights:
+            details += "_cw" + "-".join(
+                f"{name}{value:g}" for name, value in weights.items()
+            )
         if cfg.initialization.model_id is not None:
             details += "_ft"
         repeat = cfg.run.repeat
@@ -163,6 +138,11 @@ def run(cfg):
     model, model_name = load_initial_model(cfg, model_key, model_root)
     training_data, validation_data = load_train_validation_data(cfg.data)
     data, aux, channel_names, boundary, mask, _ = training_data
+    batch_weights = aux.get("batch_loss_weights")
+    if batch_weights is not None and not any(weight > 0 for weight in batch_weights):
+        raise ValueError(
+            "data.knockout.curriculum_weights give every training condition weight 0"
+        )
     _, optimiser_name, _ = build_optimiser(
         cfg.optimiser,
         cfg.run.iterations,
@@ -183,6 +163,7 @@ def run(cfg):
             if cfg.run.interval_mode == "uniform"
             else observation_times
         ),
+        condition_ids=aux.get("condition_ids"),
     )
     target_timepoints = [f"t{time}h" for time in list(cfg.data.micropattern.timesteps)[1:]]
     if cfg.data.micropattern.duplicate_final_timestep:
@@ -205,6 +186,8 @@ def run(cfg):
             data, boundary_mask=boundary
         ),
         training_intervention_times=aux.get("intervention_times"),
+        training_condition_ids=aux.get("condition_ids"),
+        training_batch_weights=aux.get("batch_loss_weights"),
         observation_times=observation_times,
         validation_data=None if validation_data is None else validation_data[0],
         validation_boundary_mask=(
@@ -221,6 +204,11 @@ def run(cfg):
             None
             if validation_data is None
             else validation_data[1].get("intervention_times")
+        ),
+        validation_condition_ids=(
+            None
+            if validation_data is None
+            else validation_data[1].get("condition_ids")
         ),
     )
     loss_overrides = {"D": 3} if cfg.run.mode == "benchmark" else None

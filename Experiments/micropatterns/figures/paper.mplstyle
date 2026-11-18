@@ -8,6 +8,8 @@ mathtext.fontset: custom
 mathtext.rm: sans
 mathtext.it: sans:italic
 mathtext.bf: sans:bold
+# \mathcal letters from the Computer Modern symbol font that ships with matplotlib
+mathtext.cal: cmsy10
 
 text.color: 222222
 axes.edgecolor: 222222

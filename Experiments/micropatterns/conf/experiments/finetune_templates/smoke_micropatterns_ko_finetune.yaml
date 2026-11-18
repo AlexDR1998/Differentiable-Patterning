@@ -1,0 +1,40 @@
+# Template for the pipeline smoke test's fine-tune stage. The model, data
+# reading and replicate split come from the parent, so they are not set here.
+# Write the sweep with (one parent that exists locally and on the cluster):
+#
+#   python -m Experiments.micropatterns.finetune \
+#     Experiments/micropatterns/conf/experiments/finetune_templates/smoke_micropatterns_ko_finetune.yaml \
+#     --selection <selection with one parent> \
+#     --out Experiments/micropatterns/conf/experiments/smoke_micropatterns_ko_finetune.yaml
+experiment_name: smoke_micropatterns_ko_finetune
+entrypoint: Experiments.micropatterns.train:run
+output_subdir: generated/smoke_micropatterns_ko_finetune
+seed_mode: fixed
+
+grid:
+  initialization.model_id: [FROM_PARENTS]
+  logging.wandb.project: [pipeline-smoke]
+  model_store.collection: [pipeline-smoke]
+
+  data.batches: [2]
+  data.knockout.channel: [Nodal]
+  data.knockout.curriculum:
+    - [ko_24h]
+    - [baseline, ko_0h, ko_24h]
+
+  run.iterations: [40]
+  run.checkpoint_warmup_fraction: [0.125]
+  optimiser.learn_rate: [1e-4]
+  optimiser.warmup_fraction: [0.25]
+  trainer.loop_autodiff: [lax]
+  trainer.log_every: [20]
+  trainer.validation_every: [20]
+  trainer.validation_rollout: [true]
+
+  loss.terms: [multi_target]
+  loss.terms.0.multi_target_weights.l2: [1.0]
+  loss.terms.0.multi_target_weights.texture: [1.0]
+  loss.terms.0.multi_target_weights.channel_mean: [0.0]
+  loss.terms.0.multi_target_weights.correlation: [0.0]
+  loss.terms.0.multi_target_weights.radial: [1.0]
+  loss.terms.0.random_channel_shuffle: [true]

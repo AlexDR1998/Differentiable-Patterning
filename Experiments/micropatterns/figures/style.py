@@ -65,6 +65,8 @@ MODEL = "#0072B2"
 ACCENT = "#D55E00"  # highlight: knockout, slice, probe, loss
 NEIGHBOURHOOD = "#009E73"
 UNMEASURED = {"face": "#d9d9d9", "edge": "#8c8c8c", "hatch": "////"}
+# Light grey box behind images that belong together (e.g. the channels of one state in a schematic)
+GROUP_BOX = {"face": "#efefef", "edge": "#cfcfcf"}
 
 # The colours above as one dict, for schematic code that passes them around together
 THEME = {"bg": PAGE, "fg": INK, "muted": MUTED, "accent": ACCENT, "model": MODEL}
@@ -75,7 +77,11 @@ BASELINE = MUTED
 # One colour per experiment group, where groups are told apart by colour (not by sector)
 GROUP_COLOURS = {"cell_fate_s1": "#009E73", "cell_fate_s2": "#56B4E9", "rna_expression": "#C99A00",
                  "protein_response": "#8E5BA8"}
-# Outlines of zoom boxes, visible on black colonies and on a white page
+# Outlines of zoom boxes (the box on the image and the frame of its magnified
+# view): black dashes over a solid white line by default, so they show on black
+# colonies and on a white page. Dash and gap lengths are in line widths.
+ZOOM_OUTLINE = {"colours": ("white", "black"), "width": 0.9, "dashes": (2.5, 2.5)}
+# Solid outline colours, only for figures that must tell several zoom boxes apart by colour
 ZOOM_COLOURS = ("#D55E00", "#009E73", "#56B4E9", "#C99A00")
 
 # Mesoderm (dark red) and endoderm (gold) differ in hue and lightness, so they stay

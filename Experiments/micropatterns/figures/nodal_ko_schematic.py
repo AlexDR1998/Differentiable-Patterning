@@ -3,7 +3,8 @@
 Run with:
     marimo edit Experiments/micropatterns/figures/nodal_ko_schematic.py
 
-The drawing code is in ``ko_trajectory.py``. Rollouts are cached in ``figures/cache/``.
+The drawing code is in ``ko_trajectory.py`` (figure) and ``ko_video.py`` (video for
+slides). Rollouts are cached in ``figures/cache/``.
 """
 
 import marimo
@@ -32,16 +33,26 @@ with app.setup:
         KoTrajectoryOptions,
         ko_trajectory_figure,
     )
+    from Experiments.micropatterns.figures.ko_video import (
+        CONDITION_ORDERS,
+        EXTENT,
+        ko_video_panels,
+        legend_decorator,
+        sector_lines,
+    )
     from Experiments.micropatterns.figures.style import (
         ACCENT,
         DATA,
+        FIGURE_ROOT,
         MODEL,
+        PAGE,
         REPOSITORY_ROOT,
         SERIES,
         colour_or,
         paper_style,
         save_figure,
     )
+    from Experiments.snowmelt.video import render_mp4
 
     load_dotenv()
 
@@ -281,6 +292,135 @@ def _(figure_name, ko_trajectories, save_button, save_svg):
     mo.stop(not save_button.value)
     _paths = save_figure(ko_trajectories, figure_name.value, "schematics", svg=save_svg.value)
     mo.md("Saved " + ", ".join(f"`{p}`" for p in _paths))
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Video for slides
+
+    - The same NCA, replicate and seed as above, rolled out with many frames between observations
+    - One tall column: a row per condition, in the order chosen
+    - Stainings as sectors of one disc (as in the figure) or as a column each; colours as in the figure
+    - Videos are saved to `figures/schematics/` as mp4
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(rollouts):
+    _names = rollouts["baseline"]["channel_names"]
+    _groups = list(dict.fromkeys(_n.split("/")[0] for _n in _names if "/" in _n))
+    video_order = mo.ui.dropdown(options=CONDITION_ORDERS, value=next(iter(CONDITION_ORDERS)),
+                                 label="Rows, top to bottom")
+    video_groups = mo.ui.multiselect(options=_groups,
+                                     value=[_g for _g in _groups if _g.startswith("cell_fate")] or _groups[:1],
+                                     label="Stainings")
+    video_sectors = mo.ui.dropdown(options={"Sectors of one disc": True, "Column per staining": False},
+                                   value="Sectors of one disc", label="Stainings as")
+    video_frames = mo.ui.slider(1, 96, step=1, value=24, show_value=True, label="Frames per 12 h")
+    video_fps = mo.ui.slider(2, 60, step=1, value=24, show_value=True, label="Frames per second")
+    video_hold = mo.ui.slider(0.0, 5.0, step=0.25, value=1.0, show_value=True, label="Pause on last frame (s)")
+    video_size = mo.ui.slider(1.5, 6.0, step=0.25, value=3.0, show_value=True, label="Colony size (in)")
+    video_dpi = mo.ui.dropdown(options={"100": 100, "150": 150, "200": 200}, value="150", label="DPI")
+    video_gamma = mo.ui.slider(0.3, 2.0, step=0.05, value=1.0, show_value=True, label="Gamma (1 = linear)")
+    video_lmbr = mo.ui.checkbox(value=False, label="LMBR in yellow (Fate S2)")
+    video_legend = mo.ui.checkbox(value=True, label="Legend")
+    video_name = mo.ui.text(value="nodal_knockout_video", label="File name")
+    video_rollout = mo.ui.run_button(label="Roll out for video")
+    video_render = mo.ui.run_button(label="Render video")
+    mo.vstack([
+        mo.hstack([video_order, video_groups, video_sectors], justify="start"),
+        mo.hstack([video_frames, video_fps, video_hold], justify="start"),
+        mo.hstack([video_size, video_dpi, video_gamma, video_lmbr, video_legend], justify="start"),
+        mo.hstack([video_name, video_rollout, video_render], justify="start"),
+        mo.md("- Changing **Frames per 12 h** needs a new rollout; cached rollouts load without pressing the button"),
+    ])
+    return (
+        video_dpi,
+        video_fps,
+        video_frames,
+        video_gamma,
+        video_groups,
+        video_hold,
+        video_legend,
+        video_lmbr,
+        video_name,
+        video_order,
+        video_render,
+        video_rollout,
+        video_sectors,
+        video_size,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    data_root,
+    model_id,
+    refresh,
+    replicate,
+    seed,
+    store_root,
+    video_frames,
+    video_rollout,
+):
+    _model = (model_id.value or "").strip()
+    _name = cache_name("video_rollouts", _model, f"r{int(replicate.value)}", f"s{int(seed.value)}",
+                       f"f{int(video_frames.value)}")
+    _cached = bool(_model) and (CACHE_DIRECTORY / _name).is_file()
+    mo.stop(not _model or not (video_rollout.value or _cached), mo.md("Press **Roll out for video**."))
+    mo.stop(not data_root.value.strip() and not _cached, mo.callout("Set the data root first.", kind="warn"))
+    with mo.status.spinner("Rolling out the video frames"):
+        video_rollouts = cached(
+            _name,
+            lambda: model_rollouts(store_root.value, _model, data_root.value, int(replicate.value),
+                                   int(seed.value), conditions=tuple(CONDITIONS),
+                                   frames_per_12h=int(video_frames.value)),
+            refresh=video_rollout.value and refresh.value,
+        )
+    mo.md(f"{len(video_rollouts['baseline']['frame_hours'])} frames per condition ready.")
+    return (video_rollouts,)
+
+
+@app.cell(hide_code=True)
+def _(
+    video_dpi,
+    video_fps,
+    video_gamma,
+    video_groups,
+    video_hold,
+    video_legend,
+    video_lmbr,
+    video_name,
+    video_order,
+    video_render,
+    video_rollouts,
+    video_sectors,
+    video_size,
+):
+    mo.stop(not video_groups.value, mo.callout("Select at least one staining.", kind="warn"))
+    mo.stop(not video_render.value, mo.md("Press **Render video**."))
+    _groups = list(video_groups.value)
+    _panels, _columns, _titles = ko_video_panels(
+        video_rollouts, video_order.value, _groups, sectors=video_sectors.value, gamma=video_gamma.value,
+        lmbr=video_lmbr.value, hold_frames=round(video_hold.value * video_fps.value),
+    )
+    _names = video_rollouts["baseline"]["channel_names"]
+    _path = FIGURE_ROOT / "schematics" / f"{video_name.value}.mp4"
+    _path.parent.mkdir(parents=True, exist_ok=True)
+    with paper_style():
+        render_mp4(
+            _path, _panels, _titles, EXTENT, fps=int(video_fps.value), ncols=_columns,
+            draw_outline=sector_lines(len(_groups) if video_sectors.value else 1),
+            progress=lambda frames: mo.status.progress_bar(frames, title="Rendering video"),
+            panel_size=(video_size.value, video_size.value + 0.3), dpi=int(video_dpi.value), show_axes=False,
+            background=PAGE,  # discs on the page, as in the figure
+            decorate=legend_decorator(_names, _groups, video_sectors.value, video_lmbr.value)
+            if video_legend.value else None,
+        )
+    mo.vstack([mo.md(f"Saved `{_path}`"), mo.video(src=_path.read_bytes(), controls=True, loop=True)])
     return
 
 
