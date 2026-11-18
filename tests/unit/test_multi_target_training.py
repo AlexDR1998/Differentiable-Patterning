@@ -197,6 +197,44 @@ def test_snapshot_reinjection_donors_preserve_intervention_condition():
         assert jnp.array_equal(labels[donors], labels)
 
 
+def test_snapshot_reinjection_donors_preserve_condition_ids():
+    # Two conditions without a knockout (time -1) must still stay apart.
+    intervention_times = (-1, -1, -1, -1, 0, 0)
+    condition_ids = (0, 0, 1, 1, 2, 2)
+    augmenter = _snapshot_augmenter(
+        jnp.zeros((6, 2, 14, 2, 2)),
+        intervention_times=intervention_times,
+        condition_ids=condition_ids,
+    )
+    labels = jnp.asarray(condition_ids)
+
+    for seed in range(10):
+        donors = augmenter._matched_donors(jax.random.PRNGKey(seed), 6)
+        assert jnp.array_equal(labels[donors], labels)
+
+
+def test_condition_ids_swap_donors_exactly_like_knockout_times():
+    # For knockout curricula the labels give the same groups as the times,
+    # so existing runs draw exactly the same donors.
+    from Experiments.micropatterns.config_helpers import curriculum_condition_ids
+
+    curriculum = ("baseline", "baseline", "ko_0h", "ko_24h")
+    intervention_times = (-1, -1, -1, -1, 0, 0, 24, 24)
+    condition_ids = curriculum_condition_ids(curriculum, 2)
+    assert condition_ids == (0, 0, 0, 0, 1, 1, 2, 2)
+    data = jnp.zeros((8, 2, 14, 2, 2))
+    by_time = _snapshot_augmenter(data, intervention_times=intervention_times)
+    by_condition = _snapshot_augmenter(
+        data, intervention_times=intervention_times, condition_ids=condition_ids
+    )
+
+    for seed in range(5):
+        key = jax.random.PRNGKey(seed)
+        assert jnp.array_equal(
+            by_time._matched_donors(key, 8), by_condition._matched_donors(key, 8)
+        )
+
+
 def test_multi_target_l2_is_computed_within_channel_groups():
     schema = MICROPATTERN_260726_SCHEMA.select_groups(["cell_fate_s1"])
     prediction = jnp.zeros((1, 1, schema.n_state_channels, 2, 2))
@@ -341,3 +379,12 @@ def test_snapshot_reinjection_rejects_invalid_schedule(kwargs):
     data = jnp.zeros((2, 5, 14, 2, 2))
     with pytest.raises(ValueError):
         _snapshot_augmenter(data, **kwargs)
+
+
+def test_batch_mean_weights_each_batch_item():
+    from NCA.trainer.step import batch_mean
+
+    losses = jnp.asarray([1.0, 3.0, 5.0])
+    assert batch_mean(losses) == 3.0
+    assert batch_mean(losses, jnp.asarray([1.0, 0.0, 0.0])) == 1.0
+    assert batch_mean(losses, jnp.asarray([1.0, 1.0, 2.0])) == 3.5

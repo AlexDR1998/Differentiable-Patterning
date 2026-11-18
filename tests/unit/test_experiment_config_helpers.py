@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from types import SimpleNamespace
+from dataclasses import replace
 
 from Common.trainer.config import (
     LossConfig,
@@ -754,6 +755,8 @@ def test_260726_knockout_curriculum_uses_standard_conditions_and_schema(monkeypa
     assert calls[0]["conditions"] == ("ctrl", "sl0", "sl24")
     assert data.shape[0] == mask.shape[0] == 8
     assert aux["intervention_times"] == (-1, -1, -1, -1, 0, 0, 24, 24)
+    assert aux["condition_ids"] == (0, 0, 0, 0, 1, 1, 2, 2)
+    assert aux["batch_loss_weights"] is None
     assert aux["batch_conditions"] == (
         "ctrl", "ctrl", "ctrl", "ctrl", "sl0", "sl0", "sl24", "sl24"
     )
@@ -763,6 +766,65 @@ def test_260726_knockout_curriculum_uses_standard_conditions_and_schema(monkeypa
     assert aux["measurement_mask"].shape == (8, 5, 14)
     assert aux["loss_measurement_mask"].shape == (8, 4, 14)
     assert "_curbaseline-baseline-ko_0h-ko_24h" in cfg_str
+
+
+def test_260726_curriculum_weights_give_one_weight_per_batch(monkeypatch):
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+
+    def fake_loader(path, **kwargs):
+        batch_count = 2 * len(kwargs["conditions"])
+        return (
+            jnp.zeros((batch_count, 5, 14, 2, 3)),
+            {"channel_schema": object(), "histogram_bins": jnp.ones((14, 2))},
+            ["marker"] * 14,
+            jnp.ones((batch_count, 1, 2, 3), dtype=bool),
+            jnp.ones((batch_count, 5, 14), dtype=bool),
+        )
+
+    monkeypatch.setattr(micropattern_helpers, "load_micropattern_260726", fake_loader)
+    cfg = _micropattern_cfg(
+        data_channels=14,
+        curriculum=("baseline", "ko_0h", "ko_24h"),
+        dataset="micropatterns_260726",
+    )
+    cfg = replace(
+        cfg,
+        knockout=replace(cfg.knockout, curriculum_weights={"baseline": 4.0, "ko_24h": 0.0}),
+    )
+
+    _, aux, *_ = micropattern_helpers.load_data(cfg, impath="/tmp/micropatterns/")
+
+    assert aux["batch_loss_weights"] == (4.0, 4.0, 1.0, 1.0, 0.0, 0.0)
+
+
+def test_curriculum_weights_must_be_non_negative():
+    with pytest.raises(ValueError, match="non-negative"):
+        KnockoutConfig(curriculum=("baseline",), curriculum_weights={"baseline": -1.0})
+
+
+def test_curriculum_weights_survive_reloading_one_condition():
+    # Normalisation and evaluation reload single conditions from the config.
+    config = KnockoutConfig(
+        curriculum=("baseline", "ko_0h"),
+        curriculum_weights={"baseline": 0.0, "ko_0h": 1.0},
+    )
+    assert replace(config, curriculum=("baseline",)).curriculum == ("baseline",)
+
+
+def test_unknown_curriculum_weight_names_stop_loading(monkeypatch):
+    import Experiments.micropatterns.config_helpers as micropattern_helpers
+
+    cfg = _micropattern_cfg(
+        data_channels=14, curriculum=("baseline",), dataset="micropatterns_260726"
+    )
+    cfg = replace(cfg, knockout=replace(cfg.knockout, curriculum_weights={"ko_48h": 1.0}))
+    monkeypatch.setattr(
+        micropattern_helpers,
+        "load_micropattern_260726",
+        lambda path, **kwargs: (_ for _ in ()).throw(AssertionError("not reached")),
+    )
+    with pytest.raises(ValueError, match="ko_48h"):
+        micropattern_helpers.load_data(cfg, impath="/tmp/micropatterns/")
 
 
 def test_260726_knockout_requires_full_schema():

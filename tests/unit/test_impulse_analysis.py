@@ -11,15 +11,18 @@ from pathlib import Path
 
 from Experiments.config import config_to_dict, impulse_experiment_config_from_mapping
 from Experiments.impulse.analysis import (
+    critical_time,
     distance_over_time,
     graft,
     graft_switch_map,
     grow_attractors,
+    impulse_record_table,
     load_impulse_results,
     load_saved_intervention,
     move_intervention,
     summary_row,
     scale_intervention,
+    sigmoid_midpoint,
     success_rate,
     switch_matrix,
 )
@@ -251,3 +254,64 @@ def test_batched_graft_map_matches_each_graft_on_its_own():
             nearest = jnp.argmin(jnp.mean((final[:, None] - references[None]) ** 2, axis=(-3, -2, -1)), axis=1)
             assert batched[i, j] == float(jnp.mean(nearest == 1))
     assert batched[-1].tolist() == [1.0, 1.0, 1.0]
+
+
+def test_critical_time_is_when_switching_stops_for_good():
+    times = [0.0, 0.1, 0.2, 0.3, 0.4]
+    assert critical_time(times, [1, 1, 0.25, 0, 0]) == 0.2
+    # A late blip above the threshold moves the critical time after it
+    assert critical_time(times, [1, 0, 0.75, 0, 0]) == 0.3
+    # Unsorted input gives the same answer
+    assert critical_time(times[::-1], [0, 0, 0.25, 1, 1]) == 0.2
+    assert critical_time(times, [1, 1, 1, 1, 0.5]) == np.inf
+    assert critical_time(times, [0, 0, 0, 0, 0]) == 0.0
+    assert critical_time(times, [1, 0.6, 0.6, 0, 0], threshold=0.7) == 0.1
+
+
+def test_sigmoid_midpoint_recovers_a_logistic():
+    times = np.linspace(0, 1.5, 19)
+    rates = 0.9 / (1 + np.exp((times - 0.6) / 0.05))
+    t0, width, top = sigmoid_midpoint(times, rates)
+    assert t0 == pytest.approx(0.6, abs=1e-3)
+    assert width == pytest.approx(0.05, abs=1e-3)
+    assert top == pytest.approx(0.9, abs=1e-3)
+    assert np.isnan(sigmoid_midpoint(times, np.ones_like(times))).all()
+
+
+def test_impulse_record_table_reads_manifest_and_config(tmp_path):
+    from omegaconf import OmegaConf
+
+    record = tmp_path / "experiment" / "impulse-1"
+    record.mkdir(parents=True)
+    OmegaConf.save(
+        {
+            "id": "impulse-1",
+            "experiment": "critical_time_v1",
+            "model": {"id": "model-abcdefgh", "family": "NCA", "training_t": 64},
+            "conditions": {
+                "source_index": 0, "target_index": 1, "source_pattern": "rooster",
+                "target_pattern": "lizard", "impulse_time": 32,
+            },
+            "results": {
+                "switch_rate": 0.75, "baseline_switch_rate": 0.0, "evaluation_loss": 0.1,
+                "baseline_evaluation_loss": 0.4, "switch_time": 96.0, "impulse_l2": 2.0, "footprint": 25,
+            },
+        },
+        record / "manifest.yaml",
+    )
+    OmegaConf.save(
+        {
+            "impulse": {
+                "pair_source": {"impulse_time": 0.5, "time_unit": "training_t"},
+                "intervention": {"channels": "all", "spatial": "patch", "patch_size": 5},
+            }
+        },
+        record / "config.yaml",
+    )
+    table = impulse_record_table([record])
+    row = table.iloc[0]
+    assert len(table) == 1
+    assert row.switch == "rooster → lizard"
+    assert (row.impulse_time, row.impulse_steps, row.training_t) == (0.5, 32, 64)
+    assert row.setting == "all, patch 5"
+    assert row.switch_rate == 0.75

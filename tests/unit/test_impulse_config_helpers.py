@@ -327,3 +327,14 @@ def test_attractor_contrast_objective_needs_attractors_and_defaults_its_temperat
     assert isinstance(objective, AttractorContrastObjective)
     assert objective.target_index == 1
     assert objective.temperature == target_gap(attractors) == 0.0625
+
+
+@pytest.mark.parametrize("steps", [(2.0,), (2.0, 1.5), (1.5, 2.0, 2.5), (-1.0, 2.0)])
+def test_stable_attractor_needs_an_increasing_stabilisation_range(steps):
+    from Experiments.impulse.config import ImpulsePairSourceConfig
+
+    with pytest.raises(ValueError, match="stabilisation_steps"):
+        ImpulsePairSourceConfig(type="stable_attractor", stabilisation_steps=steps)
+    ImpulsePairSourceConfig(type="stable_attractor", stabilisation_steps=(1.5, 2.0))
+    # Other pair sources do not use stabilisation_steps
+    ImpulsePairSourceConfig(type="external_target", stabilisation_steps=steps)

@@ -268,6 +268,67 @@ def test_intervention_slot_matches_12h_rule_and_follows_observation_times():
     )
 
 
+@pytest.mark.parametrize("observation_times", [None, MICROPATTERN_HOURS])
+def test_knockout_inside_a_slot_blocks_from_its_hour(observation_times):
+    from NCA.trainer.intervention import nodal_read_block_mask
+
+    steps = (12, 12, 12, 12)  # one step per hour
+    blocked = jnp.stack([
+        nodal_read_block_mask(
+            28, 4, observation_times=observation_times, step=j, slot_steps=steps
+        )
+        for j in range(12)
+    ])  # [step, slot]
+    assert not jnp.any(blocked[:, :2])
+    assert jnp.array_equal(blocked[:, 2], jnp.arange(12) >= 4)
+    assert jnp.all(blocked[:, 3])
+
+
+@pytest.mark.parametrize("hours", [-1, 0, 12, 24, 36])
+def test_knockout_on_a_slot_boundary_blocks_whole_slots_as_before(hours):
+    from NCA.trainer.intervention import nodal_read_block_mask
+
+    whole_slots = nodal_read_block_mask(hours, 4)
+    for j in range(8):
+        assert jnp.array_equal(
+            nodal_read_block_mask(hours, 4, step=j, slot_steps=(8,) * 4), whole_slots
+        )
+
+
+def test_knockout_step_is_the_first_step_at_or_after_the_hour():
+    from NCA.trainer.intervention import knockout_step
+
+    assert knockout_step(24, 128) == 256
+    assert knockout_step(28, 128) == 299  # 28 * 128 / 12 = 298.7
+    assert knockout_step(28, 12) == 28
+    assert knockout_step(0, 64) == 0
+
+
+def test_training_rollout_blocks_nodal_from_a_mid_slot_knockout():
+    # A toy model that counts, in channel 1, the steps on which it read
+    # channel 0 (the "NODAL" channel, always 1).
+    from NCA.trainer.step import batch_model
+
+    class CountingModel:
+        boundary_regulariser_state = firing_probability = conductance = None
+
+        def __call__(self, state, boundary_callback, key):
+            return state.at[1].add(state[0])
+
+    model = CountingModel()
+
+    t = 6
+    states = [jnp.zeros((4, 2, 1, 1)).at[:, 0].set(1.0)]
+    batched = batch_model(model, (28,), 0, None, slot_steps=(t,) * 4)
+    _, final, _ = run_nca_steps(
+        model, batched, states, {}, uniform_schedule(t, 4), jr.PRNGKey(0),
+        "lax", lambda totals, *args: totals, [no_boundary()],
+    )
+    # Slots 0-1 read NODAL on every step; slot 2 (24-36 h) until 28 h, i.e.
+    # steps 0 and 1 (24 h, 26 h); slot 3 never.
+    assert final[0][:, 1, 0, 0].tolist() == [6.0, 6.0, 2.0, 0.0]
+
+
 def test_legacy_nodal_zeroing_follows_observation_times():
     from NCA.trainer.data_augmenter.micropattern import masked_reinject
 
