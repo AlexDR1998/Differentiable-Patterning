@@ -124,6 +124,17 @@ with app.setup(hide_code=True):
 
 @app.cell(hide_code=True)
 def _():
+    _backend = jax.default_backend()
+    _devices = ", ".join(f"{_device.platform}: {_device.device_kind}" for _device in jax.devices())
+    mo.callout(
+        f"JAX backend: **{_backend}** · Devices: {_devices}",
+        kind="success" if _backend == "gpu" else "warn",
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     plt.style.use(["default", STYLE_FILE])
     return
 
@@ -132,10 +143,19 @@ def _():
 def _():
     mo.md("""
     # Colony size × cell density
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    This notebook prepares inference sweeps from selected models, over varying micropattern sizes and initial densites.
+    These can be run locally, or prepared for an EIDF sweep.
 
     - Circular colonies of several diameters, filled with whole measured cells at a range of densities (`synthetic_ic.py`, as in the density × KO sweep of `nodal_ko_eval.py`)
     - Every size is drawn at the model's own µm per pixel, on one grid per model
-    - Radial profiles over time (kymographs) to look for wavefronts
+    - Radial profiles over time (kymographs)
     - The models only saw ~500 µm colonies: other sizes are extrapolation
     """)
     return
@@ -143,12 +163,9 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    _backend = jax.default_backend()
-    _devices = ", ".join(f"{_device.platform}: {_device.device_kind}" for _device in jax.devices())
-    mo.callout(
-        f"JAX backend: **{_backend}** · Devices: {_devices}",
-        kind="success" if _backend == "gpu" else "warn",
-    )
+    mo.md(r"""
+    ## Model selection
+    """)
     return
 
 
@@ -620,7 +637,14 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(sd_export_job, sd_job_name, sd_job_output, sd_job_split, sd_records, sd_settings):
+def _(
+    sd_export_job,
+    sd_job_name,
+    sd_job_output,
+    sd_job_split,
+    sd_records,
+    sd_settings,
+):
     if not sd_export_job.value:
         _job_status = mo.md("")
     elif not sd_records:
@@ -671,7 +695,14 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(get_sd_results, sd_load, sd_overwrite, sd_results_path, sd_save, set_sd_results):
+def _(
+    get_sd_results,
+    sd_load,
+    sd_overwrite,
+    sd_results_path,
+    sd_save,
+    set_sd_results,
+):
     _path = Path(sd_results_path.value.strip()).expanduser()
     if not _path.is_absolute():
         _path = repository_root / _path
@@ -1412,7 +1443,14 @@ def _(cell_type_labels, sd_results):
 
 
 @app.cell(hide_code=True)
-def _(cell_type_rules_by_projection, sd_group_of, sd_model_names, sd_references, sd_resolve, sd_results):
+def _(
+    cell_type_rules_by_projection,
+    sd_group_of,
+    sd_model_names,
+    sd_references,
+    sd_resolve,
+    sd_results,
+):
     def sd_kymograph_entries(_quantity, _source="sweep"):
         """Mean kymograph ``[sizes, densities, conditions, times, bins]`` of
         ``_quantity`` for each model, of the sweep or of one reference."""

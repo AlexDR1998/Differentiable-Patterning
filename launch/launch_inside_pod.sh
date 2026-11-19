@@ -36,7 +36,15 @@ fi
 
 mkdir -p /workspace/writeable/data/logs/wandb/"$WANDB_DIR_NAME"/"$JOB_WORKER_INDEX"_"$JOB_COMPLETION_INDEX"
 
-python "$SCRIPT_PATH" --manifest "$MANIFEST_PATH"
+# Keep the job's printed output (and any error) on the persistent volume, since
+# pods and their logs can be deleted before anyone reads them
+LOG_DIR=/workspace/writeable/data/logs/jobs/"$WANDB_DIR_NAME"
+mkdir -p "$LOG_DIR"
+set -o pipefail
+python -X faulthandler "$SCRIPT_PATH" --manifest "$MANIFEST_PATH" 2>&1 \
+  | tee "$LOG_DIR"/worker_"$JOB_WORKER_INDEX"_index_"$JOB_COMPLETION_INDEX".log
+STATUS=$?
 
 # The W&B cache (WANDB_CACHE_DIR) stays in the pod: only the run logs are kept
 rsync -a --inplace --exclude cache/ /workspace/writeable/wandb-fast/ /workspace/writeable/data/logs/wandb/"$WANDB_DIR_NAME"/"$JOB_WORKER_INDEX"_"$JOB_COMPLETION_INDEX"/
+exit $STATUS
