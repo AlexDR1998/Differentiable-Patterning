@@ -42,7 +42,7 @@ with app.setup(hide_code=True):
     from Common.dataloader.micropattern_projections import PROJECTIONS
     from Experiments.model_registry import ModelRegistry, load_selection
     # Cell placement shared with the density × KO sweep (synthetic_ic.py)
-    from Experiments.micropatterns.density_ko_sweep import format_density, prepare_model_cells
+    from Experiments.micropatterns.density_ko_sweep import format_density, mean_measured_density, prepare_model_cells
     from Experiments.micropatterns.ko_evaluation import (
         REFERENCE_LABELS,
         REFERENCE_LINESTYLES,
@@ -60,8 +60,6 @@ with app.setup(hide_code=True):
     # The sweep (run here or as a remote job) and its analysis helpers
     from Experiments.micropatterns.size_density_sweep import (
         SizeDensitySettings,
-        front_positions,
-        front_speed,
         job_configs,
         load_size_density_results,
         mean_kymograph,
@@ -93,7 +91,13 @@ with app.setup(hide_code=True):
     load_dotenv(repository_root / ".env", override=False)
 
     CELL_TYPE_DIRECTORY = repository_root / "Experiments/micropatterns/conf/cell_types"
-    DENSITY_LABELS = {"per_mm2": "Cells per mm²", "share": "Covered share"}
+    DENSITY_LABELS = {
+        "relative": "Multiple of measured density",
+        "per_mm2": "Cells per mm²",
+        "share": "Covered share",
+    }
+    # Column of the density each colony actually got, in each unit
+    DENSITY_X_COLUMNS = {"relative": "relative_density", "per_mm2": "cells_per_mm2", "share": "covered_share"}
     AXIS_LABELS = {
         "edge_um": "Distance from edge (µm)",
         "centre_um": "Distance from centre (µm)",
@@ -271,7 +275,8 @@ def _():
     mo.md("""
     ## Sweep
 
-    - Diameters in µm; densities as real cells per mm² (the same at every size) or covered share
+    - Diameters in µm; densities as multiples of the measured density, real cells per mm² (both the same at every size) or covered share
+    - Default densities: 0.1× to 2× the measured density (mean cells per mm² of the real colonies), in steps of 0.1×
     - Baseline rollouts always; optional NODAL knockouts from the listed hours
     - Each run places its cells once per size: every density and condition of a run shares the rollout seed
     """)
@@ -282,7 +287,7 @@ def _():
 def _():
     sd_density_unit = mo.ui.dropdown(
         options={_label: _unit for _unit, _label in DENSITY_LABELS.items()},
-        value=DENSITY_LABELS["per_mm2"],
+        value=DENSITY_LABELS["relative"],
         label="Sweep density as",
     )
     return (sd_density_unit,)
@@ -291,6 +296,7 @@ def _():
 @app.cell(hide_code=True)
 def _(sd_density_unit):
     _low, _high, _start, _stop, _step = {
+        "relative": (0.01, 10.0, 0.1, 2.0, 0.05),
         "per_mm2": (0, 50000, 1000, 8000, 50),
         "share": (0.02, 0.98, 0.2, 0.8, 0.01),
     }[sd_density_unit.value]
@@ -307,7 +313,7 @@ def _(selection_records):
         options=_model_options, value=list(_model_options), label="Models", full_width=True,
     )
     sd_diameters = mo.ui.text("200, 300, 400, 500, 600, 800, 1000", label="Colony diameters (µm)", full_width=True)
-    sd_density_count = mo.ui.number(1, 50, value=5, step=1, label="Densities")
+    sd_density_count = mo.ui.number(1, 50, value=20, step=1, label="Densities")
     sd_ko_hours = mo.ui.text("", label="NODAL KO hours (empty: baseline only)", placeholder="0, 24")
     sd_snapshot = mo.ui.number(1, 96, value=48, step=1, label="End time (h)")
     sd_record_every = mo.ui.number(0.25, 12, value=1, step=0.25, label="Profile every (h)")
@@ -321,12 +327,15 @@ def _(selection_records):
     sd_max_batch = mo.ui.number(1, 4096, value=32, step=1, label="Rollouts per GPU batch")
     # References rolled out beside the sweep, with the same conditions and seeds
     sd_include_true_data = mo.ui.switch(value=False, label="True data initial condition")
-    sd_include_measured = mo.ui.switch(value=False, label="Synthetic at the measured density")
+    # Size sweeps: every size at the measured density, or with the measured cells per colony
+    sd_include_measured = mo.ui.switch(value=False, label="Fixed density (measured cells per mm²)")
+    sd_include_cell_count = mo.ui.switch(value=False, label="Fixed cell count (measured cells per colony)")
     return (
         sd_bin_um,
         sd_density_count,
         sd_diameters,
         sd_duplicate_runs,
+        sd_include_cell_count,
         sd_include_measured,
         sd_include_true_data,
         sd_ko_hours,
@@ -349,6 +358,7 @@ def _(
     sd_density_unit,
     sd_diameters,
     sd_duplicate_runs,
+    sd_include_cell_count,
     sd_include_measured,
     sd_include_true_data,
     sd_ko_hours,
@@ -366,20 +376,25 @@ def _(
         mo.hstack([sd_density_unit, sd_density_start, sd_density_stop, sd_density_count]),
         mo.hstack([sd_ko_hours, sd_snapshot, sd_record_every, sd_bin_um]),
         mo.hstack([sd_replicates, sd_seed, sd_duplicate_runs]),
+        mo.md(
+            "**Size sweeps** (every diameter above, beside the size × density grid)\n\n"
+            "- Fixed density: every size at the measured cells per mm²\n"
+            "- Fixed cell count: every size with the measured cells per colony, so small colonies are denser\n"
+            "- Both use the mean over the replicates, and the sweep's conditions and run seeds"
+        ),
+        mo.hstack([sd_include_measured, sd_include_cell_count], justify="start"),
         mo.accordion({
             "Cell placement": mo.vstack([
                 sd_texture_file,
                 mo.md("- The `cells` settings of each model's projection; tune them in `synthetic_textured_ic_explorer.py`"),
             ]),
             "Compute": sd_max_batch,
-            "References": mo.vstack([
+            "True data": mo.vstack([
                 mo.md(
-                    "- True data: the 0h control colony of each replicate above, in its own outline and size\n"
-                    "- Synthetic at the measured density: every size at the measured density "
-                    "(mean over the replicates)\n"
-                    "- Both use the same conditions and run seeds as the sweep"
+                    "- The 0h control colony of each replicate above, in its own outline and size\n"
+                    "- Same conditions and run seeds as the sweep"
                 ),
-                mo.hstack([sd_include_true_data, sd_include_measured], justify="start"),
+                sd_include_true_data,
             ]),
         }),
     ])
@@ -398,6 +413,7 @@ def _(
     sd_density_unit,
     sd_diameters,
     sd_duplicate_runs,
+    sd_include_cell_count,
     sd_include_measured,
     sd_include_true_data,
     sd_ko_hours,
@@ -437,6 +453,7 @@ def _(
         max_batch=int(sd_max_batch.value),
         include_true_data=bool(sd_include_true_data.value),
         include_measured_density=bool(sd_include_measured.value),
+        include_measured_cell_count=bool(sd_include_cell_count.value),
     )
     _by_id = {_record["model_id"]: _record for _record in selection_records}
     sd_records = tuple(_by_id[_model_id] for _model_id in sd_models.value)
@@ -444,13 +461,17 @@ def _(
         {"projection": _p, **{_k: _v[_k] for _k in ("placement", "pieces", "segmentation", "density_panels")}}
         for _p, _v in sd_settings.cells.items()
     ])
+    _densities = sd_settings.densities()
+    _hits_measured = sd_settings.density_unit != "relative" or bool(np.any(np.isclose(_densities, 1.0)))
     mo.vstack([
         mo.md(
             f"- {sd_settings.trajectories(len(sd_records))} rollouts: {len(sd_records)} models × "
             f"{len(sd_settings.replicates)} replicates × {sd_settings.duplicate_runs} runs × "
-            f"{len(sd_settings.diameters_um)} sizes × {len(sd_settings.densities())} densities × "
-            f"{len(sd_settings.conditions())} conditions"
+            f"{len(sd_settings.diameters_um)} sizes × {len(_densities)} densities × "
+            f"{len(sd_settings.conditions())} conditions (plus the size sweeps and true data)\n"
+            f"- Densities: {', '.join(format_density(_d, sd_settings.density_unit) for _d in _densities)}"
         ),
+        *([] if _hits_measured else [mo.callout("The measured density (1×) is not one of the densities.", kind="warn")]),
         mo.ui.table(_cells, selection=None),
     ])
     return sd_records, sd_settings
@@ -505,7 +526,9 @@ def _(sd_preview_model, sd_records, sd_run_preview, sd_settings):
         _cmap = plt.get_cmap("magma").copy()
         _cmap.set_bad("#d9d9d9")
         for _size, (_diameter, _mask) in enumerate(zip(sd_settings.diameters_um, _geometry["masks"])):
-            _states = size_initial_states(_prepared, 0, _mask, _densities, _unit, sd_settings.seed)
+            _states = size_initial_states(
+                _prepared, 0, _mask, _densities, _unit, sd_settings.seed, mean_measured_density(_prepared)[0],
+            )
             for _row, _density in enumerate(_densities):
                 _axis = _axes[_row, _size]
                 _axis.imshow(np.where(_mask, _states["initial_states"][_row, _channel], np.nan), cmap=_cmap)
@@ -766,9 +789,13 @@ def _(cell_type_labels, sd_references, sd_results):
         value="Share of colony pixels",
         label="Prevalence as",
     )
+    # Default: the measured density (1×) for relative densities, else the middle one
+    _default = (
+        int(np.argmin(np.abs(np.asarray(_densities) - 1.0))) if _unit == "relative" else len(_densities) // 2
+    )
     sd_fixed_density = mo.ui.dropdown(
         {format_density(_d, _unit): _d for _d in _densities},
-        value=format_density(_densities[len(_densities) // 2], _unit) if _densities else None,
+        value=format_density(_densities[_default], _unit) if _densities else None,
         label=f"Fixed density ({DENSITY_LABELS[_unit]}, requested)",
     )
     # References present in the results, shown on request
@@ -787,7 +814,8 @@ def _(cell_type_labels, sd_references, sd_results):
                 sd_show_references,
                 mo.md(
                     "- True data: every replicate's colony in its own outline and size (pooled at their mean "
-                    "size); synthetic: every size at the measured density\n"
+                    "size)\n"
+                    "- Size sweeps: every size at the measured density, or with the measured cell count\n"
                     "- True data has no cell counts, so it is shown by pixels only"
                 ),
             ], justify="start") if _present else mo.md(""),
@@ -847,6 +875,9 @@ def _(
                                 "density": float(_density),
                                 "cells_per_mm2": float(_result["cells_per_mm2"][_s, _d]),
                                 "covered_share": float(_result["covered_shares"][_s, _d]),
+                                # Multiple of the mean measured density (NaN in older results)
+                                "relative_density": float(_result["cells_per_mm2"][_s, _d])
+                                / float(_result.get("mean_measured_cells_per_mm2", np.nan)),
                                 "measured_density": float(_result["measured_density"]),
                                 "training_diameter_um": float(_result["training_diameter_um"]),
                                 "condition": _condition,
@@ -867,13 +898,14 @@ def _(
                 **({} if "density" in _keys else {"density": float(_values["density"].mean())}),
                 "cells_per_mm2": float(_values["cells_per_mm2"].mean()),
                 "covered_share": float(_values["covered_share"].mean()),
+                "relative_density": float(_values["relative_density"].mean()),
                 "mean_share": _mean, "lower": _lower, "upper": _upper, "samples": len(_values),
             })
         return pd.DataFrame(_summary)
 
     sd_shares = _share_rows(sd_results or ())
     sd_summary = _summarise(sd_shares, ["group", "cell_type", "diameter_um", "density", "condition"])
-    # References: true data (one size), and every size at the measured density
+    # References: true data (one size), and the size sweeps (every size)
     sd_reference_shares = _share_rows(sd_references)
     if not sd_reference_shares.empty:
         # The replicates' true colonies differ a little in size: pooled at their mean size
@@ -915,7 +947,7 @@ def _(
     else:
         _shown = sd_summary[(sd_summary["group"] == sd_group.value) & (sd_summary["condition"] == sd_condition.value)]
         _unit = sd_results[0]["density_unit"]
-        _x_column = "cells_per_mm2" if _unit == "per_mm2" else "covered_share"
+        _x_column = DENSITY_X_COLUMNS[_unit]
         _cell_types = [_c for _c in sd_display_cell_types.value if _c in set(_shown["cell_type"])]
         # References of this group and condition, as a strip right of each map
         _references = (
@@ -1004,7 +1036,7 @@ def _(
     else:
         _shown = sd_summary[(sd_summary["group"] == sd_group.value) & (sd_summary["condition"] == sd_condition.value)]
         _unit = sd_results[0]["density_unit"]
-        _x_column = "cells_per_mm2" if _unit == "per_mm2" else "covered_share"
+        _x_column = DENSITY_X_COLUMNS[_unit]
         _figure, (_left, _right) = plt.subplots(1, 2, figsize=(10, 3.8), dpi=150)
         _at_density = _shown[np.isclose(_shown["density"], sd_fixed_density.value)]
         for _cell_type in sd_display_cell_types.value:
@@ -1068,6 +1100,79 @@ def _(
         _figure.tight_layout()
         _slice_view = _figure
     _slice_view
+    return
+
+
+@app.cell(hide_code=True)
+def _(
+    sd_condition,
+    sd_display_cell_types,
+    sd_group,
+    sd_reference_summary,
+    sd_shares,
+):
+    # Size sweeps: share against diameter at fixed density (left) and fixed cell count (right)
+    _panels = {
+        "measured_density": "Fixed density (measured cells per mm²)",
+        "measured_cell_count": "Fixed cell count (measured cells per colony)",
+    }
+    _of = (
+        sd_reference_summary[
+            (sd_reference_summary["group"] == sd_group.value)
+            & (sd_reference_summary["condition"] == sd_condition.value)
+        ]
+        if not sd_reference_summary.empty and sd_group.value is not None else pd.DataFrame()
+    )
+    _present = [_source for _source in _panels if not _of.empty and _source in set(_of["source"])]
+    if not _present or not sd_display_cell_types.value:
+        _size_sweep_view = mo.md("")
+    else:
+        _true = _of[_of["source"] == "true_data"]
+        _figure, _axes = plt.subplots(
+            2, len(_present), figsize=(5.0 * len(_present), 5.4), dpi=150, squeeze=False, sharex=True,
+            height_ratios=[3, 1],
+        )
+        for _column, _source in enumerate(_present):
+            _axis, _density_axis = _axes[0, _column], _axes[1, _column]
+            _sweep = _of[_of["source"] == _source]
+            for _cell_type in sd_display_cell_types.value:
+                _line = _sweep[_sweep["cell_type"] == _cell_type].sort_values("diameter_um")
+                _colour = cell_type_colour(_cell_type)
+                _axis.plot(_line["diameter_um"], _line["mean_share"], marker="o", color=_colour, label=_cell_type)
+                _axis.fill_between(
+                    _line["diameter_um"], _line["lower"], _line["upper"], color=_colour, alpha=0.2, linewidth=0,
+                )
+                # True data: one point at its (mean) size
+                _point = _true[_true["cell_type"] == _cell_type]
+                _axis.plot(
+                    _point["diameter_um"], _point["mean_share"], linestyle="none",
+                    marker=REFERENCE_MARKERS["true_data"], markersize=9, color=_colour,
+                )
+            _axis.axvline(float(sd_shares["training_diameter_um"].mean()), color="grey", linewidth=0.8, linestyle="--")
+            _axis.set(ylabel="Share", title=_panels[_source])
+            # Cells per mm² each size got (one cell type's rows, as every type has the same)
+            _sizes = _sweep[_sweep["cell_type"] == _sweep["cell_type"].iloc[0]].sort_values("diameter_um")
+            _density_axis.plot(_sizes["diameter_um"], _sizes["cells_per_mm2"], marker="o", color="0.3")
+            _density_axis.axvline(
+                float(sd_shares["training_diameter_um"].mean()), color="grey", linewidth=0.8, linestyle="--",
+            )
+            _density_axis.set(xlabel="Colony diameter (µm)", ylabel="Cells per mm²")
+        _handles, _labels = _axes[0, 0].get_legend_handles_labels()
+        _true_handles = reference_legend_handles(["true_data"]) if not _true.empty else []
+        _axes[0, -1].legend(
+            _handles + _true_handles, _labels + [_h.get_label() for _h in _true_handles], fontsize=7,
+        )
+        _figure.suptitle(f"{sd_group.value} · {sd_condition.value} · size sweeps (dashed: training size)")
+        _figure.tight_layout()
+        _size_sweep_view = mo.vstack([
+            mo.md(
+                "### Size sweeps\n\n"
+                "- Every size at the measured density, or with the measured number of cells per colony\n"
+                "- Bottom: the cells per mm² each size got (cells that do not fit are left out)"
+            ),
+            _figure,
+        ])
+    _size_sweep_view
     return
 
 
@@ -1213,7 +1318,7 @@ def _(
 
         def _density_label(_d):
             if isinstance(_d, str):
-                return REFERENCE_LABELS[_d].replace(" at ", "\nat ")
+                return REFERENCE_LABELS[_d].replace(" at ", "\nat ").replace(" with ", "\nwith ")
             return f"{format_density(_densities[_d], _unit)}"
 
         def _panel(_s, _d):
@@ -1278,7 +1383,7 @@ def _(
 @app.cell(hide_code=True)
 def _(cell_type_labels, sd_results):
     _channels = list(sd_results[0]["state_channel_names"]) if sd_results else []
-    # Any channel mean or cell type share, for the kymographs and the fronts
+    # Any channel mean or cell type share, for the kymographs
     sd_quantity_options = {
         **{f"{_c} (channel mean)": _c for _c in _channels},
         **{f"{_l} (share)": _l for _l in cell_type_labels},
@@ -1293,20 +1398,17 @@ def _(cell_type_labels, sd_results):
         value=AXIS_LABELS["edge_um"],
         label="Position",
     )
-    sd_level_fraction = mo.ui.slider(0.05, 0.95, value=0.5, step=0.05, label="Front level (fraction of range)")
     (
         mo.vstack([
             mo.md(
-                "## Kymographs and wavefronts\n\n"
-                "- Radially averaged quantity against time; one model, its replicates and runs pooled\n"
-                "- Front: where the profile first crosses the level, reading in from the edge\n"
-                "- Level: the chosen fraction of each quantity's range over every shown model, size, density and time"
+                "## Kymographs\n\n"
+                "- Radially averaged quantity against time; one model, its replicates and runs pooled"
             ),
-            mo.hstack([sd_quantity, sd_axis, sd_level_fraction], justify="start"),
+            mo.hstack([sd_quantity, sd_axis], justify="start"),
         ])
         if sd_results else mo.md("")
     )
-    return sd_axis, sd_level_fraction, sd_quantity, sd_quantity_options
+    return sd_axis, sd_quantity
 
 
 @app.cell(hide_code=True)
@@ -1328,27 +1430,18 @@ def _(cell_type_rules_by_projection, sd_group_of, sd_model_names, sd_references,
             }
         return _entries
 
-    def sd_front_level(_entries, _fraction):
-        """``(level, low, high)``: the level is ``_fraction`` of the range of the
-        kymographs ``_entries`` over every model, size, density and time."""
-        _values = np.concatenate([_k["values"].ravel() for _k in _entries.values()]) if _entries else np.zeros(1)
-        _low, _high = float(np.nanmin(_values)), float(np.nanmax(_values))
-        return _low + float(_fraction) * (_high - _low), _low, _high
-
-    return sd_front_level, sd_kymograph_entries
+    return (sd_kymograph_entries,)
 
 
 @app.cell(hide_code=True)
-def _(sd_front_level, sd_kymograph_entries, sd_level_fraction, sd_quantity, sd_show_references):
+def _(sd_kymograph_entries, sd_quantity, sd_show_references):
     sd_kymographs = sd_kymograph_entries(sd_quantity.value) if sd_quantity.value is not None else {}
-    # References shown: {source: {model id: entry}}; their fronts use the sweep's level
+    # References shown: {source: {model id: entry}}
     sd_reference_kymographs = {
         _source: sd_kymograph_entries(sd_quantity.value, _source)
         for _source in sd_show_references.value if sd_quantity.value is not None
     }
-    sd_level, _low, _high = sd_front_level(sd_kymographs, sd_level_fraction.value)
-    mo.md(f"- Front level {sd_level:.3g} (range {_low:.3g} to {_high:.3g})") if sd_kymographs else mo.md("")
-    return sd_kymographs, sd_level, sd_reference_kymographs
+    return sd_kymographs, sd_reference_kymographs
 
 
 @app.cell(hide_code=True)
@@ -1385,7 +1478,6 @@ def _(
     sd_kymo_shared,
     sd_kymo_size,
     sd_kymographs,
-    sd_level,
     sd_quantity,
     sd_reference_kymographs,
 ):
@@ -1416,7 +1508,8 @@ def _(
             _ref_s = int(np.argmin(np.abs(_ref_diameters - sd_kymo_size.value))) if _source != "true_data" else 0
             _panels.append((
                 _reference, _ref_s, 0,
-                f"{REFERENCE_LABELS[_source].replace(' at ', chr(10) + 'at ')} · {_ref_diameters[_ref_s]:.0f} µm",
+                f"{REFERENCE_LABELS[_source].replace(' at ', chr(10) + 'at ').replace(' with ', chr(10) + 'with ')} · "
+                f"{_ref_diameters[_ref_s]:.0f} µm",
             ))
         _hours = np.asarray(_result["profile_hours"], dtype=float)
         _shown = np.concatenate([_p[0]["values"][_p[1], _p[2], _k].ravel() for _p in _panels])
@@ -1435,19 +1528,11 @@ def _(
             _mesh = _axis.pcolormesh(
                 cell_edges(_x), cell_edges(_hours), np.ma.masked_invalid(_z), shading="flat", cmap="magma", **_scale,
             )
-            if np.nanmin(_z) < sd_level < np.nanmax(_z):
-                _axis.contour(_x, _hours, np.ma.masked_invalid(_z), levels=[sd_level], colors="white", linewidths=0.7)
-            # Fronts are found reading in from the edge, then drawn on the chosen axis
-            _fronts = front_positions(_z, _edge[_order], sd_level)
-            _axis.plot(edge_to_axis(_fronts, _radius, sd_axis.value), _hours, color="#56B4E9", linewidth=1.0, linestyle="--")
             _axis.set_title(_title, fontsize=8)
             _axis.set_xlabel(AXIS_LABELS[sd_axis.value], fontsize=7)
         _axes[0, 0].set_ylabel("Time (h)")
         _figure.colorbar(_mesh, ax=_axes[0].tolist(), label=sd_quantity.value)
-        _figure.suptitle(
-            f"{_entry['name']} · {sd_condition.value} · white: level {sd_level:.3g}, blue dashed: front from the edge",
-            fontsize=9,
-        )
+        _figure.suptitle(f"{_entry['name']} · {sd_condition.value}", fontsize=9)
         _kymograph_view = _figure
     _kymograph_view
     return
@@ -1511,197 +1596,14 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(sd_quantity_options, sd_results):
-    _end = float(sd_results[0]["snapshot_hour"]) if sd_results else 48.0
-    sd_window = mo.ui.range_slider(0.0, _end, value=[0.0, _end], step=1.0, label="Speed fit window (h)", full_width=True)
-    sd_front_axis = mo.ui.dropdown(
-        {"Distance from edge (µm)": "edge_um", "Fraction of radius from edge": "relative"},
-        value="Distance from edge (µm)",
-        label="Front position as",
-    )
-    # Fronts of any channel or cell type share, one row of plots each
-    sd_front_quantities = mo.ui.multiselect(
-        options=sd_quantity_options,
-        value=list(sd_quantity_options)[:1],
-        label="Front quantities",
-        full_width=True,
-    )
-    mo.vstack([
-        mo.md(
-            "### Wavefronts\n\n"
-            "- Fronts that start at the edge and move at a similar µm/h in every size suggest a travelling front\n"
-            "- Fronts that settle at a fixed fraction of the radius suggest a pattern that scales with the colony\n"
-            "- Each quantity's level is the front level fraction of its own range"
-        ),
-        sd_front_quantities,
-        mo.hstack([sd_window, sd_front_axis]),
-    ]) if sd_results else mo.md("")
-    return sd_front_axis, sd_front_quantities, sd_window
-
-
-@app.cell(hide_code=True)
-def _(
-    sd_front_level,
-    sd_front_quantities,
-    sd_kymograph_entries,
-    sd_level_fraction,
-    sd_show_references,
-    sd_window,
-):
-    # Front of every quantity, model, size, density and condition; and its speed in the window
-    _positions, _speeds, _levels = [], [], []
-
-    def _add_fronts(_entries, _quantity, _level, _source):
-        for _model_id, _entry in _entries.items():
-            _result = _entry["result"]
-            _hours = np.asarray(_result["profile_hours"], dtype=float)
-            for _s, _diameter in enumerate(np.asarray(_result["diameters_um"], dtype=float)):
-                _edge = profile_positions(_result, _s, "edge_um")
-                _radius = _diameter / 2.0
-                for _d, _density in enumerate(np.asarray(_result["densities"], dtype=float)):
-                    for _k, _condition in enumerate(_result["conditions"]):
-                        _fronts = front_positions(_entry["values"][_s, _d, _k], _edge, _level)
-                        _common = {
-                            "model_id": _model_id, "model": _entry["name"], "model_label": _result["label"],
-                            # sweep, true_data or measured_density
-                            "source": _source,
-                            "group": _entry["group"], "quantity": _quantity, "level": _level,
-                            "diameter_um": _diameter, "density": _density, "condition": _condition,
-                        }
-                        _positions.extend(
-                            {**_common, "hour": _h, "front_from_edge_um": _f, "front_relative": _f / _radius}
-                            for _h, _f in zip(_hours, _fronts)
-                        )
-                        _speed = front_speed(_hours, _fronts, tuple(sd_window.value))
-                        _speeds.append({
-                            **_common,
-                            "speed_um_per_h": _speed,
-                            "relative_speed_per_h": _speed / _radius,
-                            "fronts_found": int(np.isfinite(_fronts).sum()),
-                        })
-
-    for _quantity in sd_front_quantities.value:
-        _entries = sd_kymograph_entries(_quantity)
-        _level, _, _ = sd_front_level(_entries, sd_level_fraction.value)
-        _levels.append(f"{_quantity} {_level:.3g}")
-        _add_fronts(_entries, _quantity, _level, "sweep")
-        # References: fronts at the sweep's level
-        for _source in sd_show_references.value:
-            _add_fronts(sd_kymograph_entries(_quantity, _source), _quantity, _level, _source)
-    sd_front_positions = pd.DataFrame(_positions)
-    sd_front_speeds = pd.DataFrame(_speeds)
-    mo.md("- Front levels: " + ", ".join(_levels)) if _levels else mo.md("")
-    return sd_front_positions, sd_front_speeds
-
-
-@app.cell(hide_code=True)
-def _(
-    sd_condition,
-    sd_fixed_density,
-    sd_front_axis,
-    sd_front_positions,
-    sd_front_quantities,
-    sd_front_speeds,
-    sd_group,
-    sd_results,
-    sd_uncertainty,
-):
-    if sd_front_positions.empty or sd_group.value is None or sd_fixed_density.value is None:
-        _front_view = mo.md("")
-    else:
-        _column = "front_from_edge_um" if sd_front_axis.value == "edge_um" else "front_relative"
-        _speed_column = "speed_um_per_h" if sd_front_axis.value == "edge_um" else "relative_speed_per_h"
-        _quantities = [_q for _q in sd_front_quantities.value if _q in set(sd_front_positions["quantity"])]
-        _training = float(np.mean([_r["training_diameter_um"] for _r in sd_results]))
-        # One row per quantity: front over time (left), speed against size (right)
-        _figure, _axes = plt.subplots(
-            len(_quantities), 2, figsize=(10, 3.8 * len(_quantities)), dpi=150, squeeze=False,
-        )
-        _sources = [_s for _s in REFERENCE_LABELS if _s in set(sd_front_positions["source"])]
-        for (_left, _right), _quantity in zip(_axes, _quantities):
-            _of = sd_front_positions[
-                (sd_front_positions["quantity"] == _quantity)
-                & (sd_front_positions["group"] == sd_group.value)
-                & (sd_front_positions["condition"] == sd_condition.value)
-            ]
-            _shown = _of[(_of["source"] == "sweep") & np.isclose(_of["density"], sd_fixed_density.value)]
-            _diameters = np.sort(_shown["diameter_um"].unique())
-            _colours = plt.get_cmap("viridis")(np.linspace(0, 0.9, len(_diameters)))
-            for _diameter, _colour in zip(_diameters, _colours):
-                _rows = []
-                for _hour, _values in _shown[_shown["diameter_um"] == _diameter].groupby("hour"):
-                    _values = _values[_column].dropna()
-                    if len(_values):
-                        _rows.append((_hour, *uncertainty_band(_values, sd_uncertainty.value, clip=False)))
-                if _rows:
-                    _hour, _mean, _lower, _upper = np.asarray(_rows).T
-                    _left.plot(_hour, _mean, color=_colour, label=f"{_diameter:g} µm")
-                    _left.fill_between(_hour, _lower, _upper, color=_colour, alpha=0.15, linewidth=0)
-            # References: each size at the measured density (its size's colour), the true colony (black)
-            for _source in _sources:
-                _reference = _of[_of["source"] == _source]
-                for _diameter, _rows in _reference.groupby("diameter_um"):
-                    _mean = _rows.groupby("hour")[_column].mean()
-                    _nearest = int(np.argmin(np.abs(_diameters - _diameter))) if len(_diameters) else 0
-                    _left.plot(
-                        _mean.index.to_numpy(), _mean.to_numpy(), linestyle=REFERENCE_LINESTYLES[_source],
-                        color="black" if _source == "true_data" or not len(_diameters) else _colours[_nearest],
-                    )
-            _left.set(
-                xlabel="Time (h)",
-                ylabel="Front, distance from edge (µm)" if _column == "front_from_edge_um" else "Front, fraction of radius from edge",
-                title=f"{_quantity} · density {sd_fixed_density.value:g}",
-            )
-            if _left.has_data():
-                _handles, _labels = _left.get_legend_handles_labels()
-                _reference_handles = reference_legend_handles(_sources)
-                _left.legend(
-                    _handles + _reference_handles, _labels + [_h.get_label() for _h in _reference_handles], fontsize=7,
-                )
-            _all_speeds = sd_front_speeds[
-                (sd_front_speeds["quantity"] == _quantity)
-                & (sd_front_speeds["group"] == sd_group.value)
-                & (sd_front_speeds["condition"] == sd_condition.value)
-            ]
-            _speeds = _all_speeds[_all_speeds["source"] == "sweep"]
-            _densities = np.sort(_speeds["density"].unique())
-            _colours = plt.get_cmap("plasma")(np.linspace(0, 0.85, len(_densities)))
-            for _density, _colour in zip(_densities, _colours):
-                _line = _speeds[_speeds["density"] == _density].groupby("diameter_um")[_speed_column].agg(["mean", "std"])
-                _right.errorbar(_line.index, _line["mean"], yerr=_line["std"], color=_colour, marker="o", capsize=2, label=f"{_density:g}")
-            # References: every size at the measured density, and the true colony at its size
-            for _source in _sources:
-                _line = _all_speeds[_all_speeds["source"] == _source].groupby("diameter_um")[_speed_column].agg(["mean", "std"])
-                _right.errorbar(
-                    _line.index.to_numpy(), _line["mean"].to_numpy(), yerr=_line["std"].fillna(0.0).to_numpy(),
-                    color="black", marker=REFERENCE_MARKERS[_source], linestyle=REFERENCE_LINESTYLES[_source],
-                    markersize=9 if _source == "true_data" else 5, capsize=2, label=REFERENCE_LABELS[_source],
-                )
-            _right.axhline(0.0, color="grey", linewidth=0.6)
-            _right.axvline(_training, color="grey", linewidth=0.8, linestyle="--")
-            _right.set(
-                xlabel="Colony diameter (µm)",
-                ylabel="Front speed inward (µm/h)" if _speed_column == "speed_um_per_h" else "Front speed inward (radii/h)",
-                title=f"{_quantity} · speed in the fit window (dashed: training size)",
-            )
-            _right.legend(title="Density", fontsize=7)
-        _figure.suptitle(f"{sd_group.value} · {sd_condition.value}")
-        _figure.tight_layout()
-        _front_view = _figure
-    _front_view
-    return
-
-
-@app.cell(hide_code=True)
-def _(sd_front_positions, sd_front_speeds, sd_shares):
+def _(sd_reference_shares, sd_shares):
     def _download(_table, _name, _label):
         return mo.download(data=_table.to_csv(index=False).encode(), filename=_name, mimetype="text/csv", label=_label)
 
     (
         mo.hstack([
             _download(sd_shares, "size_density_shares.csv", "Cell-type shares"),
-            _download(sd_front_positions, "size_density_fronts.csv", "Front positions"),
-            _download(sd_front_speeds, "size_density_front_speeds.csv", "Front speeds"),
+            _download(sd_reference_shares, "size_density_reference_shares.csv", "Size sweeps and true data shares"),
         ], justify="start")
         if not sd_shares.empty else mo.md("")
     )

@@ -182,6 +182,8 @@ def record_label(record):
 
 
 def format_density(value, unit):
+    if unit == "relative":
+        return f"{value:.2f}×"
     return f"{value:.2f}" if unit == "share" else f"{value:.0f}"
 
 

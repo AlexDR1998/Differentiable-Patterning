@@ -8,6 +8,12 @@ drawn on one grid per model, at the model's own µm per pixel, so a
 1000 µm colony is twice as wide as a 500 µm one (the models were trained on
 500 µm colonies only).
 
+Densities are cells per mm², covered share, or multiples of the measured
+density (``relative``: 1 is the real colonies' cells per mm², the mean over
+the replicates). Two optional size sweeps run beside the size × density
+grid: every size at the measured density, and every size with the measured
+number of cells per colony.
+
 Kept per run:
 
 - cell-type pattern counts and channel means of the final state per
@@ -63,8 +69,10 @@ from Experiments.notebook_jobs import (
 class SizeDensitySettings:
     """Everything the sweep depends on, apart from the models.
 
-    Densities are in ``density_unit``: ``per_mm2`` (real cells per mm², the
-    same at every size) or ``share`` (covered share of the colony).
+    Densities are in ``density_unit``: ``relative`` (multiples of the
+    measured cells per mm², the mean over the replicates), ``per_mm2`` (real
+    cells per mm²; both the same at every size) or ``share`` (covered share
+    of the colony).
     ``cell_type_files`` maps a projection to its cell type file (relative to
     the repository root); ``cells`` holds each projection's ``CellSettings``
     (as dicts, from the texture settings file). ``data_root`` contains
@@ -81,10 +89,11 @@ class SizeDensitySettings:
     # Set when a job is split by size, so every part uses the same grid.
     grid_diameter_um: float = 0.0
     rings: int = 12
-    density_unit: str = "per_mm2"
-    density_start: float = 1000.0
-    density_stop: float = 8000.0
-    density_count: int = 5
+    density_unit: str = "relative"
+    # 0.1×, 0.2×, … 2× the measured density (1× is one of the points)
+    density_start: float = 0.1
+    density_stop: float = 2.0
+    density_count: int = 20
     # NODAL knockout hours; a baseline rollout (no knockout) is always run
     ko_hours: tuple = ()
     snapshot_hour: float = 48.0
@@ -98,10 +107,12 @@ class SizeDensitySettings:
     max_batch: int = 32
     # References beside the sweep, rolled out with the same conditions and
     # run seeds: the true 0h control colony of each of ``replicates`` (its
-    # own outline and size), and synthetic colonies of every size at the
-    # measured density (the mean over the replicates)
+    # own outline and size), and two size sweeps of synthetic colonies:
+    # every size at the measured density, and every size with the measured
+    # number of cells per colony (both the mean over the replicates)
     include_true_data: bool = False
     include_measured_density: bool = False
+    include_measured_cell_count: bool = False
     # Replicates the measured density is the mean over (empty: replicates);
     # a job split by replicate keeps every replicate here
     measured_replicates: tuple = ()
@@ -121,6 +132,7 @@ class SizeDensitySettings:
         # Colonies per model and run: the sweep's, then one per reference
         colonies = len(self.replicates) * len(self.diameters_um) * len(self.densities())
         colonies += len(self.replicates) * len(self.diameters_um) if self.include_measured_density else 0
+        colonies += len(self.replicates) * len(self.diameters_um) if self.include_measured_cell_count else 0
         colonies += len(self.replicates) if self.include_true_data else 0
         return models * int(self.duplicate_runs) * colonies * len(self.conditions())
 
@@ -131,8 +143,11 @@ class SizeDensitySettings:
             raise ValueError("Give at least one colony diameter, all above zero.")
         if self.grid_diameter_um and self.grid_diameter_um < max(self.diameters_um):
             raise ValueError("The grid diameter must fit the largest colony.")
-        if self.density_unit not in ("per_mm2", "share"):
-            raise ValueError("Sweep the density per mm² or as covered share, so sizes compare at equal density.")
+        if self.density_unit not in ("relative", "per_mm2", "share"):
+            raise ValueError(
+                "Sweep the density as a multiple of the measured density, per mm² or as covered share, "
+                "so sizes compare at equal density."
+            )
         if self.density_stop < self.density_start:
             raise ValueError("Highest density must be at or above the lowest.")
         if self.density_unit != "share" and self.density_start <= 0:
@@ -226,24 +241,38 @@ def sweep_geometry(prepared, settings):
     }
 
 
-def size_initial_states(prepared, replicate_index, mask, densities, unit, seed):
+def size_initial_states(prepared, replicate_index, mask, densities, unit, seed, measured_per_mm2=None):
     """Synthetic initial states of one replicate's cells in ``mask``, one per density.
 
-    ``prepared`` comes from ``prepare_model_cells``. Returns the dict of
-    ``synthetic_ic.cell_states``, plus ``mask_mm2``, the ``targets`` it was
-    asked for and ``max_density`` (what the placement holds, in ``unit``).
+    ``prepared`` comes from ``prepare_model_cells``. ``unit`` is ``per_mm2``,
+    ``share``, or ``relative`` (multiples of ``measured_per_mm2`` cells per
+    mm²). Returns the dict of ``synthetic_ic.cell_states``, plus
+    ``mask_mm2``, the ``targets`` it was asked for (cells, or shares) and
+    ``max_density`` (what the placement holds, in ``unit``).
     """
     replicate = prepared["replicates"][replicate_index]
     mask_mm2 = float(np.count_nonzero(mask)) * prepared["pixel_um"] ** 2 * 1e-6
-    targets = np.asarray(densities, dtype=float) * (mask_mm2 if unit == "per_mm2" else 1.0)
+    if unit == "relative" and not np.isfinite(measured_per_mm2 or np.nan):
+        raise ValueError("Densities relative to the measured density need the measured cells per mm².")
+    # Cells (or covered share) for one unit of density
+    scale = {"per_mm2": mask_mm2, "share": 1.0, "relative": mask_mm2 * (measured_per_mm2 or np.nan)}[unit]
+    targets = np.asarray(densities, dtype=float) * scale
     states = cell_states(
         replicate["library"], prepared["colonies"]["schema"], mask, targets, unit == "share",
         int(seed), prepared["cell_settings"], replicate["per_piece"],
     )
     states["mask_mm2"] = mask_mm2
     states["targets"] = targets
-    states["max_density"] = states["capacity"] / (mask_mm2 if unit == "per_mm2" else 1.0)
+    states["max_density"] = states["capacity"] / scale
     return states
+
+
+def mean_measured_cells_per_colony(prepared):
+    """Measured cells per colony of the real 0h colonies, the mean over the
+    replicates of ``prepare_model_cells`` (NaN without nuclear counts)."""
+    return float(np.mean([
+        _r["cell_counts"].get("cells_per_colony", np.nan) for _r in prepared["replicates"]
+    ]))
 
 
 def marker_channels(names, cell_type_rules):
@@ -359,7 +388,9 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
     and ``source``, with arrays ``[sizes, densities, conditions, ...]``.
     ``source`` is ``sweep``, or a reference the settings ask for:
     ``measured_density`` (every size at the mean measured density, one
-    density, the sweep's seeds) or ``true_data`` (each replicate's true
+    density, the sweep's seeds), ``measured_cell_count`` (every size with
+    the mean measured cells per colony; ``densities`` holds that cell
+    count, the sweep's seeds) or ``true_data`` (each replicate's true
     colony, one size: its own outline, centred on the grid, with radial bins
     over the whole grid; that replicate's seeds; replicates whose colony
     cannot be loaded are skipped with a warning).
@@ -429,11 +460,24 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
         curriculum = tuple(bundle.config.data.knockout.curriculum or ("baseline",))
         label = record_label(record)
         # Measured density of the real colonies, mean over the replicates
+        needs_measured = (
+            settings.include_true_data or settings.include_measured_density
+            or settings.include_measured_cell_count or unit == "relative"
+        )
         measured_cells, measured_replicates = (
             measured_density_cells(bundle, settings, projection, root, prepared)
-            if settings.include_true_data or settings.include_measured_density else (prepared, replicates)
+            if needs_measured else (prepared, replicates)
         )
         mean_per_mm2, mean_share = mean_measured_density(measured_cells)
+        mean_cells = mean_measured_cells_per_colony(measured_cells)
+        if unit == "relative" and not np.isfinite(mean_per_mm2):
+            raise ValueError(f"{bundle.id}: densities relative to the measured density need nuclear counts.")
+
+        def in_unit(per_mm2, share):
+            """A density in the sweep's unit, from cells per mm² and covered share."""
+            if unit == "relative":
+                return per_mm2 / mean_per_mm2
+            return share if unit == "share" else per_mm2
 
         def roll_sizes(_masks, _states_of, _seeds, keep_images, n_bins=None):
             """Rollouts of every run's initial states at every size in ``_masks``.
@@ -553,7 +597,11 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                     "max_density": _per_run["max_density"][_run_index],
                     "measured_cells_per_mm2": _measured["cells_per_mm2"],
                     "measured_covered_share": _measured["share"],
-                    "measured_density": {"share": _measured["share"], "per_mm2": _measured["cells_per_mm2"]}[unit],
+                    "measured_density": in_unit(_measured["cells_per_mm2"], _measured["share"]),
+                    # Mean over the replicates: 1× of the relative densities, and the cells
+                    # per colony of the measured_cell_count size sweep
+                    "mean_measured_cells_per_mm2": mean_per_mm2,
+                    "mean_measured_cells_per_colony": mean_cells,
                     "placement": cell_settings.placement,
                     "cell_settings": cell_settings.to_dict(),
                     # Conditions: [K]; NaN KO hour for baseline
@@ -598,7 +646,7 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
             seeds = [int(settings.seed) + job_index * runs + _run for _run in range(runs)]
 
             def sweep_states(_size_index, _mask, _seed):
-                _states = size_initial_states(prepared, replicate_index, _mask, densities, unit, _seed)
+                _states = size_initial_states(prepared, replicate_index, _mask, densities, unit, _seed, mean_per_mm2)
                 _where = f"{label}, {diameters[_size_index]:g} µm, replicate {replicate}, seed {_seed}"
                 if densities[-1] > _states["max_density"]:
                     warnings.append(
@@ -618,9 +666,9 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                 diameters, masks, densities, measured, sweep_images,
             )
 
-            # Reference: the same cells at the measured density (mean over the replicates), every size
+            # Size sweep: the same cells at the measured density (mean over the replicates), every size
             if settings.include_measured_density:
-                reference_density = mean_share if unit == "share" else mean_per_mm2
+                reference_density = in_unit(mean_per_mm2, mean_share)
                 if not np.isfinite(reference_density):
                     warnings.append(f"{label}: no measured density (nuclei not counted); skipped that reference")
                 else:
@@ -629,12 +677,35 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                         roll_sizes(
                             masks,
                             lambda _s, _mask, _seed: size_initial_states(
-                                prepared, replicate_index, _mask, [reference_density], unit, _seed,
+                                prepared, replicate_index, _mask, [reference_density], unit, _seed, mean_per_mm2,
                             ),
                             seeds,
                             replicate_index == 0,
                         ),
                         diameters, masks, [reference_density], measured, replicate_index == 0,
+                    )
+
+            # Size sweep: the measured number of cells per colony (mean over the replicates), every size
+            if settings.include_measured_cell_count:
+                if not np.isfinite(mean_cells):
+                    warnings.append(f"{label}: no measured cell count (nuclei not counted); skipped that size sweep")
+                else:
+                    def count_states(_s, _mask, _seed):
+                        _mm2 = float(np.count_nonzero(_mask)) * pixel_um**2 * 1e-6
+                        _states = size_initial_states(
+                            prepared, replicate_index, _mask, [mean_cells / _mm2], "per_mm2", _seed,
+                        )
+                        if _states["cells"][0] < 0.95 * mean_cells:
+                            warnings.append(
+                                f"{label}, {diameters[_s]:g} µm, replicate {replicate}, seed {_seed}: "
+                                f"{int(_states['cells'][0])} of the measured {mean_cells:.0f} cells fit"
+                            )
+                        return _states
+
+                    add_results(
+                        "measured_cell_count", replicate, seeds,
+                        roll_sizes(masks, count_states, seeds, replicate_index == 0),
+                        diameters, masks, [mean_cells], measured, replicate_index == 0,
                     )
 
             # Reference: this replicate's true colony, in its own outline and size, with the sweep's seeds
@@ -656,7 +727,7 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                             "shares": np.asarray([_true["covered_share"]]),
                             "cells": np.asarray([_cells]),
                             # Nothing was placed, so nothing was cut down
-                            "max_density": _true["covered_share"] if unit == "share" else _true["cells_per_mm2"],
+                            "max_density": in_unit(_true["cells_per_mm2"], _true["covered_share"]),
                             "mask_mm2": _true["mask_mm2"],
                         }
 
@@ -667,7 +738,7 @@ def run_size_density_sweep(settings, records, job_offset=0, progress=None):
                         # The diameter of a disc of the colony's area
                         [2.0 * np.sqrt(true["mask_mm2"] / np.pi) * 1000.0],
                         true_mask[None],
-                        [true["covered_share"] if unit == "share" else true["cells_per_mm2"]],
+                        [in_unit(true["cells_per_mm2"], true["covered_share"])],
                         {"cells_per_mm2": true["cells_per_mm2"], "share": true["covered_share"]},
                         True,
                     )
@@ -742,42 +813,6 @@ def mean_kymograph(results, quantity, cell_type_rules=None, resolve_several=0.0)
             return np.nanmean(np.stack([kymograph_values(_r, quantity) for _r in results]), axis=0)
     pooled = {**results[0], "profile_counts": np.sum([_r["profile_counts"] for _r in results], axis=0)}
     return kymograph_values(pooled, quantity, cell_type_rules, resolve_several)
-
-
-def front_positions(values, positions, level):
-    """Where each profile first crosses ``level``, ``[T]`` (NaN where it does not).
-
-    ``values`` is ``[T, bins]`` and ``positions`` ``[bins]``; profiles are
-    read in order of increasing position (e.g. distance from the edge, so
-    the front nearest the edge is found) and interpolated linearly between
-    bins. NaN bins are skipped.
-    """
-    values = np.asarray(values, dtype=float)
-    positions = np.asarray(positions, dtype=float)
-    order = np.argsort(positions)
-    fronts = np.full(values.shape[0], np.nan)
-    for time, profile in enumerate(values[:, order]):
-        keep = np.isfinite(profile)
-        value, position = profile[keep], positions[order][keep]
-        above = value > level
-        crossings = np.flatnonzero(above[:-1] != above[1:])
-        if len(crossings):
-            i = crossings[0]
-            fronts[time] = position[i] + (level - value[i]) * (position[i + 1] - position[i]) / (value[i + 1] - value[i])
-    return fronts
-
-
-def front_speed(hours, fronts, window=None):
-    """Slope of ``fronts`` over ``hours`` (position per hour) by least squares,
-    within ``window`` ``(start, end)`` hours. NaN with fewer than two fronts."""
-    hours = np.asarray(hours, dtype=float)
-    fronts = np.asarray(fronts, dtype=float)
-    keep = np.isfinite(fronts)
-    if window is not None:
-        keep &= (hours >= window[0]) & (hours <= window[1])
-    if keep.sum() < 2:
-        return float("nan")
-    return float(np.polyfit(hours[keep], fronts[keep], 1)[0])
 
 
 # ---------------------------------------------------------------- remote jobs

@@ -63,7 +63,7 @@ chunks of "Rollouts per GPU batch" (`max_batch`).
 
 ## Size × density sweep
 
-`Experiments/micropatterns/size_density_explorer.py` (module `size_density_sweep.py`) sweeps the colony diameter (µm) and cell density, with optional NODAL KO hours. Initial states come from the same cell placement as the density × KO sweep (`density_ko_sweep.prepare_model_cells`). Each run keeps radial profiles over time (kymographs) as well as the end-time ring counts.
+`Experiments/micropatterns/size_density_explorer.py` (module `size_density_sweep.py`) sweeps the colony diameter (µm) and cell density, with optional NODAL KO hours. Initial states come from the same cell placement as the density × KO sweep (`density_ko_sweep.prepare_model_cells`). Each run keeps radial profiles over time (kymographs) as well as the end-time ring counts. Densities default to 0.1× to 2× the measured density. Two optional size sweeps run every diameter at the measured density, or with the measured cells per colony.
 
 1. Under "Run the sweep remotely", export the job. This writes `Experiments/micropatterns/conf/generated/size_density/<name>/manifest.yaml`.
    - Parts can be one per model, per (model, replicate) or per (model, replicate, size).

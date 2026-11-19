@@ -274,12 +274,21 @@ DENSITY_COLUMNS = {"per_mm2": "cells_per_mm2", "per_colony": "cells_per_colony",
 
 
 # References rolled out beside the density sweeps (result "source"), and how plots draw them
-REFERENCE_LABELS = {"true_data": "True data", "measured_density": "Synthetic at measured density"}
-REFERENCE_MARKERS = {"true_data": "*", "measured_density": "s"}
-REFERENCE_LINESTYLES = {"true_data": (0, (5, 2)), "measured_density": (0, (1, 1.5))}
+REFERENCE_LABELS = {
+    "true_data": "True data",
+    "measured_density": "Synthetic at measured density",
+    # Size × density sweep only: every size with the measured cells per colony
+    "measured_cell_count": "Synthetic with measured cell count",
+}
+REFERENCE_MARKERS = {"true_data": "*", "measured_density": "s", "measured_cell_count": "D"}
+REFERENCE_LINESTYLES = {
+    "true_data": (0, (5, 2)), "measured_density": (0, (1, 1.5)), "measured_cell_count": (0, (4, 1.5, 1, 1.5)),
+}
 
 
-REFERENCE_SHORT_LABELS = {"true_data": "True data", "measured_density": "Measured\ndensity"}
+REFERENCE_SHORT_LABELS = {
+    "true_data": "True data", "measured_density": "Measured\ndensity", "measured_cell_count": "Measured\ncell count",
+}
 
 
 def draw_reference_strip(axis, positions, rows, sources, image, vertical=False):

@@ -1,4 +1,4 @@
-"""Colony size × cell density sweep: geometry, profile rollouts, fronts, results files and jobs."""
+"""Colony size × cell density sweep: geometry, profile rollouts, size sweeps, results files and jobs."""
 
 from dataclasses import replace
 from pathlib import Path
@@ -11,8 +11,6 @@ import numpy as np
 
 from Experiments.micropatterns.size_density_sweep import (
     SizeDensitySettings,
-    front_positions,
-    front_speed,
     job_configs,
     kymograph_values,
     load_size_density_results,
@@ -91,21 +89,6 @@ def test_profile_rollout_matches_sampled_rollout():
                 np.testing.assert_allclose(profiles[index, step, group], frame[:3, inside].mean(axis=1), rtol=1e-4)
                 codes = (frame[0, inside] > 0.5) + 2 * (frame[2, inside] > 0.4)
                 np.testing.assert_array_equal(counts[index, step, group], np.bincount(codes, minlength=4))
-
-
-def test_fronts_follow_a_moving_edge():
-    hours = np.arange(0.0, 25.0)
-    positions = np.arange(0.0, 200.0, 10.0)[::-1]  # decreasing, as distance from the edge often is
-    fronts_true = 20.0 + 3.0 * hours
-    values = 1.0 / (1.0 + np.exp((positions[None] - fronts_true[:, None]) / 8.0))
-    fronts = front_positions(values, positions, 0.5)
-
-    np.testing.assert_allclose(fronts, fronts_true, atol=1.0)
-    assert abs(front_speed(hours, fronts) - 3.0) < 0.05
-    assert abs(front_speed(hours, fronts, window=(10, 20)) - 3.0) < 0.05
-    # No crossing: no front
-    assert np.isnan(front_positions(np.ones((1, 5)), np.arange(5.0), 0.5)[0])
-    assert np.isnan(front_speed(hours[:1], fronts[:1]))
 
 
 def test_ring_label_shares_sum_to_one():
@@ -187,14 +170,15 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
     monkeypatch.setattr(density_sweep, "bundle_alignment", lambda bundle: (None, 1.0, 5.0))
     monkeypatch.setattr(density_sweep, "reference_cell_counts", lambda *args, **kwargs: [])
     monkeypatch.setattr(density_sweep, "replicate_cell_counts", lambda rows, replicate, panels=None: {
-        "cells_per_mm2": 3000.0, "cells_per_segment": 1.0,
+        "cells_per_mm2": 3000.0, "cells_per_colony": 30.0, "cells_per_segment": 1.0,
     })
     monkeypatch.setattr(density_sweep, "replicate_cell_library", lambda *args, **kwargs: (library, 0.4))
 
     settings = SizeDensitySettings(
         data_root="data", store_root="models", cell_type_files={"slice": CELL_TYPES},
         cells={"slice": CellSettings(placement="tiled").to_dict()},
-        diameters_um=(60.0, 100.0, 160.0), rings=3, density_start=2000, density_stop=5000, density_count=2,
+        diameters_um=(60.0, 100.0, 160.0), rings=3, density_unit="per_mm2",
+        density_start=2000, density_stop=5000, density_count=2,
         ko_hours=(6.0,), snapshot_hour=12, record_every_hours=3, profile_bin_um=10.0,
         duplicate_runs=2, max_batch=3,
     )
@@ -286,6 +270,31 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
     assert [r["source"] for r in load_size_density_results(tmp_path / "references.npz")] == [r["source"] for r in results]
     # Files from before the references load as sweep results
     assert all(r["source"] == "sweep" for r in load_size_density_results(tmp_path / "results.npz"))
+
+    # Densities as multiples of the measured density, and both size sweeps
+    settings = replace(
+        settings, replicates=(1,), density_unit="relative", density_start=0.5, density_stop=1.0,
+        include_true_data=False, include_measured_density=True, include_measured_cell_count=True,
+    )
+    results, warnings = sweep.run_size_density_sweep(settings, [record])
+    assert [r["source"] for r in results] == ["sweep"] * 2 + ["measured_density"] * 2 + ["measured_cell_count"] * 2
+    assert settings.trajectories(1) == 2 * (3 * 2 + 3 + 3) * 2
+    relative = results[0]
+    np.testing.assert_allclose(relative["densities"], [0.5, 1.0])
+    assert relative["mean_measured_cells_per_mm2"] == 3000.0
+    assert relative["measured_density"] == 1.0
+    np.testing.assert_allclose(relative["cells_per_mm2"][1:], [[1500.0, 3000.0]] * 2, rtol=0.15)
+    at_density = [r for r in results if r["source"] == "measured_density"]
+    np.testing.assert_allclose(at_density[0]["densities"], [1.0])
+    np.testing.assert_allclose(at_density[0]["cells_per_mm2"][1:, 0], 3000.0, rtol=0.15)
+    # Fixed cell count: the same cells at every size that holds them, so smaller colonies are denser
+    counted = [r for r in results if r["source"] == "measured_cell_count"]
+    assert [r["seed"] for r in counted] == [r["seed"] for r in results if r["source"] == "sweep"]
+    for result in counted:
+        np.testing.assert_allclose(result["densities"], [30.0])
+        np.testing.assert_allclose(result["cells_per_colony"][1:, 0], 30.0, rtol=0.1)
+        assert np.all(np.diff(result["cells_per_mm2"][:, 0]) < 0)
+    assert counted[0]["final_states"] is not None and counted[1]["final_states"] is None
 
 
 def test_jobs_run_each_replicates_true_data_once_and_average_every_replicate():
