@@ -128,7 +128,7 @@ configs:
       - 1
       seed: 0
       duplicate_runs: 2
-      max_batch: 12
+      max_batch: 8
       include_true_data: true
       include_measured_density: true
       include_measured_cell_count: true
@@ -464,7 +464,7 @@ configs:
       - 1
       seed: 0
       duplicate_runs: 2
-      max_batch: 12
+      max_batch: 8
       include_true_data: true
       include_measured_density: true
       include_measured_cell_count: true
@@ -800,7 +800,7 @@ configs:
       - 1
       seed: 0
       duplicate_runs: 2
-      max_batch: 12
+      max_batch: 8
       include_true_data: true
       include_measured_density: true
       include_measured_cell_count: true
@@ -1136,7 +1136,7 @@ configs:
       - 1
       seed: 0
       duplicate_runs: 2
-      max_batch: 12
+      max_batch: 8
       include_true_data: true
       include_measured_density: true
       include_measured_cell_count: true
