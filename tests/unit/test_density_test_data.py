@@ -94,6 +94,35 @@ def test_model_prevalence_uses_only_the_stains_markers():
     assert np.allclose(shares[..., labels.index("Other")], 1 - weight)
 
 
+def test_figure_rows_hold_every_run_density_and_ko_time():
+    rules = load_cell_type_rules(SUM_RULES)
+    restricted, _, _ = dt.stain_rules(rules)
+    markers = rules.markers
+    counts = np.zeros((2, 3, 4, 2 ** len(markers)))  # [densities, KO times, rings, patterns]
+    counts[..., 1 << markers.index("TBXT")] = 10.0
+    result = {
+        "pattern_counts": counts,
+        "cell_type_markers": markers,
+        "densities": [1000.0, 2000.0],
+        "cells_per_mm2": [1000.0, 1800.0],  # the second density was capped
+        "cells_per_colony": [200.0, 360.0],
+        "covered_shares": [0.3, 0.5],
+        "density_unit": "per_mm2",
+        "requested_ko_hours": [0.0, 24.0, 48.0],
+        "groups": {"model": "M1"},
+        "model_id": "m1",
+    }
+    rows = dt.model_prevalence_rows([result, result], restricted, "model")
+    labels = label_names(restricted)
+    assert len(rows) == 2 * 2 * 3 * len(labels)
+    capped = [r for r in rows if r["run"] == 1 and r["density_index"] == 1 and r["cell_type"] == "Mesoderm"]
+    assert {r["density"] for r in capped} == {1800.0}
+    assert {r["requested_density"] for r in capped} == {2000.0}
+    assert [r["knockout_hour"] for r in capped] == [0.0, 24.0, 48.0]
+    assert capped[0]["group"] == "M1"
+    assert capped[0]["prevalence"] == pytest.approx(restricted.weights_of("Mesoderm")[0])
+
+
 def test_prediction_is_interpolated_inside_the_sweep_only():
     grid = np.zeros((2, 2, 1))
     grid[1, :, 0] = 1.0  # density 2000: share 1

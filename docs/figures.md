@@ -57,6 +57,8 @@ save_figure(fig, "my_figure", "schematics")  # figures/schematics/my_figure.pdf 
 | `nca_training_schematic.py` | NCA update step and training schematic | `figures/schematics/` |
 | `loss_schematic.py` | Loss functions schematic | `figures/schematics/` |
 | `overview_figure.py` | Results overview (slide-sized by default) | `figures/overview/` |
+| `density_ko_figure.py` | Predicted prevalence over plating density × NODAL KO time (heatmaps), with the 150K training and held-out 250K colonies as markers, slices at one KO time and one density, and optional 48 h colony images (true data and NCA) at chosen points | `figures/density_ko/` |
+| `size_sweep_figure.py` | Predicted prevalence against colony diameter at a fixed cell density and a fixed cell count (optional cells per mm² row), with numbered 48 h snapshots whose numbers are marked on the curves; one figure per condition | `figures/size_sweep/` |
 
 ## What each figure needs
 
@@ -74,6 +76,8 @@ exported from `Experiments/model_registry_explorer.py`
 | `nodal_ko_schematic.py` | yes | selection | |
 | `projection_resolution_figure.py` | yes | four selections (per projection, per resolution, both, final losses) | losses cached in `figures/cache/` |
 | `overview_figure.py` | yes | selection | exports from `nodal_ko_eval.py`, saved into `figures/overview/`: **run `nodal_ko_eval.py` first** |
+| `density_ko_figure.py` | for NCA images | for NCA images (rolled out at the image points, cached in `figures/density_ko/cache/`) | exports from `nodal_ko_eval.py` (*Held-out test: 250K plating* → *Save for density × KO figure*), saved into `figures/density_ko/` |
+| `size_sweep_figure.py` | | | results of `size_density_explorer.py` run with the size sweeps switched on (a saved `.npz`, or a remote job's folder of parts) |
 
 Slow results (rollouts) are cached as pickles in `figures/cache/` and
 `figures/overview/cache/`. Delete them after changing a model or the data.

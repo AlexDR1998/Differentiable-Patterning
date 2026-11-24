@@ -339,3 +339,32 @@ def test_mean_kymograph_pools_runs():
     shares = mean_kymograph(runs, label, rules)
     assert shares.shape == shape
     assert np.all((shares >= 0) & (shares <= 1))
+
+
+def test_parts_split_by_size_are_joined_per_run():
+    from Experiments.micropatterns.size_density_sweep import merge_size_parts
+
+    def part(diameter, bins, run=0, images=True):
+        return {
+            "model_id": "m", "replicate": 1, "run_index": run, "source": "sweep",
+            "diameters_um": np.asarray([diameter]), "covered_shares": np.full((1, 2), diameter),
+            "profiles": np.ones((1, 2, 1, 3, bins, 4)), "profile_counts": np.ones((1, 2, 1, 3, bins, 16), dtype=np.uint32),
+            "profile_radii_um": np.arange(bins) + 0.5, "colony_masks": np.zeros((1, 5, 5), dtype=bool),
+            "final_states": np.zeros((1, 2, 1, 4, 5, 5)) if images else None,
+        }
+
+    # Parts as a size-split job loads them: largest first, two runs
+    joined = merge_size_parts([part(300.0, 6), part(100.0, 2), part(300.0, 6, run=1, images=False), part(100.0, 2, run=1)])
+    assert len(joined) == 2
+    first = joined[0]
+    np.testing.assert_array_equal(first["diameters_um"], [100.0, 300.0])
+    np.testing.assert_array_equal(first["covered_shares"][:, 0], [100.0, 300.0])
+    assert first["profiles"].shape == (2, 2, 1, 3, 6, 4)
+    # The small colony's missing bins are empty
+    assert np.all(np.isnan(first["profiles"][0, ..., 2:, :])) and np.all(first["profile_counts"][0, ..., 2:, :] == 0)
+    assert len(first["profile_radii_um"]) == 6
+    assert first["final_states"].shape[0] == 2
+    # Images only when every part has them
+    assert joined[1]["final_states"] is None
+    # Overlapping sizes (two jobs loaded together) stay apart
+    assert len(merge_size_parts([part(100.0, 2), part(100.0, 2)])) == 2

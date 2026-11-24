@@ -38,6 +38,7 @@ with app.setup(hide_code=True):
     from omegaconf import OmegaConf
 
     from Experiments.impulse.analysis import critical_time, impulse_record_table, sigmoid_midpoint
+    from Experiments.micropatterns.figures.style import FONT, GROUP_LINESTYLES, INK, LINE, MUTED, SERIES, WIDTH, paper_style, save_figure
     from Experiments.model_registry import ModelRegistry
 
     plt.style.use("default")
@@ -109,6 +110,190 @@ with app.setup(hide_code=True):
             axes[0, 0].set_ylim(-0.05, 1.05)
         return fig
 
+    # --- Summary figure -----------------------------------------------------
+
+    # Paper line colours first, then the notebook's own for more than five switches
+    FIGURE_COLOURS = (*SERIES, *COLOURS[5:])
+
+    def white_rgb(state):
+        """[C, H, W] RGBA state -> [H, W, 3] image on a white background."""
+        state = np.clip(np.asarray(state[:4], dtype=float), 0.0, 1.0)
+        return np.moveaxis(state[:3] * state[3:4] + 1.0 - state[3:4], 0, -1)
+
+    def curve_labels(keys, model_names):
+        """Legend label for each (model, switch, setting) curve: the switch, then the
+        setting and the model name only when they tell curves apart."""
+        several_models = len({key[0] for key in keys}) > 1
+        several_settings = len({key[2] for key in keys}) > 1
+        return {
+            key: key[1] + (f" ({key[2]})" if several_settings else "") + (f", {model_names[key[0]]}" if several_models else "")
+            for key in keys
+        }
+
+    def load_rollout(path, element):
+        """One batch element of a saved run: the state before and just after the impulse,
+        the evaluation rollout after it (one frame every ``every`` steps), and the
+        mature source and target."""
+        with np.load(Path(path) / "states.npz") as arrays:
+            element = min(element, len(arrays["initial_states"]) - 1)
+            # The mature source is saved when the impulse acts during development
+            source = arrays["source_states" if "source_states" in arrays.files else "initial_states"][element]
+            rollout = {
+                "before": arrays["initial_states"][element],
+                "impulse": arrays["perturbed_initial_states"][element],
+                "trajectory": arrays["perturbed_trajectory"][element],
+                "references": {"source": source, "target": arrays["target_states"][element]},
+            }
+        rollout["every"] = OmegaConf.load(Path(path) / "config.yaml").impulse.rollout.evaluation_frame_every
+        return rollout
+
+    def arrange_frames(rows, frames, timing):
+        """Pick the rollout frames of panel b: the same columns for every row.
+
+        ``rows`` are (impulse step, rollout). Returns the column titles, the axis
+        label of the frame columns and, per row, a list of images (None where the
+        row has no frame for that column).
+        - ``timing="after impulse"``: ``frames`` evenly spaced times after each impulse.
+        - ``timing="since start"``: ``frames`` evenly spaced NCA steps since growth
+          started, up to the end of the earliest impulse's rollout. Later impulses
+          start later, so they have fewer frames.
+        """
+        every = rows[0][1]["every"]
+        length = min(len(rollout["trajectory"]) for _, rollout in rows)
+        if timing == "after impulse":
+            picks = np.unique(np.linspace(0, length - 1, frames).round().astype(int))
+            images = [[rollout["trajectory"][pick] for pick in picks] for _, rollout in rows]
+            return [f"+{every * (pick + 1)}" for pick in picks], "+n: NCA steps after the impulse", images
+        first = min(start for start, _ in rows)
+        # Rounded to whole frame intervals, for readable column titles
+        steps = np.unique(np.round(np.linspace(first + every, first + every * length, frames) / every).astype(int) * every)
+        images = []
+        for start, rollout in rows:
+            # Nearest saved frame, if it is within half a frame interval of the column's step
+            index = np.round((steps - start) / rollout["every"]).astype(int) - 1
+            near = np.abs(start + rollout["every"] * (index + 1) - steps) <= rollout["every"] / 2
+            valid = (index >= 0) & (index < len(rollout["trajectory"])) & near
+            images.append([rollout["trajectory"][i] if ok else None for i, ok in zip(index, valid)])
+        return [f"{step}" for step in steps], "NCA steps since growth started", images
+
+    def number_labels(ax, points):
+        """Write the row numbers next to their circles in panel a; numbers whose
+        circles (nearly) coincide share one label, e.g. "1, 4"."""
+        groups = []
+        for number, time, rate in points:
+            for group in groups:
+                if np.isclose(group[0], time) and abs(group[1] - rate) < 0.06:
+                    group[2].append(number)
+                    break
+            else:
+                groups.append([time, rate, [number]])
+        for time, rate, numbers in groups:
+            ax.annotate(", ".join(map(str, numbers)), (time, rate), xytext=(5, 3), textcoords="offset points",
+                        fontsize=FONT["annotation"], color=INK, fontweight="bold")
+
+    def summary_figure(shown, x, colours, labels, blocks=(), columns=(), frame_label="", horizon=None,
+                       critical=None, show_runs=True):
+        """Panel a: switch rate against impulse time, one line per (model, switch, setting) curve.
+        Panel b: snapshots of saved rollouts, one block of rows per switch.
+
+        Each block is a dict with the curve ``key``, a row ``label``, the mature
+        ``references`` (source and target) and ``rows`` of (impulse time, mean
+        switch rate, images; None leaves a cell empty). Snapshot rows are
+        numbered, and the numbers mark their impulse times on the curves in
+        panel a. ``columns`` are the titles of the image columns, ``frame_label``
+        explains the rollout columns. ``critical`` maps a curve to its threshold
+        crossing; ``horizon`` is the training horizon. With several models, each
+        model has its own line style.
+        """
+        width = WIDTH["double"]
+        n_columns = len(columns) + 1  # the last column holds the source and target
+        # Snapshot rows in order: (block, impulse time, rate, images); numbered from 1
+        rows = [(block, *row) for block in blocks for row in block["rows"]]
+        if rows:
+            image = 0.6 * width / (n_columns + 0.8)
+            grid_height = len(rows) + 0.2 + 0.25 * len(blocks) + 0.15 * (len(blocks) - 1)
+            height = max(0.4 * width, grid_height * image * 1.1 + 0.3)
+            fig = plt.figure(figsize=(width, height), layout="constrained")
+            fig_a, fig_b = fig.subfigures(1, 2, width_ratios=[0.4, 0.6], wspace=0.03)
+        else:
+            fig = fig_a = plt.figure(figsize=(0.45 * width, 0.4 * width), layout="constrained")
+
+        # a: switch rate against impulse time
+        ax = fig_a.subplots()
+        models = list(dict.fromkeys(key[0] for key in colours))
+        for key, colour in colours.items():
+            runs = shown[(shown.model == key[0]) & (shown.switch == key[1]) & (shown.setting == key[2])]
+            means = runs.groupby(x).switch_rate.mean()
+            if show_runs:
+                ax.scatter(runs[x], runs.switch_rate, s=4, color=colour, alpha=0.35, lw=0, zorder=2)
+            ax.plot(means.index, means.values, color=colour, lw=LINE["data"], marker="o", ms=2.5,
+                    ls=GROUP_LINESTYLES[models.index(key[0]) % len(GROUP_LINESTYLES)], label=labels[key], zorder=3)
+            if critical is not None and np.isfinite(critical.get(key, np.nan)):
+                ax.axvline(critical[key], color=colour, lw=LINE["thin"], ls="--", zorder=1)
+        if horizon is not None:
+            ax.axvline(horizon, color=MUTED, lw=LINE["thin"], ls=":", zorder=1)
+            ax.annotate("end of training rollout", (horizon, 1.04), xytext=(0, 2), textcoords="offset points",
+                        ha="center", va="bottom", fontsize=FONT["annotation"], color=MUTED, annotation_clip=False)
+        # Circles of later blocks are larger, so circles at the same point stay visible
+        block_index = {id(block): index for index, block in enumerate(blocks)}
+        for block, time, rate, _ in rows:
+            ax.plot(time, rate, marker="o", ms=5 + 2.5 * block_index[id(block)], mfc="none",
+                    mec=colours[block["key"]], mew=LINE["data"], zorder=4)
+        number_labels(ax, [(number, time, rate) for number, (_, time, rate, _) in enumerate(rows, start=1)])
+        ax.set_ylim(-0.04, 1.04)
+        ax.set_xlabel("impulse time (NCA steps)" if x == "impulse_steps" else "impulse time (fraction of training rollout)")
+        ax.set_ylabel("switch rate")
+        ax.spines[["top", "right"]].set_visible(False)
+        fig_a.legend(frameon=False, loc="outside lower center")
+        fig_a.text(0, 1, "a", ha="left", va="top", fontsize=FONT["letter"], fontweight="bold")
+        if not rows:
+            return fig
+
+        # b: snapshots. Grid rows: column titles, then per block a header line and
+        # its image rows, with a small gap between blocks
+        heights = [0.2]
+        for index, block in enumerate(blocks):
+            heights += ([0.15] if index else []) + [0.25] + [1] * len(block["rows"])
+        grid = fig_b.add_gridspec(len(heights), n_columns, height_ratios=heights, wspace=0.05, hspace=0.05)
+        for column, column_title in enumerate(columns):
+            axis = fig_b.add_subplot(grid[0, column])
+            axis.axis("off")
+            axis.text(0.5, 0, column_title, ha="center", va="bottom", fontsize=FONT["annotation"], in_layout=False)
+        grid_row, number = 1, 1
+        for index, block in enumerate(blocks):
+            grid_row += 1 if index else 0
+            colour = colours[block["key"]]
+            grid_row += 1  # the header row stays empty; the header is written above the first image
+            axes = [[fig_b.add_subplot(grid[grid_row + row, column]) for column in range(n_columns)]
+                    for row in range(len(block["rows"]))]
+            # Header: the switch, in the colour of its curve in panel a
+            axes[0][0].annotate(block["label"], xy=(0, 1), xycoords="axes fraction", xytext=(0, 3),
+                                textcoords="offset points", ha="left", va="bottom", fontsize=FONT["label"],
+                                color=colour, annotation_clip=False, in_layout=False)
+            for axis in (axis for line in axes for axis in line):
+                axis.set_xticks([])
+                axis.set_yticks([])
+                axis.spines[:].set_visible(False)
+            for row, (time, rate, images) in enumerate(block["rows"]):
+                for column, state in enumerate(images):
+                    if state is not None:
+                        axes[row][column].imshow(white_rgb(state))
+                axes[row][0].set_ylabel(f"$\\bf{{{number}}}$  t = {time:g}\nrate {rate:.2f}", rotation=0,
+                                        ha="right", va="center", fontsize=FONT["annotation"], color=colour)
+                number += 1
+            # Mature source and target of this switch, stacked in the last column, named on the right
+            for row, name in enumerate(["target"] if len(block["rows"]) == 1 else ["source", "target"]):
+                axis = axes[row][-1]
+                axis.imshow(white_rgb(block["references"][name]))
+                axis.spines[:].set_visible(True)
+                axis.spines[:].set_color(MUTED)
+                axis.yaxis.set_label_position("right")
+                axis.set_ylabel(name, rotation=270, va="bottom", fontsize=FONT["annotation"], color=MUTED)
+            grid_row += len(block["rows"])
+        fig_b.supxlabel(frame_label, fontsize=FONT["annotation"], color=MUTED)
+        fig_b.text(0, 1, "b", ha="left", va="top", fontsize=FONT["letter"], fontweight="bold")
+        return fig
+
 
 @app.cell(hide_code=True)
 def _():
@@ -150,11 +335,33 @@ def _(store_root):
 def _(experiment_choice, record_paths):
     mo.stop(not experiment_choice.value, mo.md("Pick at least one experiment"))
     with mo.status.spinner("Reading impulse records"):
-        runs = impulse_record_table(
+        records = impulse_record_table(
             [_path for _name in experiment_choice.value for _path in record_paths[_name]]
         )
-    runs = runs[runs.impulse_time.notna()].copy()
-    mo.stop(runs.empty, mo.md("These experiments have no runs with an impulse time"))
+    records = records[records.impulse_time.notna()].copy()
+    mo.stop(records.empty, mo.md("These experiments have no runs with an impulse time"))
+    return (records,)
+
+
+@app.cell
+def _(records):
+    # One short name per pattern image, used instead of its file name in every label and figure
+    _files = sorted(set(records.source_pattern) | set(records.target_pattern))
+    pattern_names = mo.ui.dictionary(
+        {_file: mo.ui.text(value=Path(_file).stem.replace("_", " ")) for _file in _files},
+        label="Pattern names",
+    )
+    pattern_names
+    return (pattern_names,)
+
+
+@app.cell
+def _(pattern_names, records):
+    _names = {_file: (_name.strip() or _file) for _file, _name in pattern_names.value.items()}
+    runs = records.copy()
+    runs["source_pattern"] = runs.source_pattern.map(_names)
+    runs["target_pattern"] = runs.target_pattern.map(_names)
+    runs["switch"] = runs.source_pattern + " → " + runs.target_pattern
     # Name each model by its patterns, plus its family and the end of its ID
     _patterns = {
         _id: " / ".join(sorted(set(_rows.source_pattern) | set(_rows.target_pattern)))
@@ -217,6 +424,170 @@ def _(model_filter, runs, setting_filter, threshold, time_axis):
         })
     critical = pd.DataFrame(_rows).sort_values(["threshold_time", "sigmoid_midpoint"]).reset_index(drop=True)
     return critical, horizon, view, x
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md("""
+    ## Summary figure
+    - a: switch rate against impulse time for the chosen models (dots: single runs)
+    - b: one block of rows per chosen switch (e.g. both directions of a model), one rollout per chosen impulse time
+    - Numbered circles in a mark the rows of b; times between two critical times show the direction difference
+    - Rollout frames at the same steps after each impulse, or at the same steps since growth started (later impulses: fewer frames)
+    - Pattern names (top of the notebook) and model names (below) replace file names and IDs in the figure
+    - Uses the filters above (settings, time unit, threshold); saves to `figures/impulse/`
+    """)
+    return
+
+
+@app.cell
+def _(view):
+    _models = sorted(view.model.unique())
+    figure_models = mo.ui.multiselect(_models, value=_models[:1], label="Models in the figure", full_width=True)
+    figure_runs = mo.ui.checkbox(value=True, label="Show single runs")
+    figure_critical = mo.ui.checkbox(value=False, label="Mark critical time (threshold crossing)")
+    figure_horizon = mo.ui.checkbox(value=True, label="Mark end of training rollout")
+    mo.vstack([figure_models, mo.hstack([figure_runs, figure_critical, figure_horizon], justify="start")])
+    return figure_critical, figure_horizon, figure_models, figure_runs
+
+
+@app.cell
+def _(figure_models, view):
+    # Short name per model, shown in the figure only when it has more than one model
+    _families = {_model: view[view.model == _model].family.iloc[0] for _model in figure_models.value}
+    _defaults = {
+        _model: _family if list(_families.values()).count(_family) == 1
+        else f"{_family} {[_m for _m in _families if _families[_m] == _family].index(_model) + 1}"
+        for _model, _family in _families.items()
+    }
+    figure_model_names = mo.ui.dictionary(
+        {_model: mo.ui.text(value=_defaults[_model]) for _model in figure_models.value},
+        label="Model names in the figure (used with more than one model)",
+    )
+    figure_model_names
+    return (figure_model_names,)
+
+
+@app.cell
+def _(critical, figure_models):
+    _options = {
+        f"{_model}: {_switch} ({_setting})": (_model, _switch, _setting)
+        for _model, _switch, _setting in critical[CURVE].itertuples(index=False, name=None)
+        if _model in figure_models.value
+    }
+    # Start with every switch of the first model, e.g. both directions between two patterns
+    _first = figure_models.value[0] if figure_models.value else None
+    snapshot_curves = mo.ui.multiselect(
+        _options, value=[_label for _label, _key in _options.items() if _key[0] == _first],
+        label="Panel b: rollouts of (one block of rows each)", full_width=True,
+    )
+    snapshot_curves
+    return (snapshot_curves,)
+
+
+@app.cell
+def _(snapshot_curves, view, x):
+    # Impulse times run for any of the chosen switches; the same times are shown in every block
+    _chosen = view[[_key in snapshot_curves.value for _key in view[CURVE].itertuples(index=False, name=None)]]
+    _times = sorted(_chosen[x].unique())
+    # Four evenly spaced impulse times to start with
+    _default = [_times[_i] for _i in np.unique(np.linspace(0, len(_times) - 1, 4).round().astype(int))] if _times else []
+    snapshot_times = mo.ui.multiselect(
+        {f"{_time:g}": _time for _time in _times}, value=[f"{_time:g}" for _time in _default], label="Impulse times"
+    )
+    snapshot_frames = mo.ui.slider(2, 10, value=5, label="Rollout frames", show_value=True)
+    snapshot_element = mo.ui.slider(0, 7, value=0, label="Batch element", show_value=True)
+    snapshot_timing = mo.ui.radio(
+        {"steps after the impulse": "after impulse", "steps since growth started": "since start"},
+        value="steps after the impulse", label="Rollout frames at",
+    )
+    mo.hstack([snapshot_times, snapshot_frames, snapshot_element, snapshot_timing], justify="start")
+    return snapshot_element, snapshot_frames, snapshot_timing, snapshot_times
+
+
+@app.cell
+def _(
+    critical,
+    figure_critical,
+    figure_horizon,
+    figure_model_names,
+    figure_models,
+    figure_runs,
+    horizon,
+    snapshot_curves,
+    snapshot_element,
+    snapshot_frames,
+    snapshot_times,
+    snapshot_timing,
+    view,
+    x,
+):
+    mo.stop(not figure_models.value, mo.md("Pick at least one model for the figure"))
+    _shown = view[view.model.isin(figure_models.value)]
+    # Curves in the order of the model list, so colours stay put when models are added or removed
+    _keys = sorted(_shown.groupby(CURVE, sort=False).groups, key=lambda _key: (figure_models.value.index(_key[0]), _key))
+    _colours = {_key: FIGURE_COLOURS[_k % len(FIGURE_COLOURS)] for _k, _key in enumerate(_keys)}
+    _critical = {
+        (_model, _switch, _setting): _time
+        for _model, _switch, _setting, _time in critical[[*CURVE, "threshold_time"]].itertuples(index=False, name=None)
+    }
+
+    _labels = curve_labels(_keys, figure_model_names.value)
+
+    # One block per chosen switch, in the order of panel a; one saved run per chosen
+    # impulse time (the first, when a time was repeated)
+    _blocks, _rollouts = [], []
+    for _key in [_key for _key in _keys if _key in snapshot_curves.value]:
+        _curve = _shown[(_shown.model == _key[0]) & (_shown.switch == _key[1]) & (_shown.setting == _key[2])]
+        _block = {"key": _key, "label": _labels[_key], "rows": [], "references": None}
+        for _time in sorted(snapshot_times.value):
+            _runs = _curve[_curve[x] == _time]
+            if _runs.empty:
+                continue
+            _rollout = load_rollout(_runs.path.iloc[0], snapshot_element.value)
+            _block["references"] = _rollout["references"]
+            _block["rows"].append([_time, float(_runs.switch_rate.mean()), _rollout])
+            _rollouts.append((int(_runs.impulse_steps.iloc[0]), _rollout))
+        if _block["rows"]:
+            _blocks.append(_block)
+
+    # The same frame columns for every row; rows become (time, rate, images)
+    _columns, _frame_label = [], ""
+    if _rollouts:
+        _frame_titles, _frame_label, _frames = arrange_frames(_rollouts, snapshot_frames.value, snapshot_timing.value)
+        _columns = ["before", "impulse", *_frame_titles]
+        _frames = iter(_frames)
+        for _block in _blocks:
+            _block["rows"] = [
+                (_time, _rate, [_rollout["before"], _rollout["impulse"], *next(_frames)])
+                for _time, _rate, _rollout in _block["rows"]
+            ]
+
+    with paper_style():
+        summary_fig = summary_figure(
+            _shown, x, _colours, _labels, blocks=_blocks, columns=_columns, frame_label=_frame_label,
+            horizon=horizon(_shown) if figure_horizon.value else None,
+            critical=_critical if figure_critical.value else None,
+            show_runs=figure_runs.value,
+        )
+    summary_fig
+    return (summary_fig,)
+
+
+@app.cell
+def _():
+    figure_name = mo.ui.text(value="impulse_critical_time", label="File name")
+    save_button = mo.ui.run_button(label="Save figure")
+    mo.hstack([figure_name, save_button], justify="start")
+    return figure_name, save_button
+
+
+@app.cell
+def _(figure_name, save_button, summary_fig):
+    mo.stop(not save_button.value)
+    _paths = save_figure(summary_fig, figure_name.value, folder="impulse")
+    mo.md("Saved " + ", ".join(f"`{_path}`" for _path in _paths))
+    return
 
 
 @app.cell(hide_code=True)

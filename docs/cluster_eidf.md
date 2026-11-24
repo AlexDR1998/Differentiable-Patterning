@@ -11,9 +11,8 @@ manifest entry and then stops.
 ## What you need
 
 - **An EIDF account** in the project, with access to the GPU service and
-  `kubectl` set up on the project VM. Ask the project PI to add you, then
+  `kubectl` set up on the project VM. Ask Linus to add you, then
   follow EIDF's GPU service documentation for the kubeconfig.
-  **TODO(handover):** project name and code, and who to ask.
 - **SSH access to the project VM** through the EIDF gateway. Locally, an
   SSH alias called `eidf-1` is expected by
   `helper_scripts/copy_models_from_cluster.sh`:
@@ -22,11 +21,12 @@ manifest entry and then stops.
   Host eidf-gateway
       HostName eidf-gateway.epcc.ed.ac.uk
       User <your EIDF user>
-  Host eidf-1
+  Host eidf-vm
       HostName <project VM address>
       User <your EIDF user>
       ProxyJump eidf-gateway
   ```
+  However you can set this up however you want, and edit `helper_scripts/copy_models_from_cluster.sh` as you like
 - **Environment variables on the VM** (e.g. in `~/.bashrc`), used by
   `launch/run.tpl.yml`:
   - `KUBE_USER_QUEUE`: your Kueue queue name;
@@ -37,8 +37,7 @@ manifest entry and then stops.
   - `$USER-ws1`: a persistent volume (PVC) for data, models and outputs;
   - `$USER-wandb-login`: a secret with your W&B key:
     `kubectl create secret generic $USER-wandb-login --from-literal=WANDB_API_KEY=<key>`.
-  **TODO(handover):** how the PVC was created (size, storage class), and
-  whether new users get their own or share the existing one.
+ - 
 
 ## Where things are
 
@@ -115,14 +114,33 @@ Bundles are written to `/workspace/writeable/Models/bundles/`. To copy them,
 the impulse records and the notebook-job outputs to your machine, and rebuild
 the local registry index:
 
-```bash
-helper_scripts/copy_models_from_cluster.sh --port <port>
+First, on the terminal open on EIDF (via ssh), run these commands:
+``` 
+kubectl pvcsync <USER>-eidf107-ws1 down
+``` 
+then run:
+```
+kubectl pvcsync <USER>-eidf107-ws1 up
+```
+which will show something like:
+
+``` 
+pod/<USER>-eidf107-ws1-rsync-backend-YYYYY condition met
+Forwarding from 127.0.0.1:XXXXX -> 22
+Forwarding from [::1]:XXXXX -> 22
+<USER>-eidf107-ws1-rsync-backend-YYYYY is listening on port XXXXX
+ ```
+Where XXXXX is a 5 digit port number, and YYYYY is a 5 character Kubernetes pod identifier. What this has done so far is mount a Kubernetes pod onto your PVC, where the models are stored. This port number (XXXXX) will allow us to directly SCP/rsync to and from the PVC, so this is generally a useful sequence of commands to remember. The "down" command we started with just removes any existing PVC mount pod, in case you left one running before and can't remember the port number.
+
+Then locally run:
+```
+bash launch_scripts/copy_models_from_cluster.sh --port XXXXX
 ```
 
-This connects with SSH (through `eidf-1`) to a long-running pod that mounts
+
+This connects with SSH (through `eidf-1`) to a pod that mounts
 the `$USER-ws1` volume at `/data`, so `/data/Models/` is the same folder as
-`/workspace/writeable/Models/`. `--port` is that pod's SSH port.
-**TODO(handover):** how that SSH pod is started, and how to find its port.
+`/workspace/writeable/Models/`. `--port` is that pod's SSH port. 
 
 Options:
 - `--no-impulses` skips the (slow) impulse records;

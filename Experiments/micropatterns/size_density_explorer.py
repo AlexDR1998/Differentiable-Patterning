@@ -150,7 +150,7 @@ def _():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    This notebook prepares inference sweeps from selected models, over varying micropattern sizes and initial densites.
+    This notebook prepares inference sweeps from selected models, over varying micropattern sizes and initial densities.
     These can be run locally, or prepared for an EIDF sweep.
 
     - Circular colonies of several diameters, filled with whole measured cells at a range of densities (`synthetic_ic.py`, as in the density × KO sweep of `nodal_ko_eval.py`)
@@ -164,7 +164,27 @@ def _():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
+    - **Before:** export a selection from `Experiments/model_registry_explorer.py`; cell-type rule files come from `Experiments/micropatterns/data_cleaning.py`
+    - Cell placement (`cells` settings) is tuned in `Experiments/micropatterns/synthetic_textured_ic_explorer.py`
+    - Companion: the *Cell density × NODAL-KO time* section of `Experiments/micropatterns/nodal_ko_eval.py` sweeps KO time at the training size
+    - Long sweeps: export a remote job (`docs/remote_notebook_jobs.md`), then load its folder under *Save or load results*
+    - **Sections** (fold each one from its heading): *Model selection*, *Cell types*, *Sweep* (settings, preview, run here or remotely, save or load), *Results*, *Kymographs*
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     ## Model selection
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    - Store and data folders default to `MODEL_STORE_ROOT` and `DATA_PATH_BASE` in `.env` (`.env.example`)
     """)
     return
 
@@ -233,12 +253,20 @@ def _(loaded_records, selection_projections):
     else:
         _columns = ["model_id", "alias", "notes", "projection", "downsample", "family", "experiment", "best_loss"]
         _preview = mo.vstack([
-            mo.md(f"## Selected models ({len(selection_records)} of {len(loaded_records)})"),
+            mo.md(f"**Selected models ({len(selection_records)} of {len(loaded_records)})**"),
             selection_projections,
             mo.ui.table(pd.DataFrame(selection_records).reindex(columns=_columns), selection=None, page_size=10),
         ])
     _preview
     return (selection_records,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Cell types
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -263,7 +291,7 @@ def _():
     })
     cell_type_rings = mo.ui.number(1, 40, value=12, step=1, label="Rings for the colony-wide shares")
     mo.vstack([
-        mo.md("## Cell types\n\n- Rule files exported by `data_cleaning.py`; one per projection"),
+        mo.md("- Rule files exported by `data_cleaning.py`; one per projection"),
         mo.hstack([cell_type_files, cell_type_rings]),
     ])
     return cell_type_files, cell_type_rings
@@ -289,9 +317,15 @@ def _(cell_type_files):
 
 @app.cell(hide_code=True)
 def _():
-    mo.md("""
+    mo.md(r"""
     ## Sweep
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _():
+    mo.md("""
     - Diameters in µm; densities as multiples of the measured density, real cells per mm² (both the same at every size) or covered share
     - Default densities: 0.1× to 2× the measured density (mean cells per mm² of the real colonies), in steps of 0.1×
     - Baseline rollouts always; optional NODAL knockouts from the listed hours
@@ -502,6 +536,14 @@ def _():
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Preview
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(sd_records):
     sd_preview_model = mo.ui.dropdown(
         options={model_option_label(_record): _record["model_id"] for _record in sd_records},
@@ -511,7 +553,6 @@ def _(sd_records):
     sd_run_preview = mo.ui.run_button(label="Preview initial states")
     mo.vstack([
         mo.md(
-            "### Preview\n\n"
             "- Initial states of the first replicate at every size, lowest and highest density (no rollout)\n"
             "- Loads the model's data and cells; no GPU needed"
         ),
@@ -580,6 +621,14 @@ def _(sd_preview_model, sd_records, sd_run_preview, sd_settings):
 
 @app.cell(hide_code=True)
 def _():
+    mo.md(r"""
+    ### Run the sweep here
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     sd_run = mo.ui.run_button(label="Run size × density sweep here")
     sd_run
     return (sd_run,)
@@ -605,6 +654,14 @@ def _(sd_records, sd_run, sd_settings, set_sd_results):
 
 @app.cell(hide_code=True)
 def _():
+    mo.md(r"""
+    ### Run the sweep remotely
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     sd_job_name = mo.ui.text("size_density", label="Job name", full_width=True)
     sd_job_split = mo.ui.dropdown(
         options={
@@ -623,7 +680,6 @@ def _():
     sd_export_job = mo.ui.run_button(label="Export remote job")
     mo.vstack([
         mo.md(
-            "### Run the sweep remotely\n\n"
             "- Writes a job manifest with the settings above and the chosen models\n"
             "- Each part writes `part_<i>.npz`; load the copied-back folder below\n"
             "- The pods need the stored nucleus segmentation under the data root\n"
@@ -678,6 +734,14 @@ def _(
 
 @app.cell(hide_code=True)
 def _():
+    mo.md(r"""
+    ### Save or load results
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     sd_results_path = mo.ui.text(
         "output/size_density/size_density_results.npz",
         label="Results file, or folder of a remote job's parts (relative to the repository root)",
@@ -687,7 +751,6 @@ def _():
     sd_load = mo.ui.run_button(label="Load results")
     sd_overwrite = mo.ui.checkbox(value=False, label="Overwrite an existing file")
     mo.vstack([
-        mo.md("### Save or load results"),
         sd_results_path,
         mo.hstack([sd_save, sd_overwrite, sd_load], justify="start"),
     ])
@@ -723,6 +786,14 @@ def _(
     else:
         _file_status = mo.md("")
     _file_status
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Results
+    """)
     return
 
 
@@ -767,7 +838,7 @@ def _(cell_type_rings, cell_type_rules_by_projection, get_sd_results):
         for _model_id in _model_ids
     ])
     mo.vstack(
-        [mo.md("## Results\n\n- Figures name models M1, M2, …; see the key"), mo.ui.table(_key, selection=None), *_warnings]
+        [mo.md("- Figures name models M1, M2, …; see the key"), mo.ui.table(_key, selection=None), *_warnings]
         if sd_results else []
     )
     return sd_model_names, sd_references, sd_results
@@ -949,6 +1020,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Prevalence maps
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(sd_summary):
     _groups = list(dict.fromkeys(sd_summary["group"])) if not sd_summary.empty else []
     sd_group = mo.ui.dropdown(_groups, value=_groups[0] if _groups else None, label="Group shown")
@@ -1039,6 +1118,14 @@ def _(
             _figure.tight_layout()
         _heatmap_view = _figure
     _heatmap_view
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Share against size and density
+    """)
     return
 
 
@@ -1135,6 +1222,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Size sweeps
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     sd_condition,
     sd_display_cell_types,
@@ -1197,7 +1292,6 @@ def _(
         _figure.tight_layout()
         _size_sweep_view = mo.vstack([
             mo.md(
-                "### Size sweeps\n\n"
                 "- Every size at the measured density, or with the measured number of cells per colony\n"
                 "- Bottom: the cells per mm² each size got (cells that do not fit are left out)"
             ),
@@ -1208,24 +1302,36 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Colonies
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(sd_model_names, sd_results):
-    # Images are kept for the first run of each job part only
-    _with_images = [
-        (f"{sd_model_names[_r['model_id']]} · replicate {_r['replicate']} · run {_r['run_index']}", _i)
-        for _i, _r in enumerate(sd_results or ()) if _r["final_states"] is not None
-    ]
+    # Images are kept for the first run of each job part only. A job split by
+    # size has one part per size: a run's images are gathered from every part
+    _imaged = [_r for _r in sd_results or () if _r["final_states"] is not None]
+    _with_images = {
+        f"{sd_model_names[_r['model_id']]} · replicate {_r['replicate']} · run {_r['run_index']}":
+        (_r["model_id"], _r["replicate"], _r["run_index"])
+        for _r in _imaged
+    }
     sd_image_result = mo.ui.dropdown(
-        dict(_with_images), value=_with_images[0][0] if _with_images else None, label="Run",
+        _with_images, value=next(iter(_with_images), None), label="Run",
     )
     sd_image_stage = mo.ui.dropdown(["End", "Initial (0h)"], value="End", label="State")
-    _first = sd_results[0] if sd_results else None
+    _first = _imaged[0] if _imaged else None
     _names = set(_first["state_channel_names"]) if _first else set()
     # Experiment groups whose figure markers the model has, one sector each
     _sector_groups = {
         GROUP_LABELS[_g]: _g for _g, _markers in FIGURE_CHANNELS.items() if _names & set(_markers)
     }
     sd_image_sectors = mo.ui.multiselect(_sector_groups, value=list(_sector_groups), label="Sectors")
-    _diameters = [float(_d) for _d in _first["diameters_um"]] if _first else []
+    # Every size with images, over all parts
+    _diameters = sorted({float(_d) for _r in _imaged for _d in _r["diameters_um"]})
     sd_image_sizes = mo.ui.multiselect(
         {f"{_d:g} µm": _d for _d in _diameters}, value=[f"{_d:g} µm" for _d in _diameters], label="Sizes",
     )
@@ -1242,7 +1348,6 @@ def _(sd_model_names, sd_results):
     (
         mo.vstack([
             mo.md(
-                "### Colonies\n\n"
                 "- One sector per experiment group, showing its figure markers\n"
                 "- Drawn to scale, or each colony enlarged to fill its panel (same display size; use the scale bars)\n"
                 "- Rows are sizes and columns densities, or the other way round"
@@ -1304,38 +1409,72 @@ def _(
     _groups = [_g for _g in FIGURE_CHANNELS if _g in sd_image_sectors.value]
     _sizes_shown = [float(_d) for _d in sd_image_sizes.value]
     _densities_shown = [float(_d) for _d in sd_image_densities.value]
-    if sd_image_result.value is None or not (_groups and _sizes_shown and _densities_shown):
+    # Sizes of the chosen run with images, over all its parts
+    _run_sizes = [
+        float(_d) for _r in sd_results or ()
+        if _r["final_states"] is not None
+        and (_r["model_id"], _r["replicate"], _r["run_index"]) == sd_image_result.value
+        for _d in _r["diameters_um"]
+    ]
+    if sd_image_result.value is not None and _sizes_shown and not np.any(
+        np.isclose(np.asarray(_run_sizes)[:, None], np.asarray(_sizes_shown)[None, :])
+    ):
+        _image_view = mo.md("- This run has no images at the chosen sizes")
+    elif sd_image_result.value is None or not (_groups and _sizes_shown and _densities_shown):
         _image_view = mo.md("- Choose at least one sector, size and density") if sd_image_result.value is not None else mo.md("")
     else:
-        _result = sd_results[sd_image_result.value]
+        _model_id, _replicate, _run_index = sd_image_result.value
+        # The run's parts with images (one per size when the job was split by size)
+        _parts = [
+            _r for _r in sd_results
+            if _r["final_states"] is not None
+            and (_r["model_id"], _r["replicate"], _r["run_index"]) == (_model_id, _replicate, _run_index)
+        ]
+        _result = _parts[0]
         _names = list(_result["state_channel_names"])
         _k = list(_result["conditions"]).index(sd_condition.value)
-        _diameters = np.asarray(_result["diameters_um"], dtype=float)
         _densities = np.asarray(_result["densities"], dtype=float)
-        # Indices of the chosen sizes and densities, in sweep order
-        _size_index = [_s for _s, _d in enumerate(_diameters) if np.any(np.isclose(_d, _sizes_shown))]
-        _density_index = [_i for _i, _d in enumerate(_densities) if np.any(np.isclose(_d, _densities_shown))]
         _unit = _result["density_unit"]
-        # References of this model with images, shown as extra densities: every size at the
-        # measured density, and the true colony in the row of the nearest shown size
-        def _reference_image(_source):
-            """The reference with images of this model, of the shown run's replicate where there is one."""
-            _candidates = [
-                _r for _r in sd_references
-                if _r["source"] == _source and _r["model_id"] == _result["model_id"] and _r["final_states"] is not None
-            ]
-            return next(
-                (_r for _r in _candidates if _r["replicate"] == _result["replicate"]),
-                _candidates[0] if _candidates else None,
-            )
 
-        _reference_of = {_source: _reference_image(_source) for _source in sd_show_references.value}
-        _reference_of = {_source: _r for _source, _r in _reference_of.items() if _r is not None}
+        def _at_size(_candidates, _diameter):
+            """``(result, size index)`` of the first of ``_candidates`` with a colony of ``_diameter``."""
+            for _candidate in _candidates:
+                _sizes = np.asarray(_candidate["diameters_um"], dtype=float)
+                if np.any(np.isclose(_sizes, _diameter)):
+                    return _candidate, int(np.flatnonzero(np.isclose(_sizes, _diameter))[0])
+            return None
+
+        # Sizes shown: those chosen that this run has images of, smallest first
+        _diameters = np.asarray(sorted(
+            _d for _d in {float(_x) for _r in _parts for _x in _r["diameters_um"]}
+            if np.any(np.isclose(_d, _sizes_shown))
+        ))
+        _size_index = list(range(len(_diameters)))
+        _density_index = [_i for _i, _d in enumerate(_densities) if np.any(np.isclose(_d, _densities_shown))]
+        # References of this model with images, shown as extra densities: the size sweeps
+        # (every size), and the true colony in the row of the nearest shown size. The
+        # shown run's replicate first, else any replicate
+        _reference_candidates = {
+            _source: sorted(
+                [
+                    _r for _r in sd_references
+                    if _r["source"] == _source and _r["model_id"] == _model_id and _r["final_states"] is not None
+                ],
+                key=lambda _r: _r["replicate"] != _replicate,
+            )
+            for _source in sd_show_references.value
+        }
+        _reference_candidates = {_source: _c for _source, _c in _reference_candidates.items() if _c}
         _true_size = (
-            min(_size_index, key=lambda _s: abs(_diameters[_s] - float(_reference_of["true_data"]["diameters_um"][0])))
-            if "true_data" in _reference_of else None
+            min(
+                _size_index,
+                key=lambda _s: abs(_diameters[_s] - float(_reference_candidates["true_data"][0]["diameters_um"][0])),
+            )
+            if "true_data" in _reference_candidates and _size_index else None
         )
-        _density_index = list(_density_index) + [_source for _source in REFERENCE_LABELS if _source in _reference_of]
+        _density_index = list(_density_index) + [
+            _source for _source in REFERENCE_LABELS if _source in _reference_candidates
+        ]
         _rows, _columns = (_density_index, _size_index) if sd_image_transpose.value else (_size_index, _density_index)
         _figure, _axes = plt.subplots(
             len(_rows), len(_columns), figsize=(1.8 * len(_columns) + 1.6, 1.8 * len(_rows) + 0.4),
@@ -1355,13 +1494,15 @@ def _(
         def _panel(_s, _d):
             """(state, mask) of size ``_s`` at density ``_d`` (an index, or a reference); None if there is none."""
             _source = _d if isinstance(_d, str) else None
-            _of = _result if _source is None else _reference_of[_source]
             if _source == "true_data":
                 if _s != _true_size:
                     return None
-                _s_of, _d_of = 0, 0
+                _of, _s_of, _d_of = _reference_candidates[_source][0], 0, 0
             else:
-                _s_of, _d_of = _s, (0 if _source else _d)
+                _found_at = _at_size(_parts if _source is None else _reference_candidates[_source], _diameters[_s])
+                if _found_at is None:
+                    return None
+                (_of, _s_of), _d_of = _found_at, (0 if _source else _d)
             _states = (
                 _of["final_states"][_s_of, _d_of, _k] if sd_image_stage.value == "End"
                 else _of["initial_states"][_s_of, _d_of, : len(_names)]
@@ -1399,7 +1540,7 @@ def _(
         _handles, _labels, _ncol = rows_to_columns(marker_legend_entries(_legend_names, _groups, sectors=_groups))
         _figure.legend(_handles, _labels, ncol=_ncol, loc="center left", bbox_to_anchor=(1.0, 0.5), **legend_options())
         _figure.suptitle(
-            f"{sd_model_names[_result['model_id']]} · replicate {_result['replicate']} · "
+            f"{sd_model_names[_model_id]} · replicate {_replicate} · run {_run_index} · "
             f"{sd_condition.value} · {sd_image_stage.value} · "
             + ("rows: density, columns: size" if sd_image_transpose.value else "rows: size, columns: density")
             + f" ({DENSITY_LABELS[_unit].lower()}, requested)",
@@ -1408,6 +1549,37 @@ def _(
         _figure.tight_layout()
         _image_view = _figure
     _image_view
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### CSV exports
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(sd_reference_shares, sd_shares):
+    def _download(_table, _name, _label):
+        return mo.download(data=_table.to_csv(index=False).encode(), filename=_name, mimetype="text/csv", label=_label)
+
+    (
+        mo.hstack([
+            _download(sd_shares, "size_density_shares.csv", "Cell-type shares"),
+            _download(sd_reference_shares, "size_density_reference_shares.csv", "Size sweeps and true data shares"),
+        ], justify="start")
+        if not sd_shares.empty else mo.md("")
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Kymographs
+    """)
     return
 
 
@@ -1432,7 +1604,6 @@ def _(cell_type_labels, sd_results):
     (
         mo.vstack([
             mo.md(
-                "## Kymographs\n\n"
                 "- Radially averaged quantity against time; one model, its replicates and runs pooled"
             ),
             mo.hstack([sd_quantity, sd_axis], justify="start"),
@@ -1630,21 +1801,6 @@ def _(
         _figure.tight_layout()
         _profile_view = _figure
     _profile_view
-    return
-
-
-@app.cell(hide_code=True)
-def _(sd_reference_shares, sd_shares):
-    def _download(_table, _name, _label):
-        return mo.download(data=_table.to_csv(index=False).encode(), filename=_name, mimetype="text/csv", label=_label)
-
-    (
-        mo.hstack([
-            _download(sd_shares, "size_density_shares.csv", "Cell-type shares"),
-            _download(sd_reference_shares, "size_density_reference_shares.csv", "Size sweeps and true data shares"),
-        ], justify="start")
-        if not sd_shares.empty else mo.md("")
-    )
     return
 
 

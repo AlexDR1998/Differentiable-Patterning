@@ -56,7 +56,7 @@ files in the repository.
 | --- | --- | --- | --- |
 | `impulse_explorer.py` | Look at optimised impulses on an emoji NCA. | store | maintained |
 | `impulse_sweep_explorer.py` | Compare impulse sweep runs. | store | maintained |
-| `impulse_critical_time.py` | Switch rate against impulse time: when an attractor can no longer be switched. | store | maintained |
+| `impulse_critical_time.py` | Switch rate against impulse time: when an attractor can no longer be switched. Two-panel summary figure (switch rate; rollout snapshots) saved to `figures/impulse/`. | store | maintained |
 
 ## Snowmelt (`Experiments/snowmelt/`)
 

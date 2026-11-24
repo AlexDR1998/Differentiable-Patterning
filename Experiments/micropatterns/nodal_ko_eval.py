@@ -141,11 +141,13 @@ with app.setup(hide_code=True):
     )
     # Shared figure style and colony drawing
     from Experiments.micropatterns.figures.data import cell_type_rgba, masked_rgba
+    from Experiments.micropatterns.figures.drawing import colony_rgba
     from Experiments.micropatterns.figures.style import (
         PROJECTION_COLOURS,
         SERIES,
         STYLE_FILE,
         cell_type_colour,
+        group_colours,
     )
     from matplotlib.patches import Patch
 
@@ -173,9 +175,15 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md("""
+    mo.md(r"""
     # NODAL knockout model evaluation
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _():
+    mo.md("""
     Load a YAML selection exported by `model_registry_explorer.py`, then run
     those models against matching baseline, 0h NODAL-KO, or 24h NODAL-KO
     measurements. Knockout predictions block the model from reading its
@@ -184,6 +192,23 @@ def _():
     The reusable `evaluation_results` value produced below contains the full
     predictions, experimental targets, registry details, and saved notes for
     custom analysis and figure construction.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    - **Before:** train models (`docs/workflow_micropatterns.md`), then export a selection YAML from `Experiments/model_registry_explorer.py`
+    - **Cell types** come from rule files exported by `Experiments/micropatterns/data_cleaning.py` (Export cell types)
+    - **Sections** (fold each one from its heading):
+        - *Model selection* and *Cell types*: used by every section below
+        - *Evaluation on measured conditions*: rollouts against baseline, KO 0h and KO 24h data; *Cell-type threshold tuning* reuses them
+        - *Fine NODAL-KO timing sweep*: prevalence against KO time; saves data for `Experiments/micropatterns/figures/overview_figure.py`
+        - *Cell density × NODAL-KO time*: synthetic colonies; can run on EIDF (`docs/remote_notebook_jobs.md`)
+        - *Held-out test: 250K plating* and *Tuning thresholds on 150K and 250K data together*: need density × KO results
+        - *Cell-fate dynamics*, *Composite CMY snapshots*, *Generative trajectory ensemble*: need only the models and cell types
+    - **Related:** colony size × density in `Experiments/micropatterns/size_density_explorer.py`
     """)
     return
 
@@ -200,6 +225,23 @@ def _():
         "The first rollout for each model architecture includes JIT compilation.",
         kind=_kind,
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Model selection
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    - Export a selection from `Experiments/model_registry_explorer.py`
+    - Store and data folders default to `MODEL_STORE_ROOT` and `DATA_PATH_BASE` in `.env` (`.env.example`)
+    """)
     return
 
 
@@ -286,7 +328,7 @@ def _(loaded_records, selection_projections):
             ["projection", "downsample"]
         ).size().rename("models").reset_index()
         _preview = mo.vstack([
-            mo.md(f"## Selected models ({len(selection_records)} of {len(loaded_records)})"),
+            mo.md(f"**Selected models ({len(selection_records)} of {len(loaded_records)})**"),
             mo.hstack([
                 selection_projections,
                 mo.ui.table(_projection_counts, selection=None, page_size=12),
@@ -295,6 +337,146 @@ def _(loaded_records, selection_projections):
         ])
     _preview
     return (selection_records,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Cell types
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    - Make rule files in `Experiments/micropatterns/data_cleaning.py`, or in the two threshold tuning sections below
+    - How cell types are defined: `docs/concepts.md`
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(get_cell_type_files_version):
+    # Listed again after a file is saved in the threshold tuning section.
+    get_cell_type_files_version()
+    _cell_type_files = sorted(CELL_TYPE_DIRECTORY.glob("*.yaml"))
+    _file_options = {
+        f"{_path.name} (tuned on {rules_projection(load_cell_type_rules(_path))})": str(_path)
+        for _path in _cell_type_files
+    }
+    # Default: the newest file tuned on the projection, else the newest file.
+    _default_files = {
+        _projection: (
+            [_option for _option in _file_options if _option.endswith(f"(tuned on {_projection})")]
+            or list(_file_options)
+            or [None]
+        )[-1]
+        for _projection in PROJECTIONS
+    }
+    # Thresholds depend on the projection, so each one has its own file.
+    cell_type_files = mo.ui.dictionary({
+        _projection: mo.ui.dropdown(
+            options=_file_options,
+            value=_default_files[_projection],
+            label=f"Cell type file for {_projection}",
+            full_width=True,
+        )
+        for _projection in PROJECTIONS
+    })
+    cell_type_rings = mo.ui.number(
+        1, 40, value=12, step=1, label="Rings for the share estimate"
+    )
+    mo.vstack([
+        mo.md(
+            "Thresholds, cell-type rules and stains are read from a file "
+            "exported by `data_cleaning.py` (Export cell types). Because SOX2 "
+            "and FOXA2 are imaged in different stains, cell-type shares are "
+            "estimated per radial ring by combining the stains (see "
+            "`Common/dataloader/cell_type_shares.py`), for the model output "
+            "as well as the data, and the rings are then averaged by area. "
+            "Pixels matching more than one cell type are counted as *Several*."
+        ),
+        mo.md("- Each projection uses its own file; models and data use the file of their projection"),
+        mo.hstack([cell_type_files, cell_type_rings]),
+    ])
+    return cell_type_files, cell_type_rings
+
+
+@app.cell(hide_code=True)
+def _(cell_type_files):
+    mo.stop(
+        any(_path is None for _path in cell_type_files.value.values()),
+        mo.callout(f"No cell type files found in `{CELL_TYPE_DIRECTORY}`.", kind="warn"),
+    )
+    cell_type_rules_by_projection = {
+        _projection: load_cell_type_rules(_path)
+        for _projection, _path in cell_type_files.value.items()
+    }
+    # Plots and tables share one list of cell types across projections.
+    _label_sets = {
+        _projection: tuple(label_names(_rules))
+        for _projection, _rules in cell_type_rules_by_projection.items()
+    }
+    mo.stop(
+        len(set(_label_sets.values())) > 1,
+        mo.callout(
+            "The cell type files must define the same cell types: "
+            + "; ".join(f"{_p}: {', '.join(_l)}" for _p, _l in _label_sets.items()),
+            kind="danger",
+        ),
+    )
+    cell_type_labels = next(iter(_label_sets.values()))
+
+    _rule_tabs = {}
+    for _projection, _rules in cell_type_rules_by_projection.items():
+        _rule_rows = [
+            {
+                "cell_type": _cell_type,
+                "clause": _index + 1,
+                "weight": _weight,
+                **{_marker: _clause.get(_marker, "any") for _marker in _rules.markers},
+            }
+            for _cell_type, _clauses in _rules.rules.items()
+            for _index, (_clause, _weight) in enumerate(
+                zip(_clauses, _rules.weights_of(_cell_type))
+            )
+        ]
+        _mismatch = (
+            [mo.callout(
+                f"This file was tuned on the {rules_projection(_rules)} projection.",
+                kind="warn",
+            )]
+            if rules_projection(_rules) != _projection else []
+        )
+        _rule_tabs[_projection] = mo.vstack([
+            *_mismatch,
+            mo.md(
+                f"Tuned at {_rules.hour}h. Thresholds: "
+                + ", ".join(
+                    f"{_marker} {_value:g}"
+                    for _marker, _value in _rules.thresholds.items()
+                )
+                + ". Stains: "
+                + "; ".join(
+                    f"{_stain} ({', '.join(_channels)})"
+                    for _stain, _channels in rule_stains(_rules).items()
+                )
+                + ". The thresholds only hold for images pre-processed with the "
+                "file's `preprocessing` settings."
+            ),
+            mo.ui.table(_rule_rows, selection=None),
+        ])
+    mo.ui.tabs(_rule_tabs)
+    return cell_type_labels, cell_type_rules_by_projection
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Evaluation on measured conditions
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -482,15 +664,30 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Evaluation timings
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(evaluation_timings):
     if evaluation_timings.empty:
         _timing_view = mo.md("")
     else:
         _timing_view = mo.vstack([
-            mo.md("## Evaluation timings"),
             mo.ui.table(evaluation_timings, selection=None, page_size=25),
         ])
     _timing_view
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Starter metrics
+    """)
     return
 
 
@@ -531,12 +728,19 @@ def _(evaluation_results):
             .reset_index()
         )
         _metrics_view = mo.vstack([
-            mo.md("## Starter metrics"),
             mo.md("- Mean MSE per projection (each against its own data)"),
             mo.ui.table(_projection_metrics, selection=None, page_size=15),
             mo.ui.table(evaluation_metrics, selection=None, page_size=15),
         ])
     _metrics_view
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Predictions against data
+    """)
     return
 
 
@@ -781,119 +985,11 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(get_cell_type_files_version):
-    # Listed again after a file is saved in the threshold tuning section.
-    get_cell_type_files_version()
-    _cell_type_files = sorted(CELL_TYPE_DIRECTORY.glob("*.yaml"))
-    _file_options = {
-        f"{_path.name} (tuned on {rules_projection(load_cell_type_rules(_path))})": str(_path)
-        for _path in _cell_type_files
-    }
-    # Default: the newest file tuned on the projection, else the newest file.
-    _default_files = {
-        _projection: (
-            [_option for _option in _file_options if _option.endswith(f"(tuned on {_projection})")]
-            or list(_file_options)
-            or [None]
-        )[-1]
-        for _projection in PROJECTIONS
-    }
-    # Thresholds depend on the projection, so each one has its own file.
-    cell_type_files = mo.ui.dictionary({
-        _projection: mo.ui.dropdown(
-            options=_file_options,
-            value=_default_files[_projection],
-            label=f"Cell type file for {_projection}",
-            full_width=True,
-        )
-        for _projection in PROJECTIONS
-    })
-    cell_type_rings = mo.ui.number(
-        1, 40, value=12, step=1, label="Rings for the share estimate"
-    )
-    mo.vstack([
-        mo.md(
-            "## Cell types\n\n"
-            "Thresholds, cell-type rules and stains are read from a file "
-            "exported by `data_cleaning.py` (Export cell types). Because SOX2 "
-            "and FOXA2 are imaged in different stains, cell-type shares are "
-            "estimated per radial ring by combining the stains (see "
-            "`Common/dataloader/cell_type_shares.py`), for the model output "
-            "as well as the data, and the rings are then averaged by area. "
-            "Pixels matching more than one cell type are counted as *Several*."
-        ),
-        mo.md("- Each projection uses its own file; models and data use the file of their projection"),
-        mo.hstack([cell_type_files, cell_type_rings]),
-    ])
-    return cell_type_files, cell_type_rings
-
-
-@app.cell(hide_code=True)
-def _(cell_type_files):
-    mo.stop(
-        any(_path is None for _path in cell_type_files.value.values()),
-        mo.callout(f"No cell type files found in `{CELL_TYPE_DIRECTORY}`.", kind="warn"),
-    )
-    cell_type_rules_by_projection = {
-        _projection: load_cell_type_rules(_path)
-        for _projection, _path in cell_type_files.value.items()
-    }
-    # Plots and tables share one list of cell types across projections.
-    _label_sets = {
-        _projection: tuple(label_names(_rules))
-        for _projection, _rules in cell_type_rules_by_projection.items()
-    }
-    mo.stop(
-        len(set(_label_sets.values())) > 1,
-        mo.callout(
-            "The cell type files must define the same cell types: "
-            + "; ".join(f"{_p}: {', '.join(_l)}" for _p, _l in _label_sets.items()),
-            kind="danger",
-        ),
-    )
-    cell_type_labels = next(iter(_label_sets.values()))
-
-    _rule_tabs = {}
-    for _projection, _rules in cell_type_rules_by_projection.items():
-        _rule_rows = [
-            {
-                "cell_type": _cell_type,
-                "clause": _index + 1,
-                "weight": _weight,
-                **{_marker: _clause.get(_marker, "any") for _marker in _rules.markers},
-            }
-            for _cell_type, _clauses in _rules.rules.items()
-            for _index, (_clause, _weight) in enumerate(
-                zip(_clauses, _rules.weights_of(_cell_type))
-            )
-        ]
-        _mismatch = (
-            [mo.callout(
-                f"This file was tuned on the {rules_projection(_rules)} projection.",
-                kind="warn",
-            )]
-            if rules_projection(_rules) != _projection else []
-        )
-        _rule_tabs[_projection] = mo.vstack([
-            *_mismatch,
-            mo.md(
-                f"Tuned at {_rules.hour}h. Thresholds: "
-                + ", ".join(
-                    f"{_marker} {_value:g}"
-                    for _marker, _value in _rules.thresholds.items()
-                )
-                + ". Stains: "
-                + "; ".join(
-                    f"{_stain} ({', '.join(_channels)})"
-                    for _stain, _channels in rule_stains(_rules).items()
-                )
-                + ". The thresholds only hold for images pre-processed with the "
-                "file's `preprocessing` settings."
-            ),
-            mo.ui.table(_rule_rows, selection=None),
-        ])
-    mo.ui.tabs(_rule_tabs)
-    return cell_type_labels, cell_type_rules_by_projection
+def _():
+    mo.md(r"""
+    ## Cell-type threshold tuning on NCA rollouts
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -1104,7 +1200,6 @@ def _(
             ))
     mo.vstack([
         mo.md(
-            "## Cell-type threshold tuning on NCA rollouts\n\n"
             "- Uses the rollouts of **Run NODAL-KO evaluation**\n"
             "- Every marker is read from every model pixel, so no stain combining\n"
             "- True data is only shown one marker at a time\n"
@@ -1341,7 +1436,13 @@ def _(
 def _():
     mo.md(r"""
     ## Fine NODAL-KO timing sweep (model ensembles)
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     Select one or more models and sweep the time at which recurrent NODAL is blocked.
     The default one-hour spacing creates a denser set of predictions than the
     measured 0h and 24h knockout conditions. Each rollout retains only the
@@ -1350,8 +1451,11 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
+    mo.md(r"""
+    ### Run the sweep
+    """)
     return
 
 
@@ -1654,6 +1758,14 @@ def _(
         )
     _fine_ko_status
     return (fine_ko_results,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Prevalence against KO time
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -2134,6 +2246,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### CSV exports
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     fine_prevalence_export,
     fine_prevalence_summary,
@@ -2146,7 +2266,6 @@ def _(
         else "Run the fine NODAL-KO timing sweep to enable these downloads."
     )
     mo.vstack([
-        mo.md("### CSV exports"),
         mo.md(_fine_export_status),
         mo.hstack([
             mo.download(
@@ -2179,11 +2298,26 @@ def _(
 
 @app.cell(hide_code=True)
 def _():
+    mo.md(r"""
+    ### Overview figure
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    - Next: open `Experiments/micropatterns/figures/overview_figure.py` (`docs/figures.md`)
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     save_overview_svg = mo.ui.checkbox(value=False, label="Also SVG (editable text)")
     save_overview_panels = mo.ui.run_button(label="Save for overview figure")
     mo.vstack([
         mo.md(
-            "### Overview figure\n\n"
             "- Saves the prevalence curves (CSV, plus PNG/PDF/optional SVG as shown) and the "
             "cell-type snapshots (shares of the first shown model run, every Nth KO "
             "time as displayed) to `figures/overview/`\n"
@@ -2241,6 +2375,14 @@ def _(
         np.savez_compressed(_directory / "nodal_ko_cell_maps.npz", **fine_cell_map_export)
         _saved.append("nodal_ko_cell_maps.npz")
     mo.md(f"Saved to `{_directory}`:\n\n" + "\n".join(f"- `{_n}`" for _n in _saved))
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Final cell-type snapshots
+    """)
     return
 
 
@@ -2357,7 +2499,6 @@ def _(
             _fine_cell_map_view = mo.md("Select at least one displayed cell type.")
         else:
             _fine_cell_map_view = mo.vstack([
-                mo.md("### Final cell-type snapshots"),
                 mo.md(
                     "Brightness is scaled by the LMBR nuclear marker."
                     if fine_scale_cell_maps_by_lmbr.value
@@ -2372,6 +2513,14 @@ def _(
             ])
     _fine_cell_map_view
     return fine_cell_map_export, fine_cell_map_figures
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Final channel snapshots
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -2479,12 +2628,36 @@ def _(
 def _():
     mo.md(r"""
     ## Cell density × NODAL-KO time
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     - Circular colony (mean area of the chosen replicates' colonies) with a synthetic 0h state
     - Whole cells cut out of each replicate's 0h colony and placed at random, as in inverse design; the density sets how many are kept
     - Each run places its cells once: every density and KO time of a run uses the same cells and rollout seed
     - Bands: spread over models, replicates and duplicate runs in each group
     - Cell types as above, with *Resolve multiple matches* from the fine KO sweep
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    - Cell placement (`cells` settings) is tuned in `Experiments/micropatterns/synthetic_textured_ic_explorer.py`
+    - The same placement over colony sizes: `Experiments/micropatterns/size_density_explorer.py`
+    - Long sweeps: export a remote job below (`docs/remote_notebook_jobs.md`), then load its folder
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Sweep settings
     """)
     return
 
@@ -2717,6 +2890,14 @@ def _(dko_records, dko_settings, run_dko_sweep, set_dko_results):
 
 @app.cell(hide_code=True)
 def _():
+    mo.md(r"""
+    ### Run the sweep remotely
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     dko_job_name = mo.ui.text("density_ko", label="Job name", full_width=True)
     dko_job_split = mo.ui.dropdown(
         options={"One per model": "model", "One per model and replicate": "replicate"},
@@ -2731,7 +2912,6 @@ def _():
     export_dko_job = mo.ui.run_button(label="Export remote job")
     mo.vstack([
         mo.md(
-            "### Run the sweep remotely\n\n"
             "- Writes a job manifest with the settings above and the chosen models\n"
             "- Each part writes `part_<i>.npz`; load the copied-back folder below\n"
             "- See `docs/remote_notebook_jobs.md`"
@@ -2794,6 +2974,14 @@ def _(
 
 @app.cell(hide_code=True)
 def _():
+    mo.md(r"""
+    ### Save or load density × KO results
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     dko_results_path = mo.ui.text(
         "output/nodal_ko_eval/density_ko_results.npz",
         label="Results file, or folder of a remote job's parts (relative to the repository root)",
@@ -2804,7 +2992,6 @@ def _():
     dko_overwrite = mo.ui.checkbox(value=False, label="Overwrite an existing file")
     mo.vstack([
         mo.md(
-            "### Save or load density × KO results\n\n"
             "- Saves the pattern counts of every run, so the plots below can be "
             "remade without rerunning the sweep\n"
             "- Cell types are recomputed on loading; the file records the "
@@ -2847,6 +3034,14 @@ def _(
     else:
         _dko_file_status = mo.md("")
     _dko_file_status
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Display settings
+    """)
     return
 
 
@@ -3166,6 +3361,14 @@ def _(
 
 @app.cell(hide_code=True)
 def _():
+    mo.md(r"""
+    ### Initial states
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     # Colour scale of the synthetic initial states below
     dko_initial_scale = mo.ui.dropdown(
         options={"Percentiles of these states": "percentile", "Fixed values": "fixed"},
@@ -3285,6 +3488,14 @@ def _(
         ])
         # _figure.show()
     _dko_initial_view
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Prevalence against density and KO time
+    """)
     return
 
 
@@ -3471,6 +3682,14 @@ def _(dko_fixed_density, dko_prevalence, dko_prevalence_basis, save_dko_slice):
         f"Saved {len(_export)} rows ({_export['requested_knockout_hour'].nunique()} KO times) to `{_path}`",
         kind="success",
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Heatmaps
+    """)
     return
 
 
@@ -3708,6 +3927,14 @@ def _(dko_heatmap_grids, dko_show_measured):
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Measured channels
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(dko_results):
     # Measured channels of the final state: mean over the chosen rings
     _with_means = [_result for _result in dko_results or () if _result.get("channel_means") is not None]
@@ -3719,7 +3946,6 @@ def _(dko_results):
     )
     mo.vstack([
         mo.md(
-            "### Measured channels\n\n"
             "- Mean of each channel of the final state over the chosen rings, against density and KO time\n"
             "- Uses the fixed KO time, fixed density, grouping and heatmap group above"
         ),
@@ -4043,9 +4269,16 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Density × KO CSV exports
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(dko_prevalence, dko_summary):
     mo.vstack([
-        mo.md("### Density × KO CSV exports"),
         mo.hstack([
             mo.download(
                 lambda: dko_prevalence.to_csv(index=False).encode("utf-8"),
@@ -4063,6 +4296,23 @@ def _(dko_prevalence, dko_summary):
             ),
         ], justify="start"),
     ])
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Held-out test: 250K plating
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    - Tune the 250K normalisation and rules first in `Experiments/micropatterns/data_cleaning.py` ("250K colonies beside the 150K colonies")
+    - Background and next steps: `docs/finetune_ablation.md`
+    """)
     return
 
 
@@ -4087,7 +4337,6 @@ def _(data_root, dko_results):
     heldout_load = mo.ui.run_button(label="Load the 250K colonies")
     mo.vstack([
         mo.md(
-            "### Held-out test: 250K plating\n\n"
             "- One colony per KO time (24, 28, 32, 36 h), fixed at 48 h, plated at 250K instead of 150K; never used in training\n"
             "- Placed at 250/150 × the measured 150K density (dashed line below); needs a sweep in cells per mm² or per colony\n"
             "- Only SOX17, TBXT, FOXA2 (and LMBR) are imaged, so data **and** model use the rule clauses those markers can check (listed below)\n"
@@ -4191,23 +4440,23 @@ def _(heldout_colonies, heldout_rules):
     _colours = np.array([to_rgb(cell_type_colour(_label)) for _label in _labels])
     _count = len(heldout_colonies["hours"])
     _figure, _axes = plt.subplots(2, _count, figsize=(2.6 * _count, 5.4), dpi=120, squeeze=False)
+    # Marker colours of the S2 panel from the figure style (FOXA2 cyan, TBXT magenta, SOX17 yellow)
+    _marker_colours = group_colours(_names, "cell_fate_s2")
     for _column, (_hour, _image, _mask) in enumerate(zip(
         heldout_colonies["hours"], heldout_colonies["images"], heldout_colonies["mask"]
     )):
-        # SOX17, TBXT, FOXA2 as red, green, blue
-        _rgb = np.stack([_image[_names.index(f"cell_fate_s2/{_m}")] for _m in ("SOX17", "TBXT", "FOXA2")], axis=-1)
-        _axes[0, _column].imshow(np.clip(_rgb, 0, 1))
-        _axes[0, _column].contour(_mask, levels=[0.5], colors="white", linewidths=0.6)
+        _axes[0, _column].imshow(colony_rgba(_image, _mask, _marker_colours))
         _axes[0, _column].set_title(f"KO {_hour:g}h")
         _classes = classify_cell_types(marker_values(_image, _names, heldout_rules), heldout_rules, _mask)
         _map = np.ones(_mask.shape + (3,))
         for _index, _label in enumerate(_labels):
             _map[_classes[_label]] = _colours[_index, :3]
-        _axes[1, _column].imshow(_map)
+        # Cropped like the top row, so both rows line up
+        _axes[1, _column].imshow(masked_rgba(_map, _mask))
     for _axis in _axes.flat:
         _axis.set_xticks([])
         _axis.set_yticks([])
-    _axes[0, 0].set_ylabel("SOX17 / TBXT / FOXA2")
+    _axes[0, 0].set_ylabel("FOXA2 / TBXT / SOX17")
     _axes[1, 0].set_ylabel("Cell types (S2 rules)")
     _figure.legend(
         handles=[plt.Rectangle((0, 0), 1, 1, color=_c) for _c in _colours],
@@ -4318,6 +4567,151 @@ def _(dko_group_by, dko_heatmap_cmap, dko_results, heldout, heldout_density, hel
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Save for the density × KO figure
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    save_dko_figure = mo.ui.run_button(label="Save for density × KO figure")
+    mo.vstack([
+        mo.md(
+            "- Saves to `figures/density_ko/`: the S2-rule prevalence of every sweep run of this projection, "
+            "the 250K shares above, and the 150K training colonies at the end time (read when saving), with their marker images\n"
+            "- Also the sweep settings above (cell placement, seeds), for NCA images at chosen points in the figure\n"
+            "- Model and data use the same S2 rules, rings and *Resolve multiple matches*; groups as *Group replicate models by*\n"
+            "- Then open `Experiments/micropatterns/figures/density_ko_figure.py`"
+        ),
+        save_dko_figure,
+    ])
+    return (save_dko_figure,)
+
+
+@app.cell(hide_code=True)
+def _(
+    cell_type_files,
+    cell_type_rings,
+    data_root,
+    dko_group_by,
+    dko_results,
+    dko_settings,
+    fine_resolve_several,
+    heldout,
+    heldout_colonies,
+    heldout_density,
+    heldout_measured,
+    heldout_normalisation,
+    heldout_projection,
+    heldout_rules,
+    save_dko_figure,
+    store_root,
+):
+    from dataclasses import asdict as _asdict
+
+    mo.stop(not save_dko_figure.value)
+    _projection = heldout_projection.value
+    _results = [_r for _r in dko_results if _r["projection"] == _projection]
+    _snapshot = float(_results[0]["snapshot_hour"])
+    _rings = int(cell_type_rings.value)
+    _resolve = float(fine_resolve_several.value)
+    _training_density = heldout_density / heldout.PLATING_SCALE
+    _model = pd.DataFrame(heldout.model_prevalence_rows(_results, heldout_rules, dko_group_by.value, _resolve))
+
+    # The 150K training colonies at the end time, read with the same model's
+    # data settings as the 250K colonies, and scored with the same S2 rules
+    _ko_hours = {"baseline": _snapshot, "ko_0h": 0.0, "ko_24h": 24.0}
+    _bundle = ModelRegistry(Path(store_root.value.strip()).expanduser()).get(_results[0]["model_id"])
+    with mo.status.spinner("Reading the 150K colonies"):
+        _found = heldout.measured_150k(
+            _bundle, Path(data_root.value.strip()).expanduser(), tuple(_ko_hours), (1, 2, 3, 4),
+        )
+    _labels = list(label_names(heldout_rules))
+    _measured = []
+    # Marker images of every measured colony, for the image panel of the figure
+    _images, _image_rows = {}, []
+
+    def _keep_image(_image, _names, _mask, **_row):
+        _index = len(_image_rows)
+        for _marker, _values in marker_values(_image, _names, heldout_rules, axis=0).items():
+            _images[f"colony{_index}_{_marker}"] = np.asarray(_values, dtype=np.float32)
+        _images[f"colony{_index}_mask"] = np.asarray(_mask, dtype=bool)
+        _image_rows.append({"image": _index, **_row})
+
+    for _condition, _colonies in _found.items():
+        for _colony, (_image, _mask, _names) in enumerate(_colonies, start=1):
+            _keep_image(
+                _image, _names, _mask, dataset="150K", condition=_condition, colony=_colony,
+                knockout_hour=_ko_hours[_condition], density=_training_density,
+            )
+            _shares = data_label_shares(_image, _names, heldout_rules, _mask, _rings, resolve_several=_resolve)
+            _measured.extend(
+                {
+                    "dataset": "150K", "condition": _condition, "colony": _colony,
+                    "knockout_hour": _ko_hours[_condition], "density": _training_density,
+                    "cell_type": _label, "share": float(_share),
+                }
+                for _label, _share in zip(_labels, _shares)
+            )
+    _measured.extend(
+        {
+            "dataset": "250K", "condition": f"ko_{_row.knockout_hour:g}h", "colony": 1,
+            "knockout_hour": float(_row.knockout_hour), "density": heldout_density,
+            "cell_type": _row.cell_type, "share": float(_row.measured),
+        }
+        for _row in heldout_measured.itertuples()
+    )
+    for _hour, _image, _mask in zip(heldout_colonies["hours"], heldout_colonies["images"], heldout_colonies["mask"]):
+        _keep_image(
+            _image, heldout_colonies["channel_names"], _mask, dataset="250K", condition=f"ko_{_hour:g}h",
+            colony=1, knockout_hour=float(_hour), density=heldout_density,
+        )
+
+    _directory = repository_root / "figures" / "density_ko"
+    _directory.mkdir(parents=True, exist_ok=True)
+    _model.to_csv(_directory / "model_prevalence.csv", index=False)
+    pd.DataFrame(_measured).to_csv(_directory / "measured_prevalence.csv", index=False)
+    pd.DataFrame(_image_rows).to_csv(_directory / "measured_images.csv", index=False)
+    np.savez_compressed(_directory / "measured_images.npz", **_images)
+    _settings = {
+        "projection": _projection,
+        "density_unit": _results[0]["density_unit"],
+        "density_label": DENSITY_AXIS_LABELS[_results[0]["density_unit"]],
+        "snapshot_hour": _snapshot,
+        "training_density": _training_density,
+        "test_density": heldout_density,
+        "group_by": dko_group_by.value,
+        "cell_types": _labels,
+        "cell_type_file": repository_relative_path(cell_type_files.value[_projection]),
+        "thresholds": {_m: float(_t) for _m, _t in heldout_rules.thresholds.items()},
+        "rings": _rings,
+        "resolve_several": _resolve,
+        "normalisation_250k": heldout_normalisation.value,
+        # Cell placement etc. of the sweep settings above, for NCA rollouts at
+        # chosen points in the figure (the settings shown, not read from a loaded results file)
+        "sweep_settings": _asdict(dko_settings),
+    }
+    (_directory / "settings.json").write_text(json.dumps(_settings, indent=2))
+    mo.callout(
+        f"Saved {len(_results)} runs, {len(_found.get('baseline', []))}/{len(_found.get('ko_0h', []))}/"
+        f"{len(_found.get('ko_24h', []))} 150K colonies (baseline/KO 0h/KO 24h) and "
+        f"{heldout_measured['knockout_hour'].nunique()} 250K colonies to `{repository_relative_path(_directory)}`.",
+        kind="success",
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Tuning thresholds on 150K and 250K data together
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(dko_results, heldout_projection):
     # Models of the held-out projection in the loaded sweep
     _models = {}
@@ -4336,7 +4730,6 @@ def _(dko_results, heldout_projection):
     tp_load = mo.ui.run_button(label="Load rollouts")
     mo.vstack([
         mo.md(
-            "### Tuning thresholds on 150K and 250K data together\n\n"
             "- The sweep keeps only counts made with the cell type file's thresholds, so the heatmaps above cannot follow a threshold change\n"
             "- Here the models are rolled out at the points with data, and their 48h states kept: 150K density (baseline, KO 0h, KO 24h) and 250/150 × 150K density (the 250K KO times)\n"
             "- The sliders then set **one** set of thresholds for the model states, the 150K colonies and the 250K colonies (S2-panel rules, as above)\n"
@@ -4559,12 +4952,26 @@ def _(
 def _():
     mo.md(r"""
     ## Cell-fate dynamics across intervention and measurement time
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     Sweep NODAL-KO time while measuring the cell-type shares (from the cell
     type file above) at every NCA update. Only the number of pixels of each
     marker pattern in each ring is kept per step, rather than full image
     trajectories. After the sweep, use the
     selectors below to explore model and cell-type heatmaps without rerunning.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Run the sweep
     """)
     return
 
@@ -4783,6 +5190,14 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Dynamics CSV export
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(temporal_prevalence_results):
     _dynamics_export_rows = []
     for _result in temporal_prevalence_results or ():
@@ -4827,7 +5242,6 @@ def _(temporal_prevalence_results):
             label="Download prevalence dynamics CSV",
     )
     mo.vstack([
-        mo.md("### Dynamics CSV export"),
         mo.md(
             "Download is ready."
             if _dynamics_export_ready
@@ -4835,6 +5249,14 @@ def _(temporal_prevalence_results):
         ),
         _dynamics_download,
     ])
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### Prevalence over KO and measurement time
+    """)
     return
 
 
@@ -4930,7 +5352,13 @@ def _(
 def _():
     mo.md(r"""
     ## Composite CMY snapshots and video
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     Render a full-resolution trajectory from one selected model and initial
     condition as three horizontal CMY panels: SOX2–TBXT–SOX17,
     CER1–LEFTY2–NODAL, and FOXA2–LEF1–SMAD23. The shaped conditions resample
@@ -5183,7 +5611,13 @@ def _(
 def _():
     mo.md(r"""
     ## Generative trajectory ensemble
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     Render nine independently seeded predictions from one model as a 3×3 grid.
     Every tile is a SOX2–TBXT–SOX17 CMY composite at the selected developmental
     time. Initial marker intensities are independently resampled within the

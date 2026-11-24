@@ -320,7 +320,67 @@ def load_size_density_results(path):
         result["conditions"] = tuple(result["conditions"])
         # Results from before the references are all sweep results
         result.setdefault("source", "sweep")
-    return results
+    return merge_size_parts(results)
+
+
+# Arrays with the colony size first; the profiles' radial bins are padded to the largest colony's
+SIZE_AXIS_ARRAYS = (
+    "diameters_um", "colony_mm2", "covered_shares", "cells_per_mm2", "cells_per_colony", "max_density",
+    "pattern_counts", "cell_pattern_counts", "channel_means", "profiles", "profile_counts",
+    "colony_masks", "initial_states", "final_states",
+)
+
+
+def merge_size_parts(results):
+    """Results of a job split by size, joined into one result per run.
+
+    Each part of such a job holds one size, so one run (model, replicate,
+    run and ``source``) is spread over several results. They are joined
+    along the size axis, smallest size first; profiles are padded to the
+    most radial bins (NaN means, zero counts). Images are kept only when
+    every part has them. Results whose sizes overlap (e.g. two jobs loaded
+    together) are left as they are.
+    """
+    groups = {}
+    for result in results:
+        key = (result["model_id"], result["replicate"], result["run_index"], result["source"])
+        groups.setdefault(key, []).append(result)
+    merged = []
+    for result in results:
+        key = (result["model_id"], result["replicate"], result["run_index"], result["source"])
+        parts = groups.get(key)
+        if parts is None:
+            continue  # already joined into an earlier result
+        sizes = np.concatenate([np.asarray(_p["diameters_um"], dtype=float) for _p in parts])
+        if len(parts) == 1 or len(np.unique(sizes)) < len(sizes):
+            merged.extend(parts)
+            del groups[key]
+            continue
+        del groups[key]
+        parts = sorted(parts, key=lambda _p: float(np.min(_p["diameters_um"])))
+        n_bins = max(len(_p["profile_radii_um"]) for _p in parts)
+
+        def padded(_array, _fill):
+            # Radial bins are the second-to-last axis of the profiles
+            _array = np.asarray(_array)
+            _pad = [(0, 0)] * _array.ndim
+            _pad[-2] = (0, n_bins - _array.shape[-2])
+            return np.pad(_array, _pad, constant_values=_fill)
+
+        joined = dict(parts[0])
+        for name in SIZE_AXIS_ARRAYS:
+            values = [_p.get(name) for _p in parts]
+            if any(_v is None for _v in values):
+                joined[name] = None
+            elif name == "profiles":
+                joined[name] = np.concatenate([padded(_v, np.nan) for _v in values])
+            elif name == "profile_counts":
+                joined[name] = np.concatenate([padded(_v, 0) for _v in values])
+            else:
+                joined[name] = np.concatenate([np.asarray(_v) for _v in values])
+        joined["profile_radii_um"] = max((_p["profile_radii_um"] for _p in parts), key=len)
+        merged.append(joined)
+    return tuple(merged)
 
 
 # ---------------------------------------------------------------- sweep

@@ -426,6 +426,41 @@ def model_stain_prevalence(pattern_counts, markers, restricted, resolve_several=
     return np.asarray(shares).reshape(*counts.shape[:-2], -1)
 
 
+def model_prevalence_rows(results, restricted, group_by, resolve_several=0.0):
+    """One row per run, density, KO time and cell type of density × KO sweep
+    ``results``: the share with ``restricted`` rules (``model_stain_prevalence``).
+
+    ``density`` is the density the run actually used, in its ``density_unit``;
+    ``group`` is the run's group under ``group_by`` (as in the notebook).
+    """
+    from Common.dataloader.cell_types import label_names
+    from Experiments.micropatterns.density_ko_sweep import actual_densities
+
+    labels = label_names(restricted)
+    rows = []
+    for run, result in enumerate(results):
+        grid = model_stain_prevalence(
+            result["pattern_counts"], result["cell_type_markers"], restricted, resolve_several=resolve_several,
+        )
+        for density_index, (requested, density) in enumerate(zip(result["densities"], actual_densities(result))):
+            for ko_index, hour in enumerate(result["requested_ko_hours"]):
+                rows.extend(
+                    {
+                        "group": result["groups"][group_by],
+                        "model_id": result["model_id"],
+                        "run": run,
+                        "density_index": density_index,
+                        "requested_density": float(requested),
+                        "density": float(density),
+                        "knockout_hour": float(hour),
+                        "cell_type": label,
+                        "prevalence": float(share),
+                    }
+                    for label, share in zip(labels, grid[density_index, ko_index])
+                )
+    return rows
+
+
 def test_density(results):
     """The test density in the sweep's unit: ``PLATING_SCALE`` times the measured 150K density."""
     unit = results[0]["density_unit"]
