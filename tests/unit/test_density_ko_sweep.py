@@ -15,6 +15,7 @@ from Experiments.micropatterns.density_ko_sweep import (
     load_density_ko_results,
     save_density_ko_results,
     settings_from_dict,
+    tuning_grid,
 )
 from Experiments.micropatterns.texture_settings import CellSettings
 from Experiments.notebook_jobs import part_path, read_job_entry, write_job_manifest
@@ -143,6 +144,22 @@ def test_old_job_files_keep_their_cell_settings():
     # Before cell placement was a setting, cells were placed in layers
     unset = settings_from_dict({"data_root": "data", "store_root": "models", "cell_type_files": {"max": "x"}})
     assert unset.cell_settings("max").placement == "layers"
+
+
+def test_tuning_grid_steps_around_the_file_thresholds_within_0_and_1():
+    from types import SimpleNamespace
+
+    rules = SimpleNamespace(markers=("SOX17", "TBXT", "SOX2"), thresholds={"SOX17": 0.1, "TBXT": 0.5, "SOX2": 0.4})
+    settings = DensityKoSettings(data_root="data", store_root="models", tuning_span=0.2, tuning_step=0.1)
+    grid = tuning_grid(rules, settings)
+    # FOXA2 is not in these rules; SOX2 is not a tuning marker
+    assert list(grid) == ["SOX17", "TBXT"]
+    np.testing.assert_allclose(grid["SOX17"], [0.0, 0.1, 0.2, 0.3])
+    np.testing.assert_allclose(grid["TBXT"], [0.3, 0.4, 0.5, 0.6, 0.7])
+    assert tuning_grid(rules, replace(settings, tuning_span=0.0)) == {}
+    # Job files from before tuning get the default grid; lists come back as tuples
+    old = settings_from_dict({"data_root": "data", "store_root": "models", "tuning_markers": ["TBXT"]})
+    assert old.tuning_markers == ("TBXT",) and old.tuning_span == 0.2
 
 
 def test_settings_ranges():
@@ -406,6 +423,12 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
             assert result["pattern_counts"].shape[:3] == (3, 2, 3)
             assert result["channel_means"].shape == (3, 2, 3, 4)
             assert np.all(np.isfinite(result["channel_means"]))
+            # One histogram per density and KO time, holding every colony pixel once
+            grid = result["tuning_grid"]
+            assert list(grid) == ["SOX17", "TBXT", "FOXA2"]
+            bins = int(np.prod([len(_values) + 1 for _values in grid.values()]))
+            assert result["tuning_counts"].shape == (3, 2, bins)
+            np.testing.assert_allclose(result["tuning_counts"].sum(axis=-1), np.count_nonzero(result["colony"]))
         cells = results[0]["cells_per_colony"]
         if placement == "tiled":
             np.testing.assert_array_equal(cells, [20, 70, 120])
@@ -422,6 +445,8 @@ def test_whole_sweep_runs_with_fake_models_and_data(monkeypatch, tmp_path):
         assert loaded[0]["placement"] == placement
         assert loaded[0]["cell_settings"]["placement"] == placement
         np.testing.assert_allclose(loaded[1]["channel_means"], results[1]["channel_means"])
+        np.testing.assert_allclose(loaded[1]["tuning_counts"], results[1]["tuning_counts"])
+        assert loaded[1]["tuning_grid"] == results[1]["tuning_grid"]
 
     # A remote job part, as a pod runs it: manifest entry -> part file, skipped when rerun
     from Experiments.micropatterns.density_ko_sweep import run_job_part

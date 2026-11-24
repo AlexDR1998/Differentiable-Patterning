@@ -61,6 +61,12 @@ Things to keep in mind:
 Rollouts of all runs × densities of one KO time go to the GPU together, in
 chunks of "Rollouts per GPU batch" (`max_batch`).
 
+For threshold tuning, each run also keeps a histogram of the S2 markers
+(SOX17, TBXT, FOXA2) on a grid of thresholds: the cell type file's values ±
+`tuning_span` (0.2) in steps of `tuning_step` (0.05), set in
+`DensityKoSettings`. `figures/density_ko_figure.py` uses it to count cell
+types again at any thresholds on that grid (*Thresholds*). A span of 0 turns it off.
+
 ## Size × density sweep
 
 `Experiments/micropatterns/size_density_explorer.py` (module `size_density_sweep.py`) sweeps the colony diameter (µm) and cell density, with optional NODAL KO hours. Initial states come from the same cell placement as the density × KO sweep (`density_ko_sweep.prepare_model_cells`). Each run keeps radial profiles over time (kymographs) as well as the end-time ring counts. Densities default to 0.1× to 2× the measured density. Two optional size sweeps run every diameter at the measured density, or with the measured cells per colony.

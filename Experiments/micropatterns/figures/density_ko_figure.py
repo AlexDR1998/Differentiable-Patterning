@@ -10,6 +10,9 @@ Run with:
   (SOX17, TBXT, FOXA2), as the 250K colonies have only those markers.
 - Optional panel d: colony images at chosen points. NCA images need a rollout
   (button; JAX, a GPU helps), cached in ``figures/density_ko/cache/``.
+- Thresholds: for sweeps saved with threshold-grid histograms, the S2
+  thresholds can be fitted (NCA against data) and changed by hand, and every
+  panel follows; the result can be saved as a cell type file.
 """
 
 import marimo
@@ -32,7 +35,13 @@ with app.setup:
     from dotenv import load_dotenv
     from matplotlib.patches import Patch
 
-    from Common.dataloader.cell_types import load_cell_type_rules, marker_values, pixel_label_shares
+    from Common.dataloader.cell_types import (
+        label_names,
+        load_cell_type_rules,
+        marker_values,
+        pixel_label_shares,
+        save_cell_type_rules,
+    )
     from Experiments.micropatterns import density_test_data as heldout
     from Experiments.micropatterns.density_ko_sweep import settings_from_dict
     from Experiments.micropatterns.figures.data import cache_name, cached, cell_type_rgba
@@ -68,6 +77,9 @@ with app.setup:
     IMAGES_CSV = FIGURE_DIRECTORY / "measured_images.csv"
     IMAGES_NPZ = FIGURE_DIRECTORY / "measured_images.npz"
     CACHE_DIRECTORY = FIGURE_DIRECTORY / "cache"
+    # Threshold-grid histograms of the sweep runs, for live threshold tuning
+    TUNING_NPZ = FIGURE_DIRECTORY / "model_tuning_counts.npz"
+    CELL_TYPE_DIRECTORY = REPOSITORY_ROOT / "Experiments/micropatterns/conf/cell_types"
     # Channels of the marker images, in the order of the figure channels of the S2 panel
     IMAGE_MARKERS = ("FOXA2", "TBXT", "SOX17")
     IMAGE_ROWS = ("True data", "NCA")
@@ -111,6 +123,52 @@ def summarise_measured(measured):
 @app.function(hide_code=True)
 def format_density(value, unit):
     return f"{value:.2f}" if unit == "share" else f"{value:,.0f}"
+
+
+@app.function(hide_code=True)
+def tuned_model_rows(tuning, group, grid, rules, thresholds, resolve_several):
+    """Rows as in ``model_prevalence.csv`` for the runs of ``group``, counted
+    at ``thresholds`` from the threshold-grid histograms ``tuning``."""
+    runs = np.flatnonzero(tuning["groups"] == group)
+    # [runs, densities, KO times, labels]
+    shares = heldout.grid_shares(tuning["counts"][runs], grid, rules, thresholds, resolve_several)
+    run, density, hour, label = np.indices(shares.shape).reshape(4, -1)
+    return pd.DataFrame({
+        "run": runs[run],
+        "density_index": density,
+        "density": tuning["densities"][runs][run, density],
+        "knockout_hour": tuning["ko_hours"][hour],
+        "cell_type": np.asarray(label_names(rules))[label],
+        "prevalence": shares.ravel(),
+    })
+
+
+@app.function(hide_code=True)
+def tuned_measured_rows(table, histograms, grid, rules, thresholds, resolve_several):
+    """Rows as in ``measured_prevalence.csv`` for the colonies of ``table``
+    (``measured_images.csv``), counted at ``thresholds`` from their histograms."""
+    labels = list(label_names(rules))
+    shares = heldout.grid_shares(histograms, grid, rules, thresholds, resolve_several)
+    rows = table.loc[table.index.repeat(len(labels))].reset_index(drop=True)
+    rows["cell_type"] = labels * len(table)
+    rows["share"] = shares.ravel()
+    return rows
+
+
+@app.function(hide_code=True)
+def measured_points(table, histograms, tuning, group, snapshot):
+    """``(nca, data)``: histograms at each measured point (``fit_thresholds``),
+    the NCA runs of ``group`` interpolated to the point."""
+    runs = [
+        {"counts": tuning["counts"][i], "densities": tuning["densities"][i], "ko_hours": tuning["ko_hours"]}
+        for i in np.flatnonzero(tuning["groups"] == group)
+    ]
+    nca, data = {}, {}
+    for (dataset, hour, density), rows in table.groupby(["dataset", "knockout_hour", "density"], sort=False):
+        name = f"{dataset} " + ("baseline" if hour >= snapshot else f"KO {hour:g}h")
+        data[name] = histograms[rows.index.to_numpy()]
+        nca[name] = heldout.histograms_at(runs, density, hour)
+    return nca, data
 
 
 @app.function(hide_code=True)
@@ -413,6 +471,11 @@ def _():
     model_table = pd.read_csv(MODEL_CSV)
     measured_table = pd.read_csv(MEASURED_CSV)
     figure_settings = json.loads(SETTINGS_JSON.read_text())
+    # Threshold-grid histograms (sweeps run since threshold tuning was added)
+    figure_tuning = None
+    if TUNING_NPZ.is_file() and figure_settings.get("tuning_grid"):
+        with np.load(TUNING_NPZ) as _file:
+            figure_tuning = {_key: _file[_key] for _key in _file.files}
     mo.md(
         f"- Projection **{figure_settings['projection']}**, groups by *{figure_settings['group_by']}*, "
         f"cell type file `{figure_settings['cell_type_file']}`\n"
@@ -420,9 +483,14 @@ def _():
         + ", ".join(f"{_d} {_n}" for _d, _n in measured_table.groupby("dataset")["colony"].nunique().items())
         + "\n"
         f"- 250K normalisation: {figure_settings['normalisation_250k']}; rings {figure_settings['rings']}; "
-        f"resolve multiple matches {figure_settings['resolve_several']:g}"
+        f"resolve multiple matches {figure_settings['resolve_several']:g}\n"
+        + (
+            "- Threshold-grid histograms found: thresholds can be tuned live (*Thresholds* below)"
+            if figure_tuning is not None
+            else "- No threshold-grid histograms: shares are fixed at the saved thresholds"
+        )
     )
-    return figure_settings, measured_table, model_table
+    return figure_settings, figure_tuning, measured_table, model_table
 
 
 @app.cell(hide_code=True)
@@ -455,15 +523,10 @@ def _(figure_settings, model_table):
 
 
 @app.cell(hide_code=True)
-def _(figure_group, figure_uncertainty, model_table):
-    figure_summary = summarise_model(model_table[model_table["group"] == figure_group.value], figure_uncertainty.value)
-    return (figure_summary,)
-
-
-@app.cell(hide_code=True)
-def _(figure_settings, figure_summary):
+def _(figure_group, figure_settings, model_table):
     _snapshot = float(figure_settings["snapshot_hour"])
-    _hours = sorted(figure_summary["knockout_hour"].unique())
+    _runs = model_table[model_table["group"] == figure_group.value]
+    _hours = sorted(_runs["knockout_hour"].unique())
     _ko_options = {ko_time_label(_h, _snapshot): float(_h) for _h in _hours}
     figure_slice_ko = mo.ui.dropdown(
         _ko_options,
@@ -471,7 +534,7 @@ def _(figure_settings, figure_summary):
         value=next((_k for _k, _h in _ko_options.items() if np.isclose(_h, 24.0)), next(iter(_ko_options))),
         label="KO time of slice b",
     )
-    _densities = figure_summary.groupby("density_index")["density"].mean().sort_values()
+    _densities = _runs.groupby("density_index")["density"].mean().sort_values()
     _unit = figure_settings["density_unit"]
     _density_options = {format_density(_v, _unit): int(_i) for _i, _v in _densities.items()}
     # Default: the swept density nearest the 150K training density
@@ -483,6 +546,227 @@ def _(figure_settings, figure_summary):
     )
     mo.hstack([figure_slice_ko, figure_slice_density], justify="start")
     return figure_slice_density, figure_slice_ko
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Thresholds
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    - The S2 thresholds (SOX17, TBXT, FOXA2) decide which pixels count as each cell type, in the NCA and the data alike
+    - The sweep keeps, for every run, how many pixels fall between candidate thresholds near the cell type file's values (± `tuning_span` in steps of `tuning_step`, `density_ko_sweep.py`), so the shares can be counted again at any of them without new rollouts
+    - *Auto-tune* tries every combination on that grid and keeps the one where the NCA best matches the data: smallest mean |NCA − data| over the measured points (150K and 250K) and the cell types shown
+    - Combinations where a shown cell type almost vanishes from the data (mean share under 2%) are skipped: NCA and data would then agree only because neither has it
+    - Then adjust by hand; every panel follows. The 250K colonies are fitted too, so they are no longer a held-out test of the thresholds
+    - Thresholds are cell-type rules, not a model fit: some conditions may not match at any thresholds
+    - *Save as a cell type file* writes the cell type file with these thresholds, for `nodal_ko_eval.py` and new sweeps (whose grid is then centred on them)
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(figure_settings, figure_tuning):
+    # {marker: candidate thresholds}, and the saved thresholds on that grid
+    figure_grid = figure_settings["tuning_grid"] if figure_tuning is not None else None
+    figure_start_thresholds = None if figure_grid is None else {
+        _m: float(_v[heldout.grid_indices({_m: _v}, figure_settings["thresholds"])[0]])
+        for _m, _v in figure_grid.items()
+    }
+    get_figure_thresholds, set_figure_thresholds = mo.state(figure_start_thresholds)
+    return figure_grid, figure_start_thresholds, get_figure_thresholds, set_figure_thresholds
+
+
+@app.cell(hide_code=True)
+def _(figure_grid, figure_settings, figure_start_thresholds, get_figure_thresholds, set_figure_thresholds):
+    mo.stop(
+        figure_grid is None,
+        mo.callout(
+            "No threshold-grid histograms in `figures/density_ko/`. Rerun the density × KO sweep (it now keeps them), "
+            "load it in `nodal_ko_eval.py` and click *Save for density × KO figure* again.",
+            kind="info",
+        ),
+    )
+    _current = get_figure_thresholds()
+    figure_threshold_sliders = mo.ui.dictionary(
+        {
+            _m: mo.ui.slider(steps=list(_v), value=_current[_m], show_value=True, label=_m)
+            for _m, _v in figure_grid.items()
+        },
+        on_change=lambda _values: set_figure_thresholds({_m: float(_t) for _m, _t in _values.items()}),
+    )
+    figure_autotune = mo.ui.run_button(label="Auto-tune", kind="success")
+    _reset = mo.ui.button(
+        label="Reset to the saved thresholds", on_click=lambda _: set_figure_thresholds(dict(figure_start_thresholds)),
+    )
+    figure_rules_name = mo.ui.text(
+        f"260726_cell_types_{figure_settings['projection']}_tuned_dko.yaml", label="File name", full_width=True,
+    )
+    figure_save_rules = mo.ui.run_button(label="Save as a cell type file")
+    mo.vstack([
+        mo.hstack([figure_threshold_sliders[_m] for _m in figure_grid], justify="start", wrap=True),
+        mo.hstack([figure_autotune, _reset], justify="start"),
+        mo.hstack([figure_rules_name, figure_save_rules], justify="start", widths=[4, 1]),
+    ])
+    return figure_autotune, figure_rules_name, figure_save_rules
+
+
+@app.cell(hide_code=True)
+def _(figure_settings):
+    # The cell type file the data were saved with, at the saved thresholds
+    _rules = load_cell_type_rules(REPOSITORY_ROOT / figure_settings["cell_type_file"])
+    figure_file_rules = replace(_rules, thresholds={**_rules.thresholds, **figure_settings["thresholds"]})
+    # Marker images of the measured colonies (saved since the image panel was added)
+    if IMAGES_CSV.is_file() and IMAGES_NPZ.is_file():
+        with np.load(IMAGES_NPZ) as _file:
+            figure_measured_images = (pd.read_csv(IMAGES_CSV), {_key: _file[_key] for _key in _file.files})
+    else:
+        figure_measured_images = None
+    return figure_file_rules, figure_measured_images
+
+
+@app.cell(hide_code=True)
+def _(figure_file_rules, get_figure_thresholds):
+    # S2 rules at the current thresholds: used by every panel
+    figure_rules, _, _ = heldout.stain_rules(
+        replace(figure_file_rules, thresholds={**figure_file_rules.thresholds, **(get_figure_thresholds() or {})})
+    )
+    return (figure_rules,)
+
+
+@app.cell(hide_code=True)
+def _(figure_grid, figure_measured_images):
+    # Histogram of each measured colony on the threshold grid (rows of measured_images.csv)
+    figure_data_histograms = None
+    if figure_grid is not None and figure_measured_images is not None:
+        _table, _arrays = figure_measured_images
+        figure_data_histograms = np.stack([
+            heldout.colony_histogram(
+                {_m: _arrays[f"colony{_i}_{_m}"] for _m in figure_grid}, _arrays[f"colony{_i}_mask"], figure_grid,
+            )
+            for _i in _table["image"]
+        ])
+    return (figure_data_histograms,)
+
+
+@app.cell(hide_code=True)
+def _(
+    figure_data_histograms,
+    figure_grid,
+    figure_group,
+    figure_measured_images,
+    figure_rules,
+    figure_settings,
+    figure_tuning,
+    figure_uncertainty,
+    get_figure_thresholds,
+    measured_table,
+    model_table,
+):
+    # Shares shown in the figure: counted at the current thresholds when the
+    # histograms were saved, else as saved
+    _resolve = float(figure_settings["resolve_several"])
+    if figure_tuning is not None and figure_data_histograms is not None:
+        _thresholds = get_figure_thresholds()
+        _model = tuned_model_rows(figure_tuning, figure_group.value, figure_grid, figure_rules, _thresholds, _resolve)
+        figure_measured = tuned_measured_rows(
+            figure_measured_images[0], figure_data_histograms, figure_grid, figure_rules, _thresholds, _resolve,
+        )
+    else:
+        _model = model_table[model_table["group"] == figure_group.value]
+        figure_measured = measured_table
+    figure_summary = summarise_model(_model, figure_uncertainty.value)
+    return figure_measured, figure_summary
+
+
+@app.cell(hide_code=True)
+def _(
+    figure_cell_types,
+    figure_data_histograms,
+    figure_file_rules,
+    figure_grid,
+    figure_group,
+    figure_measured_images,
+    figure_settings,
+    figure_tuning,
+):
+    # Every combination of thresholds on the grid, scored at the measured points
+    figure_fit = None
+    if figure_tuning is not None and figure_data_histograms is not None and figure_cell_types.value:
+        _nca, _data = measured_points(
+            figure_measured_images[0], figure_data_histograms, figure_tuning, figure_group.value,
+            float(figure_settings["snapshot_hour"]),
+        )
+        _restricted, _, _ = heldout.stain_rules(figure_file_rules)
+        figure_fit = heldout.fit_thresholds(
+            _nca, _data, figure_grid, _restricted, list(figure_cell_types.value),
+            float(figure_settings["resolve_several"]),
+        )
+    return (figure_fit,)
+
+
+@app.cell(hide_code=True)
+def _(figure_autotune, figure_fit, set_figure_thresholds):
+    mo.stop(not figure_autotune.value or figure_fit is None)
+    set_figure_thresholds(dict(figure_fit["thresholds"]))
+    return
+
+
+@app.cell(hide_code=True)
+def _(figure_fit, figure_grid, figure_start_thresholds, get_figure_thresholds):
+    mo.stop(figure_fit is None)
+    _sets = {
+        "saved": figure_start_thresholds,
+        "current": get_figure_thresholds(),
+        "best on grid": figure_fit["thresholds"],
+    }
+    _datasets = np.asarray([_p.split(" ")[0] for _p in figure_fit["points"]])
+
+    def _by_dataset(thresholds):
+        _errors = figure_fit["point_errors"][(slice(None), *heldout.grid_indices(figure_grid, thresholds))]
+        _rows = {_d: float(np.nanmean(_errors[_datasets == _d])) for _d in dict.fromkeys(_datasets)}
+        return {**_rows, "all": float(np.nanmean(_errors))}
+
+    _table = pd.DataFrame({_name: _by_dataset(_t) for _name, _t in _sets.items()}).round(3)
+    _table.index.name = "mean |NCA − data|"
+    _thresholds = pd.DataFrame(_sets).T
+
+    # Error along each marker, the others at their current values: where to move by hand
+    _current = heldout.grid_indices(figure_grid, get_figure_thresholds())
+    _figure, _axes = plt.subplots(1, len(figure_grid), figsize=(3.0 * len(figure_grid), 2.2), dpi=110, squeeze=False)
+    for _k, (_axis, (_marker, _values)) in enumerate(zip(_axes[0], figure_grid.items())):
+        _index = list(_current)
+        _index[_k] = slice(None)
+        _axis.plot(_values, figure_fit["errors"][tuple(_index)], marker="o", markersize=3, color="0.3")
+        _axis.axvline(get_figure_thresholds()[_marker], color="tab:red", linestyle="--", linewidth=1)
+        _axis.set(title=_marker, xlabel="threshold", ylabel="mean |NCA − data|" if _k == 0 else None)
+    _figure.tight_layout()
+    mo.vstack([
+        mo.hstack([_table, _thresholds], justify="start"),
+        mo.md("Error along each marker with the others at the current values (red: current):"),
+        _figure,
+    ])
+    return
+
+
+@app.cell(hide_code=True)
+def _(figure_file_rules, figure_rules_name, figure_save_rules, get_figure_thresholds):
+    mo.stop(not figure_save_rules.value)
+    _path = CELL_TYPE_DIRECTORY / figure_rules_name.value.strip()
+    mo.stop(_path.exists(), mo.callout(f"`{_path.name}` exists; choose another name.", kind="warn"))
+    _tuned = replace(figure_file_rules, thresholds={**figure_file_rules.thresholds, **get_figure_thresholds()})
+    save_cell_type_rules(_path, _tuned, made_with="Experiments/micropatterns/figures/density_ko_figure.py (threshold tuning)")
+    mo.md(
+        f"- Saved `{_path.relative_to(REPOSITORY_ROOT)}`\n"
+        "- A threshold applies wherever its marker is read, also in the S1 panel (e.g. SOX17)\n"
+        "- Choose it in `nodal_ko_eval.py` (*Cell types*) for new sweeps"
+    )
+    return
 
 
 @app.cell(hide_code=True)
@@ -547,21 +831,6 @@ def _(figure_image_text, figure_settings):
         _view = mo.callout("Could not read the points; write them as `150K@24, 250K@36`.", kind="warn")
     _view
     return (figure_points,)
-
-
-@app.cell(hide_code=True)
-def _(figure_settings):
-    # The S2 rules of the saved data: the cell type file with the thresholds used when saving
-    _rules = load_cell_type_rules(REPOSITORY_ROOT / figure_settings["cell_type_file"])
-    _rules = replace(_rules, thresholds={**_rules.thresholds, **figure_settings["thresholds"]})
-    figure_rules, _, _ = heldout.stain_rules(_rules)
-    # Marker images of the measured colonies (saved since the image panel was added)
-    if IMAGES_CSV.is_file() and IMAGES_NPZ.is_file():
-        with np.load(IMAGES_NPZ) as _file:
-            figure_measured_images = (pd.read_csv(IMAGES_CSV), {_key: _file[_key] for _key in _file.files})
-    else:
-        figure_measured_images = None
-    return figure_measured_images, figure_rules
 
 
 @app.cell(hide_code=True)
@@ -672,28 +941,33 @@ def _(
     figure_image_points,
     figure_image_row_names,
     figure_image_style,
+    figure_measured,
     figure_settings,
     figure_show_slices,
     figure_slice_density,
     figure_slice_ko,
     figure_summary,
     figure_uncertainty,
-    measured_table,
+    get_figure_thresholds,
 ):
     mo.stop(not figure_cell_types.value, mo.md("- Choose at least one cell type"))
     _cell_types = [_c for _c in figure_settings["cell_types"] if _c in figure_cell_types.value]
     _shown = figure_summary[figure_summary["cell_type"].isin(_cell_types)]
     _colour_max = 1.0 if figure_colour_max.value == "one" else float(max(
-        _shown["mean"].max(), measured_table[measured_table["cell_type"].isin(_cell_types)]["share"].max(),
+        _shown["mean"].max(), figure_measured[figure_measured["cell_type"].isin(_cell_types)]["share"].max(),
     ))
     with paper_style():
         density_ko_figure = draw_figure(
-            figure_summary, measured_table, figure_settings, _cell_types,
+            figure_summary, figure_measured, figure_settings, _cell_types,
             figure_slice_ko.value, figure_slice_density.value, _colour_max,
             figure_show_slices.value, figure_uncertainty.value != "none",
             figure_image_points, figure_image_row_names, figure_image_style.value,
         )
-    density_ko_figure
+    _thresholds = get_figure_thresholds() or figure_settings["thresholds"]
+    mo.vstack([
+        density_ko_figure,
+        mo.md("Thresholds: " + ", ".join(f"{_m} {_t:.2f}" for _m, _t in _thresholds.items())),
+    ])
     return (density_ko_figure,)
 
 

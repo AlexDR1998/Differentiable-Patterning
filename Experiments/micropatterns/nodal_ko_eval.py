@@ -4582,6 +4582,7 @@ def _():
             "- Saves to `figures/density_ko/`: the S2-rule prevalence of every sweep run of this projection, "
             "the 250K shares above, and the 150K training colonies at the end time (read when saving), with their marker images\n"
             "- Also the sweep settings above (cell placement, seeds), for NCA images at chosen points in the figure\n"
+            "- And each run's histograms on the threshold grid (sweeps run since threshold tuning was added), so the figure can tune thresholds live\n"
             "- Model and data use the same S2 rules, rings and *Resolve multiple matches*; groups as *Group replicate models by*\n"
             "- Then open `Experiments/micropatterns/figures/density_ko_figure.py`"
         ),
@@ -4675,6 +4676,20 @@ def _(
     pd.DataFrame(_measured).to_csv(_directory / "measured_prevalence.csv", index=False)
     pd.DataFrame(_image_rows).to_csv(_directory / "measured_images.csv", index=False)
     np.savez_compressed(_directory / "measured_images.npz", **_images)
+    # Threshold-grid histograms of the sweep runs (density_ko_sweep.tuning_grid), for live tuning
+    _tuned_runs = [_r for _r in _results if _r["source"] == "sweep" and _r.get("tuning_counts") is not None]
+    _tuning_file = _directory / "model_tuning_counts.npz"
+    if _tuned_runs:
+        np.savez_compressed(
+            _tuning_file,
+            counts=np.stack([np.asarray(_r["tuning_counts"], dtype=np.float32) for _r in _tuned_runs]),
+            densities=np.stack([actual_densities(_r) for _r in _tuned_runs]),
+            ko_hours=np.asarray(_tuned_runs[0]["requested_ko_hours"], dtype=float),
+            groups=np.asarray([_r["groups"][dko_group_by.value] for _r in _tuned_runs]),
+            model_ids=np.asarray([_r["model_id"] for _r in _tuned_runs]),
+        )
+    elif _tuning_file.exists():
+        _tuning_file.unlink()  # left from an earlier save; it would not match these runs
     _settings = {
         "projection": _projection,
         "density_unit": _results[0]["density_unit"],
@@ -4692,13 +4707,19 @@ def _(
         # Cell placement etc. of the sweep settings above, for NCA rollouts at
         # chosen points in the figure (the settings shown, not read from a loaded results file)
         "sweep_settings": _asdict(dko_settings),
+        # {marker: candidate thresholds} of model_tuning_counts.npz (null without it)
+        "tuning_grid": _tuned_runs[0]["tuning_grid"] if _tuned_runs else None,
     }
     (_directory / "settings.json").write_text(json.dumps(_settings, indent=2))
     mo.callout(
         f"Saved {len(_results)} runs, {len(_found.get('baseline', []))}/{len(_found.get('ko_0h', []))}/"
         f"{len(_found.get('ko_24h', []))} 150K colonies (baseline/KO 0h/KO 24h) and "
-        f"{heldout_measured['knockout_hour'].nunique()} 250K colonies to `{repository_relative_path(_directory)}`.",
-        kind="success",
+        f"{heldout_measured['knockout_hour'].nunique()} 250K colonies to `{repository_relative_path(_directory)}`."
+        + (
+            f" Threshold-grid histograms of {len(_tuned_runs)} runs saved for live tuning." if _tuned_runs
+            else " These results have no threshold-grid histograms; sweeps run now keep them (`DensityKoSettings.tuning_span`), so rerun the sweep to tune live."
+        ),
+        kind="success" if _tuned_runs else "info",
     )
     return
 
@@ -4730,6 +4751,7 @@ def _(dko_results, heldout_projection):
     tp_load = mo.ui.run_button(label="Load rollouts")
     mo.vstack([
         mo.md(
+            "- For live tuning with automatic fitting, use the *Thresholds* section of `Experiments/micropatterns/figures/density_ko_figure.py` (needs a sweep with threshold-grid histograms, saved above)\n"
             "- The sweep keeps only counts made with the cell type file's thresholds, so the heatmaps above cannot follow a threshold change\n"
             "- Here the models are rolled out at the points with data, and their 48h states kept: 150K density (baseline, KO 0h, KO 24h) and 250/150 × 150K density (the 250K KO times)\n"
             "- The sliders then set **one** set of thresholds for the model states, the 150K colonies and the 250K colonies (S2-panel rules, as above)\n"

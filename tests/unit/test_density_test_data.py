@@ -1,5 +1,6 @@
 """Held-out 250K colonies: reading, normalisation, single-stain cell types, interpolation."""
 
+from dataclasses import replace
 from types import SimpleNamespace
 
 import numpy as np
@@ -183,3 +184,65 @@ def test_shares_follow_the_thresholds_for_data_and_model_alike():
         mesoderm = label_names(restricted).index("Mesoderm")
         assert (data_shares[0, mesoderm] > 0) == expected
         assert np.allclose(data_shares, model_shares)
+
+
+def _grid_and_colonies(rng, n=3):
+    grid = {"SOX17": [0.3, 0.5, 0.7], "TBXT": [0.2, 0.4], "FOXA2": [0.4, 0.6]}
+    mask = np.ones((10, 10), dtype=bool)
+    mask[:2] = False
+    colonies = [{marker: rng.random((10, 10)) for marker in grid} for _ in range(n)]
+    return grid, mask, colonies
+
+
+def test_grid_shares_equal_panel_shares_at_grid_thresholds():
+    rules = load_cell_type_rules(SUM_RULES)
+    grid, mask, colonies = _grid_and_colonies(np.random.default_rng(1))
+    histograms = np.stack([dt.colony_histogram(values, mask, grid) for values in colonies])
+    for thresholds in ({"SOX17": 0.5, "TBXT": 0.2, "FOXA2": 0.6}, {"SOX17": 0.7, "TBXT": 0.4, "FOXA2": 0.4}):
+        restricted, _, _ = dt.stain_rules(replace(rules, thresholds={**rules.thresholds, **thresholds}))
+        shares = dt.grid_shares(histograms, grid, restricted, thresholds)
+        # Rings play no part with one stain holding every marker
+        expected = [dt.panel_label_shares(values, mask, restricted, 4) for values in colonies]
+        np.testing.assert_allclose(shares, expected)
+
+
+def test_fit_tries_every_grid_combination_and_keeps_the_best():
+    rules = load_cell_type_rules(SUM_RULES)
+    rng = np.random.default_rng(2)
+    grid, mask, colonies = _grid_and_colonies(rng, n=4)
+    histograms = np.stack([dt.colony_histogram(values, mask, grid) for values in colonies])
+    restricted, _, _ = dt.stain_rules(rules)
+    nca = {"a": histograms[:2], "b": histograms[2:3], "outside": np.full((2, histograms.shape[1]), np.nan)}
+    data = {"a": histograms[3:], "b": histograms[:1], "outside": histograms[:1]}
+    cell_types = ["Endoderm", "Mesoderm"]
+    fit = dt.fit_thresholds(nca, data, grid, restricted, cell_types, min_share=0.0)
+    labels = label_names(restricted)
+    keep = [labels.index(cell_type) for cell_type in cell_types]
+    for combination in np.ndindex(*(len(values) for values in grid.values())):
+        thresholds = {marker: grid[marker][i] for marker, i in zip(grid, combination)}
+        error = np.mean([
+            np.abs(
+                dt.grid_shares(nca[point], grid, restricted, thresholds).mean(axis=0)[keep]
+                - dt.grid_shares(data[point], grid, restricted, thresholds).mean(axis=0)[keep]
+            ).mean()
+            for point in ("a", "b")  # the point outside the sweep is left out
+        ])
+        assert fit["errors"][combination] == pytest.approx(error)
+    assert fit["errors"][tuple(dt.grid_indices(grid, fit["thresholds"]))] == pytest.approx(np.nanmin(fit["errors"]))
+
+
+def test_fit_skips_thresholds_where_a_cell_type_vanishes_from_the_data():
+    rules = load_cell_type_rules(SUM_RULES)
+    restricted, _, _ = dt.stain_rules(rules)
+    grid = {"SOX17": [0.0, 0.5], "TBXT": [0.0, 0.5], "FOXA2": [0.0, 0.5]}
+    mask = np.ones((8, 8), dtype=bool)
+    # The NCA never has mesoderm (TBXT 0); the data does when SOX17 and FOXA2
+    # (0.1) count as low. A SOX17 or FOXA2 threshold of 0 makes them high, so
+    # neither has mesoderm and they agree; those fits are skipped.
+    values = {"SOX17": np.full((8, 8), 0.1), "TBXT": np.full((8, 8), 0.9), "FOXA2": np.full((8, 8), 0.1)}
+    values["TBXT"][:4] = 0.2
+    data = {"a": dt.colony_histogram(values, mask, grid)[None]}
+    nca = {"a": dt.colony_histogram({**values, "TBXT": np.zeros((8, 8))}, mask, grid)[None]}
+    fit = dt.fit_thresholds(nca, data, grid, restricted, ["Mesoderm"])
+    assert np.isnan(fit["errors"][0]).all() and np.isnan(fit["errors"][:, :, 0]).all()
+    assert fit["thresholds"] == {"SOX17": 0.5, "TBXT": 0.5, "FOXA2": 0.5}

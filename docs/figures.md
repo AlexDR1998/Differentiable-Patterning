@@ -57,7 +57,7 @@ save_figure(fig, "my_figure", "schematics")  # figures/schematics/my_figure.pdf 
 | `nca_training_schematic.py` | NCA update step and training schematic | `figures/schematics/` |
 | `loss_schematic.py` | Loss functions schematic | `figures/schematics/` |
 | `overview_figure.py` | Results overview (slide-sized by default) | `figures/overview/` |
-| `density_ko_figure.py` | Predicted prevalence over plating density × NODAL KO time (heatmaps), with the 150K training and held-out 250K colonies as markers, slices at one KO time and one density, and optional 48 h colony images (true data and NCA) at chosen points | `figures/density_ko/` |
+| `density_ko_figure.py` | Predicted prevalence over plating density × NODAL KO time (heatmaps), with the 150K training and held-out 250K colonies as markers, slices at one KO time and one density, and optional 48 h colony images (true data and NCA) at chosen points. For sweeps with threshold-grid histograms, the S2 thresholds can be auto-tuned (NCA against data), adjusted by hand with every panel following, and saved as a cell type file | `figures/density_ko/` |
 | `size_sweep_figure.py` | Predicted prevalence against colony diameter at a fixed cell density and a fixed cell count (optional cells per mm² row), with numbered 48 h snapshots whose numbers are marked on the curves; one figure per condition | `figures/size_sweep/` |
 
 ## What each figure needs

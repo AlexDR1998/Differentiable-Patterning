@@ -20,6 +20,7 @@ Used by the "held-out 250K colonies" section of ``nodal_ko_eval.py``.
 from __future__ import annotations
 
 import re
+import warnings
 from functools import lru_cache
 from pathlib import Path
 
@@ -32,10 +33,12 @@ from Common.dataloader.background import subtract_background
 from Common.dataloader.cell_type_fit import radial_rings
 from Common.dataloader.cell_type_shares import (
     colony_label_shares,
+    counts_at_thresholds,
     pattern_counts,
     stain_counts_from_patterns,
+    threshold_histogram,
 )
-from Common.dataloader.cell_types import CellTypeRules
+from Common.dataloader.cell_types import CellTypeRules, label_names, pattern_label_shares
 from Common.dataloader.hot_pixels import replace_hot_pixels_per_channel
 from Common.dataloader.micropattern_260726 import (
     _downsample_image_and_mask,
@@ -635,6 +638,115 @@ def shares_with(images, names, masks, rules, thresholds, n_rings, resolve_severa
             values[marker] = np.asarray(image[index])
         shares.append(panel_label_shares(values, mask, restricted, n_rings, resolve_several))
     return np.asarray(shares), restricted
+
+
+# ---------------------------------------------------------------- tuning on a threshold grid
+#
+# The density × KO sweep keeps, for every colony, a histogram of the S2
+# markers on a grid of thresholds (``density_ko_sweep.tuning_grid``). The S2
+# panel images every marker in one stain, so a colony's label shares are just
+# the shares of pixels with each high/low pattern, and these can be read from
+# the histogram for any thresholds on the grid. ``grid`` below is
+# ``{marker: candidate thresholds}`` and histograms are flattened ``[..., bins]``.
+
+
+def grid_shape(grid):
+    """Bins per marker of a histogram on ``grid``."""
+    return tuple(len(values) + 1 for values in grid.values())
+
+
+def grid_indices(grid, thresholds):
+    """Index of each marker's threshold on ``grid`` (the nearest grid value)."""
+    return [int(np.argmin(np.abs(np.asarray(values) - float(thresholds[marker])))) for marker, values in grid.items()]
+
+
+def colony_histogram(values, mask, grid):
+    """Flattened ``threshold_histogram`` of one colony ``{marker: image}`` inside ``mask``."""
+    inside = np.asarray(mask, dtype=bool)
+    return threshold_histogram(
+        np.stack([np.asarray(values[marker])[inside] for marker in grid]), list(grid.values()),
+    ).ravel()
+
+
+def _pattern_shares(patterns, markers, restricted, resolve_several):
+    """Label shares ``[..., labels]`` from pattern counts ``[..., 2 ** markers]``."""
+    ((_, counts),) = stain_counts_from_patterns(patterns, markers, [restricted.markers])
+    total = counts.sum(axis=-1, keepdims=True)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        fractions = counts / np.where(total > 0, total, np.nan)
+    return fractions @ pattern_label_shares(restricted, resolve_several=resolve_several)
+
+
+def grid_shares(counts, grid, restricted, thresholds, resolve_several=0.0):
+    """Label shares ``[..., labels]`` of histograms ``counts`` ``[..., bins]``
+    with ``restricted`` rules (``stain_rules``) at ``thresholds``, each
+    taken to the nearest grid value. Equal to ``panel_label_shares`` there."""
+    counts = np.asarray(counts, dtype=float)
+    histogram = counts.reshape(*counts.shape[:-1], *grid_shape(grid))
+    patterns = counts_at_thresholds(histogram, [[index] for index in grid_indices(grid, thresholds)])
+    patterns = patterns.reshape(*counts.shape[:-1], patterns.shape[-1])
+    return _pattern_shares(patterns, list(grid), restricted, resolve_several)
+
+
+def histograms_at(runs, density, hour):
+    """Histograms ``[runs, bins]`` of sweep runs at one point, interpolated
+    linearly (``predict_at``; NaN outside the sweep). Each run is ``{"counts"
+    [densities, KO times, bins], "densities", "ko_hours"}``."""
+    return np.stack([predict_at(run["counts"], run["densities"], run["ko_hours"], density, hour) for run in runs])
+
+
+def fit_thresholds(nca, data, grid, restricted, cell_types, resolve_several=0.0, min_share=0.02):
+    """Thresholds on ``grid`` at which the NCA matches the data best.
+
+    ``nca`` and ``data`` map each measured point to histograms ``[n, bins]``
+    (NCA runs at the point, ``histograms_at``; measured colonies). The error
+    of a set of thresholds is the mean, over the points and ``cell_types``,
+    of |mean NCA share − mean data share|. Every combination on the grid is
+    tried, so the search stays inside the grid. Combinations where one of
+    ``cell_types`` almost vanishes from the data (mean share over the points
+    below ``min_share``) are skipped (error NaN): there, NCA and data can
+    agree only because both have no pixels of it, e.g. with every threshold at 0.
+
+    Returns ``{"thresholds": best, "points": [...], "point_errors": [points,
+    *grid shape], "errors": [*grid shape]}``; the errors hold every
+    combination (indexed as ``grid_indices``).
+    """
+    markers = list(grid)
+    shape = grid_shape(grid)
+    every = [range(len(values)) for values in grid.values()]
+    labels = label_names(restricted)
+    keep = [labels.index(cell_type) for cell_type in cell_types if cell_type in labels]
+    points = [point for point in nca if point in data]
+
+    def mean_shares(histograms):
+        histograms = np.asarray(histograms, dtype=float)
+        patterns = counts_at_thresholds(histograms.reshape(len(histograms), *shape), every)
+        shares = _pattern_shares(patterns, markers, restricted, resolve_several)[..., keep]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)  # points outside the sweep are NaN
+            return np.nanmean(shares, axis=0)
+
+    data_shares = np.stack([mean_shares(data[point]) for point in points])
+    point_errors = np.stack([
+        np.abs(mean_shares(nca[point]) - shares).mean(axis=-1) for point, shares in zip(points, data_shares)
+    ])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        errors = np.nanmean(point_errors, axis=0)
+        vanished = np.any(np.nanmean(data_shares, axis=0) < min_share, axis=-1)
+    errors = np.where(vanished, np.nan, errors)
+    if not np.isfinite(errors).any():
+        raise ValueError(
+            "No thresholds on the grid fit: no measured point lies inside the density × KO sweep, "
+            "or a chosen cell type is (almost) absent from the data at every grid point"
+        )
+    best = np.unravel_index(np.nanargmin(errors), errors.shape)
+    return {
+        "thresholds": {marker: float(grid[marker][index]) for marker, index in zip(markers, best)},
+        "points": points,
+        "point_errors": point_errors,
+        "errors": errors,
+    }
 
 
 TEST_POINT_ARRAYS = ("states", "mask", "densities_per_mm2")

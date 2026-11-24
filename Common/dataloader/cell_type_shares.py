@@ -58,6 +58,48 @@ def pattern_counts(values, thresholds, groups, n_groups, weights=None):
     return counts.reshape(n_groups, n_patterns).astype(float)
 
 
+def threshold_histogram(values, grids):
+    """Pixels between neighbouring candidate thresholds, one axis per marker.
+
+    ``values`` is ``[markers, pixels]`` and ``grids`` one increasing list of
+    candidate thresholds per marker. Returns ``[len(grid) + 1, ...]``: a
+    pixel goes in bin ``b`` of a marker when ``b`` of its grid thresholds
+    are below its value, so it is above ``grid[i]`` exactly when its bin is
+    above ``i``. ``counts_at_thresholds`` turns this into the counts
+    ``pattern_counts`` gives, for any thresholds on the grids.
+    """
+    values = np.asarray(values, dtype=float)
+    shape = tuple(len(grid) + 1 for grid in grids)
+    bins = [np.searchsorted(np.asarray(grid, dtype=float), row, side="left") for grid, row in zip(grids, values)]
+    flat = np.ravel_multi_index(bins, shape)
+    return np.bincount(flat, minlength=int(np.prod(shape))).reshape(shape).astype(float)
+
+
+def counts_at_thresholds(histogram, indices):
+    """Pixels of each high/low pattern from a ``threshold_histogram``.
+
+    ``histogram`` is ``[..., bins per marker]`` (leading axes, e.g. one per
+    colony, are kept) and ``indices`` one list of grid indices per marker.
+    Every combination is counted: returns ``[..., len(indices[0]), ...,
+    2 ** markers]``, where bit ``i`` of a pattern is marker ``i``, as in
+    ``pattern_counts``.
+    """
+    out = np.asarray(histogram, dtype=float)
+    n_markers = len(indices)
+    first = out.ndim - n_markers
+    for marker, index in enumerate(indices):
+        axis = first + marker
+        cumulative = np.cumsum(out, axis=axis)
+        # Bins up to i: at or below grid[i]
+        low = np.take(cumulative, np.asarray(index, dtype=int), axis=axis)
+        total = np.take(cumulative, [-1], axis=axis)
+        out = np.stack([low, total - low], axis=-1)
+    # The last axes are low/high of marker 0, 1, ...; bit i is marker i
+    last = list(range(out.ndim - n_markers, out.ndim))
+    out = np.moveaxis(out, last, last[::-1])
+    return out.reshape(*out.shape[: out.ndim - n_markers], 2**n_markers)
+
+
 def _sub_patterns(codes, markers, subset):
     """Patterns over ``subset`` read from patterns ``codes`` over ``markers``."""
     out = np.zeros_like(codes)

@@ -1,7 +1,13 @@
 import numpy as np
 import pytest
 
-from Common.dataloader.cell_type_shares import combine_stains, pattern_counts, share_estimator
+from Common.dataloader.cell_type_shares import (
+    combine_stains,
+    counts_at_thresholds,
+    pattern_counts,
+    share_estimator,
+    threshold_histogram,
+)
 from Common.dataloader.cell_types import CellTypeRules
 
 
@@ -102,3 +108,15 @@ def test_colony_label_shares_weights_rings_by_area():
     shares = colony_label_shares([(("A",), counts)], rules)
     # Labels: High, Several, Other.
     np.testing.assert_allclose(shares, [0.25, 0.0, 0.75])
+
+
+def test_threshold_histogram_counts_match_pattern_counts_on_the_grid():
+    values = np.random.default_rng(0).random((3, 400))
+    grids = [np.linspace(0.1, 0.9, 5), [0.2, 0.4, 0.6], [0.5]]
+    histogram = threshold_histogram(values, grids)
+    counts = counts_at_thresholds(histogram[None], [range(5), range(3), range(1)])
+    assert counts.shape == (1, 5, 3, 1, 8)
+    for i, a in enumerate(grids[0]):
+        for j, b in enumerate(grids[1]):
+            expected = pattern_counts(values, [a, b, 0.5], np.zeros(400, dtype=int), 1)[0]
+            np.testing.assert_array_equal(counts[0, i, j, 0], expected)

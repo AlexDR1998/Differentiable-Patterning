@@ -30,7 +30,7 @@ import numpy as np
 
 from Common.dataloader.alignment import load_colony_alignment
 from Common.dataloader.cell_type_fit import radial_rings
-from Common.dataloader.cell_type_shares import pattern_counts
+from Common.dataloader.cell_type_shares import pattern_counts, threshold_histogram
 from Common.dataloader.cell_types import load_cell_type_rules, marker_values
 from Common.dataloader.disk_cache import cache_dir_from_environment
 from Experiments.micropatterns.cell_counts import (
@@ -96,6 +96,13 @@ class DensityKoSettings:
     # Replicates the measured density is the mean over (empty: replicates);
     # a job split by replicate keeps every replicate here
     measured_replicates: tuple = ()
+    # Threshold tuning: each colony also keeps a histogram of these markers
+    # on a grid of thresholds (the cell type file's ± tuning_span in steps of
+    # tuning_step), so cell types can be counted again at any of them
+    # (density_ko_figure.py). A span of 0 keeps none.
+    tuning_markers: tuple = ("SOX17", "TBXT", "FOXA2")
+    tuning_span: float = 0.2
+    tuning_step: float = 0.05
 
     def densities(self):
         return np.linspace(float(self.density_start), float(self.density_stop), int(self.density_count))
@@ -147,6 +154,8 @@ def settings_from_dict(values):
     # Job files that chose one true data replicate: it now comes from every replicate
     values.pop("true_data_replicate", None)
     values["cell_type_files"] = dict(values.get("cell_type_files") or {})
+    if "tuning_markers" in values:
+        values["tuning_markers"] = tuple(values["tuning_markers"])
     # Job files from before the texture settings file held one set of cell
     # settings for every projection (placement "layers" by default)
     old = {_new: values.pop(_old) for _old, _new in OLD_CELL_KEYS.items() if _old in values}
@@ -457,6 +466,7 @@ DENSITY_KO_ARRAYS = (
     "pattern_counts",
     "cell_pattern_counts",
     "channel_means",
+    "tuning_counts",
     "initial_states",
     "colony",
 )
@@ -476,6 +486,8 @@ def _upgrade_result(result):
     result.setdefault("measured_covered_share", result["measured_density"])
     # Results from before the references are all sweep results
     result.setdefault("source", "sweep")
+    # Results from before threshold tuning have no histograms
+    result.setdefault("tuning_grid", None)
     if result["covered_shares"] is None:
         result["covered_shares"] = result["densities"]
     return result
@@ -487,19 +499,44 @@ def load_density_ko_results(path):
     return tuple(_upgrade_result(_result) for _result in load_results_npz(path, DENSITY_KO_ARRAYS))
 
 
+def tuning_grid(rules, settings):
+    """``{marker: candidate thresholds}`` for threshold tuning: the rule's
+    threshold ± ``settings.tuning_span`` in steps of ``tuning_step``, within
+    0 to 1. Empty when the span is 0 or the rules have none of the markers."""
+    span, step = float(settings.tuning_span), float(settings.tuning_step)
+    if span <= 0 or step <= 0:
+        return {}
+    offsets = step * np.arange(-round(span / step), round(span / step) + 1)
+    return {
+        _m: sorted({round(float(np.clip(rules.thresholds[_m] + _o, 0.0, 1.0)), 6) for _o in offsets})
+        for _m in settings.tuning_markers if _m in rules.markers
+    }
+
+
+def tuning_histogram(image, channel_names, cell_type_rules, colony, grid):
+    """``threshold_histogram`` of the ``grid`` markers inside ``colony``, flattened."""
+    values = marker_values(image, channel_names, cell_type_rules, axis=0)
+    inside = np.asarray(colony, dtype=bool)
+    return threshold_histogram(
+        np.stack([np.asarray(values[_m])[inside] for _m in grid]), list(grid.values()),
+    ).ravel()
+
+
 # ---------------------------------------------------------------- sweep
 
 
 def _final_pattern_counts(
     model, states, keys, boundary, boundary_mode, total_steps, nodal_channel, ko_step,
-    names, rules, mask, rings, max_batch, cell_weights=None,
+    names, rules, mask, rings, max_batch, cell_weights=None, grid=None,
 ):
     """Pattern counts ``[B, rings, patterns]`` of the final states of
     ``states`` ``[B, C, H, W]`` rolled out with ``keys`` ``[B]``, NODAL
     blocked from ``ko_step``. Rollouts run in chunks of ``max_batch``; the
     last chunk is padded, so every chunk uses the same compiled rollout.
 
-    Returns ``(pixel counts, cell counts, channel means)``. With
+    Returns ``(pixel counts, cell counts, channel means, tuning
+    histograms)``; the histograms (``tuning_histogram`` on ``grid``) are
+    None without a grid. With
     ``cell_weights`` ``[B, H, W]`` (each pixel's share of the 0h cells,
     ``synthetic_ic.cell_states``) the cell counts count every cell once, spread over its
     pixels; else None. Channel means are ``[B, rings, channels]`` of the
@@ -507,7 +544,7 @@ def _final_pattern_counts(
     """
     from NCA.trainer.intervention import rollout_batch_with_blocked_channel_final
 
-    counts, cell_counts, means = [], [], []
+    counts, cell_counts, means, tuning = [], [], [], []
     batch = max(1, min(int(max_batch), states.shape[0]))
     for start in range(0, states.shape[0], batch):
         chunk = np.arange(start, min(start + batch, states.shape[0]))
@@ -525,6 +562,8 @@ def _final_pattern_counts(
         final = np.asarray(final)[: len(chunk), : len(names)]
         counts.extend(model_pattern_counts(_state, names, rules, mask, rings) for _state in final)
         means.extend(ring_channel_means(_state, mask, rings) for _state in final)
+        if grid:
+            tuning.extend(tuning_histogram(_state, names, rules, mask, grid) for _state in final)
         if cell_weights is not None:
             cell_counts.extend(
                 model_pattern_counts(_state, names, rules, mask, rings, weights=cell_weights[_index])
@@ -534,6 +573,7 @@ def _final_pattern_counts(
         np.stack(counts),
         np.stack(cell_counts) if cell_weights is not None else None,
         np.stack(means),
+        np.stack(tuning).astype(np.float32) if grid else None,
     )
 
 
@@ -711,6 +751,7 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
         if projection not in rules_by_projection:
             raise ValueError(f"No cell type file is set for projection {projection!r}.")
         rules = rules_by_projection[projection]
+        grid = tuning_grid(rules, settings)
         bundle = registry.get(record["model_id"])
         model = bundle.load_model(key=jr.PRNGKey(int(settings.seed)), implementation="portable")
         prepared = prepare_model_cells(bundle, settings, projection, root)
@@ -741,7 +782,8 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
 
         def ko_rollouts(_initial, _seeds, _weights, _colony):
             """Final-state counts of ``_initial`` ``[runs × points, C, H, W]``
-            (one seed per run) at every KO time, each ``[runs, points, KO times, ...]``."""
+            (one seed per run) at every KO time, each ``[runs, points, KO times, ...]``:
+            pixel counts, cell counts, channel means and tuning histograms."""
             _points = _initial.shape[0] // len(_seeds)
             # Padded with zero channels to the model's
             _states = np.pad(_initial, ((0, 0), (0, channels - _initial.shape[1]), (0, 0), (0, 0)))
@@ -751,16 +793,17 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
             _boundary = jnp.broadcast_to(
                 jnp.asarray(_colony, dtype=prepared["boundary"].dtype), prepared["boundary"].shape,
             )
-            _pixel, _cell, _means = [], [], []
+            _pixel, _cell, _means, _tuning = [], [], [], []
             for _ko_step in ko_steps:
-                _counts, _cell_counts, _ring_means = _final_pattern_counts(
+                _counts, _cell_counts, _ring_means, _histograms = _final_pattern_counts(
                     model, _states, _keys, _boundary, bundle.config.trainer.boundary_mode,
                     total_steps, prepared["nodal_channel"], _ko_step,
-                    names, rules, _colony, rings, settings.max_batch, cell_weights=_weights,
+                    names, rules, _colony, rings, settings.max_batch, cell_weights=_weights, grid=grid,
                 )
                 _pixel.append(_counts)
                 _cell.append(_cell_counts)
                 _means.append(_ring_means)
+                _tuning.append(_histograms)
                 progress(_states.shape[0])
 
             def _by_run(_values):
@@ -772,9 +815,10 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                 _by_run(_pixel),
                 _by_run(_cell) if _weights is not None else [None] * len(_seeds),
                 _by_run(_means),
+                _by_run(_tuning) if grid else [None] * len(_seeds),
             )
 
-        def result(_source, _replicate, _run, _counts, _cell_counts, _means, _measured, _keep_image):
+        def result(_source, _replicate, _run, _counts, _cell_counts, _means, _tuning, _measured, _keep_image):
             """One result dict; ``_run`` holds what differs between runs and sources."""
             return {
                 "model_id": bundle.id,
@@ -822,6 +866,10 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                 # [densities, KO times, rings, channels]: mean of each measured
                 # state channel (state_channel_names) in each ring
                 "channel_means": _means,
+                # [densities, KO times, bins]: threshold_histogram of the
+                # tuning_grid markers, flattened (None without a grid)
+                "tuning_grid": grid,
+                "tuning_counts": _tuning,
                 "cell_area_px": _run["cell_area_px"],
                 # Kept for one run only, to show the initial states
                 "initial_states": _run["initial_states"] if _keep_image else None,
@@ -888,13 +936,13 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                         f"{states['squeeze']:.0%} of the measured cell area"
                     )
                 placed.append({**states, "run_index": run_index, "seed": run_seed, "densities": densities})
-            counts, cell_pattern, means = ko_rollouts(
+            counts, cell_pattern, means, tuning = ko_rollouts(
                 np.concatenate([_run["initial_states"] for _run in placed]), seeds,
                 np.concatenate([_run["cell_weights"] for _run in placed]), mask,
             )
-            for run, run_counts, run_cells, run_means in zip(placed, counts, cell_pattern, means):
+            for run, run_counts, run_cells, run_means, run_tuning in zip(placed, counts, cell_pattern, means, tuning):
                 results.append(result(
-                    "sweep", replicate, run, run_counts, run_cells, run_means, measured, not results,
+                    "sweep", replicate, run, run_counts, run_cells, run_means, run_tuning, measured, not results,
                 ))
 
             # Reference: the same cells at the measured density (mean over the replicates)
@@ -911,13 +959,15 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                         }
                         for _run, _seed in enumerate(seeds)
                     ]
-                    counts, cell_pattern, means = ko_rollouts(
+                    counts, cell_pattern, means, tuning = ko_rollouts(
                         np.concatenate([_run["initial_states"] for _run in reference]), seeds,
                         np.concatenate([_run["cell_weights"] for _run in reference]), mask,
                     )
-                    for run, run_counts, run_cells, run_means in zip(reference, counts, cell_pattern, means):
+                    for run, run_counts, run_cells, run_means, run_tuning in zip(
+                        reference, counts, cell_pattern, means, tuning,
+                    ):
                         results.append(result(
-                            "measured_density", replicate, run, run_counts, run_cells, run_means,
+                            "measured_density", replicate, run, run_counts, run_cells, run_means, run_tuning,
                             measured, run["run_index"] == 0 and replicate_index == 0,
                         ))
 
@@ -935,10 +985,10 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                         "share": true["covered_share"],
                         "density": true_density,
                     }
-                    counts, _, means = ko_rollouts(
+                    counts, _, means, tuning = ko_rollouts(
                         np.repeat(true["initial_state"][None], runs, axis=0), seeds, None, true["mask"],
                     )
-                    for run_index, (run_counts, run_means) in enumerate(zip(counts, means)):
+                    for run_index, (run_counts, run_means, run_tuning) in enumerate(zip(counts, means, tuning)):
                         run = {
                             "run_index": run_index,
                             "seed": seeds[run_index],
@@ -955,7 +1005,8 @@ def run_density_ko_sweep(settings, records, job_offset=0, progress=None):
                             "colony_mm2": true["mask_mm2"],
                         }
                         results.append(result(
-                            "true_data", replicate, run, run_counts, None, run_means, true_measured, run_index == 0,
+                            "true_data", replicate, run, run_counts, None, run_means, run_tuning, true_measured,
+                            run_index == 0,
                         ))
             job_index += 1
     return tuple(results), warnings
